@@ -1,0 +1,18 @@
+program manual_fruit_basket_driver
+use fruit
+use manual_fruit_basket
+
+call init_fruit
+call init_fruit_xml
+
+call doubly_linked_list_all_tests
+call field_section_all_tests
+call subfield_all_tests
+call area_all_tests
+call cotat_plus_all_tests
+call loop_breaker_all_tests
+
+call fruit_summary
+call fruit_summary_xml
+call fruit_finalize
+end program manual_fruit_basket_driver
