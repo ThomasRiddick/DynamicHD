@@ -921,6 +921,28 @@ def intelligent_orography_burning_driver(input_fine_orography_filename,
                                          change_print_out_limit = 200,
                                          fine_grid_type=None,course_grid_type=None,
                                          fine_grid_kwargs={},**course_grid_kwargs):
+    """Drive intelligent burning of an orography
+    
+    Arguments:
+    input_fine_orography_filename: string; full path to the fine orography field file to use as a reference
+    input_course_orography_filename: string; full path to the course orography field file to intelligently burn
+    input_fine_fmap_filename: string; full path to the fine cumulative flow field file to use as reference
+    output_course_orography_filename: string; full path to target file to write the output intelligently burned
+        orogrpahy to
+    regions_to_burn_list_filename: string; full path of list of regions to burn and the burning thershold to use
+        for each region. See inside function the necessary format for the header and the necessary format to 
+        specifying each region to burn 
+    change_print_out_limit: integer; limit on the number of changes to the orography to individually print out
+    fine_grid_type: string; code for the grid type of the fine grid
+    course_grid_type: string; code for teh grid type of the course grid
+    fine_grid_kwargs: dictionary; key word dictionary specifying parameters of the fine grid (if required)
+    course_grid_kwargs: dictionary; key word dictionary specifying parameters of the course grid (if required)
+    Returns: nothing
+    
+    Reads input file, orientates field according to information on orientation supplied in corrections region file,
+    uses intelligent burning function to burn each specified region then writes out results.
+    """
+
     input_fine_orography_field = dynamic_hd.load_field(input_fine_orography_filename, 
                                                        file_type=\
                                                        dynamic_hd.get_file_extension(input_fine_orography_filename),
@@ -1034,4 +1056,3 @@ def intelligent_orography_burning_driver(input_fine_orography_filename,
     dynamic_hd.write_field(output_course_orography_filename, 
                            field=output_course_orography, 
                            file_type=dynamic_hd.get_file_extension(output_course_orography_filename))
-    
