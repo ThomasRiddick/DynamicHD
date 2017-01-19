@@ -65,6 +65,32 @@ class TestAlgorithmOne(unittest.TestCase):
                                                           [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]],
                                                          dtype=np.float64, order='C')
         
+        self.orography_in_wrapped_sink_with_slope = \
+            np.asarray([[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],
+                        [1.1,1.1,1.1,1.1,0.0,0.0,1.1,1.1,1.1,1.1],
+                        [2.0,2.0,2.0,1.1,0.0,0.0,1.1,2.0,2.0,1.5],
+                        [1.45,3.0,2.0,1.1,0.0,0.0,1.1,2.0,3.0,3.0],
+                        [0.1,3.0,2.0,1.1,0.0,0.0,1.1,2.0,3.0,0.1],
+                        [0.1,3.0,2.0,1.1,0.0,0.0,1.1,2.0,3.0,0.1],
+                        [3.0,3.0,2.0,1.1,0.0,0.0,1.1,2.0,3.0,3.0],
+                        [2.0,2.0,2.0,1.1,0.0,0.0,1.1,2.0,2.0,2.0],
+                        [1.1,1.1,1.1,1.1,0.0,0.0,1.1,1.1,1.1,1.1],
+                        [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]],
+                       dtype=np.float64, order='C')
+
+        self.orography_in_with_slope = \
+            np.asarray([[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],
+                        [0.0,1.1,1.1,1.1,1.1,1.1,1.1,1.1,1.1,0.0],
+                        [0.0,1.1,2.0,2.0,1.2,2.0,2.0,2.0,1.1,0.0],
+                        [0.0,1.1,2.0,0.1,0.1,0.1,0.1,2.0,1.1,0.0],
+                        [0.0,1.1,2.0,0.1,0.1,0.1,0.1,1.4,1.1,0.0],
+                        [0.0,1.1,2.0,0.1,0.1,0.1,0.1,2.0,1.1,0.0],
+                        [0.0,1.1,2.0,0.1,0.1,0.1,0.1,2.0,1.1,0.0],
+                        [0.0,1.1,2.0,2.0,2.0,1.3,2.0,2.0,1.1,0.0],
+                        [0.0,1.1,1.1,1.1,1.1,1.1,1.1,1.1,1.1,0.0],
+                        [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]],
+                       dtype=np.float64, order='C')
+        
         self.expected_wrapped_array_output = np.asarray([[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],
                                                          [1.1,1.1,1.1,1.1,0.0,0.0,1.1,1.1,1.1,1.1],
                                                          [2.0,2.0,2.0,1.1,0.0,0.0,1.1,2.0,2.0,1.2],
@@ -88,6 +114,32 @@ class TestAlgorithmOne(unittest.TestCase):
                                                          [1.1,1.1,1.1,1.1,0.0,0.0,1.1,1.1,1.1,1.1],
                                                          [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]],
                                                         dtype=np.float64, order='C')
+        
+        self.expected_orography_wrapped_sink_ls_filled_with_slope = \
+            np.asarray([[0.3,0.2,0.1,0.0,0.0,0.0,0.0,0.1,0.2,0.3],
+                        [1.1,1.1,1.1,1.1,0.0,0.0,1.1,1.1,1.1,1.1],
+                        [2.0,2.0,2.0,1.1,0.0,0.0,1.1,2.0,2.0,1.5],
+                        [1.6,3.0,2.0,1.1,0.0,0.0,1.1,2.0,3.0,3.0],
+                        [1.7,3.0,2.0,1.1,0.0,0.0,1.1,2.0,3.0,1.7],
+                        [1.8,3.0,2.0,1.1,0.0,0.0,1.1,2.0,3.0,1.8],
+                        [3.0,3.0,2.0,1.1,0.0,0.0,1.1,2.0,3.0,3.0],
+                        [2.0,2.0,2.0,1.1,0.0,0.0,1.1,2.0,2.0,2.0],
+                        [1.1,1.1,1.1,1.1,0.0,0.0,1.1,1.1,1.1,1.1],
+                        [0.3,0.2,0.1,0.0,0.0,0.0,0.0,0.1,0.2,0.3]],
+                       dtype=np.float64, order='C')
+    
+        self.expected_orography_out_with_slope = \
+            np.asarray([[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],
+                        [0.0,1.1,1.1,1.1,1.1,1.1,1.1,1.1,1.1,0.0],
+                        [0.0,1.1,2.0,2.0,1.2,2.0,2.0,2.0,1.1,0.0],
+                        [0.0,1.1,2.0,1.3,1.3,1.3,1.4,2.0,1.1,0.0],
+                        [0.0,1.1,2.0,1.4,1.4,1.4,1.4,1.4,1.1,0.0],
+                        [0.0,1.1,2.0,1.5,1.5,1.5,1.5,2.0,1.1,0.0],
+                        [0.0,1.1,2.0,1.5,1.4,1.4,1.4,2.0,1.1,0.0],
+                        [0.0,1.1,2.0,2.0,2.0,1.3,2.0,2.0,1.1,0.0],
+                        [0.0,1.1,1.1,1.1,1.1,1.1,1.1,1.1,1.1,0.0],
+                        [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]],
+                       dtype=np.float64, order='C')
         
         self.true_sink_and_former_true_sinks_wrapped_with_lsmask_and_slope_expected_output = \
             np.asarray([[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],
@@ -273,6 +325,27 @@ class TestAlgorithmOne(unittest.TestCase):
                                       self.true_sink_and_former_true_sinks_wrapped_with_lsmask_and_slope_expected_output,
                                       "Fill sinks algorithm 1 with land sea mask and wrapped orography doesn't"
                                       " give expected results when using true (on a slope) and former true sinks")
+        
+    def testFillingSinksWithSlopeAddedToFill(self):
+        """Test call on a wrapped grid where a slope is added to the filled sink"""
+        fill_sinks_wrapper.fill_sinks_cpp_func(self.orography_in_wrapped_sink_with_slope,1,True,self.ls_mask,use_true_sinks=False,
+                                               true_sinks_in=self.dummy_mask,add_slope=True,epsilon=0.1,);
+        np.testing.assert_array_almost_equal(self.orography_in_wrapped_sink_with_slope,
+                                             self.expected_orography_wrapped_sink_ls_filled_with_slope,
+                                             decimal=8,
+                                             err_msg="Testing sink filling where a slight slope to filled sinks doesn't produce"
+                                             " expected results")
+        
+    def testFillingSinksWithSlopeAddedToFillMultipleEntry(self):
+        """Test call on a grid where a slope is added to a filled sink with multiple entry points"""
+        fill_sinks_wrapper.fill_sinks_cpp_func(self.orography_in_with_slope,1,False,self.ls_mask,False,
+                                               use_true_sinks=False,true_sinks_in=self.dummy_mask,add_slope=True,
+                                               epsilon=0.1);
+        np.testing.assert_array_almost_equal(self.orography_in_with_slope,
+                                             self.expected_orography_out_with_slope,
+                                             decimal=8,
+                                             err_msg="Testing sink filling where a slight slope to a filled sink with multiply"
+                                                     " entry points doesn't produce expected results")
 
 class TestAlgorithmFour(unittest.TestCase):
     """Tests of Algorithm 4 from Barnes et al (2014)""" 
@@ -525,7 +598,10 @@ class TestAlgorithmFour(unittest.TestCase):
         """Test a basic call to fill_sinks using algorithm 4"""
         dummy_ls = np.empty((1,1),dtype=np.int32)
         dummy_ts = np.empty((1,1),dtype=np.int32)
+        next_lat_indices = np.empty((10,10),dtype=np.int32)
+        next_lon_indices = np.empty((10,10),dtype=np.int32)
         fill_sinks_wrapper.fill_sinks_cpp_func(self.input_array,4,False,dummy_ls,False,False,dummy_ts,
+                                               False,0.0,next_lat_indices,next_lon_indices,
                                                self.rdirs,self.catchment_nums_in) #@UndefinedVariable 
         np.testing.assert_array_equal(self.catchment_nums_in,self.expected_catchment_num_output,
                                       "Basic Algorithm 4 call not producing expected catchment number")
@@ -537,7 +613,10 @@ class TestAlgorithmFour(unittest.TestCase):
     def testCallWithLSMask(self):
         """Test a call to fill_sinks using algorithm 4 and a land sea mask"""
         dummy_ts = np.empty((1,1),dtype=np.int32)
-        fill_sinks_wrapper.fill_sinks_cpp_func(self.wrapped_input_array,4,True,self.ls_mask,False,False,dummy_ts,self.rdirs,
+        next_lat_indices = np.empty((10,10),dtype=np.int32)
+        next_lon_indices = np.empty((10,10),dtype=np.int32)
+        fill_sinks_wrapper.fill_sinks_cpp_func(self.wrapped_input_array,4,True,self.ls_mask,False,False,dummy_ts,
+                                               False,0.0,next_lat_indices,next_lon_indices,self.rdirs,
                                                self.catchment_nums_in) #@UndefinedVariable 
         np.testing.assert_array_equal(self.catchment_nums_in,self.expected_catchment_num_wrapped_output,
                                       "Fill sinks algorithm 4 with land sea mask doesn't produce expected river catchments")
@@ -549,7 +628,10 @@ class TestAlgorithmFour(unittest.TestCase):
     def testCallWithLSMaskPreferNonDiagonalsInSettingInitialFlowDirections(self):
         """Test a call to fill_sinks using algorithm 4, a land sea mask and preferring non-diagonals in setting intitial flow directions"""
         dummy_ts = np.empty((1,1),dtype=np.int32)
-        fill_sinks_wrapper.fill_sinks_cpp_func(self.wrapped_input_array,4,True,self.ls_mask,False,False,dummy_ts,self.rdirs,
+        next_lat_indices = np.empty((10,10),dtype=np.int32)
+        next_lon_indices = np.empty((10,10),dtype=np.int32)
+        fill_sinks_wrapper.fill_sinks_cpp_func(self.wrapped_input_array,4,True,self.ls_mask,False,False,dummy_ts,
+                                               False,0.0,next_lat_indices,next_lon_indices,self.rdirs,
                                                self.catchment_nums_in,True)  #@UndefinedVariable       
         np.testing.assert_array_equal(self.catchment_nums_in,self.expected_catchment_num_wrapped_output,
                                       "Filling sinks algorithm 4 with land sea mask and prefering non-diagonal flow"
@@ -563,8 +645,11 @@ class TestAlgorithmFour(unittest.TestCase):
     def testBasicCallwithBothTrueSinkAndFormerTrueSinks(self):
         """Test a call to fill_sinks using algorithm 4 including both active and inactive true sinks"""
         dummy_ls = np.empty((1,1),dtype=np.int32)
+        next_lat_indices = np.empty((10,10),dtype=np.int32)
+        next_lon_indices = np.empty((10,10),dtype=np.int32)
         fill_sinks_wrapper.fill_sinks_cpp_func(self.input_array,4,False,dummy_ls,False,True,
                                                self.true_sink_and_former_true_sinks_input_array,
+                                               False,0.0,next_lat_indices,next_lon_indices,
                                                self.rdirs,self.catchment_nums_in) #@UndefinedVariable 
         np.testing.assert_array_equal(self.catchment_nums_in,
                                       self.expected_catchment_num_output_with_true_and_former_true_sinks,
@@ -579,9 +664,12 @@ class TestAlgorithmFour(unittest.TestCase):
     
     def testLSCallwithFormerTrueSinkWrapped(self):
         """Test a call to fill_sinks using algorithm 4 including an inactive true sink"""
+        next_lat_indices = np.empty((10,10),dtype=np.int32)
+        next_lon_indices = np.empty((10,10),dtype=np.int32)
         fill_sinks_wrapper.fill_sinks_cpp_func(self.wrapped_input_array,4,True,self.ls_mask,False,True,
-                                               self.former_true_sinks_input_array,self.rdirs,
-                                               self.catchment_nums_in) #@UndefinedVariable 
+                                               self.former_true_sinks_input_array,
+                                               False,0.0,next_lat_indices,next_lon_indices,
+                                               self.rdirs,self.catchment_nums_in) #@UndefinedVariable 
         np.testing.assert_array_equal(self.catchment_nums_in,self.expected_catchment_num_wrapped_output,
                                       "Fill sinks algorithm 4 with land sea mask (and a former true sink) doesn't"
                                       " produce expected river catchments")
@@ -594,8 +682,11 @@ class TestAlgorithmFour(unittest.TestCase):
     
     def testLSCallWithBothTrueSinkOnSlopeAndFormerTrueSinkWrapped(self):
         """Test a call to fill_sinks using algorithm 4 including both an active (on a slope) and an inactive true sinks"""
+        next_lat_indices = np.empty((10,10),dtype=np.int32)
+        next_lon_indices = np.empty((10,10),dtype=np.int32)
         fill_sinks_wrapper.fill_sinks_cpp_func(self.wrapped_input_array_with_slope,4,True,self.ls_mask,
                                                False,True,self.wrapped_current_and_former_true_sinks_input_array,
+                                               False,0.0,next_lat_indices,next_lon_indices,
                                                self.rdirs,self.catchment_nums_in,True)  #@UndefinedVariable       
         np.testing.assert_array_equal(self.catchment_nums_in,
                                       self.expected_wrapped_catchment_nums_with_current_sink_on_slope_and_former_sinks,
