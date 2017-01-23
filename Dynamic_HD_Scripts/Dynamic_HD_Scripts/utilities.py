@@ -13,6 +13,7 @@ import re
 import copy
 import netCDF4
 import shutil
+import cdo
 from context import fortran_source_path
 from Dynamic_HD_Scripts.field import makeField
 
@@ -1056,3 +1057,69 @@ def intelligent_orography_burning_driver(input_fine_orography_filename,
     dynamic_hd.write_field(output_course_orography_filename, 
                            field=output_course_orography, 
                            file_type=dynamic_hd.get_file_extension(output_course_orography_filename))
+    
+def generate_gaussian_landsea_mask(input_lsmask_filename,output_gaussian_latlon_mask_filename,
+                                   gaussian_grid_spacing):
+    """Generate a lat-lon gaussian landsea mask from a regular mask (lat-lon or otherwise) using cdos
+    
+    Arguments:
+    input_lsmask_filename: string; full path to the input land-sea mask file to generate a gaussian land-sea
+        mask from; this can be any format that the cdos will recognize.
+    output_gaussian_latlon_mask_filename: string; full path to the target file for the output gaussian land-sea
+        mask
+    gaussian_grid_spacing: integer, the number of latitude lines between the pole and equator.
+    Returns: nothing
+    
+    Uses the python wrapper to cdos provided by developers. Input file can any input grid allowed by cdos, output
+    grid is global lat-lon gaussian as defined by cdos. 
+    """
+    
+    cdo_instance = cdo.Cdo()
+    print "Generate gaussian land-sea mask from input mask: {0}".format(input_lsmask_filename)
+    print "Writing output to: {0}".format(output_gaussian_latlon_mask_filename)
+    cdo_instance.remapnn('n{0}'.format(gaussian_grid_spacing),input=input_lsmask_filename,
+                         output=output_gaussian_latlon_mask_filename)
+    
+def insert_new_landsea_mask_into_jsbach_restart_file(input_landsea_mask_filename,input_js_bach_filename,
+                                                     output_modified_js_bach_filename,
+                                                     modify_fractional_lsm=False,
+                                                     modify_lake_mask=False):
+    """Insert a new landsea mask into a jsbach restart file
+    
+    Arguments:
+    input_landsea_mask_filename: string; full path to new input landsea mask to insert
+        into jsbach file 
+    input_js_bach_filename: string; full path to jsbach file to insert landsea mask into
+    output_modified_js_bach_filename: string; full target path to write the new jsbach file to
+    modify_fractional_lsm: boolean; also modify the fractional land sea mask (replace it the
+        input update landsea mask that may not be fractional!?)?
+    modify_lake_mask: boolean, set the lake mask to zero?
+    Returns: nothing
+    
+    Uses python cdos. Always modifies the bindary landsea mask, will also modify the fractional
+    land sea mask and/or set the lake mask to zero if boolean options are set accordingly.
+    """
+
+    cdo_instance = cdo.Cdo()
+    temp_lsm_file = cdo_instance.chname("field_value,slm",input=input_landsea_mask_filename)
+    if modify_fractional_lsm or modify_lake_mask:
+        temp_output_file = cdo_instance.replace(input=" ".join([input_js_bach_filename,temp_lsm_file]))
+    else:
+        cdo_instance.replace(input=" ".join([input_js_bach_filename,temp_lsm_file]),
+                             output=output_modified_js_bach_filename)
+        return
+    if modify_fractional_lsm:
+        temp_lsm_file = cdo_instance.chname("field_value,slf",input=input_landsea_mask_filename)
+        if modify_lake_mask:
+            temp_output_file2 = cdo_instance.replace(input=" ".join([temp_output_file,temp_lsm_file])) 
+        else:
+            cdo_instance.replace(input=" ".join([temp_output_file,temp_lsm_file]),
+                                 output=output_modified_js_bach_filename) 
+            return
+    #This if test is technically unnecessary but added for clarity/future proofing
+    if modify_lake_mask:
+        temp_lsm_file = cdo_instance.chname("field_value,lake",input=input_landsea_mask_filename)
+        temp_lsm_file2 = cdo_instance.setclonlatbox("0.0,180.0,-180.0,90.0,-90.0",input=temp_lsm_file)
+        cdo_instance.replace(input=" ".join([temp_output_file2 if modify_lake_mask else temp_output_file,
+                                             temp_lsm_file2]),
+                             output=output_modified_js_bach_filename)

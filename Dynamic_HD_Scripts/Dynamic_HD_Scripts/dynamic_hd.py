@@ -63,17 +63,21 @@ def load_field(filename,file_type,field_type,unmask=True,timeslice=None,
                                                              grid_type,**grid_kwargs)
     return fld.makeField(raw_field,field_type,grid_type,**grid_kwargs)
 
-def write_field(filename,field,file_type):
+def write_field(filename,field,file_type,griddescfile=None):
     """Writes the given field object to the given file type.
 
     Arguments:
     filename: string; the full path of the target file
     field: field object; the field object containing the data to be written
     file_type: string; the code of the type of file that is to be written
+    griddescfile (optional): string; full path to the grid description metadata to add to 
+            file written out (if possible). Nothing is added if this is set to 
+            None
+        
     Uses the getFileHeper pseudo-factory function to get the appropriate IOHelper subclass
     to write this file type and then uses this to write the field object. 
     """
-    iohelper.getFileHelper(file_type).write_field(filename,field) 
+    iohelper.getFileHelper(file_type).write_field(filename,field,griddescfile=griddescfile) 
 
 def get_file_extension(filename):
     """Return the extension of a given filename"""
