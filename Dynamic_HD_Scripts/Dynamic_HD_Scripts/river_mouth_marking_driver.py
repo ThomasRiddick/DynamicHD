@@ -12,7 +12,7 @@ import field
 def main(rdirs_filepath,updatedrdirs_filepath,lsmask_filepath=None,
          flowtocell_filepath=None,rivermouths_filepath=None,
          flowtorivermouths_filepath=None,skip_marking_mouths=False,
-         grid_type='HD',**grid_kwargs):
+         flip_mask_ud=False,grid_type='HD',**grid_kwargs):
     """Top level function to drive the river mouth marking process
     
     Arguments:
@@ -30,6 +30,7 @@ def main(rdirs_filepath,updatedrdirs_filepath,lsmask_filepath=None,
         cumulative flow to that river mouth
     skip_marking_mouths(optional): boolean; if this flag is set to True then don't mark river mouths
         and perform only the additional task otherwise (if it is False) proceed as normal
+    flip_mask_ud: boolean; flip the landsea mask (if any) upside down before processing?
     grid_type: string; keyword specifying the grid type
     **grid_kwargs: dictionary of keyword arguments; parameters for the specified grid type if required
     Return: Nothing
@@ -45,6 +46,8 @@ def main(rdirs_filepath,updatedrdirs_filepath,lsmask_filepath=None,
                                         file_type=dynamic_hd.get_file_extension(lsmask_filepath),
                                         field_type="Generic",
                                         grid_type=grid_type,**grid_kwargs)
+        if flip_mask_ud:
+            lsmask.flip_data_ud()
     else:
         lsmask = None
         

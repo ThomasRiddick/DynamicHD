@@ -28,6 +28,7 @@ src = path.join(cpp_base,"src")
 include = path.join(cpp_base,"include")
 
 extensions=[Extension("libs.fill_sinks_wrapper",[path.join(module_dir,"fill_sinks_wrapper.pyx"),
+                                                 path.join(src,"grid.cpp"),
                                                  path.join(src,"cell.cpp"),
                                                  path.join(src,"sink_filling_algorithm.cpp")],
                       include_dirs=[src,include,np.get_include()],
@@ -35,6 +36,7 @@ extensions=[Extension("libs.fill_sinks_wrapper",[path.join(module_dir,"fill_sink
                       extra_compile_args=extra_compile_args,
                       extra_link_args=extra_links_args),
             Extension("libs.create_connected_lsmask_wrapper",[path.join(module_dir,"create_connected_lsmask_wrapper.pyx"),
+                                                              path.join(src,"grid.cpp"),
                                                               path.join(src,"cell.cpp"),
                                                               path.join(src,"connected_lsmask_generation_algorithm.cpp")],
                       include_dirs=[src,include,np.get_include()],

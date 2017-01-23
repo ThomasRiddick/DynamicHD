@@ -251,7 +251,7 @@ def invert_ls_mask(original_ls_mask_filename,
     timeslice(optional): timeslice of the input file load the field from 
     grid_type: string; the code for this grid type 
     grid_kwargs: dictionary; key word arguments specifying parameters of the grid
-    Returns"""
+    Returns: nothing"""
     ls_mask = dynamic_hd.load_field(original_ls_mask_filename, 
                                     file_type=\
                                     dynamic_hd.get_file_extension(original_ls_mask_filename),
