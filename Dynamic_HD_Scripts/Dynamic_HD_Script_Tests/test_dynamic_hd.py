@@ -331,6 +331,7 @@ class IOHelperTestCase(unittest.TestCase):
     fortran_output_test_file= directory + 'test_output_temp.fortran_file'
     fortran_output_f2py_test_file= directory + 'test_output_f2py_temp.fortran_file'
     netcdf_output_test_file = directory + 'test_output_netcdf4_temp.nc'
+    text_output_test_file = directory + 'test_output_text_temp.txt'
   
     def setUp(self):
         """Unit test setup. Prepare some test data"""
@@ -436,6 +437,19 @@ class IOHelperTestCase(unittest.TestCase):
         np.testing.assert_array_almost_equal(field_260[2158:2160,4318:4320], np.array([[-4288.0,-4288.0],[-4290.0,-4290.0]]),
                                              decimal= 6,err_msg="Loading a field from NetCDF file containing multiple time" 
                                              " slices doesn't produce expected result")
+        
+        
+    def testTextReadAndWrite(self):
+        """Test writing to then reading from a text file"""
+        iohelper.TextFileIOHelper.write_field(filename=self.text_output_test_file, 
+                                              field=fld.Field(self.field.reshape(360,720)), 
+                                              griddescfile=None)
+        field_after_writing_and_reading_from_a_file = \
+            iohelper.TextFileIOHelper.load_field(filename=self.text_output_test_file, 
+                                                 grid_type='HD')
+        np.testing.assert_array_equal(self.field.reshape(360,720),field_after_writing_and_reading_from_a_file,
+                                      "Writing to a text file and reading back from it doesn't produce expected"
+                                      " result.")
 
 class fieldOperationTestCase(unittest.TestCase):
     """Tests the various operations on field objects"""
