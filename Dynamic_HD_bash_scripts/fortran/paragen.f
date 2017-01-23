@@ -367,7 +367,9 @@ c        *** Minimales V, das entspricht Minimum-Steigung
 c        *** Ist nur Dummy, da DH = 0 nur bei lokalen Senken vorkommen darf.
 c        Minimum is now set to (VSAU/C)**(1/ALPHA)*DX
 c        which is (0.1/2)**(1/0.1)*50000
-         IF (DH.LE. 0.00000000488281 ) THEN
+         IF (DH .LE. 0) THEN
+            VSAU = 0.65
+         ELSE IF (DH.LE. 0.00000000488281 ) THEN
 c
 ccc            VSAU = 0.01   (0.1 = 5.79 days auf 50 km)
             VSAU = 0.1

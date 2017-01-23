@@ -12,7 +12,8 @@ inner_slope_file=${5}
 ls_mask_file=${6}
 null_file=${7}
 area_spacing_file=${8}
-work_dir=${9}
+orography_variance_file=${9}
+work_dir=${10}
 
 #Set compiler
 comp=/usr/local/bin/gfortran
@@ -42,7 +43,7 @@ ${area_spacing_file}
 TDNORO: Filename of the global Orography Arrays
 ${topography_file}
 TDNSIG: Filename of the global Orography variance array
-${null_file}
+${orography_variance_file}
 TDNMAS: Filename of the landsea mask
 ${ls_mask_file}
 TDNGMA: Filename of the glacier mask, z.B. null.dat
