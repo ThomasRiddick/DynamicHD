@@ -34,6 +34,9 @@ def main(rdirs_filepath,updatedrdirs_filepath,lsmask_filepath=None,
     grid_type: string; keyword specifying the grid type
     **grid_kwargs: dictionary of keyword arguments; parameters for the specified grid type if required
     Return: Nothing
+    
+    Additional tasks are producing a river mouths output file and producing a flow to river mouth output 
+    file.
     """
 
     #Load files
