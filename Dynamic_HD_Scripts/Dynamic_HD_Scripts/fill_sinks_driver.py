@@ -24,9 +24,9 @@ def generate_orography_with_sinks_filled(input_orography_filename,output_orograp
     output_orography_filename: string, the full path to the target file to write the output orography to
     ls_mask_filename: string, the full path to the file containing the input landsea mask.None means ignore.
     truesinks_filename: string, the full path to the file containing the true sinks to use. None means ignore.
-    flip_ud: Flip the orography upside down before processing
-    flip_lsmask_ud: Flip the landsea mask upside down before processing
-    flip_truesinks_ud: Flip the true sinks upside down before processing
+    flip_ud: boolean; Flip the orography upside down before processing
+    flip_lsmask_ud: boolean; Flip the landsea mask upside down before processing
+    flip_truesinks_ud: boolean; Flip the true sinks upside down before processing
     grid_type: string; keyword for the grid type being used
     add_slight_slope_when_filling_sinks: boolean; a small increment to the height of each successive cell when 
         filling a sink to give sink a slight slope
