@@ -642,7 +642,8 @@ def makeGrid(grid_type,**kwargs):
     shortcuts = {'HD':{'type':LatLongGrid,'params':{'nlat':360,'nlong':720}},
                  'LatLong5min':{'type':LatLongGrid,'params':{'nlat':2160,'nlong':4320}},
                  'LatLong10min':{'type':LatLongGrid,'params':{'nlat':1080,'nlong':2160}},
-                 'LatLong1min':{'type':LatLongGrid,'params':{'nlat':10800,'nlong':21600}}}
+                 'LatLong1min':{'type':LatLongGrid,'params':{'nlat':10800,'nlong':21600}},
+                 'T63':{'type':LatLongGrid,'params':{'nlat':96,'nlong':192}}}
     grid_types = {'LatLong':LatLongGrid}
     if grid_type in shortcuts.keys():
         underlying_grid_type = shortcuts[grid_type]['type']
