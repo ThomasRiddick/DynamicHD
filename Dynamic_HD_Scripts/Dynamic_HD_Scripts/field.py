@@ -541,7 +541,7 @@ class RiverDischarge(Field):
         river discharge at outflow points
         """
         
-        return np.sum(self.data)
+        return np.sum(self.data,dtype=np.float128)
         
 #add any new Field subclasses to the list of field_types along with an appropriate key
 def makeField(raw_field,field_type,grid_type,**grid_kwargs):
