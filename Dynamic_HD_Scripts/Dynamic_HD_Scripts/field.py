@@ -530,7 +530,7 @@ class RiverDischarge(Field):
         Returns: nothing
         """
 
-        self.data[rdirs_field.get_data() != 0] = 0.0
+        self.data[np.logical_and(rdirs_field.get_data() != 0,rdirs_field.get_data() != 5)] = 0.0
         
     def sum_river_outflow(self):
         """Find the global sum of the river discharge at outflow points
