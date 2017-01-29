@@ -1883,16 +1883,32 @@ class Ten_Minute_Data_From_Virna_Driver(ICE5G_Data_Drivers):
     
     def ten_minute_data_from_virna_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs(self):
         """Generate and upscale sinkless river directions for the present day"""
+        file_label = self._generate_file_label()
+        original_orography_filename = path.join(self.orography_path,"10min-topo-present-from-virna.nc")
+        original_ls_mask_filename = path.join(self.ls_masks_path,"10min-mask-present-from-virna.nc")
+        self._ten_minute_data_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_helper(file_label,
+                                                                                                  original_orography_filename,
+                                                                                                  original_ls_mask_filename)
+        
+    def _ten_minute_data_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_helper(self,file_label,
+                                                                                             original_orography_filename,
+                                                                                             original_ls_mask_filename): 
+        """Helper for generating and upscaling sinkless river direction for a given 10 minute orography and landsea mask
+        
+        Arguments:
+        file_label: string; file label to use
+        original_orography_filename: string; full path to 10 minute orography to start from
+        original_ls_mask_filename: string; full path to 10 minute landsea mask to start from
+        Returns: nothing
+        """
+
         orog_corrections_filename = path.join(self.orography_corrections_fields_path,
                                               "orog_corrs_field_ICE5G_data_ALG4_sink"
                                               "less_downscaled_ls_mask_0k_20160930_001057.nc")
-        file_label = self._generate_file_label()
-        original_orography_filename = path.join(self.orography_path,"10min-topo-present-from-virna.nc")
         orography_filename = self.generated_orography_filepath + file_label + '.nc'
         HD_orography_filename = self.upscaled_orography_filepath + file_label + '_HD' + '.nc'
         HD_filled_orography_filename = self.upscaled_orography_filepath + file_label + '_HD_filled' + '.nc'
         rdirs_filename = self.generated_rdir_filepath + file_label + '.nc'
-        original_ls_mask_filename = path.join(self.ls_masks_path,"10min-mask-present-from-virna.nc")
         HD_ls_mask_filename = self.generated_ls_mask_filepath + file_label + '_HD' + '.nc'
         unsorted_catchments_filename = self.generated_catchments_path + 'unsorted_' +\
             file_label + '.nc'
@@ -2095,170 +2111,12 @@ class Ten_Minute_Data_From_Virna_Driver(ICE5G_Data_Drivers):
         
     def ten_minute_data_from_virna_lgm_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs(self):
         """Generate and upscale sinkless river directions for the LGM"""
-        orog_corrections_filename = path.join(self.orography_corrections_fields_path,
-                                              "orog_corrs_field_ICE5G_data_ALG4_sink"
-                                              "less_downscaled_ls_mask_0k_20160930_001057.nc")
         file_label = self._generate_file_label()
         original_orography_filename = path.join(self.orography_path,"10min-topo-lgm-from-virna.nc")
-        orography_filename = self.generated_orography_filepath + file_label + '.nc'
-        HD_orography_filename = self.upscaled_orography_filepath + file_label + '_HD' + '.nc'
-        rdirs_filename = self.generated_rdir_filepath + file_label + '.nc'
         original_ls_mask_filename = path.join(self.ls_masks_path,"10min-mask-lgm-from-virna.nc")
-        HD_ls_mask_filename = self.generated_ls_mask_filepath + file_label + '_HD' + '.nc'
-        unsorted_catchments_filename = self.generated_catchments_path + 'unsorted_' +\
-            file_label + '.nc'
-        utilities.change_dtype(input_filename=original_ls_mask_filename, 
-                               output_filename=original_ls_mask_filename,
-                               new_dtype=np.int32,grid_type='LatLong10min')
-        utilities.apply_orog_correction_field(original_orography_filename=original_orography_filename,
-                                              orography_corrections_filename=orog_corrections_filename,
-                                              corrected_orography_filename=orography_filename,
-                                              grid_type="LatLong10min")
-        fill_sinks_driver.generate_sinkless_flow_directions(filename=orography_filename,
-                                                            output_filename=rdirs_filename,
-                                                            ls_mask_filename=\
-                                                            original_ls_mask_filename,
-                                                            truesinks_filename=None,
-                                                            catchment_nums_filename=\
-                                                            unsorted_catchments_filename,
-                                                            grid_type='LatLong10min')
-        self._run_postprocessing(rdirs_filename=rdirs_filename, 
-                                 output_file_label=file_label,
-                                 ls_mask_filename=original_ls_mask_filename,
-                                 compute_catchments=False,
-                                 grid_type='LatLong10min')
-#         utilities.upscale_field_driver(input_filename=self.generated_flowmaps_filepath 
-#                                        + original_data_file_label + '.nc',  
-#                                        output_filename=self.upscaled_flowmaps_filepath 
-#                                        + upscaled_file_label + '.nc', 
-#                                        input_grid_type='LatLong10min', 
-#                                        output_grid_type='HD', 
-#                                        method='Max',
-#                                        scalenumbers=True)
-#         utilities.upscale_field_driver(input_filename=self.generated_rmouth_cumulative_flow_path
-#                                        + original_data_file_label + '.nc', 
-#                                        output_filename=self.upscaled_rmouth_cumulative_flow_path 
-#                                        + upscaled_file_label + '.nc', 
-#                                        input_grid_type='LatLong10min', 
-#                                        output_grid_type='HD', 
-#                                        method='Sum',
-#                                        scalenumbers=True)
-#         utilities.upscale_field_driver(input_filename=self.generated_catchments_path 
-#                                        + "unsorted_"
-#                                        + original_data_file_label + '.nc',
-#                                        output_filename=self.upscaled_catchments_path
-#                                        + "unsorted_"
-#                                        + upscaled_file_label + '.nc',
-#                                        input_grid_type='LatLong10min',
-#                                        output_grid_type='HD',
-#                                        method='Mode',
-#                                        scalenumbers=False)
-        fine_cumulative_flow = self.generated_flowmaps_filepath + file_label + '.nc'
-        output_course_rdirs_filename = self.upscaled_generated_rdir_filepath + file_label + '.nc' 
-        cotat_plus_parameters_filename = path.join(self.cotat_plus_parameters_path,'cotat_plus_standard_params.nl') 
-        self._run_cotat_plus_upscaling(input_fine_rdirs_filename=rdirs_filename, 
-                                       input_fine_cumulative_flow_filename=fine_cumulative_flow, 
-                                       cotat_plus_parameters_filename=cotat_plus_parameters_filename, 
-                                       output_course_rdirs_filename=output_course_rdirs_filename,
-                                       output_file_label=file_label, 
-                                       fine_grid_type='LatLong10min',
-                                       course_grid_type='HD')
-        upscaled_file_label = file_label + '_upscaled'
-        self._run_postprocessing(rdirs_filename=output_course_rdirs_filename,
-                                 output_file_label=upscaled_file_label, 
-                                 ls_mask_filename=None, 
-                                 skip_marking_mouths=True, 
-                                 compute_catchments=True, grid_type='HD')
-        original_course_cumulative_flow_filename = self.generated_flowmaps_filepath + upscaled_file_label + '.nc'
-        original_course_catchments_filename = self.generated_catchments_path + upscaled_file_label + '.nc'
-        loops_nums_list_filename = self.generated_catchments_path + upscaled_file_label + '_loops.log'
-        updated_file_label = upscaled_file_label + "_updated"
-        updated_course_rdirs_filename = self.upscaled_generated_rdir_filepath + updated_file_label + '.nc'
-        loop_breaker_driver.loop_breaker_driver(input_course_rdirs_filepath=output_course_rdirs_filename, 
-                                                input_course_cumulative_flow_filepath=\
-                                                original_course_cumulative_flow_filename, 
-                                                input_course_catchments_filepath=\
-                                                original_course_catchments_filename, 
-                                                input_fine_rdirs_filepath=\
-                                                rdirs_filename, 
-                                                input_fine_cumulative_flow_filepath=\
-                                                fine_cumulative_flow, 
-                                                output_updated_course_rdirs_filepath=\
-                                                updated_course_rdirs_filename, 
-                                                loop_nums_list_filepath=\
-                                                loops_nums_list_filename, 
-                                                course_grid_type='HD', 
-                                                fine_grid_type='LatLong10min')
-        utilities.upscale_field_driver(input_filename=orography_filename, 
-                                       output_filename=HD_orography_filename,
-                                       input_grid_type='LatLong10min', 
-                                       output_grid_type='HD', 
-                                       method='Sum', timeslice=None,
-                                       scalenumbers=True)
-        utilities.extract_ls_mask_from_rdirs(rdirs_filename=updated_course_rdirs_filename,
-                                             lsmask_filename=HD_ls_mask_filename,
-                                             grid_type='HD')
-        transformed_course_rdirs_filename = path.splitext(updated_course_rdirs_filename)[0] + '_transf' +\
-                                            path.splitext(updated_course_rdirs_filename)[1]
-        transformed_HD_orography_filename = path.splitext(HD_orography_filename)[0] + '_transf' +\
-                                          path.splitext(HD_orography_filename)[1]
-        transformed_HD_ls_mask_filename = path.splitext(HD_ls_mask_filename)[0] + '_transf' +\
-                                            path.splitext(HD_ls_mask_filename)[1]
-        self._apply_transforms_to_field(input_filename=updated_course_rdirs_filename,
-                                        output_filename=transformed_course_rdirs_filename,
-                                        flip_ud=False, rotate180lr=True, invert_data=False,
-                                        timeslice=None, griddescfile=self.half_degree_grid_filepath,
-                                        grid_type='HD')
-        self._apply_transforms_to_field(input_filename=HD_orography_filename,
-                                        output_filename=transformed_HD_orography_filename, 
-                                        flip_ud=True, rotate180lr=True, invert_data=False,
-                                        timeslice=None, griddescfile=self.half_degree_grid_filepath,
-                                        grid_type='HD')
-        self._apply_transforms_to_field(input_filename=HD_ls_mask_filename,
-                                        output_filename=transformed_HD_ls_mask_filename,
-                                        flip_ud=False, rotate180lr=True, invert_data=True,
-                                        timeslice=None, griddescfile=self.half_degree_grid_filepath,
-                                        grid_type='HD')
-        self._generate_flow_parameters(rdir_file=transformed_course_rdirs_filename,
-                                       topography_file=transformed_HD_orography_filename,
-                                       inner_slope_file=\
-                                       path.join(self.orography_path,'bin_innerslope.dat'),
-                                       lsmask_file=transformed_HD_ls_mask_filename,
-                                       null_file=\
-                                       path.join(self.null_fields_filepath,'null.dat'), 
-                                       area_spacing_file=\
-                                       path.join(self.grid_areas_and_spacings_filepath,
-                                                 'fl_dp_dl.dat'),
-                                       orography_variance_file=\
-                                       path.join(self.orography_path,'bin_toposig.dat'),
-                                       output_dir=path.join(self.flow_params_dirs_path,
-                                                            'hd_flow_params' + file_label))
-        self._generate_hd_file(rdir_file=path.splitext(transformed_course_rdirs_filename)[0] + ".dat",
-                               lsmask_file=path.splitext(transformed_HD_ls_mask_filename)[0] + ".dat",
-                               null_file=\
-                               path.join(self.null_fields_filepath,'null.dat'), 
-                               area_spacing_file=\
-                               path.join(self.grid_areas_and_spacings_filepath,
-                                         'fl_dp_dl.dat'),
-                               hd_grid_specs_file=self.half_degree_grid_filepath,
-                               output_file=self.generated_hd_file_path + file_label + '.nc',
-                               paras_dir=path.join(self.flow_params_dirs_path,
-                                                   'hd_flow_params' + file_label))
-        utilities.prepare_hdrestart_file_driver(base_hdrestart_filename=self.base_hd_restart_file,
-                                                output_hdrestart_filename=self.generated_hd_restart_file_path +
-                                                    file_label + '.nc',
-                                                hdparas_filename=self.generated_hd_file_path + file_label + '.nc',
-                                                ref_hdparas_filename=self.ref_hd_paras_file,
-                                                timeslice=None, 
-                                                res_num_data_rotate180lr=False, 
-                                                res_num_data_flipup=False, 
-                                                res_num_ref_rotate180lr=False,
-                                                res_num_ref_flipud=False, grid_type='HD')
-        self._run_postprocessing(rdirs_filename=updated_course_rdirs_filename,
-                                 output_file_label=updated_file_label, 
-                                 ls_mask_filename=None, 
-                                 skip_marking_mouths=True, 
-                                 compute_catchments=True, grid_type='HD')
+        self._ten_minute_data_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_helper(file_label,
+                                                                                                  original_orography_filename,
+                                                                                                  original_ls_mask_filename)
         
 def main():
     """Select the revelant runs to make 
@@ -2301,8 +2159,8 @@ def main():
     #glac_data_drivers.GLAC_data_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_27timeslices()
     #glac_data_drivers.GLAC_data_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_27timeslices_merge_timeslices_only()
     ten_minute_data_from_virna_driver = Ten_Minute_Data_From_Virna_Driver()
-    ten_minute_data_from_virna_driver.ten_minute_data_from_virna_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs()
-    #ten_minute_data_from_virna_driver.ten_minute_data_from_virna_lgm_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs()
+    #ten_minute_data_from_virna_driver.ten_minute_data_from_virna_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs()
+    ten_minute_data_from_virna_driver.ten_minute_data_from_virna_lgm_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs()
 
 if __name__ == '__main__':
     main()
