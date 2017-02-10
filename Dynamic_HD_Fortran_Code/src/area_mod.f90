@@ -12,12 +12,15 @@ type, abstract :: area
     private
         class(field_section), pointer :: river_directions => null()
         class(field_section), pointer :: total_cumulative_flow => null()
+        class(field_section), pointer :: yamazaki_outlet_pixels => null()
         !The following variables are only used by latlon based area's
         !(Have to insert here due to lack of multiple inheritance)
         integer :: section_min_lat
         integer :: section_min_lon
         integer :: section_max_lat
         integer :: section_max_lon
+        integer :: yamazaki_normal_outlet = 1
+        integer :: yamazaki_source_cell_outlet = 2
     contains
         private
         ! In lieu of a final routine as this feature is not currently (August 2016)
@@ -29,6 +32,8 @@ type, abstract :: area
         procedure(check_if_coords_are_in_area), deferred, nopass :: check_if_coords_are_in_area
         procedure(neighbor_flows_to_pixel), deferred, nopass :: neighbor_flows_to_pixel
         procedure(find_next_pixel_downstream), deferred, nopass :: find_next_pixel_downstream
+        procedure(calculate_length_through_pixel), deferred, nopass :: calculate_length_through_pixel
+        procedure(is_diagonal), deferred, nopass :: is_diagonal
         procedure(print_area), deferred, nopass :: print_area
 end type area
 
@@ -88,6 +93,29 @@ abstract interface
         class(area), intent(in) :: this
     end subroutine print_area
 
+    !Must explicitly pass the object this to this function as pointers to it have the nopass
+    !attribute
+    function calculate_length_through_pixel(this,coords_in) result(length_through_pixel)
+        import area
+        import coords
+        import double_precision
+        implicit none
+        class(area), intent(in) :: this
+        class(coords), intent(in) :: coords_in
+        real(kind=double_precision) :: length_through_pixel
+    end function calculate_length_through_pixel
+
+    !Must explicitly pass the object this to this function as pointers to it have the nopass
+    !attribute
+    function is_diagonal(this,coords_in) result(diagonal)
+        import area
+        import coords
+        implicit none
+        class(area), intent(in) :: this
+        class(coords), intent(in) :: coords_in
+        logical :: diagonal
+    end function is_diagonal
+
     subroutine destructor(this)
         import area
         class(area), intent(inout) :: this
@@ -141,6 +169,8 @@ type, extends(area), abstract :: neighborhood
         procedure :: is_center_cell
         procedure(calculate_direction_indicator), deferred :: calculate_direction_indicator
         procedure(in_which_cell), deferred :: in_which_cell
+        procedure(yamazaki_get_cell_coords), deferred :: yamazaki_get_cell_coords
+        procedure(yamazaki_wrap_coordinates), deferred :: yamazaki_wrap_coordinates
 end type neighborhood
 
 abstract interface
@@ -162,6 +192,24 @@ abstract interface
         integer, intent(in) :: downstream_cell
         class(direction_indicator), pointer :: flow_direction
     end function calculate_direction_indicator
+
+    pure function yamazaki_get_cell_coords(this,pixel_coords) result(cell_coords)
+        import neighborhood
+        import coords
+        implicit none
+        class(neighborhood), intent(in) :: this
+        class(coords), intent(in) :: pixel_coords
+        class(coords), pointer :: cell_coords
+    end function yamazaki_get_cell_coords
+
+    subroutine yamazaki_wrap_coordinates(this,pixel_coords)
+        import neighborhood
+        import coords
+        implicit none
+        class(neighborhood), intent(in) :: this
+        class(coords), intent(inout) :: pixel_coords
+    end subroutine yamazaki_wrap_coordinates
+
 end interface
 
 type, extends(area), abstract :: cell
@@ -176,12 +224,15 @@ type, extends(area), abstract :: cell
     contains
     private
         procedure, public :: process_cell
+        procedure, public :: yamazaki_mark_cell_outlet_pixel
         procedure, public :: set_contains_river_mouths
         procedure, public :: print_cell_and_neighborhood
         ! In lieu of a final routine as this feature is not currently (August 2016)
         ! supported by all fortran compilers
         ! final :: destructor => cell_destructor
         procedure, public :: destructor => cell_destructor
+        procedure :: find_outlet_pixel
+        procedure :: find_cell_flow_direction
         procedure :: find_pixel_with_LUDA
         procedure :: find_pixel_with_LCDA
         procedure :: measure_upstream_path
@@ -189,7 +240,6 @@ type, extends(area), abstract :: cell
         procedure, public :: test_generate_cell_cumulative_flow
         procedure :: generate_cell_cumulative_flow
         procedure(find_edge_pixels), deferred :: find_edge_pixels
-        procedure(calculate_length_through_pixel), deferred :: calculate_length_through_pixel
         procedure(initialize_cell_cumulative_flow_subfield), deferred :: &
             initialize_cell_cumulative_flow_subfield
         procedure(initialize_rejected_pixels_subfield), deferred :: &
@@ -213,16 +263,6 @@ abstract interface
         class(cell), intent(in) :: this
         class(coords), pointer :: edge_pixel_coords_list(:)
     end function find_edge_pixels
-
-    function calculate_length_through_pixel(this,coords_in) result(length_through_pixel)
-        import cell
-        import coords
-        import double_precision
-        implicit none
-        class(cell), intent(in) :: this
-        class(coords), intent(in) :: coords_in
-        real(kind=double_precision) :: length_through_pixel
-    end function calculate_length_through_pixel
 
     subroutine initialize_cell_cumulative_flow_subfield(this)
         import cell
@@ -301,6 +341,7 @@ type, extends(field), abstract :: latlon_field
         procedure, nopass :: check_if_coords_are_in_area => latlon_check_if_coords_are_in_area
         procedure, nopass :: print_area => latlon_print_area
         procedure, nopass :: find_upstream_neighbors => latlon_find_upstream_neighbors
+        procedure, nopass :: calculate_length_through_pixel => latlon_calculate_length_through_pixel
         procedure :: initialize_cells_to_reprocess_field_section => &
             latlon_initialize_cells_to_reprocess_field_section
 end type latlon_field
@@ -314,6 +355,9 @@ type, extends(neighborhood), abstract :: latlon_neighborhood
     contains
         procedure :: init_latlon_neighborhood
         procedure :: in_which_cell => latlon_in_which_cell
+        procedure :: yamazaki_get_cell_coords => latlon_yamazaki_get_cell_coords
+        procedure :: yamazaki_wrap_coordinates => latlon_yamazaki_wrap_coordinates
+        procedure, nopass :: calculate_length_through_pixel => latlon_calculate_length_through_pixel
         procedure, nopass :: find_upstream_neighbors => latlon_find_upstream_neighbors
         procedure, nopass :: check_if_coords_are_in_area => latlon_check_if_coords_are_in_area
         procedure, nopass :: print_area => latlon_print_area
@@ -326,7 +370,7 @@ type, extends(cell), abstract :: latlon_cell
     contains
         procedure :: init_latlon_cell
         procedure :: find_edge_pixels => latlon_find_edge_pixels
-        procedure :: calculate_length_through_pixel => latlon_calculate_length_through_pixel
+        procedure, nopass :: calculate_length_through_pixel => latlon_calculate_length_through_pixel
         procedure, nopass :: check_if_coords_are_in_area => latlon_check_if_coords_are_in_area
         procedure, nopass :: find_upstream_neighbors => latlon_find_upstream_neighbors
         procedure :: initialize_cell_cumulative_flow_subfield => &
@@ -337,19 +381,7 @@ type, extends(cell), abstract :: latlon_cell
         procedure :: get_rmouth_outflow_combined_cumulative_flow => &
             latlon_get_rmouth_outflow_combined_cumulative_flow
         procedure, nopass :: print_area => latlon_print_area
-        procedure(is_diagonal), deferred :: is_diagonal
 end type latlon_cell
-
-abstract interface
-    function is_diagonal(this,coords_in) result(diagonal)
-        import latlon_cell
-        import coords
-        implicit none
-        class(latlon_cell), intent(in) :: this
-        class(coords), intent(in) :: coords_in
-        logical :: diagonal
-    end function is_diagonal
-end interface
 
 type, public, extends(latlon_field) :: latlon_dir_based_rdirs_field
     private
@@ -357,6 +389,7 @@ type, public, extends(latlon_field) :: latlon_dir_based_rdirs_field
         private
         procedure, nopass :: find_next_pixel_downstream => latlon_dir_based_rdirs_find_next_pixel_downstream
         procedure, nopass :: neighbor_flows_to_pixel => latlon_dir_based_rdirs_neighbor_flows_to_pixel
+        procedure, nopass :: is_diagonal => dir_based_rdirs_is_diagonal
 end type latlon_dir_based_rdirs_field
 
 interface  latlon_dir_based_rdirs_field
@@ -367,6 +400,7 @@ type, extends(latlon_neighborhood) :: latlon_dir_based_rdirs_neighborhood
     private
     contains
     private
+        procedure, nopass :: is_diagonal => dir_based_rdirs_is_diagonal
         procedure, nopass :: find_next_pixel_downstream => latlon_dir_based_rdirs_find_next_pixel_downstream
         procedure, nopass :: neighbor_flows_to_pixel => latlon_dir_based_rdirs_neighbor_flows_to_pixel
         procedure :: calculate_direction_indicator => dir_based_rdirs_calculate_direction_indicator
@@ -381,7 +415,7 @@ type, public, extends(latlon_cell) :: latlon_dir_based_rdirs_cell
     integer :: flow_direction_for_outflow = 0
     integer :: flow_direction_for_ocean_point = -1
 contains
-    procedure :: is_diagonal => dir_based_rdirs_is_diagonal
+    procedure, nopass :: is_diagonal => dir_based_rdirs_is_diagonal
     procedure, nopass :: neighbor_flows_to_pixel => &
         latlon_dir_based_rdirs_neighbor_flows_to_pixel
     procedure :: init_dir_based_rdirs_latlon_cell
@@ -461,75 +495,127 @@ contains
             deallocate(initial_cell_coords)
     end function check_cell_for_localized_loops
 
-    function process_cell(this) result(flow_direction)
+    function find_outlet_pixel(this,no_remaining_outlets,use_LCDA_criterion,outlet_is_LCDA) &
+        result(LUDA_pixel_coords)
         class(cell) :: this
-        class(*), allocatable :: downstream_cell
+        logical, intent(inout) :: no_remaining_outlets
+        logical, intent(in)    :: use_LCDA_criterion
+        logical, optional, intent(inout) :: outlet_is_LCDA
+        class(coords), pointer :: LUDA_pixel_coords
         class(coords), pointer :: LCDA_pixel_coords => null()
-        class(coords), pointer :: LUDA_pixel_coords => null()
-        class(direction_indicator), pointer :: flow_direction
-        class(*), pointer :: outlet_pixel_cumulative_flow_value
-        logical :: no_remaining_outlets
-        integer :: outlet_pixel_cumulative_flow
-        integer :: cumulative_sink_outflow
-        integer :: cumulative_rmouth_outflow
-            if (.not. this%ocean_cell) then
+            nullify(LUDA_pixel_coords)
+            if(use_LCDA_criterion) then
                 call this%generate_cell_cumulative_flow()
                 LCDA_pixel_coords=>this%find_pixel_with_LCDA()
-                do
-                    if (associated(LUDA_pixel_coords)) deallocate(LUDA_pixel_coords)
-                    LUDA_pixel_coords=>this%find_pixel_with_LUDA(no_remaining_outlets)
-                    if (no_remaining_outlets) then
-                        exit
+            else
+                nullify(LCDA_pixel_coords)
+            end if
+            do
+                if (associated(LUDA_pixel_coords)) deallocate(LUDA_pixel_coords)
+                LUDA_pixel_coords=>this%find_pixel_with_LUDA(no_remaining_outlets)
+                if (no_remaining_outlets) then
+                    if (present(outlet_is_LCDA)) outlet_is_LCDA = .False.
+                    exit
+                else
+                    if (present(outlet_is_LCDA)) then
+                        if (this%check_MUFP(LUDA_pixel_coords,LCDA_pixel_coords,outlet_is_LCDA)) exit
                     else
                         if (this%check_MUFP(LUDA_pixel_coords,LCDA_pixel_coords)) exit
                     end if
-                end do
-                deallocate(LCDA_pixel_coords)
-                if (no_remaining_outlets) then
-                    outlet_pixel_cumulative_flow = -1
-                else
-                    outlet_pixel_cumulative_flow_value => &
-                        this%total_cumulative_flow%get_value(LUDA_pixel_coords)
-                    select type(outlet_pixel_cumulative_flow_value)
-                    type is (integer)
-                        outlet_pixel_cumulative_flow = outlet_pixel_cumulative_flow_value
-                    end select
-                    deallocate(outlet_pixel_cumulative_flow_value)
                 end if
-                if (run_check_for_sinks) then
-                    cumulative_sink_outflow = this%get_sink_combined_cumulative_flow()
-                else
-                    cumulative_sink_outflow = 0
-                end if
-                if (this%contains_river_mouths) then
-                    cumulative_rmouth_outflow = this%get_rmouth_outflow_combined_cumulative_flow()
-                else
-                    cumulative_rmouth_outflow = -1
-                end if
-                if ( cumulative_sink_outflow > cumulative_rmouth_outflow .and. &
-                     cumulative_sink_outflow > outlet_pixel_cumulative_flow ) then
-                    flow_direction => this%get_flow_direction_for_sink()
-                    deallocate(LUDA_pixel_coords)
-                    return
-                else if (  cumulative_rmouth_outflow > outlet_pixel_cumulative_flow) then
-                    flow_direction => this%get_flow_direction_for_outflow()
-                    deallocate(LUDA_pixel_coords)
-                    return
-                end if
-                allocate(downstream_cell,source=this%cell_neighborhood%find_downstream_cell(LUDA_pixel_coords))
-                select type (downstream_cell)
-                type is (integer)
-                    flow_direction => this%cell_neighborhood%calculate_direction_indicator(downstream_cell)
-                end select
-                deallocate(LUDA_pixel_coords)
+            end do
+            deallocate(LCDA_pixel_coords)
+    end function find_outlet_pixel
+
+    function find_cell_flow_direction(this,outlet_pixel_coords,no_remaining_outlets) &
+        result(flow_direction)
+        class(cell) :: this
+        class(coords), pointer, intent(inout) :: outlet_pixel_coords
+        logical, intent(in) :: no_remaining_outlets
+        class(direction_indicator), pointer :: flow_direction
+        class(*), allocatable :: downstream_cell
+        class(*), pointer :: outlet_pixel_cumulative_flow_value
+        integer :: outlet_pixel_cumulative_flow
+        integer :: cumulative_sink_outflow
+        integer :: cumulative_rmouth_outflow
+        if (no_remaining_outlets) then
+            outlet_pixel_cumulative_flow = -1
+        else
+            outlet_pixel_cumulative_flow_value => &
+                this%total_cumulative_flow%get_value(outlet_pixel_coords)
+            select type(outlet_pixel_cumulative_flow_value)
+            type is (integer)
+                outlet_pixel_cumulative_flow = outlet_pixel_cumulative_flow_value
+            end select
+            deallocate(outlet_pixel_cumulative_flow_value)
+        end if
+        if (run_check_for_sinks) then
+            cumulative_sink_outflow = this%get_sink_combined_cumulative_flow()
+        else
+            cumulative_sink_outflow = 0
+        end if
+        if (this%contains_river_mouths) then
+            cumulative_rmouth_outflow = this%get_rmouth_outflow_combined_cumulative_flow()
+        else
+            cumulative_rmouth_outflow = -1
+        end if
+        if ( cumulative_sink_outflow > cumulative_rmouth_outflow .and. &
+             cumulative_sink_outflow > outlet_pixel_cumulative_flow ) then
+            flow_direction => this%get_flow_direction_for_sink()
+            return
+        else if (  cumulative_rmouth_outflow > outlet_pixel_cumulative_flow) then
+            flow_direction => this%get_flow_direction_for_outflow()
+            return
+        end if
+        allocate(downstream_cell,source=this%cell_neighborhood%find_downstream_cell(outlet_pixel_coords))
+        select type (downstream_cell)
+        type is (integer)
+            flow_direction => this%cell_neighborhood%calculate_direction_indicator(downstream_cell)
+        end select
+    end function
+
+    function process_cell(this) result(flow_direction)
+        class(cell) :: this
+        class(direction_indicator), pointer :: flow_direction
+        class(coords), pointer :: outlet_pixel_coords => null()
+        logical :: no_remaining_outlets
+        logical :: use_LCDA_criterion = .True.
+            if (.not. this%ocean_cell) then
+                outlet_pixel_coords => this%find_outlet_pixel(no_remaining_outlets,use_LCDA_criterion)
+                flow_direction => this%find_cell_flow_direction(outlet_pixel_coords,no_remaining_outlets)
+                deallocate(outlet_pixel_coords)
             else
                 flow_direction => this%get_flow_direction_for_ocean_point()
             end if
     end function process_cell
 
+    function yamazaki_mark_cell_outlet_pixel(this,use_LCDA_criterion) &
+        result(yamazaki_outlet_pixels_local)
+        class(cell) :: this
+        logical, intent(in) :: use_LCDA_criterion
+        logical, optional, intent(inout) :: outlet_is_LCDA
+        class(field_section), pointer :: yamazaki_outlet_pixels_local
+        class(coords), pointer :: outlet_pixel_coords => null()
+        logical :: no_remaining_outlets
+        integer :: outlet_type
+            if (.not. this%ocean_cell) then
+                outlet_pixel_coords => this%find_outlet_pixel(no_remaining_outlets,use_LCDA_criterion,&
+                                                              outlet_is_LCDA)
+                if (no_remaining_outlets .or. outlet_is_LCDA) then
+                    outlet_type = this%yamazaki_source_cell_outlet
+                else
+                    outlet_type = this%yamazaki_normal_outlet
+                end if
+                call this%yamazaki_outlet_pixels%set_value(outlet_pixel_coords,outlet_type)
+                deallocate(outlet_pixel_coords)
+            end if
+        yamazaki_outlet_pixels_local => this%yamazaki_outlet_pixels
+    end function yamazaki_mark_cell_outlet_pixel
+
     subroutine print_cell_and_neighborhood(this)
     class(cell), intent(in) :: this
         write(*,*) 'For cell'
+
         call this%print_area(this)
         write (*,*) 'contains_river_mouths= ', this%contains_river_mouths
         write (*,*) 'ocean_cell= ', this%ocean_cell
@@ -648,7 +734,7 @@ contains
                 do
                     upstream_path_length = upstream_path_length + length_through_pixel
                     call this%find_next_pixel_upstream(working_coords,coords_not_in_cell)
-                    length_through_pixel = this%calculate_length_through_pixel(working_coords)
+                    length_through_pixel = this%calculate_length_through_pixel(this,working_coords)
                     if (coords_not_in_cell) exit
                 end do
                 if (.NOT. this%cell_neighborhood%path_reenters_region(working_coords)) exit
@@ -656,19 +742,25 @@ contains
             deallocate(working_coords)
     end function measure_upstream_path
 
-    function check_MUFP(this,LUDA_pixel_coords,LCDA_pixel_coords) result(accept_pixel)
+    function check_MUFP(this,LUDA_pixel_coords,LCDA_pixel_coords,LUDA_is_LCDA) result(accept_pixel)
         class(cell) :: this
         class(coords), intent(in) :: LUDA_pixel_coords
-        class(coords), intent(in) :: LCDA_pixel_coords
+        class(coords), intent(in), pointer :: LCDA_pixel_coords
+        logical, optional, intent(inout) :: LUDA_is_LCDA
         logical :: accept_pixel
+            if (present(LUDA_is_LCDA)) LUDA_is_LCDA = .FALSE.
             if (this%measure_upstream_path(LUDA_pixel_coords) > MUFP) then
                 accept_pixel = .TRUE.
-            else if (LUDA_pixel_coords%are_equal_to(LCDA_pixel_coords)) then
-                accept_pixel = .TRUE.
-            else
-                call this%rejected_pixels%set_value(LUDA_pixel_coords,.TRUE.)
-                accept_pixel = .FALSE.
+                return
+            else if (associated(LCDA_pixel_coords)) then
+                if(LUDA_pixel_coords%are_equal_to(LCDA_pixel_coords)) then
+                    accept_pixel = .TRUE.
+                    if (present(LUDA_is_LCDA)) LUDA_is_LCDA = .TRUE.
+                    return
+                end if
             end if
+            accept_pixel = .FALSE.
+            call this%rejected_pixels%set_value(LUDA_pixel_coords,.TRUE.)
     end function check_MUFP
 
     function test_generate_cell_cumulative_flow(this) result(cmltv_flow_array)
@@ -857,11 +949,13 @@ contains
         end select
     end function latlon_find_edge_pixels
 
+    ! Note must explicit pass this function the object this as it has the nopass attribute
+    ! so that it can be shared by latlon_cell and latlon_neighborhood
     function latlon_calculate_length_through_pixel(this,coords_in) result(length_through_pixel)
-        class(latlon_cell), intent(in) :: this
+        class(area), intent(in) :: this
         class(coords), intent(in) :: coords_in
         real(kind=double_precision) length_through_pixel
-        if (this%is_diagonal(coords_in)) then
+        if (this%is_diagonal(this,coords_in)) then
             length_through_pixel = 1.414_double_precision
         else
             length_through_pixel = 1.0_double_precision
@@ -1136,8 +1230,10 @@ contains
                 dir_based_direction_indicator(this%flow_direction_for_ocean_point))
     end function latlon_dir_based_rdirs_get_flow_direction_for_ocean_point
 
+    ! Note must explicit pass this function the object this as it has the nopass attribute
+    ! so that it can be shared by latlon_cell and latlon_neighborhood
     function dir_based_rdirs_is_diagonal(this,coords_in) result(diagonal)
-        class(latlon_dir_based_rdirs_cell),intent(in) :: this
+        class(area),intent(in) :: this
         class(coords), intent(in) :: coords_in
         class(*), pointer :: rdir
         logical :: diagonal
@@ -1222,6 +1318,44 @@ contains
             deallocate(initial_cumulative_flow)
             deallocate(working_pixel)
     end function find_downstream_cell
+
+    function yamazaki_find_downstream_cell(this) result(cell_coords)
+        class(neighborhood), intent(in) :: this
+        class(coords) :: cell_coords
+        class(coords) :: working_pixel
+        class(*), pointer :: yamazaki_outlet_pixel_type
+        logical :: coords_not_in_neighborhood
+        logical :: outflow_pixel_reached
+        integer :: downstream_path_length
+        integer :: cells_passed_through_count
+            working_pixel => yamazaki_find_initial_outlet_pixel()
+            downstream_path_length = 0.0
+            count_of_cells_passed_through = 0
+            do
+                call this%find_next_pixel_downstream(this,working_pixel,coords_not_in_neighborhood,outflow_pixel_reached)
+                downstream_path_length = downstream_path_length + this%calculate_length_through_pixel(working_coords)
+                if (coords_not_in_neighborhood) call this%yamazaki_wrap_coordinates(working_pixel)
+                if ( .not. cell_coords%are_equal_to(this%yamazaki_get_cell_coords(working_pixel))) then
+                    deallocate(cell_coords)
+                    cell_coords => this%yamazaki_get_cell_coords(working_pixel)
+                    count_of_cells_passed_through = count_of_cells_passed_through + 1
+                end if
+                yamazaki_outlet_pixel_type => this%yamazaki_outlet_pixels%get_value(working_pixel)
+                select type (yamazaki_outlet_pixel_type)
+                type is (integer)
+                    if (yamazki_outlet_pixel_type == yamazaki_normal_outlet .and. downstream_path_length > MUFP) exit
+                end select
+                deallocate(yamazaki_outlet_pixel_type)
+                if (count_of_cells_passed_through > yamazaki_max_range) then
+                    working_pixel => yamazaki_find_initial_outlet_pixel()
+                    call this%find_next_pixel_downstream(this,working_pixel,coords_not_in_neighborhood,outflow_pixel_reached)
+                    if (coords_not_in_neighborhood) call yamazaki_wrap_coordinates(working_pixel)
+                    cell_coords => this%yamazaki_get_cell_coords(working_pixel)
+                    exit
+                end if
+            end do
+            deallocate(working_pixel)
+    end function yamazaki_find_downstream_cell
 
     function path_reenters_region(this,coords_inout)
         class(neighborhood), intent(in) :: this
@@ -1311,6 +1445,18 @@ contains
                 in_cell = internal_cell_lon + 9 - 3*internal_cell_lat
             end select
     end function latlon_in_which_cell
+
+    pure function latlon_yamazaki_get_cell_coords(this,pixel_coords) result(cell_coords)
+        class(latlon_neighborhood), intent(in) :: this
+        class(coords), intent(in) :: pixel_coords
+        class(coords) :: cell_coords
+            nullify(cell_coords)
+    end function latlon_yamazaki_get_cell_coords
+
+    subroutine latlon_yamazaki_wrap_coordinates(this,pixel_coords)
+        class(latlon_neighborhood), intent(in) :: this
+        class(coords), intent(inout) :: pixel_coords
+    end subroutine latlon_yamazaki_wrap_coordinates
 
     function latlon_dir_based_rdirs_field_constructor(field_section_coords,river_directions) &
         result(constructor)
