@@ -4,7 +4,7 @@ use doubly_linked_list_mod
 use subfield_mod
 use field_section_mod
 use precision_mod
-use cotat_parameters_mod, only: MUFP, area_threshold, run_check_for_sinks
+use cotat_parameters_mod, only: MUFP, area_threshold, run_check_for_sinks, yamazaki_max_range
 implicit none
 private
 
@@ -167,6 +167,7 @@ type, extends(area), abstract :: neighborhood
         procedure :: find_downstream_cell
         procedure :: path_reenters_region
         procedure :: is_center_cell
+        procedure :: yamazaki_find_downstream_cell
         procedure(calculate_direction_indicator), deferred :: calculate_direction_indicator
         procedure(in_which_cell), deferred :: in_which_cell
         procedure(yamazaki_get_cell_coords), deferred :: yamazaki_get_cell_coords
@@ -238,6 +239,7 @@ type, extends(area), abstract :: cell
         procedure :: measure_upstream_path
         procedure :: check_MUFP
         procedure, public :: test_generate_cell_cumulative_flow
+        procedure, public :: yamazaki_test_find_downstream_cell
         procedure :: generate_cell_cumulative_flow
         procedure(find_edge_pixels), deferred :: find_edge_pixels
         procedure(initialize_cell_cumulative_flow_subfield), deferred :: &
@@ -352,8 +354,11 @@ type, extends(neighborhood), abstract :: latlon_neighborhood
         integer :: center_cell_min_lon
         integer :: center_cell_max_lat
         integer :: center_cell_max_lon
+        integer :: yamazaki_cell_width_lat
+        integer :: yamazaki_cell_width_lon
     contains
         procedure :: init_latlon_neighborhood
+        procedure :: yamazaki_init_latlon_neighborhood
         procedure :: in_which_cell => latlon_in_which_cell
         procedure :: yamazaki_get_cell_coords => latlon_yamazaki_get_cell_coords
         procedure :: yamazaki_wrap_coordinates => latlon_yamazaki_wrap_coordinates
@@ -369,6 +374,7 @@ type, extends(cell), abstract :: latlon_cell
     integer :: section_width_lon
     contains
         procedure :: init_latlon_cell
+        procedure :: yamazaki_init_latlon_cell
         procedure :: find_edge_pixels => latlon_find_edge_pixels
         procedure, nopass :: calculate_length_through_pixel => latlon_calculate_length_through_pixel
         procedure, nopass :: check_if_coords_are_in_area => latlon_check_if_coords_are_in_area
@@ -407,7 +413,8 @@ type, extends(latlon_neighborhood) :: latlon_dir_based_rdirs_neighborhood
 end type latlon_dir_based_rdirs_neighborhood
 
 interface latlon_dir_based_rdirs_neighborhood
-    procedure latlon_dir_based_rdirs_neighborhood_constructor
+    procedure latlon_dir_based_rdirs_neighborhood_constructor, &
+              yamazaki_latlon_dir_based_rdirs_neighborhood_constructor
 end interface latlon_dir_based_rdirs_neighborhood
 
 type, public, extends(latlon_cell) :: latlon_dir_based_rdirs_cell
@@ -419,6 +426,7 @@ contains
     procedure, nopass :: neighbor_flows_to_pixel => &
         latlon_dir_based_rdirs_neighbor_flows_to_pixel
     procedure :: init_dir_based_rdirs_latlon_cell
+    procedure :: yamazaki_init_dir_based_rdirs_latlon_cell
     procedure :: get_flow_direction_for_sink => latlon_dir_based_rdirs_get_flow_direction_for_sink
     procedure :: get_flow_direction_for_outflow => latlon_dir_based_rdirs_get_flow_direction_for_outflow
     procedure :: get_flow_direction_for_ocean_point => latlon_dir_based_rdirs_get_flow_direction_for_ocean_point
@@ -427,7 +435,7 @@ contains
 end type latlon_dir_based_rdirs_cell
 
 interface latlon_dir_based_rdirs_cell
-    procedure latlon_dir_based_rdirs_cell_constructor
+    procedure latlon_dir_based_rdirs_cell_constructor,yamazaki_latlon_dir_based_rdirs_cell_constructor
 end interface latlon_dir_based_rdirs_cell
 
 contains
@@ -500,7 +508,7 @@ contains
         class(cell) :: this
         logical, intent(inout) :: no_remaining_outlets
         logical, intent(in)    :: use_LCDA_criterion
-        logical, optional, intent(inout) :: outlet_is_LCDA
+        logical, intent(inout), optional :: outlet_is_LCDA
         class(coords), pointer :: LUDA_pixel_coords
         class(coords), pointer :: LCDA_pixel_coords => null()
             nullify(LUDA_pixel_coords)
@@ -589,7 +597,7 @@ contains
             end if
     end function process_cell
 
-    function yamazaki_mark_cell_outlet_pixel(this,use_LCDA_criterion) &
+    function yamazaki_mark_cell_outlet_pixel(this,use_LCDA_criterion,outlet_is_LCDA) &
         result(yamazaki_outlet_pixels_local)
         class(cell) :: this
         logical, intent(in) :: use_LCDA_criterion
@@ -730,7 +738,7 @@ contains
             upstream_path_length = 0.0_double_precision
             allocate(working_coords, source=outlet_pixel_coords)
             do
-                length_through_pixel = this%calculate_length_through_pixel(working_coords)
+                length_through_pixel = this%calculate_length_through_pixel(this,working_coords)
                 do
                     upstream_path_length = upstream_path_length + length_through_pixel
                     call this%find_next_pixel_upstream(working_coords,coords_not_in_cell)
@@ -762,6 +770,13 @@ contains
             accept_pixel = .FALSE.
             call this%rejected_pixels%set_value(LUDA_pixel_coords,.TRUE.)
     end function check_MUFP
+
+    function yamazaki_test_find_downstream_cell(this,initial_outlet_pixel) result(downstream_cell)
+        class(cell), intent(in) :: this
+        class(coords), pointer, intent(in) :: initial_outlet_pixel
+        class(coords), pointer :: downstream_cell
+            downstream_cell => this%cell_neighborhood%yamazaki_find_downstream_cell(initial_outlet_pixel)
+    end function yamazaki_test_find_downstream_cell
 
     function test_generate_cell_cumulative_flow(this) result(cmltv_flow_array)
         class(cell), intent(inout) :: this
@@ -925,7 +940,22 @@ contains
             call this%initialize_rejected_pixels_subfield()
             this%contains_river_mouths = .FALSE.
             this%ocean_cell = .FALSE.
-    end subroutine
+    end subroutine init_latlon_cell
+
+    subroutine yamazaki_init_latlon_cell(this,cell_section_coords,river_directions, &
+                                         total_cumulative_flow,yamazaki_outlet_pixels)
+        class(latlon_cell), intent(inout) :: this
+        type(latlon_section_coords) :: cell_section_coords
+        integer, dimension(:,:) :: river_directions
+        integer, dimension(:,:) :: total_cumulative_flow
+        integer, dimension(:,:), target :: yamazaki_outlet_pixels
+        class(*), dimension(:,:), pointer :: yamazaki_outlet_pixels_pointer
+            call this%init_latlon_cell(cell_section_coords,river_directions,&
+                                       total_cumulative_flow)
+            yamazaki_outlet_pixels_pointer => yamazaki_outlet_pixels
+            this%yamazaki_outlet_pixels => latlon_field_section(yamazaki_outlet_pixels_pointer, &
+                                                                cell_section_coords)
+    end subroutine yamazaki_init_latlon_cell
 
     pure function latlon_find_edge_pixels(this) result(edge_pixel_coords_list)
         class(latlon_cell), intent(in) :: this
@@ -1168,6 +1198,20 @@ contains
                                                               total_cumulative_flow)
     end function
 
+
+    function yamazaki_latlon_dir_based_rdirs_cell_constructor(cell_section_coords,river_directions,&
+                                                              total_cumulative_flow,yamazaki_outlet_pixels) &
+        result(constructor)
+        type(latlon_dir_based_rdirs_cell), allocatable :: constructor
+        class(latlon_section_coords) :: cell_section_coords
+        integer, dimension(:,:) :: river_directions
+        integer, dimension(:,:) :: total_cumulative_flow
+        integer, dimension(:,:) :: yamazaki_outlet_pixels
+            allocate(constructor)
+            call constructor%yamazaki_init_dir_based_rdirs_latlon_cell(cell_section_coords,river_directions,&
+                                                                       total_cumulative_flow,yamazaki_outlet_pixels)
+    end function yamazaki_latlon_dir_based_rdirs_cell_constructor
+
     subroutine init_dir_based_rdirs_latlon_cell(this,cell_section_coords,river_directions,&
                                                 total_cumulative_flow)
         class(latlon_dir_based_rdirs_cell) :: this
@@ -1178,6 +1222,20 @@ contains
             allocate(this%cell_neighborhood, source=latlon_dir_based_rdirs_neighborhood(cell_section_coords, &
                 river_directions, total_cumulative_flow))
     end subroutine init_dir_based_rdirs_latlon_cell
+
+    subroutine yamazaki_init_dir_based_rdirs_latlon_cell(this,cell_section_coords,river_directions,&
+                                                total_cumulative_flow,yamazaki_outlet_pixels)
+        class(latlon_dir_based_rdirs_cell) :: this
+        type(latlon_section_coords) :: cell_section_coords
+        integer, dimension(:,:) :: river_directions
+        integer, dimension(:,:) :: total_cumulative_flow
+        integer, dimension(:,:) :: yamazaki_outlet_pixels
+            call this%yamazaki_init_latlon_cell(cell_section_coords,river_directions,total_cumulative_flow,&
+                                                yamazaki_outlet_pixels)
+            allocate(this%cell_neighborhood, source=&
+                     latlon_dir_based_rdirs_neighborhood(cell_section_coords,river_directions,&
+                     total_cumulative_flow,yamazaki_outlet_pixels))
+    end subroutine yamazaki_init_dir_based_rdirs_latlon_cell
 
     ! Note must explicit pass this function the object this as it has the nopass attribute
     ! so that it can be shared by latlon_cell and latlon_neighborhood
@@ -1319,21 +1377,23 @@ contains
             deallocate(working_pixel)
     end function find_downstream_cell
 
-    function yamazaki_find_downstream_cell(this) result(cell_coords)
+    function yamazaki_find_downstream_cell(this,initial_outlet_pixel) result(cell_coords)
         class(neighborhood), intent(in) :: this
-        class(coords) :: cell_coords
-        class(coords) :: working_pixel
+        class(coords), intent(in), pointer :: initial_outlet_pixel
+        class(coords), pointer :: cell_coords
+        class(coords), pointer :: working_pixel
         class(*), pointer :: yamazaki_outlet_pixel_type
         logical :: coords_not_in_neighborhood
         logical :: outflow_pixel_reached
-        integer :: downstream_path_length
-        integer :: cells_passed_through_count
-            working_pixel => yamazaki_find_initial_outlet_pixel()
+        real(double_precision) :: downstream_path_length
+        integer :: count_of_cells_passed_through
+            working_pixel => initial_outlet_pixel
+            cell_coords => this%yamazaki_get_cell_coords(initial_outlet_pixel)
             downstream_path_length = 0.0
             count_of_cells_passed_through = 0
             do
                 call this%find_next_pixel_downstream(this,working_pixel,coords_not_in_neighborhood,outflow_pixel_reached)
-                downstream_path_length = downstream_path_length + this%calculate_length_through_pixel(working_coords)
+                downstream_path_length = downstream_path_length + this%calculate_length_through_pixel(this,working_pixel)
                 if (coords_not_in_neighborhood) call this%yamazaki_wrap_coordinates(working_pixel)
                 if ( .not. cell_coords%are_equal_to(this%yamazaki_get_cell_coords(working_pixel))) then
                     deallocate(cell_coords)
@@ -1343,13 +1403,13 @@ contains
                 yamazaki_outlet_pixel_type => this%yamazaki_outlet_pixels%get_value(working_pixel)
                 select type (yamazaki_outlet_pixel_type)
                 type is (integer)
-                    if (yamazki_outlet_pixel_type == yamazaki_normal_outlet .and. downstream_path_length > MUFP) exit
+                    if (yamazaki_outlet_pixel_type == this%yamazaki_normal_outlet .and. downstream_path_length > MUFP) exit
                 end select
                 deallocate(yamazaki_outlet_pixel_type)
                 if (count_of_cells_passed_through > yamazaki_max_range) then
-                    working_pixel => yamazaki_find_initial_outlet_pixel()
+                    working_pixel => initial_outlet_pixel
                     call this%find_next_pixel_downstream(this,working_pixel,coords_not_in_neighborhood,outflow_pixel_reached)
-                    if (coords_not_in_neighborhood) call yamazaki_wrap_coordinates(working_pixel)
+                    if (coords_not_in_neighborhood) call this%yamazaki_wrap_coordinates(working_pixel)
                     cell_coords => this%yamazaki_get_cell_coords(working_pixel)
                     exit
                 end if
@@ -1420,6 +1480,26 @@ contains
             this%center_cell_id = 5
     end subroutine init_latlon_neighborhood
 
+    subroutine yamazaki_init_latlon_neighborhood(this,center_cell_section_coords,river_directions,&
+                                                 total_cumulative_flow,yamazaki_outlet_pixels)
+        class(latlon_neighborhood) :: this
+        type(latlon_section_coords) :: center_cell_section_coords
+        type(latlon_section_coords) :: section_coords
+        integer, dimension(:,:) :: river_directions
+        integer, dimension(:,:) :: total_cumulative_flow
+        integer, dimension(:,:), target :: yamazaki_outlet_pixels
+        class(*), dimension(:,:), pointer :: yamazaki_outlet_pixels_pointer
+            call this%init_latlon_neighborhood(center_cell_section_coords,river_directions,&
+                                               total_cumulative_flow)
+            yamazaki_outlet_pixels_pointer => yamazaki_outlet_pixels
+            section_coords = latlon_section_coords(this%section_min_lat,this%section_min_lon,&
+                                                   this%section_max_lat,this%section_max_lon)
+            this%yamazaki_outlet_pixels => latlon_field_section(yamazaki_outlet_pixels_pointer, &
+                                                                section_coords)
+            this%yamazaki_cell_width_lat = this%center_cell_max_lat + 1 - this%center_cell_min_lat
+            this%yamazaki_cell_width_lon = this%center_cell_max_lon + 1 - this%center_cell_min_lon
+    end subroutine yamazaki_init_latlon_neighborhood
+
     pure function latlon_in_which_cell(this,pixel) result (in_cell)
         class(latlon_neighborhood), intent(in) :: this
         class(coords), intent(in) :: pixel
@@ -1448,14 +1528,26 @@ contains
 
     pure function latlon_yamazaki_get_cell_coords(this,pixel_coords) result(cell_coords)
         class(latlon_neighborhood), intent(in) :: this
-        class(coords), intent(in) :: pixel_coords
-        class(coords) :: cell_coords
-            nullify(cell_coords)
+        class(coords), pointer, intent(in) :: pixel_coords
+        class(coords), pointer :: cell_coords
+            select type (pixel_coords)
+            class is (latlon_coords)
+                allocate(cell_coords,source=latlon_coords(ceiling(real(pixel_coords%lat)/this%yamazaki_cell_width_lat),&
+                                                          ceiling(real(pixel_coords%lon)/this%yamazaki_cell_width_lon)))
+            end select
     end function latlon_yamazaki_get_cell_coords
 
     subroutine latlon_yamazaki_wrap_coordinates(this,pixel_coords)
         class(latlon_neighborhood), intent(in) :: this
         class(coords), intent(inout) :: pixel_coords
+            select type (pixel_coords)
+            class is (latlon_coords)
+                if (pixel_coords%lon < this%section_min_lon) then
+                    pixel_coords%lon = this%section_max_lon + pixel_coords%lon + 1 - this%section_min_lon
+                else if (pixel_coords%lon > this%section_max_lon) then
+                    pixel_coords%lon = this%section_min_lon + pixel_coords%lon - 1 - this%section_max_lon
+                end if
+            end select
     end subroutine latlon_yamazaki_wrap_coordinates
 
     function latlon_dir_based_rdirs_field_constructor(field_section_coords,river_directions) &
@@ -1469,7 +1561,7 @@ contains
             call constructor%init_latlon_field(field_section_coords,river_directions_pointer)
     end function
 
-    function latlon_dir_based_rdirs_neighborhood_constructor(center_cell_section_coords,river_directions,&
+    function latlon_dir_based_rdirs_neighborhood_constructor(center_cell_section_coords,river_directions, &
                                                                total_cumulative_flow) result(constructor)
         type(latlon_dir_based_rdirs_neighborhood), allocatable :: constructor
         type(latlon_section_coords) :: center_cell_section_coords
@@ -1479,6 +1571,19 @@ contains
             call constructor%init_latlon_neighborhood(center_cell_section_coords,river_directions,&
                                                       total_cumulative_flow)
     end function latlon_dir_based_rdirs_neighborhood_constructor
+
+    function yamazaki_latlon_dir_based_rdirs_neighborhood_constructor(center_cell_section_coords,river_directions, &
+                                                                      total_cumulative_flow,yamazaki_outlet_pixels) &
+        result(constructor)
+        type(latlon_dir_based_rdirs_neighborhood), allocatable :: constructor
+        type(latlon_section_coords) :: center_cell_section_coords
+        integer, dimension(:,:) :: river_directions
+        integer, dimension(:,:) :: total_cumulative_flow
+        integer, dimension(:,:) :: yamazaki_outlet_pixels
+            allocate(constructor)
+            call constructor%yamazaki_init_latlon_neighborhood(center_cell_section_coords,river_directions,&
+                                                               total_cumulative_flow,yamazaki_outlet_pixels)
+    end function yamazaki_latlon_dir_based_rdirs_neighborhood_constructor
 
     subroutine latlon_dir_based_rdirs_find_next_pixel_downstream(this,coords_inout,coords_not_in_area,&
                                                                  outflow_pixel_reached)

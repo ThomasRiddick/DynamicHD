@@ -626,6 +626,19 @@ contains
         end if
         call teardown
 
+
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testYamazakiFindDownstreamCell"
+        call set_unit_name('test_something')
+        call run_test_case(testYamazakiFindDownstreamCellOne,&
+                           'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","yamazaki_find_downstream_cell_test")
+        else
+            call case_passed_xml("test_something","yamazaki_find_downstream_cell_test")
+        end if
+        call teardown
+
     end subroutine area_all_tests
 
     subroutine subfield_all_tests
