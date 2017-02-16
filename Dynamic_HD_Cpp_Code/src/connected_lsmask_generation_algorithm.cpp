@@ -15,13 +15,13 @@ void create_connected_landsea_mask::setup_flags(bool use_diagonals_in)
 
 void create_connected_landsea_mask::setup_fields(bool* landsea_in,
 												 bool* ls_seed_points_in,
-												 int nlat_in, int nlon_in)
+												 grid_params* grid_params_in)
 {
-	nlat = nlat_in;
-	nlon = nlon_in;
-	landsea = new field<bool>(landsea_in,nlat_in,nlon_in);
-	ls_seed_points = new field<bool>(ls_seed_points_in,nlat_in,nlon_in);
-	completed_cells = new field<bool>(nlat_in,nlon_in);
+	_grid_params = grid_params_in;
+	_grid = grid_factory(_grid_params);
+	landsea = new field<bool>(landsea_in,_grid_params);
+	ls_seed_points = new field<bool>(ls_seed_points_in,_grid_params);
+	completed_cells = new field<bool>(_grid_params);
 	completed_cells->set_all(false);
 }
 
@@ -47,14 +47,12 @@ void create_connected_landsea_mask::generate_connected_mask()
 
 void create_connected_landsea_mask::add_ls_seed_points_to_q()
 {
-	for (auto i = 0; i < nlat; i++){
-		for (auto j = 0; j < nlon; j++){
-			if ((*ls_seed_points)(i,j)) {
-				q.push(new landsea_cell(i,j));
-				(*completed_cells)(i,j) = true;
-			}
-		}
-	}
+	function<void(coords*)> add_ls_point_to_q_func = [&](coords* coords_in) {
+		if ((*ls_seed_points)(coords_in)) {
+			q.push(new landsea_cell(coords_in));
+			(*completed_cells)(coords_in) = true;
+		}};
+	_grid->for_all(add_ls_point_to_q_func);
 }
 
 void create_connected_landsea_mask::process_neighbors()
@@ -70,12 +68,10 @@ void create_connected_landsea_mask::process_neighbors()
 inline void create_connected_landsea_mask::process_neighbor()
 {
 	auto nbr_coords = neighbors_coords->back();
-	nbr_lat = nbr_coords->first;
-	nbr_lon = nbr_coords->second;
 	if (use_diagonals || neighbors_coords->size() > diagonal_neighbors) {
-		if ((*landsea)(nbr_lat,nbr_lon) && !((*completed_cells)(nbr_lat,nbr_lon))) {
-			q.push(new landsea_cell(nbr_lat,nbr_lon));
-			(*completed_cells)(nbr_lat,nbr_lon) = true;
+		if ((*landsea)(nbr_coords) && !((*completed_cells)(nbr_coords))) {
+			q.push(new landsea_cell(nbr_coords));
+			(*completed_cells)(nbr_coords) = true;
 		}
 	}
 	neighbors_coords->pop_back();
@@ -83,9 +79,5 @@ inline void create_connected_landsea_mask::process_neighbor()
 
 void create_connected_landsea_mask::deep_copy_completed_cells_to_landsea()
 {
-	for (auto i = 0; i < nlat; i++ ){
-		for (auto j = 0; j < nlon; j++) {
-			(*landsea)(i,j) = (*completed_cells)(i,j);
-		}
-	}
+	_grid->for_all([&](coords* coords_in){(*landsea)(coords_in) = (*completed_cells)(coords_in);});
 }

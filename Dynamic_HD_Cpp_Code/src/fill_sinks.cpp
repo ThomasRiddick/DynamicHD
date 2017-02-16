@@ -11,6 +11,7 @@
 #include <iostream>
 #include "fill_sinks.hpp"
 #include "sink_filling_algorithm.hpp"
+#include "grid.hpp"
 
 using namespace std;
 
@@ -22,10 +23,11 @@ using namespace std;
 
 //If necessary the function converts the land sea mask to a boolean data type; otherwise it calls
 //the function with landsea_in set as a nullptr
-void fill_sinks_cython_interface(double* orography_in, int nlat, int nlon, int method, int use_ls_mask,
+void latlon_fill_sinks_cython_interface(double* orography_in, int nlat, int nlon, int method, int use_ls_mask,
 								 int* landsea_in_int, int set_ls_as_no_data_flag, int use_true_sinks,
-								 int* true_sinks_in_int, double* rdirs_in, int* catchment_nums_in,
-								 int prefer_non_diagonal_initial_dirs)
+								 int* true_sinks_in_int, int add_slope, double epsilon,
+								 int* next_cell_lat_index_in,int* next_cell_lon_index_in, double* rdirs_in,
+								 int* catchment_nums_in,int prefer_non_diagonal_initial_dirs)
 {
 	if(!use_ls_mask) landsea_in_int = nullptr;
 	if(!use_true_sinks) true_sinks_in_int = nullptr;
@@ -44,14 +46,17 @@ void fill_sinks_cython_interface(double* orography_in, int nlat, int nlon, int m
 			true_sinks_in[i] = bool(true_sinks_in_int[i]);
 		}
 	}
-	fill_sinks(orography_in, nlat, nlon, method, landsea_in, bool(set_ls_as_no_data_flag),
-			   true_sinks_in,rdirs_in,catchment_nums_in,bool(prefer_non_diagonal_initial_dirs));
+	latlon_fill_sinks(orography_in, nlat, nlon, method, landsea_in, bool(set_ls_as_no_data_flag),
+			   	   	  true_sinks_in,bool(add_slope),epsilon,next_cell_lat_index_in,next_cell_lon_index_in,
+					  rdirs_in,catchment_nums_in,bool(prefer_non_diagonal_initial_dirs));
 }
 
-void fill_sinks(double* orography_in, int nlat, int nlon, int method,
+void latlon_fill_sinks(double* orography_in, int nlat, int nlon, int method,
 				bool* landsea_in, bool set_ls_as_no_data_flag,bool* true_sinks_in,
-				double* rdirs_in, int* catchment_nums_in,
-				bool prefer_non_diagonal_initial_dirs)
+				bool add_slope_in, double epsilon_in, int* next_cell_lat_index_in,
+				int* next_cell_lon_index_in, double* rdirs_in,
+				int* catchment_nums_in, bool prefer_non_diagonal_initial_dirs,
+				bool index_based_rdirs_only_in)
 {
 	cout << "Entering sink filling C++ code now" << endl;
 	const bool debug = false;
@@ -59,19 +64,21 @@ void fill_sinks(double* orography_in, int nlat, int nlon, int method,
 		case 1:
 			{
 				cout << "Using Algorithm 1" << endl;
-				auto alg1 = sink_filling_algorithm_1();
-				alg1.setup_flags(set_ls_as_no_data_flag,debug);
-				alg1.setup_fields(orography_in,landsea_in,true_sinks_in,nlat,nlon);
+				auto alg1 = sink_filling_algorithm_1_latlon();
+				alg1.setup_flags(set_ls_as_no_data_flag,debug,add_slope_in,epsilon_in);
+				alg1.setup_fields(orography_in,landsea_in,true_sinks_in,new latlon_grid_params(nlat,nlon));
 				alg1.fill_sinks();
 			}
 			break;
 		case 4:
 			{
 				cout << "Using Algorithm 4" << endl;
-				auto alg4 = sink_filling_algorithm_4();
-				alg4.setup_flags(set_ls_as_no_data_flag,prefer_non_diagonal_initial_dirs,debug);
-				alg4.setup_fields(orography_in,landsea_in,true_sinks_in,nlat,nlon,rdirs_in,
-						          catchment_nums_in);
+				auto alg4 = sink_filling_algorithm_4_latlon();
+				alg4.setup_flags(set_ls_as_no_data_flag,prefer_non_diagonal_initial_dirs,debug,
+								 index_based_rdirs_only_in);
+				alg4.setup_fields(orography_in,landsea_in,true_sinks_in,next_cell_lat_index_in,
+							      next_cell_lon_index_in,new latlon_grid_params(nlat,nlon),
+								  rdirs_in,catchment_nums_in);
 				alg4.fill_sinks();
 			}
 			break;

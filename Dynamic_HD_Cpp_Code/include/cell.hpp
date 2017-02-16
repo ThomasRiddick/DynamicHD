@@ -12,37 +12,42 @@
 #define CELL_HPP_
 
 #include <utility>
-#include "common_types.hpp"
+#include "coords.hpp"
 
 /*Stores the orography, position and order of addition for a grid cell as an object
  * (which can be queued)*/
 class cell{
 	//The value of orography of this cell
 	double orography;
-	//The latitude and longitude of this cell
-	int lat,lon;
+	//The coordinates of this cell
+	coords* cell_coords = nullptr;
 	//an identifier marking order of insertion to impose a stable queue order
 	//when two orography values are the same
 	int k;
 	//an identifier of which catchment this cell is part of
 	int catchment_num;
+	//height of the highest (real) value of orography crossed on the way to this point
+	int rim_height;
 
 public:
-	//Class Constructor
-	cell(double orography_in,int lat_in,int lon_in,int catchment_num) : orography(orography_in),
-		lat(lat_in), lon(lon_in), k(0), catchment_num(catchment_num) {}
-	cell(double orography_in,int lat_in,int lon_in) : orography(orography_in),
-		lat(lat_in), lon(lon_in), k(0), catchment_num(0) {}
+	//Class Constructors
+	cell(double orography_in,coords* cell_coords_in,int catchment_num, double rim_height_in)
+	: orography(orography_in), cell_coords(cell_coords_in), k(0), catchment_num(catchment_num),
+	  rim_height(rim_height_in) {}
+	cell(double orography_in,coords* cell_coords_in) : orography(orography_in),
+			cell_coords(cell_coords_in), k(0), catchment_num(0), rim_height(0.0)  {}
+	//Class destructor
+	~cell() { delete cell_coords; }
 	//Getters
-	int get_lat() {return lat;}
-	int get_lon() {return lon;}
+	coords* get_cell_coords() {return cell_coords;}
 	int get_catchment_num() {return catchment_num;}
 	double get_orography() {return orography;}
-	integerpair get_cell_coords() {return integerpair(lat,lon);}
+	double get_rim_height() {return rim_height;}
 	//Setters
 	void set_orography(double value) {orography = value;}
 	void set_k(int k_in) {k=k_in;}
 	//Overloaded operators
+	cell operator= (const cell&);
 	friend bool operator> (const cell&,const cell&);
 	friend bool operator< (const cell&,const cell&);
 	friend bool operator>= (const cell&,const cell&);
@@ -62,7 +67,7 @@ public:
 
 class landsea_cell : public cell {
 public:
-	landsea_cell(int lat_in,int lon_in) : cell(0.0,lat_in,lon_in){}
+	landsea_cell(coords* cell_coords) : cell(0.0,cell_coords){}
 };
 
 #endif /* CELL_HPP_ */

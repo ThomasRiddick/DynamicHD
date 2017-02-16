@@ -7,7 +7,6 @@
 #include <iostream>
 #include <limits>
 #include <algorithm>
-#include "common_types.hpp"
 #include "sink_filling_algorithm.hpp"
 
 using namespace std;
@@ -18,42 +17,86 @@ using namespace std;
  * details of the implementation.
  */
 
-sink_filling_algorithm::sink_filling_algorithm(field<double>* orography,int nlat, int nlon,
+sink_filling_algorithm::sink_filling_algorithm(field<double>* orography,grid_params* grid_params_in,
 											   field<bool>* completed_cells,bool* landsea_in,
 											   bool set_ls_as_no_data_flag,bool* true_sinks_in) :
+											   _grid_params(grid_params_in),
 											   orography(orography),
 											   completed_cells(completed_cells),
-											   set_ls_as_no_data_flag(set_ls_as_no_data_flag),
-											   nlat(nlat),nlon(nlon)
+											   set_ls_as_no_data_flag(set_ls_as_no_data_flag)
+
 {
-	landsea = landsea_in ? new field<bool>(landsea_in,nlat,nlon): nullptr;
-	true_sinks = true_sinks_in ? new field<bool>(true_sinks_in,nlat,nlon): nullptr;
+	_grid = grid_factory(_grid_params);
+	landsea = landsea_in ? new field<bool>(landsea_in,_grid_params): nullptr;
+	true_sinks = true_sinks_in ? new field<bool>(true_sinks_in,_grid_params): nullptr;
 }
 
 sink_filling_algorithm::~sink_filling_algorithm() { delete orography; delete completed_cells;
 													delete true_sinks; }
 
-sink_filling_algorithm_1::sink_filling_algorithm_1(field<double>* orography,int nlat, int nlon,
+sink_filling_algorithm_1::sink_filling_algorithm_1(field<double>* orography,grid_params* grid_params_in,
 												   field<bool>* completed_cells,bool* landsea_in,
-												   bool set_ls_as_no_data_flag,bool* true_sinks_in)
-	: sink_filling_algorithm(orography,nlat,nlon,completed_cells,landsea_in,set_ls_as_no_data_flag,
-							 true_sinks_in) {}
+												   bool set_ls_as_no_data_flag,bool add_slope,
+												   double epsilon, bool* true_sinks_in)
+	: sink_filling_algorithm(orography,grid_params_in,completed_cells,landsea_in,set_ls_as_no_data_flag,
+							 true_sinks_in), add_slope(add_slope), epsilon(epsilon) {}
 
-sink_filling_algorithm_4::sink_filling_algorithm_4(field<double>* orography,int nlat,int nlon,
-											       field<double>* rdirs, field<bool>* completed_cells,
+sink_filling_algorithm_1_latlon::sink_filling_algorithm_1_latlon(field<double>* orography,grid_params* grid_params_in,
+		   	   	   	   	   	   									 field<bool>* completed_cells,bool* landsea_in,
+																 bool set_ls_as_no_data_flag,bool add_slope,
+																 double epsilon,bool* true_sinks_in)
+	: sink_filling_algorithm(orography,grid_params_in,completed_cells,landsea_in,set_ls_as_no_data_flag,
+							 true_sinks_in),
+	  sink_filling_algorithm_1(orography,grid_params_in,completed_cells,landsea_in,set_ls_as_no_data_flag,
+			  	  	  	  	   add_slope,epsilon,true_sinks_in)
+{
+	auto* grid_latlon = dynamic_cast<latlon_grid*>(_grid);
+	nlat = grid_latlon->get_nlat(); nlon = grid_latlon->get_nlon();
+}
+
+sink_filling_algorithm_4::sink_filling_algorithm_4(field<double>* orography,grid_params* grid_params_in,
+											       field<bool>* completed_cells,
 												   bool* landsea_in, bool set_ls_as_no_data_flag,
 												   field<int>* catchment_nums_in,
 												   bool prefer_non_diagonal_initial_dirs,
 												   bool* true_sinks_in)
-	: sink_filling_algorithm(orography,nlat,nlon,completed_cells,landsea_in,set_ls_as_no_data_flag,
+	: sink_filling_algorithm(orography,grid_params_in,completed_cells,landsea_in,set_ls_as_no_data_flag,
 			                 true_sinks_in),
-	  rdirs(rdirs), catchment_nums(catchment_nums_in),
+	  catchment_nums(catchment_nums_in),
 	  prefer_non_diagonal_initial_dirs(prefer_non_diagonal_initial_dirs) {}
+
+sink_filling_algorithm_4_latlon::sink_filling_algorithm_4_latlon(field<double>* orography,grid_params* grid_params_in,
+											       	   	         field<bool>* completed_cells,
+																 bool* landsea_in, bool set_ls_as_no_data_flag,
+																 field<int>* catchment_nums_in,
+																 bool prefer_non_diagonal_initial_dirs,
+																 bool index_based_rdirs_only_in,
+																 field<int>* next_cell_lat_index_in,
+																 field<int>* next_cell_lon_index_in,
+																 bool* true_sinks_in,
+																 field<double>* rdirs_in)
+	: sink_filling_algorithm(orography,grid_params_in,completed_cells,landsea_in,set_ls_as_no_data_flag,
+            true_sinks_in),
+	  sink_filling_algorithm_4(orography,grid_params_in,completed_cells,landsea_in,set_ls_as_no_data_flag,
+			   	   	   	       catchment_nums_in,prefer_non_diagonal_initial_dirs,true_sinks_in),
+	  rdirs(rdirs_in), next_cell_lat_index(next_cell_lat_index_in), next_cell_lon_index(next_cell_lon_index_in)
+	{
+		index_based_rdirs_only=index_based_rdirs_only_in;
+		auto* grid_latlon = dynamic_cast<latlon_grid*>(_grid);
+		nlat = grid_latlon->get_nlat(); nlon = grid_latlon->get_nlon();
+	}
 
 void sink_filling_algorithm::setup_flags(bool set_ls_as_no_data_flag_in,bool debug_in)
 {
 	set_ls_as_no_data_flag = set_ls_as_no_data_flag_in;
 	debug = debug_in;
+}
+
+void sink_filling_algorithm_1::setup_flags(bool set_ls_as_no_data_flag_in,bool debug_in,
+										   bool add_slope_in, double epsilon_in)
+{
+	sink_filling_algorithm::setup_flags(set_ls_as_no_data_flag_in,debug_in);
+	add_slope = add_slope_in; epsilon = epsilon_in;
 }
 
 void sink_filling_algorithm_4::setup_flags(bool set_ls_as_no_data_flag_in,
@@ -64,25 +107,56 @@ void sink_filling_algorithm_4::setup_flags(bool set_ls_as_no_data_flag_in,
 	prefer_non_diagonal_initial_dirs = prefer_non_diagonal_initial_dirs_in;
 }
 
-void sink_filling_algorithm::setup_fields(double* orography_in, bool* landsea_in,
-									      bool* true_sinks_in,int nlat_in,int nlon_in)
+void sink_filling_algorithm_4_latlon::setup_flags(bool set_ls_as_no_data_flag_in,
+			     	 	 	 	 	 	   bool prefer_non_diagonal_initial_dirs_in,
+										   bool debug_in, bool index_based_rdirs_only_in)
 {
-	nlat = nlat_in;
-	nlon = nlon_in;
-	orography = new field<double>(orography_in,nlat,nlon);
-	completed_cells = new field<bool>(nlat,nlon);  //Cells that have already been processed
+	sink_filling_algorithm_4::setup_flags(set_ls_as_no_data_flag_in,prefer_non_diagonal_initial_dirs_in,
+			   	   	   	   	   	   	   	  debug_in);
+	prefer_non_diagonal_initial_dirs = prefer_non_diagonal_initial_dirs_in;
+	index_based_rdirs_only = index_based_rdirs_only_in;
+}
+
+void sink_filling_algorithm::setup_fields(double* orography_in, bool* landsea_in,
+									      bool* true_sinks_in,grid_params* grid_params)
+{
+	_grid_params = grid_params;
+	_grid = grid_factory(_grid_params);
+	orography = new field<double>(orography_in,grid_params);
+	completed_cells = new field<bool>(grid_params);  //Cells that have already been processed
 	completed_cells->set_all(false);
-	landsea = landsea_in ? new field<bool>(landsea_in,nlat,nlon): nullptr;
-	true_sinks = true_sinks_in ? new field<bool>(true_sinks_in,nlat,nlon): nullptr;
+	landsea = landsea_in ? new field<bool>(landsea_in,grid_params): nullptr;
+	true_sinks = true_sinks_in ? new field<bool>(true_sinks_in,grid_params): nullptr;
 }
 
 void sink_filling_algorithm_4::setup_fields(double* orography_in, bool* landsea_in,
-								            bool* true_sinks_in, int nlat_in, int nlon_in,
-											double* rdirs_in, int* catchment_nums_in)
+								            bool* true_sinks_in, grid_params* grid_params_in,
+											int* catchment_nums_in)
 {
-	sink_filling_algorithm::setup_fields(orography_in,landsea_in,true_sinks_in,nlat_in,nlon_in);
-	rdirs = new field<double>(rdirs_in,nlat,nlon);
-	catchment_nums = new field<int>(catchment_nums_in,nlat,nlon);
+	sink_filling_algorithm::setup_fields(orography_in,landsea_in,true_sinks_in,grid_params_in);
+	catchment_nums = new field<int>(catchment_nums_in,grid_params_in);
+}
+
+void sink_filling_algorithm_4_latlon::setup_fields(double* orography_in, bool* landsea_in,
+								            	   bool* true_sinks_in, int * next_cell_lat_index_in,
+												   int * next_cell_lon_index_in,
+												   grid_params* grid_params_in,
+												   double* rdirs_in, int* catchment_nums_in)
+{
+	sink_filling_algorithm_4::setup_fields(orography_in,landsea_in,true_sinks_in,grid_params_in,
+										   catchment_nums_in);
+	rdirs = new field<double>(rdirs_in,grid_params_in);
+	next_cell_lat_index = new field<int>(next_cell_lat_index_in,grid_params_in);
+	next_cell_lon_index = new field<int>(next_cell_lon_index_in,grid_params_in);
+	auto* grid_latlon = dynamic_cast<latlon_grid*>(_grid);
+	nlat = grid_latlon->get_nlat(); nlon = grid_latlon->get_nlon();
+}
+
+void sink_filling_algorithm_1_latlon::setup_fields(double* orography_in, bool* landsea_in,
+									      	  	   bool* true_sinks_in,grid_params* grid_params){
+	sink_filling_algorithm::setup_fields(orography_in,landsea_in,true_sinks_in,grid_params);
+	auto* grid_latlon = dynamic_cast<latlon_grid*>(_grid);
+	nlat = grid_latlon->get_nlat(); nlon = grid_latlon->get_nlon();
 }
 
 //Implementation as per algorithm 1 of the paper cited in the preamble to this file
@@ -106,7 +180,9 @@ void sink_filling_algorithm::fill_sinks()
 		if (debug) {
 			cout << "q length: " << q.size() << endl;
 			cout << "Processing central cell:" << endl;
-			cout << "lat: " << center_coords.first << " lon: "<< center_coords.second << endl;
+			if (auto center_coords_latlon = dynamic_cast<latlon_coords*>(center_coords)){
+				cout << "lat: " << center_coords_latlon->get_lat() << " lon: "<< center_coords_latlon->get_lon() << endl;
+			}
 		}
 		process_center_cell();
 		auto neighbors_coords = orography->get_neighbors_coords(center_coords,method);
@@ -123,140 +199,148 @@ void sink_filling_algorithm::fill_sinks()
 void sink_filling_algorithm::add_edge_cells_to_q()
 {
 	//If a land sea mask is supplied
-	if (landsea) {
-		for (auto i = 0; i < nlat; i++){
-			for (auto j = 0; j < nlon; j++){
-				if((*landsea)(i,j)){
-					//set the land sea mask itself to no data if that option has been selected
-					if (set_ls_as_no_data_flag) set_ls_as_no_data(i,j);
-					//set all points in the land sea mask as having been processed
-					(*completed_cells)(i,j) = true;
-					//Calculate and the process the neighbors of every landsea point and
-					//add them to the queue (if they aren't already in the queue or themselves
-					//land sea points
-					//Note the get_neighbors_coords function is always called here using
-					//method 1 technique as this is always appropriate (regardless of which
-					//method is being run) for the set-up phase
-					auto neighbors_coords = orography->get_neighbors_coords(i,j);
-					while (!neighbors_coords->empty()){
-						auto nbr_coords = neighbors_coords->back();
-						nbr_lat = nbr_coords->first;
-						nbr_lon = nbr_coords->second;
-						//If neither a land sea point nor a cell already in the queue
-						//then add this cell to the queue (and possibly assign it
-						//a flow direction if this is algorithm 4)
-						if (!((*landsea)(nbr_lat,nbr_lon) ||
-							(*completed_cells)(nbr_lat,nbr_lon))) {
-							(*completed_cells)(nbr_lat,nbr_lon) = true;
-							push_land_sea_neighbor();
-						}
-						neighbors_coords->pop_back();
-						delete nbr_coords;
-					}
-					delete neighbors_coords;
-				}
-			}
-		}
+	if (landsea) add_landsea_edge_cells_to_q();
 	//No land sea mask supplied; use edges as out flow points; also assign
     //them flow direction if using algorithm 4
-	} else {
-		for (auto i = 0; i < nlat; i++) {
-			push_vertical_edge(i);
-			(*completed_cells)(i,0) = true;
-			(*completed_cells)(i,nlon-1) = true;
+	else add_geometric_edge_cells_to_q();
+}
+
+void sink_filling_algorithm::add_landsea_edge_cells_to_q(){
+
+	function<void(coords*)> add_edge_cell_to_q_func = [&](coords* coords_in){
+		if((*landsea)(coords_in)){
+			//set the land sea mask itself to no data if that option has been selected
+			if (set_ls_as_no_data_flag) set_ls_as_no_data(coords_in);
+			//set all points in the land sea mask as having been processed
+			(*completed_cells)(coords_in) = true;
+			//Calculate and the process the neighbors of every landsea point and
+			//add them to the queue (if they aren't already in the queue or themselves
+			//land sea points
+			//Note the get_neighbors_coords function is always called here using
+			//method 1 technique as this is always appropriate (regardless of which
+			//method is being run) for the set-up phase
+			auto neighbors_coords = orography->get_neighbors_coords(coords_in);
+			while (!neighbors_coords->empty()){
+				nbr_coords = neighbors_coords->back();
+				//If neither a land sea point nor a cell already in the queue
+				//then add this cell to the queue (and possibly assign it
+				//a flow direction if this is algorithm 4)
+				if (!((*landsea)(nbr_coords) ||
+					(*completed_cells)(nbr_coords))) {
+					(*completed_cells)(nbr_coords) = true;
+					push_land_sea_neighbor();
+				}
+				neighbors_coords->pop_back();
+				delete nbr_coords;
+			}
+			delete neighbors_coords;
 		}
-		for (auto j = 1; j < nlon-1; j++){
-			push_horizontal_edge(j);
-			(*completed_cells)(0,j) = true;
-			(*completed_cells)(nlat-1,j) = true;
-		} }
+	};
+	_grid->for_all(add_edge_cell_to_q_func);
+}
+
+void sink_filling_algorithm_latlon::add_geometric_edge_cells_to_q(){
+	for (auto i = 0; i < nlat; i++) {
+		push_vertical_edge(i);
+		(*completed_cells)(new latlon_coords(i,0)) = true;
+		(*completed_cells)(new latlon_coords(i,nlon-1)) = true;
+	}
+	for (auto j = 1; j < nlon-1; j++){
+		push_horizontal_edge(j);
+		(*completed_cells)(new latlon_coords(0,j)) = true;
+		(*completed_cells)(new latlon_coords(nlat-1,j)) = true;
+	}
 }
 
 void sink_filling_algorithm::add_true_sinks_to_q()
 {
-	for (auto i = 0; i < nlat; i++){
-		for (auto j = 0; j < nlon; j++){
-			if ((*true_sinks)(i,j)){
+	_grid->for_all([&](coords* coords_in){
+			if ((*true_sinks)(coords_in)){
 				if (landsea){
-					if ((*landsea)(i,j)) continue;
+					if ((*landsea)(coords_in)) return;
 				}
 				//ignore sinks next to landsea points... how such a situation could possible occur
 				//and therefore the correct hydrology for it is not clear
-				if(!(*completed_cells)(i,j)) push_true_sink(i,j);
+				if(!(*completed_cells)(coords_in)) push_true_sink(coords_in);
 			}
-		}
-	}
+	});
 }
 
-inline void sink_filling_algorithm_1::set_ls_as_no_data(int i, int j)
+inline void sink_filling_algorithm_1::set_ls_as_no_data(coords* coords_in)
 {
-	(*orography)(i,j) = no_data_value;
+	(*orography)(coords_in) = no_data_value;
 }
 
-inline void sink_filling_algorithm_4::set_ls_as_no_data(int i, int j)
+inline void sink_filling_algorithm_4::set_ls_as_no_data(coords* coords_in)
 {
 	cout << "Setting sea points as no data is incompatible with method 4; ignoring flag" << endl;
 }
 
 inline void sink_filling_algorithm_1::push_land_sea_neighbor()
 {
-	q.push(new cell((*orography)(nbr_lat,nbr_lon),nbr_lat,nbr_lon));
+	q.push(new cell((*orography)(nbr_coords),nbr_coords->clone()));
 }
 
 inline void sink_filling_algorithm_4::push_land_sea_neighbor()
 {
 	int new_catchment_num = q.get_next_k_value();
-	q.push(new cell((*orography)(nbr_lat,nbr_lon),nbr_lat,nbr_lon,new_catchment_num));
-	(*rdirs)(nbr_lat,nbr_lon) =
-			find_initial_cell_flow_direction();
-	(*catchment_nums)(nbr_lat,nbr_lon) = new_catchment_num;
+	q.push(new cell((*orography)(nbr_coords),nbr_coords->clone(),new_catchment_num,
+		   (*orography)(nbr_coords)));
+	find_initial_cell_flow_direction();
+	(*catchment_nums)(nbr_coords) = new_catchment_num;
 }
 
-inline void sink_filling_algorithm_1::push_vertical_edge(int i)
+//Require a minimum of 1 in-line function in sink_filling_algorithm_1_latlon
+void sink_filling_algorithm_1_latlon::push_vertical_edge(int i)
 {
-	q.push(new cell((*orography)(i,0),i,0));
-	q.push(new cell((*orography)(i,nlon-1),i,nlon-1));
+	q.push(new cell((*orography)(new latlon_coords(i,0)),new latlon_coords(i,0)));
+	q.push(new cell((*orography)(new latlon_coords(i,nlon-1)),new latlon_coords(i,nlon-1)));
 }
 
-inline void sink_filling_algorithm_4::push_vertical_edge(int i)
+inline void sink_filling_algorithm_4_latlon::push_vertical_edge(int i)
 {
 	int new_catchment_num = q.get_next_k_value();
-	q.push(new cell((*orography)(i,0),i,0,new_catchment_num));
-	(*catchment_nums)(i,0) = new_catchment_num;
+	q.push(new cell((*orography)(new latlon_coords(i,0)),new latlon_coords(i,0),new_catchment_num,
+					(*orography)(new latlon_coords(i,0))));
+	(*catchment_nums)(new latlon_coords(i,0)) = new_catchment_num;
 	new_catchment_num = q.get_next_k_value();
-	q.push(new cell((*orography)(i,nlon-1),i,nlon-1,new_catchment_num));
-	(*catchment_nums)(i,nlon-1) = new_catchment_num;
-	(*rdirs)(i,0) = 4;
-	(*rdirs)(i,nlon-1) = 6;
+	q.push(new cell((*orography)(new latlon_coords(i,nlon-1)),new latlon_coords(i,nlon-1),new_catchment_num,
+					(*orography)(new latlon_coords(i,nlon-1))));
+	(*catchment_nums)(new latlon_coords(i,nlon-1)) = new_catchment_num;
+	(*rdirs)(new latlon_coords(i,0)) = 4;
+	(*rdirs)(new latlon_coords(i,nlon-1)) = 6;
 }
 
-inline void sink_filling_algorithm_1::push_horizontal_edge(int j)
+inline void sink_filling_algorithm_1_latlon::push_horizontal_edge(int j)
 {
-	q.push(new cell((*orography)(0,j),0,j));
-	q.push(new cell((*orography)(nlat-1,j),nlat-1,j));
+	q.push(new cell((*orography)(new latlon_coords(0,j)),new latlon_coords(0,j)));
+	q.push(new cell((*orography)(new latlon_coords(nlat-1,j)),new latlon_coords(nlat-1,j)));
 }
 
-inline void sink_filling_algorithm_4::push_horizontal_edge(int j)
+inline void sink_filling_algorithm_4_latlon::push_horizontal_edge(int j)
 {
 	int new_catchment_num = q.get_next_k_value();
-	q.push(new cell((*orography)(0,j),0,j,new_catchment_num));
-	(*catchment_nums)(0,j) = new_catchment_num;
+	q.push(new cell((*orography)(new latlon_coords(0,j)),new latlon_coords(0,j),new_catchment_num,
+					(*orography)(new latlon_coords(0,j))));
+	(*catchment_nums)(new latlon_coords(0,j)) = new_catchment_num;
 	new_catchment_num = q.get_next_k_value();
-	q.push(new cell((*orography)(nlat-1,j),nlat-1,j,new_catchment_num));
-	(*catchment_nums)(nlat-1,j) = new_catchment_num;
-	(*rdirs)(0,j) = 8;
-	(*rdirs)(nlat-1,j) = 2;
+	q.push(new cell((*orography)(new latlon_coords(nlat-1,j)),new latlon_coords(nlat-1,j),new_catchment_num,
+					(*orography)(new latlon_coords(nlat-1,j))));
+	(*catchment_nums)(new latlon_coords(nlat-1,j)) = new_catchment_num;
+	(*rdirs)(new latlon_coords(0,j)) = 8;
+	(*rdirs)(new latlon_coords(nlat-1,j)) = 2;
 }
 
-inline void sink_filling_algorithm_1::push_true_sink(int i, int j)
+inline void sink_filling_algorithm_1::push_true_sink(coords* coords_in)
 {
-	q.push_true_sink(new cell((*orography)(i,j),i,j));
+	q.push_true_sink(new cell((*orography)(coords_in),coords_in->clone()));
 }
 
-inline void sink_filling_algorithm_4::push_true_sink(int i, int j)
+inline void sink_filling_algorithm_4::push_true_sink(coords* coords_in)
 {
 	int new_catchment_num = q.get_next_k_value();
-	q.push_true_sink(new cell((*orography)(i,j),i,j,new_catchment_num));
+	q.push_true_sink(new cell((*orography)(coords_in),coords_in->clone(),new_catchment_num,
+			(*orography)(coords_in)));
 }
 
 //Calculates the flow direction for cell add to the queue as out flow points for algorithm 4;
@@ -265,59 +349,67 @@ inline void sink_filling_algorithm_4::push_true_sink(int i, int j)
 //being tied the first minimum is used unless a flag is set and then the last non-diagonal neighbor
 //is used (and the first minimum again if there are no non diagonal neighbors). This function deals
 //with longitudinal wrapping.
-double sink_filling_algorithm_4::find_initial_cell_flow_direction(){
+void sink_filling_algorithm_4::find_initial_cell_flow_direction(){
 	double min_height = numeric_limits<double>::max();
-	double directions[9] = {7.0,8.0,9.0,4.0,5.0,6.0,1.0,2.0,3.0};
-	double direction  = 5.0;
+	double direction = 5.0;
+	coords* destination_coords = nbr_coords;
 	//Default to 5 for land sea points
-	if ((*landsea)(nbr_lat,nbr_lon) == true) return direction;
-	for (auto i = nbr_lat-1; i <= nbr_lat+1; i++){
-		for (auto j = nbr_lon-1; j <= nbr_lon+1; j++){
-			if (i == nbr_lat && j == nbr_lon) continue;
-			if (i < 0 || i >= nlat) continue;
-			int jprime;
-			//deal with longitudinal wrapping
-			if (j < 0 ) jprime = nlon + j;
-			else if (j >= nlon) jprime = j - nlon;
-			else jprime = j;
-			if ((*landsea)(i,jprime)){
-				if (min_height > (*orography)(i,jprime)){
-					min_height = (*orography)(i,jprime);
-					//Note the index here is correctly j and not jprime!
-					direction = directions[3*(i+1-nbr_lat) + (j+1-nbr_lon)];
-				} else if(min_height == (*orography)(i,jprime) &&
-						  prefer_non_diagonal_initial_dirs &&
-						  //This block favors non diagonals if the appropriate flag is set
-						  (i == nbr_lat || j == nbr_lon)) {
-					direction = directions[3*(i+1-nbr_lat) + (j+1-nbr_lon)];
-				}
+	if ((*landsea)(nbr_coords) == true){
+		set_cell_to_true_sink_value(nbr_coords);
+		return;
+	}
+	function<void(coords*)> find_init_rdir_func = [&](coords* coords_in){
+		//check if out of latitude range
+		if (_grid->outside_limits(coords_in)) return;
+		//deal with longitudinal wrapping
+		auto coords_prime = _grid->wrapped_coords(coords_in);
+		if ((*landsea)(coords_prime)){
+			if (min_height > (*orography)(coords_prime)){
+				min_height = (*orography)(coords_prime);
+				set_index_based_rdirs(nbr_coords,coords_prime);
+				destination_coords = coords_prime;
+				//Note the index here is correctly coords_in and not coords_prime!
+				if (not index_based_rdirs_only) direction = _grid->calculate_dir_based_rdir(nbr_coords,coords_in);
+			} else if(min_height == (*orography)(coords_prime) &&
+					  prefer_non_diagonal_initial_dirs &&
+					  //This block favors non diagonals if the appropriate flag is set
+					  _grid->non_diagonal(nbr_coords,coords_prime)) {
+				destination_coords = coords_prime;
+				//make this a part of latlon_grid then cast to that and give nbr_coors
+				//and coords_in to that to generate this number, also below
+				//Also require setter function below and a is non-diagonal
+				//check function
+				if(not index_based_rdirs_only) direction = _grid->calculate_dir_based_rdir(nbr_coords,coords_in);
 			}
 		}
-	}
-	return direction;
+	};
+	_grid->for_all_nbrs(nbr_coords,find_init_rdir_func);
+	set_index_based_rdirs(nbr_coords,destination_coords);
+	if (not index_based_rdirs_only) static_cast<sink_filling_algorithm_4_latlon*>(this)->set_dir_based_rdir(nbr_coords,direction);
 }
 
 inline void sink_filling_algorithm_1::process_true_sink_center_cell() {
-	lat = center_coords.first;
-	lon = center_coords.second;
-	(*completed_cells)(lat,lon) = true;
+	(*completed_cells)(center_coords) = true;
 }
 
 inline void sink_filling_algorithm_4::process_true_sink_center_cell(){
-	if (!(*completed_cells)(lat,lon)){
-		double cell_orog = (*orography)(lat,lon);
+	double cell_orog = (*orography)(center_coords);
+	if (!(*completed_cells)(center_coords)){
 		center_catchment_num = center_cell->get_catchment_num();
-		if (cell_orog == no_data_value) (*rdirs)(lat,lon) = 0.0;
-		else (*rdirs)(lat,lon) = 5.0;
-		(*completed_cells)(lat,lon) = true;
-		(*catchment_nums)(lat,lon) = center_catchment_num;
+		if (cell_orog == no_data_value) set_cell_to_no_data_value(center_coords);
+		else set_cell_to_true_sink_value(center_coords);
+		(*completed_cells)(center_coords) = true;
+		(*catchment_nums)(center_coords) = center_catchment_num;
+		center_rim_height = cell_orog;
 	} else {
 		//If this a former true sink that now flow to a neighbor
 		//then value in cell object is not the correct one (and
 		//it couldn't be corrected as this would require searching
 		//the queue for this cell in a previous step ) so have to
 		//look it up in array instead
-		center_catchment_num = (*catchment_nums)(lat,lon);
+		center_catchment_num = (*catchment_nums)(center_coords);
+		//Same for rim height
+		center_rim_height = cell_orog;
 	}
 }
 
@@ -328,23 +420,22 @@ inline void sink_filling_algorithm_1::process_center_cell() {
 
 inline void sink_filling_algorithm_4::process_center_cell()
 {
-	lat = center_coords.first;
-	lon = center_coords.second;
 	if (true_sinks) process_true_sink_center_cell();
-	else center_catchment_num = center_cell->get_catchment_num();
+	else {
+		center_rim_height = center_cell->get_rim_height();
+		center_catchment_num = center_cell->get_catchment_num();
+	}
 }
 
 //Process the neighbors of a cell; this is key high level function that contain a considerably
 //section of the whichever algorithm is being used
-void sink_filling_algorithm::process_neighbors(vector<integerpair*>* neighbors_coords){
+void sink_filling_algorithm::process_neighbors(vector<coords*>* neighbors_coords){
 	//Loop through the neighbors on the supplied list
 	while (!neighbors_coords->empty()) {
-				auto nbr_coords = neighbors_coords->back();
-				nbr_lat = nbr_coords->first;
-				nbr_lon = nbr_coords->second;
+				nbr_coords = neighbors_coords->back();
 				//If a neighbor has already been proceed simply remove it and
 				//move onto the next one
-				if ((*completed_cells)(nbr_lat,nbr_lon)) {
+				if ((*completed_cells)(nbr_coords)) {
 					neighbors_coords->pop_back();
 					delete nbr_coords;
 					continue;
@@ -356,7 +447,7 @@ void sink_filling_algorithm::process_neighbors(vector<integerpair*>* neighbors_c
 				delete nbr_coords;
 				if (true_sinks) {
 					//If neighbor is a true sink then it is already on the queue
-					if ((*true_sinks)(nbr_lat,nbr_lon)) {
+					if ((*true_sinks)(nbr_coords)) {
 						continue;
 					}
 				}
@@ -365,72 +456,112 @@ void sink_filling_algorithm::process_neighbors(vector<integerpair*>* neighbors_c
 }
 
 void sink_filling_algorithm_1::process_neighbor(){
-	nbr_orog = max((*orography)(nbr_lat,nbr_lon),center_orography);
+	if(add_slope){
+		nbr_orog = (*orography)(nbr_coords);
+		if (center_orography >= nbr_orog){
+			nbr_orog = center_orography + epsilon;
+		}
+	} else nbr_orog = max((*orography)(nbr_coords),center_orography);
 	if (debug) {
 		cout << " Processing neighbor: " << endl;
-		cout << " lat: " << nbr_lat << " lon: "<< nbr_lon << endl;
+		if (auto nbr_coords_latlon = dynamic_cast<latlon_coords*>(nbr_coords)){
+			cout << " lat: " <<  nbr_coords_latlon->get_lat() << " lon: "<< nbr_coords_latlon->get_lon() << endl;
+		}
 		cout << " center_orography: " << center_orography << endl;
 		cout << " new_orography:    " << nbr_orog << endl;
-		cout << " old orography:    " << (*orography)(nbr_lat,nbr_lon) << endl;
+		cout << " old orography:    " << (*orography)(nbr_coords) << endl;
 	}
-	(*orography)(nbr_lat,nbr_lon) = nbr_orog;
-	(*completed_cells)(nbr_lat,nbr_lon) = true;
+	(*orography)(nbr_coords) = nbr_orog;
+	(*completed_cells)(nbr_coords) = true;
 }
 
 void sink_filling_algorithm_4::process_neighbor(){
-	nbr_orog = (*orography)(nbr_lat,nbr_lon);
-	if (nbr_orog == no_data_value) (*rdirs)(nbr_lat,nbr_lon) = 0.0;
-	else (*rdirs)(nbr_lat,nbr_lon) = calculate_direction_from_neighbor_to_cell(nbr_lat,nbr_lon);
-	(*completed_cells)(nbr_lat,nbr_lon) = true;
-	(*catchment_nums)(nbr_lat,nbr_lon) = center_catchment_num;
+	nbr_orog = (*orography)(nbr_coords);
+	nbr_rim_height = max(nbr_orog,center_rim_height);
+	if (nbr_orog == no_data_value) set_cell_to_no_data_value(nbr_coords);
+	else {
+		set_index_based_rdirs(nbr_coords,center_coords);
+		if(not index_based_rdirs_only) {
+			static_cast<sink_filling_algorithm_4_latlon*>(this)->calculate_direction_from_neighbor_to_cell();
+		}
+	}
+	(*completed_cells)(nbr_coords) = true;
+	(*catchment_nums)(nbr_coords) = center_catchment_num;
 	if (debug){
 		cout << " Processing neighbor: " << endl;
-		cout << " lat: " << nbr_lat << " lon: "<< nbr_lon << endl;
+		if (auto nbr_coords_latlon = dynamic_cast<latlon_coords*>(nbr_coords)){
+			cout << " lat: " <<  nbr_coords_latlon->get_lat() << " lon: "<< nbr_coords_latlon->get_lon() << endl;
+		}
 	}
 }
 
 //Calculate the river flow direction from a neighbor to a central cell dealing with longitudinal
-//wrapping and defaulting to 5 if the neighbor and the central cells are not really neighbors
-double sink_filling_algorithm_4::calculate_direction_from_neighbor_to_cell(int nbr_lat_loc,int nbr_lon_loc){
-	double directions[9] = {3.0,2.0,1.0,6.0,5.0,4.0,9.0,8.0,7.0};
-	//deal with wrapping longitude
-	if (lon == 0 && nbr_lon_loc == nlon - 1) nbr_lon_loc = -1;
-	if (nbr_lon_loc == 0 && lon == nlon - 1) nbr_lon_loc = nlon;
-	//deal with the case of the neighbor and cell not actually being neighbors
-	if ((abs(nbr_lat_loc - lat) > 1) || (abs(nbr_lon_loc - lon) > 1)) return 5.0;
-	return directions[3*(nbr_lat_loc - lat) + (nbr_lon_loc - lon) + 4];
+//wrapping
+inline void sink_filling_algorithm_4_latlon::calculate_direction_from_neighbor_to_cell(){
+	(*rdirs)(nbr_coords) = _grid->calculate_dir_based_rdir(nbr_coords,center_coords);
 }
-
 
 inline void sink_filling_algorithm_1::push_neighbor()
 {
-	q.push(new cell(nbr_orog,nbr_lat,nbr_lon));
+	q.push(new cell(nbr_orog,nbr_coords->clone()));
 }
 
 inline void sink_filling_algorithm_4::push_neighbor()
 {
-	q.push(new cell(nbr_orog,nbr_lat,nbr_lon,center_catchment_num));
+	q.push(new cell(nbr_orog,nbr_coords->clone(),center_catchment_num,nbr_rim_height));
 }
 
-double sink_filling_algorithm_4::test_find_initial_cell_flow_direction(int lat_in,int lon_in,
-																	   int nlat_in,int nlon_in,
-																	   field<double>* orography_in,
-																	   field<bool>* landsea_in,
-																	   bool prefer_non_diagonals_in)
+void sink_filling_algorithm_4_latlon::set_cell_to_no_data_value(coords* coords_in){
+	(*next_cell_lat_index)(coords_in) = no_data_value;
+	(*next_cell_lon_index)(coords_in) = no_data_value;
+	if(not index_based_rdirs_only)(*rdirs)(coords_in) = 0.0;
+}
+
+void sink_filling_algorithm_4_latlon::set_cell_to_true_sink_value(coords* coords_in){
+	(*next_cell_lat_index)(coords_in) = true_sink_value;
+	(*next_cell_lon_index)(coords_in) = true_sink_value;
+	if(not index_based_rdirs_only)(*rdirs)(coords_in) = 5.0;
+}
+
+void sink_filling_algorithm_4_latlon::set_index_based_rdirs(coords* start_coords,coords* dest_coords){
+	auto latlon_dest_coords = static_cast<latlon_coords*>(dest_coords);
+	(*next_cell_lat_index)(start_coords) = latlon_dest_coords->get_lat();
+	(*next_cell_lon_index)(start_coords) = latlon_dest_coords->get_lon();
+}
+
+void sink_filling_algorithm_4_latlon::set_dir_based_rdir(coords* coords_in, double direction){
+	(*rdirs)(coords_in) = direction;
+}
+
+double sink_filling_algorithm_4_latlon::test_find_initial_cell_flow_direction(coords* coords_in,
+																	   	   	  grid_params* grid_params_in,
+																			  field<double>* orography_in,
+																			  field<bool>* landsea_in,
+																			  bool prefer_non_diagonals_in)
 {
-	nbr_lat = lat_in; nbr_lon = lon_in; nlat = nlat_in; nlon = nlon_in;
+	nbr_coords = coords_in; _grid_params = grid_params_in;
 	orography = orography_in; landsea = landsea_in;
 	prefer_non_diagonal_initial_dirs = prefer_non_diagonals_in;
-	return find_initial_cell_flow_direction();
+	index_based_rdirs_only = false;
+	rdirs = new field<double>(grid_params_in);
+	next_cell_lat_index = new field<int>(grid_params_in);
+	next_cell_lon_index = new field<int>(grid_params_in);
+	_grid = grid_factory(grid_params_in);
+	find_initial_cell_flow_direction();
+	return (*rdirs)(nbr_coords);
 }
 
-double sink_filling_algorithm_4::test_calculate_direction_from_neighbor_to_cell(int nbr_lat_in,
-																				int nbr_lon_in,
-																				int lat_in,
-																				int lon_in,
-																				int nlat_in,
-																				int nlon_in)
+double sink_filling_algorithm_4_latlon::test_calculate_direction_from_neighbor_to_cell(coords* nbr_coords_in,
+																					   coords* coords_in,
+																					   grid_params* grid_params_in)
+
 {
-	lat = lat_in; lon = lon_in; nlat = nlat_in; nlon = nlon_in;
-	return calculate_direction_from_neighbor_to_cell(nbr_lat_in,nbr_lon_in);
+	center_coords = coords_in;  nbr_coords = nbr_coords_in; _grid_params = grid_params_in;
+	index_based_rdirs_only = false;
+	rdirs = new field<double>(grid_params_in);
+	next_cell_lat_index = new field<int>(grid_params_in);
+	next_cell_lon_index = new field<int>(grid_params_in);
+	_grid = grid_factory(grid_params_in);
+	calculate_direction_from_neighbor_to_cell();
+	return (*rdirs)(nbr_coords);
 }

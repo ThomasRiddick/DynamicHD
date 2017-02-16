@@ -8,6 +8,10 @@
  */
 #include "cell.hpp"
 
+cell cell::operator= (const cell& cell_in){
+	return cell(cell_in);
+}
+
 //If the orography value of the cells is equal compare the k value
 //(order of insertion)
 bool operator> (const cell& lhs_cell,const cell& rhs_cell) {

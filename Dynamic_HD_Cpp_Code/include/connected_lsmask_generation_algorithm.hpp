@@ -10,6 +10,8 @@
 
 #include "cell.hpp"
 #include "field.hpp"
+#include "grid.hpp"
+#include "coords.hpp"
 #include <queue>
 
 class create_connected_landsea_mask{
@@ -18,7 +20,7 @@ public:
 	~create_connected_landsea_mask();
 	void setup_flags(bool use_diagonals_in);
 	void setup_fields(bool* landsea_in, bool* ls_seed_points_in,
-					  int nlat_in, int nlon_in);
+					  grid_params* grid_params_in);
 	void generate_connected_mask();
 	void add_ls_seed_points_to_q();
 	void process_neighbors();
@@ -27,16 +29,15 @@ public:
 
 private:
 	queue<landsea_cell*> q;
-	integerpair center_coords;
-	vector<integerpair*>* neighbors_coords = nullptr;
+	coords* center_coords;
+	grid_params* _grid_params = nullptr;
+	grid* _grid = nullptr;
+	vector<coords*>* neighbors_coords = nullptr;
 	field<bool>* landsea = nullptr;
 	field<bool>* completed_cells = nullptr;
 	field<bool>* ls_seed_points = nullptr;
 	bool use_diagonals = true;
-	int nlat = 0;
-	int nlon = 0;
-	int nbr_lat = 0;
-	int nbr_lon = 0;
+
 	int diagonal_neighbors = 0;
 };
 
