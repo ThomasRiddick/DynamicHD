@@ -2473,6 +2473,7 @@ contains
         integer, dimension(:,:), allocatable :: input_yamazaki_outlet_pixels
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
         type(latlon_section_coords) :: cell_section_coords
+        type(latlon_section_coords) :: input_yamazaki_section_coords
         class(coords), pointer :: initial_outlet_pixel
         class(coords), pointer :: result
             allocate(input_fine_river_directions(9,9))
@@ -2480,6 +2481,7 @@ contains
             allocate(input_yamazaki_outlet_pixels(9,9))
             allocate(initial_outlet_pixel,source=latlon_coords(4,6))
             cell_section_coords = latlon_section_coords(4,4,3,3)
+            input_yamazaki_section_coords = latlon_section_coords(1,1,18,18)
             input_fine_river_directions = transpose(reshape((/ 4,4,4, 4,4,4, 4,6,6,&
                                                                4,4,4, 4,4,4, 4,7,6,&
                                                                4,4,4, 4,4,6, 9,6,6,&
@@ -2512,13 +2514,1825 @@ contains
                                                          shape(input_fine_river_directions)))
             dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
                 input_fine_river_directions, input_fine_total_cumulative_flow, &
-                input_yamazaki_outlet_pixels)
+                input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
             result=>dir_based_rdirs_cell%yamazaki_test_find_downstream_cell(initial_outlet_pixel)
             select type (result)
             type is (latlon_coords)
-                write(*,*) result%lat
-                write(*,*) result%lon
+                call assert_equals(result%lat,1)
+                call assert_equals(result%lon,1)
             end select
     end subroutine testYamazakiFindDownstreamCellOne
+
+    subroutine testYamazakiFindDownstreamCellTwo
+        use area_mod
+        use coords_mod
+        use cotat_parameters_mod
+        integer, dimension(:,:), allocatable :: input_fine_river_directions
+        integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
+        integer, dimension(:,:), allocatable :: input_yamazaki_outlet_pixels
+        type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
+        type(latlon_section_coords) :: cell_section_coords
+        type(latlon_section_coords) :: input_yamazaki_section_coords
+        class(coords), pointer :: initial_outlet_pixel
+        class(coords), pointer :: result
+            allocate(input_fine_river_directions(9,9))
+            allocate(input_fine_total_cumulative_flow(9,9))
+            allocate(input_yamazaki_outlet_pixels(9,9))
+            allocate(initial_outlet_pixel,source=latlon_coords(4,6))
+            cell_section_coords = latlon_section_coords(4,4,3,3)
+            input_yamazaki_section_coords = latlon_section_coords(1,1,18,18)
+            input_fine_river_directions = transpose(reshape((/ 4,4,4, 4,4,4, 4,6,6,&
+                                                               4,4,4, 4,4,4, 4,7,6,&
+                                                               4,4,4, 4,4,6, 9,6,6,&
+                                                               5,5,5, 3,6,9, 5,5,5,&
+                                                               5,5,6, 6,8,8, 5,5,5,&
+                                                               5,5,5, 6,9,8, 5,5,5,&
+                                                               5,5,5, 5,5,5, 5,5,5,&
+                                                               5,5,5, 5,5,5, 5,5,5,&
+                                                               5,5,5, 5,5,5, 5,5,5 /),&
+                                          shape(input_fine_river_directions)))
+            input_fine_total_cumulative_flow = transpose(reshape((/ 19,18,17, 16,15,14, 13,1,1,&
+                                                                    1,1,1, 1,1,1, 1,12,1,&
+                                                                    1,1,1, 1,1,1, 11,1,1,&
+                                                                    1,1,1, 1,5,10, 1,1,1,&
+                                                                    1,1,1, 2,4,4, 1,1,1,&
+                                                                    1,1,1, 1,2,1, 1,1,1,&
+                                                                    1,1,1, 1,1,1, 1,1,1,&
+                                                                    1,1,1, 1,1,1, 1,1,1,&
+                                                                    1,1,1, 1,1,1, 1,1,1 /),&
+                                                         shape(input_fine_river_directions)))
+            input_yamazaki_outlet_pixels = transpose(reshape((/ 1,0,0, 1,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,1, 0,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0 /),&
+                                                         shape(input_fine_river_directions)))
+            dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
+                input_fine_river_directions, input_fine_total_cumulative_flow, &
+                input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
+            result=>dir_based_rdirs_cell%yamazaki_test_find_downstream_cell(initial_outlet_pixel)
+            select type (result)
+            type is (latlon_coords)
+                call assert_equals(result%lat,1)
+                call assert_equals(result%lon,2)
+            end select
+    end subroutine testYamazakiFindDownstreamCellTwo
+
+    subroutine testYamazakiFindDownstreamCellThree
+        use area_mod
+        use coords_mod
+        use cotat_parameters_mod
+        integer, dimension(:,:), allocatable :: input_fine_river_directions
+        integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
+        integer, dimension(:,:), allocatable :: input_yamazaki_outlet_pixels
+        type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
+        type(latlon_section_coords) :: cell_section_coords
+        type(latlon_section_coords) :: input_yamazaki_section_coords
+        class(coords), pointer :: initial_outlet_pixel
+        class(coords), pointer :: result
+            allocate(input_fine_river_directions(9,9))
+            allocate(input_fine_total_cumulative_flow(9,9))
+            allocate(input_yamazaki_outlet_pixels(9,9))
+            allocate(initial_outlet_pixel,source=latlon_coords(4,6))
+            cell_section_coords = latlon_section_coords(4,4,3,3)
+            input_yamazaki_section_coords = latlon_section_coords(1,1,18,18)
+            input_fine_river_directions = transpose(reshape((/ 4,4,4, 4,4,4, 4,6,6,&
+                                                               4,4,4, 4,4,4, 4,7,6,&
+                                                               4,4,4, 4,4,6, 9,6,6,&
+                                                               5,5,5, 3,6,9, 5,5,5,&
+                                                               5,5,6, 6,8,8, 5,5,5,&
+                                                               5,5,5, 6,9,8, 5,5,5,&
+                                                               5,5,5, 5,5,5, 5,5,5,&
+                                                               5,5,5, 5,5,5, 5,5,5,&
+                                                               5,5,5, 5,5,5, 5,5,5 /),&
+                                          shape(input_fine_river_directions)))
+            input_fine_total_cumulative_flow = transpose(reshape((/ 19,18,17, 16,15,14, 13,1,1,&
+                                                                    1,1,1, 1,1,1, 1,12,1,&
+                                                                    1,1,1, 1,1,1, 11,1,1,&
+                                                                    1,1,1, 1,5,10, 1,1,1,&
+                                                                    1,1,1, 2,4,4, 1,1,1,&
+                                                                    1,1,1, 1,2,1, 1,1,1,&
+                                                                    1,1,1, 1,1,1, 1,1,1,&
+                                                                    1,1,1, 1,1,1, 1,1,1,&
+                                                                    1,1,1, 1,1,1, 1,1,1 /),&
+                                                         shape(input_fine_river_directions)))
+            input_yamazaki_outlet_pixels = transpose(reshape((/ 1,0,0, 0,0,0, 1,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,1, 0,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0 /),&
+                                                         shape(input_fine_river_directions)))
+            dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
+                input_fine_river_directions, input_fine_total_cumulative_flow, &
+                input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
+            result=>dir_based_rdirs_cell%yamazaki_test_find_downstream_cell(initial_outlet_pixel)
+            select type (result)
+            type is (latlon_coords)
+                call assert_equals(result%lat,1)
+                call assert_equals(result%lon,3)
+            end select
+    end subroutine testYamazakiFindDownstreamCellThree
+
+    subroutine testYamazakiFindDownstreamCellFour
+        use area_mod
+        use coords_mod
+        use cotat_parameters_mod
+        integer, dimension(:,:), allocatable :: input_fine_river_directions
+        integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
+        integer, dimension(:,:), allocatable :: input_yamazaki_outlet_pixels
+        type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
+        type(latlon_section_coords) :: cell_section_coords
+        type(latlon_section_coords) :: input_yamazaki_section_coords
+        class(coords), pointer :: initial_outlet_pixel
+        class(coords), pointer :: result
+            allocate(input_fine_river_directions(9,9))
+            allocate(input_fine_total_cumulative_flow(9,9))
+            allocate(input_yamazaki_outlet_pixels(9,9))
+            allocate(initial_outlet_pixel,source=latlon_coords(4,6))
+            cell_section_coords = latlon_section_coords(4,4,3,3)
+            input_yamazaki_section_coords = latlon_section_coords(1,1,18,18)
+            input_fine_river_directions = transpose(reshape((/ 4,4,4, 4,4,4, 4,4,6,&
+                                                               4,4,4, 4,4,4, 4,4,6,&
+                                                               4,4,4, 4,4,4, 4,4,6,&
+                                                               5,5,5, 3,6,6, 3,5,5,&
+                                                               5,5,6, 6,8,8, 5,3,5,&
+                                                               5,5,5, 6,9,8, 5,5,1,&
+                                                               5,5,5, 5,5,5, 5,1,5,&
+                                                               4,4,4, 4,4,4, 4,5,5,&
+                                                               5,5,5, 5,5,5, 5,5,5 /),&
+                                          shape(input_fine_river_directions)))
+            input_fine_total_cumulative_flow = transpose(reshape((/ 1,1,1, 1,1,1, 1,1,1,&
+                                                                    1,1,1, 1,1,1, 1,1,1,&
+                                                                    1,1,1, 1,1,1, 1,1,1,&
+                                                                    1,1,1, 1,5,10, 11,1,1,&
+                                                                    1,1,1, 2,4,4, 1,12,1,&
+                                                                    1,1,1, 1,2,1, 1,1,13,&
+                                                                    1,1,1, 1,1,1, 1,14,1,&
+                                                                    21,20,19, 18,17,16, 15,1,1,&
+                                                                    1,1,1, 1,1,1, 1,1,1 /),&
+                                                         shape(input_fine_river_directions)))
+            input_yamazaki_outlet_pixels = transpose(reshape((/ 1,0,0, 0,0,0, 1,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,1, 0,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 1,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0 /),&
+                                                         shape(input_fine_river_directions)))
+            dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
+                input_fine_river_directions, input_fine_total_cumulative_flow, &
+                input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
+            result=>dir_based_rdirs_cell%yamazaki_test_find_downstream_cell(initial_outlet_pixel)
+            select type (result)
+            type is (latlon_coords)
+                call assert_equals(result%lat,3)
+                call assert_equals(result%lon,2)
+            end select
+    end subroutine testYamazakiFindDownstreamCellFour
+
+    subroutine testYamazakiFindDownstreamCellFive
+        use area_mod
+        use coords_mod
+        use cotat_parameters_mod
+        integer, dimension(:,:), allocatable :: input_fine_river_directions
+        integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
+        integer, dimension(:,:), allocatable :: input_yamazaki_outlet_pixels
+        type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
+        type(latlon_section_coords) :: cell_section_coords
+        type(latlon_section_coords) :: input_yamazaki_section_coords
+        class(coords), pointer :: initial_outlet_pixel
+        class(coords), pointer :: result
+            allocate(input_fine_river_directions(9,9))
+            allocate(input_fine_total_cumulative_flow(9,9))
+            allocate(input_yamazaki_outlet_pixels(9,9))
+            allocate(initial_outlet_pixel,source=latlon_coords(4,6))
+            cell_section_coords = latlon_section_coords(4,4,3,3)
+            input_yamazaki_section_coords = latlon_section_coords(1,1,18,18)
+            input_fine_river_directions = transpose(reshape((/ 4,4,4, 4,4,4, 4,4,6,&
+                                                               4,4,4, 4,4,4, 4,4,6,&
+                                                               4,4,4, 4,4,4, 4,4,6,&
+                                                               5,5,5, 3,6,6, 3,5,5,&
+                                                               5,5,6, 6,8,8, 5,3,5,&
+                                                               5,5,5, 6,9,8, 5,5,1,&
+                                                               5,5,5, 5,5,5, 5,1,5,&
+                                                               4,4,4, 4,4,4, 4,5,5,&
+                                                               5,5,5, 5,5,5, 5,5,5 /),&
+                                          shape(input_fine_river_directions)))
+            input_fine_total_cumulative_flow = transpose(reshape((/ 1,1,1, 1,1,1, 1,1,1,&
+                                                                    1,1,1, 1,1,1, 1,1,1,&
+                                                                    1,1,1, 1,1,1, 1,1,1,&
+                                                                    1,1,1, 1,5,10, 11,1,1,&
+                                                                    1,1,1, 2,4,4, 1,12,1,&
+                                                                    1,1,1, 1,2,1, 1,1,13,&
+                                                                    1,1,1, 1,1,1, 1,14,1,&
+                                                                    21,20,19, 18,17,16, 15,1,1,&
+                                                                    1,1,1, 1,1,1, 1,1,1 /),&
+                                                         shape(input_fine_river_directions)))
+            input_yamazaki_outlet_pixels = transpose(reshape((/ 1,0,0, 0,0,0, 1,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,1, 0,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                1,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0 /),&
+                                                         shape(input_fine_river_directions)))
+            dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
+                input_fine_river_directions, input_fine_total_cumulative_flow, &
+                input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
+            result=>dir_based_rdirs_cell%yamazaki_test_find_downstream_cell(initial_outlet_pixel)
+            select type (result)
+            type is (latlon_coords)
+                call assert_equals(result%lat,3)
+                call assert_equals(result%lon,1)
+            end select
+    end subroutine testYamazakiFindDownstreamCellFive
+
+    subroutine testYamazakiFindDownstreamCellSix
+        use area_mod
+        use coords_mod
+        use cotat_parameters_mod
+        integer, dimension(:,:), allocatable :: input_fine_river_directions
+        integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
+        integer, dimension(:,:), allocatable :: input_yamazaki_outlet_pixels
+        type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
+        type(latlon_section_coords) :: cell_section_coords
+        type(latlon_section_coords) :: input_yamazaki_section_coords
+        class(coords), pointer :: initial_outlet_pixel
+        class(coords), pointer :: result
+            allocate(input_fine_river_directions(9,9))
+            allocate(input_fine_total_cumulative_flow(9,9))
+            allocate(input_yamazaki_outlet_pixels(9,9))
+            allocate(initial_outlet_pixel,source=latlon_coords(4,6))
+            cell_section_coords = latlon_section_coords(4,4,3,3)
+            input_yamazaki_section_coords = latlon_section_coords(1,1,18,18)
+            input_fine_river_directions = transpose(reshape((/ 4,4,4, 4,4,4, 4,4,6,&
+                                                               4,4,4, 4,4,4, 4,4,6,&
+                                                               4,4,4, 4,4,4, 4,4,6,&
+                                                               5,5,5, 3,6,6, 3,5,5,&
+                                                               5,5,6, 6,8,8, 5,3,5,&
+                                                               5,5,5, 6,9,8, 5,5,1,&
+                                                               5,5,5, 5,5,5, 5,1,5,&
+                                                               4,4,4, 4,4,4, 4,5,5,&
+                                                               5,5,5, 5,5,5, 5,5,5 /),&
+                                          shape(input_fine_river_directions)))
+            input_fine_total_cumulative_flow = transpose(reshape((/ 1,1,1, 1,1,1, 1,1,1,&
+                                                                    1,1,1, 1,1,1, 1,1,1,&
+                                                                    1,1,1, 1,1,1, 1,1,1,&
+                                                                    1,1,1, 1,5,10, 11,1,1,&
+                                                                    1,1,1, 2,4,4, 1,12,1,&
+                                                                    1,1,1, 1,2,1, 1,1,13,&
+                                                                    1,1,1, 1,1,1, 1,14,1,&
+                                                                    21,20,19, 18,17,16, 15,1,1,&
+                                                                    1,1,1, 1,1,1, 1,1,1 /),&
+                                                         shape(input_fine_river_directions)))
+            input_yamazaki_outlet_pixels = transpose(reshape((/ 1,0,0, 0,0,0, 1,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,1, 0,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,0, 1,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0 /),&
+                                                         shape(input_fine_river_directions)))
+            dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
+                input_fine_river_directions, input_fine_total_cumulative_flow, &
+                input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
+            result=>dir_based_rdirs_cell%yamazaki_test_find_downstream_cell(initial_outlet_pixel)
+            select type (result)
+            type is (latlon_coords)
+                call assert_equals(result%lat,3)
+                call assert_equals(result%lon,3)
+            end select
+    end subroutine testYamazakiFindDownstreamCellSix
+
+    subroutine testYamazakiFindDownstreamCellSeven
+        use area_mod
+        use coords_mod
+        use cotat_parameters_mod
+        integer, dimension(:,:), allocatable :: input_fine_river_directions
+        integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
+        integer, dimension(:,:), allocatable :: input_yamazaki_outlet_pixels
+        type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
+        type(latlon_section_coords) :: cell_section_coords
+        type(latlon_section_coords) :: input_yamazaki_section_coords
+        class(coords), pointer :: initial_outlet_pixel
+        class(coords), pointer :: result
+            allocate(input_fine_river_directions(9,9))
+            allocate(input_fine_total_cumulative_flow(9,9))
+            allocate(input_yamazaki_outlet_pixels(9,9))
+            allocate(initial_outlet_pixel,source=latlon_coords(4,6))
+            cell_section_coords = latlon_section_coords(4,4,3,3)
+            input_yamazaki_section_coords = latlon_section_coords(1,1,18,18)
+            input_fine_river_directions = transpose(reshape((/ 4,4,4, 4,4,4, 4,4,6,&
+                                                               4,4,4, 4,4,4, 4,4,6,&
+                                                               4,4,4, 4,4,4, 4,4,6,&
+                                                               5,5,5, 3,6,6, 3,5,5,&
+                                                               5,5,6, 6,8,8, 5,3,5,&
+                                                               5,5,5, 6,9,8, 5,5,1,&
+                                                               5,5,5, 5,5,5, 5,1,5,&
+                                                               4,4,4, 4,4,4, 4,5,5,&
+                                                               5,5,5, 5,5,5, 5,5,5 /),&
+                                          shape(input_fine_river_directions)))
+            input_fine_total_cumulative_flow = transpose(reshape((/ 1,1,1, 1,1,1, 1,1,1,&
+                                                                    1,1,1, 1,1,1, 1,1,1,&
+                                                                    1,1,1, 1,1,1, 1,1,1,&
+                                                                    1,1,1, 1,5,10, 11,1,1,&
+                                                                    1,1,1, 2,4,4, 1,12,1,&
+                                                                    1,1,1, 1,2,1, 1,1,13,&
+                                                                    1,1,1, 1,1,1, 1,14,1,&
+                                                                    21,20,19, 18,17,16, 15,1,1,&
+                                                                    1,1,1, 1,1,1, 1,1,1 /),&
+                                                         shape(input_fine_river_directions)))
+            input_yamazaki_outlet_pixels = transpose(reshape((/ 1,0,0, 0,0,0, 1,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,1, 0,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,1,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,0, 1,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0 /),&
+                                                         shape(input_fine_river_directions)))
+            dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
+                input_fine_river_directions, input_fine_total_cumulative_flow, &
+                input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
+            result=>dir_based_rdirs_cell%yamazaki_test_find_downstream_cell(initial_outlet_pixel)
+            select type (result)
+            type is (latlon_coords)
+                call assert_equals(result%lat,2)
+                call assert_equals(result%lon,3)
+            end select
+    end subroutine testYamazakiFindDownstreamCellSeven
+
+    subroutine testYamazakiFindDownstreamCellEight
+        use area_mod
+        use coords_mod
+        use cotat_parameters_mod
+        integer, dimension(:,:), allocatable :: input_fine_river_directions
+        integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
+        integer, dimension(:,:), allocatable :: input_yamazaki_outlet_pixels
+        type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
+        type(latlon_section_coords) :: cell_section_coords
+        type(latlon_section_coords) :: input_yamazaki_section_coords
+        class(coords), pointer :: initial_outlet_pixel
+        class(coords), pointer :: result
+            MUFP = 1.5
+            allocate(input_fine_river_directions(9,9))
+            allocate(input_fine_total_cumulative_flow(9,9))
+            allocate(input_yamazaki_outlet_pixels(9,9))
+            allocate(initial_outlet_pixel,source=latlon_coords(4,6))
+            cell_section_coords = latlon_section_coords(4,4,3,3)
+            input_yamazaki_section_coords = latlon_section_coords(1,1,18,18)
+            input_fine_river_directions = transpose(reshape((/ 4,4,4, 4,4,4, 4,4,8,&
+                                                               4,4,4, 4,4,4, 4,4,8,&
+                                                               4,4,4, 4,4,4, 4,6,8,&
+                                                               5,5,5, 3,6,6, 9,5,5,&
+                                                               5,5,5, 6,8,8, 5,5,5,&
+                                                               5,5,5, 6,9,8, 5,5,5,&
+                                                               5,5,5, 5,5,5, 5,5,5,&
+                                                               5,5,5, 5,5,5, 5,5,5,&
+                                                               5,5,5, 5,5,5, 5,5,5 /),&
+                                          shape(input_fine_river_directions)))
+            input_fine_total_cumulative_flow = transpose(reshape((/ 1,1,1, 1,1,1, 1,1,15,&
+                                                                    1,1,1, 1,1,1, 1,1,14,&
+                                                                    1,1,1, 1,1,1, 1,12,13,&
+                                                                    1,1,1, 1,5,10, 11,1,1,&
+                                                                    1,1,1, 2,4,4, 1,1,1,&
+                                                                    1,1,1, 1,2,1, 1,1,1,&
+                                                                    1,1,1, 1,1,1, 1,1,1,&
+                                                                    1,1,1, 1,1,1, 1,1,1,&
+                                                                    1,1,1, 1,1,1, 1,1,1 /),&
+                                                         shape(input_fine_river_directions)))
+            input_yamazaki_outlet_pixels = transpose(reshape((/ 1,0,0, 0,0,0, 0,0,1,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,1, 1,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,0, 1,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0 /),&
+                                                         shape(input_fine_river_directions)))
+            dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
+                input_fine_river_directions, input_fine_total_cumulative_flow, &
+                input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
+            result=>dir_based_rdirs_cell%yamazaki_test_find_downstream_cell(initial_outlet_pixel)
+            select type (result)
+            type is (latlon_coords)
+                call assert_equals(result%lat,1)
+                call assert_equals(result%lon,3)
+            end select
+    end subroutine testYamazakiFindDownstreamCellEight
+
+    subroutine testYamazakiFindDownstreamCellNine
+        use area_mod
+        use coords_mod
+        use cotat_parameters_mod
+        integer, dimension(:,:), allocatable :: input_fine_river_directions
+        integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
+        integer, dimension(:,:), allocatable :: input_yamazaki_outlet_pixels
+        type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
+        type(latlon_section_coords) :: cell_section_coords
+        type(latlon_section_coords) :: input_yamazaki_section_coords
+        class(coords), pointer :: initial_outlet_pixel
+        class(coords), pointer :: result
+            MUFP = 1.0
+            allocate(input_fine_river_directions(9,9))
+            allocate(input_fine_total_cumulative_flow(9,9))
+            allocate(input_yamazaki_outlet_pixels(9,9))
+            allocate(initial_outlet_pixel,source=latlon_coords(4,6))
+            cell_section_coords = latlon_section_coords(4,4,3,3)
+            input_yamazaki_section_coords = latlon_section_coords(1,1,18,18)
+            input_fine_river_directions = transpose(reshape((/ 4,4,4, 4,4,4, 4,4,8,&
+                                                               4,4,4, 4,4,4, 4,4,8,&
+                                                               4,4,4, 4,4,4, 4,6,8,&
+                                                               5,5,5, 3,6,6, 9,5,5,&
+                                                               5,5,5, 6,8,8, 5,5,5,&
+                                                               5,5,5, 6,9,8, 5,5,5,&
+                                                               5,5,5, 5,5,5, 5,5,5,&
+                                                               5,5,5, 5,5,5, 5,5,5,&
+                                                               5,5,5, 5,5,5, 5,5,5 /),&
+                                          shape(input_fine_river_directions)))
+            input_fine_total_cumulative_flow = transpose(reshape((/ 1,1,1, 1,1,1, 1,1,15,&
+                                                                    1,1,1, 1,1,1, 1,1,14,&
+                                                                    1,1,1, 1,1,1, 1,12,13,&
+                                                                    1,1,1, 1,5,10, 11,1,1,&
+                                                                    1,1,1, 2,4,4, 1,1,1,&
+                                                                    1,1,1, 1,2,1, 1,1,1,&
+                                                                    1,1,1, 1,1,1, 1,1,1,&
+                                                                    1,1,1, 1,1,1, 1,1,1,&
+                                                                    1,1,1, 1,1,1, 1,1,1 /),&
+                                                         shape(input_fine_river_directions)))
+            input_yamazaki_outlet_pixels = transpose(reshape((/ 1,0,0, 0,0,0, 0,0,1,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,1, 1,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,0, 1,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0 /),&
+                                                         shape(input_fine_river_directions)))
+            dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
+                input_fine_river_directions, input_fine_total_cumulative_flow, &
+                input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
+            result=>dir_based_rdirs_cell%yamazaki_test_find_downstream_cell(initial_outlet_pixel)
+            select type (result)
+            type is (latlon_coords)
+                call assert_equals(result%lat,2)
+                call assert_equals(result%lon,3)
+            end select
+    end subroutine testYamazakiFindDownstreamCellNine
+
+    subroutine testYamazakiFindDownstreamCellTen
+        use area_mod
+        use coords_mod
+        use cotat_parameters_mod
+        integer, dimension(:,:), allocatable :: input_fine_river_directions
+        integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
+        integer, dimension(:,:), allocatable :: input_yamazaki_outlet_pixels
+        type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
+        type(latlon_section_coords) :: cell_section_coords
+        type(latlon_section_coords) :: input_yamazaki_section_coords
+        class(coords), pointer :: initial_outlet_pixel
+        class(coords), pointer :: result
+            MUFP = 1.0
+            allocate(input_fine_river_directions(9,9))
+            allocate(input_fine_total_cumulative_flow(9,9))
+            allocate(input_yamazaki_outlet_pixels(9,9))
+            allocate(initial_outlet_pixel,source=latlon_coords(4,6))
+            cell_section_coords = latlon_section_coords(4,4,3,3)
+            input_yamazaki_section_coords = latlon_section_coords(1,1,18,18)
+            input_fine_river_directions = transpose(reshape((/ 4,4,4, 4,4,4, 4,4,8,&
+                                                               4,4,4, 4,4,4, 4,4,8,&
+                                                               4,4,4, 4,4,4, 6,6,8,&
+                                                               5,5,5, 3,6,6, 8,5,5,&
+                                                               5,5,5, 6,8,8, 5,5,5,&
+                                                               5,5,5, 6,9,8, 5,5,5,&
+                                                               5,5,5, 5,5,5, 5,5,5,&
+                                                               5,5,5, 5,5,5, 5,5,5,&
+                                                               5,5,5, 5,5,5, 5,5,5 /),&
+                                          shape(input_fine_river_directions)))
+            input_fine_total_cumulative_flow = transpose(reshape((/ 1,1,1, 1,1,1, 1,1,16,&
+                                                                    1,1,1, 1,1,1, 1,1,15,&
+                                                                    1,1,1, 1,1,1, 12,13,14,&
+                                                                    1,1,1, 1,5,10, 11,1,1,&
+                                                                    1,1,1, 2,4,4, 1,1,1,&
+                                                                    1,1,1, 1,2,1, 1,1,1,&
+                                                                    1,1,1, 1,1,1, 1,1,1,&
+                                                                    1,1,1, 1,1,1, 1,1,1,&
+                                                                    1,1,1, 1,1,1, 1,1,1 /),&
+                                                         shape(input_fine_river_directions)))
+            input_yamazaki_outlet_pixels = transpose(reshape((/ 1,0,0, 0,0,0, 0,0,1,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,1, 1,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,0, 1,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0 /),&
+                                                         shape(input_fine_river_directions)))
+            dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
+                input_fine_river_directions, input_fine_total_cumulative_flow, &
+                input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
+            result=>dir_based_rdirs_cell%yamazaki_test_find_downstream_cell(initial_outlet_pixel)
+            select type (result)
+            type is (latlon_coords)
+                call assert_equals(result%lat,1)
+                call assert_equals(result%lon,3)
+            end select
+   end subroutine testYamazakiFindDownstreamCellTen
+
+   subroutine testYamazakiFindDownstreamCellEleven
+        use area_mod
+        use coords_mod
+        use cotat_parameters_mod
+        integer, dimension(:,:), allocatable :: input_fine_river_directions
+        integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
+        integer, dimension(:,:), allocatable :: input_yamazaki_outlet_pixels
+        type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
+        type(latlon_section_coords) :: cell_section_coords
+        type(latlon_section_coords) :: input_yamazaki_section_coords
+        class(coords), pointer :: initial_outlet_pixel
+        class(coords), pointer :: result
+            MUFP = 0.5
+            allocate(input_fine_river_directions(9,9))
+            allocate(input_fine_total_cumulative_flow(9,9))
+            allocate(input_yamazaki_outlet_pixels(9,9))
+            allocate(initial_outlet_pixel,source=latlon_coords(4,6))
+            cell_section_coords = latlon_section_coords(4,4,3,3)
+            input_yamazaki_section_coords = latlon_section_coords(1,1,18,18)
+            input_fine_river_directions = transpose(reshape((/ 4,4,4, 4,4,4, 4,4,8,&
+                                                               4,4,4, 4,4,4, 4,4,8,&
+                                                               4,4,4, 4,4,4, 6,6,8,&
+                                                               5,5,5, 3,6,6, 8,5,5,&
+                                                               5,5,5, 6,8,8, 5,5,5,&
+                                                               5,5,5, 6,9,8, 5,5,5,&
+                                                               5,5,5, 5,5,5, 5,5,5,&
+                                                               5,5,5, 5,5,5, 5,5,5,&
+                                                               5,5,5, 5,5,5, 5,5,5 /),&
+                                          shape(input_fine_river_directions)))
+            input_fine_total_cumulative_flow = transpose(reshape((/ 1,1,1, 1,1,1, 1,1,16,&
+                                                                    1,1,1, 1,1,1, 1,1,15,&
+                                                                    1,1,1, 1,1,1, 12,13,14,&
+                                                                    1,1,1, 1,5,10, 11,1,1,&
+                                                                    1,1,1, 2,4,4, 1,1,1,&
+                                                                    1,1,1, 1,2,1, 1,1,1,&
+                                                                    1,1,1, 1,1,1, 1,1,1,&
+                                                                    1,1,1, 1,1,1, 1,1,1,&
+                                                                    1,1,1, 1,1,1, 1,1,1 /),&
+                                                         shape(input_fine_river_directions)))
+            input_yamazaki_outlet_pixels = transpose(reshape((/ 1,0,0, 0,0,0, 0,0,1,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,1, 1,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,0, 1,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0 /),&
+                                                         shape(input_fine_river_directions)))
+            dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
+                input_fine_river_directions, input_fine_total_cumulative_flow, &
+                input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
+            result=>dir_based_rdirs_cell%yamazaki_test_find_downstream_cell(initial_outlet_pixel)
+            select type (result)
+            type is (latlon_coords)
+                call assert_equals(result%lat,2)
+                call assert_equals(result%lon,3)
+            end select
+    end subroutine testYamazakiFindDownstreamCellEleven
+
+    subroutine testYamazakiFindDownstreamCellTwelve
+        use area_mod
+        use coords_mod
+        use cotat_parameters_mod
+        integer, dimension(:,:), allocatable :: input_fine_river_directions
+        integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
+        integer, dimension(:,:), allocatable :: input_yamazaki_outlet_pixels
+        type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
+        type(latlon_section_coords) :: cell_section_coords
+        type(latlon_section_coords) :: input_yamazaki_section_coords
+        class(coords), pointer :: initial_outlet_pixel
+        class(coords), pointer :: result
+            MUFP = 0.5
+            allocate(input_fine_river_directions(9,9))
+            allocate(input_fine_total_cumulative_flow(9,9))
+            allocate(input_yamazaki_outlet_pixels(9,9))
+            allocate(initial_outlet_pixel,source=latlon_coords(5,4))
+            cell_section_coords = latlon_section_coords(4,4,3,3)
+            input_yamazaki_section_coords = latlon_section_coords(1,1,18,18)
+            input_fine_river_directions = transpose(reshape((/ 4,4,4, 4,4,4, 4,4,5,&
+                                                               4,4,4, 4,4,4, 4,4,5,&
+                                                               4,4,4, 4,4,4, 4,4,5,&
+                                                               5,5,5, 2,2,4, 5,5,5,&
+                                                               5,1,4, 4,4,4, 5,5,5,&
+                                                               7,5,5, 8,7,4, 5,5,5,&
+                                                               5,5,5, 5,5,5, 5,5,5,&
+                                                               5,5,5, 5,5,5, 5,5,5,&
+                                                               5,5,5, 5,5,5, 5,5,5 /),&
+                                          shape(input_fine_river_directions)))
+            input_fine_total_cumulative_flow = transpose(reshape((/ 1,1,1,  1,1,1, 1,1,1, &
+                                                                    1,1,1,  1,1,1, 1,1,1, &
+                                                                    1,1,1,  1,1,1, 1,1,1, &
+                                                                    1,1,1,  2,2,1, 1,1,1, &
+                                                                    1,9,8,  4,4,1, 1,1,1, &
+                                                                    10,1,1, 1,2,1, 1,1,1, &
+                                                                    1,1,1,  1,1,1, 1,1,1, &
+                                                                    1,1,1,  1,1,1, 1,1,1, &
+                                                                    1,1,1,  1,1,1, 1,1,1/),&
+                                                         shape(input_fine_river_directions)))
+            input_yamazaki_outlet_pixels = transpose(reshape((/ 1,0,0, 0,0,0, 0,0,1,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,0, 1,0,0,&
+                                                                0,0,0, 1,0,0, 0,0,0,&
+                                                                1,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0,&
+                                                                0,0,0, 0,0,0, 1,0,0,&
+                                                                0,0,0, 0,0,0, 0,0,0 /),&
+                                                         shape(input_fine_river_directions)))
+            dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
+                input_fine_river_directions, input_fine_total_cumulative_flow, &
+                input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
+            result=>dir_based_rdirs_cell%yamazaki_test_find_downstream_cell(initial_outlet_pixel)
+            select type (result)
+            type is (latlon_coords)
+                call assert_equals(result%lat,2)
+                call assert_equals(result%lon,1)
+            end select
+    end subroutine testYamazakiFindDownstreamCellTwelve
+
+    subroutine testYamazakiFindDownstreamCellThirteen
+        use area_mod
+        use coords_mod
+        use cotat_parameters_mod
+        integer, dimension(:,:), allocatable :: input_fine_river_directions
+        integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
+        integer, dimension(:,:), allocatable :: input_yamazaki_outlet_pixels
+        type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
+        type(latlon_section_coords) :: cell_section_coords
+        type(latlon_section_coords) :: input_yamazaki_section_coords
+        class(coords), pointer :: initial_outlet_pixel
+        class(coords), pointer :: result
+            MUFP = 1.5
+            allocate(input_fine_river_directions(18,18))
+            allocate(input_fine_total_cumulative_flow(18,18))
+            allocate(input_yamazaki_outlet_pixels(18,18))
+            allocate(initial_outlet_pixel,source=latlon_coords(9,9))
+            cell_section_coords = latlon_section_coords(7,7,3,3)
+            input_yamazaki_section_coords = latlon_section_coords(1,1,18,18)
+            input_fine_river_directions = transpose(reshape((/ 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+
+                                                               5,5,5, 5,5,5, 6,2,1, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 6,3,2, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 9,6,3, 5,5,5, 5,5,5, 5,5,5, &
+
+                                                               5,5,5, 5,5,5, 5,5,5, 2,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 2,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 2,5,5, 5,5,5, 5,5,5, &
+
+                                                               5,5,5, 5,5,5, 5,5,5, 2,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 6,2,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,3,5, 5,6,6, 6,6,6, &
+
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,6, 6,8,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5/),&
+                                          shape(input_fine_river_directions)))
+
+            input_fine_total_cumulative_flow = transpose(reshape((/ 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+
+                                                                    1,1,1, 1,1,1, 1,2,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,6,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,9, 1,1,1, 1,1,1, 1,1,1, &
+
+                                                                    1,1,1, 1,1,1, 1,1,1, 10,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 11,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 12,1,1, 1,1,1, 1,1,1, &
+
+                                                                    1,1,1, 1,1,1, 1,1,1, 13,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 14,15,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,16,1, 1,20,21, 22,23,24, &
+
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,17, 18,19,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1/), &
+                                                         shape(input_fine_river_directions)))
+
+            input_yamazaki_outlet_pixels = transpose(reshape((/ 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,1, 0,0,0, 0,0,0, 0,0,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,1,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0/), &
+                                                         shape(input_fine_river_directions)))
+
+            dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
+                input_fine_river_directions, input_fine_total_cumulative_flow, &
+                input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
+            result=>dir_based_rdirs_cell%yamazaki_test_find_downstream_cell(initial_outlet_pixel)
+            select type (result)
+            type is (latlon_coords)
+                call assert_equals(result%lat,6)
+                call assert_equals(result%lon,5)
+            end select
+    end subroutine testYamazakiFindDownstreamCellThirteen
+
+    subroutine testYamazakiFindDownstreamCellFourteen
+        use area_mod
+        use coords_mod
+        use cotat_parameters_mod
+        integer, dimension(:,:), allocatable :: input_fine_river_directions
+        integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
+        integer, dimension(:,:), allocatable :: input_yamazaki_outlet_pixels
+        type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
+        type(latlon_section_coords) :: cell_section_coords
+        type(latlon_section_coords) :: input_yamazaki_section_coords
+        class(coords), pointer :: initial_outlet_pixel
+        class(coords), pointer :: result
+            MUFP = 1.5
+            allocate(input_fine_river_directions(18,18))
+            allocate(input_fine_total_cumulative_flow(18,18))
+            allocate(input_yamazaki_outlet_pixels(18,18))
+            allocate(initial_outlet_pixel,source=latlon_coords(8,7))
+            cell_section_coords = latlon_section_coords(7,7,3,3)
+            input_yamazaki_section_coords = latlon_section_coords(1,1,18,18)
+            input_fine_river_directions = transpose(reshape((/ 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+
+                                                               5,5,5, 5,5,5, 3,2,1, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,2,4, 4,4,4, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,2,5, 8,8,7, 5,5,5, 5,5,5, 5,5,5, &
+
+                                                               5,5,5, 5,2,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,3,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,3, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+
+                                                               5,5,5, 5,5,5, 6,2,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,2,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 1,4,5, 5,5,5, 5,5,5, 5,5,5, &
+
+                                                               5,5,5, 5,5,2, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               4,4,4, 4,4,4, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5/),&
+                                          shape(input_fine_river_directions)))
+
+            input_fine_total_cumulative_flow = transpose(reshape((/ 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,10,9, 8,6,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,11,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+
+                                                                    1,1,1, 1,12,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,13,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,14, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+
+                                                                    1,1,1, 1,1,1, 15,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,16,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 18,17,1, 1,1,1, 1,1,1, 1,1,1, &
+
+                                                                    1,1,1, 1,1,19, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    25,24,23, 22,21,20, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1/), &
+                                                         shape(input_fine_river_directions)))
+
+            input_yamazaki_outlet_pixels = transpose(reshape((/ 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 1,0,0, 0,0,0, 0,0,1, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,1,0, 0,0,0, 0,0,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 1,0,0, 0,0,0, 0,1,0, 0,0,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,1,0, 0,0,0, &
+                                                                1,0,0, 1,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0/), &
+                                                         shape(input_fine_river_directions)))
+
+            dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
+                input_fine_river_directions, input_fine_total_cumulative_flow, &
+                input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
+            result=>dir_based_rdirs_cell%yamazaki_test_find_downstream_cell(initial_outlet_pixel)
+            select type (result)
+            type is (latlon_coords)
+                call assert_equals(result%lat,5)
+                call assert_equals(result%lon,3)
+            end select
+    end subroutine testYamazakiFindDownstreamCellFourteen
+
+    subroutine testYamazakiFindDownstreamCellFifteen
+        use area_mod
+        use coords_mod
+        use cotat_parameters_mod
+        integer, dimension(:,:), allocatable :: input_fine_river_directions
+        integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
+        integer, dimension(:,:), allocatable :: input_yamazaki_outlet_pixels
+        type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
+        type(latlon_section_coords) :: cell_section_coords
+        type(latlon_section_coords) :: input_yamazaki_section_coords
+        class(coords), pointer :: initial_outlet_pixel
+        class(coords), pointer :: result
+            MUFP = 1.5
+            allocate(input_fine_river_directions(18,18))
+            allocate(input_fine_total_cumulative_flow(18,18))
+            allocate(input_yamazaki_outlet_pixels(18,18))
+            allocate(initial_outlet_pixel,source=latlon_coords(8,7))
+            cell_section_coords = latlon_section_coords(7,7,3,3)
+            input_yamazaki_section_coords = latlon_section_coords(1,1,18,18)
+            input_fine_river_directions = transpose(reshape((/ 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+
+                                                               5,5,5, 5,5,5, 3,2,1, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,2,4, 4,4,4, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,2,5, 8,8,7, 5,5,5, 5,5,5, 5,5,5, &
+
+                                                               5,5,5, 5,2,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,3,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,3, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+
+                                                               5,5,5, 5,5,5, 6,2,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,2,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 1,4,5, 5,5,5, 5,5,5, 5,5,5, &
+
+                                                               5,5,5, 5,5,2, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               4,4,4, 4,4,4, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5/),&
+                                          shape(input_fine_river_directions)))
+
+            input_fine_total_cumulative_flow = transpose(reshape((/ 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,10,9, 8,6,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,11,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+
+                                                                    1,1,1, 1,12,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,13,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,14, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+
+                                                                    1,1,1, 1,1,1, 15,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,16,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 18,17,1, 1,1,1, 1,1,1, 1,1,1, &
+
+                                                                    1,1,1, 1,1,19, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    25,24,23, 22,21,20, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1/), &
+                                                         shape(input_fine_river_directions)))
+
+            input_yamazaki_outlet_pixels = transpose(reshape((/ 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 1,0,0, 0,0,0, 0,0,1, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,1,0, 0,0,0, 0,0,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 1,0,0, 0,0,0, 0,1,0, 0,0,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,1,0, 0,0,0, &
+                                                                1,0,0, 1,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0/), &
+                                                         shape(input_fine_river_directions)))
+
+            dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
+                input_fine_river_directions, input_fine_total_cumulative_flow, &
+                input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
+            result=>dir_based_rdirs_cell%yamazaki_test_find_downstream_cell(initial_outlet_pixel)
+            select type (result)
+            type is (latlon_coords)
+                call assert_equals(result%lat,5)
+                call assert_equals(result%lon,3)
+            end select
+    end subroutine testYamazakiFindDownstreamCellFifteen
+
+    subroutine testYamazakiFindDownstreamCellSixteen
+        use area_mod
+        use coords_mod
+        use cotat_parameters_mod
+        integer, dimension(:,:), allocatable :: input_fine_river_directions
+        integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
+        integer, dimension(:,:), allocatable :: input_yamazaki_outlet_pixels
+        type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
+        type(latlon_section_coords) :: cell_section_coords
+        type(latlon_section_coords) :: input_yamazaki_section_coords
+        class(coords), pointer :: initial_outlet_pixel
+        class(coords), pointer :: result
+            MUFP = 1.5
+            allocate(input_fine_river_directions(18,18))
+            allocate(input_fine_total_cumulative_flow(18,18))
+            allocate(input_yamazaki_outlet_pixels(18,18))
+            allocate(initial_outlet_pixel,source=latlon_coords(11,7))
+            cell_section_coords = latlon_section_coords(10,7,3,3)
+            input_yamazaki_section_coords = latlon_section_coords(1,1,18,18)
+            input_fine_river_directions = transpose(reshape((/ 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+
+                                                               1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                               1,1,1, 1,1,1, 6,6,6, 6,3,1, 1,1,1, 1,1,1, &
+                                                               1,1,1, 1,1,9, 1,1,1, 1,1,3, 1,1,1, 1,1,1, &
+
+                                                               1,1,1, 1,9,1, 1,1,1, 1,1,1, 2,1,1, 1,1,1, &
+                                                               1,1,1, 1,8,1, 1,1,1, 1,1,1, 2,1,1, 1,1,1, &
+                                                               1,1,1, 1,8,1, 1,1,1, 1,1,1, 2,1,1, 1,1,1, &
+
+                                                               1,1,1, 1,8,1, 3,2,1, 1,1,1, 2,1,1, 1,1,1, &
+                                                               1,1,1, 1,1,7, 4,4,4, 1,1,1, 2,1,1, 1,1,1, &
+                                                               1,1,1, 1,1,1, 8,8,7, 1,1,1, 2,1,1, 1,1,1, &
+
+                                                               1,1,1, 1,1,1, 1,1,1, 1,1,1, 2,1,1, 1,1,1, &
+                                                               4,4,4, 4,4,4, 4,4,4, 4,4,4, 4,1,1, 1,1,1, &
+                                                               1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5/),&
+                                          shape(input_fine_river_directions)))
+
+            input_fine_total_cumulative_flow = transpose(reshape((/ 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 15,16,17, 18,19,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,14, 1,1,1, 1,1,20, 1,1,1, 1,1,1, &
+
+                                                                    1,1,1, 1,13,1, 1,1,1, 1,1,1, 21,1,1, 1,1,1, &
+                                                                    1,1,1, 1,12,1, 1,1,1, 1,1,1, 22,1,1, 1,1,1, &
+                                                                    1,1,1, 1,11,1, 1,1,1, 1,1,1, 23,1,1, 1,1,1, &
+
+                                                                    1,1,1, 1,10,1, 1,1,1, 1,1,1, 24,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,9, 8,6,1, 1,1,1, 25,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 26,1,1, 1,1,1, &
+
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 27,1,1, 1,1,1, &
+                                                                    40,39,38, 37,36,35, 34,33,32, 31,30,29, 28,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1/), &
+                                                         shape(input_fine_river_directions)))
+
+            input_yamazaki_outlet_pixels = transpose(reshape((/ 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 1,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 1,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0/), &
+                                                         shape(input_fine_river_directions)))
+
+            dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
+                input_fine_river_directions, input_fine_total_cumulative_flow, &
+                input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
+            result=>dir_based_rdirs_cell%yamazaki_test_find_downstream_cell(initial_outlet_pixel)
+            select type (result)
+            type is (latlon_coords)
+                call assert_equals(result%lat,5)
+                call assert_equals(result%lon,3)
+            end select
+    end subroutine testYamazakiFindDownstreamCellSixteen
+
+    subroutine testYamazakiFindDownstreamCellSeventeen
+        use area_mod
+        use coords_mod
+        use cotat_parameters_mod
+        integer, dimension(:,:), allocatable :: input_fine_river_directions
+        integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
+        integer, dimension(:,:), allocatable :: input_yamazaki_outlet_pixels
+        type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
+        type(latlon_section_coords) :: cell_section_coords
+        type(latlon_section_coords) :: input_yamazaki_section_coords
+        class(coords), pointer :: initial_outlet_pixel
+        class(coords), pointer :: result
+            MUFP = 1.5
+            yamazaki_max_range = 5
+            allocate(input_fine_river_directions(18,18))
+            allocate(input_fine_total_cumulative_flow(18,18))
+            allocate(input_yamazaki_outlet_pixels(18,18))
+            allocate(initial_outlet_pixel,source=latlon_coords(11,7))
+            cell_section_coords = latlon_section_coords(10,7,3,3)
+            input_yamazaki_section_coords = latlon_section_coords(1,1,18,18)
+            input_fine_river_directions = transpose(reshape((/ 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+
+                                                               1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                               1,1,1, 1,1,1, 6,6,6, 6,3,1, 1,1,1, 1,1,1, &
+                                                               1,1,1, 1,1,9, 1,1,1, 1,1,3, 1,1,1, 1,1,1, &
+
+                                                               1,1,1, 1,9,1, 1,1,1, 1,1,1, 2,1,1, 1,1,1, &
+                                                               1,1,1, 1,8,1, 1,1,1, 1,1,1, 2,1,1, 1,1,1, &
+                                                               1,1,1, 1,8,1, 1,1,1, 1,1,1, 2,1,1, 1,1,1, &
+
+                                                               1,1,1, 1,8,1, 3,2,1, 1,1,1, 2,1,1, 1,1,1, &
+                                                               1,1,1, 1,1,7, 4,4,4, 1,1,1, 2,1,1, 1,1,1, &
+                                                               1,1,1, 1,1,1, 8,8,7, 1,1,1, 2,1,1, 1,1,1, &
+
+                                                               1,1,1, 1,1,1, 1,1,1, 1,1,1, 2,1,1, 1,1,1, &
+                                                               4,4,4, 4,4,4, 4,4,4, 4,4,4, 4,1,1, 1,1,1, &
+                                                               1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5/),&
+                                          shape(input_fine_river_directions)))
+
+            input_fine_total_cumulative_flow = transpose(reshape((/ 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 15,16,17, 18,19,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,14, 1,1,1, 1,1,20, 1,1,1, 1,1,1, &
+
+                                                                    1,1,1, 1,13,1, 1,1,1, 1,1,1, 21,1,1, 1,1,1, &
+                                                                    1,1,1, 1,12,1, 1,1,1, 1,1,1, 22,1,1, 1,1,1, &
+                                                                    1,1,1, 1,11,1, 1,1,1, 1,1,1, 23,1,1, 1,1,1, &
+
+                                                                    1,1,1, 1,10,1, 1,1,1, 1,1,1, 24,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,9, 8,6,1, 1,1,1, 25,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 26,1,1, 1,1,1, &
+
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 27,1,1, 1,1,1, &
+                                                                    40,39,38, 37,36,35, 34,33,32, 31,30,29, 28,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1/), &
+                                                         shape(input_fine_river_directions)))
+
+            input_yamazaki_outlet_pixels = transpose(reshape((/ 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 1,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 1,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0/), &
+                                                         shape(input_fine_river_directions)))
+
+            dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
+                input_fine_river_directions, input_fine_total_cumulative_flow, &
+                input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
+            result=>dir_based_rdirs_cell%yamazaki_test_find_downstream_cell(initial_outlet_pixel)
+            select type (result)
+            type is (latlon_coords)
+                call assert_equals(result%lat,3)
+                call assert_equals(result%lon,5)
+            end select
+    end subroutine testYamazakiFindDownstreamCellSeventeen
+
+    subroutine testYamazakiFindDownstreamCellEighteen
+        use area_mod
+        use coords_mod
+        use cotat_parameters_mod
+        integer, dimension(:,:), allocatable :: input_fine_river_directions
+        integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
+        integer, dimension(:,:), allocatable :: input_yamazaki_outlet_pixels
+        type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
+        type(latlon_section_coords) :: cell_section_coords
+        type(latlon_section_coords) :: input_yamazaki_section_coords
+        class(coords), pointer :: initial_outlet_pixel
+        class(coords), pointer :: result
+            MUFP = 1.5
+            yamazaki_max_range = 20
+            allocate(input_fine_river_directions(18,18))
+            allocate(input_fine_total_cumulative_flow(18,18))
+            allocate(input_yamazaki_outlet_pixels(18,18))
+            allocate(initial_outlet_pixel,source=latlon_coords(11,7))
+            cell_section_coords = latlon_section_coords(10,7,3,3)
+            input_yamazaki_section_coords = latlon_section_coords(1,1,18,18)
+            input_fine_river_directions = transpose(reshape((/ 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+
+                                                               1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                               1,1,1, 1,1,1, 6,6,6, 6,3,1, 1,1,1, 1,1,1, &
+                                                               1,1,1, 1,1,9, 1,1,1, 1,1,3, 1,1,1, 1,1,1, &
+
+                                                               1,1,1, 1,9,1, 1,1,1, 1,1,1, 2,1,1, 1,1,1, &
+                                                               1,1,1, 1,8,1, 1,1,1, 1,1,1, 2,1,1, 1,1,1, &
+                                                               1,1,1, 1,8,1, 1,1,1, 1,1,1, 2,1,1, 1,1,1, &
+
+                                                               1,1,1, 1,8,1, 3,2,1, 1,1,1, 2,1,1, 1,1,1, &
+                                                               1,1,1, 1,1,7, 4,4,4, 1,1,1, 2,1,1, 1,1,1, &
+                                                               1,1,1, 1,1,1, 8,8,7, 1,1,1, 2,1,1, 1,1,1, &
+
+                                                               1,1,1, 1,1,1, 1,1,1, 1,1,1, 2,1,1, 1,1,1, &
+                                                               4,4,4, 4,4,4, 4,4,4, 4,4,4, 4,1,1, 1,1,1, &
+                                                               1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5/),&
+                                          shape(input_fine_river_directions)))
+
+            input_fine_total_cumulative_flow = transpose(reshape((/ 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 15,16,17, 18,19,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,14, 1,1,1, 1,1,20, 1,1,1, 1,1,1, &
+
+                                                                    1,1,1, 1,13,1, 1,1,1, 1,1,1, 21,1,1, 1,1,1, &
+                                                                    1,1,1, 1,12,1, 1,1,1, 1,1,1, 22,1,1, 1,1,1, &
+                                                                    1,1,1, 1,11,1, 1,1,1, 1,1,1, 23,1,1, 1,1,1, &
+
+                                                                    1,1,1, 1,10,1, 1,1,1, 1,1,1, 24,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,9, 8,6,1, 1,1,1, 25,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 26,1,1, 1,1,1, &
+
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 27,1,1, 1,1,1, &
+                                                                    40,39,38, 37,36,35, 34,33,32, 31,30,29, 28,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1/), &
+                                                         shape(input_fine_river_directions)))
+
+            input_yamazaki_outlet_pixels = transpose(reshape((/ 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 1,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 1,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0/), &
+                                                         shape(input_fine_river_directions)))
+
+            dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
+                input_fine_river_directions, input_fine_total_cumulative_flow, &
+                input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
+            result=>dir_based_rdirs_cell%yamazaki_test_find_downstream_cell(initial_outlet_pixel)
+            select type (result)
+            type is (latlon_coords)
+                call assert_equals(result%lat,5)
+                call assert_equals(result%lon,2)
+            end select
+    end subroutine testYamazakiFindDownstreamCellEighteen
+
+    subroutine testYamazakiFindDownstreamCellNineteen
+        use area_mod
+        use coords_mod
+        use cotat_parameters_mod
+        integer, dimension(:,:), allocatable :: input_fine_river_directions
+        integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
+        integer, dimension(:,:), allocatable :: input_yamazaki_outlet_pixels
+        type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
+        type(latlon_section_coords) :: cell_section_coords
+        type(latlon_section_coords) :: input_yamazaki_section_coords
+        class(coords), pointer :: initial_outlet_pixel
+        class(coords), pointer :: result
+            MUFP = 1.5
+            allocate(input_fine_river_directions(18,18))
+            allocate(input_fine_total_cumulative_flow(18,18))
+            allocate(input_yamazaki_outlet_pixels(18,18))
+            allocate(initial_outlet_pixel,source=latlon_coords(16,16))
+            cell_section_coords = latlon_section_coords(16,16,3,3)
+            input_yamazaki_section_coords = latlon_section_coords(1,1,18,18)
+            input_fine_river_directions = transpose(reshape((/ 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 6,6,6, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,9, 5,5,5, &
+
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 7,4,4, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 8,7,4, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 8,6,8/),&
+                                          shape(input_fine_river_directions)))
+
+            input_fine_total_cumulative_flow = transpose(reshape((/ 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 7,8,9, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,6, 1,1,1, &
+
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 5,2,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 2,4,2, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1/), &
+                                                         shape(input_fine_river_directions)))
+
+            input_yamazaki_outlet_pixels = transpose(reshape((/ 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,1, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,1, 0,0,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 1,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0/), &
+                                                         shape(input_fine_river_directions)))
+
+            dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
+                input_fine_river_directions, input_fine_total_cumulative_flow, &
+                input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
+            result=>dir_based_rdirs_cell%yamazaki_test_find_downstream_cell(initial_outlet_pixel)
+            select type (result)
+            type is (latlon_coords)
+                call assert_equals(result%lat,5)
+                call assert_equals(result%lon,6)
+            end select
+    end subroutine testYamazakiFindDownstreamCellNineteen
+
+    subroutine testYamazakiFindDownstreamCellTwenty
+        use area_mod
+        use coords_mod
+        use cotat_parameters_mod
+        integer, dimension(:,:), allocatable :: input_fine_river_directions
+        integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
+        integer, dimension(:,:), allocatable :: input_yamazaki_outlet_pixels
+        type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
+        type(latlon_section_coords) :: cell_section_coords
+        type(latlon_section_coords) :: input_yamazaki_section_coords
+        class(coords), pointer :: initial_outlet_pixel
+        class(coords), pointer :: result
+            MUFP = 1.5
+            allocate(input_fine_river_directions(18,18))
+            allocate(input_fine_total_cumulative_flow(18,18))
+            allocate(input_yamazaki_outlet_pixels(18,18))
+            allocate(initial_outlet_pixel,source=latlon_coords(16,16))
+            cell_section_coords = latlon_section_coords(16,16,3,3)
+            input_yamazaki_section_coords = latlon_section_coords(1,1,18,18)
+            input_fine_river_directions = transpose(reshape((/ 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,6, 6,6,6, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,8, 5,5,5, &
+
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 7,4,4, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 8,7,4, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 8,6,8/),&
+                                          shape(input_fine_river_directions)))
+
+            input_fine_total_cumulative_flow = transpose(reshape((/ 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,7, 8,9,10, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,6, 1,1,1, &
+
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 5,2,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 2,4,2, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1/), &
+                                                         shape(input_fine_river_directions)))
+
+            input_yamazaki_outlet_pixels = transpose(reshape((/ 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,1, 0,0,1, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 1,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0/), &
+                                                         shape(input_fine_river_directions)))
+
+            dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
+                input_fine_river_directions, input_fine_total_cumulative_flow, &
+                input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
+            result=>dir_based_rdirs_cell%yamazaki_test_find_downstream_cell(initial_outlet_pixel)
+            select type (result)
+            type is (latlon_coords)
+                call assert_equals(result%lat,5)
+                call assert_equals(result%lon,5)
+            end select
+    end subroutine testYamazakiFindDownstreamCellTwenty
+
+    subroutine testYamazakiFindDownstreamCellTwentyOne
+        use area_mod
+        use coords_mod
+        use cotat_parameters_mod
+        integer, dimension(:,:), allocatable :: input_fine_river_directions
+        integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
+        integer, dimension(:,:), allocatable :: input_yamazaki_outlet_pixels
+        type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
+        type(latlon_section_coords) :: cell_section_coords
+        type(latlon_section_coords) :: input_yamazaki_section_coords
+        class(coords), pointer :: initial_outlet_pixel
+        class(coords), pointer :: result
+            MUFP = 1.5
+            yamazaki_max_range = 100
+            allocate(input_fine_river_directions(18,18))
+            allocate(input_fine_total_cumulative_flow(18,18))
+            allocate(input_yamazaki_outlet_pixels(18,18))
+            allocate(initial_outlet_pixel,source=latlon_coords(8,9))
+            cell_section_coords = latlon_section_coords(7,7,3,3)
+            input_yamazaki_section_coords = latlon_section_coords(1,1,18,18)
+            input_fine_river_directions = transpose(reshape((/ 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,2,5, 5,8,5, &
+                                                               5,2,4, 4,4,4, 4,4,4, 4,4,4, 4,4,5, 5,8,5, &
+                                                               5,2,5, 5,5,5, 5,5,5, 5,5,5, 5,8,5, 5,8,5, &
+
+                                                               5,2,5, 5,5,5, 5,5,5, 5,5,5, 5,8,5, 5,8,5, &
+                                                               5,2,5, 5,2,4, 4,4,4, 4,4,5, 5,8,5, 5,8,5, &
+                                                               5,2,5, 5,2,5, 5,5,5, 5,8,5, 5,8,5, 5,8,5, &
+
+                                                               5,2,5, 5,2,5, 2,2,2, 5,8,5, 5,8,5, 5,8,5, &
+                                                               5,2,5, 5,2,5, 6,6,6, 6,8,5, 5,8,5, 5,8,5, &
+                                                               5,2,5, 5,2,5, 8,8,8, 5,5,5, 5,8,5, 5,8,5, &
+
+                                                               5,2,5, 5,2,5, 5,5,5, 5,5,5, 5,8,5, 5,8,5, &
+                                                               5,2,5, 5,6,6, 6,6,6, 6,6,6, 6,8,5, 5,8,5, &
+                                                               5,2,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,8,5, &
+
+                                                               5,2,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,8,5, &
+                                                               5,6,6, 6,6,6, 6,6,6, 6,6,6, 6,6,6, 6,8,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5/),&
+                                          shape(input_fine_river_directions)))
+
+            input_fine_total_cumulative_flow = transpose(reshape((/ 1,1,1,   1,1,1,    1,1,1,    1,1,1,    1,4,1,    1,100,1, &
+                                                                    1,59,58, 57,56,55, 54,53,52, 51,50,49, 48,47,46, 1,99,1, &
+                                                                    1,60,1,  1,1,1,    1,1,1,    1,1,1,    1,43,1,    1,98,1, &
+
+                                                                    1,61,1,  1,1,1,   1,1,1,    1,1,1,   1,42,1, 1,97,1, &
+                                                                    1,62,1,  1,20,19, 18,17,16, 15,14,1, 1,41,1, 1,96,1, &
+                                                                    1,63,1,  1,21,1,  1,1,1,    1,13,1,  1,40,1, 1,95,1, &
+
+                                                                    1,64,1, 1,22,1, 1,1,1, 1,12,1,  1,39,1, 1,94,1, &
+                                                                    1,65,1, 1,23,1, 3,6,9, 10,11,1, 1,38,1, 1,93,1, &
+                                                                    1,66,1, 1,24,1, 1,1,1, 1,1,1,   1,37,1, 1,92,1, &
+
+                                                                    1,67,1, 1,25,1,  1,1,1,    1,1,1,    1,36,1,  1,91,1, &
+                                                                    1,68,1, 1,26,27, 28,29,30, 31,32,33, 34,35,1, 1,90,1, &
+                                                                    1,69,1, 1,1,1,   1,1,1,    1,1,1,    1,1,1,   1,89,1, &
+
+                                                                    1,70,1,  1,1,1,    1,1,1,    1,1,1,    1,1,1,    1,88,1, &
+                                                                    1,71,72, 73,74,75, 76,78,79, 80,81,82, 83,84,85, 86,87,1, &
+                                                                    1,1,1,   1,1,1,    1,1,1,    1,1,1,    1,1,1,    1,1,1, &
+
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1/), &
+                                                         shape(input_fine_river_directions)))
+
+            input_yamazaki_outlet_pixels = transpose(reshape((/ 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,1,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,1, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0/), &
+                                                         shape(input_fine_river_directions)))
+
+            dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
+                input_fine_river_directions, input_fine_total_cumulative_flow, &
+                input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
+            result=>dir_based_rdirs_cell%yamazaki_test_find_downstream_cell(initial_outlet_pixel)
+            select type (result)
+            type is (latlon_coords)
+                call assert_equals(result%lat,1)
+                call assert_equals(result%lon,6)
+            end select
+    end subroutine testYamazakiFindDownstreamCellTwentyOne
+
+    subroutine testYamazakiFindDownstreamCellTwentyTwo
+        use area_mod
+        use coords_mod
+        use cotat_parameters_mod
+        integer, dimension(:,:), allocatable :: input_fine_river_directions
+        integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
+        integer, dimension(:,:), allocatable :: input_yamazaki_outlet_pixels
+        type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
+        type(latlon_section_coords) :: cell_section_coords
+        type(latlon_section_coords) :: input_yamazaki_section_coords
+        class(coords), pointer :: initial_outlet_pixel
+        class(coords), pointer :: result
+            MUFP = 1.5
+            allocate(input_fine_river_directions(18,18))
+            allocate(input_fine_total_cumulative_flow(18,18))
+            allocate(input_yamazaki_outlet_pixels(18,18))
+            allocate(initial_outlet_pixel,source=latlon_coords(9,18))
+            cell_section_coords = latlon_section_coords(7,16,3,3)
+            input_yamazaki_section_coords = latlon_section_coords(1,1,18,18)
+            input_fine_river_directions = transpose(reshape((/ 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 3,2,2, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 6,6,2, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 9,6,3, &
+
+                                                               3,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,6,6, 6,6,2, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,2, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+
+                                                               5,5,5, 5,5,2, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,2, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,2, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+
+                                                               5,5,5, 5,5,2, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,2, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,2, 5,5,5, 5,5,5, 5,5,5, 5,5,5/),&
+                                          shape(input_fine_river_directions)))
+
+            input_fine_total_cumulative_flow = transpose(reshape((/ 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,5,7, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,9, &
+
+                                                                    10,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,11,12, 13,14,15, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,16, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+
+                                                                    1,1,1, 1,1,17, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,18, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,19, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+
+                                                                    1,1,1, 1,1,20, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,20, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,20, 1,1,1, 1,1,1, 1,1,1, 1,1,1/), &
+                                                         shape(input_fine_river_directions)))
+
+            input_yamazaki_outlet_pixels = transpose(reshape((/ 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,1, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+
+                                                                0,0,0, 0,0,1, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0/), &
+                                                         shape(input_fine_river_directions)))
+
+            dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
+                input_fine_river_directions, input_fine_total_cumulative_flow, &
+                input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
+            result=>dir_based_rdirs_cell%yamazaki_test_find_downstream_cell(initial_outlet_pixel)
+            select type (result)
+            type is (latlon_coords)
+                call assert_equals(result%lat,5)
+                call assert_equals(result%lon,2)
+            end select
+    end subroutine testYamazakiFindDownstreamCellTwentyTwo
+
+    subroutine testYamazakiFindDownstreamCellTwentyThree
+        use area_mod
+        use coords_mod
+        use cotat_parameters_mod
+        integer, dimension(:,:), allocatable :: input_fine_river_directions
+        integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
+        integer, dimension(:,:), allocatable :: input_yamazaki_outlet_pixels
+        type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
+        type(latlon_section_coords) :: cell_section_coords
+        type(latlon_section_coords) :: input_yamazaki_section_coords
+        class(coords), pointer :: initial_outlet_pixel
+        class(coords), pointer :: result
+            MUFP = 1.5
+            allocate(input_fine_river_directions(18,18))
+            allocate(input_fine_total_cumulative_flow(18,18))
+            allocate(input_yamazaki_outlet_pixels(18,18))
+            allocate(initial_outlet_pixel,source=latlon_coords(17,4))
+            cell_section_coords = latlon_section_coords(16,4,3,3)
+            input_yamazaki_section_coords = latlon_section_coords(1,1,18,18)
+            input_fine_river_directions = transpose(reshape((/ 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+
+                                                               5,5,5, 2,1,2, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
+                                                               4,4,4, 4,4,6, 6,2,5, 5,5,5, 5,5,5, 5,1,4, &
+                                                               5,5,5, 8,7,8, 5,2,5, 5,5,5, 5,5,5, 2,5,5/),&
+                                          shape(input_fine_river_directions)))
+
+            input_fine_total_cumulative_flow = transpose(reshape((/ 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+
+                                                                    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, &
+                                                                    9,8,7, 6,1,3, 4,5,1, 1,1,1, 1,1,1, 1,11,10, &
+                                                                    1,1,1, 1,1,1, 1,6,1, 1,1,1, 1,1,1, 12,1,1/), &
+                                                         shape(input_fine_river_directions)))
+
+            input_yamazaki_outlet_pixels = transpose(reshape((/ 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 1,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,1, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0/), &
+                                                         shape(input_fine_river_directions)))
+
+            dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
+                input_fine_river_directions, input_fine_total_cumulative_flow, &
+                input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
+            result=>dir_based_rdirs_cell%yamazaki_test_find_downstream_cell(initial_outlet_pixel)
+            select type (result)
+            type is (latlon_coords)
+                call assert_equals(result%lat,6)
+                call assert_equals(result%lon,6)
+            end select
+    end subroutine testYamazakiFindDownstreamCellTwentyThree
 
 end module area_test_mod

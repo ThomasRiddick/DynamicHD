@@ -626,9 +626,8 @@ contains
         end if
         call teardown
 
-
         call setup
-        if (verbose) write (*,('(/A)')) "..running test: testYamazakiFindDownstreamCell"
+        if (verbose) write (*,('(/A)')) "..running test: testYamazakiFindDownstreamCellOne"
         call set_unit_name('test_something')
         call run_test_case(testYamazakiFindDownstreamCellOne,&
                            'test_something')
@@ -638,6 +637,271 @@ contains
             call case_passed_xml("test_something","yamazaki_find_downstream_cell_test")
         end if
         call teardown
+
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testYamazakiFindDownstreamCellTwo"
+        call set_unit_name('test_something')
+        call run_test_case(testYamazakiFindDownstreamCellTwo,&
+                           'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","yamazaki_find_downstream_cell_test")
+        else
+            call case_passed_xml("test_something","yamazaki_find_downstream_cell_test")
+        end if
+        call teardown
+
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testYamazakiFindDownstreamCellThree"
+        call set_unit_name('test_something')
+        call run_test_case(testYamazakiFindDownstreamCellThree,&
+                           'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","yamazaki_find_downstream_cell_test")
+        else
+            call case_passed_xml("test_something","yamazaki_find_downstream_cell_test")
+        end if
+        call teardown
+
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testYamazakiFindDownstreamCellFour"
+        call set_unit_name('test_something')
+        call run_test_case(testYamazakiFindDownstreamCellFour,&
+                           'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","yamazaki_find_downstream_cell_test")
+        else
+            call case_passed_xml("test_something","yamazaki_find_downstream_cell_test")
+        end if
+        call teardown
+
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testYamazakiFindDownstreamCellFive"
+        call set_unit_name('test_something')
+        call run_test_case(testYamazakiFindDownstreamCellFive,&
+                           'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","yamazaki_find_downstream_cell_test")
+        else
+            call case_passed_xml("test_something","yamazaki_find_downstream_cell_test")
+        end if
+        call teardown
+
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testYamazakiFindDownstreamCellSix"
+        call set_unit_name('test_something')
+        call run_test_case(testYamazakiFindDownstreamCellSix,&
+                           'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","yamazaki_find_downstream_cell_test")
+        else
+            call case_passed_xml("test_something","yamazaki_find_downstream_cell_test")
+        end if
+        call teardown
+
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testYamazakiFindDownstreamCellSeven"
+        call set_unit_name('test_something')
+        call run_test_case(testYamazakiFindDownstreamCellSeven,&
+                           'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","yamazaki_find_downstream_cell_test")
+        else
+            call case_passed_xml("test_something","yamazaki_find_downstream_cell_test")
+        end if
+        call teardown
+
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testYamazakiFindDownstreamCellEight"
+        call set_unit_name('test_something')
+        call run_test_case(testYamazakiFindDownstreamCellEight,&
+                           'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","yamazaki_find_downstream_cell_test")
+        else
+            call case_passed_xml("test_something","yamazaki_find_downstream_cell_test")
+        end if
+        call teardown
+
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testYamazakiFindDownstreamCellNine"
+        call set_unit_name('test_something')
+        call run_test_case(testYamazakiFindDownstreamCellNine,&
+                           'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","yamazaki_find_downstream_cell_test")
+        else
+            call case_passed_xml("test_something","yamazaki_find_downstream_cell_test")
+        end if
+        call teardown
+
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testYamazakiFindDownstreamCellTen"
+        call set_unit_name('test_something')
+        call run_test_case(testYamazakiFindDownstreamCellTen,&
+                           'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","yamazaki_find_downstream_cell_test")
+        else
+            call case_passed_xml("test_something","yamazaki_find_downstream_cell_test")
+        end if
+        call teardown
+
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testYamazakiFindDownstreamCellEleven"
+        call set_unit_name('test_something')
+        call run_test_case(testYamazakiFindDownstreamCellEleven,&
+                           'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","yamazaki_find_downstream_cell_test")
+        else
+            call case_passed_xml("test_something","yamazaki_find_downstream_cell_test")
+        end if
+        call teardown
+
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testYamazakiFindDownstreamCellTwelve"
+        call set_unit_name('test_something')
+        call run_test_case(testYamazakiFindDownstreamCellTwelve,&
+                           'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","yamazaki_find_downstream_cell_test")
+        else
+            call case_passed_xml("test_something","yamazaki_find_downstream_cell_test")
+        end if
+        call teardown
+
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testYamazakiFindDownstreamCellThirteen"
+        call set_unit_name('test_something')
+        call run_test_case(testYamazakiFindDownstreamCellThirteen,&
+                           'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","yamazaki_find_downstream_cell_test")
+        else
+            call case_passed_xml("test_something","yamazaki_find_downstream_cell_test")
+        end if
+        call teardown
+
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testYamazakiFindDownstreamCellFourteen"
+        call set_unit_name('test_something')
+        call run_test_case(testYamazakiFindDownstreamCellFourteen,&
+                           'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","yamazaki_find_downstream_cell_test")
+        else
+            call case_passed_xml("test_something","yamazaki_find_downstream_cell_test")
+        end if
+        call teardown
+
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testYamazakiFindDownstreamCellFifteen"
+        call set_unit_name('test_something')
+        call run_test_case(testYamazakiFindDownstreamCellFifteen,&
+                           'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","yamazaki_find_downstream_cell_test")
+        else
+            call case_passed_xml("test_something","yamazaki_find_downstream_cell_test")
+        end if
+        call teardown
+
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testYamazakiFindDownstreamCellSixteen"
+        call set_unit_name('test_something')
+        call run_test_case(testYamazakiFindDownstreamCellSixteen,&
+                           'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","yamazaki_find_downstream_cell_test")
+        else
+            call case_passed_xml("test_something","yamazaki_find_downstream_cell_test")
+        end if
+        call teardown
+
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testYamazakiFindDownstreamCellSeventeen"
+        call set_unit_name('test_something')
+        call run_test_case(testYamazakiFindDownstreamCellSeventeen,&
+                           'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","yamazaki_find_downstream_cell_test")
+        else
+            call case_passed_xml("test_something","yamazaki_find_downstream_cell_test")
+        end if
+        call teardown
+
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testYamazakiFindDownstreamCellEighteen"
+        call set_unit_name('test_something')
+        call run_test_case(testYamazakiFindDownstreamCellEighteen,&
+                           'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","yamazaki_find_downstream_cell_test")
+        else
+            call case_passed_xml("test_something","yamazaki_find_downstream_cell_test")
+        end if
+        call teardown
+
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testYamazakiFindDownstreamCellNineteen"
+        call set_unit_name('test_something')
+        call run_test_case(testYamazakiFindDownstreamCellNineteen,&
+                           'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","yamazaki_find_downstream_cell_test")
+        else
+            call case_passed_xml("test_something","yamazaki_find_downstream_cell_test")
+        end if
+        call teardown
+
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testYamazakiFindDownstreamCellTwenty"
+        call set_unit_name('test_something')
+        call run_test_case(testYamazakiFindDownstreamCellTwenty,&
+                           'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","yamazaki_find_downstream_cell_test")
+        else
+            call case_passed_xml("test_something","yamazaki_find_downstream_cell_test")
+        end if
+        call teardown
+
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testYamazakiFindDownstreamCellTwentyOne"
+        call set_unit_name('test_something')
+        call run_test_case(testYamazakiFindDownstreamCellTwentyOne,&
+                           'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","yamazaki_find_downstream_cell_test")
+        else
+            call case_passed_xml("test_something","yamazaki_find_downstream_cell_test")
+        end if
+        call teardown
+
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testYamazakiFindDownstreamCellTwentyTwo"
+        call set_unit_name('test_something')
+        call run_test_case(testYamazakiFindDownstreamCellTwentyTwo,&
+                           'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","yamazaki_find_downstream_cell_test")
+        else
+            call case_passed_xml("test_something","yamazaki_find_downstream_cell_test")
+        end if
+        call teardown
+
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testYamazakiFindDownstreamCellTwentyThree"
+        call set_unit_name('test_something')
+        call run_test_case(testYamazakiFindDownstreamCellTwentyThree,&
+                           'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","yamazaki_find_downstream_cell_test")
+        else
+            call case_passed_xml("test_something","yamazaki_find_downstream_cell_test")
+        end if
+        call teardown
+
 
     end subroutine area_all_tests
 
