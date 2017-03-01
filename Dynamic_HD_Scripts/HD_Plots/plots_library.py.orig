@@ -406,7 +406,10 @@ class OutflowPlots(Plots):
                                      catchment_and_outflows_mods_list_filename=None,
                                      plot_simple_catchment_and_flowmap_plots=False,
                                      swap_ref_and_data_when_finding_labels=False,
+<<<<<<< HEAD
                                      rivers_to_plot=None,
+=======
+>>>>>>> Upscaling_Flow_Parameters_Test
                                      matching_parameter_set='default',
                                      grid_type='HD',data_original_scale_grid_type='HD',
                                      super_fine_orog_grid_type='HD',

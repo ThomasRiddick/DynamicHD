@@ -14,6 +14,7 @@ import flow_to_grid_cell
 import compute_catchments
 import fill_sinks_driver
 import utilities
+import grid
 import river_mouth_marking_driver
 import create_connected_lsmask_driver as cc_lsmask_driver
 import shutil
@@ -60,6 +61,7 @@ class Dynamic_HD_Drivers(object):
         hd_file_path_extension = 'hdfiles'
         hd_restart_file_path_extension = 'hdrestartfiles'
         js_bach_restart_file_path_extension = 'jsbachrestartfiles'
+        paragen_code_copies_path_extension = 'paragencopies'
         cotat_plus_parameters_path_extension = path.join(parameter_path_extension,'cotat_plus')
         self.base_RFD_filepath = path.join(data_dir,rdirs_path_extension,
                                            base_RFD_filename)
@@ -130,6 +132,9 @@ class Dynamic_HD_Drivers(object):
         self.js_bach_restart_filepath = path.join(data_dir,js_bach_restart_file_path_extension)
         self.generated_js_bach_restart_filepath = path.join(self.js_bach_restart_filepath,
                                                             'generated','updated_')
+        self.paragen_code_copies_path = path.join(data_dir,paragen_code_copies_path_extension)
+        self.generated_paragen_code_copies_path = path.join(self.paragen_code_copies_path,
+                                                            "paragen_copy_")
         self.hd_grid_filepath = path.join(self.grids_path,"hdmodel2d_griddes")
         self.half_degree_grid_filepath = path.join(self.grids_path,"grid_0_5.txt")
         self.hd_grid_ls_mask_filepath = path.join(self.ls_masks_path,
@@ -239,7 +244,7 @@ class Dynamic_HD_Drivers(object):
 
     def _generate_flow_parameters(self,rdir_file,topography_file,inner_slope_file,lsmask_file,
                                   null_file,area_spacing_file,orography_variance_file,
-                                  output_dir):
+                                  output_dir,paragen_source_label=None,grid_type="HD",**grid_kwargs):
         """Generate flow parameters files in a specified directory from given input
         
         Arguments:
@@ -253,12 +258,31 @@ class Dynamic_HD_Drivers(object):
         area_spacing_file: string; full path to a file containing the areas of grid boxes within the HD grid
         orography_variance_file: string; full path to a file containing the variance of the orography  
         output_dir: string; full path to directory to place the various srv output files from this script in
+        paragen_source_label: string; a label for modified source files if not using an HD grid (optional)
+        grid_type: string; code for the grid type of the grid (optional)
+        grid_kwargs: dictionary; key word dictionary specifying parameters of the grid (if required)
         Returns: nothing
 
         Converts input file to revelant format and acts as a wrapper for the parameter_generation_driver.sh
         script
         """
-
+        
+        parameter_generation_grid = grid.makeGrid(grid_type,**grid_kwargs)
+        nlat,nlon = parameter_generation_grid.get_grid_dimensions()
+        original_paragen_source_filepath = path.join(self.bash_scripts_path,"fortran",
+                                                     "paragen.f")
+        if (nlat != 360 or nlon != 720):
+            paragen_source_filepath = self.generated_paragen_code_copies_path  + paragen_source_label
+            with open(original_paragen_source_filepath,"r") as f:
+                source = f.readlines()
+            source.replace(360,str(nlat))
+            source.replace(720,str(nlon))
+            with open(paragen_source_filepath,"w") as f:
+                f.writelines(source)
+            paragen_bin_file = "paragen_nlat{0}_nlon{1}".format(nlat,nlon)
+        else:
+            paragen_source_filepath = original_paragen_source_filepath
+            paragen_bin_file = "paragen"
         if path.splitext(rdir_file)[1] != '.dat':
             self._convert_data_file_type(rdir_file,'.dat','HD')
         if path.splitext(topography_file)[1] != '.dat':
@@ -287,7 +311,7 @@ class Dynamic_HD_Drivers(object):
                                            path.splitext(null_file)[0] + ".dat",
                                            path.splitext(area_spacing_file)[0] + ".dat",
                                            path.splitext(orography_variance_file)[0] + ".dat",
-                                           output_dir],
+                                           paragen_source_filepath,paragen_bin_file,output_dir],
                                           stderr=subprocess.STDOUT)
         except CalledProcessError as cperror:
             raise RuntimeError("Failure in called process {0}; return code {1}; output:\n{2}".format(cperror.cmd,
@@ -2159,8 +2183,8 @@ def main():
     #glac_data_drivers.GLAC_data_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_27timeslices()
     #glac_data_drivers.GLAC_data_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_27timeslices_merge_timeslices_only()
     ten_minute_data_from_virna_driver = Ten_Minute_Data_From_Virna_Driver()
-    #ten_minute_data_from_virna_driver.ten_minute_data_from_virna_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs()
-    ten_minute_data_from_virna_driver.ten_minute_data_from_virna_lgm_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs()
+    ten_minute_data_from_virna_driver.ten_minute_data_from_virna_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs()
+    #ten_minute_data_from_virna_driver.ten_minute_data_from_virna_lgm_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs()
 
 if __name__ == '__main__':
     main()

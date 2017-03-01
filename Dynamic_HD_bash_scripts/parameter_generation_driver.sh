@@ -13,7 +13,9 @@ ls_mask_file=${6}
 null_file=${7}
 area_spacing_file=${8}
 orography_variance_file=${9}
-work_dir=${10}
+paragen_source_filepath=${10}
+paragen_bin_file=${11}
+work_dir=${12}
 
 #Set compiler
 comp=/usr/local/bin/gfortran
@@ -87,7 +89,7 @@ EOF
 
 cd ${work_dir}
 
-${comp} -o ${bin_dir}/paragen ${src_dir}/paragen.f ${src_dir}/globuse.f ${src_dir}/mathe.f ${src_dir}/modtime.f
-${bin_dir}/paragen
+${comp} -o ${bin_dir}/${paragen_bin_file} ${paragen_source_filepath} ${src_dir}/globuse.f ${src_dir}/mathe.f ${src_dir}/modtime.f
+${bin_dir}/${paragen_bin_file}
 
 cd -

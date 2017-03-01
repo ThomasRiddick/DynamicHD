@@ -1,4 +1,7 @@
 '''
+Routines to plot a comparison of rivers and catchments between an evaluated dataset and a 
+reference dataset.
+
 Created on Jul 21, 2016
 
 @author: thomasriddick
@@ -39,9 +42,9 @@ def find_catchment_numbers(ref_catchment_field,data_catchment_field,
 
 def select_bounds_around_rivermouth(pair,border=10):
     """Select a set of bounds for a plot of a river mouth"""
-    imin = min(pair[0].get_lat(),pair[1].get_lat()) - border
+    imin = max(min(pair[0].get_lat(),pair[1].get_lat()) - border,0)
     imax = max(pair[0].get_lat(),pair[1].get_lat()) + border
-    jmin = min(pair[0].get_lon(),pair[1].get_lon()) - border
+    jmin = max(min(pair[0].get_lon(),pair[1].get_lon()) - border,0)
     jmax = max(pair[0].get_lon(),pair[1].get_lon()) + border
     return imin,imax,jmin,jmax
 
@@ -359,13 +362,14 @@ def add_catchment_and_outflow_to_river(catchments,outflows,sink_outflow_to_remap
                                            flowmap,None))
         catchments = pts.relabel_outflow_catchment(catchments, original_outflow_coords,
                                                    new_outflow_coords)
-    elif processing_mod_type == 'River Mouth':
+    elif processing_mod_type == 'River Mouth': 
         outflows.set_data(pts.move_outflow(outflows.get_data(), original_outflow_coords, new_outflow_coords,
                                            None,None)) 
-        catchments = pts.relabel_outflow_catchment(catchments, original_outflow_coords,new_outflow_coords,
+        catchments = pts.relabel_outflow_catchment(catchments, original_outflow_coords,
+                                                   new_outflow_coords,
                                                    original_scale_catchment,
                                                    original_scale_flowmap,
-                                                   catchment_grid_changed,
+                                                   catchment_grid_changed,False,
                                                    original_scale_grid_type,
                                                    original_scale_grid_kwargs,
                                                    grid_type,**grid_kwargs)
@@ -374,6 +378,15 @@ def add_catchment_and_outflow_to_river(catchments,outflows,sink_outflow_to_remap
                                            None,rdirs))
         catchments = pts.relabel_outflow_catchment(catchments,original_outflow_coords,new_outflow_coords,
                                                    None)
+    elif processing_mod_type == 'Ref Join Catchments':
+        catchments = pts.relabel_outflow_catchment(catchments, original_outflow_coords,
+                                                   new_outflow_coords,
+                                                   original_scale_catchment,
+                                                   original_scale_flowmap,
+                                                   catchment_grid_changed,True,
+                                                   original_scale_grid_type,
+                                                   original_scale_grid_kwargs,
+                                                   grid_type,**grid_kwargs)
     else:
         raise RuntimeError('Trying to process unknown modification type')
     return catchments,outflows
@@ -382,8 +395,10 @@ def modify_catchments_and_outflows(ref_catchments,ref_outflows,ref_flowmap,ref_r
                                    data_catchments,data_outflows,
                                    catchment_and_outflows_modifications_list_filename,
                                    original_scale_catchment=None,original_scale_flowmap=None,
-                                   catchment_grid_changed=False,original_scale_grid_type=None,
-                                   original_scale_grid_kwargs={},grid_type=None,**grid_kwargs):
+                                   catchment_grid_changed=False,
+                                   swap_ref_and_data_when_finding_labels=False,
+                                   original_scale_grid_type=None,original_scale_grid_kwargs={},
+                                   grid_type=None,**grid_kwargs):
     """Load various temporary modifications to make to the catchment and outflows to aid comparison
     
     Modifications are applied after fields have been orientated
@@ -393,6 +408,7 @@ def modify_catchments_and_outflows(ref_catchments,ref_outflows,ref_flowmap,ref_r
     sinks_first_line_pattern = re.compile(r"^ *Sinks to Move *$")
     mouths_first_line_pattern = re.compile(r"^ *Mouths to Move *$")
     ref_mouths_first_line_pattern = re.compile(r"^ *Ref Mouths to Move *$")
+    ref_join_catchments_first_line_pattern = re.compile(r"^ *Ref Catchments to Join *$")
     mod_second_line_pattern = re.compile(r"^ *grid_type= *(.*) *$")
     mod_third_line_pattern = re.compile(r"^ *original_lat *, *original_lon *, *new_lat *, *new_lon *$")
     line_of_input_pattern = re.compile(r"^ *[0-9]* *, *[0-9]* *, *[0-9]* *, *[0-9]* *$")
@@ -462,12 +478,28 @@ def modify_catchments_and_outflows(ref_catchments,ref_outflows,ref_flowmap,ref_r
                 proc_mod_gen = process_modification_generator(ref_catchments,ref_outflows,
                                                               process_mod_type,None,ref_rdirs, 
                                                               grid_type=grid_type)
-            elif process_mod_type == 'Sink' or process_mod_type == 'Ref River Mouth':
+            elif ref_join_catchments_first_line_pattern.match(line):
+                process_mod_type = 'Ref Join Catchments'
+                if swap_ref_and_data_when_finding_labels:
+                    proc_mod_gen = process_modification_generator(ref_catchments,ref_outflows,
+                                                                  process_mod_type,None,None, 
+                                                                  original_scale_catchment,
+                                                                  original_scale_flowmap,
+                                                                  catchment_grid_changed,
+                                                                  original_scale_grid_type,
+                                                                  original_scale_grid_kwargs,
+                                                                  grid_type=grid_type)
+                else:
+                    proc_mod_gen = process_modification_generator(ref_catchments,ref_outflows,
+                                                                  process_mod_type,None,ref_rdirs, 
+                                                                  grid_type=grid_type)
+            elif (process_mod_type == 'Sink' or process_mod_type == 'Ref River Mouth' or
+                  process_mod_type == 'Ref Join Catchments'):
                 ref_catchments,ref_outflows = next(proc_mod_gen)
             elif process_mod_type == 'River Mouth':
                 data_catchments,data_outflows = next(proc_mod_gen)
             else:
                 raise RuntimeError("Mistake in file containing list of modifications:"
-                                   "Have reached line {0} without first reading"
+                                   "Have reached line {0} without first reading "
                                    "necessary headers".format(i))
     return ref_catchments,ref_outflows,data_catchments,data_outflows

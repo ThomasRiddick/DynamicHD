@@ -1,4 +1,7 @@
 '''
+Contains classes for generating interactive orography and riverflow comparison plots for 
+large range of individual catchments
+
 Created on Jul 21, 2016
 
 @author: thomasriddick
@@ -13,10 +16,19 @@ import numpy as np
 import math
 
 class Interactive_Plots(object):
+    """The main class for the interactive orography and cumulative flow/river flow comparison plots"""
 
     numbers_max_size = 200
 
     def __init__(self):
+        """Class constructor. Initialise permenant class members as required and set constants.
+        
+        Arguments:
+        None
+        Returns:
+        Nothing
+        """
+
         self.min_heights = []
         self.max_heights = []
         self.num_levels_sliders = []
@@ -68,6 +80,23 @@ class Interactive_Plots(object):
                     ref_flowtocellfield,data_flowtocellfield,rdirs_field,super_fine_orog_field,
                     super_fine_data_flowtocellfield,pair,catchment_bounds,scale_factor,
                     ref_to_super_fine_scale_factor):
+        """Setup the set of interactive plots and bind on events to callbacks
+        
+        Arguments:
+        catchment_section
+        ref_orog_field
+        data_orog_original_scale_field
+        ref_flowtocellfield
+        data_flowtocellfield
+        rdirs_field
+        super_fine_orog_field
+        super_fine_data_flowtocellfield
+        pair
+        catchment_bounds
+        scale_factor
+        ref_to_super_fine_scale_facto
+        Returns: nothing
+        """
         self.scale_factor = scale_factor
         self.ref_to_super_fine_scale_factor = ref_to_super_fine_scale_factor
         self.catchment_bounds = catchment_bounds

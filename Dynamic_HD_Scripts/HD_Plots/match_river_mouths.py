@@ -1,4 +1,7 @@
 '''
+Contains classes related to automatically matching river mouths in a dataset 
+under evaluation against those in a reference dataset.
+
 Created on Apr 22, 2016
 
 @author: thomasriddick
@@ -13,7 +16,8 @@ class Params(object):
   
     def __init__(self, paramset='default'):
         {'default':self.init_default_params,
-         'testing':self.init_testing_params}[paramset]()
+         'testing':self.init_testing_params,
+         'area':self.init_area_params}[paramset]()
        
     def init_default_params(self): 
         self.max_complexity = 15
@@ -35,7 +39,18 @@ class Params(object):
         self.ps_c = 50.0
         self.minflow = 1000
         self.range = 10
-        self.magnitude_tolerance_factor = 5   
+        self.magnitude_tolerance_factor = 5
+    
+    def init_area_params(self):  
+        self.max_complexity = 15
+        self.missing_pair_penalty_factor = 2.0
+        self.missing_pair_penalty_constant = 2.0
+        self.ps_a = 1.0
+        self.ps_b = 0.0
+        self.ps_c = 0.0
+        self.minflow = 200 #250 #500
+        self.range = 5
+        self.magnitude_tolerance_factor = 5  
 
 class RiverMouth(object):
     
