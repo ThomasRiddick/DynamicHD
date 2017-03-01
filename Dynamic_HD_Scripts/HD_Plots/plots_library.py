@@ -79,6 +79,7 @@ class OutflowPlots(Plots):
                                      catchment_and_outflows_mods_list_filename=None,
                                      plot_simple_catchment_and_flowmap_plots=False,
                                      swap_ref_and_data_when_finding_labels=False,
+                                     rivers_to_plot=None,
                                      grid_type='HD',data_original_scale_grid_type='HD',
                                      super_fine_orog_grid_type='HD',
                                      data_original_scale_grid_kwargs={},
@@ -337,6 +338,9 @@ class OutflowPlots(Plots):
         for pair in matchedpairs:
             if pair[0].get_lat() > 312:
                 continue
+            if rivers_to_plot is not None:
+                if not (pair[0].get_lat(),pair[0].get_lon()) in rivers_to_plot:
+                    continue
             print "Ref Point: " + str(pair[0]) + "Matches: " + str(pair[1])
             plt.figure(figsize=(25,12.5))
             ax = plt.subplot(222)
@@ -1189,9 +1193,9 @@ def main():
     #flowmapplot.Corrected_HD_Rdirs_And_ICE5G_data_ALG4_corr_orog_downscaled_ls_mask_0k_directly_upscaled_fields_FlowMap_comparison()
     #flowmapplot.Corrected_HD_Rdirs_And_ICE5G_data_ALG4_no_true_sinks_corr_orog_0k_directly_upscaled_fields_FlowMap_comparison()
     #flowmapplot.Corrected_HD_Rdirs_And_ICE5G_HD_as_data_ALG4_true_sinks_0k_directly_upscaled_fields_FlowMap_comparison()
-    flowmapplot.Upscaled_Rdirs_vs_Directly_Upscaled_fields_ICE5G_data_ALG4_corr_orog_downscaled_ls_mask_0k_FlowMap_comparison()
-    outflowplots = OutflowPlots(save)
-    outflowplots.Compare_Upscaled_Rdirs_vs_Directly_Upscaled_fields_ICE5G_data_ALG4_corr_orog_downscaled_ls_mask_0k()
+    #flowmapplot.Upscaled_Rdirs_vs_Directly_Upscaled_fields_ICE5G_data_ALG4_corr_orog_downscaled_ls_mask_0k_FlowMap_comparison()
+    #outflowplots = OutflowPlots(save)
+    #outflowplots.Compare_Upscaled_Rdirs_vs_Directly_Upscaled_fields_ICE5G_data_ALG4_corr_orog_downscaled_ls_mask_0k()
     #outflowplots.Compare_Corrected_HD_Rdirs_And_ICE5G_as_HD_data_ALG4_sinkless_all_points_0k()
     #outflowplots.Compare_Corrected_HD_Rdirs_And_ICE5G_as_HD_data_ALG4_true_sinks_all_points_0k()
     #outflowplots.Compare_Corrected_HD_Rdirs_And_ICE5G_ALG4_sinkless_all_points_0k_directly_upscaled_fields()
