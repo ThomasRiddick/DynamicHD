@@ -87,25 +87,29 @@ def relabel_catchment(catchments,old_catchment_num,new_catchment_num):
 def relabel_outflow_catchment(catchments,original_outflow_coords,relabel_as_outflow_coords,
                               data_catchment_field_original_scale=None,
                               data_original_scale_flowtocellfield=None,
-                              catchment_grid_changed=False,data_original_scale_grid_type=None,
-                              data_original_scale_grid_kwargs={},grid_type=None,**grid_kwargs):
+                              catchment_grid_changed=False,original_coords_not_outflow=False,
+                              data_original_scale_grid_type=None,data_original_scale_grid_kwargs={},
+                              grid_type=None,**grid_kwargs):
     """Relabel the catchment of an input outflow with the catchment number of a second outflow"""
     if data_catchment_field_original_scale is None: 
         old_catchment_num = catchments[original_outflow_coords]
         new_catchment_num = catchments[relabel_as_outflow_coords]
     else:
-        old_catchment_num = find_data_catchment_number(data_catchment_field=catchments, 
-                                                       data_catchment_field_original_scale=\
-                                                       data_catchment_field_original_scale, 
-                                                       data_original_scale_flowtocellfield=\
-                                                       data_original_scale_flowtocellfield, 
-                                                       data_course_coords=original_outflow_coords, 
-                                                       catchment_grid_changed=catchment_grid_changed, 
-                                                       data_original_scale_grid_type=\
-                                                       data_original_scale_grid_type, 
-                                                       data_original_scale_grid_kwargs=\
-                                                       data_original_scale_grid_kwargs, 
-                                                       grid_type=grid_type,**grid_kwargs)[0]
+        if original_coords_not_outflow:
+            old_catchment_num = catchments[original_outflow_coords]
+        else:
+            old_catchment_num = find_data_catchment_number(data_catchment_field=catchments, 
+                                                           data_catchment_field_original_scale=\
+                                                           data_catchment_field_original_scale, 
+                                                           data_original_scale_flowtocellfield=\
+                                                           data_original_scale_flowtocellfield, 
+                                                           data_course_coords=original_outflow_coords, 
+                                                           catchment_grid_changed=catchment_grid_changed, 
+                                                           data_original_scale_grid_type=\
+                                                           data_original_scale_grid_type, 
+                                                           data_original_scale_grid_kwargs=\
+                                                           data_original_scale_grid_kwargs, 
+                                                           grid_type=grid_type,**grid_kwargs)[0]
         new_catchment_num = find_data_catchment_number(data_catchment_field=catchments, 
                                                        data_catchment_field_original_scale=\
                                                        data_catchment_field_original_scale, 
