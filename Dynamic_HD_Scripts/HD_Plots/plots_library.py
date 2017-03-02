@@ -666,7 +666,7 @@ class OutflowPlots(Plots):
             ref_orog_field[rdirs_field <= 0] = np.ma.masked
         interactive_plots = Interactive_Plots()
         for pair in matchedpairs:
-            if pair[0].get_lat() > 312:
+            if pair[0].get_lat() > 310:
                 continue
             if rivers_to_plot is not None:
                 if not (pair[0].get_lat(),pair[0].get_lon()) in rivers_to_plot:
@@ -1593,8 +1593,8 @@ def main():
     #flowmapplot.Upscaled_Rdirs_vs_Directly_Upscaled_fields_ICE5G_data_ALG4_corr_orog_downscaled_ls_mask_0k_FlowMap_comparison()
     #flowmapplot.Ten_Minute_Data_from_Virna_data_ALG4_corr_orog_downscaled_lsmask_no_sinks_21k_vs_0k_FlowMap_comparison()
     flowmapplot.Upscaled_Rdirs_vs_Corrected_HD_Rdirs_ICE5G_data_ALG4_corr_orog_downscaled_ls_mask_0k_FlowMap_comparison()
-    #outflowplots = OutflowPlots(save)
-    #outflowplots.Compare_Upscaled_Rdirs_vs_Directly_Upscaled_fields_ICE5G_data_ALG4_corr_orog_downscaled_ls_mask_0k()
+    outflowplots = OutflowPlots(save)
+    outflowplots.Compare_Upscaled_Rdirs_vs_Directly_Upscaled_fields_ICE5G_data_ALG4_corr_orog_downscaled_ls_mask_0k()
     #outflowplots.Compare_Corrected_HD_Rdirs_And_ICE5G_as_HD_data_ALG4_sinkless_all_points_0k()
     #outflowplots.Compare_Corrected_HD_Rdirs_And_ICE5G_as_HD_data_ALG4_true_sinks_all_points_0k()
     #outflowplots.Compare_Corrected_HD_Rdirs_And_ICE5G_ALG4_sinkless_all_points_0k_directly_upscaled_fields()
