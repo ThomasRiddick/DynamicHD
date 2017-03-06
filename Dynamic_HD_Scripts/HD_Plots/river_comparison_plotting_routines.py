@@ -179,6 +179,7 @@ def plot_catchment_and_histogram_for_river(ax_hist,ax_catch,ref_catchment_field,
                                            rdirs_field,data_rdirs_field,pair,
                                            catchment_grid_changed,grid_type,
                                            swap_ref_and_data_when_finding_labels=False,
+                                           alternative_catchment_bounds=None,
                                            data_original_scale_grid_type='HD',
                                            data_original_scale_grid_kwargs={},
                                            **grid_kwargs):
@@ -211,7 +212,9 @@ def plot_catchment_and_histogram_for_river(ax_hist,ax_catch,ref_catchment_field,
                                                           data_catchment_num,
                                                           points_to_mark,
                                                           data_true_sinks=data_rdirs_field,
-                                                          allow_new_sink_points=False)
+                                                          allow_new_sink_points=False,
+                                                          alternative_catchment_bounds=\
+                                                          alternative_catchment_bounds)
     plot_catchment(ax_catch,catchment_section,cax=None)
     return catchment_section,catchment_bounds,scale_factor
 
@@ -238,7 +241,8 @@ def select_catchment(ref_catchment_field,data_catchment_field,
                      rdirs_field,ref_catchment_num,
                      data_catchment_num,points_to_mark=None,
                      data_true_sinks=None,
-                     allow_new_sink_points=False):
+                     allow_new_sink_points=False,
+                     alternative_catchment_bounds=None,):
     """Prepare a catchment field that combines both the reference and data catchments"""
     catchment_field = np.copy(ref_catchment_field)
     catchment_field[np.logical_and(data_catchment_field == data_catchment_num,
@@ -260,7 +264,10 @@ def select_catchment(ref_catchment_field,data_catchment_field,
                 catchment_field[np.logical_and(rdirs_field != 5,data_true_sinks)] = 9
             else:
                 raise RuntimeWarning("New true sink point has appeared in data")
-    imin,imax,jmin,jmax = find_catchment_edges(catchment_field)
+    if alternative_catchment_bounds is None:
+        imin,imax,jmin,jmax = find_catchment_edges(catchment_field)
+    else:
+        imin,imax,jmin,jmax = alternative_catchment_bounds
     return catchment_field[imin:imax,jmin:jmax], (imin,imax,jmin,jmax)
 
 def find_catchment_edges(catchment_field,border = 5):
@@ -315,20 +322,50 @@ def simple_catchment_and_flowmap_plots(fig,ref_ax,data_ax,ref_catchment_field,da
                                                                   data_original_scale_grid_kwargs=\
                                                                   data_original_scale_grid_kwargs,
                                                                   grid_type=grid_type)[0:2]
-    simple_catchment_and_flowmap_plot(ax=ref_ax,
-                                      catchment_field=ref_catchment_field,
-                                      catchment_field_for_lsmask = data_catchment_field,
-                                      flowtocell=ref_flowtocellfield,
-                                      catchment_bounds=catchment_bounds,
-                                      catchment_num=ref_catchment_num,
-                                      flowtocell_threshold=flowtocell_threshold)
-    simple_catchment_and_flowmap_plot(ax=data_ax,
-                                      catchment_field=data_catchment_field,
-                                      catchment_field_for_lsmask = data_catchment_field,
-                                      flowtocell=data_flowtocellfield,
-                                      catchment_bounds=catchment_bounds,
-                                      catchment_num=data_catchment_num,
-                                      flowtocell_threshold=flowtocell_threshold)
+    simple_catchment_and_flowmap_plot_object_ref = SimpleCatchmentAndFlowMapPlt(catchment_field=\
+                                                                                ref_catchment_field,
+                                                                                catchment_field_for_lsmask=\
+                                                                                data_catchment_field,
+                                                                                flowtocell=ref_flowtocellfield,
+                                                                                catchment_bounds=\
+                                                                                catchment_bounds,
+                                                                                catchment_num=\
+                                                                                ref_catchment_num,
+                                                                                flowtocell_threshold=\
+                                                                                flowtocell_threshold)
+    simple_catchment_and_flowmap_plot_object_ref(ref_ax)
+    simple_catchment_and_flowmap_plot_object_data = SimpleCatchmentAndFlowMapPlt(catchment_field=\
+                                                                                 data_catchment_field,
+                                                                                 catchment_field_for_lsmask=\
+                                                                                 data_catchment_field,
+                                                                                 flowtocell=data_flowtocellfield,
+                                                                                 catchment_bounds=\
+                                                                                 catchment_bounds,
+                                                                                 catchment_num=\
+                                                                                 data_catchment_num,
+                                                                                 flowtocell_threshold=\
+                                                                                 flowtocell_threshold)
+    simple_catchment_and_flowmap_plot_object_data(data_ax)
+    return simple_catchment_and_flowmap_plot_object_ref,simple_catchment_and_flowmap_plot_object_data
+    
+class SimpleCatchmentAndFlowMapPlt(object):
+    
+    def __init__(self,catchment_field,catchment_field_for_lsmask,flowtocell,
+                 catchment_bounds,catchment_num,flowtocell_threshold):
+        self.catchment_field = catchment_field
+        self.catchment_field_for_lsmask = catchment_field_for_lsmask
+        self.flowtocell = flowtocell
+        self.catchment_bounds = catchment_bounds
+        self.catchment_num = catchment_num
+        self.flowtocell_threshold = flowtocell_threshold
+        
+    def __call__(self,ax):
+        simple_catchment_and_flowmap_plot(ax,self.catchment_field,self.catchment_field_for_lsmask,
+                                          self.flowtocell,self.catchment_bounds,self.catchment_num,
+                                          self.flowtocell_threshold)
+    
+    def get_flowtocell_threshold(self):
+        return self.flowtocell_threshold
 
 def simple_catchment_and_flowmap_plot(ax,catchment_field,catchment_field_for_lsmask,flowtocell,
                                       catchment_bounds,catchment_num,flowtocell_threshold):

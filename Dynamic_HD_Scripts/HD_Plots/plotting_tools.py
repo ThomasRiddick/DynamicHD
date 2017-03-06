@@ -10,6 +10,7 @@ import numpy as np
 import math
 import Dynamic_HD_Scripts.grid as grid
 
+
 class OrogCoordFormatter(object):
     """Class that creates an object to call to give cursor position)""" 
     def __init__(self,xoffset,yoffset):
@@ -195,3 +196,4 @@ def calculate_scale_factor(course_grid_type,course_grid_kwargs,fine_grid_type,fi
     fine_grid_nlat = grid.makeGrid(fine_grid_type,**fine_grid_kwargs).get_grid_dimensions()[0]
     course_grid_nlat = grid.makeGrid(course_grid_type,**course_grid_kwargs).get_grid_dimensions()[0]
     return fine_grid_nlat/course_grid_nlat
+
