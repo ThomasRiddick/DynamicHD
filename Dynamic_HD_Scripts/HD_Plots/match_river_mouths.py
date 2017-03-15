@@ -17,7 +17,8 @@ class Params(object):
     def __init__(self, paramset='default'):
         {'default':self.init_default_params,
          'testing':self.init_testing_params,
-         'area':self.init_area_params}[paramset]()
+         'area':self.init_area_params,
+         'extensive':self.init_extensive_params}[paramset]()
        
     def init_default_params(self): 
         self.max_complexity = 15
@@ -26,9 +27,13 @@ class Params(object):
         self.ps_a = 0.0
         self.ps_b = 0.0
         self.ps_c = 1.0
-        self.minflow = 200 #250 #500
+        self.minflow = 200
         self.range = 10
         self.magnitude_tolerance_factor = 5   
+        
+    def init_extensive_params(self):
+        self.init_default_params()
+        self.minflow = 135
         
     def init_testing_params(self):
         self.max_complexity = 15
@@ -48,7 +53,7 @@ class Params(object):
         self.ps_a = 1.0
         self.ps_b = 0.0
         self.ps_c = 0.0
-        self.minflow = 200 #250 #500
+        self.minflow = 200
         self.range = 5
         self.magnitude_tolerance_factor = 5  
 

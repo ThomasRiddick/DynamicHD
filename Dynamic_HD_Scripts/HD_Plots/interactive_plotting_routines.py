@@ -121,7 +121,8 @@ class Interactive_Plots(object):
         rc_pts.plot_catchment(ax_catch, self.catchment_section, cax=cax_cct,remove_ticks_flag=False,
                               format_coords=True,
                               lat_offset=self.catchment_bounds[0],
-                              lon_offset=self.catchment_bounds[2])
+                              lon_offset=self.catchment_bounds[2],
+                              colors=None)
         def format_fn_y(tick_val,tick_pos,offset=self.catchment_bounds[0]):
             return pts.calculate_lat_label(tick_val,offset)
         self.y_formatter_funcs.append(format_fn_y)

@@ -104,7 +104,7 @@ def select_rivermaps_section(ref_flowtocellfield,data_flowtocellfield,
     return rmap_field[imin:imax,jmin:jmax]
 
 def plot_whole_river_flowmap(ax,pair,ref_flowtocellfield,data_flowtocellfield,rdirs_field,data_rdirs_field,
-                        catchment_bounds,allow_new_sink_points=False):
+                        catchment_bounds,allow_new_sink_points=False,simplified_flowmap_plot=False,colors=None):
     points_to_mark = [pair[0].get_coords(),pair[1].get_coords()]
     rmap_threshold_wholecatch = 25
     whole_catchment_rmap_section = select_rivermaps_section(ref_flowtocellfield,data_flowtocellfield,
@@ -114,17 +114,19 @@ def plot_whole_river_flowmap(ax,pair,ref_flowtocellfield,data_flowtocellfield,rd
                                                             mark_true_sinks=True,
                                                             data_true_sinks=data_rdirs_field,
                                                             allow_new_sink_points=allow_new_sink_points)
-    plot_flowmap(ax, section=whole_catchment_rmap_section)
+    plot_flowmap(ax, section=whole_catchment_rmap_section,colors=colors,reduced_map=simplified_flowmap_plot)
     plt.subplots_adjust(hspace=0.25,left=0.1)
     
 def plot_flowmap(ax,section,reduced_map=False,cax=None,
                  interpolation='none',alternative_colors=False,
-                 remove_ticks_flag=True):
+                 remove_ticks_flag=True,colors=None):
     if reduced_map: 
-        colors = 5
+        num_colors = 5
     else:
-        colors = 9
-    cmap_wholec,norm_wholec = create_colormap(section,colors=colors,alternative_colors=alternative_colors)
+        num_colors = 9
+    cmap_wholec,norm_wholec = create_colormap(section,num_colors=num_colors,
+                                              alternative_colors=alternative_colors,
+                                              colors=colors)
     ax.imshow(section,interpolation=interpolation,cmap=cmap_wholec,norm=norm_wholec)
     if remove_ticks_flag:
         pts.remove_ticks(ax)
@@ -147,7 +149,7 @@ def plot_flowmap(ax,section,reduced_map=False,cax=None,
         cb_wc.set_ticks(tic_loc_wc) 
         cb_wc.set_ticklabels(tic_labels_wc)
         
-def plot_river_rmouth_flowmap(ax,ref_flowtocellfield,data_flowtocellfield,rdirs_field,pair):
+def plot_river_rmouth_flowmap(ax,ref_flowtocellfield,data_flowtocellfield,rdirs_field,pair,colors):
     points_to_mark = [pair[0].get_coords(),pair[1].get_coords()]
     bounds = select_bounds_around_rivermouth(pair,border=20)
     rmap_threshold = 0.5*min(pair[0].get_outflow(),pair[1].get_outflow())
@@ -156,7 +158,7 @@ def plot_river_rmouth_flowmap(ax,ref_flowtocellfield,data_flowtocellfield,rdirs_
                                             threshold=rmap_threshold,
                                             points_to_mark=points_to_mark,
                                             allow_new_sink_points=False)
-    cmap,norm = create_colormap(rmap_section)
+    cmap,norm = create_colormap(rmap_section,colors=colors)
     ax.imshow(rmap_section,interpolation='none',cmap=cmap,norm=norm)
     plt.title(" Lat: " + (lambda x: str((0.5*x - 90)*(-1 if x<=180 else 1))
                           + r'$^{\circ}$' + ('N' if x <=180 else 'S'))(pair[0].get_lat())
@@ -177,9 +179,10 @@ def plot_catchment_and_histogram_for_river(ax_hist,ax_catch,ref_catchment_field,
                                            data_catchment_field_original_scale,
                                            data_original_scale_flowtocellfield,
                                            rdirs_field,data_rdirs_field,pair,
-                                           catchment_grid_changed,grid_type,
+                                           catchment_grid_changed,colors,grid_type,
                                            swap_ref_and_data_when_finding_labels=False,
                                            alternative_catchment_bounds=None,
+                                           use_simplified_catchment_colorscheme=False,
                                            data_original_scale_grid_type='HD',
                                            data_original_scale_grid_kwargs={},
                                            **grid_kwargs):
@@ -214,13 +217,21 @@ def plot_catchment_and_histogram_for_river(ax_hist,ax_catch,ref_catchment_field,
                                                           data_true_sinks=data_rdirs_field,
                                                           allow_new_sink_points=False,
                                                           alternative_catchment_bounds=\
-                                                          alternative_catchment_bounds)
-    plot_catchment(ax_catch,catchment_section,cax=None)
+                                                          alternative_catchment_bounds,
+                                                          use_simplified_catchment_colorscheme=\
+                                                          use_simplified_catchment_colorscheme)
+    plot_catchment(ax_catch,catchment_section,colors,
+                   simplified_colorscheme=use_simplified_catchment_colorscheme,
+                   cax=None)
     return catchment_section,catchment_bounds,scale_factor
 
-def plot_catchment(ax,catchment_section,cax=None,legend=True,remove_ticks_flag=True,format_coords=False,
-                   lat_offset=0,lon_offset=0):
-    cmap_catch,norm_catch = create_colormap(catchment_section,9)
+def plot_catchment(ax,catchment_section,colors,simplified_colorscheme=False,
+                   cax=None,legend=True,remove_ticks_flag=True,
+                   format_coords=False,lat_offset=0,lon_offset=0):
+    if simplified_colorscheme:
+        cmap_catch,norm_catch = create_colormap(catchment_section,5,colors=colors)
+    else:
+        cmap_catch,norm_catch = create_colormap(catchment_section,9,colors=colors)
     ax.imshow(catchment_section,interpolation='none',cmap=cmap_catch,norm=norm_catch)
     if format_coords:
         ax.format_coord = pts.OrogCoordFormatter(lon_offset,lat_offset) 
@@ -242,7 +253,8 @@ def select_catchment(ref_catchment_field,data_catchment_field,
                      data_catchment_num,points_to_mark=None,
                      data_true_sinks=None,
                      allow_new_sink_points=False,
-                     alternative_catchment_bounds=None,):
+                     alternative_catchment_bounds=None,
+                     use_simplified_catchment_colorscheme=False):
     """Prepare a catchment field that combines both the reference and data catchments"""
     catchment_field = np.copy(ref_catchment_field)
     catchment_field[np.logical_and(data_catchment_field == data_catchment_num,
@@ -254,16 +266,18 @@ def select_catchment(ref_catchment_field,data_catchment_field,
     catchment_field[np.logical_and(data_catchment_field != data_catchment_num,
                                    ref_catchment_field != ref_catchment_num)] = 1
     catchment_field[rdirs_field <= 0] = 0
-    catchment_field[rdirs_field == 5] = 7
-    for i,point in enumerate(points_to_mark,start=5):
-        catchment_field[point] = i
-    if data_true_sinks is not None:
-        catchment_field[np.logical_and(rdirs_field == 5,data_true_sinks)] = 8
-        if np.any(np.logical_and(rdirs_field != 5,data_true_sinks)):
-            if allow_new_sink_points:
-                catchment_field[np.logical_and(rdirs_field != 5,data_true_sinks)] = 9
-            else:
-                raise RuntimeWarning("New true sink point has appeared in data")
+    if not use_simplified_catchment_colorscheme:
+        catchment_field[rdirs_field == 5] = 7
+    if not use_simplified_catchment_colorscheme:
+        for i,point in enumerate(points_to_mark,start=5):
+            catchment_field[point] = i
+            if data_true_sinks is not None:
+                catchment_field[np.logical_and(rdirs_field == 5,data_true_sinks)] = 8
+                if np.any(np.logical_and(rdirs_field != 5,data_true_sinks)):
+                    if allow_new_sink_points:
+                        catchment_field[np.logical_and(rdirs_field != 5,data_true_sinks)] = 9
+                    else:
+                        raise RuntimeWarning("New true sink point has appeared in data")
     if alternative_catchment_bounds is None:
         imin,imax,jmin,jmax = find_catchment_edges(catchment_field)
     else:
@@ -292,14 +306,20 @@ def find_catchment_edges(catchment_field,border = 5):
         jmax = is_catchment.shape[1] - 1
     return imin,imax,jmin,jmax
 
-def create_colormap(field,colors=7,alternative_colors=False):
+def create_colormap(field,num_colors=7,alternative_colors=False,colors=None):
     """Generate a discrete colormap"""
-    cmap = mpl.colors.ListedColormap(['blue','peru','yellow','white','gray','red','black',
-                                      'indigo','deepskyblue'][:colors])
+    if colors is not None:
+        color_list = colors.create_colormap_colors
+        alternative_color_list = colors.create_colormap_alternative_colors
+    else:
+        color_list = ['blue','peru','yellow','white','gray','red','black',
+                      'indigo','deepskyblue']
+        alternative_color_list = ['blue','peru','blueviolet','black','red','gray','green',
+                                  'yellow','deepskyblue']
+    cmap = mpl.colors.ListedColormap(color_list[:num_colors])
     if alternative_colors:
-        cmap = mpl.colors.ListedColormap(['blue','peru','blueviolet','black','red','gray','green',
-                                          'yellow','deepskyblue'][:colors]) 
-    bounds = range(colors+1)
+        cmap = mpl.colors.ListedColormap(alternative_color_list[:num_colors]) 
+    bounds = range(num_colors+1)
     norm = mpl.colors.BoundaryNorm(bounds,cmap.N)
     return cmap,norm
 
@@ -307,8 +327,9 @@ def simple_catchment_and_flowmap_plots(fig,ref_ax,data_ax,ref_catchment_field,da
                                        data_catchment_field_original_scale,ref_flowtocellfield,
                                        data_flowtocellfield,data_original_scale_flowtocellfield,pair,
                                        catchment_bounds,flowtocell_threshold,
-                                       catchment_grid_changed,grid_type,data_original_scale_grid_type,
-                                       data_original_scale_grid_kwargs={},**grid_kwargs):
+                                       catchment_grid_changed,colors,grid_type,
+                                       data_original_scale_grid_type,data_original_scale_grid_kwargs={},
+                                       **grid_kwargs):
     fig.suptitle('River catchment plus cells with a cumulative flow greater than {0}'.format(flowtocell_threshold))
     ref_ax.set_title('Reference')
     data_ax.set_title('Data')
@@ -332,7 +353,8 @@ def simple_catchment_and_flowmap_plots(fig,ref_ax,data_ax,ref_catchment_field,da
                                                                                 catchment_num=\
                                                                                 ref_catchment_num,
                                                                                 flowtocell_threshold=\
-                                                                                flowtocell_threshold)
+                                                                                flowtocell_threshold,
+                                                                                colors=colors)
     simple_catchment_and_flowmap_plot_object_ref(ref_ax)
     simple_catchment_and_flowmap_plot_object_data = SimpleCatchmentAndFlowMapPlt(catchment_field=\
                                                                                  data_catchment_field,
@@ -344,31 +366,33 @@ def simple_catchment_and_flowmap_plots(fig,ref_ax,data_ax,ref_catchment_field,da
                                                                                  catchment_num=\
                                                                                  data_catchment_num,
                                                                                  flowtocell_threshold=\
-                                                                                 flowtocell_threshold)
+                                                                                 flowtocell_threshold,
+                                                                                 colors=colors)
     simple_catchment_and_flowmap_plot_object_data(data_ax)
     return simple_catchment_and_flowmap_plot_object_ref,simple_catchment_and_flowmap_plot_object_data
     
 class SimpleCatchmentAndFlowMapPlt(object):
     
     def __init__(self,catchment_field,catchment_field_for_lsmask,flowtocell,
-                 catchment_bounds,catchment_num,flowtocell_threshold):
+                 catchment_bounds,catchment_num,flowtocell_threshold,colors):
         self.catchment_field = catchment_field
         self.catchment_field_for_lsmask = catchment_field_for_lsmask
         self.flowtocell = flowtocell
         self.catchment_bounds = catchment_bounds
         self.catchment_num = catchment_num
         self.flowtocell_threshold = flowtocell_threshold
+        self.colors = colors
         
     def __call__(self,ax):
         simple_catchment_and_flowmap_plot(ax,self.catchment_field,self.catchment_field_for_lsmask,
                                           self.flowtocell,self.catchment_bounds,self.catchment_num,
-                                          self.flowtocell_threshold)
+                                          self.flowtocell_threshold,self.colors)
     
     def get_flowtocell_threshold(self):
         return self.flowtocell_threshold
 
 def simple_catchment_and_flowmap_plot(ax,catchment_field,catchment_field_for_lsmask,flowtocell,
-                                      catchment_bounds,catchment_num,flowtocell_threshold):
+                                      catchment_bounds,catchment_num,flowtocell_threshold,colors):
     """Simple version of overlaid catchment and flowmaps plot"""
     working_catchment = np.copy(catchment_field)
     imin,imax,jmin,jmax = catchment_bounds
@@ -377,7 +401,7 @@ def simple_catchment_and_flowmap_plot(ax,catchment_field,catchment_field_for_lsm
     working_catchment[catchment_field_for_lsmask <= 0] = 0
     working_catchment[flowtocell > flowtocell_threshold] = 4
     working_catchment_section = working_catchment[imin:imax,jmin:jmax]
-    cmap_catch = mpl.colors.ListedColormap(['blue','peru','white','black'])
+    cmap_catch = mpl.colors.ListedColormap(colors.simple_catchment_and_flowmap_colors)
     norm_catch = mpl.colors.BoundaryNorm(range(5),cmap_catch.N)
     ax.imshow(working_catchment_section,interpolation='none',cmap=cmap_catch,norm=norm_catch)
     pts.remove_ticks(ax)

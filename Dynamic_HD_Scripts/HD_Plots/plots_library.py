@@ -7,6 +7,7 @@ Created on Jan 29, 2016
 
 @author: thomasriddick
 '''
+from color_palette import ColorPalette 
 import datetime
 import numpy as np
 import matplotlib.pyplot as plt
@@ -32,16 +33,17 @@ class Plots(object):
     hd_data_path = '/Users/thomasriddick/Documents/data/HDdata/'
     scratch_dir = '/Users/thomasriddick/Documents/data/temp/' 
     
-    def __init__(self,save=False):
+    def __init__(self,save=False,color_palette_to_use='default'):
         """Class constructor."""
+        self.colors = ColorPalette(color_palette_to_use)
         self.save = save
         
 class HDparameterPlots(Plots):
     
     hdfile_extension = "hdfiles"
     
-    def __init__(self,save=False):
-        super(HDparameterPlots,self).__init__(save)
+    def __init__(self,save=False,color_palette_to_use='default'):
+        super(HDparameterPlots,self).__init__(save,color_palette_to_use)
         self.hdfile_path = os.path.join(self.hd_data_path,self.hdfile_extension)
     
     def flow_parameter_distribution_for_non_lake_cells_for_current_HD_model(self):
@@ -96,9 +98,9 @@ class HDOutputPlots(Plots):
     rdirs_path_extension = 'rdirs'
     jsbach_restart_file_path_extension = 'jsbachrestartfiles'
     
-    def __init__(self,save=False):
+    def __init__(self,save=False,color_palette_to_use='default'):
         """Class constructor."""
-        super(HDOutputPlots,self).__init__(save)
+        super(HDOutputPlots,self).__init__(save,color_palette_to_use)
         self.rdirs_data_directory = os.path.join(self.hd_data_path,self.rdirs_path_extension)
         self.upscaled_rdirs_data_directory = os.path.join(self.rdirs_data_directory,
                                                           'generated','upscaled')
@@ -374,8 +376,8 @@ class OutflowPlots(Plots):
     additional_matches_list_extension = 'addmatches'
     catchment_and_outflows_mods_list_extension = 'catchmods'
     
-    def __init__(self,save):
-        super(OutflowPlots,self).__init__(save)
+    def __init__(self,save,color_palette_to_use='default'):
+        super(OutflowPlots,self).__init__(save,color_palette_to_use)
         self.rmouth_outflow_data_directory = os.path.join(self.hd_data_path,self.rmouth_outflow_path_extension)
         self.flow_maps_data_directory = os.path.join(self.hd_data_path,self.flow_maps_path_extension)
         self.rdirs_data_directory = os.path.join(self.hd_data_path,self.rdirs_path_extension)
@@ -410,6 +412,9 @@ class OutflowPlots(Plots):
                                      rivers_to_plot=None,
                                      alternative_catchment_bounds=None,
                                      matching_parameter_set='default',
+                                     split_comparison_plots_across_multiple_canvases=False,
+                                     use_simplified_catchment_colorscheme=False,
+                                     use_simplified_flowmap_colorscheme=False,
                                      grid_type='HD',data_original_scale_grid_type='HD',
                                      super_fine_orog_grid_type='HD',
                                      data_original_scale_grid_kwargs={},
@@ -676,15 +681,26 @@ class OutflowPlots(Plots):
             if rivers_to_plot is not None:
                 if not (pair[0].get_lat(),pair[0].get_lon()) in rivers_to_plot:
                     continue
-            plt.figure(figsize=(25,12.5))
-            ax = plt.subplot(222)
+            if split_comparison_plots_across_multiple_canvases:
+                plt.figure(figsize=(25,6.25))
+                ax = plt.subplot(121)
+                plt.tight_layout()
+            else:
+                plt.figure(figsize=(25,12.5))
+                ax = plt.subplot(222)
             rc_pts.plot_river_rmouth_flowmap(ax=ax, 
                                              ref_flowtocellfield=ref_flowtocellfield, 
                                              data_flowtocellfield=data_flowtocellfield,
                                              rdirs_field=rdirs_field, 
-                                             pair=pair)
-            ax_hist = plt.subplot(221)
-            ax_catch = plt.subplot(223)
+                                             pair=pair,colors=self.colors)
+            if split_comparison_plots_across_multiple_canvases:
+                ax_hist = plt.subplot(122)
+                plt.figure(figsize=(12.5,12.5))
+                ax_catch = plt.subplot(111)
+                plt.tight_layout(rect=(0,0,0.9,1))
+            else:
+                ax_hist = plt.subplot(221)
+                ax_catch = plt.subplot(223)
             catchment_section,catchment_bounds,scale_factor = \
                 rc_pts.plot_catchment_and_histogram_for_river(ax_hist=ax_hist,ax_catch=ax_catch,
                                                               ref_catchment_field=ref_catchment_field,
@@ -698,19 +714,28 @@ class OutflowPlots(Plots):
                                                               catchment_grid_changed=catchment_grid_changed,
                                                               swap_ref_and_data_when_finding_labels=\
                                                               swap_ref_and_data_when_finding_labels,
+                                                              colors=self.colors,
                                                               grid_type=grid_type,
                                                               alternative_catchment_bounds=\
                                                               alternative_catchment_bounds,
+                                                              use_simplified_catchment_colorscheme=\
+                                                              use_simplified_catchment_colorscheme,
                                                               data_original_scale_grid_type=\
                                                               data_original_scale_grid_type,
                                                               data_original_scale_grid_kwargs=\
                                                               data_original_scale_grid_kwargs,
                                                               **grid_kwargs)
-            ax = plt.subplot(224)
+            if split_comparison_plots_across_multiple_canvases:
+                plt.figure(figsize=(12.5,12.5))
+                ax = plt.subplot(111)
+                plt.tight_layout(rect=(0,0,0.9,1))
+            else:
+                ax = plt.subplot(224)
             rc_pts.plot_whole_river_flowmap(ax=ax,pair=pair,ref_flowtocellfield=ref_flowtocellfield,
                                             data_flowtocellfield=data_flowtocellfield,
                                             rdirs_field=rdirs_field,data_rdirs_field=data_rdirs_field,
-                                            catchment_bounds=catchment_bounds)
+                                            catchment_bounds=catchment_bounds,colors=self.colors,
+                                            simplified_flowmap_plot=use_simplified_flowmap_colorscheme)
             if plot_simple_catchment_and_flowmap_plots:
                 simple_candf_plt = plt.figure(figsize=(10,6))
                 simple_ref_ax  = plt.subplot(121)
@@ -730,7 +755,7 @@ class OutflowPlots(Plots):
                                                                      pair=pair,catchment_bounds=catchment_bounds,
                                                                      flowtocell_threshold=flowtocell_threshold, 
                                                                      catchment_grid_changed=catchment_grid_changed,
-                                                                     grid_type=grid_type,
+                                                                     colors=self.colors,grid_type=grid_type,
                                                                      data_original_scale_grid_type=\
                                                                      data_original_scale_grid_type,
                                                                      data_original_scale_grid_kwargs=\
@@ -1027,9 +1052,9 @@ class FlowMapPlots(Plots):
     flow_maps_path_extension = 'flowmaps'
     ls_masks_extension        = 'lsmasks'
     
-    def __init__(self,save):
+    def __init__(self,save,color_palette_to_use='default'):
         """Class Constructor"""
-        super(FlowMapPlots,self).__init__(save)
+        super(FlowMapPlots,self).__init__(save,color_palette_to_use)
         self.flow_maps_data_directory = os.path.join(self.hd_data_path,self.flow_maps_path_extension)
         self.ls_masks_data_directory= os.path.join(self.hd_data_path,self.ls_masks_extension)
         
@@ -1062,7 +1087,8 @@ class FlowMapPlots(Plots):
                                          lsmask_has_same_orientation_as_ref=True,
                                          invert_ls_mask=False,
                                          first_datasource_name="Reference",
-                                         second_datasource_name="Data",**kwargs):
+                                         second_datasource_name="Data",
+                                         add_title=True,**kwargs):
         """Help compare two two-colour flow maps"""
         flowmap_ref_field = dynamic_hd.load_field(ref_filename,
                                                   file_type=dynamic_hd.get_file_extension(ref_filename), 
@@ -1094,10 +1120,11 @@ class FlowMapPlots(Plots):
             lsmask = lsmask_field.get_data() 
         flowmap_ref_field = flowmap_ref_field.get_data()
         flowmap_data_field = flowmap_data_field.get_data()
-        plt.figure()
+        plt.figure(figsize=(20,8))
         ax = plt.subplot(111)
         fmp_pts.make_basic_flowmap_comparison_plot(ax,flowmap_ref_field,flowmap_data_field,minflowcutoff,
-                                                   first_datasource_name,second_datasource_name,lsmask)
+                                                   first_datasource_name,second_datasource_name,lsmask,
+                                                   colors=self.colors,add_title=add_title)
         
     def FlowMapTwoColourPlotHelper(self,filename,lsmask_filename=None,grid_type='HD',
                                    minflowcutoff=100,flip_data=False,flip_mask=False,
@@ -1412,13 +1439,20 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
     catchments_path_extension = 'catchmentmaps'
     rdirs_path_extension = 'rdirs'
     rmouth_outflow_path_extension = 'rmouthflow'
+    catchment_and_outflows_mods_list_extension = 'catchmods'
+    additional_matches_list_extension = 'addmatches'
     
-    def __init__(self,save):
+    def __init__(self,save,color_palette_to_use='default'):
         """Class constructor"""
-        super(FlowMapPlotsWithCatchments,self).__init__(save)
+        super(FlowMapPlotsWithCatchments,self).__init__(save,color_palette_to_use)
         self.catchments_data_directory = os.path.join(self.hd_data_path,self.catchments_path_extension)
         self.rdirs_data_directory = os.path.join(self.hd_data_path,self.rdirs_path_extension)
         self.rmouth_outflow_data_directory = os.path.join(self.hd_data_path,self.rmouth_outflow_path_extension)
+        self.temp_label = 'temp_' + datetime.datetime.now().strftime("%Y%m%d_%H%M%S%f") + "_"
+        self.additional_matches_list_directory = os.path.join(self.hd_data_path,
+                                                              self.additional_matches_list_extension)
+        self.catchment_and_outflows_mods_list_directory = os.path.join(self.hd_data_path,
+                                                                       self.catchment_and_outflows_mods_list_extension)
 
     def FlowMapTwoColourComparisonWithCatchmentsHelper(self,ref_flowmap_filename,data_flowmap_filename,
                                                        ref_catchment_filename,data_catchment_filename,
@@ -1428,11 +1462,26 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                                        lsmask_filename=None,minflowcutoff=100,flip_data=False,
                                                        rotate_data=False,flip_ref=False,rotate_ref=False,
                                                        lsmask_has_same_orientation_as_ref=True,
-                                                       invert_ls_mask=False,first_datasource_name="Reference",
-                                                       matching_parameter_set='default',rivers_to_plot=None,
-                                                       second_datasource_name="Data",grid_type='HD',
-                                                       **grid_kwargs):
+                                                       invert_ls_mask=False,matching_parameter_set='default',
+                                                       rivers_to_plot=None,
+                                                       rivers_to_plot_alt_color=None,
+                                                       rivers_to_plot_secondary_alt_color=None,
+                                                       use_single_color_for_discrepancies=True,
+                                                       use_only_one_color_for_flowmap=False,
+                                                       additional_matches_list_filename=None,
+                                                       catchment_and_outflows_mods_list_filename=None,
+                                                       first_datasource_name="Reference",
+                                                       second_datasource_name="Data",use_title=True,
+                                                       grid_type='HD',**grid_kwargs):
         """Help compare two two-colour flow maps"""
+        if (rivers_to_plot_secondary_alt_color is not None):
+            if (rivers_to_plot is None) or (rivers_to_plot_alt_color is None): 
+                raise RuntimeError("Invalid options - Secondary alternative color set when primary and/or"
+                                   "secondary colors unused")
+            else:
+                rivers_to_plot_alt_color.extend(rivers_to_plot_secondary_alt_color)
+        else:
+            rivers_to_plot_secondary_alt_color = []
         ref_flowmaps_filepath = os.path.join(self.flow_maps_data_directory,ref_flowmap_filename)
         data_flowmaps_filepath = os.path.join(self.flow_maps_data_directory,data_flowmap_filename)
         ref_catchment_filepath = os.path.join(self.catchments_data_directory,
@@ -1474,6 +1523,12 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
             lsmask_field = dynamic_hd.load_field(lsmask_filename, 
                                                  file_type=dynamic_hd.get_file_extension(lsmask_filename), 
                                                  field_type='Generic', grid_type=grid_type,**grid_kwargs)
+        if catchment_and_outflows_mods_list_filename:
+            catchment_and_outflows_mods_list_filepath = os.path.join(self.catchment_and_outflows_mods_list_directory,
+                                                                     catchment_and_outflows_mods_list_filename)
+        if additional_matches_list_filename:
+            additional_matches_list_filepath = os.path.join(self.additional_matches_list_directory,
+                                                            additional_matches_list_filename)
         if flip_data:
             flowmap_data_field.flip_data_ud()
             data_catchment_field.flip_data_ud()
@@ -1507,7 +1562,7 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
         if data_rdirs_filename:
             data_rdirs_field = data_rdirs_field.get_data()
         ref_rdirs_field = ref_rdirs_field.get_data()
-        plt.figure()
+        plt.figure(figsize=(20,8))
         ax = plt.subplot(111)
         image_array =fmp_pts.\
             make_basic_flowmap_comparison_plot(ax,flowmap_ref_field,
@@ -1517,6 +1572,47 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                                second_datasource_name,
                                                lsmask,
                                                return_image_array_instead_of_plotting=True)
+        temp_file_list = []
+        if catchment_and_outflows_mods_list_filename:
+            ref_outflow_field = dynamic_hd.load_field(reference_rmouth_outflows_filename,
+                                                      file_type=dynamic_hd.\
+                                                      get_file_extension(reference_rmouth_outflows_filename), 
+                                                      field_type='Generic', grid_type=grid_type,**grid_kwargs)
+            data_outflow_field = dynamic_hd.load_field(data_rmouth_outflows_filename,
+                                                       file_type=dynamic_hd.\
+                                                       get_file_extension(data_rmouth_outflows_filename), 
+                                                       field_type='Generic', grid_type=grid_type,**grid_kwargs)
+            if flip_data:
+                data_outflow_field.flip_data_ud()
+            if rotate_data:
+                data_outflow_field.rotate_field_by_a_hundred_and_eighty_degrees()
+            ref_catchment_field, ref_outflow_field, data_catchment_field, data_outflow_field =\
+                rc_pts.modify_catchments_and_outflows(ref_catchment_field,ref_outflow_field,flowmap_ref_field,
+                                                      ref_rdirs_field,data_catchment_field,data_outflow_field,
+                                                      catchment_and_outflows_modifications_list_filename=\
+                                                      catchment_and_outflows_mods_list_filepath, 
+                                                      grid_type=grid_type)
+            if flip_data:
+                data_outflow_field.flip_data_ud()
+            if rotate_data:
+                data_outflow_field.rotate_field_by_a_hundred_and_eighty_degrees()
+            reference_rmouth_outflows_filename=os.path.join(self.scratch_dir,
+                                                            self.temp_label + os.path.\
+                                                            basename(reference_rmouth_outflows_filename))
+            data_rmouth_outflows_filename=os.path.join(self.scratch_dir,
+                                                       self.temp_label + os.path.\
+                                                       basename(reference_rmouth_outflows_filename))
+            temp_file_list.append(reference_rmouth_outflows_filename)
+            temp_file_list.append(data_rmouth_outflows_filename)
+            dynamic_hd.write_field(reference_rmouth_outflows_filename, 
+                                   field=ref_outflow_field, 
+                                   file_type=dynamic_hd.\
+                                   get_file_extension(reference_rmouth_outflows_filename))
+            dynamic_hd.write_field(data_rmouth_outflows_filename, 
+                                   field=data_outflow_field, 
+                                   file_type=dynamic_hd.\
+                                   get_file_extension(data_rmouth_outflows_filename))
+            
         matchedpairs,_  = mtch_rm.main(reference_rmouth_outflows_filename=\
                                        reference_rmouth_outflows_filename, 
                                        data_rmouth_outflows_filename=\
@@ -1527,21 +1623,63 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                        rotate_ref_field=rotate_ref,
                                        param_set=matching_parameter_set,
                                        grid_type=grid_type,**grid_kwargs)
+        if additional_matches_list_filename:
+            additional_matches = mtch_rm.load_additional_manual_matches(additional_matches_list_filepath,
+                                                                        reference_rmouth_outflows_filename, 
+                                                                        data_rmouth_outflows_filename,
+                                                                        flip_data_field=flip_data,
+                                                                        rotate_data_field=rotate_data,
+                                                                        grid_type='HD',**grid_kwargs)
+            matchedpairs.extend(additional_matches)
         for pair in matchedpairs:
             if pair[0].get_lat() > 310:
                 continue
-            if rivers_to_plot is not None:
+            alt_color_num = 8
+            if (rivers_to_plot is not None) and (rivers_to_plot_alt_color is not None):
+                if ((not (pair[0].get_lat(),pair[0].get_lon()) in rivers_to_plot) and
+                    (not (pair[0].get_lat(),pair[0].get_lon()) in rivers_to_plot_alt_color)):
+                    continue
+                elif (((pair[0].get_lat(),pair[0].get_lon()) in rivers_to_plot) and
+                      ((pair[0].get_lat(),pair[0].get_lon()) in rivers_to_plot_alt_color)):
+                    raise RuntimeError("Cannot plot a catchment in both original and alternative colors - check for duplicate")
+                elif ((pair[0].get_lat(),pair[0].get_lon()) in rivers_to_plot):
+                    alt_color=False
+                elif ((pair[0].get_lat(),pair[0].get_lon()) in rivers_to_plot_secondary_alt_color): 
+                    alt_color=True
+                    alt_color_num = 9
+                else:
+                    alt_color=True
+            elif  rivers_to_plot is not None:
+                alt_color = False
                 if not (pair[0].get_lat(),pair[0].get_lon()) in rivers_to_plot:
                     continue
+            elif rivers_to_plot_alt_color is not None:
+                alt_color = True
+                if not (pair[0].get_lat(),pair[0].get_lon()) in rivers_to_plot_alt_color:
+                    continue
+            else:
+                alt_color = False
             print "Ref Point: " + str(pair[0]) + "Matches: " + str(pair[1])
             image_array = fmp_pts.add_selected_catchment_to_existing_plot(image_array,data_catchment_field,
                                                                           ref_catchment_field,data_catchment_field,
                                                                           flowmap_data_field, ref_rdirs_field, 
                                                                           data_rdirs_field, pair=pair, 
                                                                           catchment_grid_changed=False,
+                                                                          use_alt_color=alt_color,
+                                                                          alt_color_num=alt_color_num,
+                                                                          use_single_color_for_discrepancies=\
+                                                                          use_single_color_for_discrepancies,
+                                                                          use_only_one_color_for_flowmap=\
+                                                                          use_only_one_color_for_flowmap,
                                                                           grid_type=grid_type, 
                                                                           data_original_scale_grid_type=grid_type)
-        fmp_pts.plot_composite_image(ax,image_array,minflowcutoff,first_datasource_name,second_datasource_name)
+        fmp_pts.plot_composite_image(ax,image_array,minflowcutoff,first_datasource_name,second_datasource_name,
+                                     use_single_color_for_discrepancies,use_only_one_color_for_flowmap,use_title,
+                                     colors=self.colors)
+        for temp_file in temp_file_list:
+            if os.path.basename(temp_file).startswith("temp_"):
+                print "Deleting File: {0}".format(temp_file)
+                os.remove(temp_file)
         
     def Upscaled_Rdirs_vs_Corrected_HD_Rdirs_ICE5G_data_ALG4_corr_orog_downscaled_ls_mask_0k_FlowMap_comparison(self): 
         ref_filename=os.path.join(self.flow_maps_data_directory,
@@ -1571,12 +1709,46 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                                             data_rmouth_outflows_filename=\
                                                             upscaled_rdirs_rmouthoutflow_file,
                                                             lsmask_filename=lsmask_filename,
-                                                            minflowcutoff=60,flip_data=True,
+                                                            minflowcutoff=100,flip_data=True,
                                                             rotate_data=True,flip_ref=False,rotate_ref=False,
                                                             lsmask_has_same_orientation_as_ref=False,
                                                             invert_ls_mask=False,
                                                             first_datasource_name="Reference",
-                                                            matching_parameter_set='default',rivers_to_plot=None,
+                                                            matching_parameter_set='extensive',
+                                                            rivers_to_plot=[(117,424),(121,176),(179,260),
+                                                                            (160,573),(40,90),(217,432),
+                                                                            (104,598),(46,504),(252,638),
+                                                                            (32,612),(132,494),(171,371),
+                                                                            (50,439),(121,456),(40,682),
+                                                                            (88,430)],
+                                                            rivers_to_plot_alt_color=[(192,384),(82,223),
+                                                                                      (249,244),(117,603),
+                                                                                      (35,521),(144,548),
+                                                                                      (72,641),(54,29),
+                                                                                      (88,457),(62,173),
+                                                                                      (91,111),(125,165),
+                                                                                      (159,235),(237,392),
+                                                                                      (36,660),(51,717),
+                                                                                      (33,603),(90,418),
+                                                                                      (89,482),(111,380)],
+                                                            rivers_to_plot_secondary_alt_color=[(64,175),
+                                                                                                (42,468),
+                                                                                                (32,577),
+                                                                                                (43,508),
+                                                                                                (117,130),
+                                                                                                (230,427),
+                                                                                                (36,631),
+                                                                                                (86,436),
+                                                                                                (55,174),
+                                                                                                (82,113),
+                                                                                                (60,416),
+                                                                                                (154,388),
+                                                                                                (136,536),
+                                                                                                (201,286)],
+                                                            use_single_color_for_discrepancies=True,
+                                                            catchment_and_outflows_mods_list_filename=\
+                                                            "catch_and_outflow_mods_ice5g_10min_upscaled_"
+                                                            "rdirs_vs_modern_day.txt",
                                                             second_datasource_name="Data",grid_type='HD')
     
 class OrographyPlots(Plots):
@@ -1584,16 +1756,16 @@ class OrographyPlots(Plots):
     
     orography_path_extension = 'orographys'
 
-    def __init__(self,save):
+    def __init__(self,save,color_palette_to_use='default'):
         """Class constructor"""
-        super(OrographyPlots,self).__init__(save)
+        super(OrographyPlots,self).__init__(save,color_palette_to_use)
         self.orography_data_directory = os.path.join(self.hd_data_path,self.orography_path_extension)
         
 class SimpleOrographyPlots(OrographyPlots):
     
-    def __init__(self,save):
+    def __init__(self,save,color_palette_to_use='default'):
         """Class constructor."""
-        super(SimpleOrographyPlots,self).__init__(save)
+        super(SimpleOrographyPlots,self).__init__(save,color_palette_to_use)
         
     def SimpleArrayPlotHelper(self,filename):
         """Assists the creation of simple array plots"""
@@ -1606,9 +1778,9 @@ class SimpleOrographyPlots(OrographyPlots):
 class Ice5GComparisonPlots(OrographyPlots):
     """Handles generation Ice5G data comparison plots"""
 
-    def __init__(self,save,use_old_data=False):
+    def __init__(self,save,use_old_data=False,color_palette_to_use='default'):
         """Class constructor. Sets filename (to point to either old or new data)"""
-        super(Ice5GComparisonPlots,self).__init__(save)
+        super(Ice5GComparisonPlots,self).__init__(save,color_palette_to_use)
         print "Comparing the Modern and LGM Ice-5G 5-minute resolution orography datasets"
         
         if use_old_data:
@@ -1729,7 +1901,7 @@ def main():
     #ice5g_comparison_plots.plotFilled()
     #ice5g_comparison_plots.plotCombined()
     #ice5g_comparison_plots.plotCombinedIncludingOceanFloors()
-    flowmapplot = FlowMapPlots(save)
+    #flowmapplot = FlowMapPlots(save)
     #flowmapplot.Etopo1FlowMap()
     #flowmapplot.ICE5G_data_all_points_0k()
     #flowmapplot.ICE5G_data_all_points_0k_no_sink_filling()
