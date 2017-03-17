@@ -902,6 +902,53 @@ contains
         end if
         call teardown
 
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testYamazakiLatLonCalculateRiverDirectionsAsIndicesOne"
+        call set_unit_name('test_something')
+        call run_test_case(testYamazakiLatLonCalculateRiverDirectionsAsIndicesOne,&
+                           'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","yamazaki_calculate_river_directions_as_indices_test")
+        else
+            call case_passed_xml("test_something","yamazaki_calculate_river_directions_as_indices_test")
+        end if
+        call teardown
+
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testYamazakiLatLonCalculateRiverDirectionsAsIndicesTwo"
+        call set_unit_name('test_something')
+        call run_test_case(testYamazakiLatLonCalculateRiverDirectionsAsIndicesTwo,&
+                           'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","yamazaki_calculate_river_directions_as_indices_test")
+        else
+            call case_passed_xml("test_something","yamazaki_calculate_river_directions_as_indices_test")
+        end if
+        call teardown
+
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testYamazakiLatLonCalculateRiverDirectionsAsIndicesThree"
+        call set_unit_name('test_something')
+        call run_test_case(testYamazakiLatLonCalculateRiverDirectionsAsIndicesThree,&
+                           'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","yamazaki_calculate_river_directions_as_indices_test")
+        else
+            call case_passed_xml("test_something","yamazaki_calculate_river_directions_as_indices_test")
+        end if
+        call teardown
+
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testYamazakiLatLonCalculateRiverDirectionsAsIndicesFour"
+        call set_unit_name('test_something')
+        call run_test_case(testYamazakiLatLonCalculateRiverDirectionsAsIndicesFour,&
+                           'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","yamazaki_calculate_river_directions_as_indices_test")
+        else
+            call case_passed_xml("test_something","yamazaki_calculate_river_directions_as_indices_test")
+        end if
+        call teardown
 
     end subroutine area_all_tests
 
