@@ -12,12 +12,15 @@ from distutils.extension import Extension
 from Cython.Build import cythonize
 from context import module_dir
 import os.path as path
+import os
 from sys import platform
 
 if platform == "linux" or platform == "linux2":
     extra_compile_args = ['-std=gnu++11']
     extra_links_args = []
 elif platform == "darwin":
+    #specify gcc as the compiler (which is despite the name actually a version of clang on mac)
+    os.environ["CC"] = "/usr/bin/gcc"
     extra_compile_args=['-std=gnu++11','-stdlib=libc++','-mmacosx-version-min=10.7']
     extra_links_args = ['-mmacosx-version-min=10.7']
 else:
