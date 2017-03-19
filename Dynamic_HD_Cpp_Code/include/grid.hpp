@@ -18,6 +18,8 @@ public:
 	enum grid_types {latlon};
 	int get_total_size() {return total_size;}
 	int get_index(coords*);
+	virtual int get_edge_number(coords*);
+	virtual int get_separation_from_initial_edge(coords*,int);
 	virtual void for_diagonal_nbrs(coords*,function<void(coords*)> ) {};
 	virtual void for_non_diagonal_nbrs(coords*,function<void(coords*)>) {};
 	virtual void for_all_nbrs(coords*,function<void(coords*)>) {};
@@ -26,6 +28,8 @@ public:
 	coords* wrapped_coords(coords*);
 	bool outside_limits(coords*);
 	bool non_diagonal(coords*,coords*);
+	virtual bool is_corner_cell(coords*);
+	virtual bool check_if_cell_is_on_given_edge_number(coords*,int);
 	double calculate_dir_based_rdir(coords*,coords*);
 protected:
 	grid_types grid_type;
@@ -40,11 +44,17 @@ public:
 class latlon_grid : public grid {
 	int nlat;
 	int nlon;
+	const int left_vertical_edge_num     = 1;
+	const int right_vertical_edge_num    = 2;
+	const int top_horizontal_edge_num    = 3;
+	const int bottom_horizontal_edge_num = 4;
 public:
 	latlon_grid(grid_params*);
 	virtual ~latlon_grid() {};
 	int get_nlat() { return nlat; };
 	int get_nlon() { return nlon; };
+	int get_edge_number(coords*);
+	int get_separation_from_initial_edge(coords*,int);
 	int latlon_get_index(latlon_coords* coords_in)
 		{ return coords_in->get_lat()*nlon + coords_in->get_lon(); }
 	void for_diagonal_nbrs(coords*,function<void(coords*)> );
@@ -55,6 +65,8 @@ public:
 	bool latlon_outside_limits(latlon_coords* coords)
 		{ return (coords->get_lat() < 0 || coords->get_lat() >= nlat); }
 	bool latlon_non_diagonal(latlon_coords*, latlon_coords*);
+	bool is_corner_cell(coords*);
+	bool check_if_cell_is_on_given_edge_number(coords*,int);
 	double latlon_calculate_dir_based_rdir(latlon_coords*,latlon_coords*);
 	latlon_coords* latlon_wrapped_coords(latlon_coords*);
 };

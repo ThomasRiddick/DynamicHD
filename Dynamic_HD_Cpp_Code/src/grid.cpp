@@ -85,6 +85,39 @@ bool latlon_grid::latlon_non_diagonal(latlon_coords* start_coords,latlon_coords*
 			dest_coords->get_lon() == start_coords->get_lon());
 }
 
+bool latlon_grid::is_corner_cell(coords* coords_in){
+	latlon_coords* latlon_coords_in = static_cast<latlon_coords*>(coords_in);
+	return ((latlon_coords_in->get_lat() == 0 && latlon_coords_in->get_lon() == 0) ||
+			(latlon_coords_in->get_lat() == 0 && latlon_coords_in->get_lon() == nlon-1) ||
+			(latlon_coords_in->get_lat() == nlat-1 && latlon_coords_in->get_lon() == 0) ||
+			(latlon_coords_in->get_lat() == nlat-1 && latlon_coords_in->get_lon() == nlon-1));
+}
+
+bool latlon_grid::check_if_cell_is_on_given_edge_number(coords* coords_in,int edge_number){
+	latlon_coords* latlon_coords_in = static_cast<latlon_coords*>(coords_in);
+	if (this->get_edge_number(coords_in) == edge_number) return true;
+	//deal with corner cells that are assigned vertical edge edge numbers but should
+	//also be considered to be a horizontal edge
+	else if ((edge_number == top_horizontal_edge_num) &&
+			(latlon_coords_in->get_lon() == 0)) 		 return true;
+	else if ((edge_number == bottom_horizontal_edge_num) &&
+			(latlon_coords_in->get_lon() == nlon-1))     return true;
+	else return false;
+}
+
+int latlon_grid::get_edge_number(coords* coords_in) {
+	latlon_coords* latlon_coords_in = static_cast<latlon_coords*>(coords_in);
+	if (latlon_coords_in->get_lat() == 0)      return left_vertical_edge_num;
+	if (latlon_coords_in->get_lat() == nlat-1) return right_vertical_edge_num;
+	if (latlon_coords_in->get_lon() == 0)      return top_horizontal_edge_num;
+	if (latlon_coords_in->get_lon() == nlon-1) return bottom_horizontal_edge_num;
+	throw runtime_error("Internal logic broken - trying to get edge number of non-edge cell");
+}
+
+int latlon_grid::get_separation_from_initial_edge(coords* coords_in,int edge_number) {
+	return 999;
+}
+
 double latlon_grid::latlon_calculate_dir_based_rdir(latlon_coords* start_coords,latlon_coords* dest_coords){
 	//deal with wrapping longitude
 	int start_lon_loc = start_coords->get_lon();

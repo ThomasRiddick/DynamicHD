@@ -185,6 +185,14 @@ void sink_filling_algorithm::fill_sinks()
 			}
 		}
 		process_center_cell();
+		if (tarasov_mod) {
+			this->tarasov_update_maximum_separation_from_initial_edge();
+			if (this->tarasov_is_shortest_permitted_path()) {
+				this->tarasov_set_area_height();
+				delete center_cell;
+				break;
+			}
+		}
 		auto neighbors_coords = orography->get_neighbors_coords(center_coords,method);
 		process_neighbors(neighbors_coords);
 		delete neighbors_coords;
@@ -237,6 +245,33 @@ void sink_filling_algorithm::add_landsea_edge_cells_to_q(){
 		}
 	};
 	_grid->for_all(add_edge_cell_to_q_func);
+}
+
+bool sink_filling_algorithm::tarasov_is_shortest_permitted_path(){
+	if (center_cell->get_tarasov_path_length() < tarasov_min_path_length) return false;
+	else if (not this->tarasov_same_edge_criteria_met()) return false;
+	else return true;
+}
+
+bool sink_filling_algorithm::tarasov_same_edge_criteria_met(){
+	if (_grid->check_if_cell_is_on_given_edge_number(center_coords,
+			center_cell->get_tarasov_initial_edge_number())) {
+		if (not tarasov_include_corners_in_same_edge_criteria &&
+			_grid->is_corner_cell(center_coords)) return true;
+		else if(center_cell->get_maximum_separation_from_initial_edge() >
+					tarasov_seperation_threshold_for_returning_to_same_edge) return true;
+		else return false;
+	}
+	else return true;
+}
+
+void sink_filling_algorithm::tarasov_update_maximum_separation_from_initial_edge(){
+	int separation_from_initial_edge = _grid->get_separation_from_initial_edge(center_coords,
+			center_cell->get_tarasov_initial_edge_number());
+	if(center_cell->get_maximum_separation_from_initial_edge() <
+			separation_from_initial_edge){
+		center_cell->set_maximum_separation_from_initial_edge(separation_from_initial_edge);
+	}
 }
 
 void sink_filling_algorithm_latlon::add_geometric_edge_cells_to_q(){
@@ -509,6 +544,14 @@ inline void sink_filling_algorithm_1::push_neighbor()
 inline void sink_filling_algorithm_4::push_neighbor()
 {
 	q.push(new cell(nbr_orog,nbr_coords->clone(),center_catchment_num,nbr_rim_height));
+}
+
+void sink_filling_algorithm_1::tarasov_set_area_height() {
+	tarasov_area_height = center_cell->get_orography();
+}
+
+void sink_filling_algorithm_4::tarasov_set_area_height() {
+	tarasov_area_height = center_cell->get_rim_height();
 }
 
 void sink_filling_algorithm_4_latlon::set_cell_to_no_data_value(coords* coords_in){

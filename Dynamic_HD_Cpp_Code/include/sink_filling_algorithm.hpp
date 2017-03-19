@@ -51,6 +51,10 @@ protected:
 	virtual void set_ls_as_no_data(coords*) = 0;
 	virtual void process_true_sink_center_cell() = 0;
 	virtual void push_neighbor() = 0;
+	void tarasov_update_maximum_separation_from_initial_edge();
+	bool tarasov_is_shortest_permitted_path();
+	bool tarasov_same_edge_criteria_met();
+	virtual void tarasov_set_area_height() = 0;
 
 	priority_cell_queue q;
 	coords* center_coords = nullptr;
@@ -65,7 +69,12 @@ protected:
 	bool debug = false;
 	bool set_ls_as_no_data_flag = false;
 	double nbr_orog = 0.0;
+	double tarasov_min_path_length = 0.0;
+	double tarasov_area_height = 0.0;
+	bool tarasov_include_corners_in_same_edge_criteria = false;
+	bool tarasov_mod = false;
 	int method = 0;
+	int tarasov_seperation_threshold_for_returning_to_same_edge = 0;
 
 };
 
@@ -100,6 +109,7 @@ protected:
 	void process_center_cell();
 	void process_true_sink_center_cell();
 	void push_neighbor();
+	void tarasov_set_area_height();
 	bool add_slope = false;
 	double center_orography = 0.0;
 	double epsilon = 0.1; //normally in meters
@@ -126,6 +136,7 @@ protected:
 	void find_initial_cell_flow_direction();
 	void setup_fields(double*, bool*, bool*, grid_params*, int*);
 	void setup_flags(bool, bool = false, bool = false);
+	void tarasov_set_area_height();
 	virtual void set_cell_to_no_data_value(coords*) = 0;
 	virtual void set_cell_to_true_sink_value(coords*) = 0;
 	virtual void set_index_based_rdirs(coords*,coords*) = 0;
