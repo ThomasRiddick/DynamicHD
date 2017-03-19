@@ -10,6 +10,7 @@
 
 #include <queue>
 #include <limits>
+#include <cmath>
 #include "grid.hpp"
 #include "field.hpp"
 #include "priority_cell_queue.hpp"
@@ -52,6 +53,7 @@ protected:
 	virtual void process_true_sink_center_cell() = 0;
 	virtual void push_neighbor() = 0;
 	void tarasov_update_maximum_separation_from_initial_edge();
+	void tarasov_calculate_neighbors_path_length();
 	bool tarasov_is_shortest_permitted_path();
 	bool tarasov_same_edge_criteria_met();
 	virtual void tarasov_set_area_height() = 0;
@@ -75,6 +77,7 @@ protected:
 	bool tarasov_mod = false;
 	int method = 0;
 	int tarasov_seperation_threshold_for_returning_to_same_edge = 0;
+	double tarasov_neighbor_path_length = 0.0;
 
 };
 

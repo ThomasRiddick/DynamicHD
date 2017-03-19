@@ -18,18 +18,18 @@ public:
 	enum grid_types {latlon};
 	int get_total_size() {return total_size;}
 	int get_index(coords*);
-	virtual int get_edge_number(coords*);
-	virtual int get_separation_from_initial_edge(coords*,int);
-	virtual void for_diagonal_nbrs(coords*,function<void(coords*)> ) {};
-	virtual void for_non_diagonal_nbrs(coords*,function<void(coords*)>) {};
-	virtual void for_all_nbrs(coords*,function<void(coords*)>) {};
-	virtual void for_all(function<void(coords*)> func) {};
-	virtual void for_all_with_line_breaks(function<void(coords*,bool)>) {};
+	virtual int get_edge_number(coords*) = 0;
+	virtual int get_separation_from_initial_edge(coords*,int) = 0;
+	virtual void for_diagonal_nbrs(coords*,function<void(coords*)> ) = 0;
+	virtual void for_non_diagonal_nbrs(coords*,function<void(coords*)>) = 0;
+	virtual void for_all_nbrs(coords*,function<void(coords*)>) = 0;
+	virtual void for_all(function<void(coords*)> func) = 0;
+	virtual void for_all_with_line_breaks(function<void(coords*,bool)>) = 0;
 	coords* wrapped_coords(coords*);
 	bool outside_limits(coords*);
 	bool non_diagonal(coords*,coords*);
-	virtual bool is_corner_cell(coords*);
-	virtual bool check_if_cell_is_on_given_edge_number(coords*,int);
+	virtual bool is_corner_cell(coords*) = 0;
+	virtual bool check_if_cell_is_on_given_edge_number(coords*,int) = 0;
 	double calculate_dir_based_rdir(coords*,coords*);
 protected:
 	grid_types grid_type;

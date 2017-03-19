@@ -17,6 +17,8 @@ using namespace std;
  * details of the implementation.
  */
 
+const double SQRT_TWO = sqrt(2);
+
 sink_filling_algorithm::sink_filling_algorithm(field<double>* orography,grid_params* grid_params_in,
 											   field<bool>* completed_cells,bool* landsea_in,
 											   bool set_ls_as_no_data_flag,bool* true_sinks_in) :
@@ -186,9 +188,9 @@ void sink_filling_algorithm::fill_sinks()
 		}
 		process_center_cell();
 		if (tarasov_mod) {
-			this->tarasov_update_maximum_separation_from_initial_edge();
-			if (this->tarasov_is_shortest_permitted_path()) {
-				this->tarasov_set_area_height();
+			tarasov_update_maximum_separation_from_initial_edge();
+			if (tarasov_is_shortest_permitted_path()) {
+				tarasov_set_area_height();
 				delete center_cell;
 				break;
 			}
@@ -249,7 +251,7 @@ void sink_filling_algorithm::add_landsea_edge_cells_to_q(){
 
 bool sink_filling_algorithm::tarasov_is_shortest_permitted_path(){
 	if (center_cell->get_tarasov_path_length() < tarasov_min_path_length) return false;
-	else if (not this->tarasov_same_edge_criteria_met()) return false;
+	else if (not tarasov_same_edge_criteria_met()) return false;
 	else return true;
 }
 
@@ -258,7 +260,7 @@ bool sink_filling_algorithm::tarasov_same_edge_criteria_met(){
 			center_cell->get_tarasov_initial_edge_number())) {
 		if (not tarasov_include_corners_in_same_edge_criteria &&
 			_grid->is_corner_cell(center_coords)) return true;
-		else if(center_cell->get_maximum_separation_from_initial_edge() >
+		else if(center_cell->get_tarasov_maximum_separation_from_initial_edge() >
 					tarasov_seperation_threshold_for_returning_to_same_edge) return true;
 		else return false;
 	}
@@ -268,9 +270,9 @@ bool sink_filling_algorithm::tarasov_same_edge_criteria_met(){
 void sink_filling_algorithm::tarasov_update_maximum_separation_from_initial_edge(){
 	int separation_from_initial_edge = _grid->get_separation_from_initial_edge(center_coords,
 			center_cell->get_tarasov_initial_edge_number());
-	if(center_cell->get_maximum_separation_from_initial_edge() <
+	if(center_cell->get_tarasov_maximum_separation_from_initial_edge() <
 			separation_from_initial_edge){
-		center_cell->set_maximum_separation_from_initial_edge(separation_from_initial_edge);
+		center_cell->set_tarasov_maximum_separation_from_initial_edge(separation_from_initial_edge);
 	}
 }
 
@@ -479,14 +481,20 @@ void sink_filling_algorithm::process_neighbors(vector<coords*>* neighbors_coords
 				//selected
 				process_neighbor();
 				neighbors_coords->pop_back();
-				delete nbr_coords;
 				if (true_sinks) {
 					//If neighbor is a true sink then it is already on the queue
 					if ((*true_sinks)(nbr_coords)) {
+						delete nbr_coords;
 						continue;
 					}
 				}
+				//For algorithm 4 might be faster calculate this on center
+				//cells instead of neighbors, looking up the river direction
+				//set previously; however to maintain unity of methods process
+				//it here for both algorithm 1 and 4
+				if (tarasov_mod) tarasov_calculate_neighbors_path_length();
 				push_neighbor();
+				delete nbr_coords;
 			}
 }
 
@@ -538,12 +546,22 @@ inline void sink_filling_algorithm_4_latlon::calculate_direction_from_neighbor_t
 
 inline void sink_filling_algorithm_1::push_neighbor()
 {
-	q.push(new cell(nbr_orog,nbr_coords->clone()));
+	if (tarasov_mod) {
+		q.push(new cell(nbr_orog,nbr_coords->clone(),
+						center_cell->get_tarasov_initial_edge_number(),
+						center_cell->get_tarasov_maximum_separation_from_initial_edge(),
+						tarasov_neighbor_path_length));
+	} else q.push(new cell(nbr_orog,nbr_coords->clone()));
 }
 
 inline void sink_filling_algorithm_4::push_neighbor()
 {
-	q.push(new cell(nbr_orog,nbr_coords->clone(),center_catchment_num,nbr_rim_height));
+	if (tarasov_mod) {
+		q.push(new cell(nbr_orog,nbr_coords->clone(),center_catchment_num,nbr_rim_height,
+						center_cell->get_tarasov_initial_edge_number(),
+						center_cell->get_tarasov_maximum_separation_from_initial_edge(),
+						tarasov_neighbor_path_length));
+	} else q.push(new cell(nbr_orog,nbr_coords->clone(),center_catchment_num,nbr_rim_height));
 }
 
 void sink_filling_algorithm_1::tarasov_set_area_height() {
@@ -552,6 +570,12 @@ void sink_filling_algorithm_1::tarasov_set_area_height() {
 
 void sink_filling_algorithm_4::tarasov_set_area_height() {
 	tarasov_area_height = center_cell->get_rim_height();
+}
+
+void sink_filling_algorithm::tarasov_calculate_neighbors_path_length() {
+	tarasov_neighbor_path_length = center_cell->get_tarasov_path_length();
+	if (_grid->non_diagonal(nbr_coords,center_coords)) tarasov_neighbor_path_length += SQRT_TWO;
+	else tarasov_neighbor_path_length += 1.0;
 }
 
 void sink_filling_algorithm_4_latlon::set_cell_to_no_data_value(coords* coords_in){

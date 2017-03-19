@@ -95,7 +95,7 @@ bool latlon_grid::is_corner_cell(coords* coords_in){
 
 bool latlon_grid::check_if_cell_is_on_given_edge_number(coords* coords_in,int edge_number){
 	latlon_coords* latlon_coords_in = static_cast<latlon_coords*>(coords_in);
-	if (this->get_edge_number(coords_in) == edge_number) return true;
+	if (get_edge_number(coords_in) == edge_number) return true;
 	//deal with corner cells that are assigned vertical edge edge numbers but should
 	//also be considered to be a horizontal edge
 	else if ((edge_number == top_horizontal_edge_num) &&
@@ -108,14 +108,20 @@ bool latlon_grid::check_if_cell_is_on_given_edge_number(coords* coords_in,int ed
 int latlon_grid::get_edge_number(coords* coords_in) {
 	latlon_coords* latlon_coords_in = static_cast<latlon_coords*>(coords_in);
 	if (latlon_coords_in->get_lat() == 0)      return left_vertical_edge_num;
-	if (latlon_coords_in->get_lat() == nlat-1) return right_vertical_edge_num;
-	if (latlon_coords_in->get_lon() == 0)      return top_horizontal_edge_num;
-	if (latlon_coords_in->get_lon() == nlon-1) return bottom_horizontal_edge_num;
-	throw runtime_error("Internal logic broken - trying to get edge number of non-edge cell");
+	else if (latlon_coords_in->get_lat() == nlat-1) return right_vertical_edge_num;
+	else if (latlon_coords_in->get_lon() == 0)      return top_horizontal_edge_num;
+	else if (latlon_coords_in->get_lon() == nlon-1) return bottom_horizontal_edge_num;
+	else throw runtime_error("Internal logic broken - trying to get edge number of non-edge cell");
 }
 
 int latlon_grid::get_separation_from_initial_edge(coords* coords_in,int edge_number) {
-	return 999;
+	latlon_coords* latlon_coords_in = static_cast<latlon_coords*>(coords_in);
+	if (left_vertical_edge_num) return latlon_coords_in->get_lat();
+	else if (right_vertical_edge_num) return latlon_coords_in->get_lat() - nlat + 1;
+	else if (top_horizontal_edge_num) return latlon_coords_in->get_lon();
+	else if (bottom_horizontal_edge_num) return latlon_coords_in->get_lon() - nlon + 1;
+	else throw runtime_error("Internal logic broken - invalid initial edge number used as input to "
+						     "get_separation_from_initial_edge");
 }
 
 double latlon_grid::latlon_calculate_dir_based_rdir(latlon_coords* start_coords,latlon_coords* dest_coords){
