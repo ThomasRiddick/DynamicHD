@@ -8,7 +8,8 @@ input_ls_mask_filepath=${3}
 output_hdpara_filepath=${4}
 ancillary_data_directory=${5}
 working_directory=${6}
-output_hdstart_filepath=${7}
+diagostic_output_directory=${7}
+output_hdstart_filepath=${8}
 
 #Change first_timestep into a bash command for true or false
 shopt -s nocasematch
@@ -23,15 +24,15 @@ fi
 shopt -u nocasematch
 
 #Check number of arguments makes sense
-if [[ $# -ne "6" ]] && [[ $# -ne "7" ]]; then
+if [[ $# -ne "7" ]] && [[ $# -ne "8" ]]; then
 	echo "Wrong number of positional arguments ($# supplied), script only takes 6 or 7"	1>&2
 	exit 1
 fi 
-if $first_timestep && [[ $# -eq "6" ]]; then
-	echo "First timestep requires 7 arguments including output hdstart file path (6 supplied)" 1>&2
+if $first_timestep && [[ $# -eq "7" ]]; then
+	echo "First timestep requires 8 arguments including output hdstart file path (7 supplied)" 1>&2
 	exit 1
-elif ! $first_timestep && [[ $# -eq "7" ]]; then
-	echo "First timestep requires 6 arguments (7 supplied). Specifying an output hdstart file path is not permitted." 1>&2
+elif ! $first_timestep && [[ $# -eq "8" ]]; then
+	echo "First timestep requires 7 arguments (8 supplied). Specifying an output hdstart file path is not permitted." 1>&2
 	exit 1
 fi 
 
@@ -49,6 +50,11 @@ fi
 if  $first_timestep || ! [[ ${output_hdstart_filepath##*.} -eq "nc" ]] ; then
 	echo "Output hdstart file has the wrong file extension" 1>&2
 	exit 1
+fi
+
+#Set output_hdstart_filepath to blank if not the first timestep
+if ! ${first_timestep}; then
+	output_hdstart_filepath=""	
 fi
 
 #Setup conda environment
@@ -104,4 +110,9 @@ if $first_timestep ; then
 fi
 
 #Run
-python dynamic_hd_production_run_driver.py
+python dynamic_hd_production_run_driver.py ${input_orography_filepath} ${input_ls_mask_filepath} ${output_hdpara_filepath} ${ancillary_data_directory} ${working_directory} ${output_hdstart_filepath}
+#Move diagonstic output to target location
+if [[ $(ls ${working_directory}) ]]; then 
+	mv ${working_directory} ${diagostic_output_directory}
+fi
+rmdir ${working_directory}
