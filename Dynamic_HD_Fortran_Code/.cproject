@@ -19,7 +19,7 @@
 					<folderInfo id="photran.managedbuild.config.gnu.fortran.macosx.exe.debug.1387750848.817370539." name="/" resourcePath="">
 						<toolChain id="photran.managedbuild.toolchain.gnu.fortran.macosx.exe.debug.317574958" name="GCC Fortran" superClass="photran.managedbuild.toolchain.gnu.fortran.macosx.exe.debug">
 							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.MachO64" id="photran.managedbuild.target.gnu.platform.macosx.exe.debug.1377778782" name="Debug Platform" osList="macosx" superClass="photran.managedbuild.target.gnu.platform.macosx.exe.debug"/>
-							<builder buildPath="${workspace_loc:/Dynamic_HD_Fortran_Code}/Debug" id="photran.managedbuild.target.gnu.builder.macosx.exe.debug.1408434275" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Gnu Make Builder" superClass="photran.managedbuild.target.gnu.builder.macosx.exe.debug"/>
+							<builder arguments="-f ${workspace_loc:/Dynamic_HD_Fortran_Code}/makefile" buildPath="${workspace_loc:/Dynamic_HD_Fortran_Code}/Release" command="make" id="photran.managedbuild.target.gnu.builder.macosx.exe.debug.1408434275" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Gnu Make Builder" superClass="photran.managedbuild.target.gnu.builder.macosx.exe.debug"/>
 							<tool id="photran.managedbuild.tool.gnu.c.compiler.macosx.exe.debug.1194024194" name="GCC C Compiler" superClass="photran.managedbuild.tool.gnu.c.compiler.macosx.exe.debug">
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.632596810" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
@@ -27,6 +27,7 @@
 								<option id="gnu.fortran.compiler.macosx.exe.debug.option.debugging.level.98910299" name="Debug Level" superClass="gnu.fortran.compiler.macosx.exe.debug.option.debugging.level" value="gnu.fortran.debugging.level.default" valueType="enumerated"/>
 								<option id="gnu.fortran.compiler.option.warnings.pedantic.751151074" name="Pedantic (-pedantic)" superClass="gnu.fortran.compiler.option.warnings.pedantic" value="false" valueType="boolean"/>
 								<option id="gnu.fortran.compiler.option.misc.other.478250994" name="Other flags" superClass="gnu.fortran.compiler.option.misc.other" value="-c -fmessage-length=0 -fPIC" valueType="string"/>
+								<option id="gnu.fortran.compiler.option.misc.verbose.399164" name="Verbose (-v)" superClass="gnu.fortran.compiler.option.misc.verbose" value="false" valueType="boolean"/>
 								<inputType id="photran.managedbuild.tool.gnu.fortran.compiler.input.283929243" superClass="photran.managedbuild.tool.gnu.fortran.compiler.input"/>
 							</tool>
 							<tool command="/usr/local/bin/gfortran" id="photran.managedbuild.tool.macosx.fortran.linker.macosx.exe.debug.1680218306" name="MacOS X Fortran Linker" superClass="photran.managedbuild.tool.macosx.fortran.linker.macosx.exe.debug">
@@ -55,10 +56,10 @@
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
 	<storageModule moduleId="refreshScope" versionNumber="2">
-		<configuration configurationName="Debug">
+		<configuration configurationName="Release">
 			<resource resourceType="PROJECT" workspacePath="/Dynamic_HD_Fortran_Code"/>
 		</configuration>
-		<configuration configurationName="Release">
+		<configuration configurationName="Debug">
 			<resource resourceType="PROJECT" workspacePath="/Dynamic_HD_Fortran_Code"/>
 		</configuration>
 		<configuration configurationName="Fortran">

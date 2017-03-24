@@ -24,11 +24,13 @@ implicit none
         integer, dimension(:,:), pointer :: course_catchments_ptr
         integer, dimension(:,:), pointer :: fine_rdirs_ptr
         integer, dimension(:,:), pointer :: fine_cumulative_flow_ptr
-            allocate(course_rdirs_ptr,source=course_rdirs)
-            allocate(course_cumulative_flow_ptr,source=course_cumulative_flow)
-            allocate(course_catchments_ptr,source=course_catchments)
-            allocate(fine_rdirs_ptr,source=fine_rdirs)
-            allocate(fine_cumulative_flow_ptr,source=fine_cumulative_flow)
+            !To compile on Linux with gfortran seem to need to specify array sizes
+            allocate(course_rdirs_ptr(nlat_course,nlon_course),source=course_rdirs)
+            allocate(course_cumulative_flow_ptr(nlat_course,nlon_course), &
+                source=course_cumulative_flow)
+            allocate(course_catchments_ptr(nlat_course,nlon_course),source=course_catchments)
+            allocate(fine_rdirs_ptr(nlat_fine,nlon_fine),source=fine_rdirs)
+            allocate(fine_cumulative_flow_ptr(nlat_fine,nlon_fine),source=fine_cumulative_flow)
             call break_loops_latlon(course_rdirs_ptr,course_cumulative_flow_ptr, &
                                     course_catchments_ptr,fine_rdirs_ptr, &
                                     fine_cumulative_flow_ptr,loop_nums_list)
