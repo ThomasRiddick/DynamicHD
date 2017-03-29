@@ -17,7 +17,7 @@ from sys import platform
 
 if platform == "linux" or platform == "linux2":
     extra_compile_args = ['-std=gnu++11']
-    extra_links_args = []
+    extra_links_args = ['-static-libstdc++']
 elif platform == "darwin":
     #specify gcc as the compiler (which is despite the name actually a version of clang on mac)
     os.environ["CC"] = "/usr/bin/gcc"

@@ -15,6 +15,7 @@ FIX_SRCS :=
 C_SRCS := 
 EXECUTABLES := 
 OBJS := 
+MODS :=
 C_DEPS := 
 
 # Every subdirectory with source files must be described here

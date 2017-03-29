@@ -2,9 +2,11 @@ RM := rm -rf
 ifeq ($(shell uname -s),Darwin)
 GPLUSPLUS := /usr/bin/g++ 
 STDLIB_OPT := -stdlib=libc++
+FLAGS :=
 else ifeq ($(shell uname -s),Linux)
 GPLUSPLUS := $(shell which g++) 
 STDLIB_OPT := 
+FLAGS :=-pthread
 else 
 $(error OS $(uname -s) not recognised)
 endif
@@ -45,7 +47,7 @@ all: Dynamic_HD_Cpp_Code
 # Tool invocations
 Dynamic_HD_Cpp_Code: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
-	$(GPLUSPLUS)  -o "Dynamic_HD_Cpp_Exec" $(OBJS) $(USER_OBJS) $(LIBS)
+	$(GPLUSPLUS)  -o "Dynamic_HD_Cpp_Exec" $(OBJS) $(USER_OBJS) $(FLAGS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 

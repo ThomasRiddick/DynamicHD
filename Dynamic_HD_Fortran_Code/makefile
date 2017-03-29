@@ -37,6 +37,7 @@ Dynamic_HD_Fortran_Code: $(OBJS) $(USER_OBJS)
 # Other Targets
 clean:
 	-$(RM) $(EXECUTABLES)$(OBJS)$(C_DEPS) Dynamic_HD_Fortran_Exec
+	-$(RM) $(MODS)
 	-@echo ' '
 
 .PHONY: all clean dependents

@@ -6,12 +6,9 @@ first_timestep=${1}
 input_orography_filepath=${2}
 input_ls_mask_filepath=${3}
 output_hdpara_filepath=${4}
-source_directory=${5}
-external_source_directory=${6}
-ancillary_data_directory=${7}
-working_directory=${8}
-diagostic_output_directory=${9}
-output_hdstart_filepath=${10}
+ancillary_data_directory=${5}
+diagostic_output_directory=${6}
+output_hdstart_filepath=${7}
 
 #Change first_timestep into a bash command for true or false
 shopt -s nocasematch
@@ -26,15 +23,16 @@ fi
 shopt -u nocasematch
 
 #Check number of arguments makes sense
-if [[ $# -ne "9" ]] && [[ $# -ne "10" ]]; then
-	echo "Wrong number of positional arguments ($# supplied), script only takes 9 or 10"	1>&2
+if [[ $# -ne "6" ]] && [[ $# -ne "7" ]]; then
+	echo "Wrong number of positional arguments ($# supplied), script only takes 6 or 7"	1>&2
 	exit 1
 fi 
-if $first_timestep && [[ $# -eq "9" ]]; then
-	echo "First timestep requires 10 arguments including output hdstart file path (9 supplied)" 1>&2
+if $first_timestep && [[ $# -eq "6" ]]; then
+	echo "First timestep requires 7 arguments including output hdstart file path (6 supplied)" 1>&2
 	exit 1
-elif ! $first_timestep && [[ $# -eq "10" ]]; then
-	echo "First timestep requires 9 arguments (10 supplied). Specifying an output hdstart file path is not permitted." 1>&2
+elif ! $first_timestep && [[ $# -eq "6" ]]; then
+	echo "Timesteps other than the first requires 6 arguments (7 supplied)." 1>&2 
+	echo "Specifying an output hdstart file path is not permitted." 1>&2
 	exit 1
 fi 
 
@@ -58,49 +56,35 @@ fi
 echo "Setting up environment"
 export MODULEPATH="/sw/common/Modules:/client/Modules"
 eval `/usr/bin/tclsh /sw/share/Modules/modulecmd.tcl bash load anaconda3`
+if $first_timestep && conda info -e | grep -q "dyhdenv"; then
+	conda env remove --yes --name dyhdenv
+fi
 if ! conda info -e | grep -q "dyhdenv"; then
-     conda create --yes --name dyhdenv --file dynamic_hd_env.txt
+	#Use the txt file environment creation (not conda env create that requires a yml file)
+	#Create a dynamic_hd_env.txt using conda list --export > filename.txt not 
+	#conda env export which creates a yml file.
+	conda create --file "${ancillary_data_directory}/dynamic_hd_env.txt" --yes --name "dyhdenv"
 fi
 source activate dyhdenv
 
-#Setup correct python path
-export PYTHONPATH=$(pwd)
+#Load CDOs and reload version of python with CDOs included
+eval `/usr/bin/tclsh /sw/share/Modules/modulecmd.tcl bash load cdo`
+eval `/usr/bin/tclsh /sw/share/Modules/modulecmd.tcl bash load python`
 
 #Load a new version of gcc that doesn't have the polymorphic variable bug
 eval `/usr/bin/tclsh /sw/share/Modules/modulecmd.tcl bash load gcc/6.2.0`
 
-# Prepare a working directory if it is the first timestep and it doesn't already exist
-if $first_timestep && ! [[ -e $working_directory ]]; then
-	echo "Creating a working directory"	
-	mkdir -p $working_directory
-fi
-
-#Check input files, source directory ancillary data directory and working directory exist
+#Check input files, ancillary data directory and diagnostic output directory exist
 
 if ! [[ -e $input_ls_mask_filepath ]] || ! [[ -e $input_orography_filepath ]]; then
 	echo "One or more input files does not exist" 1>&2
 	exit 1
 fi
 
-if ! [[ -d $source_directory ]]; then
-	echo "Source directory does not exist." 1>&2
-	
-fi
-
-if ! [[ -d $external_source_directory ]]; then
-	echo "External Source directory does not exist." 1>&2
-	
-fi 
-
 if ! [[ -d $ancillary_data_directory ]]; then
 	echo "Ancillary data directory does not exist" 1>&2
 	exit 1	
 fi
-
-if ! [[ -d $working_directory ]]; then
-	echo "Working directory does not exist or is not a directory (even after attempt to create it)" 1>&2	
-	exit 1
-fi 
 
 if ! [[ -d ${output_hdpara_filepath%/*} ]]; then
 	echo "Filepath of output hdpara.nc does not exist" 1>&2
@@ -112,12 +96,74 @@ if $first_timestep && ! [[ -d ${output_hdstart_filepath%/*} ]]; then
 	exit 1
 fi
 
+# Define config file
+config_file="${ancillary_data_directory}/top_level_driver.cfg"
+
+# Check config file exists  and has correct format
+
+if ! [[ -f ${config_file} ]]; then
+	echo "Top level script config file doesn't exist!"	
+	exit 1
+fi
+
+if egrep -v -q "^(#.*|.*=.*)$" ${config_file}; then
+	echo "Config file has wrong format" 1>&2	
+	exit 1
+fi
+
+# Read in source_directory, external_source_directory and working_directory
+source ${config_file}
+
+# Check we have actually read the variables correctly
+if [[ -z ${source_directory} ]]; then
+	echo "Source directory not set in config file or set to a blank string" 1>&2
+	exit 1
+fi
+
+if [[ -z ${external_source_directory} ]]; then
+	echo "External source directory not set in config file or set to a blank string" 1>&2
+	exit 1
+fi
+
+if [[ -z ${working_directory} ]]; then
+	echo "Working directory not set in config file or set to a blank string" 1>&2
+	exit 1
+fi
+
+# Prepare a working directory if it is the first timestep and it doesn't already exist
+if $first_timestep && ! [[ -e $working_directory ]]; then
+	echo "Creating a working directory"	
+	mkdir -p $working_directory
+fi
+
+#Check that the working directory, source directory and external source directory exist
+if ! [[ -d $working_directory ]]; then
+	echo "Working directory does not exist or is not a directory (even after attempt to create it)" 1>&2	
+	exit 1
+fi 
+
+if ! [[ -d $source_directory ]]; then
+	echo "Source directory does not exist." 1>&2
+	
+fi
+
+if ! [[ -d $external_source_directory ]]; then
+	echo "External Source directory does not exist." 1>&2
+	
+fi 
+
+#Change to the working directory
+cd ${working_directory}
+
 #Set output_hdstart_filepath to blank if not the first timestep
 if ! ${first_timestep}; then
 	output_hdstart_filepath=""	
 else 
 	output_hdstart_filepath="-s ${output_hdstart_filepath}"
 fi
+
+#Setup correct python path
+export PYTHONPATH=${source_directory}/Dynamic_HD_Scripts:${PYTHONPATH}
 
 #Compile C++ and Fortran Code if this is the first timestep
 if $first_timestep ; then
@@ -139,11 +185,28 @@ if $first_timestep ; then
 	cd - 2>&1 >/dev/null
 fi
 
+# Clean shared libraries
+if $first_timestep; then
+	cd ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts
+		make -f makefile clean
+	cd - >/dev/null
+fi
+
+#Setup cython interface between python and C++
+cd ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts
+echo "Compiling Cython Modules" 1>&2
+python2.7 ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/setup_fill_sinks.py clean --all
+python2.7 ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/setup_fill_sinks.py build_ext --inplace -f
+cd - >/dev/null
 #Run
 echo "Running Dynamic HD Code" 1>&2 
-python ${source_directory}/Dynamic_HD_Scripts/dynamic_hd_production_run_driver.py ${input_orography_filepath} ${input_ls_mask_filepath} ${output_hdpara_filepath} ${ancillary_data_directory} ${working_directory} ${output_hdstart_filepath}
+python2.7 ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/dynamic_hd_production_run_driver.py ${input_orography_filepath} ${input_ls_mask_filepath} ${output_hdpara_filepath} ${ancillary_data_directory} ${working_directory} ${output_hdstart_filepath}
 #Move diagnostic output to target location
 if [[ $(ls ${working_directory}) ]]; then 
 	mv ${working_directory} ${diagostic_output_directory}
+	rm -f paragen.inp soil_partab.txt slope.dat riv_vel.dat riv_n.dat riv_k.dat over_vel.dat over_n.dat over_k.dat 
+	rm -f hdpara.srv global.inp ddir.inp bas_k.dat catchments.log loops.log 30minute_river_dirs.dat 
+	rm -f 30minute_ls_mask.dat 30minute_filled_orog.dat 30minute_river_dirs_temp.nc 30minute_filled_orog_temp.nc
+	rm -f 30minute_ls_mask_temp.nc
 fi
 rmdir ${working_directory}

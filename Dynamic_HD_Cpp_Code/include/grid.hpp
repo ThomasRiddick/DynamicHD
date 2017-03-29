@@ -9,6 +9,7 @@
 #define INCLUDE_GRID_HPP_
 
 #include <sstream>
+#include <functional>
 #include "coords.hpp"
 using namespace std;
 

@@ -47,7 +47,30 @@ OBJS += \
 ./src/manual_fruit_basket.o \
 ./src/manual_fruit_basket_driver.o 
 
-
+MODS += \
+./fruit.mod \
+./fruit_util.mod \
+./precision_mod.mod \
+./coords_mod.mod \
+./doubly_linked_list_link_mod.mod \
+./doubly_linked_list_mod.mod \
+./doubly_linked_list_test_module.mod \
+./subfield_mod.mod \
+./subfield_test_mod.mod \
+./field_section_mod.mod \
+./field_section_test_mod.mod \
+./area_mod.mod \
+./area_test_mod.mod \
+./break_loops_mod.mod \
+./break_loops_driver_mod.mod \
+./cotat_parameters_mod.mod \
+./cotat_plus.mod \
+./cotat_plus_driver_mod.mod \
+./cotat_plus_test_mod.mod \
+./loop_breaker_mod.mod \
+./loop_breaker_test_mod.mod \
+./manual_fruit_basket.mod \
+./manual_fruit_basket_driver.mod 
 
 # Each subdirectory must supply rules for building sources it contributes
 src/fruit.o: $(FRUIT_LOC)/fruit.f90

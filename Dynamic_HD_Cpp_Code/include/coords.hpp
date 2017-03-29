@@ -9,6 +9,7 @@
 #define INCLUDE_COORDS_HPP_
 
 #include <iostream>
+#include <stdexcept>
 using namespace std;
 
 class coords {

@@ -21,7 +21,7 @@ work_dir=${12}
 comp=/usr/local/bin/gfortran
 
 #Setup working directory
-mkdir ${work_dir}
+mkdir ${work_dir} || true
 
 #Setup input file
 
