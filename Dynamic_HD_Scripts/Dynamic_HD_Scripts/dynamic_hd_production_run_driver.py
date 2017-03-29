@@ -41,7 +41,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
             self.python_config_filename=path.join(self.ancillary_data_path,
                                                   "dynamic_hd_production_driver.cfg")
         
-    def trial_run_using_data_from_new_data_from_virna_2017_version(self):
+    def trial_run_using_data_from_new_data_from_virna_2016_version(self):
         super(Dynamic_HD_Production_Run_Drivers,self).__init__()
         file_label = self._generate_file_label()
         self.original_orography_filename=path.join(self.orography_path,"10min-topo-present-from-virna.nc")
@@ -312,7 +312,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                  'fl_dp_dl.dat'),
                                        orography_variance_file=\
                                        path.join(self.ancillary_data_path,'bin_toposig.dat'),
-                                       output_dir=self.working_directory_path)
+                                       output_dir=path.join(self.working_directory_path,'paragen'))
         #Place parameters and rdirs into a hdparas.file
         self._generate_hd_file(rdir_file=path.splitext(transformed_course_rdirs_filename)[0] + ".dat",
                                lsmask_file=path.splitext(transformed_HD_ls_mask_filename)[0] + ".dat",
@@ -323,7 +323,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                          'fl_dp_dl.dat'),
                                hd_grid_specs_file=half_degree_grid_filepath,
                                output_file=self.output_hdparas_filepath,
-                               paras_dir=self.working_directory_path)
+                               paras_dir=path.join(self.working_directory_path,'paragen'))
         if self.output_hdstart_filepath is not None:
             utilities.prepare_hdrestart_file_driver(base_hdrestart_filename=base_hd_restart_file,
                                                     output_hdrestart_filename=\

@@ -16,14 +16,24 @@ class Test_Dynamic_HD_Production_Run_Drivers(unittest.TestCase):
     def setUp(self):
         """Class constructor. Create a Dynamic_HD_Production_Run_Driver object."""
         self.driver = Dynamic_HD_Production_Run_Drivers()
-        temp_dir = os.path.join(data_dir,'temp','temp_workdir')
+        self.temp_dir = os.path.join(data_dir,'temp','temp_workdir')
         try:
-            os.stat(temp_dir)
+            os.stat(self.temp_dir)
         except:
-            os.mkdir(temp_dir)
+            os.mkdir(self.temp_dir)
+    
+    def tearDown(self):
+        files_to_remove = ["bas_k.dat","global.inp","over_k.dat","over_vel.dat","riv_k.dat",
+                           "riv_vel.dat","soil_partab.txt","ddir.inp","hdpara.srv","over_n.dat",
+                           "paragen.inp","riv_n.dat","slope.dat",os.path.join(self.temp_dir),"paragen"]
+        for filename in files_to_remove:
+            try:
+                os.remove(filename)
+            except:
+                pass
 
     def testName(self):
-        self.driver.trial_run_using_data_from_new_data_from_virna_2017_version()
+        self.driver.trial_run_using_data_from_new_data_from_virna_2016_version()
 
 if __name__ == "__main__":
     unittest.main()

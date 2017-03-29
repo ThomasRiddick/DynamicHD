@@ -17,6 +17,7 @@ import utilities
 import grid
 import river_mouth_marking_driver
 import create_connected_lsmask_driver as cc_lsmask_driver
+from context import bash_scripts_path
 import shutil
 import cotat_plus_driver
 import loop_breaker_driver
@@ -30,8 +31,6 @@ class Dynamic_HD_Drivers(object):
     Public Members:
     """
     
-    bash_scripts_path = "/Users/thomasriddick/Documents/workspace/Dynamic_HD_Code/Dynamic_HD_bash_scripts"
-   
     def __init__(self):
         """Setup paths to various input and output data directories
         
@@ -184,7 +183,7 @@ class Dynamic_HD_Drivers(object):
         """
 
         try:
-            print subprocess.check_output([path.join(self.bash_scripts_path,
+            print subprocess.check_output([path.join(bash_scripts_path,
                                                      "prepare_topography.sh"),
                                            orog_nc_file,
                                            grid_file,
@@ -226,11 +225,11 @@ class Dynamic_HD_Drivers(object):
         if path.splitext(output_file)[1] != '.nc':
             raise UserWarning("Output filename doesn't have a netCDF extension as expected")
         try:
-            print subprocess.check_output([path.join(self.bash_scripts_path,
+            print subprocess.check_output([path.join(bash_scripts_path,
                                                      "generate_output_file.sh"),
-                                           path.join(self.bash_scripts_path,
+                                           path.join(bash_scripts_path,
                                                      "bin"),
-                                           path.join(self.bash_scripts_path,
+                                           path.join(bash_scripts_path,
                                                      "fortran"),
                                            path.splitext(rdir_file)[0] + ".dat",
                                            path.splitext(lsmask_file)[0] + ".dat",
@@ -269,7 +268,7 @@ class Dynamic_HD_Drivers(object):
         
         parameter_generation_grid = grid.makeGrid(grid_type,**grid_kwargs)
         nlat,nlon = parameter_generation_grid.get_grid_dimensions()
-        original_paragen_source_filepath = path.join(self.bash_scripts_path,"fortran",
+        original_paragen_source_filepath = path.join(bash_scripts_path,"fortran",
                                                      "paragen.f")
         if (nlat != 360 or nlon != 720):
             paragen_source_filepath = self.generated_paragen_code_copies_path  + paragen_source_label
@@ -298,11 +297,11 @@ class Dynamic_HD_Drivers(object):
         if path.splitext(orography_variance_file)[1] != '.dat':
             self._convert_data_file_type(orography_variance_file,'.dat','HD')
         try:
-            print subprocess.check_output([path.join(self.bash_scripts_path,
+            print subprocess.check_output([path.join(bash_scripts_path,
                                                      "parameter_generation_driver.sh"),
-                                           path.join(self.bash_scripts_path,
+                                           path.join(bash_scripts_path,
                                                      "bin"),
-                                           path.join(self.bash_scripts_path,
+                                           path.join(bash_scripts_path,
                                                      "fortran"),
                                            path.splitext(rdir_file)[0] + ".dat",
                                            path.splitext(topography_file)[0] + ".dat",

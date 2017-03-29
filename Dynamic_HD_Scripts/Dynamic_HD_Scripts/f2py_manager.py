@@ -11,6 +11,7 @@ import textwrap
 import stat
 from subprocess import CalledProcessError
 from context import shared_object_path, bin_path
+from sys import platform
 
 class f2py_manager(object):
     """Manages a f2py fortran module.
@@ -36,6 +37,15 @@ class f2py_manager(object):
     remove_wrapper=None
     additional_fortran_files = ''
     include_path = ''
+    if platform == "linux" or platform == "linux2":
+        path_env_var=("/home/mpim/m300468/.conda/envs/dyhdenv/bin:"
+                      "/sw/jessie-x64/gcc/gcc-6.2.0/bin:"
+                      "/sw/jessie-x64/anaconda3-4.1.1/bin:"
+                      "/usr/local/bin:/usr/bin")
+    elif platform == "darwin":
+        path_env_var="/anaconda/envs/mpiwork/bin:/usr/local/bin:/usr/bin"
+    else:
+        raise RuntimeError("Platform not supported")
     wrapper_path=os.path.join(bin_path,'f2py_wrapper')
     wrapper_text= textwrap.dedent("""\
     #!/bin/bash
@@ -43,8 +53,9 @@ class f2py_manager(object):
     #A simple wrapper for f2py calls that sets up the enviroment correctly
     unset PYTHONPATH
     export $PYTHONPATH
-    export PATH="/anaconda/envs/mpiwork/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/X11/bin:/Library/TeX/texbin"
-    f2py -c ${1} ${2} -m ${3}""")
+    export PATH="{0}"
+    """.format(path_env_var))
+    wrapper_text += "f2py -c ${1} ${2} -m ${3}"
 
     def __init__(self, fortran_file_name,func_name=None,remove_wrapper=False,
                  additional_fortran_files=None,include_path=None):

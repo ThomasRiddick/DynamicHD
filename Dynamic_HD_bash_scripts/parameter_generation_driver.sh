@@ -18,7 +18,7 @@ paragen_bin_file=${11}
 work_dir=${12}
 
 #Set compiler
-comp=/usr/local/bin/gfortran
+comp=gfortran
 
 #Setup working directory
 mkdir ${work_dir} || true
@@ -92,4 +92,4 @@ cd ${work_dir}
 ${comp} -o ${bin_dir}/${paragen_bin_file} ${paragen_source_filepath} ${src_dir}/globuse.f ${src_dir}/mathe.f ${src_dir}/modtime.f
 ${bin_dir}/${paragen_bin_file}
 
-cd -
+cd - 1>&2 > /dev/null

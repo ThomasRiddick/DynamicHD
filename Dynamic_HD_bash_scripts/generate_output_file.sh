@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 #Set standard scripting options
 set -e
@@ -15,10 +15,14 @@ output_file=${8}
 work_dir=${9}
 
 #Set compiler
-comp=/usr/local/bin/gfortran
+comp=gfortran
 
 #Set CDO
-cdo=/usr/local/bin/cdo
+if [[ $OSTYPE = "darwin"* ]]; then
+	cdo=/usr/local/bin/cdo
+else
+	cdo=cdo	
+fi
 
 # **** Zusammenfassen der Parameterdateien in Inputdatei hdpara.srv
 # **** Combining the parameter files in Input File hdpara.srv  
@@ -80,57 +84,57 @@ echo 'Conversion to NetCDF'
 cat > ${work_dir}/soil_partab.txt << EOF2
 &parameter
  param        = 172
- name         = FLAG 
+ out_name     = FLAG 
  long_name    = "HD model land sea mask"
  /
 &parameter
  param        = 701
- name         = FDIR 
+ out_name     = FDIR 
  long_name    = "River Direction File = RDF"
  /
 &parameter
  param        = 702
- name         = ALF_K
+ out_name     = ALF_K
  long_name    = "HD model parameter Overland flow k"
  /
 &parameter
  param        = 703
- name         = ALF_N
+ out_name     = ALF_N
  long_name    = "HD model parameter Overland flow n"
  /
 &parameter
  param        = 704
- name         = ARF_K
+ out_name     = ARF_K
  long_name    = "HD model parameter Riverflow k"
  /
 &parameter
  param        = 705
- name         = ARF_N
+ out_name     = ARF_N
  long_name    = "HD model parameter Riverflow n"
  /
 &parameter
  param        = 706
- name         = AGF_K
+ out_name     = AGF_K
  long_name    = "HD model parameter Baseflow k"
  /
 &parameter
  param        = 707
- name         = AREA
+ out_name     = AREA
  long_name    = "Areas at 5 Min grid [m2] = f(latitude)"
  /
 &parameter
  param        = 708
- name         = FILNEW
+ out_name     = FILNEW
  long_name    = "Longitude index of Flow Destination according to FDIR"
  /
 &parameter
  param        = 709
- name         = FIBNEW
+ out_name     = FIBNEW
  long_name    = "Latitude index of Flow Destination according to FDIR"
  /
 EOF2
 #
 CGRID=${hd_grid_specs_file}
-cd ${work_dir}
+cd ${work_dir} 
 ${cdo} -f nc setpartabp,soil_partab.txt -setgrid,${CGRID} hdpara.srv ${output_file}
-cd -
+cd - 1>&2 > /dev/null
