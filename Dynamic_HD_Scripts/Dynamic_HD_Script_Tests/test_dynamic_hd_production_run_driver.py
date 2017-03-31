@@ -32,8 +32,11 @@ class Test_Dynamic_HD_Production_Run_Drivers(unittest.TestCase):
             except:
                 pass
 
-    def testName(self):
+    def testTrialUsingNewDataFromVirna2016Version(self):
         self.driver.trial_run_using_data_from_new_data_from_virna_2016_version()
+        
+    def testTrialUsingNewDataFromVirna2017Version(self):
+        self.driver.trial_run_using_data_from_new_data_from_virna_2017_version()
 
 if __name__ == "__main__":
     unittest.main()
