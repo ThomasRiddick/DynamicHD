@@ -198,7 +198,7 @@ if $first_timestep ; then
 	echo "Compiling C++ code" 1>&2
 	mkdir -p ${source_directory}/Dynamic_HD_Cpp_Code/Release
 	mkdir -p ${source_directory}/Dynamic_HD_Cpp_Code/Release/src
-	mkdir -p ${source_directory}/Dynamic_HD_Cpp_Code/Release/gtest
+	mkdir -p ${source_directory}/Dynamic_HD_Cpp_Code/Release/src/gtest
 	cd ${source_directory}/Dynamic_HD_Cpp_Code/Release
 	make -f ../makefile clean
 	make -f ../makefile all 
