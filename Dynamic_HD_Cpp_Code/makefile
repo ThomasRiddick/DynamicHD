@@ -3,6 +3,10 @@ ifeq ($(shell uname -s),Darwin)
 GPLUSPLUS := /usr/bin/g++ 
 STDLIB_OPT := -stdlib=libc++
 FLAGS :=
+else ifeq ($(shell hostname -d),hpc.dkrz.de)
+GPLUSPLUS := /sw/rhel6-x64/gcc/gcc-6.2.0/bin/g++
+STDLIB_OPT := 
+FLAGS :=-pthread
 else ifeq ($(shell uname -s),Linux)
 GPLUSPLUS := $(shell which g++) 
 STDLIB_OPT := 

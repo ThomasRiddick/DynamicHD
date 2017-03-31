@@ -48,7 +48,20 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         self.original_ls_mask_filename=path.join(self.ls_masks_path,"10min-mask-present-from-virna.nc")
         self.output_hdparas_filepath="/Users/thomasriddick/Documents/data/temp/hdpara_{0}.nc".format(file_label)
         self.ancillary_data_path="/Users/thomasriddick/Documents/data/HDancillarydata"
-        self.working_directory_path="/Users/thomasriddick/Documents/data/temp/temp_workdir"
+        self.working_directory_path="/Users/thomasriddick/Documents/data/temp/temp_workdir_2016_data"
+        self.output_hdstart_filepath="/Users/thomasriddick/Documents/data/temp/hdstart_{0}.nc".format(file_label)
+        self.python_config_filename=path.join("/Users/thomasriddick/Documents/data/HDancillarydata/"
+                                              "dynamic_hd_production_driver.cfg")
+        self.no_intermediaries_ten_minute_data_ALG4_no_true_sinks_plus_upscale_rdirs_driver()
+        
+    def trial_run_using_data_from_new_data_from_virna_2017_version(self):
+        super(Dynamic_HD_Production_Run_Drivers,self).__init__()
+        file_label = self._generate_file_label()
+        self.original_orography_filename=path.join(self.orography_path,"OR-topography-present_data_from_virna_2017.nc")
+        self.original_ls_mask_filename=path.join(self.ls_masks_path,"OR-remapped-mask-present_data_from_virna_2017.nc")
+        self.output_hdparas_filepath="/Users/thomasriddick/Documents/data/temp/hdpara_{0}.nc".format(file_label)
+        self.ancillary_data_path="/Users/thomasriddick/Documents/data/HDancillarydata"
+        self.working_directory_path="/Users/thomasriddick/Documents/data/temp/temp_workdir_2017_data"
         self.output_hdstart_filepath="/Users/thomasriddick/Documents/data/temp/hdstart_{0}.nc".format(file_label)
         self.python_config_filename=path.join("/Users/thomasriddick/Documents/data/HDancillarydata/"
                                               "dynamic_hd_production_driver.cfg")

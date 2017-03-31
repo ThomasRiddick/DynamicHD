@@ -89,7 +89,11 @@ source activate dyhdenv
 
 #Load CDOs and reload version of python with CDOs included
 load_module cdo
-load_module python
+if [[ $(hostname -d) == "hpc.dkrz.de" ]]; then
+	load_module python/2.7.12
+else
+	load_module python
+fi
 
 #Load a new version of gcc that doesn't have the polymorphic variable bug
 load_module gcc/6.2.0
@@ -190,7 +194,7 @@ if $first_timestep ; then
 	#Normalise external source path; use a crude yet portable method
 	cd $external_source_directory
 	external_source_directory=$(pwd -P)
-	cd -
+	cd - 2>&1 > /dev/null
 	echo "Compiling C++ code" 1>&2
 	mkdir -p ${source_directory}/Dynamic_HD_Cpp_Code/Release
 	cd ${source_directory}/Dynamic_HD_Cpp_Code/Release
@@ -213,7 +217,6 @@ if $first_timestep; then
 fi
 
 # Clean up paragen working directory if any
-
 if [[ -d "${working_directory}/paragen" ]]; then
 	cd ${working_directory}/paragen
 	rm -f paragen.inp soil_partab.txt slope.dat riv_vel.dat riv_n.dat riv_k.dat over_vel.dat over_n.dat over_k.dat || true 

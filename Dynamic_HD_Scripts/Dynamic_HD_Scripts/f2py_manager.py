@@ -9,6 +9,8 @@ import os
 import subprocess
 import textwrap
 import stat
+import socket
+import re
 from subprocess import CalledProcessError
 from context import shared_object_path, bin_path
 from sys import platform
@@ -37,7 +39,15 @@ class f2py_manager(object):
     remove_wrapper=None
     additional_fortran_files = ''
     include_path = ''
-    if platform == "linux" or platform == "linux2":
+    if re.match(r'.*\.hpc\.dkrz\.de',socket.getfqdn()):
+        path_env_var=("/sw/rhel6-x64/gcc/gcc-6.2.0/bin:"
+                      "/sw/rhel6-x64/gcc/binutils-2.24-gccsys/bin:"
+                      "/sw/rhel6-x64/cdo/cdo-1.8.0-magicsxx-gcc48/bin:"
+                      "/sw/rhel6-x64/python/python-2.7.12-gcc49/bin:"
+                      "/sw/rhel6-x64/conda/anaconda3-4.2.0-python-3.5.2/bin:"
+                      "/usr/lib64/qt-3.3/bin:/usr/local/bin:/bin:/usr/bin:"
+                      "/usr/local/sbin:/usr/sbin:/sbin")
+    elif platform == "linux" or platform == "linux2":
         path_env_var=("/home/mpim/m300468/.conda/envs/dyhdenv/bin:"
                       "/sw/jessie-x64/gcc/gcc-6.2.0/bin:"
                       "/sw/jessie-x64/anaconda3-4.1.1/bin:"

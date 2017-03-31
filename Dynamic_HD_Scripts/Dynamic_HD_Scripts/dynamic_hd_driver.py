@@ -2141,6 +2141,15 @@ class Ten_Minute_Data_From_Virna_Driver(ICE5G_Data_Drivers):
                                                                                                   original_orography_filename,
                                                                                                   original_ls_mask_filename)
         
+    def ten_minute_data_from_virna_lgm_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_2017_data(self):
+        """Generate and upscale sinkless river directions for the LGM"""
+        file_label = self._generate_file_label()
+        original_orography_filename = path.join(self.orography_path,"OR-topography-present_data_from_virna_2017.nc")
+        original_ls_mask_filename = path.join(self.ls_masks_path,"OR-remapped-mask-present_data_from_virna_2017.nc")
+        self._ten_minute_data_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_helper(file_label,
+                                                                                                  original_orography_filename,
+                                                                                                  original_ls_mask_filename)
+        
 def main():
     """Select the revelant runs to make 
     
@@ -2182,7 +2191,8 @@ def main():
     #glac_data_drivers.GLAC_data_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_27timeslices()
     #glac_data_drivers.GLAC_data_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_27timeslices_merge_timeslices_only()
     ten_minute_data_from_virna_driver = Ten_Minute_Data_From_Virna_Driver()
-    ten_minute_data_from_virna_driver.ten_minute_data_from_virna_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs()
+    #ten_minute_data_from_virna_driver.ten_minute_data_from_virna_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs()
+    ten_minute_data_from_virna_driver.ten_minute_data_from_virna_lgm_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_2017_data()
     #ten_minute_data_from_virna_driver.ten_minute_data_from_virna_lgm_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs()
 
 if __name__ == '__main__':

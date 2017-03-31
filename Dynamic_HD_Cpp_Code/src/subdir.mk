@@ -35,7 +35,7 @@ CPP_DEPS += \
 src/%.o: ../src/%.cpp
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C++ Compiler'
-	/usr/bin/g++ -I"../include" -I"../." -I"../src" -O3 -Wall -c -fmessage-length=0 -std=gnu++11 $(STDLIB_OPT) -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -o "$@" "$<"
+	$(GPLUSPLUS) -I"../include" -I"../." -I"../src" -O3 -Wall -c -fmessage-length=0 -std=gnu++11 $(STDLIB_OPT) -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 
