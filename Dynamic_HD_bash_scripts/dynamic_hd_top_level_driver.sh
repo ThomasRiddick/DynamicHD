@@ -199,12 +199,12 @@ if $first_timestep ; then
 	mkdir -p ${source_directory}/Dynamic_HD_Cpp_Code/Release
 	mkdir -p ${source_directory}/Dynamic_HD_Cpp_Code/Release/src
 	mkdir -p ${source_directory}/Dynamic_HD_Cpp_Code/Release/src/gtest
-	if ! [[ -d ${source_directory}/Dynamic_HD_Cpp_Code/src/gtest ]]; then
-		cp -r ${external_source_directory}/googletest-master/googletest/src \
+	if ! [[ -f ${source_directory}/Dynamic_HD_Cpp_Code/src/gtest/*.cc ]]; then
+		cp ${external_source_directory}/googletest-master/googletest/src/* \
 			${source_directory}/Dynamic_HD_Cpp_Code/src/gtest
 	fi
 	if ! [[ -d ${source_directory}/Dynamic_HD_Cpp_Code/include/gtest ]]; then
-			cp -r ${external_source_directory}/googletest-master/googletest/include/gtest \
+		cp -r ${external_source_directory}/googletest-master/googletest/include/gtest \
 			${source_directory}/Dynamic_HD_Cpp_Code/include/gtest
 	fi
 	cd ${source_directory}/Dynamic_HD_Cpp_Code/Release
