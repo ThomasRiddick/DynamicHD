@@ -200,12 +200,16 @@ if $first_timestep ; then
 	mkdir -p ${source_directory}/Dynamic_HD_Cpp_Code/Release/src
 	mkdir -p ${source_directory}/Dynamic_HD_Cpp_Code/Release/src/gtest
 	if ! [[ -f ${source_directory}/Dynamic_HD_Cpp_Code/src/gtest/*.cc ]]; then
-		cp ${external_source_directory}/googletest-master/googletest/src/* \
+		cp ${external_source_directory}/googletest-master/googletest/src/*.cc \
 			${source_directory}/Dynamic_HD_Cpp_Code/src/gtest
 	fi
 	if ! [[ -d ${source_directory}/Dynamic_HD_Cpp_Code/include/gtest ]]; then
 		cp -r ${external_source_directory}/googletest-master/googletest/include/gtest \
 			${source_directory}/Dynamic_HD_Cpp_Code/include/gtest
+	fi
+	if ! [[ -f ${source_directory}/Dynamic_HD_Cpp_Code/src/gtest-internal-inl.h ]]; then
+		cp -r ${external_source_directory}/googletest-master/googletest/src/gtest-internal-inl.h \
+			${source_directory}/Dynamic_HD_Cpp_Code/src	
 	fi
 	cd ${source_directory}/Dynamic_HD_Cpp_Code/Release
 	make -f ../makefile clean
