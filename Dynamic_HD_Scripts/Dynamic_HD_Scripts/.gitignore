@@ -15,6 +15,5 @@
 /utilities.pyc
 /build/
 /bin/
-/libs/
 /fill_sinks_wrapper.cpp
 /create_connected_lsmask_wrapper.cpp
