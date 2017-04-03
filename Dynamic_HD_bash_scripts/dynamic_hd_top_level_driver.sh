@@ -217,6 +217,7 @@ if $first_timestep ; then
 	cd - 2>&1 > /dev/null
 	echo "Compiling Fortran code" 1>&2
 	mkdir -p ${source_directory}/Dynamic_HD_Fortran_Code/Release
+	mkdir -p ${source_directory}/Dynamic_HD_Fortran_Code/Release/src
 	cd ${source_directory}/Dynamic_HD_Fortran_Code/Release
 	make -f ../makefile clean
 	make -f ../makefile -e "EXT_SOURCE=${external_source_directory}" all 
