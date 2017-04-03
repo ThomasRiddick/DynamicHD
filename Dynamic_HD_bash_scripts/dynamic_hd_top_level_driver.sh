@@ -249,9 +249,10 @@ if $first_timestep; then
 	cd - 2>&1 > /dev/null
 fi
 
-#Prepare bin directory for python code 
+#Prepare bin directory for python code and bash code
 if $first_timestep; then
 	mkdir -p ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/bin
+	mkdir -p ${source_directory}/Dynamic_HD_bash_scripts/bin
 fi
 
 #Run
