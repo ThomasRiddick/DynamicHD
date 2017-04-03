@@ -249,6 +249,11 @@ if $first_timestep; then
 	cd - 2>&1 > /dev/null
 fi
 
+#Prepare bin directory for python code 
+if $first_timestep; then
+	mkdir -p ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/bin
+fi
+
 #Run
 echo "Running Dynamic HD Code" 1>&2 
 python2.7 ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/dynamic_hd_production_run_driver.py ${input_orography_filepath} ${input_ls_mask_filepath} ${output_hdpara_filepath} ${ancillary_data_directory} ${working_directory} ${output_hdstart_filepath}
