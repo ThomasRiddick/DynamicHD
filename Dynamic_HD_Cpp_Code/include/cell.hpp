@@ -34,6 +34,8 @@ class cell{
 	double rim_height;
 	//length of path from entry into area (only used by Tarasov modification)
 	double tarasov_path_length = 0;
+	//height of initial point on this path (only used by Tarasov modification)
+	double tarasov_path_initial_height = 0;
 
 public:
 	//Class Constructors
@@ -42,19 +44,22 @@ public:
 	  rim_height(rim_height_in) {}
 	cell(double orography_in,coords* cell_coords_in) : orography(orography_in),
 			cell_coords(cell_coords_in), k(0), catchment_num(0), rim_height(0.0)  {}
-	cell(double orography_in,coords* cell_coords_in,int catchment_num, double rim_height_in,
+	cell(double orography_in,coords* cell_coords_in,int catchment_num_in, double rim_height_in,
 		 int tarasov_initial_edge_number_in, int tarasov_maximum_separation_from_initial_edge_in,
-		 double tarasov_path_length_in)
-	: orography(orography_in), cell_coords(cell_coords_in), k(0), catchment_num(catchment_num),
+		 double tarasov_path_length_in,double tarasov_path_initial_height_in)
+	: orography(orography_in), cell_coords(cell_coords_in), k(0), catchment_num(catchment_num_in),
 	  tarasov_initial_edge_number(tarasov_initial_edge_number_in),
 	  tarasov_maximum_separation_from_initial_edge(tarasov_maximum_separation_from_initial_edge_in),
-	  rim_height(rim_height_in), tarasov_path_length(tarasov_path_length_in) {}
-	cell(double orography_in,coords* cell_coords_in, int tarasov_initial_edge_number_in,
-		 int tarasov_maximum_separation_from_initial_edge_in, double tarasov_path_length_in)
-	: orography(orography_in), cell_coords(cell_coords_in), k(0), catchment_num(0),
+	  rim_height(rim_height_in), tarasov_path_length(tarasov_path_length_in),
+	  tarasov_path_initial_height(tarasov_path_initial_height_in) {}
+	cell(double orography_in,coords* cell_coords_in, int catchment_num_in,
+		 int tarasov_initial_edge_number_in,int tarasov_maximum_separation_from_initial_edge_in,
+		 double tarasov_path_length_in,double tarasov_path_initial_height_in)
+	: orography(orography_in), cell_coords(cell_coords_in), k(0), catchment_num(catchment_num_in),
 	  tarasov_initial_edge_number(tarasov_initial_edge_number_in),
 	  tarasov_maximum_separation_from_initial_edge(tarasov_maximum_separation_from_initial_edge_in),
-	  rim_height(0.0), tarasov_path_length(tarasov_path_length_in)  {}
+	  rim_height(0.0), tarasov_path_length(tarasov_path_length_in),
+	  tarasov_path_initial_height(tarasov_path_initial_height_in) {}
 	//Class destructor
 	~cell() { delete cell_coords; }
 	//Getters
@@ -63,6 +68,7 @@ public:
 	double get_orography() {return orography;}
 	double get_rim_height() {return rim_height;}
 	double get_tarasov_path_length() {return tarasov_path_length;}
+	double get_tarasov_path_initial_height() {return tarasov_path_initial_height;}
 	int get_tarasov_initial_edge_number() {return tarasov_initial_edge_number;}
 	int get_tarasov_maximum_separation_from_initial_edge()
 		{return tarasov_maximum_separation_from_initial_edge;}

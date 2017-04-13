@@ -45,6 +45,14 @@ extensions=[Extension("libs.fill_sinks_wrapper",[path.join(module_dir,"fill_sink
                       include_dirs=[src,include,np.get_include()],
                       language="c++",
                       extra_compile_args=extra_compile_args,
+                      extra_link_args=extra_links_args),
+            Extension("libs.upscale_orography_wrapper",[path.join(module_dir,"upscale_orography_wrapper.pyx"),
+                                                        path.join(src,"grid.cpp"),
+                                                        path.join(src,"cell.cpp"),
+                                                        path.join(src,"sink_filling_algorithm.cpp")],
+                      include_dirs=[src,include,np.get_include()],
+                      language="c++",
+                      extra_compile_args=extra_compile_args,
                       extra_link_args=extra_links_args)]
 
 setup(

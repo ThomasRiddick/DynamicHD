@@ -24,15 +24,17 @@ class sink_filling_algorithm{
 public:
 	sink_filling_algorithm(){};
 	sink_filling_algorithm(field<double>*,grid_params*, field<bool>*,bool*,bool,
-						   bool* = nullptr);
+						   bool* = nullptr, field<int>* = nullptr);
 	virtual ~sink_filling_algorithm();
-	void setup_flags(bool, bool = false);
+	void setup_flags(bool, bool = false, int = 1, double = 1.1, bool = false,
+					 bool = false);
 	void setup_fields(double*,bool*,bool*,grid_params*);
 	void fill_sinks();
 	void test_add_edge_cells_to_q() { add_edge_cells_to_q(); }
 	void test_add_true_sinks_to_q() { add_true_sinks_to_q(); }
 	priority_cell_queue get_q() {return q; }
 	virtual int get_method() = 0;
+	double tarasov_get_area_height() { return tarasov_area_height; }
 
 protected:
 	//A variable equal to the smallest possible double used as a non data value
@@ -44,6 +46,7 @@ protected:
 	void add_edge_cells_to_q();
 	void add_true_sinks_to_q();
 	void add_landsea_edge_cells_to_q();
+	void tarasov_calculate_neighbors_path_length();
 	virtual void add_geometric_edge_cells_to_q() = 0;
 	virtual void process_neighbor() = 0;
 	virtual void process_center_cell() = 0;
@@ -52,8 +55,11 @@ protected:
 	virtual void set_ls_as_no_data(coords*) = 0;
 	virtual void process_true_sink_center_cell() = 0;
 	virtual void push_neighbor() = 0;
+	virtual double tarasov_calculate_neighbors_path_length_change(coords*) = 0;
+	void tarasov_get_center_cell_values();
+	void tarasov_set_field_values(coords*);
+	void tarasov_get_center_cell_values_from_field();
 	void tarasov_update_maximum_separation_from_initial_edge();
-	void tarasov_calculate_neighbors_path_length();
 	bool tarasov_is_shortest_permitted_path();
 	bool tarasov_same_edge_criteria_met();
 	virtual void tarasov_set_area_height() = 0;
@@ -68,16 +74,34 @@ protected:
 	field<bool>* landsea = nullptr;
 	field<bool>* true_sinks = nullptr;
 	field<bool>* completed_cells = nullptr;
+	field<double>* tarasov_path_initial_heights = nullptr;
+	field<bool>* tarasov_landsea_neighbors = nullptr;
+	field<bool>* tarasov_active_true_sink = nullptr;
+	field<double>* tarasov_path_lengths = nullptr;
+	field<int>* tarasov_maximum_separations_from_initial_edge = nullptr;
+	field<int>* tarasov_initial_edge_nums = nullptr;
+	//Used by Algorithm 4. Also used by both Algorithm when performing
+	//orography upscaling
+	field<int>* catchment_nums = nullptr;
 	bool debug = false;
 	bool set_ls_as_no_data_flag = false;
 	double nbr_orog = 0.0;
-	double tarasov_min_path_length = 0.0;
+	//Used by Algorithm 4. Also used by both Algorithm when performing
+	//orography upscaling
+	int center_catchment_num = 0;
+	double tarasov_min_path_length = 1.0;
 	double tarasov_area_height = 0.0;
 	bool tarasov_include_corners_in_same_edge_criteria = false;
+	bool tarasov_reprocessing_cell = false;
 	bool tarasov_mod = false;
+	int tarasov_separation_threshold_for_returning_to_same_edge = 1;
 	int method = 0;
-	int tarasov_seperation_threshold_for_returning_to_same_edge = 0;
 	double tarasov_neighbor_path_length = 0.0;
+	double tarasov_path_initial_height = 0.0;
+	double tarasov_center_cell_path_initial_height = 0.0;
+	double tarasov_center_cell_path_length = 0.0;
+	int tarasov_center_cell_maximum_separations_from_initial_edge = 0;
+	int tarasov_center_cell_initial_edge_num = 0;
 
 };
 
@@ -85,9 +109,10 @@ class sink_filling_algorithm_latlon :  virtual public sink_filling_algorithm {
 public:
 	sink_filling_algorithm_latlon() {};
 	void add_geometric_edge_cells_to_q();
-	virtual void push_vertical_edge(int) = 0;
-	virtual void push_horizontal_edge(int) = 0;
+	virtual void push_vertical_edge(int, bool = true, bool = true) = 0;
+	virtual void push_horizontal_edge(int, bool = true, bool = true) = 0;
 	virtual ~sink_filling_algorithm_latlon() {};
+	double tarasov_calculate_neighbors_path_length_change(coords*);
 protected:
 	int nlat = 0;
 	int nlon = 0;
@@ -99,7 +124,8 @@ public:
 	sink_filling_algorithm_1(){}
 	sink_filling_algorithm_1(field<double>*, grid_params*, field<bool>*, bool*, bool,
 							 bool, double, bool* = nullptr);
-	void setup_flags(bool, bool, bool = false, double = 0.1);
+	void setup_flags(bool, bool = false, bool = false, bool = false, double = 0.1,
+					 int = 1, double = 1.1, bool = false);
 	virtual ~sink_filling_algorithm_1() {};
 	int get_method() {return method;}
 
@@ -138,23 +164,22 @@ protected:
 	void push_neighbor();
 	void find_initial_cell_flow_direction();
 	void setup_fields(double*, bool*, bool*, grid_params*, int*);
-	void setup_flags(bool, bool = false, bool = false);
+	void setup_flags(bool, bool = false, bool = false, int = 1, double = 1.1, bool = false,
+			 	 	 bool = false);
 	void tarasov_set_area_height();
 	virtual void set_cell_to_no_data_value(coords*) = 0;
 	virtual void set_cell_to_true_sink_value(coords*) = 0;
 	virtual void set_index_based_rdirs(coords*,coords*) = 0;
 
-	field<int>* catchment_nums = nullptr;
 	bool prefer_non_diagonal_initial_dirs = false;
-	int center_catchment_num = 0;
 	double nbr_rim_height = 0.0;
 	double center_rim_height = 0.0;
 	bool index_based_rdirs_only = true;
 };
 
 class sink_filling_algorithm_1_latlon : public sink_filling_algorithm_1, public sink_filling_algorithm_latlon{
-	void push_vertical_edge(int);
-	void push_horizontal_edge(int);
+	void push_vertical_edge(int,bool,bool);
+	void push_horizontal_edge(int,bool,bool);
 public:
 	sink_filling_algorithm_1_latlon() {};
 	sink_filling_algorithm_1_latlon(field<double>*, grid_params*, field<bool>*, bool*, bool,
@@ -170,8 +195,8 @@ class sink_filling_algorithm_4_latlon : public sink_filling_algorithm_4, public 
 	const int true_sink_value = -5;
 	const int no_data_value = -1;
 	//Find the flow direction of an initial cell for algorithm 4
-	void push_vertical_edge(int);
-	void push_horizontal_edge(int);
+	void push_vertical_edge(int,bool,bool);
+	void push_horizontal_edge(int,bool,bool);
 	void set_cell_to_no_data_value(coords*);
 	void set_cell_to_true_sink_value(coords*);
 public:
@@ -180,7 +205,8 @@ public:
 							 	 	bool, field<int>*, bool, bool, field<int>*,field<int>*,
 									bool* = nullptr, field<double>* = nullptr);
 	void set_dir_based_rdir(coords*, double);
-	void setup_flags(bool, bool = false, bool = false, bool = true);
+	void setup_flags(bool, bool = false, bool = false, bool = false, bool = false, int = 1,
+				     double = 1.1, bool = false);
 	void setup_fields(double*, bool*, bool*, int*, int*, grid_params*, double*, int*);
 	void calculate_direction_from_neighbor_to_cell();
 	virtual ~sink_filling_algorithm_4_latlon() { delete rdirs; delete next_cell_lat_index;

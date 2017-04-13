@@ -9,7 +9,7 @@ Created on Mar 14, 2016
 
 import dynamic_hd
 import numpy as np
-import libs.fill_sinks_wrapper as fill_sinks_wrapper
+import libs.fill_sinks_wrapper as fill_sinks_wrapper #@UnresolvedImportError
 from Dynamic_HD_Scripts.field import Field
 
 def generate_orography_with_sinks_filled(input_orography_filename,output_orography_filename,
