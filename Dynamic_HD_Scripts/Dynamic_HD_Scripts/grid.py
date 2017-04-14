@@ -217,7 +217,7 @@ class Grid(object):
         """ 
 
         pass
-        
+     
 class LatLongGrid(Grid):
     """Class that stores information on and functions to work with a Latitude-Longitude grid.
     
@@ -621,8 +621,7 @@ class LatLongGrid(Grid):
         data = ndi.generic_filter(data,f2py_mngr.run_current_function_or_subroutine,size=(3,3),
                                   mode = 'wrap')
         return data[1:-1,:]
-        
-        
+    
 def makeGrid(grid_type,**kwargs):
     """Factory function that creates an object of the correct grid type given a keyword
     
