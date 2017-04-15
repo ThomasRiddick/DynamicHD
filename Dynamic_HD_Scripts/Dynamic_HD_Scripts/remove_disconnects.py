@@ -6,6 +6,7 @@ Created on Mar 29, 2017
 import numpy as np
 import field
 import collections
+from __builtin__ import None
 
 class RemoveDisconnects(object):
     '''
@@ -24,7 +25,19 @@ class RemoveDisconnects(object):
         
     def run_disconnect_removal(self):
         self.find_disconnects()
-        self.order_disconnects()
+        while (self.disconnect) > 0:
+            self.order_disconnects()
+            largest_disconnect = self.disconnects.pop()
+            if self.yamazaki_flowtocell.get_value(largest_disconnect) < 2: 
+                break
+            path,cotat_disconnected_catchment_num = self.find_path(largest_disconnect)
+            if path is None:
+                print "Couldn't solve disconnect at:"  +\
+                    self.grid.coords_as_string(largest_disconnect)
+                continue
+            self.attempt_to_reroute_disconnected_cells(path, 
+                    cotat_disconnected_catchment_num)
+
     
     def find_disconnects(self): 
         self.disconnects = [(dc,True) for dc in 
@@ -57,12 +70,10 @@ class RemoveDisconnects(object):
         while path[-1] is None:
             path = list(next_path_step_generator)
             if len(rerouting_start_points_and_biases) == 0:
-                return None
-        return path
-        if path is not None:
-            for point in path:
+                return None,None
+        for point in path:
                 self.modification_counts.increment_value(point)
-        return path
+        return path,cotat_disconnected_catchment_num
         
     def reroute_point(self,point,disconnect_size,cotat_disconnected_catchment_num):
         if point is None:
@@ -87,9 +98,9 @@ class RemoveDisconnects(object):
         self.reconnected_points = field.Field(self.grid.create_empty_field(np.bool_),
                                               grid=self.grid)
         for point in path:
-            if(self.old_cotat_catchments.get_value(primary_cotat_disconnected_catchment_num) == 
+            if(self.old_cotat_catchments.get_value(point) == 
                primary_cotat_disconnected_catchment_num):
-                break
+                continue
             disconnected_neighbors = self.new_cotat_rdirs.get_neighbors_flowing_to_point(point)
             downstream_neighbor = self.old_cotat_rdirs.get_downstream_neighbor(point)
             second_downstream_neighbor = self.old_cotat_rdirs.get_downstream_neighbor(downstream_neighbor)

@@ -28,6 +28,7 @@ class DisconnectRemovalGrid(grid.Grid):
     attempt_extended_direct_reconnect
     attempt_indirect_reconnect
     points_neighbor
+    coords_as_string
     '''
 
 
@@ -97,6 +98,10 @@ class DisconnectRemovalGrid(grid.Grid):
     
     @abstractmethod
     def points_neighbor(self,point_one,point_two):
+        pass
+    
+    @abstractmethod
+    def coords_as_string(self,coords):
         pass
         
 class LatLongDisconnectRemovealGrid(DisconnectRemovalGrid,grid.LatLongGrid):
@@ -282,3 +287,6 @@ class LatLongDisconnectRemovealGrid(DisconnectRemovalGrid,grid.LatLongGrid):
             if abs(value) > 1:
                 return False
         return True
+    
+    def coords_as_string(self,coords):
+        return "i: {0} j: {1}".format(*coords)
