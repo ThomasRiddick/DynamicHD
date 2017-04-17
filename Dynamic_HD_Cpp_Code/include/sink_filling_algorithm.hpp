@@ -90,7 +90,7 @@ protected:
 	//orography upscaling
 	int center_catchment_num = 0;
 	double tarasov_min_path_length = 1.0;
-	double tarasov_area_height = 0.0;
+	double tarasov_area_height = no_data_value;
 	bool tarasov_include_corners_in_same_edge_criteria = false;
 	bool tarasov_reprocessing_cell = false;
 	bool tarasov_mod = false;

@@ -79,5 +79,6 @@ inline void create_connected_landsea_mask::process_neighbor()
 
 void create_connected_landsea_mask::deep_copy_completed_cells_to_landsea()
 {
-	_grid->for_all([&](coords* coords_in){(*landsea)(coords_in) = (*completed_cells)(coords_in);});
+	_grid->for_all([&](coords* coords_in){(*landsea)(coords_in) = (*completed_cells)(coords_in);
+										  delete coords_in;});
 }

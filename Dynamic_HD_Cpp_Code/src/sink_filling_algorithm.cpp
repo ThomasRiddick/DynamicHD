@@ -325,6 +325,7 @@ void sink_filling_algorithm::add_landsea_edge_cells_to_q(){
 			}
 			delete neighbors_coords;
 		}
+		delete coords_in;
 	};
 	_grid->for_all(add_edge_cell_to_q_func);
 }
@@ -406,11 +407,15 @@ void sink_filling_algorithm::add_true_sinks_to_q()
 	_grid->for_all([&](coords* coords_in){
 			if ((*true_sinks)(coords_in)){
 				if (landsea){
-					if ((*landsea)(coords_in)) return;
+					if ((*landsea)(coords_in)) {
+						delete coords_in;
+						return;
+					}
 				}
 				//ignore sinks next to landsea points... how such a situation could possible occur
 				//and therefore the correct hydrology for it is not clear
 				if(!(*completed_cells)(coords_in)) push_true_sink(coords_in);
+				else delete coords_in;
 			}
 	});
 }
@@ -619,13 +624,16 @@ void sink_filling_algorithm_4::find_initial_cell_flow_direction(){
 	}
 	function<void(coords*)> find_init_rdir_func = [&](coords* coords_in){
 		//check if out of latitude range
-		if (_grid->outside_limits(coords_in)) return;
+		if (_grid->outside_limits(coords_in)) {
+			delete coords_in;
+			return;
+		}
 		//deal with longitudinal wrapping
 		auto coords_prime = _grid->wrapped_coords(coords_in);
 		if ((*landsea)(coords_prime)){
 			if (min_height > (*orography)(coords_prime)){
 				min_height = (*orography)(coords_prime);
-				set_index_based_rdirs(nbr_coords,coords_prime);
+				if (destination_coords != nbr_coords) delete destination_coords;
 				destination_coords = coords_prime;
 				//Note the index here is correctly coords_in and not coords_prime!
 				if (not index_based_rdirs_only) direction = _grid->calculate_dir_based_rdir(nbr_coords,coords_in);
@@ -633,6 +641,7 @@ void sink_filling_algorithm_4::find_initial_cell_flow_direction(){
 					  prefer_non_diagonal_initial_dirs &&
 					  //This block favors non diagonals if the appropriate flag is set
 					  _grid->non_diagonal(nbr_coords,coords_prime)) {
+				if (destination_coords != nbr_coords) delete destination_coords;
 				destination_coords = coords_prime;
 				//make this a part of latlon_grid then cast to that and give nbr_coors
 				//and coords_in to that to generate this number, also below
@@ -641,6 +650,8 @@ void sink_filling_algorithm_4::find_initial_cell_flow_direction(){
 				if(not index_based_rdirs_only) direction = _grid->calculate_dir_based_rdir(nbr_coords,coords_in);
 			}
 		}
+		if (coords_in != coords_prime) delete coords_in;
+		if (coords_prime != destination_coords) delete coords_prime;
 	};
 	_grid->for_all_nbrs(nbr_coords,find_init_rdir_func);
 	set_index_based_rdirs(nbr_coords,destination_coords);

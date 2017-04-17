@@ -83,6 +83,11 @@ void latlon_upscale_orography(double* orography_in, int nlat_fine, int nlon_fine
 				function<double(double*,bool*,bool*)> run_alg_4 = [&](double* orography_section,
 																	  bool* landsea_section,
 																	  bool* true_sinks_section) {
+					bool all_sea_points = true;
+					for (auto i = 0; i < scale_factor_lat*scale_factor_lon;i++){
+						if (! landsea_section[i]) all_sea_points = false;
+					}
+					if (all_sea_points) return 0.0;
 					auto next_cell_lat_index_in = new int[scale_factor_lat*scale_factor_lon];
 					auto next_cell_lon_index_in = new int[scale_factor_lat*scale_factor_lon];
 					auto rdirs_in				= new double[scale_factor_lat*scale_factor_lon];
