@@ -179,10 +179,12 @@ def plot_catchment_and_histogram_for_river(ax_hist,ax_catch,ref_catchment_field,
                                            data_catchment_field_original_scale,
                                            data_original_scale_flowtocellfield,
                                            rdirs_field,data_rdirs_field,pair,
-                                           catchment_grid_changed,colors,grid_type,
+                                           catchment_grid_changed,colors,
+                                           ref_grid,grid_type,
                                            swap_ref_and_data_when_finding_labels=False,
                                            alternative_catchment_bounds=None,
                                            use_simplified_catchment_colorscheme=False,
+                                           use_upscaling_labels=False,
                                            data_original_scale_grid_type='HD',
                                            data_original_scale_grid_kwargs={},
                                            **grid_kwargs):
@@ -221,13 +223,32 @@ def plot_catchment_and_histogram_for_river(ax_hist,ax_catch,ref_catchment_field,
                                                           use_simplified_catchment_colorscheme=\
                                                           use_simplified_catchment_colorscheme)
     plot_catchment(ax_catch,catchment_section,colors,
+                   lat_offset=catchment_bounds[0],
+                   lon_offset=catchment_bounds[2],
                    simplified_colorscheme=use_simplified_catchment_colorscheme,
-                   cax=None)
+                   cax=None,use_upscaling_labels=use_upscaling_labels,
+                   format_coords=True,
+                   remove_ticks_flag=False)
+    axis_tick_label_scale_factor=ref_grid.get_scale_factor_for_geographic_coords()
+    ax_catch.xaxis.set_major_locator(mpl.ticker.IndexLocator(10/axis_tick_label_scale_factor,
+                                                             -catchment_bounds[2]))
+    ax_catch.yaxis.set_major_locator(mpl.ticker.IndexLocator(10/axis_tick_label_scale_factor,
+                                                             -catchment_bounds[0]))
+    #Scale factor is multiplied by two as formatter has a built in scale factor of a half
+    ax_catch.xaxis.set_major_formatter(mpl.ticker.\
+                                       FuncFormatter(pts.LonAxisFormatter(catchment_bounds[2] + 
+                                                                          ref_grid.get_longitude_offset_adjustment(),
+                                                                          axis_tick_label_scale_factor*2)))
+    ax_catch.yaxis.set_major_formatter(mpl.ticker.\
+                                       FuncFormatter(pts.LatAxisFormatter(catchment_bounds[0],
+                                                                          axis_tick_label_scale_factor*2)))
+    plt.tight_layout()
     return catchment_section,catchment_bounds,scale_factor
 
 def plot_catchment(ax,catchment_section,colors,simplified_colorscheme=False,
                    cax=None,legend=True,remove_ticks_flag=True,
-                   format_coords=False,lat_offset=0,lon_offset=0):
+                   format_coords=False,lat_offset=0,lon_offset=0,
+                   use_upscaling_labels=False):
     if simplified_colorscheme:
         cmap_catch,norm_catch = create_colormap(catchment_section,5,colors=colors)
     else:
@@ -241,9 +262,15 @@ def plot_catchment(ax,catchment_section,colors,simplified_colorscheme=False,
         mappable_catch = mpl.cm.ScalarMappable(norm=norm_catch,cmap=cmap_catch)
         mappable_catch.set_array(catchment_section)
         cb_wc = plt.colorbar(mappable_catch,ax=ax,cax=cax)
-        tic_labels_catch = ['Sea','Land','Reference Catchment','Common Catchment','Data Catchment',
-                            'Reference River Mouth','Data River Mouth','Reference True Sink',
-                            'Common True Sink'] 
+        if use_upscaling_labels:
+            tic_labels_catch = ['Sea','Land','Fine River Directions\nCatchment','Common Catchment',
+                                'Upscaled River Directions\nCatchment','Fine River Directions River Mouth',
+                                'Upscaled River Directions River Mouth','Fine River Directions True Sink',
+                                'Common True Sink'] 
+        else:
+            tic_labels_catch = ['Sea','Land','Model 1 Catchment','Common Catchment','Model 2 Catchment',
+                                'Model 1 River Mouth','Model 2 River Mouth','Model 1 True Sink',
+                                'Common True Sink'] 
         tic_loc_catch = np.arange(10) + 0.5
         cb_wc.set_ticks(tic_loc_catch) 
         cb_wc.set_ticklabels(tic_labels_catch)
@@ -392,7 +419,8 @@ class SimpleCatchmentAndFlowMapPlt(object):
         return self.flowtocell_threshold
 
 def simple_catchment_and_flowmap_plot(ax,catchment_field,catchment_field_for_lsmask,flowtocell,
-                                      catchment_bounds,catchment_num,flowtocell_threshold,colors):
+                                      catchment_bounds,catchment_num,flowtocell_threshold,colors,
+                                      remove_ticks=False):
     """Simple version of overlaid catchment and flowmaps plot"""
     working_catchment = np.copy(catchment_field)
     imin,imax,jmin,jmax = catchment_bounds
@@ -404,7 +432,24 @@ def simple_catchment_and_flowmap_plot(ax,catchment_field,catchment_field_for_lsm
     cmap_catch = mpl.colors.ListedColormap(colors.simple_catchment_and_flowmap_colors)
     norm_catch = mpl.colors.BoundaryNorm(range(5),cmap_catch.N)
     ax.imshow(working_catchment_section,interpolation='none',cmap=cmap_catch,norm=norm_catch)
-    pts.remove_ticks(ax)
+    if remove_ticks:
+        pts.remove_ticks(ax)
+    else:
+            #Assume HD Grid
+            axis_tick_label_scale_factor=0.5
+            ax.xaxis.set_major_locator(mpl.ticker.IndexLocator(10/axis_tick_label_scale_factor,
+                                                               -catchment_bounds[2]))
+            ax.yaxis.set_major_locator(mpl.ticker.IndexLocator(10/axis_tick_label_scale_factor,
+                                                               -catchment_bounds[0]))
+            #Scale factor is multiplied by two as formatter has a built in scale factor of a half
+            ax.xaxis.set_major_formatter(mpl.ticker.\
+                                               FuncFormatter(pts.LonAxisFormatter(catchment_bounds[2],
+                                                            axis_tick_label_scale_factor*2)))
+            ax.yaxis.set_major_formatter(mpl.ticker.\
+                                               FuncFormatter(pts.LatAxisFormatter(catchment_bounds[0],
+                                                            axis_tick_label_scale_factor*2)))
+            plt.tight_layout()
+        
 
 def add_catchment_and_outflow_to_river(catchments,outflows,sink_outflow_to_remap,processing_mod_type,
                                        flowmap=None,rdirs=None,original_scale_catchment=None,

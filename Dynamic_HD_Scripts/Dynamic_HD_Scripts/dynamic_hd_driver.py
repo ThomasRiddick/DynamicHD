@@ -136,6 +136,7 @@ class Dynamic_HD_Drivers(object):
                                                             "paragen_copy_")
         self.hd_grid_filepath = path.join(self.grids_path,"hdmodel2d_griddes")
         self.half_degree_grid_filepath = path.join(self.grids_path,"grid_0_5.txt")
+        self.thirty_second_grid_filepath= path.join(self.grids_path,"grid_30sec.txt")
         self.hd_grid_ls_mask_filepath = path.join(self.ls_masks_path,
                                                   "lsmmaskvonGR30.srv")
         self.hd_truesinks_filepath = path.join(self.truesinks_path,
@@ -665,6 +666,32 @@ class Utilities_Drivers(Dynamic_HD_Drivers):
                                                          input_ls_seed_points_list_filename=\
                                                             hd_lsmask_seed_points, 
                                                          use_diagonals_in=True, grid_type='HD')
+        
+    def recreate_connected_lsmask_for_black_azov_and_caspian_seas_from_glcc_olson_data(self):
+        """Create an lsmask for the black,azov and caspian seas from a lake mask on a 30 second resolution"""
+        file_label = self._generate_file_label()
+        glcc_olson_lake_mask = path.join(self.ls_masks_path,"glcc_olson_land_cover_data",
+                                         "glcc_olson-2.0_lakemask.nc")
+        thirty_minute_black_azov_caspian_lsmask_seed_points = path.join(self.ls_seed_points_path,
+                                                                        "30sec_black_azov_caspian"
+                                                                        "_lsmask_seed_points.txt")
+        cc_lsmask_driver.drive_connected_lsmask_creation(input_lsmask_filename=glcc_olson_lake_mask,
+                                                         output_lsmask_filename=\
+                                                         self.generated_ls_mask_filepath + 
+                                                         file_label + '.nc',
+                                                         input_ls_seed_points_list_filename=\
+                                                         thirty_minute_black_azov_caspian_lsmask_seed_points,
+                                                         use_diagonals_in=True,
+                                                         rotate_seeds_about_polar_axis=False,
+                                                         grid_type='LatLong30sec')
+        self._apply_transforms_to_field(self.generated_ls_mask_filepath + 
+                                        file_label + '.nc',
+                                        output_filename = self.generated_ls_mask_filepath + 
+                                            file_label + '_with_grid_info.nc',
+                                        flip_ud=False,
+                                        rotate180lr=False,invert_data=False,
+                                        griddescfile=self.thirty_second_grid_filepath,
+                                        grid_type='LatLong30sec')
         
     def downscale_HD_ls_seed_points_to_1min_lat_lon(self):
         """Downscale the set of sea seed points to a 1 minute latlon resolution"""
@@ -2172,13 +2199,14 @@ def main():
     #etopo1_data_drivers = ETOPO1_Data_Drivers()
     #etopo1_data_drivers.etopo1_data_all_points()
     #etopo1_data_drivers.etopo1_data_ALG4_sinkless()
-    #utilties_drivers = Utilities_Drivers()
+    utilties_drivers = Utilities_Drivers()
     #utilties_drivers.convert_corrected_HD_hydrology_dat_files_to_nc()
     #utilties_drivers.recreate_connected_HD_lsmask()
     #utilties_drivers.recreate_connected_HD_lsmask_true_seas_inc_casp_only()
     #utilties_drivers.downscale_HD_ls_seed_points_to_1min_lat_lon()
     #utilties_drivers.downscale_HD_ls_seed_points_to_10min_lat_lon()
     #utilties_drivers.downscale_HD_ls_seed_points_to_10min_lat_lon_true_seas_inc_casp_only()
+    utilties_drivers.recreate_connected_lsmask_for_black_azov_and_caspian_seas_from_glcc_olson_data()
     #original_hd_model_rfd_drivers = Original_HD_Model_RFD_Drivers()
     #original_hd_model_rfd_drivers.corrected_HD_rdirs_post_processing()
     #original_hd_model_rfd_drivers.extract_ls_mask_from_corrected_HD_rdirs()
@@ -2190,9 +2218,9 @@ def main():
     #glac_data_drivers.test_paragen_on_GLAC_data()
     #glac_data_drivers.GLAC_data_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_27timeslices()
     #glac_data_drivers.GLAC_data_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_27timeslices_merge_timeslices_only()
-    ten_minute_data_from_virna_driver = Ten_Minute_Data_From_Virna_Driver()
+    #ten_minute_data_from_virna_driver = Ten_Minute_Data_From_Virna_Driver()
     #ten_minute_data_from_virna_driver.ten_minute_data_from_virna_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs()
-    ten_minute_data_from_virna_driver.ten_minute_data_from_virna_lgm_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_2017_data()
+    #ten_minute_data_from_virna_driver.ten_minute_data_from_virna_lgm_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_2017_data()
     #ten_minute_data_from_virna_driver.ten_minute_data_from_virna_lgm_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs()
 
 if __name__ == '__main__':

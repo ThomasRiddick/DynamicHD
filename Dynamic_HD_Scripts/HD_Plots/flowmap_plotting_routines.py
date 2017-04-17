@@ -14,17 +14,29 @@ import river_comparison_plotting_routines as rc_pts
 def make_basic_flowmap_comparison_plot(ax,flowmap_ref_field,flowmap_data_field,minflowcutoff,
                                        first_datasource_name,second_datasource_name,lsmask=None,
                                        return_image_array_instead_of_plotting=False,
-                                       no_antarctic_rivers=True,colors=None,add_title=True):
-    flowmap_ref_field[flowmap_ref_field < minflowcutoff] = 1
-    flowmap_ref_field[flowmap_ref_field >= minflowcutoff] = 2
+                                       no_antarctic_rivers=True,colors=None,add_title=True,
+                                       glacier_mask=None):
+    flowmap_ref_field_copy = np.copy(flowmap_ref_field)
+    flowmap_ref_field[flowmap_ref_field_copy < minflowcutoff] = 1
+    if glacier_mask is not None:
+        flowmap_ref_field[(glacier_mask == 100.) |
+                          (glacier_mask == 1) ] = -1 if return_image_array_instead_of_plotting else 5
+    flowmap_ref_field[flowmap_ref_field_copy >= minflowcutoff] = 2
     flowmap_ref_field[np.logical_and(flowmap_data_field >= minflowcutoff,
                                      flowmap_ref_field == 2)] = 3
     flowmap_ref_field[np.logical_and(flowmap_data_field >= minflowcutoff,
                                      flowmap_ref_field != 3)] = 4                                
     if no_antarctic_rivers:
-        flowmap_ref_field[310:,:] = 1
+        if glacier_mask is not None:
+            flowmap_ref_field[310:,:] = 1
+            flowmap_ref_field[310:,:][(glacier_mask[310:,:] == 100.) |
+                                      (glacier_mask[310:,:] == 1 )] =\
+                                       -1 if return_image_array_instead_of_plotting else 5
+        else:
+            flowmap_ref_field[310:,:] = 1
     if lsmask is not None:
         flowmap_ref_field[lsmask == 1] = 0
+
     if return_image_array_instead_of_plotting:
         return flowmap_ref_field
     if colors is None:
@@ -100,18 +112,28 @@ def combine_image(original_image,catchment_section,use_alt_color,alt_color_num,u
 
 def plot_composite_image(ax,image,minflowcutoff,first_datasource_name,second_datasource_name,
                          use_single_color_for_discrepancies,use_only_one_color_for_flowmap,
-                         use_title=True,colors=None):
+                         use_title=True,colors=None,use_only_one_common_catchment_label=True,
+                         difference_in_catchment_label="Discrepancy",remove_ticks=False,
+                         flowmap_grid=None,plot_glaciers=False):
     if use_single_color_for_discrepancies:
         image[image == 8] = 7
         image[image == 9] = 8
+        image[image == -1] = 9
         if use_only_one_color_for_flowmap:
             if colors is None:
                 flowmap_and_catchment_colors = ['lightblue','peru','blue','red',
-                                                'grey','darkgrey','lightgrey']
+                                                'grey','darkgrey','lightgrey'] 
+                if plot_glaciers:
+                    flowmap_and_catchment_colors += ['white']
             else:
-                flowmap_and_catchment_colors = colors.flowmap_and_catchments_colors_single_color_flowmap
+                if plot_glaciers:
+                    flowmap_and_catchment_colors = colors.\
+                    flowmap_and_catchments_colors_single_color_flowmap_with_glac
+                else:
+                    flowmap_and_catchment_colors = colors.\
+                    flowmap_and_catchments_colors_single_color_flowmap
             cmap = mpl.colors.ListedColormap(flowmap_and_catchment_colors)
-            bounds = range(8)
+            bounds = range(8) if not plot_glaciers else range(9)
             image[image == 2] = 1
             image[(image == 3) | (image == 4)] = 2
             image[image > 4] = image[image > 4] - 2
@@ -119,40 +141,82 @@ def plot_composite_image(ax,image,minflowcutoff,first_datasource_name,second_dat
             if colors is None:
                 flowmap_and_catchment_colors = ['lightblue','peru','black','blue','purple','red',
                                                 'grey','darkgrey','lightgrey']
+                if plot_glaciers:
+                    flowmap_and_catchment_colors += ['white']
             else:
-                flowmap_and_catchment_colors = colors.flowmap_and_catchments_colors
+                if plot_glaciers:
+                    flowmap_and_catchment_colors = colors.flowmap_and_catchments_colors_with_glac
+                else:
+                    flowmap_and_catchment_colors = colors.flowmap_and_catchments_colors
             cmap = mpl.colors.ListedColormap(flowmap_and_catchment_colors)
-            bounds = range(10)
+            bounds = range(10) if not plot_glaciers else range(11)
     else:
-        cmap = mpl.colors.ListedColormap(['lightblue','peru','black','blue','purple','red',
-                                          'grey','green','darkgrey','lightgrey'])
-        bounds = range(11)
+        image[image == -1] = 10
+        color_list = ['lightblue','peru','black','blue','purple','red',
+                      'grey','green','darkgrey','lightgrey']
+        if plot_glaciers:
+            color_list += ['white']
+        cmap = mpl.colors.ListedColormap(color_list)
+        bounds = range(11) if not plot_glaciers else range(12)
     norm = mpl.colors.BoundaryNorm(bounds,cmap.N)
     ax.imshow(image,cmap=cmap,norm=norm,interpolation='none')
     if use_title:
         plt.title('Cells with cumulative flow greater than or equal to {0}'.format(minflowcutoff))
-    pts.remove_ticks(ax)
+    if remove_ticks:
+        pts.remove_ticks(ax)
+    else:
+            axis_tick_label_scale_factor=\
+            flowmap_grid.get_scale_factor_for_geographic_coords() if flowmap_grid is not None else 0.5 
+            ax.xaxis.set_major_locator(mpl.ticker.IndexLocator(30/axis_tick_label_scale_factor,0))
+            ax.yaxis.set_major_locator(mpl.ticker.IndexLocator(30/axis_tick_label_scale_factor,0))
+            #Scale factor is multiplied by two as formatter has a built in scale factor of a half
+            ax.xaxis.set_major_formatter(mpl.ticker.\
+                                               FuncFormatter(pts.LonAxisFormatter(0,
+                                                            axis_tick_label_scale_factor*2)))
+            ax.yaxis.set_major_formatter(mpl.ticker.\
+                                               FuncFormatter(pts.LatAxisFormatter(0,
+                                                            axis_tick_label_scale_factor*2)))
+    num_colors = 10 if use_single_color_for_discrepancies else 11
+    if plot_glaciers:
+        num_colors += 1
+    if use_only_one_color_for_flowmap:
+        num_colors -= 2 
     ax.format_coord = pts.OrogCoordFormatter(0,0)
     mappable = mpl.cm.ScalarMappable(norm=norm,cmap=cmap)
     mappable.set_array(image)
     dvdr = make_axes_locatable(ax)
     cax = dvdr.append_axes("right", size=0.2, pad=0.05)
-    cb = plt.colorbar(mappable,cax=cax)
+    if use_only_one_common_catchment_label:
+        if plot_glaciers:
+            adjusted_bounds = (range(num_colors)[:-4] 
+                               + [num_colors-4-2.0/3,num_colors-4-1.0/3,
+                                  num_colors-4,num_colors-3])
+        else:
+            adjusted_bounds = (range(num_colors)[:-3] 
+                               + [num_colors-3-2.0/3,num_colors-3-1.0/3,num_colors-3])
+        norm = mpl.colors.BoundaryNorm(adjusted_bounds,cmap.N)
+        cb = mpl.colorbar.ColorbarBase(cax,cmap=cmap,norm=norm,boundaries=adjusted_bounds,
+                                       spacing='proportional')
+    else:
+        cb = plt.colorbar(mappable,cax=cax)
     plt.tight_layout()
     plt.subplots_adjust(right=0.85)
-    num_colors = 10 if use_single_color_for_discrepancies else 11
-    if use_only_one_color_for_flowmap:
-        num_colors -= 2 
     tic_loc = (np.arange(num_colors) + 0.5)
     if use_only_one_color_for_flowmap:
-        tic_labels = ['Sea', 'Land','{} River Path'.format(second_datasource_name)]
+        tic_labels = ['Sea', 'Minor Catchments','{} River Path'.format(second_datasource_name)]
     else:
-        tic_labels = ['Sea', 'Land','{} River Path'.format(first_datasource_name),
+        tic_labels = ['Sea', 'Minor Catchments','{} River Path'.format(first_datasource_name),
                       'Common River Path','{} River Path'.format(second_datasource_name)]
     if use_single_color_for_discrepancies:
-        tic_labels.extend(["Discrepancy in Catchments","Common Catchment","Common Catchment","Common Catchment"])
+        tic_labels.extend(["{} in Catchments".format(difference_in_catchment_label),
+                           "Common Catchment"])
+        if not use_only_one_common_catchment_label:
+            tic_labels.extend(["Common Catchment","Common Catchment"])
     else:
-        tic_labels.extend(["Reference Catchment","Common Catchment","Data Catchment","Common Catchment","Common Catchment"])
+        tic_labels.extend(["Model 1 Catchment","Common Catchment","Model 2 Catchment",
+                           "Common Catchment","Common Catchment"])
+    if plot_glaciers:
+        tic_labels.extend(["Glacier"])
     cb.set_ticks(tic_loc) 
     cb.set_ticklabels(tic_labels)
     

@@ -21,6 +21,28 @@ class OrogCoordFormatter(object):
         return "Array Indices: x= {0} y= {1}".format(int(round(xpos+self.xoffset)),
                                                      int(round(ypos+self.yoffset)))
 
+class LonAxisFormatter(object):
+    """Class that creates an object to call to give longitude axis tick labels"""
+    def __init__(self,xoffset,scale_factor=1,precision=0):
+        self.xoffset = xoffset
+        self.scale_factor = scale_factor
+        self.precision = precision
+        
+    def __call__(self,x,pos):
+        return calculate_lon_label(x,self.xoffset,self.scale_factor,
+                                   precision=self.precision)
+    
+class LatAxisFormatter(object):
+    """Class that creates an object to call to give latitude axis tick labels"""
+    def __init__(self,yoffset,scale_factor=1,precision=0):
+        self.yoffset = yoffset
+        self.scale_factor = scale_factor
+        self.precision = precision
+        
+    def __call__(self,y,pos):
+        return calculate_lat_label(y,self.yoffset,self.scale_factor,
+                                   precision=self.precision)
+
 def remove_ticks(ax=None):
     """Remove all the ticks a set of axes
        
@@ -181,13 +203,33 @@ def move_outflow(outflows,original_outflow_coords,new_outflow_coords,
         print 'New outflow at second point {0}'.format(outflows[new_outflow_coords])
     return outflows
         
-def calculate_lat_label(y_index,offset,scale_factor=1):
-    return (lambda y: "{:.1f}".format((0.5*y - 90)*(-1 if y<=180 else 1))
-                            + r'$^{\circ}$' + ('N' if y <=180 else 'S'))((y_index/scale_factor)+offset)
+def calculate_lat_label(y_index,offset,scale_factor=1,precision=1):
+    """ 
+    
+    A scale factor of 1 is for the half degree grid. The offset due to the center of the first 
+    cell being at 0 on the plot and 1/2 cell width down from the pole in reality is accounted
+    for in this function and doesn't need to be included in the offset. Notice offsets are 
+    assumed to be prescaled to the 1/2 degree scale - be careful this may be unexpected behaviour. 
+    This is a historical artifact. 
+    """
+
+    return (lambda y: "{:.{prec}f}".format((0.5*y - 90)*(-1 if y < 180 else 1),prec=precision)
+                            + r'$^{\circ}$' + ('N' if y <=180 else 'S'))(((y_index+0.5)/scale_factor)+offset)
                             
-def calculate_lon_label(x_index,offset,scale_factor=1):
-    return (lambda x: "{:.1f}".format((0.5*x-180)*(-1 if x<= 360 else 1)) 
-                            + r'$^{\circ}$' + ('W' if x <= 360 else 'E'))((x_index/scale_factor)+offset)
+def calculate_lon_label(x_index,offset,scale_factor=1,precision=1):
+    """ 
+    
+    A scale factor of 1 is for the half degree grid. The offset due to the center of the first 
+    cell being at 0 on the plot and 1/2 cell width long from true date line (exact opposite of
+    greenwich meridian) in reality is accounted for in this function and doesn't need to be 
+    included in the offset. Note however some other grid (10minute) don't include such an offset 
+    and therefore in these cases a compensating offset needs to be added to remove this. Notice 
+    offsets are assumed to be prescaled to the 1/2 degree scale - be careful this may be unexpected 
+    behaviour. This is a historical artifact. 
+    """
+
+    return (lambda x: "{:.{prec}f}".format((0.5*x-180)*(-1 if x < 360 else 1),prec=precision) 
+                            + r'$^{\circ}$' + ('W' if x <= 360 else 'E'))(((x_index+0.5)/scale_factor)+offset)
                             
 def calc_displayed_plot_size(xlim,ylim):
     return (xlim[1] - xlim[0])*(ylim[0]-ylim[1])

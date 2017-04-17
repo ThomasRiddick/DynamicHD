@@ -148,7 +148,7 @@ class NetCDF4FileIOHelper(IOHelper):
             fields = None
             if fieldname is None:
                 potential_field_names = ['Topo','topo','field_value','orog','z','ICEM',
-                                         'DEPTO','usurf']
+                                         'DEPTO','usurf','bats']
             else:
                 potential_field_names = [fieldname]
             for potential_field_name in potential_field_names:

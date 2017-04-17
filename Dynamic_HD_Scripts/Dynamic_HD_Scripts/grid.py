@@ -30,6 +30,7 @@ class Grid(object):
     create_empty_field
     mask_outside_region
     replace_zeros_with_highest_valued_neighbor
+    get_scale_factor_for_geographic_coords
     """
     
     __metaclass__ = ABCMeta
@@ -206,7 +207,7 @@ class Grid(object):
     
     @abstractmethod
     def replace_zeros_with_highest_valued_neighbor(self,data):
-        """"Replace any zeros with the value of the highest value out of any (non negative) neighboring cell
+        """Replace any zeros with the value of the highest value out of any (non negative) neighboring cell
         
         Arguments: 
         data: the data object to replace the zeros in
@@ -217,6 +218,18 @@ class Grid(object):
         """ 
 
         pass
+    
+    @abstractmethod
+    def get_scale_factor_for_geographic_coords(self): 
+        """Get the scale factor for this size of grid used to convert to geographical coordinates
+        
+        Arguments: none
+        Returns:
+        The scale factor used to convert coordinates values for this grid to geographical coordinates
+        (actual latitude and longitude)
+        """
+        
+        pass
         
 class LatLongGrid(Grid):
     """Class that stores information on and functions to work with a Latitude-Longitude grid.
@@ -224,6 +237,7 @@ class LatLongGrid(Grid):
     Public methods:
     As for parent class and in addition
     get_sea_point_flow_direction_value
+    get_longitude_offset_adjustment
     
     This class should work on any latitude-longitude grid that stores data in 2D array-like objects. Note
     iternally all the functions within this class will work even if the size of the array(s) given is not
@@ -235,7 +249,7 @@ class LatLongGrid(Grid):
     sea_point_flow_direction_value = -1
     default_gc_method = 'all_neighbours'
     
-    def __init__(self,nlat=360,nlong=720):
+    def __init__(self,nlat=360,nlong=720,longitude_offset_adjustment=0):
         """Class constructor. Set the grid size.
         
         Arguments:
@@ -247,6 +261,18 @@ class LatLongGrid(Grid):
                            LatLongGridGradientChangeMaskingHelper.all_neighbours_method}
         self.nlat = nlat
         self.nlong = nlong 
+        self.longitude_offset_adjustment = longitude_offset_adjustment
+        
+    def get_longitude_offset_adjustment(self):
+        """Return the factor need to adjust the longitude offset compared to that of 1/2 degree grid
+        
+        Arguments: None
+        Returns: the required longitude offset adjustment compared to that of the half degree grid 
+        required to give the correct longitude labels. This adjustment itself should of been set when
+        the class was initialized pre-scaled such that it an offset on a 1/2 degree grid scale.
+        """
+
+        return self.longitude_offset_adjustment
     
     def extend_mask_to_neighbours(self,changes_mask):
         """Extend a mask on this grid to include neighbouring points
@@ -621,6 +647,16 @@ class LatLongGrid(Grid):
         data = ndi.generic_filter(data,f2py_mngr.run_current_function_or_subroutine,size=(3,3),
                                   mode = 'wrap')
         return data[1:-1,:]
+    
+    def get_scale_factor_for_geographic_coords(self): 
+        """Get the scale factor for this size of grid used to convert to geographical coordinates
+        
+        Arguments: none
+        Returns:
+        The scale factor used to convert coordinates values for this grid to geographical coordinates
+        (actual latitude and longitude)
+        """
+        return 360.0/self.nlong
         
         
 def makeGrid(grid_type,**kwargs):
@@ -641,8 +677,10 @@ def makeGrid(grid_type,**kwargs):
     
     shortcuts = {'HD':{'type':LatLongGrid,'params':{'nlat':360,'nlong':720}},
                  'LatLong5min':{'type':LatLongGrid,'params':{'nlat':2160,'nlong':4320}},
-                 'LatLong10min':{'type':LatLongGrid,'params':{'nlat':1080,'nlong':2160}},
+                 'LatLong10min':{'type':LatLongGrid,'params':{'nlat':1080,'nlong':2160,
+                                                              'longitude_offset_adjustment':-0.5/3.0}},
                  'LatLong1min':{'type':LatLongGrid,'params':{'nlat':10800,'nlong':21600}},
+                 'LatLong30sec':{'type':LatLongGrid,'params':{'nlat':21600,'nlong':43200}},
                  'T63':{'type':LatLongGrid,'params':{'nlat':96,'nlong':192}},
                  'T106':{'type':LatLongGrid,'params':{'nlat':160,'nlong':320}}}
     grid_types = {'LatLong':LatLongGrid}

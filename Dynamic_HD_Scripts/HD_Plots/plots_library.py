@@ -7,7 +7,7 @@ Created on Jan 29, 2016
 
 @author: thomasriddick
 '''
-from color_palette import ColorPalette 
+from color_palette import ColorPalette #@UnresolvedImport 
 import datetime
 import numpy as np
 import matplotlib.pyplot as plt
@@ -21,8 +21,9 @@ import match_river_mouths as mtch_rm
 from Dynamic_HD_Scripts import dynamic_hd
 from Dynamic_HD_Scripts import utilities
 from Dynamic_HD_Scripts import field
+from Dynamic_HD_Scripts import grid
 import river_comparison_plotting_routines as rc_pts
-import flowmap_plotting_routines as fmp_pts
+import flowmap_plotting_routines as fmp_pts #@UnresolvedImport
 from interactive_plotting_routines import Interactive_Plots
 
 global interactive_plots
@@ -415,6 +416,7 @@ class OutflowPlots(Plots):
                                      split_comparison_plots_across_multiple_canvases=False,
                                      use_simplified_catchment_colorscheme=False,
                                      use_simplified_flowmap_colorscheme=False,
+                                     use_upscaling_labels=False,
                                      grid_type='HD',data_original_scale_grid_type='HD',
                                      super_fine_orog_grid_type='HD',
                                      data_original_scale_grid_kwargs={},
@@ -483,6 +485,7 @@ class OutflowPlots(Plots):
         ref_flowtocellfield = iohlpr.NetCDF4FileIOHelper.load_field(ref_flowmaps_filepath,grid_type,**grid_kwargs)
         data_flowtocellfield = iohlpr.NetCDF4FileIOHelper.load_field(data_flowmaps_filepath,grid_type,**grid_kwargs)
         rdirs_field = iohlpr.NetCDF4FileIOHelper.load_field(rdirs_filepath,grid_type,**grid_kwargs)
+        ref_grid = grid.makeGrid(grid_type,**grid_kwargs)
         if data_rdirs_filename:
             if catchment_grid_changed:
                 data_rdirs_field = iohlpr.NetCDF4FileIOHelper.load_field(data_rdirs_filepath,
@@ -511,11 +514,17 @@ class OutflowPlots(Plots):
                 load_field(data_orog_original_scale_filepath,
                            grid_type=data_original_scale_grid_type,
                            **data_original_scale_grid_kwargs)
+            fine_grid = grid.makeGrid(data_original_scale_grid_type,
+                                      **data_original_scale_grid_kwargs)
+        else:
+            fine_grid = ref_grid
         if super_fine_orog_filename:
             super_fine_orog_field = iohlpr.NetCDF4FileIOHelper.\
                 load_field(super_fine_orog_filepath,
                            grid_type=super_fine_orog_grid_type,
                            **super_fine_orog_grid_kwargs)
+            super_fine_grid = grid.makeGrid(super_fine_orog_grid_type,
+                                            **super_fine_orog_grid_kwargs)
             if super_fine_data_flowmap_filename:
                 super_fine_data_flowmap = iohlpr.NetCDF4FileIOHelper.\
                     load_field(super_fine_data_flowmap_filepath,
@@ -540,6 +549,7 @@ class OutflowPlots(Plots):
         else:  
             super_fine_orog_field = None
             super_fine_data_flowmap = None
+            super_fine_grid = ref_grid
         if flip_ref_field:
             ref_flowtocellfield = np.flipud(ref_flowtocellfield)
             rdirs_field = np.flipud(rdirs_field)
@@ -715,11 +725,14 @@ class OutflowPlots(Plots):
                                                               swap_ref_and_data_when_finding_labels=\
                                                               swap_ref_and_data_when_finding_labels,
                                                               colors=self.colors,
+                                                              ref_grid=ref_grid,
                                                               grid_type=grid_type,
                                                               alternative_catchment_bounds=\
                                                               alternative_catchment_bounds,
                                                               use_simplified_catchment_colorscheme=\
                                                               use_simplified_catchment_colorscheme,
+                                                              use_upscaling_labels=\
+                                                              use_upscaling_labels,
                                                               data_original_scale_grid_type=\
                                                               data_original_scale_grid_type,
                                                               data_original_scale_grid_kwargs=\
@@ -782,7 +795,13 @@ class OutflowPlots(Plots):
                                               super_fine_data_flowmap,
                                               pair, catchment_bounds, 
                                               scale_factor,
-                                              ref_to_super_fine_scale_factor) 
+                                              ref_to_super_fine_scale_factor,
+                                              ref_grid_offset_adjustment=ref_grid.\
+                                              get_longitude_offset_adjustment(),
+                                              fine_grid_offset_adjustment=fine_grid.\
+                                              get_longitude_offset_adjustment(),
+                                              super_fine_grid_offset_adjustment=super_fine_grid.\
+                                              get_longitude_offset_adjustment()) 
             elif ref_orog_filename or data_orog_original_scale_filename:
                 raise UserWarning("No orography plot generated, require both a reference orography"
                                   " and a data orography to generate an orography plot")
@@ -1472,7 +1491,15 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                                        catchment_and_outflows_mods_list_filename=None,
                                                        first_datasource_name="Reference",
                                                        second_datasource_name="Data",use_title=True,
-                                                       grid_type='HD',**grid_kwargs):
+                                                       remove_antartica=False,
+                                                       difference_in_catchment_label="Discrepancy",
+                                                       glacier_mask_filename=None,
+                                                       grid_type='HD',
+                                                       glacier_mask_grid_type='LatLong10min',
+                                                       glacier_mask_grid_kwargs={},
+                                                       flip_glacier_mask=False,
+                                                       rotate_glacier_mask=False,
+                                                       **grid_kwargs):
         """Help compare two two-colour flow maps"""
         if (rivers_to_plot_secondary_alt_color is not None):
             if (rivers_to_plot is None) or (rivers_to_plot_alt_color is None): 
@@ -1482,6 +1509,7 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                 rivers_to_plot_alt_color.extend(rivers_to_plot_secondary_alt_color)
         else:
             rivers_to_plot_secondary_alt_color = []
+        flowmap_grid=grid.makeGrid(grid_type)
         ref_flowmaps_filepath = os.path.join(self.flow_maps_data_directory,ref_flowmap_filename)
         data_flowmaps_filepath = os.path.join(self.flow_maps_data_directory,data_flowmap_filename)
         ref_catchment_filepath = os.path.join(self.catchments_data_directory,
@@ -1529,6 +1557,22 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
         if additional_matches_list_filename:
             additional_matches_list_filepath = os.path.join(self.additional_matches_list_directory,
                                                             additional_matches_list_filename)
+        if glacier_mask_filename:
+            glacier_mask_field = dynamic_hd.load_field(glacier_mask_filename,
+                                                       file_type=dynamic_hd.\
+                                                       get_file_extension(glacier_mask_filename),
+                                                       fieldname='sftgif',
+                                                       field_type='Generic',
+                                                       grid_type=glacier_mask_grid_type,
+                                                       **glacier_mask_grid_kwargs)
+            if glacier_mask_grid_type != grid_type:
+                glacier_mask_field = utilities.upscale_field(glacier_mask_field,
+                                                             output_grid_type=grid_type,
+                                                             method="Mode",
+                                                             output_grid_kwargs=grid_kwargs,
+                                                             scalenumbers=False)
+        else:
+            glacier_mask_field=None
         if flip_data:
             flowmap_data_field.flip_data_ud()
             data_catchment_field.flip_data_ud()
@@ -1553,6 +1597,11 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                 lsmask_field.rotate_field_by_a_hundred_and_eighty_degrees()
         if invert_ls_mask:
             lsmask_field.invert_data()
+        if glacier_mask_filename:
+            if flip_glacier_mask:
+                glacier_mask_field.flip_data_ud()
+            if rotate_glacier_mask:
+                glacier_mask_field.rotate_field_by_a_hundred_and_eighty_degrees()
         if lsmask_filename:
             lsmask = lsmask_field.get_data() 
         flowmap_ref_field = flowmap_ref_field.get_data()
@@ -1562,6 +1611,8 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
         if data_rdirs_filename:
             data_rdirs_field = data_rdirs_field.get_data()
         ref_rdirs_field = ref_rdirs_field.get_data()
+        if glacier_mask_filename:
+            glacier_mask_field = glacier_mask_field.get_data()
         plt.figure(figsize=(20,8))
         ax = plt.subplot(111)
         image_array =fmp_pts.\
@@ -1571,7 +1622,8 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                                first_datasource_name,
                                                second_datasource_name,
                                                lsmask,
-                                               return_image_array_instead_of_plotting=True)
+                                               return_image_array_instead_of_plotting=True,
+                                               glacier_mask=glacier_mask_field)
         temp_file_list = []
         if catchment_and_outflows_mods_list_filename:
             ref_outflow_field = dynamic_hd.load_field(reference_rmouth_outflows_filename,
@@ -1673,9 +1725,12 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                                                           use_only_one_color_for_flowmap,
                                                                           grid_type=grid_type, 
                                                                           data_original_scale_grid_type=grid_type)
+        if remove_antartica:
+            image_array = image_array[:320] 
         fmp_pts.plot_composite_image(ax,image_array,minflowcutoff,first_datasource_name,second_datasource_name,
                                      use_single_color_for_discrepancies,use_only_one_color_for_flowmap,use_title,
-                                     colors=self.colors)
+                                     colors=self.colors,difference_in_catchment_label=difference_in_catchment_label,
+                                     flowmap_grid=flowmap_grid,plot_glaciers=True if glacier_mask_filename else False)
         for temp_file in temp_file_list:
             if os.path.basename(temp_file).startswith("temp_"):
                 print "Deleting File: {0}".format(temp_file)
@@ -1922,16 +1977,16 @@ def main():
     #flowmapplot.Upscaled_Rdirs_vs_Directly_Upscaled_fields_ICE5G_data_ALG4_corr_orog_downscaled_ls_mask_0k_FlowMap_comparison()
     #flowmapplot.Ten_Minute_Data_from_Virna_data_ALG4_corr_orog_downscaled_lsmask_no_sinks_21k_vs_0k_FlowMap_comparison()
     #flowmapplot.Upscaled_Rdirs_vs_Corrected_HD_Rdirs_ICE5G_data_ALG4_corr_orog_downscaled_ls_mask_0k_FlowMap_comparison()
-    flowmapplotwithcatchment = FlowMapPlotsWithCatchments(save)
-    flowmapplotwithcatchment.Upscaled_Rdirs_vs_Corrected_HD_Rdirs_ICE5G_data_ALG4_corr_orog_downscaled_ls_mask_0k_FlowMap_comparison()
-    #outflowplots = OutflowPlots(save)
+    #flowmapplotwithcatchment = FlowMapPlotsWithCatchments(save)
+    #flowmapplotwithcatchment.Upscaled_Rdirs_vs_Corrected_HD_Rdirs_ICE5G_data_ALG4_corr_orog_downscaled_ls_mask_0k_FlowMap_comparison()
+    outflowplots = OutflowPlots(save)
     #outflowplots.Compare_Upscaled_Rdirs_vs_Directly_Upscaled_fields_ICE5G_data_ALG4_corr_orog_downscaled_ls_mask_0k()
     #outflowplots.Compare_Corrected_HD_Rdirs_And_ICE5G_as_HD_data_ALG4_sinkless_all_points_0k()
     #outflowplots.Compare_Corrected_HD_Rdirs_And_ICE5G_as_HD_data_ALG4_true_sinks_all_points_0k()
     #outflowplots.Compare_Corrected_HD_Rdirs_And_ICE5G_ALG4_sinkless_all_points_0k_directly_upscaled_fields()
     #outflowplots.Compare_Corrected_HD_Rdirs_And_ICE5G_ALG4_true_sinks_all_points_0k_directly_upscaled_fields()
     #outflowplots.Compare_Corrected_HD_Rdirs_And_ICE5G_ALG4_corr_orog_all_points_0k_directly_upscaled_fields()
-    #outflowplots.Compare_Corrected_HD_Rdirs_And_ICE5G_ALG4_corr_orog_downscaled_ls_mask_all_points_0k_directly_upscaled_fields()
+    outflowplots.Compare_Corrected_HD_Rdirs_And_ICE5G_ALG4_corr_orog_downscaled_ls_mask_all_points_0k_directly_upscaled_fields()
     #outflowplots.Compare_Corrected_HD_Rdirs_And_Etopo1_ALG4_sinkless_directly_upscaled_fields()
     #outflowplots.Compare_Corrected_HD_Rdirs_And_Etopo1_ALG4_true_sinks_directly_upscaled_fields()
     #hd_output_plots = HDOutputPlots()

@@ -79,7 +79,8 @@ class Interactive_Plots(object):
     def setup_plots(self,catchment_section,ref_orog_field,data_orog_original_scale_field,
                     ref_flowtocellfield,data_flowtocellfield,rdirs_field,super_fine_orog_field,
                     super_fine_data_flowtocellfield,pair,catchment_bounds,scale_factor,
-                    ref_to_super_fine_scale_factor):
+                    ref_to_super_fine_scale_factor,ref_grid_offset_adjustment=0,
+                    fine_grid_offset_adjustment=0,super_fine_grid_offset_adjustment=0):
         """Setup the set of interactive plots and bind on events to callbacks
         
         Arguments:
@@ -126,7 +127,8 @@ class Interactive_Plots(object):
         def format_fn_y(tick_val,tick_pos,offset=self.catchment_bounds[0]):
             return pts.calculate_lat_label(tick_val,offset)
         self.y_formatter_funcs.append(format_fn_y)
-        def format_fn_x(tick_val,tick_pos,offset=self.catchment_bounds[2]):
+        def format_fn_x(tick_val,tick_pos,offset=self.catchment_bounds[2] +
+                        ref_grid_offset_adjustment):
             return pts.calculate_lon_label(tick_val,offset)
         self.x_formatter_funcs.append(format_fn_x)
         ax_catch.yaxis.set_major_formatter(FuncFormatter(format_fn_y))
@@ -196,7 +198,8 @@ class Interactive_Plots(object):
             return pts.calculate_lat_label(tick_val,offset,scale_factor=self.scale_factor)
         self.y_scaled_formatter_funcs.append(format_fn_y_scaled)
         ax2.yaxis.set_major_formatter(FuncFormatter(format_fn_y_scaled))
-        def format_fn_x_scaled(tick_val,tick_pos,offset=self.catchment_bounds[2]):
+        def format_fn_x_scaled(tick_val,tick_pos,offset=self.catchment_bounds[2] + 
+                               fine_grid_offset_adjustment):
             return pts.calculate_lon_label(tick_val,offset,scale_factor=self.scale_factor)
         self.x_scaled_formatter_funcs.append(format_fn_x_scaled)
         ax2.xaxis.set_major_formatter(FuncFormatter(format_fn_x_scaled))
@@ -204,7 +207,8 @@ class Interactive_Plots(object):
             return pts.calculate_lat_label(tick_val,offset,
                                            scale_factor=self.ref_to_super_fine_scale_factor)
         self.y_super_fine_scaled_formatter_funcs.append(format_fn_y_super_fine_scaled)
-        def format_fn_x_super_fine_scaled(tick_val,tick_pos,offset=self.catchment_bounds[2]):
+        def format_fn_x_super_fine_scaled(tick_val,tick_pos,offset=self.catchment_bounds[2] +
+                                          super_fine_grid_offset_adjustment):
             return pts.calculate_lon_label(tick_val,offset,
                                            scale_factor=self.ref_to_super_fine_scale_factor) 
         self.x_super_fine_scaled_formatter_funcs.append(format_fn_x_super_fine_scaled)
@@ -316,7 +320,8 @@ class Update(object):
                               cax=None,legend=False,remove_ticks_flag=False,
                               format_coords=True,
                               lat_offset=self.lat_offset,
-                              lon_offset=self.lon_offset)
+                              lon_offset=self.lon_offset,
+                              colors=None)
         ax_catch.yaxis.set_major_formatter(FuncFormatter(self.po.y_formatter_funcs[self.orog_plot_num]))
         ax_catch.xaxis.set_major_formatter(FuncFormatter(self.po.x_formatter_funcs[self.orog_plot_num]))
         plt.setp(ax_catch.xaxis.get_ticklabels(),rotation='vertical')

@@ -182,6 +182,7 @@ class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
                                           grid_type='HD',data_original_scale_grid_type='LatLong10min')
         highest_fig_num = plt.get_fignums()[-1]
         plt.close(highest_fig_num)
+        plt.close(highest_fig_num-1)
         plt.close(highest_fig_num - 3)
         plt.close(highest_fig_num - 4)
         plt.close(highest_fig_num - 5)
@@ -190,9 +191,9 @@ class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
         plt.close(highest_fig_num - 9)
         plt.close(highest_fig_num - 11)
         if self.save:
-            for fig_num,fname in zip([highest_fig_num-1,highest_fig_num-2,highest_fig_num-6,highest_fig_num-10],
-                                     ["mekong_10min_vs_man_corr_flowmap","mekong_10min_vs_man_corr",
-                                      "mississipi_10min_vs_man_corr","nile_10min_vs_man_corr"]):
+            for fig_num,fname in zip([highest_fig_num-2,highest_fig_num-6,highest_fig_num-10],
+                                     ["mekong_10min_vs_man_corr","mississipi_10min_vs_man_corr",
+                                      "nile_10min_vs_man_corr"]):
                 plt.figure(fig_num)
                 plt.savefig(path.join(self.save_path,fname+".png"))
         
@@ -243,6 +244,7 @@ class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
                                           split_comparison_plots_across_multiple_canvases=True,
                                           use_simplified_catchment_colorscheme=True,
                                           use_simplified_flowmap_colorscheme=True,
+                                          use_upscaling_labels=True,
                                           grid_type='HD',data_original_scale_grid_type='LatLong10min')
         highest_fig_num = plt.get_fignums()[-1]
         plt.close(highest_fig_num)
@@ -291,6 +293,7 @@ class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
         upscaled_rdirs_rmouthoutflow_file = os.path.join(self.rmouth_outflow_data_directory, 
                                                          "rmouthflows_ICE5G_data_ALG4_sinkless_downscaled_ls_mask_0k_upscale_rdirs"
                                                          "_20161031_113238_updated.nc")
+        glacier_mask_filename=os.path.join(self.orog_data_directory,"ice5g_v1_2_00_0k_10min.nc")
         self.FlowMapTwoColourComparisonWithCatchmentsHelper(ref_flowmap_filename=ref_filename,
                                                             data_flowmap_filename=data_filename,
                                                             ref_catchment_filename=\
@@ -309,7 +312,7 @@ class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
                                                             rotate_data=True,flip_ref=False,rotate_ref=False,
                                                             lsmask_has_same_orientation_as_ref=False,
                                                             invert_ls_mask=False,
-                                                            first_datasource_name="Reference",
+                                                            first_datasource_name="Model 1",
                                                             matching_parameter_set='extensive',
                                                             rivers_to_plot=[(117,424),(121,176),(179,260),
                                                                             (160,573),(40,90),(217,432),
@@ -346,7 +349,12 @@ class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
                                                             catchment_and_outflows_mods_list_filename=\
                                                             "catch_and_outflow_mods_ice5g_10min_upscaled_"
                                                             "rdirs_vs_modern_day.txt",
-                                                            second_datasource_name="Data",use_title=False,
+                                                            second_datasource_name="Model 2",use_title=False,
+                                                            remove_antartica=True,
+                                                            glacier_mask_filename=glacier_mask_filename,
+                                                            glacier_mask_grid_type='LatLong10min',
+                                                            flip_glacier_mask=True,
+                                                            rotate_glacier_mask=True,
                                                             grid_type='HD')
         plt.tight_layout()
         if self.save:
@@ -408,6 +416,7 @@ class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
         data_rmouth_outflows_filename=("/Users/thomasriddick/Documents/data/HDdata/rmouths/rmouthmap_ten_"
                                        "minute_data_from_virna_lgm_ALG4_sinkless_no_true_sinks_oceans_"
                                        "lsmask_plus_upscale_rdirs_20170127_163957_upscaled_updated.nc")
+        glacier_mask_filename=os.path.join(self.orog_data_directory,"ice5g_v1_2_21_0k_10min.nc")
         self.FlowMapTwoColourComparisonWithCatchmentsHelper(ref_flowmap_filename=ref_filename,
                                                             data_flowmap_filename=data_filename, 
                                                             ref_catchment_filename=\
@@ -470,7 +479,13 @@ class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
                                                             "additional_matches_10min_upscaled_lgm_vs_present.txt",
                                                             use_single_color_for_discrepancies=True,
                                                             use_only_one_color_for_flowmap=False,
-                                                            use_title=False,grid_type='HD') 
+                                                            use_title=False,remove_antartica=True,
+                                                            difference_in_catchment_label="Difference",
+                                                            glacier_mask_filename=glacier_mask_filename,
+                                                            glacier_mask_grid_type='LatLong10min',
+                                                            flip_glacier_mask=True,
+                                                            rotate_glacier_mask=True,
+                                                            grid_type='HD') 
         plt.tight_layout()
         if self.save:
             plt.savefig(path.join(self.save_path,"lgm_vs_present_global_comp.png"))
