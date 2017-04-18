@@ -10,7 +10,8 @@ CPP_SRCS += \
 ../src/fill_sinks.cpp \
 ../src/grid.cpp \
 ../src/sink_filling_algorithm.cpp \
-../src/test_fill_sinks.cpp 
+../src/test_fill_sinks.cpp  \
+../src/upscale_orography.cpp
 
 OBJS += \
 ./src/cell.o \
@@ -19,7 +20,8 @@ OBJS += \
 ./src/fill_sinks.o \
 ./src/grid.o \
 ./src/sink_filling_algorithm.o \
-./src/test_fill_sinks.o 
+./src/test_fill_sinks.o \
+./src/upscale_orography.o
 
 CPP_DEPS += \
 ./src/cell.d \
@@ -28,8 +30,8 @@ CPP_DEPS += \
 ./src/fill_sinks.d \
 ./src/grid.d \
 ./src/sink_filling_algorithm.d \
-./src/test_fill_sinks.d 
-
+./src/test_fill_sinks.d \
+./src/upscale_orography.d
 
 # Each subdirectory must supply rules for building sources it contributes
 src/%.o: ../src/%.cpp
