@@ -19,6 +19,9 @@ using namespace std;
 
 const double SQRT_TWO = sqrt(2);
 
+//A variable equal to the smallest possible double used as a non data value
+double sink_filling_algorithm::no_data_value = numeric_limits<double>::lowest();
+
 sink_filling_algorithm::sink_filling_algorithm(field<double>* orography,grid_params* grid_params_in,
 											   field<bool>* completed_cells,bool* landsea_in,
 											   bool set_ls_as_no_data_flag,bool* true_sinks_in,
@@ -41,6 +44,7 @@ sink_filling_algorithm::~sink_filling_algorithm() {
 		delete tarasov_active_true_sink; delete tarasov_path_lengths;
 		delete tarasov_maximum_separations_from_initial_edge;
 		delete tarasov_initial_edge_nums;
+		delete catchment_nums;
 	}
 }
 
@@ -415,7 +419,12 @@ void sink_filling_algorithm::add_true_sinks_to_q()
 				//ignore sinks next to landsea points... how such a situation could possible occur
 				//and therefore the correct hydrology for it is not clear
 				if(!(*completed_cells)(coords_in)) push_true_sink(coords_in);
-				else delete coords_in;
+				else {
+					//if using tarasov style orography upscaling then delete true
+					//sink as the field is used later and needs to be up-to-date
+					if(tarasov_mod) (*true_sinks)(coords_in) = false;
+					delete coords_in;
+				}
 			}
 	});
 }
@@ -765,7 +774,6 @@ inline void sink_filling_algorithm::tarasov_set_field_values(coords* coords_in){
 			tarasov_center_cell_maximum_separations_from_initial_edge;
 	(*tarasov_initial_edge_nums)(coords_in) =
 			tarasov_center_cell_initial_edge_num;
-
 }
 
 inline void sink_filling_algorithm::tarasov_get_center_cell_values_from_field(){

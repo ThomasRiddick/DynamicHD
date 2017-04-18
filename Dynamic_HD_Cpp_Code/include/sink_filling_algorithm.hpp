@@ -35,11 +35,11 @@ public:
 	priority_cell_queue get_q() {return q; }
 	virtual int get_method() = 0;
 	double tarasov_get_area_height() { return tarasov_area_height; }
+	static double get_no_data_value() { return no_data_value; }
 
 protected:
-	//A variable equal to the smallest possible double used as a non data value
-	const double no_data_value = numeric_limits<double>::lowest();
 
+	static double no_data_value;
 	//Process the neighbors of the current cell
 	void process_neighbors(vector<coords*>*);
 	//Handles the initial setup of the queue
@@ -105,6 +105,8 @@ protected:
 
 };
 
+
+
 class sink_filling_algorithm_latlon :  virtual public sink_filling_algorithm {
 public:
 	sink_filling_algorithm_latlon() {};
@@ -151,7 +153,7 @@ public:
 	sink_filling_algorithm_4(){}
 	sink_filling_algorithm_4(field<double>*, grid_params*, field<bool>*, bool*,
 							 bool, field<int>*, bool, bool* = nullptr);
-	virtual ~sink_filling_algorithm_4() { delete catchment_nums; }
+	virtual ~sink_filling_algorithm_4() { if (not tarasov_mod) delete catchment_nums; }
 	int get_method() {return method;}
 protected:
 	const int method = 4;
