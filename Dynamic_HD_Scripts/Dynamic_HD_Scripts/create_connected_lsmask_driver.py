@@ -10,7 +10,7 @@ Created on May 28, 2016
 import numpy as np
 import field
 import dynamic_hd
-import libs.create_connected_lsmask_wrapper as cc_lsmask_wrapper
+import libs.create_connected_lsmask_wrapper as cc_lsmask_wrapper #@UnresolvedImport
 import re
 
 def drive_connected_lsmask_creation(input_lsmask_filename,
@@ -19,6 +19,7 @@ def drive_connected_lsmask_creation(input_lsmask_filename,
                                     input_ls_seed_points_list_filename = None,
                                     use_diagonals_in=True,
                                     rotate_seeds_about_polar_axis=False,
+                                    flip_input_mask_ud=False,
                                     grid_type='HD',**grid_kwargs):
     """Drives the creation of a fully connected land-sea mask
    
@@ -34,6 +35,7 @@ def drive_connected_lsmask_creation(input_lsmask_filename,
         will be added to the contents of input_ls_seed_points_filename, normally only one of the 
         two arguments would be used to initialise the seed points
     use_diagonals_in: boolean; if true count a diagonal connection as being connected 
+    flip_input_mask_ud: boolean; if true flip the input mask up down before processing
     rotate_seeds_about_polar_axis:  if true then rotate the seeds about the polar axis by 180
         degrees, i.e. shift the position of the zero longitude by 180 degrees when reading the
         seed points
@@ -50,6 +52,8 @@ def drive_connected_lsmask_creation(input_lsmask_filename,
                                    get_file_extension(input_lsmask_filename), 
                                    field_type='Generic',
                                    grid_type=grid_type,**grid_kwargs)
+    if flip_input_mask_ud:
+        lsmask.flip_data_ud()
     if input_ls_seed_points_filename:
         input_ls_seedpts = dynamic_hd.load_field(input_ls_seed_points_filename,
                                                  file_type=dynamic_hd.\

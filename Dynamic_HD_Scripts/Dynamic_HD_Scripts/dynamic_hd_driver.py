@@ -648,6 +648,24 @@ class Utilities_Drivers(Dynamic_HD_Drivers):
                                                             hd_lsmask_seed_points, 
                                                          use_diagonals_in=True, grid_type='HD')
         
+    def recreate_connected_HD_lsmask_from_glcc_olson_data(self):
+        """Regenerate a connected version of the landsea mask extracted from upscaled glcc olson data"""
+        file_label = self._generate_file_label()
+        hd_lsmask_seed_points = path.join(self.ls_seed_points_path,'lsseedpoints_HD_160530_0001900.txt')
+        cc_lsmask_driver.drive_connected_lsmask_creation(input_lsmask_filename=\
+                                                         path.join(self.ls_masks_path,
+                                                         "glcc_olson_land_cover_data",
+                                                         "glcc_olson-2.0_lsmask_with_bacseas_upscaled_30min.nc"),
+                                                         output_lsmask_filename=\
+                                                            self.generated_ls_mask_filepath +
+                                                            file_label + '.nc',
+                                                         rotate_seeds_about_polar_axis=True,
+                                                         input_ls_seed_points_filename=None, 
+                                                         input_ls_seed_points_list_filename=\
+                                                            hd_lsmask_seed_points, 
+                                                         flip_input_mask_ud=True,
+                                                         use_diagonals_in=True, grid_type='HD')
+        
     def recreate_connected_HD_lsmask_true_seas_inc_casp_only(self):
         """Recreate a connected version of the landsea mask of the original river directions with only Caspian included
         
@@ -2176,6 +2194,13 @@ class Ten_Minute_Data_From_Virna_Driver(ICE5G_Data_Drivers):
         self._ten_minute_data_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_helper(file_label,
                                                                                                   original_orography_filename,
                                                                                                   original_ls_mask_filename)
+    
+    def ten_minute_data_remapped_from_srtm30plus_v6(self):
+        """Generate and upscale sinkless river direction from a orography upscaled from the pool copy of srtm30plus v6"""
+        file_label = self._generate_file_label()
+        original_orography_filename = path.join(self.orography_path,"")
+        original_ls_mask_filename = path.join(self.ls_masks_path,"")
+
         
 def main():
     """Select the revelant runs to make 
@@ -2206,7 +2231,8 @@ def main():
     #utilties_drivers.downscale_HD_ls_seed_points_to_1min_lat_lon()
     #utilties_drivers.downscale_HD_ls_seed_points_to_10min_lat_lon()
     #utilties_drivers.downscale_HD_ls_seed_points_to_10min_lat_lon_true_seas_inc_casp_only()
-    utilties_drivers.recreate_connected_lsmask_for_black_azov_and_caspian_seas_from_glcc_olson_data()
+    #utilties_drivers.recreate_connected_lsmask_for_black_azov_and_caspian_seas_from_glcc_olson_data()
+    utilties_drivers.recreate_connected_HD_lsmask_from_glcc_olson_data()
     #original_hd_model_rfd_drivers = Original_HD_Model_RFD_Drivers()
     #original_hd_model_rfd_drivers.corrected_HD_rdirs_post_processing()
     #original_hd_model_rfd_drivers.extract_ls_mask_from_corrected_HD_rdirs()

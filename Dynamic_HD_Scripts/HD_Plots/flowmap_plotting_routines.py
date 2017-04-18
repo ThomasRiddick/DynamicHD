@@ -36,7 +36,6 @@ def make_basic_flowmap_comparison_plot(ax,flowmap_ref_field,flowmap_data_field,m
             flowmap_ref_field[310:,:] = 1
     if lsmask is not None:
         flowmap_ref_field[lsmask == 1] = 0
-
     if return_image_array_instead_of_plotting:
         return flowmap_ref_field
     if colors is None:

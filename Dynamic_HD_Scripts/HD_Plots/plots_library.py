@@ -1481,6 +1481,7 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                                        lsmask_filename=None,minflowcutoff=100,flip_data=False,
                                                        rotate_data=False,flip_ref=False,rotate_ref=False,
                                                        lsmask_has_same_orientation_as_ref=True,
+                                                       flip_lsmask=False,rotate_lsmask=False,
                                                        invert_ls_mask=False,matching_parameter_set='default',
                                                        rivers_to_plot=None,
                                                        rivers_to_plot_alt_color=None,
@@ -1597,6 +1598,10 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                 lsmask_field.rotate_field_by_a_hundred_and_eighty_degrees()
         if invert_ls_mask:
             lsmask_field.invert_data()
+        if flip_lsmask and not lsmask_has_same_orientation_as_ref:
+            lsmask_field.flip_data_ud()
+        if rotate_lsmask and not lsmask_has_same_orientation_as_ref:
+            lsmask_field.rotate_field_by_a_hundred_and_eighty_degrees()
         if glacier_mask_filename:
             if flip_glacier_mask:
                 glacier_mask_field.flip_data_ud()
