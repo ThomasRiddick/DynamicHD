@@ -8,12 +8,22 @@
 
 #include "grid.hpp"
 
+bool grid::check_if_cell_connects_two_landsea_or_true_sink_points(int edge_number, bool is_landsea_nbr,
+																		 bool is_true_sink) {
+
+	if ((edge_number == get_landsea_edge_num() ||
+			edge_number == get_true_sink_edge_num()) &&
+			(is_true_sink || is_landsea_nbr)) return true;
+	else return false;
+}
+
 latlon_grid::latlon_grid(grid_params* params){
 	grid_type = grid_types::latlon;
 	if(latlon_grid_params* params_local = dynamic_cast<latlon_grid_params*>(params)){
 		nlat = params_local->get_nlat();
 		nlon = params_local->get_nlon();
 		total_size = nlat*nlon;
+		nowrap = params_local->get_nowrap();
 	} else {
 		throw runtime_error("latlon_grid constructor received wrong kind of grid parameters");
 	}
@@ -83,6 +93,57 @@ latlon_coords* latlon_grid::latlon_wrapped_coords(latlon_coords* coords_in){
 bool latlon_grid::latlon_non_diagonal(latlon_coords* start_coords,latlon_coords* dest_coords){
 	return (dest_coords->get_lat() == start_coords->get_lat() ||
 			dest_coords->get_lon() == start_coords->get_lon());
+}
+
+bool latlon_grid::is_corner_cell(coords* coords_in){
+	latlon_coords* latlon_coords_in = static_cast<latlon_coords*>(coords_in);
+	return ((latlon_coords_in->get_lat() == 0 && latlon_coords_in->get_lon() == 0) ||
+			(latlon_coords_in->get_lat() == 0 && latlon_coords_in->get_lon() == nlon-1) ||
+			(latlon_coords_in->get_lat() == nlat-1 && latlon_coords_in->get_lon() == 0) ||
+			(latlon_coords_in->get_lat() == nlat-1 && latlon_coords_in->get_lon() == nlon-1));
+}
+
+
+
+bool latlon_grid::check_if_cell_is_on_given_edge_number(coords* coords_in,int edge_number) {
+	latlon_coords* latlon_coords_in = static_cast<latlon_coords*>(coords_in);
+	if (get_edge_number(coords_in) == edge_number) return true;
+	//deal with corner cells that are assigned horizontal edge edge numbers but should
+	//also be considered to be a vertical edge
+	else if (edge_number == left_vertical_edge_num &&
+			 latlon_coords_in->get_lon() == 0) return true;
+	else if (edge_number == right_vertical_edge_num &&
+			 latlon_coords_in->get_lon() == 0 ) return true;
+	else return false;
+}
+
+bool latlon_grid::is_edge(coords* coords_in) {
+	latlon_coords* latlon_coords_in = static_cast<latlon_coords*>(coords_in);
+	if (latlon_coords_in->get_lat() == 0 ||
+		latlon_coords_in->get_lat() == nlat-1 ||
+		latlon_coords_in->get_lon() == 0 ||
+		latlon_coords_in->get_lon() == nlon-1) return true;
+	else return false;
+}
+
+int latlon_grid::get_edge_number(coords* coords_in) {
+	latlon_coords* latlon_coords_in = static_cast<latlon_coords*>(coords_in);
+	if (latlon_coords_in->get_lat() == 0)      		return top_horizontal_edge_num;
+	else if (latlon_coords_in->get_lat() == nlat-1) return bottom_horizontal_edge_num;
+	else if (latlon_coords_in->get_lon() == 0)      return left_vertical_edge_num;
+	else if (latlon_coords_in->get_lon() == nlon-1) return right_vertical_edge_num;
+	else throw runtime_error("Internal logic broken - trying to get edge number of non-edge cell");
+}
+
+int latlon_grid::get_separation_from_initial_edge(coords* coords_in,int edge_number) {
+	latlon_coords* latlon_coords_in = static_cast<latlon_coords*>(coords_in);
+	if 		(edge_number == top_horizontal_edge_num)  	return latlon_coords_in->get_lat();
+	else if (edge_number == bottom_horizontal_edge_num) return nlat - latlon_coords_in->get_lat() - 1;
+	else if (edge_number == left_vertical_edge_num) 	return latlon_coords_in->get_lon();
+	else if (edge_number == right_vertical_edge_num) 	return nlon - latlon_coords_in->get_lon() - 1;
+	else if (edge_number == landsea_edge_num || edge_number == true_sink_edge_num) return 0;
+	else throw runtime_error("Internal logic broken - invalid initial edge number used as input to "
+						     "get_separation_from_initial_edge");
 }
 
 double latlon_grid::latlon_calculate_dir_based_rdir(latlon_coords* start_coords,latlon_coords* dest_coords){

@@ -28,6 +28,7 @@ void latlon_create_connected_lsmask_cython_wrapper(int* landsea_in_int, int* ls_
 void latlon_create_connected_lsmask_main(bool* landsea_in, bool* ls_seed_points_in,
 		  	  	  	  	  	  	  int nlat_in, int nlon_in, bool use_diagonals_in)
 {
+	cout << "Entering Connected Landsea Mask Generation C++ Code" << endl;
 	auto alg = create_connected_landsea_mask();
 	alg.setup_flags(use_diagonals_in);
 	alg.setup_fields(landsea_in, ls_seed_points_in, new latlon_grid_params(nlat_in,nlon_in));
