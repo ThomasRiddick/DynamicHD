@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+echo "Running Version 1.0 of the Dynamic HD Parameters Generation Code"
+
 #Define module loading function
 function load_module
 {
