@@ -1957,6 +1957,24 @@ class Ten_Minute_Data_From_Virna_Driver(ICE5G_Data_Drivers):
         self._ten_minute_data_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_helper(file_label,
                                                                                                   original_orography_filename,
                                                                                                   original_ls_mask_filename)
+    
+    def ten_minute_data_from_virna_0k_2017v_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs(self):
+        """Generate and upscale sinkless river directions for the present day"""
+        file_label = self._generate_file_label()
+        original_orography_filename = path.join(self.orography_path,"OR-topography-present_data_from_virna_2017.nc")
+        original_ls_mask_filename = path.join(self.ls_masks_path,"OR-remapped-mask-present_data_from_virna_2017.nc")
+        self._ten_minute_data_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_helper(file_label,
+                                                                                                  original_orography_filename,
+                                                                                                  original_ls_mask_filename)
+        
+    def ten_minute_data_from_virna_0k_13_04_2017v_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs(self):
+        """Generate and upscale sinkless river directions for the present day"""
+        file_label = self._generate_file_label()
+        original_orography_filename = path.join(self.orography_path,"OR-topography-present_data_from_virna_13_04_17.nc")
+        original_ls_mask_filename = path.join(self.ls_masks_path,"OR-remapped-mask-present_data_from_virna_13_04_17.nc")
+        self._ten_minute_data_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_helper(file_label,
+                                                                                                  original_orography_filename,
+                                                                                                  original_ls_mask_filename)
         
     def _ten_minute_data_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_helper(self,file_label,
                                                                                              original_orography_filename,
@@ -1978,10 +1996,11 @@ class Ten_Minute_Data_From_Virna_Driver(ICE5G_Data_Drivers):
         HD_filled_orography_filename = self.upscaled_orography_filepath + file_label + '_HD_filled' + '.nc'
         rdirs_filename = self.generated_rdir_filepath + file_label + '.nc'
         HD_ls_mask_filename = self.generated_ls_mask_filepath + file_label + '_HD' + '.nc'
+        original_ls_mask_with_new_dtype_filename = self.generated_ls_mask_filepath + file_label + '_orig' + '.nc'
         unsorted_catchments_filename = self.generated_catchments_path + 'unsorted_' +\
             file_label + '.nc'
         utilities.change_dtype(input_filename=original_ls_mask_filename, 
-                               output_filename=original_ls_mask_filename,
+                               output_filename=original_ls_mask_with_new_dtype_filename,
                                new_dtype=np.int32,grid_type='LatLong10min')
         utilities.apply_orog_correction_field(original_orography_filename=original_orography_filename,
                                               orography_corrections_filename=orog_corrections_filename,
@@ -1990,14 +2009,14 @@ class Ten_Minute_Data_From_Virna_Driver(ICE5G_Data_Drivers):
         fill_sinks_driver.generate_sinkless_flow_directions(filename=orography_filename,
                                                             output_filename=rdirs_filename,
                                                             ls_mask_filename=\
-                                                            original_ls_mask_filename,
+                                                            original_ls_mask_with_new_dtype_filename,
                                                             truesinks_filename=None,
                                                             catchment_nums_filename=\
                                                             unsorted_catchments_filename,
                                                             grid_type='LatLong10min')
         self._run_postprocessing(rdirs_filename=rdirs_filename, 
                                  output_file_label=file_label,
-                                 ls_mask_filename=original_ls_mask_filename,
+                                 ls_mask_filename=original_ls_mask_with_new_dtype_filename,
                                  compute_catchments=False,
                                  flip_mask_ud=True,
                                  grid_type='LatLong10min')
@@ -2224,7 +2243,7 @@ def main():
     #etopo1_data_drivers = ETOPO1_Data_Drivers()
     #etopo1_data_drivers.etopo1_data_all_points()
     #etopo1_data_drivers.etopo1_data_ALG4_sinkless()
-    utilties_drivers = Utilities_Drivers()
+    #utilties_drivers = Utilities_Drivers()
     #utilties_drivers.convert_corrected_HD_hydrology_dat_files_to_nc()
     #utilties_drivers.recreate_connected_HD_lsmask()
     #utilties_drivers.recreate_connected_HD_lsmask_true_seas_inc_casp_only()
@@ -2232,7 +2251,7 @@ def main():
     #utilties_drivers.downscale_HD_ls_seed_points_to_10min_lat_lon()
     #utilties_drivers.downscale_HD_ls_seed_points_to_10min_lat_lon_true_seas_inc_casp_only()
     #utilties_drivers.recreate_connected_lsmask_for_black_azov_and_caspian_seas_from_glcc_olson_data()
-    utilties_drivers.recreate_connected_HD_lsmask_from_glcc_olson_data()
+    #utilties_drivers.recreate_connected_HD_lsmask_from_glcc_olson_data()
     #original_hd_model_rfd_drivers = Original_HD_Model_RFD_Drivers()
     #original_hd_model_rfd_drivers.corrected_HD_rdirs_post_processing()
     #original_hd_model_rfd_drivers.extract_ls_mask_from_corrected_HD_rdirs()
@@ -2244,8 +2263,10 @@ def main():
     #glac_data_drivers.test_paragen_on_GLAC_data()
     #glac_data_drivers.GLAC_data_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_27timeslices()
     #glac_data_drivers.GLAC_data_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_27timeslices_merge_timeslices_only()
-    #ten_minute_data_from_virna_driver = Ten_Minute_Data_From_Virna_Driver()
+    ten_minute_data_from_virna_driver = Ten_Minute_Data_From_Virna_Driver()
     #ten_minute_data_from_virna_driver.ten_minute_data_from_virna_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs()
+    #ten_minute_data_from_virna_driver.ten_minute_data_from_virna_0k_2017v_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs()
+    ten_minute_data_from_virna_driver.ten_minute_data_from_virna_0k_13_04_2017v_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs()
     #ten_minute_data_from_virna_driver.ten_minute_data_from_virna_lgm_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_2017_data()
     #ten_minute_data_from_virna_driver.ten_minute_data_from_virna_lgm_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs()
 
