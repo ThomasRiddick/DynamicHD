@@ -54,6 +54,7 @@ void latlon_upscale_orography(double* orography_in, int nlat_fine, int nlon_fine
 	const bool index_based_rdirs_only_in = false;
 	int scale_factor_lat = nlat_fine/nlat_course;
 	int scale_factor_lon = nlon_fine/nlon_course;
+	auto grid_params = new latlon_grid_params(scale_factor_lat,scale_factor_lon);
 	switch(method){
 		case 1:
 			{
@@ -72,7 +73,7 @@ void latlon_upscale_orography(double* orography_in, int nlat_fine, int nlon_fine
 									 tarasov_min_path_length_in,
 									 tarasov_include_corners_in_same_edge_criteria_in);
 					alg1.setup_fields(orography_section,landsea_section,true_sinks_section,
-								  	  new latlon_grid_params(scale_factor_lat,scale_factor_lon));
+									  grid_params);
 					alg1.fill_sinks();
 					return alg1.tarasov_get_area_height();
 				};
@@ -104,9 +105,13 @@ void latlon_upscale_orography(double* orography_in, int nlat_fine, int nlon_fine
 									 tarasov_min_path_length_in,
 									 tarasov_include_corners_in_same_edge_criteria_in);
 					alg4.setup_fields(orography_in,landsea_section,true_sinks_section,next_cell_lat_index_in,
-									  next_cell_lon_index_in,new latlon_grid_params(scale_factor_lat,scale_factor_lon),
+									  next_cell_lon_index_in,grid_params,
 									  rdirs_in,catchment_nums_in);
 					alg4.fill_sinks();
+					delete[] next_cell_lat_index_in;
+					delete[] next_cell_lon_index_in;
+					delete[] rdirs_in;
+					delete[] catchment_nums_in;
 					return alg4.tarasov_get_area_height();
 				};
 				partition_fine_orography(orography_in,landsea_in,true_sinks_in,
@@ -119,6 +124,7 @@ void latlon_upscale_orography(double* orography_in, int nlat_fine, int nlon_fine
 			cout << "Algorithm selected does not exist" << endl;
 			break;
 	}
+	delete grid_params;
 }
 
 void partition_fine_orography(double* orography_in, bool* landsea_in, bool* true_sinks_in,int nlat_fine,
@@ -143,4 +149,7 @@ void partition_fine_orography(double* orography_in, bool* landsea_in, bool* true
 		orography_out[i*nlon_course + j] = func(orography_section,landsea_section,true_sinks_section);
 		}
 	}
+	delete[] orography_section;
+	delete[] landsea_section;
+	delete[] true_sinks_section;
 }

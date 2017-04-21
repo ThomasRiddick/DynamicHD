@@ -50,7 +50,10 @@ FillSinksOrographyUpscalingTest::FillSinksOrographyUpscalingTest(){
 }
 
 FillSinksOrographyUpscalingTest::~FillSinksOrographyUpscalingTest(){
-
+	delete[] empty_true_sinks_section_five_by_five;
+	delete[] all_land_landsea_mask_five_by_five;
+	delete[] empty_true_sinks_section_ten_by_ten;
+	delete[] all_land_landsea_mask_ten_by_ten;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellOne){
@@ -65,13 +68,16 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellOne){
 		100.0,100.0,84.0,100.0,100.0,
 		100.0,100.0,85.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(5,5,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_five_by_five,
 					  empty_true_sinks_section_five_by_five,
-					  new latlon_grid_params(5,5,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,85.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellTwo){
@@ -86,13 +92,16 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellTwo){
 		100.0,100.0,86.0,100.0,100.0,
 		100.0,100.0,85.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(5,5,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_five_by_five,
 					  empty_true_sinks_section_five_by_five,
-					  new latlon_grid_params(5,5,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,86.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellThree){
@@ -107,13 +116,16 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellThree){
 		100.0,100.0,86.0,100.0,100.0,
 		100.0,100.0,85.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(5,5,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_five_by_five,
 					  empty_true_sinks_section_five_by_five,
-					  new latlon_grid_params(5,5,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,82.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFour){
@@ -128,13 +140,16 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFour){
 		100.0,100.0,86.0,100.0,100.0,
 		100.0,100.0,85.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(5,5,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_five_by_five,
 					  empty_true_sinks_section_five_by_five,
-					  new latlon_grid_params(5,5,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,87.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFive){
@@ -154,13 +169,16 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFive){
 		100.0,84.0,85.0,100.0,100.0,  80.0,100.0,100.0,100.0,100.0,
 		83.0,100.0,90.0,100.0,79.0,  100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,87.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSix){
@@ -180,13 +198,16 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSix){
 		100.0,84.0,85.0,100.0,100.0,  80.0,100.0,100.0,100.0,100.0,
 		83.0,100.0,90.0,100.0,79.0,  100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,85.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSeven){
@@ -206,13 +227,16 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSeven){
 		100.0,100.0, 78.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0, 93.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,91.5);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellEight){
@@ -232,13 +256,16 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellEight){
 		100.0,100.0, 78.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0, 92.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,91);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellNine){
@@ -270,13 +297,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellNine){
 		100.0,100.0, 78.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0, 92.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,84.0);
+	delete[] orography_section;
+	delete[] landsea_mask_ten_by_ten;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellTen){
@@ -308,13 +339,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellTen){
 		100.0,100.0, 78.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0, 92.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,84.0);
+	delete[] orography_section;
+	delete[] landsea_mask_ten_by_ten;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellEleven){
@@ -346,13 +381,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellEleven){
 		100.0,100.0, 78.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0, 75.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,78.0);
+	delete[] orography_section;
+	delete[] landsea_mask_ten_by_ten;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellTwelve){
@@ -384,13 +423,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellTwelve){
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0, 80.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,71.0);
+	delete[] orography_section;
+	delete[] landsea_mask_ten_by_ten;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellThirteen){
@@ -422,13 +465,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellThirteen)
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0, 80.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,80.0);
+	delete[] orography_section;
+	delete[] landsea_mask_ten_by_ten;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFourteen){
@@ -460,13 +507,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFourteen)
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0, 80.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,80.0);
+	delete[] orography_section;
+	delete[] landsea_mask_ten_by_ten;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFifteen){
@@ -498,13 +549,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFifteen){
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,80.0);
+	delete[] orography_section;
+	delete[] landsea_mask_ten_by_ten;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSixteen){
@@ -536,13 +591,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSixteen){
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,46.0);
+	delete[] orography_section;
+	delete[] landsea_mask_ten_by_ten;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSeventeen){
@@ -574,13 +633,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSeventeen
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,80.0);
+	delete[] orography_section;
+	delete[] landsea_mask_ten_by_ten;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellEighteen){
@@ -612,13 +675,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellEighteen)
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  true_sinks_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,55.0);
+	delete[] orography_section;
+	delete[] true_sinks_ten_by_ten;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellNineteen){
@@ -650,13 +717,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellNineteen)
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  true_sinks_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,5.0);
+	delete[] orography_section;
+	delete[] true_sinks_ten_by_ten;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellTwenty){
@@ -688,13 +759,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellTwenty){
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  true_sinks_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,80.0);
+	delete[] orography_section;
+	delete[] true_sinks_ten_by_ten;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellTwentyOne){
@@ -726,13 +801,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellTwentyOne
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  true_sinks_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,80.0);
+	delete[] orography_section;
+	delete[] true_sinks_ten_by_ten;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellTwentyTwo){
@@ -752,13 +831,16 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellTwentyTwo
 		100.0,84.0,85.0,100.0,100.0,  80.0,100.0,100.0,100.0,100.0,
 		83.0,100.0,90.0,100.0,79.0,  100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,85.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellTwentyThree){
@@ -790,13 +872,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellTwentyThr
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  true_sinks_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,80.0);
+	delete[] orography_section;
+	delete[] true_sinks_ten_by_ten;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellTwentyFour){
@@ -828,13 +914,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellTwentyFou
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  true_sinks_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,80.0);
+	delete[] orography_section;
+	delete[] true_sinks_ten_by_ten;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellTwentyFive){
@@ -866,13 +956,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellTwentyFiv
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  true_sinks_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,80.0);
+	delete[] orography_section;
+	delete[] true_sinks_ten_by_ten;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellTwentySix){
@@ -916,13 +1010,18 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellTwentySix
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,landsea_mask_ten_by_ten,
 					  true_sinks_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,80.0);
+	delete[] orography_section;
+	delete[] true_sinks_ten_by_ten;
+	delete[] landsea_mask_ten_by_ten;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellTwentySeven){
@@ -966,13 +1065,18 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellTwentySev
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,landsea_mask_ten_by_ten,
 					  true_sinks_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,80.0);
+	delete[] orography_section;
+	delete[] true_sinks_ten_by_ten;
+	delete[] landsea_mask_ten_by_ten;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellTwentyEight){
@@ -1016,13 +1120,18 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellTwentyEig
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,landsea_mask_ten_by_ten,
 					  true_sinks_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,80.0);
+	delete[] orography_section;
+	delete[] true_sinks_ten_by_ten;
+	delete[] landsea_mask_ten_by_ten;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellTwentyNine){
@@ -1066,13 +1175,18 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellTwentyNin
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,landsea_mask_ten_by_ten,
 					  true_sinks_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,80.0);
+	delete[] orography_section;
+	delete[] true_sinks_ten_by_ten;
+	delete[] landsea_mask_ten_by_ten;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellThirty){
@@ -1104,13 +1218,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellThirty){
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  true_sinks_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,80.0);
+	delete[] orography_section;
+	delete[] true_sinks_ten_by_ten;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellThirtyOne){
@@ -1142,13 +1260,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellThirtyOne
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  true_sinks_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,80.0);
+	delete[] orography_section;
+	delete[] true_sinks_ten_by_ten;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellThirtyTwo){
@@ -1180,13 +1302,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellThirtyTwo
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0, 75.0,100.0,100.0,
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0, 75.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  true_sinks_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,75.0);
+	delete[] orography_section;
+	delete[] true_sinks_ten_by_ten;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellThirtyThree){
@@ -1206,13 +1332,16 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellThirtyThr
 		100.0, 86.0,100.0,100.0,100.0, 100.0,100.0,100.0, 82.0,100.0,
 		100.0, 85.0,100.0,100.0,100.0, 100.0,100.0,100.0, 83.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in,1,3.5);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,94.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellThirtyFour){
@@ -1232,13 +1361,16 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellThirtyFou
 		100.0, 86.0,100.0,100.0,100.0, 100.0,100.0,100.0, 82.0,100.0,
 		100.0, 85.0,100.0,100.0,100.0, 100.0,100.0,100.0, 83.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in,1,3.2);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,83.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellThirtyFive){
@@ -1258,13 +1390,16 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellThirtyFiv
 		100.0, 86.0,100.0,100.0,100.0, 100.0,100.0,100.0, 82.0,100.0,
 		100.0, 85.0,100.0,100.0,100.0, 100.0,100.0,100.0, 83.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in,1,3.5);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,86.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellThirtySix){
@@ -1284,13 +1419,16 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellThirtySix
 		100.0, 86.0,100.0,100.0,100.0, 100.0,100.0,100.0, 82.0,100.0,
 		100.0, 85.0,100.0,100.0,100.0, 100.0,100.0,100.0, 81.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in,1,3.5);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,86.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellThirtySeven){
@@ -1310,13 +1448,16 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellThirtySev
 		100.0, 86.0,100.0,100.0,100.0, 100.0,100.0,100.0, 82.0,100.0,
 		100.0,100.0, 85.0,100.0,100.0, 100.0,100.0,100.0, 81.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in,1,10.8);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,88.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellThirtyEight){
@@ -1336,13 +1477,16 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellThirtyEig
 		100.0, 86.0,100.0,100.0,100.0, 100.0,100.0,100.0, 82.0,100.0,
 		100.0,100.0, 85.0,100.0,100.0, 100.0,100.0,100.0, 81.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in,1,11.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,94.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellThirtyNine){
@@ -1362,13 +1506,16 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellThirtyNin
 		100.0, 86.0,100.0,100.0,100.0,  86.0,100.0,100.0, 82.0,100.0,
 		100.0, 85.0,100.0,100.0,100.0,  87.0,100.0,100.0, 81.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in,1,10.8);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,88.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellForty){
@@ -1388,13 +1535,16 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellForty){
 		100.0, 86.0,100.0,100.0,100.0,  86.0,100.0,100.0, 82.0,100.0,
 		100.0, 85.0,100.0,100.0,100.0,  87.0,100.0,100.0, 81.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in,1,6.8);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,87.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFortyOne){
@@ -1414,13 +1564,16 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFortyOne)
 		100.0, 86.0,100.0,100.0,100.0,  86.0,100.0,100.0, 82.0,100.0,
 		100.0, 85.0,100.0,100.0,100.0,  87.0,100.0,100.0, 81.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in,1,7.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,88.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFortyTwo){
@@ -1440,13 +1593,16 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFortyTwo)
 		100.0, 54.0,100.0,100.0, 57.0, 100.0, 98.0,100.0,100.0,100.0,
 		100.0, 58.0,100.0,100.0, 60.0, 100.0,100.0, 99.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in,1,6.4);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,58.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFortyThree){
@@ -1466,13 +1622,16 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFortyThre
 		100.0, 54.0,100.0,100.0, 57.0, 100.0, 98.0,100.0,100.0,100.0,
 		100.0, 58.0,100.0,100.0, 60.0, 100.0,100.0, 99.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in,1,6.6);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,59.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFortyFour){
@@ -1492,13 +1651,16 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFortyFour
 		100.0, 54.0,100.0,100.0, 57.0, 100.0, 98.0,100.0,100.0,100.0,
 		100.0, 58.0,100.0,100.0, 60.0, 100.0,100.0, 99.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in,1,7.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,60.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFortyFive){
@@ -1518,13 +1680,16 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFortyFive
 		 52.0,100.0,100.0,100.0, 57.0, 100.0, 98.0,100.0,100.0,100.0,
 		 58.0,100.0,100.0,100.0, 60.0, 100.0,100.0, 99.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in,1,6.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,58.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFortySix){
@@ -1544,13 +1709,16 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFortySix)
 		 52.0,100.0,100.0,100.0, 57.0, 100.0, 98.0,100.0,100.0,100.0,
 		 58.0,100.0,100.0,100.0, 60.0, 100.0,100.0, 99.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in,1,6.1);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,59.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFortySeven){
@@ -1570,13 +1738,16 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFortySeve
 		 52.0,100.0,100.0,100.0, 57.0, 100.0, 98.0,100.0,100.0,100.0,
 		 54.0, 55.0, 56.0,100.0, 60.0, 100.0,100.0, 99.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in,1,7.4);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,56.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFortyEight){
@@ -1596,13 +1767,16 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFortyEigh
 		 52.0,100.0,100.0,100.0, 57.0, 100.0, 98.0,100.0,100.0,100.0,
 		 54.0, 55.0, 56.0,100.0, 60.0, 100.0,100.0, 99.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in,1,7.5);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,60.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFortyNine){
@@ -1622,13 +1796,16 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFortyNine
 		100.0,100.0, 98.0,100.0,100.0, 100.0,100.0,100.0, 76.0,100.0,
 		100.0,100.0, 99.0,100.0,100.0, 100.0,100.0,100.0,100.0, 75.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in,1,5.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,99.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFifty){
@@ -1648,13 +1825,16 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFifty){
 		100.0,100.0, 98.0,100.0,100.0, 100.0,100.0,100.0, 76.0,100.0,
 		100.0,100.0, 99.0,100.0,100.0, 100.0,100.0,100.0,100.0, 75.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in,1,4.8);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,78.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFortyFiftyOne){
@@ -1674,13 +1854,16 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFortyFift
 		100.0,100.0, 98.0,100.0,100.0, 100.0,100.0,100.0, 80.0,100.0,
 		100.0,100.0, 99.0,100.0,100.0, 100.0,100.0,100.0,100.0, 81.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in,1,5.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,99.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFiftyTwo){
@@ -1700,13 +1883,16 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFiftyTwo)
 		100.0,100.0, 98.0,100.0,100.0, 100.0,100.0,100.0, 80.0,100.0,
 		100.0,100.0, 99.0,100.0,100.0, 100.0,100.0,100.0,100.0, 81.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in,1,4.8);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,81.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFiftyThree){
@@ -1738,14 +1924,18 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFiftyThre
 		100.0,100.0, 98.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0, 99.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,1,3.1);
 	alg1.setup_fields(orography_section,landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,99.0);
+	delete[] orography_section;
+	delete[] landsea_mask_ten_by_ten;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFiftyFour){
@@ -1777,14 +1967,18 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFiftyFour
 		100.0,100.0, 98.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0, 99.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,1,2.9);
 	alg1.setup_fields(orography_section,landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,52.0);
+	delete[] orography_section;
+	delete[] landsea_mask_ten_by_ten;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFiftyFive){
@@ -1816,14 +2010,18 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFiftyFive
 		100.0,100.0, 98.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0, 99.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,1,3.1);
 	alg1.setup_fields(orography_section,landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,99.0);
+	delete[] orography_section;
+	delete[] landsea_mask_ten_by_ten;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFiftySix){
@@ -1855,14 +2053,18 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFiftySix)
 		100.0,100.0, 98.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0, 99.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,1,2.9);
 	alg1.setup_fields(orography_section,landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,52.0);
+	delete[] orography_section;
+	delete[] landsea_mask_ten_by_ten;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFiftySeven){
@@ -1894,14 +2096,18 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFiftySeve
 		100.0,100.0, 98.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0, 99.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,1,4.1);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,99.0);
+	delete[] orography_section;
+	delete[] true_sinks_section_ten_by_ten;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFiftyEight){
@@ -1933,14 +2139,18 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFiftyEigh
 		100.0,100.0, 98.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0, 99.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,1,3.9);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,52.0);
+	delete[] orography_section;
+	delete[] true_sinks_section_ten_by_ten;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFiftyNine){
@@ -1972,14 +2182,18 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFiftyNine
 		100.0,100.0, 98.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0, 99.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,1,4.1);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,99.0);
+	delete[] orography_section;
+	delete[] true_sinks_section_ten_by_ten;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSixty){
@@ -2011,14 +2225,18 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSixty){
 		100.0,100.0, 98.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0, 99.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,1,3.9);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,52.0);
+	delete[] orography_section;
+	delete[] true_sinks_section_ten_by_ten;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSixtyOne){
@@ -2050,14 +2268,18 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSixtyOne)
 		100.0,100.0, 98.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0, 99.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,1,6.3);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,55.0);
+	delete[] orography_section;
+	delete[] true_sinks_section_ten_by_ten;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSixtyTwo){
@@ -2089,14 +2311,18 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSixtyTwo)
 		100.0,100.0, 98.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0, 99.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,1,6.5);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,99.0);
+	delete[] orography_section;
+	delete[] true_sinks_section_ten_by_ten;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSixtyThree){
@@ -2128,14 +2354,18 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSixtyThre
 		100.0,100.0, 98.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0, 99.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,1,6.5);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,99.0);
+	delete[] orography_section;
+	delete[] true_sinks_section_ten_by_ten;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSixtyFour){
@@ -2155,14 +2385,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSixtyFour
 		100.0,100.0, 98.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0, 99.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,1,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,52.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSixtyFive){
@@ -2182,14 +2415,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSixtyFive
 		100.0,100.0, 98.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0, 99.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,2,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,99.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSixtySix){
@@ -2209,14 +2445,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSixtySix)
 		100.0,100.0, 98.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0, 99.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,7,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,65.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSixtySeven){
@@ -2236,14 +2475,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSixtySeve
 		100.0,100.0, 98.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0, 99.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,8,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,99.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSixtyEight){
@@ -2263,14 +2505,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSixtyEigh
 		100.0,100.0, 98.0,100.0,100.0,  51.0,100.0,100.0, 54.0,100.0,
 		100.0,100.0, 99.0,100.0,100.0,  50.0,100.0,100.0, 55.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,2,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,55.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSixtyNine){
@@ -2290,14 +2535,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSixtyNine
 		100.0,100.0, 98.0,100.0,100.0,  51.0,100.0,100.0, 54.0,100.0,
 		100.0,100.0, 99.0,100.0,100.0,  50.0,100.0,100.0, 55.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,3,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,99.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSeventy){
@@ -2317,14 +2565,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSeventy){
 		100.0,100.0, 98.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0, 99.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,1,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,52.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSeventyOne){
@@ -2344,14 +2595,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSeventyOn
 		100.0,100.0, 98.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0, 99.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,2,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,94.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSeventyTwo){
@@ -2371,14 +2625,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSeventyTw
 		100.0,100.0, 98.0,100.0,100.0, 100.0, 52.0,100.0,100.0,100.0,
 		100.0,100.0, 99.0,100.0,100.0, 100.0, 51.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,5,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,57.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSeventyThree){
@@ -2398,14 +2655,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSeventyTh
 		100.0,100.0, 98.0,100.0,100.0, 100.0, 52.0,100.0, 57.0,100.0,
 		100.0,100.0, 99.0,100.0,100.0, 100.0, 51.0,100.0, 57.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,5,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,99.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSeventyFour){
@@ -2425,14 +2685,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSeventyFo
 		100.0,100.0, 98.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0, 99.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,3,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,99.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSeventyFive){
@@ -2452,14 +2715,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSeventyFi
 		100.0,100.0, 98.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0, 99.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,3,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,54.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSeventySix){
@@ -2479,14 +2745,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSeventySi
 		100.0,100.0, 98.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0, 99.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,3,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,99.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSeventySeven){
@@ -2506,14 +2775,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSeventySe
 		100.0,100.0, 98.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0, 99.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,3,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,54.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSeventyEight){
@@ -2533,14 +2805,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSeventyEi
 		100.0,100.0, 54.0,100.0,100.0, 100.0,100.0,100.0, 98.0,100.0,
 		100.0,100.0, 55.0,100.0,100.0, 100.0,100.0,100.0, 99.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,3,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,55.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSeventyNine){
@@ -2560,14 +2835,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSeventyNi
 		 55.0, 54.0,100.0,100.0,100.0, 100.0,100.0,100.0, 98.0,100.0,
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 99.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,3,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,99.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellEighty){
@@ -2587,14 +2865,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellEighty){
 		100.0,100.0, 98.0,100.0, 55.0, 100.0, 52.0,100.0, 57.0,100.0,
 		100.0,100.0, 99.0,100.0, 56.0, 100.0, 51.0,100.0, 57.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,5,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,99.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellEightyOne){
@@ -2614,14 +2895,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellEightyOne
 		100.0,100.0, 98.0,100.0, 55.0, 100.0, 52.0,100.0, 57.0,100.0,
 		100.0,100.0, 99.0,100.0, 56.0, 100.0, 51.0,100.0, 57.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,4,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,58.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellEightyTwo){
@@ -2641,14 +2925,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellEightyTwo
 		100.0,100.0, 98.0,100.0, 55.0, 100.0, 52.0,100.0, 57.0,100.0,
 		100.0,100.0, 99.0,100.0, 56.0, 100.0, 51.0,100.0, 57.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,2,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,56.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellEightyThree){
@@ -2680,14 +2967,18 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellEightyThr
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 98.0,100.0,
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 99.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,3,1.0);
 	alg1.setup_fields(orography_section,landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,55.0);
+	delete[] orography_section;
+	delete[] landsea_mask_ten_by_ten;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellEightyFour){
@@ -2719,14 +3010,18 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellEightyFou
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 98.0,100.0,
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 99.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,3,1.0);
 	alg1.setup_fields(orography_section,landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,99.0);
+	delete[] orography_section;
+	delete[] landsea_mask_ten_by_ten;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellEightyFive){
@@ -2758,14 +3053,18 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellEightyFiv
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 98.0,100.0,
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 99.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,3,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,53.0);
+	delete[] orography_section;
+	delete[] true_sinks_section_ten_by_ten;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellEightySix){
@@ -2797,14 +3096,18 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellEightySix
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 98.0,100.0,
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 99.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,3,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,99.0);
+	delete[] orography_section;
+	delete[] true_sinks_section_ten_by_ten;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellEightySeven){
@@ -2836,14 +3139,18 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellEightySev
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 98.0,100.0,
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 99.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,3,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,99.0);
+	delete[] orography_section;
+	delete[] true_sinks_section_ten_by_ten;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellEightyEight){
@@ -2875,14 +3182,18 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellEightyEig
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 98.0,100.0,
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 99.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,2,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,53.0);
+	delete[] orography_section;
+	delete[] true_sinks_section_ten_by_ten;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellEightyNine){
@@ -2914,14 +3225,18 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellEightyNin
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 98.0,100.0,
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 99.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,3,1.0);
 	alg1.setup_fields(orography_section,landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,53.0);
+	delete[] orography_section;
+	delete[] landsea_mask_ten_by_ten;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellNinety){
@@ -2953,14 +3268,18 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellNinety){
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 98.0,100.0,
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 99.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,3,1.0);
 	alg1.setup_fields(orography_section,landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,99.0);
+	delete[] orography_section;
+	delete[] landsea_mask_ten_by_ten;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellNinetyOne){
@@ -2992,14 +3311,18 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellNinetyOne
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 98.0,100.0,
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 99.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,3,2.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,53.0);
+	delete[] orography_section;
+	delete[] true_sinks_section_ten_by_ten;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellNinetyTwo){
@@ -3031,14 +3354,18 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellNinetyTwo
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 98.0,100.0,
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 99.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,3,2.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,99.0);
+	delete[] orography_section;
+	delete[] true_sinks_section_ten_by_ten;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellNinetyThree){
@@ -3070,14 +3397,18 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellNinetyThr
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 98.0,100.0,
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 99.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,3,1.0);
 	alg1.setup_fields(orography_section,landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,92.0);
+	delete[] orography_section;
+	delete[] landsea_mask_ten_by_ten;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellNinetyFour){
@@ -3109,14 +3440,18 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellNinetyFou
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 98.0,100.0,
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 99.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,3,1.0);
 	alg1.setup_fields(orography_section,landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,53.0);
+	delete[] orography_section;
+	delete[] landsea_mask_ten_by_ten;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellNinetyFive){
@@ -3136,14 +3471,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellNinetyFiv
 		100.0, 53.0,100.0, 51.0,100.0, 100.0,100.0,100.0, 98.0,100.0,
 		100.0, 54.0,100.0, 50.0,100.0, 100.0,100.0,100.0, 99.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,3,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,99.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellNinetySix){
@@ -3163,14 +3501,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellNinetySix
 		100.0, 53.0,100.0, 51.0,100.0, 100.0,100.0,100.0, 98.0,100.0,
 		 54.0,100.0,100.0, 50.0,100.0, 100.0,100.0,100.0, 99.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,3,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,54.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellNinetySeven){
@@ -3190,14 +3531,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellNinetySev
 		100.0, 53.0,100.0, 51.0,100.0, 100.0,100.0,100.0, 98.0,100.0,
 		 54.0,100.0,100.0, 50.0,100.0, 100.0,100.0,100.0, 99.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,3,1.0,true);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,99.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellNinetyEight){
@@ -3217,14 +3561,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellNinetyEig
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 98.0,100.0,
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 99.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,3,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,99.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellNinetyNine){
@@ -3244,14 +3591,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellNinetyNin
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 98.0,100.0,
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 99.0,100.0};
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,3,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,54.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellOneHundred){
@@ -3271,14 +3621,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellOneHundre
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 98.0,100.0,
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 99.0,100.0};
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,3,1.0,true);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,99.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellOneHundredAndOne){
@@ -3298,14 +3651,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellOneHundre
 		100.0, 98.0,100.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0, 99.0,100.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,3,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,99.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellOneHundredAndTwo){
@@ -3325,14 +3681,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellOneHundre
 		100.0, 98.0,100.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0, 99.0,100.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0};
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,3,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,54.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellOneHundredAndThree){
@@ -3352,14 +3711,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellOneHundre
 		100.0, 98.0,100.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0, 99.0,100.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0};
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,3,1.0,true);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,99.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellOneHundredAndFour){
@@ -3379,14 +3741,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellOneHundre
 		100.0, 98.0,100.0,100.0,100.0, 100.0, 51.0,100.0, 53.0,100.0,
 		100.0, 99.0,100.0,100.0,100.0, 100.0, 50.0,100.0, 54.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,3,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,99.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellOneHundredAndFive){
@@ -3406,14 +3771,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellOneHundre
 		100.0, 98.0,100.0,100.0,100.0, 100.0, 51.0,100.0, 53.0,100.0,
 		100.0, 99.0,100.0,100.0,100.0, 100.0, 50.0,100.0,100.0, 54.0};
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,3,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,54.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellOneHundredAndSix){
@@ -3433,14 +3801,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellOneHundre
 		100.0, 98.0,100.0,100.0,100.0, 100.0, 51.0,100.0, 53.0,100.0,
 		100.0, 99.0,100.0,100.0,100.0, 100.0, 50.0,100.0,100.0, 54.0};
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,3,1.0,true);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,99.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellOneHundredAndSeven){
@@ -3460,14 +3831,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellOneHundre
 		100.0, 98.0,100.0,100.0,100.0, 100.0, 51.0,100.0, 53.0,100.0,
 		100.0, 99.0,100.0,100.0,100.0, 100.0, 50.0,100.0, 51.0,100.0};
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,5,8.5,true);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,99.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellOneHundredAndEight){
@@ -3487,14 +3861,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellOneHundre
 		100.0, 98.0,100.0,100.0,100.0, 100.0, 51.0,100.0, 53.0,100.0,
 		100.0, 99.0,100.0,100.0,100.0, 100.0, 50.0,100.0, 51.0,100.0};
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,5,8.0,true);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,60.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellOneHundredAndNine){
@@ -3514,14 +3891,17 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellOneHundre
 		100.0, 98.0,100.0,100.0,100.0, 100.0, 51.0,100.0, 53.0,100.0,
 		100.0, 99.0,100.0,100.0,100.0, 100.0, 50.0,100.0, 51.0,100.0};
 	auto alg1 = sink_filling_algorithm_1_latlon();
+	auto grid_params = new latlon_grid_params(10,10,true);
 	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
 					 add_slope_in,epsilon_in,4,8.0,true);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
-					  new latlon_grid_params(10,10,true));
+					  grid_params);
 	alg1.fill_sinks();
 	answer = alg1.tarasov_get_area_height();
 	ASSERT_EQ(answer,54.0);
+	delete[] orography_section;
+	delete grid_params;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingTwobyTwoCellGridPartitionTest){
@@ -3584,6 +3964,10 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingTwobyTwoCellGridPartitionTes
 							 nlat_course,nlon_course,scale_factor_lat,
 							 scale_factor_lon,test_part);
 	ASSERT_FALSE(test_failed);
+	delete[] orography_in;
+	delete[] landsea_in;
+	delete[] true_sinks_in;
+	delete[] orography_out;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingTwobyTwoCellGridTest){
@@ -3640,6 +4024,10 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingTwobyTwoCellGridTest){
 	for (auto i = 0; i < 4; i++){
 		ASSERT_EQ(orography_out[i],60.0);
 	}
+	delete[] orography_in;
+	delete[] landsea_in;
+	delete[] true_sinks_in;
+	delete[] orography_out;
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingFourbyFourCellGridTest){
@@ -3793,7 +4181,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingFourbyFourCellGridTest){
 		false,false,false,false,false,false,false,false,false,false,   false,false,false,false,false,false,false,false,false,false,   false,false,false,false,false,false,false,false,false,false, false,false,false,false,false,false,false,false,false,false,
 		false,false,false,false,false,false,false,false,false,false,   false,false,false,false,false,false,false,false,false,false,   false,false,false,false,false,false,false,false,false,false, false,false,false,false,false,false,false,false,false,false
 	};
-	double* expected_output = new double [nlat_fine*nlon_fine] {
+	double* expected_output = new double [nlat_course*nlon_course] {
 		60.0,78.0,78.0,65.0,
 		99.0,52.0,55.0,52.0,
 		80.0,91.5,87.0,91.0,
@@ -3808,6 +4196,11 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingFourbyFourCellGridTest){
 	for (auto i = 0; i < nlat_course*nlat_course; i++){
 		EXPECT_EQ(orography_out[i],expected_output[i]);
 	}
+	delete[] orography_in;
+	delete[] landsea_in;
+	delete[] true_sinks_in;
+	delete[] orography_out;
+	delete[] expected_output;
 }
 
 
@@ -3839,7 +4232,6 @@ public:
 	FillSinksAlgorithmFourTest();
 	//Destructor
 	~FillSinksAlgorithmFourTest();
-
 };
 
 //Constructor; define assorted test data
@@ -4022,284 +4414,411 @@ FillSinksAlgorithmFourTest::FillSinksAlgorithmFourTest(){
 
 //Destructor; clean-up
 FillSinksAlgorithmFourTest::~FillSinksAlgorithmFourTest(){
-	delete [] orography_in;
-	delete [] orography_in_wrapped_sink;
-	delete [] ls_data;
-	delete [] ls_data_wrapped_sink;
+	delete[] orography_in;
+	delete[] orography_in_wrapped_sink;
+	delete[] orography_in_prefer_non_diagonal_test;
+	delete[] ls_data;
+	delete[] ls_data_wrapped_sink;
+	delete[] ls_data_prefer_non_diagonal_test;
+	delete[] expected_completed_cells_in;
+	delete[] expected_completed_cells_no_ls;
+	delete[] expected_orography_queue_no_ls_mask;
+	delete[] expected_orography_in;
+	delete[] expected_rdirs_in;
+	delete[] expected_rdirs_initial_no_ls_mask;
+	delete[] expected_rdirs_no_ls_mask;
+	delete[] expected_orography_no_ls_mask;
 }
 
 //Check that the find_initial_cell_flow_directions function works correctly
 TEST_F(FillSinksAlgorithmFourTest,TestFindingInitialCellFlowDirections){
-	auto orography = new field<double>(orography_in,new latlon_grid_params(nlat,nlon));
-	auto* landsea_mask = new field<bool>(ls_data,new latlon_grid_params(nlat,nlon));
+	auto grid_params = new latlon_grid_params(nlat,nlon);
+	auto orography = new field<double>(orography_in,grid_params);
+	auto* landsea_mask = new field<bool>(ls_data,grid_params);
 	auto alg4 = sink_filling_algorithm_4_latlon();
+	latlon_coords* coords;
 	auto lat = 3;
 	auto lon = 2;
-	auto answer1 = alg4.test_find_initial_cell_flow_direction(new latlon_coords(lat,lon),
-															  new latlon_grid_params(nlat,nlon),
+	coords = new latlon_coords(lat,lon);
+	auto answer1 = alg4.test_find_initial_cell_flow_direction(coords,grid_params,
 															  orography,landsea_mask);
 	ASSERT_EQ(answer1,1);
+	delete coords;
 	lat = 1;
 	lon = 9;
-	auto answer2 = alg4.test_find_initial_cell_flow_direction(new latlon_coords(lat,lon),
-															  new latlon_grid_params(nlat,nlon),
+	coords = new latlon_coords(lat,lon);
+	auto answer2 = alg4.test_find_initial_cell_flow_direction(coords,grid_params,
 															  orography,landsea_mask);
 	ASSERT_EQ(answer2,7);
+	delete coords;
 	lat = 1;
 	lon = 7;
-	auto answer3 = alg4.test_find_initial_cell_flow_direction(new latlon_coords(lat,lon),
-															  new latlon_grid_params(nlat,nlon),
+	coords = new latlon_coords(lat,lon);
+	auto answer3 = alg4.test_find_initial_cell_flow_direction(coords,grid_params,
 															  orography,landsea_mask);
 	ASSERT_EQ(answer3,9);
+	delete coords;
 	lat = 4;
 	lon = 5;
-	auto answer4 = alg4.test_find_initial_cell_flow_direction(new latlon_coords(lat,lon),
-															  new latlon_grid_params(nlat,nlon),
+	coords = new latlon_coords(lat,lon);
+	auto answer4 = alg4.test_find_initial_cell_flow_direction(coords,grid_params,
 															  orography,landsea_mask);
 	ASSERT_EQ(answer4,4);
+	delete coords;
 	lat = 0;
 	lon = 0;
-	auto answer5 = alg4.test_find_initial_cell_flow_direction(new latlon_coords(lat,lon),
-															  new latlon_grid_params(nlat,nlon),
+	coords = new latlon_coords(lat,lon);
+	auto answer5 = alg4.test_find_initial_cell_flow_direction(coords,grid_params,
 															  orography,landsea_mask);
 	ASSERT_EQ(answer5,5);
+	delete coords;
 	lat = 1;
 	lon = 1;
-	auto answer6 = alg4.test_find_initial_cell_flow_direction(new latlon_coords(lat,lon),
-															  new latlon_grid_params(nlat,nlon),
+	coords = new latlon_coords(lat,lon);
+	auto answer6 = alg4.test_find_initial_cell_flow_direction(coords,grid_params,
 															  orography,landsea_mask);
 	ASSERT_EQ(answer6,5);
+	delete coords;
 	lat = 9;
 	lon = 0;
-	auto answer7 = alg4.test_find_initial_cell_flow_direction(new latlon_coords(lat,lon),
-															  new latlon_grid_params(nlat,nlon),
+	coords = new latlon_coords(lat,lon);
+	auto answer7 = alg4.test_find_initial_cell_flow_direction(coords,grid_params,
 															  orography,landsea_mask);
 	ASSERT_EQ(answer7,5);
+	delete coords;
 	lat = 9;
 	lon = 9;
-	auto answer8 = alg4.test_find_initial_cell_flow_direction(new latlon_coords(lat,lon),
-															  new latlon_grid_params(nlat,nlon),
+	coords = new latlon_coords(lat,lon);
+	auto answer8 = alg4.test_find_initial_cell_flow_direction(coords,grid_params,
 															  orography,landsea_mask);
 	ASSERT_EQ(answer8,6);
+	delete coords;
 	lat = 3;
 	lon = 3;
-	auto answer9 = alg4.test_find_initial_cell_flow_direction(new latlon_coords(lat,lon),
-														      new latlon_grid_params(nlat,nlon),
+	coords = new latlon_coords(lat,lon);
+	auto answer9 = alg4.test_find_initial_cell_flow_direction(coords,grid_params,
 															  orography,landsea_mask);
 	ASSERT_EQ(answer9,3);
+	delete coords;
+	delete grid_params;
+	delete landsea_mask;
 }
 
 //Check that the calculate_direction_from_neighbor_to_cell function works correctly
 TEST_F(FillSinksAlgorithmFourTest,TestFindingDirectionToCell){
 	 auto alg4 = sink_filling_algorithm_4_latlon();
-	 EXPECT_EQ(alg4.test_calculate_direction_from_neighbor_to_cell(new latlon_coords(11,11),
-			 new latlon_coords(10,10),new latlon_grid_params(100,100)),7);
-	 EXPECT_EQ(alg4.test_calculate_direction_from_neighbor_to_cell(new latlon_coords(11,10),
-			 new latlon_coords(10,10),new latlon_grid_params(100,100)),8);
-	 EXPECT_EQ(alg4.test_calculate_direction_from_neighbor_to_cell(new latlon_coords(11,9),
-			 new latlon_coords(10,10),new latlon_grid_params(100,100)),9);
-	 EXPECT_EQ(alg4.test_calculate_direction_from_neighbor_to_cell(new latlon_coords(10,11),
-			 new latlon_coords(10,10),new latlon_grid_params(100,100)),4);
-	 EXPECT_EQ(alg4.test_calculate_direction_from_neighbor_to_cell(new latlon_coords(10,10),
-			 new latlon_coords(10,10),new latlon_grid_params(100,100)),5);
-	 EXPECT_EQ(alg4.test_calculate_direction_from_neighbor_to_cell(new latlon_coords(10,9),
-			 new latlon_coords(10,10),new latlon_grid_params(100,100)),6);
-	 EXPECT_EQ(alg4.test_calculate_direction_from_neighbor_to_cell(new latlon_coords(9,11),
-			 new latlon_coords(10,10),new latlon_grid_params(100,100)),1);
-	 EXPECT_EQ(alg4.test_calculate_direction_from_neighbor_to_cell(new latlon_coords(9,10),
-			 new latlon_coords(10,10),new latlon_grid_params(100,100)),2);
-	 EXPECT_EQ(alg4.test_calculate_direction_from_neighbor_to_cell(new latlon_coords(9,9),
-			 new latlon_coords(10,10),new latlon_grid_params(100,100)),3);
-	 ASSERT_THROW(alg4.test_calculate_direction_from_neighbor_to_cell(new latlon_coords(9,8),
-			 new latlon_coords(10,10),new latlon_grid_params(100,100)),runtime_error);
-	 ASSERT_THROW(alg4.test_calculate_direction_from_neighbor_to_cell(new latlon_coords(8,11),
-			 new latlon_coords(10,10),new latlon_grid_params(100,100)),runtime_error);
-	 ASSERT_THROW(alg4.test_calculate_direction_from_neighbor_to_cell(new latlon_coords(10,12),
-			 new latlon_coords(10,10),new latlon_grid_params(100,100)),runtime_error);
-	 ASSERT_THROW(alg4.test_calculate_direction_from_neighbor_to_cell(new latlon_coords(12,9),
-			 new latlon_coords(10,10),new latlon_grid_params(100,100)),runtime_error);
+	 auto grid_params = new latlon_grid_params(100,100);
+	 auto coords_in = new latlon_coords(10,10);
+	 auto nbr_coords_in = new latlon_coords(11,11);
+	 EXPECT_EQ(alg4.test_calculate_direction_from_neighbor_to_cell(nbr_coords_in,
+			 coords_in,grid_params),7);
+	 delete nbr_coords_in;
+	 nbr_coords_in = new latlon_coords(11,10);
+	 EXPECT_EQ(alg4.test_calculate_direction_from_neighbor_to_cell(nbr_coords_in,
+			 coords_in,grid_params),8);
+	 delete nbr_coords_in;
+	 nbr_coords_in = new latlon_coords(11,9);
+	 EXPECT_EQ(alg4.test_calculate_direction_from_neighbor_to_cell(nbr_coords_in,
+			 coords_in,grid_params),9);
+	 delete nbr_coords_in;
+	 nbr_coords_in = new latlon_coords(10,11);
+	 EXPECT_EQ(alg4.test_calculate_direction_from_neighbor_to_cell(nbr_coords_in,
+			 coords_in,grid_params),4);
+	 delete nbr_coords_in;
+	 nbr_coords_in = new latlon_coords(10,10);
+	 EXPECT_EQ(alg4.test_calculate_direction_from_neighbor_to_cell(nbr_coords_in,
+			 coords_in,grid_params),5);
+	 delete nbr_coords_in;
+	 nbr_coords_in = new latlon_coords(10,9);
+	 EXPECT_EQ(alg4.test_calculate_direction_from_neighbor_to_cell(nbr_coords_in,
+			 coords_in,grid_params),6);
+	 delete nbr_coords_in;
+	 nbr_coords_in = new latlon_coords(9,11);
+	 EXPECT_EQ(alg4.test_calculate_direction_from_neighbor_to_cell(nbr_coords_in,
+			 coords_in,grid_params),1);
+	 delete nbr_coords_in;
+	 nbr_coords_in = new latlon_coords(9,10);
+	 EXPECT_EQ(alg4.test_calculate_direction_from_neighbor_to_cell(nbr_coords_in,
+			 coords_in,grid_params),2);
+	 delete nbr_coords_in;
+	 nbr_coords_in = new latlon_coords(9,9);
+	 EXPECT_EQ(alg4.test_calculate_direction_from_neighbor_to_cell(nbr_coords_in,
+			 coords_in,grid_params),3);
+	 delete nbr_coords_in;
+	 nbr_coords_in = new latlon_coords(9,8);
+	 ASSERT_THROW(alg4.test_calculate_direction_from_neighbor_to_cell(nbr_coords_in,
+			 coords_in,grid_params),runtime_error);
+	 delete nbr_coords_in;
+	 nbr_coords_in = new latlon_coords(8,11);
+	 ASSERT_THROW(alg4.test_calculate_direction_from_neighbor_to_cell(nbr_coords_in,
+			 coords_in,grid_params),runtime_error);
+	 delete nbr_coords_in;
+	 nbr_coords_in = new latlon_coords(10,12);
+	 ASSERT_THROW(alg4.test_calculate_direction_from_neighbor_to_cell(nbr_coords_in,
+			 coords_in,grid_params),runtime_error);
+	 delete nbr_coords_in;
+	 nbr_coords_in = new latlon_coords(12,9);
+	 ASSERT_THROW(alg4.test_calculate_direction_from_neighbor_to_cell(nbr_coords_in,
+			 coords_in,grid_params),runtime_error);
+	 delete nbr_coords_in;
+	 delete coords_in;
 	 //Test a few longitudinal wrapping scenarios
-	 ASSERT_THROW(alg4.test_calculate_direction_from_neighbor_to_cell(new latlon_coords(12,0),
-			 new latlon_coords(10,99),new latlon_grid_params(100,100)),runtime_error);
-	 ASSERT_THROW(alg4.test_calculate_direction_from_neighbor_to_cell(new latlon_coords(8,99),
-			 new latlon_coords(10,0),new latlon_grid_params(100,100)),runtime_error);
-	 EXPECT_EQ(alg4.test_calculate_direction_from_neighbor_to_cell(new latlon_coords(9, 99),
-			 new latlon_coords(10,0),new latlon_grid_params(100,100)),3);
-	 EXPECT_EQ(alg4.test_calculate_direction_from_neighbor_to_cell(new latlon_coords(10,99),
-			 new latlon_coords(10,0),new latlon_grid_params(100,100)),6);
-	 EXPECT_EQ(alg4.test_calculate_direction_from_neighbor_to_cell(new latlon_coords(11,99),
-			 new latlon_coords(10,0),new latlon_grid_params(100,100)),9);
-	 EXPECT_EQ(alg4.test_calculate_direction_from_neighbor_to_cell(new latlon_coords(9,0),
-			 new latlon_coords(10,99),new latlon_grid_params(100,100)),1);
-	 EXPECT_EQ(alg4.test_calculate_direction_from_neighbor_to_cell(new latlon_coords(10,0),
-			 new latlon_coords(10,99),new latlon_grid_params(100,100)),4);
-	 EXPECT_EQ(alg4.test_calculate_direction_from_neighbor_to_cell(new latlon_coords(11,0),
-			 new latlon_coords(10,99),new latlon_grid_params(100,100)),7);
+	 nbr_coords_in = new latlon_coords(12,0);
+	 coords_in = new latlon_coords(10,99);
+	 ASSERT_THROW(alg4.test_calculate_direction_from_neighbor_to_cell(nbr_coords_in,
+			 coords_in,grid_params),runtime_error);
+	 delete nbr_coords_in;
+	 delete coords_in;
+	 nbr_coords_in = new latlon_coords(8,99);
+	 coords_in = new latlon_coords(10,0);
+	 ASSERT_THROW(alg4.test_calculate_direction_from_neighbor_to_cell(nbr_coords_in,
+			 coords_in,grid_params),runtime_error);
+	 delete nbr_coords_in;
+	 delete coords_in;
+	 coords_in = new latlon_coords(10,0);
+	 nbr_coords_in = new latlon_coords(9, 99);
+	 EXPECT_EQ(alg4.test_calculate_direction_from_neighbor_to_cell(nbr_coords_in,
+			 coords_in,grid_params),3);
+	 delete nbr_coords_in;
+	 delete coords_in;
+	 coords_in = new latlon_coords(10,0);
+	 nbr_coords_in = new latlon_coords(10,99);
+	 EXPECT_EQ(alg4.test_calculate_direction_from_neighbor_to_cell(nbr_coords_in,
+			 coords_in,grid_params),6);
+	 delete nbr_coords_in;
+	 delete coords_in;
+	 coords_in = new latlon_coords(10,0);
+	 nbr_coords_in = new latlon_coords(11,99);
+	 EXPECT_EQ(alg4.test_calculate_direction_from_neighbor_to_cell(nbr_coords_in,
+			 coords_in,grid_params),9);
+	 delete nbr_coords_in;
+	 delete coords_in;
+	 coords_in = new latlon_coords(10,99);
+	 nbr_coords_in = new latlon_coords(9,0);
+	 EXPECT_EQ(alg4.test_calculate_direction_from_neighbor_to_cell(nbr_coords_in,
+			 coords_in,grid_params),1);
+	 delete nbr_coords_in;
+	 delete coords_in;
+	 coords_in = new latlon_coords(10,99);
+	 nbr_coords_in = new latlon_coords(10,0);
+	 EXPECT_EQ(alg4.test_calculate_direction_from_neighbor_to_cell(nbr_coords_in,
+			 coords_in,grid_params),4);
+	 delete nbr_coords_in;
+	 delete coords_in;
+	 coords_in = new latlon_coords(10,99);
+	 nbr_coords_in = new latlon_coords(11,0);
+	 EXPECT_EQ(alg4.test_calculate_direction_from_neighbor_to_cell(nbr_coords_in,
+			 coords_in,grid_params),7);
+	 delete coords_in;
+	 delete nbr_coords_in;
+	 delete grid_params;
 }
 
 //Test the find_initial_cell_flow_direction function again now with the prefer_non_diagonals flag set to true
 TEST_F(FillSinksAlgorithmFourTest,TestFindingInitialCellFlowDirectionsPreferNonDiagonals){
-	auto* orography = new field<double>(orography_in_prefer_non_diagonal_test,new latlon_grid_params(nlat,nlon));
-	auto* landsea_mask = new field<bool>(ls_data_prefer_non_diagonal_test,new latlon_grid_params(nlat,nlon));
+	auto grid_params = new latlon_grid_params(nlat,nlon);
+	auto* orography = new field<double>(orography_in_prefer_non_diagonal_test,grid_params);
+	auto* landsea_mask = new field<bool>(ls_data_prefer_non_diagonal_test,grid_params);
 	auto alg4 = sink_filling_algorithm_4_latlon();
 	auto lat = 0;
 	auto lon = 0;
-	auto answer1 = alg4.test_find_initial_cell_flow_direction(new latlon_coords(lat,lon),
-			new latlon_grid_params(nlat,nlon),orography,landsea_mask,true);
+	auto coords = new latlon_coords(lat,lon);
+	auto answer1 = alg4.test_find_initial_cell_flow_direction(coords,
+			grid_params,orography,landsea_mask,true);
 	ASSERT_EQ(answer1,3);
+	delete coords;
 	lat = 0;
 	lon = 1;
-	auto answer2 = alg4.test_find_initial_cell_flow_direction(new latlon_coords(lat,lon),
-			new latlon_grid_params(nlat,nlon),orography,landsea_mask,true);
+	coords = new latlon_coords(lat,lon);
+	auto answer2 = alg4.test_find_initial_cell_flow_direction(coords,
+			grid_params,orography,landsea_mask,true);
 	ASSERT_EQ(answer2,2);
+	delete coords;
 	lat = 0;
 	lon = 2;
-	auto answer3 = alg4.test_find_initial_cell_flow_direction(new latlon_coords(lat,lon),
-			new latlon_grid_params(nlat,nlon),orography,landsea_mask,true);
+	coords = new latlon_coords(lat,lon);
+	auto answer3 = alg4.test_find_initial_cell_flow_direction(coords,
+			grid_params,orography,landsea_mask,true);
 	ASSERT_EQ(answer3,2);
+	delete coords;
 	// check one case with prefer non diagonals switch to false to check expected difference occurs
 	lat = 0;
 	lon = 2;
-	auto answer4 = alg4.test_find_initial_cell_flow_direction(new latlon_coords(lat,lon),
-			new latlon_grid_params(nlat,nlon),orography,landsea_mask,false);
+	coords = new latlon_coords(lat,lon);
+	auto answer4 = alg4.test_find_initial_cell_flow_direction(coords,
+			grid_params,orography,landsea_mask,false);
 	ASSERT_EQ(answer4,1);
+	delete coords;
 	lat = 0;
 	lon = 9;
-	auto answer5 = alg4.test_find_initial_cell_flow_direction(new latlon_coords(lat,lon),
-			new latlon_grid_params(nlat,nlon),orography,landsea_mask,true);
+	coords = new latlon_coords(lat,lon);
+	auto answer5 = alg4.test_find_initial_cell_flow_direction(coords,
+			grid_params,orography,landsea_mask,true);
 	ASSERT_EQ(answer5,1);
+	delete coords;
 	lat = 2;
 	lon = 9;
-	auto answer6 = alg4.test_find_initial_cell_flow_direction(new latlon_coords(lat,lon),
-			new latlon_grid_params(nlat,nlon),orography,landsea_mask,true);
+	coords = new latlon_coords(lat,lon);
+	auto answer6 = alg4.test_find_initial_cell_flow_direction(coords,
+			grid_params,orography,landsea_mask,true);
 	ASSERT_EQ(answer6,4);
+	delete coords;
 	lat = 4;
 	lon = 7;
-	auto answer7 = alg4.test_find_initial_cell_flow_direction(new latlon_coords(lat,lon),
-			new latlon_grid_params(nlat,nlon),orography,landsea_mask,true);
+	coords = new latlon_coords(lat,lon);
+	auto answer7 = alg4.test_find_initial_cell_flow_direction(coords,
+			grid_params,orography,landsea_mask,true);
 	ASSERT_EQ(answer7,4);
+	delete coords;
 	lat = 9;
 	lon = 9;
-	auto answer8 = alg4.test_find_initial_cell_flow_direction(new latlon_coords(lat,lon),
-			new latlon_grid_params(nlat,nlon),orography,landsea_mask,true);
+	coords = new latlon_coords(lat,lon);
+	auto answer8 = alg4.test_find_initial_cell_flow_direction(coords,
+			grid_params,orography,landsea_mask,true);
 	ASSERT_EQ(answer8,7);
+	delete coords;
 	lat = 7;
 	lon = 5;
-	auto answer9 = alg4.test_find_initial_cell_flow_direction(new latlon_coords(lat,lon),
-			new latlon_grid_params(nlat,nlon),orography,landsea_mask,true);
+	coords = new latlon_coords(lat,lon);
+	auto answer9 = alg4.test_find_initial_cell_flow_direction(coords,
+			grid_params,orography,landsea_mask,true);
 	ASSERT_EQ(answer9,2);
+	delete coords;
 	lat = 9;
 	lon = 0;
-	auto answer10 = alg4.test_find_initial_cell_flow_direction(new latlon_coords(lat,lon),
-			new latlon_grid_params(nlat,nlon),orography,landsea_mask,true);
+	coords = new latlon_coords(lat,lon);
+	auto answer10 = alg4.test_find_initial_cell_flow_direction(coords,
+			grid_params,orography,landsea_mask,true);
 	ASSERT_EQ(answer10,9);
+	delete coords;
 	lat = 9;
 	lon = 2;
-	auto answer11 = alg4.test_find_initial_cell_flow_direction(new latlon_coords(lat,lon),
-			new latlon_grid_params(nlat,nlon),orography,landsea_mask,true);
+	coords = new latlon_coords(lat,lon);
+	auto answer11 = alg4.test_find_initial_cell_flow_direction(coords,
+			grid_params,orography,landsea_mask,true);
 	ASSERT_EQ(answer11,8);
+	delete coords;
 	lat = 5;
 	lon = 0;
-	auto answer12 = alg4.test_find_initial_cell_flow_direction(new latlon_coords(lat,lon),
-			new latlon_grid_params(nlat,nlon),orography,landsea_mask,true);
+	coords = new latlon_coords(lat,lon);
+	auto answer12 = alg4.test_find_initial_cell_flow_direction(coords,
+			grid_params,orography,landsea_mask,true);
 	ASSERT_EQ(answer12,6);
+	delete coords;
 	//Test another with prefer non diagonals set to false
 	lat = 5;
 	lon = 0;
-	auto answer13 = alg4.test_find_initial_cell_flow_direction(new latlon_coords(lat,lon),
-			new latlon_grid_params(nlat,nlon),orography,landsea_mask,false);
+	coords = new latlon_coords(lat,lon);
+	auto answer13 = alg4.test_find_initial_cell_flow_direction(coords,
+			grid_params,orography,landsea_mask,false);
 	ASSERT_EQ(answer13,9);
+	delete coords;
 	lat = 1;
 	lon = 1;
-	auto answer14 = alg4.test_find_initial_cell_flow_direction(new latlon_coords(lat,lon),
-			new latlon_grid_params(nlat,nlon),orography,landsea_mask,true);
+	coords = new latlon_coords(lat,lon);
+	auto answer14 = alg4.test_find_initial_cell_flow_direction(coords,
+			grid_params,orography,landsea_mask,true);
 	ASSERT_EQ(answer14,5);
+	delete coords;
 	lat = 2;
 	lon = 2;
-	auto answer15 = alg4.test_find_initial_cell_flow_direction(new latlon_coords(lat,lon),
-			new latlon_grid_params(nlat,nlon),orography,landsea_mask,true);
+	coords = new latlon_coords(lat,lon);
+	auto answer15 = alg4.test_find_initial_cell_flow_direction(coords,
+			grid_params,orography,landsea_mask,true);
 	ASSERT_EQ(answer15,5);
+	delete coords;
+	delete grid_params;
+	delete landsea_mask;
 }
 
 //Test the add_edge_cells_to_q function for algorithm 4 without supplying
 //a land sea mask; the set up is similar to the main code although the
 //object tested is just the function add_edge_cell_to_q
 TEST_F(FillSinksAlgorithmFourTest,TestAddingEdgesToQueueNoLSMask){
-	auto* orography = new field<double>(orography_in,new latlon_grid_params(nlat,nlon));
-	auto* completed_cells = new field<bool>(new latlon_grid_params(nlat,nlon));
+	auto grid_params = new latlon_grid_params(nlat,nlon);
+	auto* orography = new field<double>(orography_in,grid_params);
+	auto* completed_cells = new field<bool>(grid_params);
 	completed_cells->set_all(false);
-	auto * catchment_nums = new field<int>(new latlon_grid_params(nlat,nlon));
+	auto * catchment_nums = new field<int>(grid_params);
 	catchment_nums->set_all(0);
 	bool* landsea_mask = nullptr;
-	auto* next_cell_lat_index = new field<int>(new latlon_grid_params(nlat,nlon));
-	auto* next_cell_lon_index = new field<int>(new latlon_grid_params(nlat,nlon));
-	field<double>* rdirs = new field<double>(new latlon_grid_params(nlat,nlon));
+	auto* next_cell_lat_index = new field<int>(grid_params);
+	auto* next_cell_lon_index = new field<int>(grid_params);
+	field<double>* rdirs = new field<double>(grid_params);
 	rdirs->set_all(0.0);
-	auto alg4 = sink_filling_algorithm_4_latlon(orography,new latlon_grid_params(nlat,nlon),
+	auto alg4 = sink_filling_algorithm_4_latlon(orography,grid_params,
 												completed_cells,landsea_mask,false,
 												catchment_nums,false,false,
 												next_cell_lat_index,next_cell_lon_index,
 												nullptr,rdirs);
-	alg4.test_add_edge_cells_to_q();
+	alg4.test_add_edge_cells_to_q(true);
 	priority_cell_queue q = alg4.get_q();
 	//Output the data in the queue to an array in order to validate it
 	auto count = 0;
-	field<double> orography_in_queue(new latlon_grid_params(nlat,nlon));
+	field<double> orography_in_queue(grid_params);
 	orography_in_queue.set_all(-10.0);
 	while(!q.empty()){
-		auto coords = q.top()->get_cell_coords();
+		auto cell = q.top();
+		auto coords = cell->get_cell_coords();
 		orography_in_queue(coords) = q.top()->get_orography();
 		q.pop();
 		count++;
+		delete cell;
 	}
 	EXPECT_TRUE(orography_in_queue ==
-				field<double>(expected_orography_queue_no_ls_mask,new latlon_grid_params(nlat,nlon)));
-	EXPECT_TRUE(*rdirs == field<double>(expected_rdirs_initial_no_ls_mask,new latlon_grid_params(nlat,nlon)));
+				field<double>(expected_orography_queue_no_ls_mask,grid_params));
+	EXPECT_TRUE(*rdirs == field<double>(expected_rdirs_initial_no_ls_mask,grid_params));
 	EXPECT_TRUE(*completed_cells ==
-		        field<bool>(expected_completed_cells_no_ls,new latlon_grid_params(nlat,nlon)));
+		        field<bool>(expected_completed_cells_no_ls,grid_params));
+	delete grid_params;
 }
 
 //Test the add_edge_cells_to_q function for algorithm 4; the set up is similar to the
 //main code although the object tested is just the function add_edge_cell_to_q
 TEST_F(FillSinksAlgorithmFourTest,TestAddingEdgesToQueue){
-	auto orography = new field<double>(orography_in,new latlon_grid_params(nlat,nlon));
-	auto* completed_cells = new field<bool>(new latlon_grid_params(nlat,nlon));
+	auto grid_params = new latlon_grid_params(nlat,nlon);
+	auto orography = new field<double>(orography_in,grid_params);
+	auto* completed_cells = new field<bool>(grid_params);
 	completed_cells->set_all(false);
 	bool* landsea_mask = ls_data;
-	field<double>* rdirs = new field<double>(new latlon_grid_params(nlat,nlon));
+	field<double>* rdirs = new field<double>(grid_params);
 	rdirs->set_all(0.0);
-	auto* catchment_nums = new field<int>(new latlon_grid_params(nlat,nlon));
-	auto* next_cell_lat_index = new field<int>(new latlon_grid_params(nlat,nlon));
-	auto* next_cell_lon_index = new field<int>(new latlon_grid_params(nlat,nlon));
+	auto* catchment_nums = new field<int>(grid_params);
+	auto* next_cell_lat_index = new field<int>(grid_params);
+	auto* next_cell_lon_index = new field<int>(grid_params);
 	catchment_nums->set_all(0);
-	auto alg4 = sink_filling_algorithm_4_latlon(orography,new latlon_grid_params(nlat,nlon),
+	auto alg4 = sink_filling_algorithm_4_latlon(orography,grid_params,
 												completed_cells,landsea_mask,false,catchment_nums,
 												false,false,next_cell_lat_index,next_cell_lon_index,
 												nullptr,rdirs);
-	alg4.test_add_edge_cells_to_q();
+	alg4.test_add_edge_cells_to_q(true);
 	priority_cell_queue q = alg4.get_q();
 	//Output the data in the queue to an array in order to validate it
 	auto count = 0;
-	field<double> orography_in_queue(new latlon_grid_params(nlat,nlon));
+	field<double> orography_in_queue(grid_params);
 	orography_in_queue.set_all(-10.0);
 	while(!q.empty()){
-		auto coords = q.top()->get_cell_coords();
+		auto cell = q.top();
+		auto coords = cell->get_cell_coords();
 		orography_in_queue(coords) = q.top()->get_orography();
 		q.pop();
 		count++;
+		delete cell;
 	}
-	auto expected_completed_cells = field<bool>(expected_completed_cells_in,new latlon_grid_params(nlat,nlon));
+	auto expected_completed_cells = field<bool>(expected_completed_cells_in,grid_params);
 	EXPECT_TRUE(*completed_cells == expected_completed_cells);
-	auto expected_orography_in_queue = field<double>(expected_orography_in,new latlon_grid_params(nlat,nlon));
+	auto expected_orography_in_queue = field<double>(expected_orography_in,grid_params);
 	EXPECT_TRUE(orography_in_queue == expected_orography_in_queue);
-	auto expected_rdirs = field<double>(expected_rdirs_in,new latlon_grid_params(nlat,nlon));
+	auto expected_rdirs = field<double>(expected_rdirs_in,grid_params);
 	EXPECT_TRUE((*rdirs) == expected_rdirs);
 	EXPECT_EQ(count,35);
+	delete grid_params;
 }
 
 //Tests the full program against some pseudo-data checking both the output
 //river direction and that the output orography hasn't changed
 TEST_F(FillSinksAlgorithmFourTest,TestFillSinks){
+	auto grid_params = new latlon_grid_params(nlat,nlon);
 	auto method = 4;
 	bool* landsea_in = nullptr;
 	bool* true_sinks_in = nullptr;
@@ -4314,10 +4833,15 @@ TEST_F(FillSinksAlgorithmFourTest,TestFillSinks){
 	latlon_fill_sinks(orography_in,nlat,nlon,method,landsea_in,false,true_sinks_in,
 					  false,0.0,next_cell_lat_index_in,next_cell_lon_index_in,
 					  rdirs_in,catchment_nums_in,false);
-	EXPECT_TRUE(field<double>(orography_in,new latlon_grid_params(nlat,nlon)) ==
-			    field<double>(expected_orography_no_ls_mask,new latlon_grid_params(nlat,nlon)));
-	EXPECT_TRUE(field<double>(rdirs_in,new latlon_grid_params(nlat,nlon)) ==
-			    field<double>(expected_rdirs_no_ls_mask,new latlon_grid_params(nlat,nlon)));
+	EXPECT_TRUE(field<double>(orography_in,grid_params) ==
+			    field<double>(expected_orography_no_ls_mask,grid_params));
+	EXPECT_TRUE(field<double>(rdirs_in,grid_params) ==
+			    field<double>(expected_rdirs_no_ls_mask,grid_params));
+	delete[] rdirs_in;
+	delete[] next_cell_lat_index_in;
+	delete[] next_cell_lon_index_in;
+	delete[] catchment_nums_in;
+	delete grid_params;
 }
 
 /*
@@ -4644,148 +5168,183 @@ FillSinksTest::FillSinksTest(){
 //Class destructor; clean up
 FillSinksTest::~FillSinksTest(){
 	delete [] orography_in;
+	delete [] expected_orography_out;
 	delete [] orography_in_wrapped_sink;
-	delete [] ls_data;
-	delete [] ls_data_wrapped_sink;
 	delete [] orography_in_wrapped_sink_with_slope;
 	delete [] orography_in_with_slope;
+	delete [] expected_orography_wrapped_sink;
+	delete [] expected_orography_wrapped_sink_ls_filled;
+	delete [] expected_orography_in_queue_out;
+	delete [] expected_orography_in_queue_out_with_true_sinks;
+	delete [] expected_orography_wrapped_sink_ls_filled_with_slope;
 	delete [] expected_orography_out_with_slope;
+	delete [] adding_to_q_expected_orography;
+	delete [] adding_to_q_expected_orography_basic_version;
+	delete [] adding_true_sinks_to_q_expected_orography_basic_version;
+	delete [] adding_to_q_expected_completed_cells_basic_version;
+	delete [] adding_to_q_expected_completed_cells;
+	delete [] adding_true_sinks_to_q_expected_completed_cells_basic_version;
+	delete [] adding_true_sinks_to_q_expected_completed_cells;
+	delete [] ls_data;
+	delete [] ls_data_wrapped_sink;
+	delete [] true_sinks_input;
+	delete [] true_sinks_input_ls_mask;
 }
 
 //Test the add_cells_to_q function without a land sea mask; the set up is similar to
 //the main code although the object tested is just the function add_edge_cell_to_q
 TEST_F(FillSinksTest,TestAddingEdgesToQueue){
-	auto orography = new field<double>(orography_in,new latlon_grid_params(nlat,nlon));
-	auto* completed_cells = new field<bool>(new latlon_grid_params(nlat,nlon));
+	auto grid_params = new latlon_grid_params(nlat,nlon);
+	auto orography = new field<double>(orography_in,grid_params);
+	auto* completed_cells = new field<bool>(grid_params);
 	completed_cells->set_all(false);
 	bool* landsea_mask = nullptr;
-	auto alg1 = sink_filling_algorithm_1_latlon(orography,new latlon_grid_params(nlat,nlon),
+	auto alg1 = sink_filling_algorithm_1_latlon(orography,grid_params,
 										 	 	completed_cells,landsea_mask,true);
- 	alg1.test_add_edge_cells_to_q();
+ 	alg1.test_add_edge_cells_to_q(true);
 	priority_cell_queue q = alg1.get_q();
  	EXPECT_TRUE(*completed_cells ==
  			    field<bool>(adding_to_q_expected_completed_cells_basic_version,
- 			    		    new latlon_grid_params(nlat,nlon)));
+ 			    		    grid_params));
 	//Output the data in the queue to an array in order to validate it
  	auto count = 0;
- 	field<double> orography_in_queue(new latlon_grid_params(nlat,nlon));
+ 	field<double> orography_in_queue(grid_params);
  	orography_in_queue.set_all(-10.0);
  	while(!q.empty()){
- 		auto coords = q.top()->get_cell_coords();
+ 		auto cell =  q.top();
+ 		auto coords = cell->get_cell_coords();
  		orography_in_queue(coords) = q.top()->get_orography();
  		q.pop();
  		count++;
+ 		delete cell;
  	}
  	EXPECT_TRUE(orography_in_queue ==
- 			    field<double>(adding_to_q_expected_orography_basic_version,new latlon_grid_params(nlat,nlon)));
+ 			    field<double>(adding_to_q_expected_orography_basic_version,grid_params));
  	EXPECT_EQ(count,36);
+ 	delete grid_params;
 }
 
 //Test the add_cells_to_q function with a land sea mask; the set up is similar to
 //the main code although the object tested is just the function add_edge_cell_to_q
 TEST_F(FillSinksTest,TestAddingEdgesToQueueWithLSMask){
-	auto orography = new field<double>(orography_in,new latlon_grid_params(nlat,nlon));
-	auto* completed_cells = new field<bool>(new latlon_grid_params(nlat,nlon));
+	auto grid_params = new latlon_grid_params(nlat,nlon);
+	auto orography = new field<double>(orography_in,grid_params);
+	auto* completed_cells = new field<bool>(grid_params);
 	completed_cells->set_all(false);
 	bool* landsea_mask = ls_data;
-	auto alg1 = sink_filling_algorithm_1_latlon(orography,new latlon_grid_params(nlat,nlon),
+	auto alg1 = sink_filling_algorithm_1_latlon(orography,grid_params,
 												completed_cells,landsea_mask,true);
-	alg1.test_add_edge_cells_to_q();
+	alg1.test_add_edge_cells_to_q(true);
 	priority_cell_queue q = alg1.get_q();
-	EXPECT_TRUE(*completed_cells == field<bool>(adding_to_q_expected_completed_cells,new latlon_grid_params(nlat,nlon)));
-	EXPECT_TRUE(*orography == field<double>(adding_to_q_expected_orography,new latlon_grid_params(nlat,nlon)));
+	EXPECT_TRUE(*completed_cells == field<bool>(adding_to_q_expected_completed_cells,grid_params));
+	EXPECT_TRUE(*orography == field<double>(adding_to_q_expected_orography,grid_params));
 	//Output the data in the queue to an array in order to validate it
 	auto count = 0;
-	field<double> orography_in_queue(new latlon_grid_params(nlat,nlon));
+	field<double> orography_in_queue(grid_params);
 	orography_in_queue.set_all(-10.0);
 	while(!q.empty()){
-		auto coords = q.top()->get_cell_coords();
+		auto cell = q.top();
+		auto coords = cell->get_cell_coords();
 		orography_in_queue(coords) = q.top()->get_orography();
 		q.pop();
 		count++;
+		delete cell;
 	}
 	EXPECT_TRUE(orography_in_queue ==
-			    field<double>(expected_orography_in_queue_out,new latlon_grid_params(nlat,nlon)));
+			    field<double>(expected_orography_in_queue_out,grid_params));
 	EXPECT_EQ(count,35);
+ 	delete grid_params;
 }
 
 //Test the add_true_sinks_to_q function without a land sea mask; the set up is similar to
 //the main code although the object tested is just the function add_edge_cell_to_q
 TEST_F(FillSinksTest,TestAddingTrueSinksToQueue){
-	auto orography = new field<double>(orography_in,new latlon_grid_params(nlat,nlon));
-	auto* completed_cells = new field<bool>(new latlon_grid_params(nlat,nlon));
+	auto grid_params = new latlon_grid_params(nlat,nlon);
+	auto orography = new field<double>(orography_in,grid_params);
+	auto* completed_cells = new field<bool>(grid_params);
 	completed_cells->set_all(false);
 	bool* landsea_mask = nullptr;
-	auto alg1 = sink_filling_algorithm_1_latlon(orography,new latlon_grid_params(nlat,nlon),completed_cells,
+	auto alg1 = sink_filling_algorithm_1_latlon(orography,grid_params,completed_cells,
 										 	 	landsea_mask,true,false,0.0,true_sinks_input);
- 	alg1.test_add_edge_cells_to_q();
- 	alg1.test_add_true_sinks_to_q();
+ 	alg1.test_add_edge_cells_to_q(false);
+ 	alg1.test_add_true_sinks_to_q(true);
 	priority_cell_queue q = alg1.get_q();
  	EXPECT_TRUE(*completed_cells ==
  			    field<bool>(adding_true_sinks_to_q_expected_completed_cells_basic_version,
- 			    		new latlon_grid_params(nlat,nlon)));
+ 			    		grid_params));
 	//Output the data in the queue to an array in order to validate it
  	auto count = 0;
- 	field<double> orography_in_queue(new latlon_grid_params(nlat,nlon));
+ 	field<double> orography_in_queue(grid_params);
  	orography_in_queue.set_all(-10.0);
  	while(!q.empty()){
- 		auto coords = q.top()->get_cell_coords();
+ 		auto cell = q.top();
+ 		auto coords = cell->get_cell_coords();
  		orography_in_queue(coords) = q.top()->get_orography();
  		q.pop();
  		count++;
+		delete cell;
  	}
  	EXPECT_TRUE(orography_in_queue ==
  			    field<double>(adding_true_sinks_to_q_expected_orography_basic_version,
- 			    			  new latlon_grid_params(nlat,nlon)));
+ 			    			  grid_params));
  	EXPECT_EQ(count,41);
+ 	delete grid_params;
 }
 
 //Test true sinks to the queue with a land sea mask; the set up is similar to
 //the main code although the object tested is just the function add_edge_cell_to_q
 TEST_F(FillSinksTest,TestAddingTrueSinksToQueueWithLSMask){
-	auto orography = new field<double>(orography_in,new latlon_grid_params(nlat,nlon));
-	auto* completed_cells = new field<bool>(new latlon_grid_params(nlat,nlon));
+	auto grid_params = new latlon_grid_params(nlat,nlon);
+	auto orography = new field<double>(orography_in,grid_params);
+	auto* completed_cells = new field<bool>(grid_params);
 	completed_cells->set_all(false);
 	bool* landsea_mask = ls_data;
-	auto alg1 = sink_filling_algorithm_1_latlon(orography,new latlon_grid_params(nlat,nlon),completed_cells,
+	auto alg1 = sink_filling_algorithm_1_latlon(orography,grid_params,completed_cells,
 												landsea_mask,true,false,0.0,true_sinks_input_ls_mask);
-	alg1.test_add_edge_cells_to_q();
- 	alg1.test_add_true_sinks_to_q();
+	alg1.test_add_edge_cells_to_q(false);
+ 	alg1.test_add_true_sinks_to_q(true);
 	priority_cell_queue q = alg1.get_q();
 	EXPECT_TRUE(*completed_cells == field<bool>(adding_true_sinks_to_q_expected_completed_cells,
-												new latlon_grid_params(nlat,nlon)));
-	EXPECT_TRUE(*orography == field<double>(adding_to_q_expected_orography,new latlon_grid_params(nlat,nlon)));
+												grid_params));
+	EXPECT_TRUE(*orography == field<double>(adding_to_q_expected_orography,grid_params));
 	//Output the data in the queue to an array in order to validate it
 	auto count = 0;
-	field<double> orography_in_queue(new latlon_grid_params(nlat,nlon));
+	field<double> orography_in_queue(grid_params);
 	orography_in_queue.set_all(-10.0);
 	while(!q.empty()){
-		auto coords = q.top()->get_cell_coords();
+		auto cell = q.top();
+		auto coords = cell->get_cell_coords();
 		orography_in_queue(coords) = q.top()->get_orography();
 		q.pop();
 		count++;
+		delete cell;
 	}
 	EXPECT_TRUE(orography_in_queue ==
 			    field<double>(expected_orography_in_queue_out_with_true_sinks,
-			    			  new latlon_grid_params(nlat,nlon)));
+			    			  grid_params));
 	EXPECT_EQ(count,39);
+ 	delete grid_params;
 }
 
 //Test main fill_sinks code using algorithm 1 without a land-sea mask
 TEST_F(FillSinksTest,TestFillSinks){
 	auto method = 1;
+	auto grid_params = new latlon_grid_params(nlat,nlon);
 	latlon_fill_sinks(orography_in,nlat,nlon,method);
-	EXPECT_TRUE(field<double>(orography_in,new latlon_grid_params(nlat,nlon)) ==
-			    field<double>(expected_orography_out,new latlon_grid_params(nlat,nlon)));
+	EXPECT_TRUE(field<double>(orography_in,grid_params) ==
+			    field<double>(expected_orography_out,grid_params));
+	delete grid_params;
 }
 
 //Test main fill_sinks code using algorithm 1 with a land sea mask and
 //longitudinal wrapping required
 TEST_F(FillSinksTest,TestFillSinksWrappedSink){
 	auto method = 1;
+	auto grid_params = new latlon_grid_params(nlat,nlon);
 	latlon_fill_sinks(orography_in_wrapped_sink,nlat,nlon,method,ls_data_wrapped_sink);
-	EXPECT_TRUE(field<double>(orography_in_wrapped_sink,new latlon_grid_params(nlat,nlon))
-			    == field<double>(expected_orography_wrapped_sink_ls_filled,new latlon_grid_params(nlat,nlon)));
+	EXPECT_TRUE(field<double>(orography_in_wrapped_sink,grid_params)
+			    == field<double>(expected_orography_wrapped_sink_ls_filled,grid_params));
+	delete grid_params;
 }
 
 //Test main fill_sink code using algorithm with a land sea mask and
@@ -4793,23 +5352,29 @@ TEST_F(FillSinksTest,TestFillSinksWrappedSink){
 //no data
 TEST_F(FillSinksTest,TestFillSinksWrappedSinkLSNotND){
 	auto method = 1;
+	auto grid_params = new latlon_grid_params(nlat,nlon);
 	latlon_fill_sinks(orography_in_wrapped_sink,nlat,nlon,method,ls_data_wrapped_sink,false);
-	EXPECT_TRUE(field<double>(orography_in_wrapped_sink,new latlon_grid_params(nlat,nlon))
-			    == field<double>(expected_orography_wrapped_sink,new latlon_grid_params(nlat,nlon)));
+	EXPECT_TRUE(field<double>(orography_in_wrapped_sink,grid_params)
+			    == field<double>(expected_orography_wrapped_sink,grid_params));
+	delete grid_params;
 }
 
 TEST_F(FillSinksTest,TestFillingSinkAddingSlope){
 	auto method = 1;
+	auto grid_params = new latlon_grid_params(nlat,nlon);
 	latlon_fill_sinks(orography_in_wrapped_sink_with_slope,nlat,nlon,method,ls_data_wrapped_sink,true,nullptr,true);
-	EXPECT_TRUE(field<double>(orography_in_wrapped_sink_with_slope,new latlon_grid_params(nlat,nlon)).almost_equal(
-				field<double>(expected_orography_wrapped_sink_ls_filled_with_slope,new latlon_grid_params(nlat,nlon))));
+	EXPECT_TRUE(field<double>(orography_in_wrapped_sink_with_slope,grid_params).almost_equal(
+				field<double>(expected_orography_wrapped_sink_ls_filled_with_slope,grid_params)));
+	delete grid_params;
 }
 
 TEST_F(FillSinksTest,TestFillingSinkAddingSlopeMultipleEntryPoints){
 	auto method = 1;
+	auto grid_params = new latlon_grid_params(nlat,nlon);
 	latlon_fill_sinks(orography_in_with_slope,nlat,nlon,method,nullptr,true,nullptr,true);
-	EXPECT_TRUE(field<double>(orography_in_with_slope,new latlon_grid_params(nlat,nlon)).almost_equal(
-				field<double>(expected_orography_out_with_slope,new latlon_grid_params(nlat,nlon))));
+	EXPECT_TRUE(field<double>(orography_in_with_slope,grid_params).almost_equal(
+				field<double>(expected_orography_out_with_slope,grid_params)));
+	delete grid_params;
 }
 
 
@@ -4823,61 +5388,111 @@ class FieldTest : public ::testing::Test {
 
 //Test overloaded equality operator
 TEST_F(FieldTest,TestEquals){
+	auto grid_params = new latlon_grid_params(4,3);
 	auto *test_array = new int[3*4] {1,2,3, 11,12,13, 101,102,103, 111,112,113};
-	auto test_field = field<int>(test_array,new latlon_grid_params(4,3));
+	auto test_field = field<int>(test_array,grid_params);
 	auto *test_array2 = new int[3*4] {1,2,3, 11,12,13, 101,102,103, 111,112,113};
-	auto test_field2 = field<int>(test_array2,new latlon_grid_params(4,3));
+	auto test_field2 = field<int>(test_array2,grid_params);
 	auto *test_array3 = new int[3*4] {1,2,3, 11,12,13, 101,102,103, 111,112,114};
-	auto test_field3 = field<int>(test_array3,new latlon_grid_params(4,3));
+	auto test_field3 = field<int>(test_array3,grid_params);
 	auto *test_array4 = new int[3*4] {11,2,3, 11,120,13, 101,102,103, 111,112,114};
-	auto test_field4 = field<int>(test_array4,new latlon_grid_params(4,3));
+	auto test_field4 = field<int>(test_array4,grid_params);
 	EXPECT_TRUE(test_field == test_field);
 	EXPECT_TRUE(test_field == test_field2);
 	EXPECT_FALSE(test_field == test_field3);
 	EXPECT_FALSE(test_field == test_field4);
 	EXPECT_FALSE(test_field3 == test_field4);
+	delete grid_params;
+	delete[] test_array;
+	delete[] test_array2;
+	delete[] test_array3;
+	delete[] test_array4;
 }
 
 //Test the set_all function
 TEST_F(FieldTest,TestSetAll) {
-	auto test_field = field<int>(new latlon_grid_params(9,9));
+	auto grid_params = new latlon_grid_params(9,9);
+	auto test_field = field<int>(grid_params);
 	test_field.set_all(16);
-	EXPECT_EQ(test_field(new latlon_coords(8,8)),16);
-	EXPECT_EQ(test_field(new latlon_coords(3,3)),16);
-	EXPECT_EQ(test_field(new latlon_coords(3,8)),16);
-	EXPECT_EQ(test_field(new latlon_coords(8,3)),16);
-	EXPECT_EQ(test_field(new latlon_coords(0,0)),16);
+	auto coords_in = new latlon_coords(8,8);
+	EXPECT_EQ(test_field(coords_in),16);
+	delete coords_in;
+	coords_in = new latlon_coords(3,3);
+	EXPECT_EQ(test_field(coords_in),16);
+	delete coords_in;
+	coords_in = new latlon_coords(3,8);
+	EXPECT_EQ(test_field(coords_in),16);
+	delete coords_in;
+	coords_in = new latlon_coords(8,3);
+	EXPECT_EQ(test_field(coords_in),16);
+	delete coords_in;
+	coords_in = new latlon_coords(0,0);
+	EXPECT_EQ(test_field(coords_in),16);
+	delete coords_in;
+	delete grid_params;
 }
 
 //Test indexing on the left hand side of an expression
 TEST_F(FieldTest,TestLHSIndexing){
-	auto test_field = field<int>(new latlon_grid_params(9,9));
+	auto grid_params = new latlon_grid_params(9,9);
+	auto test_field = field<int>(grid_params);
 	test_field.set_all(16);
-	test_field(new latlon_coords(4,3)) = -13;
+	auto coords_in = new latlon_coords(4,3);
+	test_field(coords_in) = -13;
 	EXPECT_EQ(test_field.get_array()[9*4+3],-13);
-	test_field(new latlon_coords(0,0)) = -35;
+	delete coords_in;
+	coords_in = new latlon_coords(0,0);
+	test_field(coords_in) = -35;
 	EXPECT_EQ(test_field.get_array()[0],-35);
-	test_field(new latlon_coords(0,0)) = 12;
+	delete coords_in;
+	coords_in = new latlon_coords(0,0);
+	test_field(coords_in) = 12;
 	EXPECT_EQ(test_field.get_array()[0],12);
-	test_field(new latlon_coords(8,8)) = 7;
+	delete coords_in;
+	coords_in = new latlon_coords(8,8);
+	test_field(coords_in) = 7;
 	EXPECT_EQ(test_field.get_array()[9*8+8],7);
 	EXPECT_EQ(test_field.get_array()[9*3+3],16);
+	delete coords_in;
+	delete grid_params;
 }
 
 //Test indexing on the right hand side of an expression
 TEST_F(FieldTest,TestRHSIndexing){
 	auto *test_array = new int[3*4] {1,2,3, 11,12,13, 101,102,103, 111,112,113};
-	auto test_field = field<int>(test_array,new latlon_grid_params(4,3));
-	EXPECT_EQ(test_field(new latlon_coords(2,2)),103);
-	EXPECT_EQ(test_field(new latlon_coords(2,1)),102);
-	EXPECT_EQ(test_field(new latlon_coords(1,2)),13);
-	EXPECT_EQ(test_field(new latlon_coords(3,0)),111);
-	EXPECT_EQ(test_field(new latlon_coords(2,0)),101);
-	EXPECT_EQ(test_field(new latlon_coords(3,2)),113);
-	EXPECT_EQ(test_field(new latlon_coords(0,2)),3);
-	EXPECT_EQ(test_field(new latlon_coords(1,1)),12);
-	EXPECT_EQ(test_field(new latlon_coords(0,1)),2);
-	EXPECT_EQ(test_field(new latlon_coords(0,0)),1);
+	auto grid_params = new latlon_grid_params(4,3);
+	auto test_field = field<int>(test_array,grid_params);
+	auto coords_in = new latlon_coords(2,2);
+	EXPECT_EQ(test_field(coords_in),103);
+	delete coords_in;
+	coords_in = new latlon_coords(2,1);
+	EXPECT_EQ(test_field(coords_in),102);
+	delete coords_in;
+	coords_in = new latlon_coords(1,2);
+	EXPECT_EQ(test_field(coords_in),13);
+	delete coords_in;
+	coords_in = new latlon_coords(3,0);
+	EXPECT_EQ(test_field(coords_in),111);
+	delete coords_in;
+	coords_in = new latlon_coords(2,0);
+	EXPECT_EQ(test_field(coords_in),101);
+	delete coords_in;
+	coords_in = new latlon_coords(3,2);
+	EXPECT_EQ(test_field(coords_in),113);
+	delete coords_in;
+	coords_in = new latlon_coords(0,2);
+	EXPECT_EQ(test_field(coords_in),3);
+	delete coords_in;
+	coords_in = new latlon_coords(1,1);
+	EXPECT_EQ(test_field(coords_in),12);
+	delete coords_in;
+	coords_in = new latlon_coords(0,1);
+	EXPECT_EQ(test_field(coords_in),2);
+	delete coords_in;
+	coords_in = new latlon_coords(0,0);
+	EXPECT_EQ(test_field(coords_in),1);
+	delete coords_in;
+	delete grid_params;
 	delete [] test_array;
 }
 
@@ -4887,8 +5502,10 @@ TEST_F(FieldTest,TestGetneighbors){
 	for (auto i = 0; i < 10*10; ++i){
 		test_array[i] = i;
 	}
-	auto test_field = field<double>(test_array,new latlon_grid_params(10,10));
-	auto neighbors_coords = test_field.get_neighbors_coords(new latlon_coords(2,7));
+	auto grid_params = new latlon_grid_params(10,10);
+	auto test_field = field<double>(test_array,grid_params);
+	auto coords_in = new latlon_coords(2,7);
+	auto neighbors_coords = test_field.get_neighbors_coords(coords_in);
 	auto expectation_0 = latlon_coords(1,6);
 	auto expectation_1 = latlon_coords(1,7);
 	auto expectation_2 = latlon_coords(1,8);
@@ -4905,6 +5522,15 @@ TEST_F(FieldTest,TestGetneighbors){
 	EXPECT_EQ(expectation_5,*dynamic_cast<latlon_coords*>((*neighbors_coords)[5]));
 	EXPECT_EQ(expectation_6,*dynamic_cast<latlon_coords*>((*neighbors_coords)[6]));
 	EXPECT_EQ(expectation_7,*dynamic_cast<latlon_coords*>((*neighbors_coords)[7]));
+	while (!neighbors_coords->empty()){
+		auto coords = neighbors_coords->back();
+		neighbors_coords->pop_back();
+		delete coords;
+	}
+	delete coords_in;
+	delete neighbors_coords;
+	delete grid_params;
+	delete [] test_array;
 }
 
 //Test the get_neighbors_coords routines for algorithm four (which puts the non-diagonal
@@ -4914,8 +5540,10 @@ TEST_F(FieldTest,TestGetneighborsAlgorithmFour){
 	for (auto i = 0; i < 10*10; ++i){
 		test_array[i] = i;
 	}
-	auto test_field = field<double>(test_array,new latlon_grid_params(10,10));
-	auto neighbors_coords = test_field.get_neighbors_coords(new latlon_coords(2,7),4);
+	auto grid_params = new latlon_grid_params(10,10);
+	auto test_field = field<double>(test_array,grid_params);
+	auto coords_in = new latlon_coords(2,7);
+	auto neighbors_coords = test_field.get_neighbors_coords(coords_in,4);
 	auto expectation_0 = latlon_coords(1,6);
 	auto expectation_1 = latlon_coords(1,7);
 	auto expectation_2 = latlon_coords(1,8);
@@ -4932,6 +5560,15 @@ TEST_F(FieldTest,TestGetneighborsAlgorithmFour){
 	EXPECT_EQ(expectation_6,*dynamic_cast<latlon_coords*>((*neighbors_coords)[5]));
 	EXPECT_EQ(expectation_3,*dynamic_cast<latlon_coords*>((*neighbors_coords)[6]));
 	EXPECT_EQ(expectation_4,*dynamic_cast<latlon_coords*>((*neighbors_coords)[7]));
+	while (!neighbors_coords->empty()){
+		auto coords = neighbors_coords->back();
+		neighbors_coords->pop_back();
+		delete coords;
+	}
+	delete grid_params;
+	delete coords_in;
+	delete[] test_array;
+	delete neighbors_coords;
 }
 
 } // close namespace

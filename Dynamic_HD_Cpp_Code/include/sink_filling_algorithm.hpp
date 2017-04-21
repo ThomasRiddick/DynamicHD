@@ -30,8 +30,8 @@ public:
 					 bool = false);
 	void setup_fields(double*,bool*,bool*,grid_params*);
 	void fill_sinks();
-	void test_add_edge_cells_to_q() { add_edge_cells_to_q(); }
-	void test_add_true_sinks_to_q() { add_true_sinks_to_q(); }
+	void test_add_edge_cells_to_q(bool);
+	void test_add_true_sinks_to_q(bool);
 	priority_cell_queue get_q() {return q; }
 	virtual int get_method() = 0;
 	double tarasov_get_area_height() { return tarasov_area_height; }

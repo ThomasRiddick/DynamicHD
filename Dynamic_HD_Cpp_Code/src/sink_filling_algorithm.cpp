@@ -39,12 +39,18 @@ sink_filling_algorithm::sink_filling_algorithm(field<double>* orography,grid_par
 
 sink_filling_algorithm::~sink_filling_algorithm() {
 	delete orography; delete completed_cells; delete true_sinks;
+	delete _grid;
 	if (tarasov_mod) {
 		delete tarasov_path_initial_heights; delete tarasov_landsea_neighbors;
 		delete tarasov_active_true_sink; delete tarasov_path_lengths;
 		delete tarasov_maximum_separations_from_initial_edge;
 		delete tarasov_initial_edge_nums;
 		delete catchment_nums;
+		while (!q.empty()){
+			auto cell = q.top();
+			q.pop();
+			delete cell;
+		}
 	}
 }
 
@@ -375,15 +381,21 @@ void sink_filling_algorithm_latlon::add_geometric_edge_cells_to_q(){
 	for (auto i = 0; i < nlat; i++) {
 		if (tarasov_mod) {
 			if (landsea) {
-				push_left = ! (*landsea)(new latlon_coords(i,0));
-				push_right = ! (*landsea)(new latlon_coords(i,nlon-1));
+				auto left_coords = new latlon_coords(i,0);
+				auto right_coords = new latlon_coords(i,nlon-1);
+				push_left = ! (*landsea)(left_coords);
+				push_right = ! (*landsea)(right_coords);
+				delete left_coords; delete right_coords;
 			} else {
 				push_left 	= true;
 				push_right = true;
 			}
 		} else {
-			(*completed_cells)(new latlon_coords(i,0)) = true;
-			(*completed_cells)(new latlon_coords(i,nlon-1)) = true;
+			auto left_coords = new latlon_coords(i,0);
+			auto right_coords = new latlon_coords(i,nlon-1);
+			(*completed_cells)(left_coords) = true;
+			(*completed_cells)(right_coords) = true;
+			delete left_coords; delete right_coords;
 		}
 		push_vertical_edge(i,push_left,push_right);
 	}
@@ -392,15 +404,21 @@ void sink_filling_algorithm_latlon::add_geometric_edge_cells_to_q(){
 		bool push_bottom = true;
 		if (tarasov_mod) {
 			if (landsea) {
-				push_top = ! (*landsea)(new latlon_coords(0,j));
-				push_bottom = ! (*landsea)(new latlon_coords(nlat-1,j));
+				auto top_coords = new latlon_coords(0,j);
+				auto bottom_coords = new latlon_coords(nlat-1,j);
+				push_top = ! (*landsea)(top_coords);
+				push_bottom = ! (*landsea)(bottom_coords);
+				delete top_coords; delete bottom_coords;
 			} else {
 				push_top 	= true;
 				push_bottom = true;
 			}
 		} else {
-			(*completed_cells)(new latlon_coords(0,j)) = true;
-			(*completed_cells)(new latlon_coords(nlat-1,j)) = true;
+			auto top_coords = new latlon_coords(0,j);
+			auto bottom_coords = new latlon_coords(nlat-1,j);
+			(*completed_cells)(top_coords) = true;
+			(*completed_cells)(bottom_coords) = true;
+			delete top_coords; delete bottom_coords;
 		}
 		push_horizontal_edge(j,push_top,push_bottom);
 	}
@@ -425,6 +443,8 @@ void sink_filling_algorithm::add_true_sinks_to_q()
 					if(tarasov_mod) (*true_sinks)(coords_in) = false;
 					delete coords_in;
 				}
+			} else {
+				delete coords_in;
 			}
 	});
 }
@@ -475,26 +495,34 @@ void sink_filling_algorithm_1_latlon::push_vertical_edge(int i, bool push_left, 
 	if (tarasov_mod) {
 		int new_catchment_num = 0;
 		if (push_left) {
+			auto cell_coords = new latlon_coords(i,0);
 			new_catchment_num = q.get_next_k_value();
-			double cell_orog = (*orography)(new latlon_coords(i,0));
-			q.push(new cell(cell_orog,new latlon_coords(i,0),new_catchment_num,
-				   _grid->get_edge_number(new latlon_coords(i,0)),0,
+			double cell_orog = (*orography)(cell_coords);
+			q.push(new cell(cell_orog,cell_coords,new_catchment_num,
+				   _grid->get_edge_number(cell_coords),0,
 				   1.0,cell_orog));
-			(*catchment_nums)(new latlon_coords(i,0)) = new_catchment_num;
-			(*tarasov_path_initial_heights)(new latlon_coords(i,0)) = cell_orog;
+			(*catchment_nums)(cell_coords) = new_catchment_num;
+			(*tarasov_path_initial_heights)(cell_coords) = cell_orog;
 		}
 		if (push_right) {
+			auto cell_coords = new latlon_coords(i,nlon-1);
 			new_catchment_num = q.get_next_k_value();
-			double cell_orog = (*orography)(new latlon_coords(i,nlon-1));
-			q.push(new cell(cell_orog,new latlon_coords(i,nlon-1),new_catchment_num,
-					        _grid->get_edge_number(new latlon_coords(i,nlon-1)),0,
+			double cell_orog = (*orography)(cell_coords);
+			q.push(new cell(cell_orog,cell_coords,new_catchment_num,
+					        _grid->get_edge_number(cell_coords),0,
 							1.0,cell_orog));
-			(*catchment_nums)(new latlon_coords(i,nlon-1)) = new_catchment_num;
-			(*tarasov_path_initial_heights)(new latlon_coords(i,nlon-1)) = cell_orog;
+			(*catchment_nums)(cell_coords) = new_catchment_num;
+			(*tarasov_path_initial_heights)(cell_coords) = cell_orog;
 		}
 	} else {
-		if (push_left) q.push(new cell((*orography)(new latlon_coords(i,0)),new latlon_coords(i,0)));
-		if (push_right) q.push(new cell((*orography)(new latlon_coords(i,nlon-1)),new latlon_coords(i,nlon-1)));
+		if (push_left) {
+			auto cell_coords = new latlon_coords(i,0);
+			q.push(new cell((*orography)(cell_coords),cell_coords));
+		}
+		if (push_right) {
+			auto cell_coords = new latlon_coords(i,nlon-1);
+			q.push(new cell((*orography)(cell_coords),cell_coords));
+		}
 	}
 }
 
@@ -502,32 +530,34 @@ inline void sink_filling_algorithm_4_latlon::push_vertical_edge(int i, bool push
 {
 	int new_catchment_num = 0;
 	if (push_left) {
+		auto cell_coords = new latlon_coords(i,0);
 		new_catchment_num = q.get_next_k_value();
 		if (tarasov_mod) {
-			double cell_orog = (*orography)(new latlon_coords(i,0));
-			q.push(new cell(cell_orog,new latlon_coords(i,0),new_catchment_num,cell_orog,
-						    _grid->get_edge_number(new latlon_coords(i,0)),0,
+			double cell_orog = (*orography)(cell_coords);
+			q.push(new cell(cell_orog,cell_coords,new_catchment_num,cell_orog,
+						    _grid->get_edge_number(cell_coords),0,
 							1.0,cell_orog));
-			(*tarasov_path_initial_heights)(new latlon_coords(i,0)) = cell_orog;
+			(*tarasov_path_initial_heights)(cell_coords) = cell_orog;
 		}
-		else q.push(new cell((*orography)(new latlon_coords(i,0)),new latlon_coords(i,0),new_catchment_num,
-				             (*orography)(new latlon_coords(i,0))));
-		(*catchment_nums)(new latlon_coords(i,0)) = new_catchment_num;
-		(*rdirs)(new latlon_coords(i,0)) = 4;
+		else q.push(new cell((*orography)(cell_coords),cell_coords,new_catchment_num,
+				             (*orography)(cell_coords)));
+		(*catchment_nums)(cell_coords) = new_catchment_num;
+		(*rdirs)(cell_coords) = 4;
 	}
 	if (push_right) {
+		auto cell_coords = new latlon_coords(i,nlon-1);
 		new_catchment_num = q.get_next_k_value();
 		if (tarasov_mod) {
-			double cell_orog = (*orography)(new latlon_coords(i,nlon-1));
-			q.push(new cell(cell_orog,new latlon_coords(i,nlon-1),new_catchment_num,cell_orog,
-							_grid->get_edge_number(new latlon_coords(i,nlon-1)),0,
+			double cell_orog = (*orography)(cell_coords);
+			q.push(new cell(cell_orog,cell_coords,new_catchment_num,cell_orog,
+							_grid->get_edge_number(cell_coords),0,
 							1.0,cell_orog));
-			(*tarasov_path_initial_heights)(new latlon_coords(i,nlon-1)) = cell_orog;
+			(*tarasov_path_initial_heights)(cell_coords) = cell_orog;
 		}
-		else q.push(new cell((*orography)(new latlon_coords(i,nlon-1)),new latlon_coords(i,nlon-1),new_catchment_num,
-						     (*orography)(new latlon_coords(i,nlon-1))));
-		(*catchment_nums)(new latlon_coords(i,nlon-1)) = new_catchment_num;
-		(*rdirs)(new latlon_coords(i,nlon-1)) = 6;
+		else q.push(new cell((*orography)(cell_coords),cell_coords,new_catchment_num,
+						     (*orography)(cell_coords)));
+		(*catchment_nums)(cell_coords) = new_catchment_num;
+		(*rdirs)(cell_coords) = 6;
 	}
 }
 
@@ -536,26 +566,34 @@ inline void sink_filling_algorithm_1_latlon::push_horizontal_edge(int j, bool pu
 	if (tarasov_mod) {
 		int new_catchment_num = 0;
 		if(push_top) {
+			auto cell_coords = new latlon_coords(0,j);
 			new_catchment_num = q.get_next_k_value();
-			double cell_orog = (*orography)(new latlon_coords(0,j));
-			q.push(new cell(cell_orog,new latlon_coords(0,j),new_catchment_num,
-							_grid->get_edge_number(new latlon_coords(0,j)),0,
+			double cell_orog = (*orography)(cell_coords);
+			q.push(new cell(cell_orog,cell_coords,new_catchment_num,
+							_grid->get_edge_number(cell_coords),0,
 							1.0,cell_orog));
-			(*catchment_nums)(new latlon_coords(0,j)) = new_catchment_num;
-			(*tarasov_path_initial_heights)(new latlon_coords(0,j)) = cell_orog;
+			(*catchment_nums)(cell_coords) = new_catchment_num;
+			(*tarasov_path_initial_heights)(cell_coords) = cell_orog;
 		}
 		if(push_bottom) {
+			auto cell_coords = new latlon_coords(nlat-1,j);
 			new_catchment_num = q.get_next_k_value();
-			double cell_orog = (*orography)(new latlon_coords(nlat-1,j));
-			q.push(new cell(cell_orog,new latlon_coords(nlat-1,j),new_catchment_num,
-							_grid->get_edge_number(new latlon_coords(nlat-1,j)),0,
+			double cell_orog = (*orography)(cell_coords);
+			q.push(new cell(cell_orog,cell_coords,new_catchment_num,
+							_grid->get_edge_number(cell_coords),0,
 							1.0,cell_orog));
-			(*catchment_nums)(new latlon_coords(nlat-1,j)) = new_catchment_num;
-			(*tarasov_path_initial_heights)(new latlon_coords(nlat-1,j)) = cell_orog;
+			(*catchment_nums)(cell_coords) = new_catchment_num;
+			(*tarasov_path_initial_heights)(cell_coords) = cell_orog;
 		}
 	} else {
-		if (push_top) q.push(new cell((*orography)(new latlon_coords(0,j)),new latlon_coords(0,j)));
-		if (push_bottom) q.push(new cell((*orography)(new latlon_coords(nlat-1,j)),new latlon_coords(nlat-1,j)));
+		if (push_top) {
+			auto cell_coords = new latlon_coords(0,j);
+			q.push(new cell((*orography)(cell_coords),cell_coords));
+		}
+		if (push_bottom) {
+			auto cell_coords = new latlon_coords(nlat-1,j);
+			q.push(new cell((*orography)(cell_coords),cell_coords));
+		}
 	}
 }
 
@@ -563,32 +601,34 @@ inline void sink_filling_algorithm_4_latlon::push_horizontal_edge(int j, bool pu
 {
 	int new_catchment_num = 0;
 	if(push_top) {
+		auto cell_coords = new latlon_coords(0,j);
 		new_catchment_num = q.get_next_k_value();
 		if (tarasov_mod) {
-			double cell_orog = (*orography)(new latlon_coords(0,j));
-			q.push(new cell(cell_orog,new latlon_coords(0,j),new_catchment_num,cell_orog,
-						    _grid->get_edge_number(new latlon_coords(0,j)),0,
+			double cell_orog = (*orography)(cell_coords);
+			q.push(new cell(cell_orog,cell_coords,new_catchment_num,cell_orog,
+						    _grid->get_edge_number(cell_coords),0,
 							1.0,cell_orog));
-			(*tarasov_path_initial_heights)(new latlon_coords(0,j)) = cell_orog;
+			(*tarasov_path_initial_heights)(cell_coords) = cell_orog;
 		}
-		else q.push(new cell((*orography)(new latlon_coords(0,j)),new latlon_coords(0,j),new_catchment_num,
-							 (*orography)(new latlon_coords(0,j))));
-		(*catchment_nums)(new latlon_coords(0,j)) = new_catchment_num;
-		(*rdirs)(new latlon_coords(0,j)) = 8;
+		else q.push(new cell((*orography)(cell_coords),cell_coords,new_catchment_num,
+							 (*orography)(cell_coords)));
+		(*catchment_nums)(cell_coords) = new_catchment_num;
+		(*rdirs)(cell_coords) = 8;
 	}
 	if(push_bottom) {
+		auto cell_coords = new latlon_coords(nlat-1,j);
 		new_catchment_num = q.get_next_k_value();
 		if (tarasov_mod) {
-			double cell_orog = (*orography)(new latlon_coords(nlat-1,j));
-			q.push(new cell(cell_orog,new latlon_coords(nlat-1,j),new_catchment_num,cell_orog,
-							_grid->get_edge_number(new latlon_coords(nlat-1,j)),0,
+			double cell_orog = (*orography)(cell_coords);
+			q.push(new cell(cell_orog,cell_coords,new_catchment_num,cell_orog,
+							_grid->get_edge_number(cell_coords),0,
 							1.0,cell_orog));
-			(*tarasov_path_initial_heights)(new latlon_coords(nlat-1,j)) = cell_orog;
+			(*tarasov_path_initial_heights)(cell_coords) = cell_orog;
 		}
-		else q.push(new cell((*orography)(new latlon_coords(nlat-1,j)),new latlon_coords(nlat-1,j),new_catchment_num,
-							 (*orography)(new latlon_coords(nlat-1,j))));
-		(*catchment_nums)(new latlon_coords(nlat-1,j)) = new_catchment_num;
-		(*rdirs)(new latlon_coords(nlat-1,j)) = 2;
+		else q.push(new cell((*orography)(cell_coords),cell_coords,new_catchment_num,
+							 (*orography)(cell_coords)));
+		(*catchment_nums)(cell_coords) = new_catchment_num;
+		(*rdirs)(cell_coords) = 2;
 	}
 }
 
@@ -597,23 +637,34 @@ inline void sink_filling_algorithm_1::push_true_sink(coords* coords_in)
 	if (tarasov_mod) {
 		int new_catchment_num = q.get_next_k_value();
 		double cell_orog = (*orography)(coords_in);
-		q.push_true_sink(new cell(cell_orog,coords_in->clone(),
+		q.push_true_sink(new cell(cell_orog,coords_in,
 					     	 	  new_catchment_num,_grid->get_true_sink_edge_num(),
 								  0,1.0,cell_orog));
 		(*tarasov_path_initial_heights)(coords_in) = cell_orog;
 	}
-	else q.push_true_sink(new cell((*orography)(coords_in),coords_in->clone()));
+	else q.push_true_sink(new cell((*orography)(coords_in),coords_in));
 }
 
 inline void sink_filling_algorithm_4::push_true_sink(coords* coords_in)
 {
 	int new_catchment_num = q.get_next_k_value();
 	double cell_orog = (*orography)(coords_in);
-	if (tarasov_mod) q.push_true_sink(new cell(cell_orog,coords_in->clone(),new_catchment_num,
+	if (tarasov_mod) q.push_true_sink(new cell(cell_orog,coords_in,new_catchment_num,
 	  	     	 	 	 	 	 	  cell_orog,_grid->get_true_sink_edge_num(),
 									  0,1.0,cell_orog));
-	else q.push_true_sink(new cell(cell_orog,coords_in->clone(),new_catchment_num,
+	else q.push_true_sink(new cell(cell_orog,coords_in,new_catchment_num,
 							  	   cell_orog));
+}
+
+void sink_filling_algorithm::test_add_edge_cells_to_q(bool delete_ls_mask)
+{
+	add_edge_cells_to_q();
+	if(delete_ls_mask) delete landsea;
+}
+
+void sink_filling_algorithm::test_add_true_sinks_to_q(bool delete_ls_mask) {
+	add_true_sinks_to_q();
+	if(delete_ls_mask) delete landsea;
 }
 
 //Calculates the flow direction for cell add to the queue as out flow points for algorithm 4;
@@ -665,6 +716,7 @@ void sink_filling_algorithm_4::find_initial_cell_flow_direction(){
 	_grid->for_all_nbrs(nbr_coords,find_init_rdir_func);
 	set_index_based_rdirs(nbr_coords,destination_coords);
 	if (not index_based_rdirs_only) static_cast<sink_filling_algorithm_4_latlon*>(this)->set_dir_based_rdir(nbr_coords,direction);
+	if(destination_coords != nbr_coords) delete destination_coords;
 }
 
 inline void sink_filling_algorithm_1::process_true_sink_center_cell() {
@@ -979,7 +1031,12 @@ double sink_filling_algorithm_4_latlon::test_find_initial_cell_flow_direction(co
 	next_cell_lon_index = new field<int>(grid_params_in);
 	_grid = grid_factory(grid_params_in);
 	find_initial_cell_flow_direction();
-	return (*rdirs)(nbr_coords);
+	auto rdir = (*rdirs)(nbr_coords);
+	delete rdirs; rdirs = nullptr;
+	delete next_cell_lat_index; next_cell_lat_index = nullptr;
+	delete next_cell_lon_index; next_cell_lon_index = nullptr;
+	delete _grid; _grid = nullptr;
+	return rdir;
 }
 
 double sink_filling_algorithm_4_latlon::test_calculate_direction_from_neighbor_to_cell(coords* nbr_coords_in,
@@ -993,6 +1050,19 @@ double sink_filling_algorithm_4_latlon::test_calculate_direction_from_neighbor_t
 	next_cell_lat_index = new field<int>(grid_params_in);
 	next_cell_lon_index = new field<int>(grid_params_in);
 	_grid = grid_factory(grid_params_in);
-	calculate_direction_from_neighbor_to_cell();
-	return (*rdirs)(nbr_coords);
+	try {
+		calculate_direction_from_neighbor_to_cell();
+	} catch(runtime_error &err){
+		delete rdirs; rdirs = nullptr;
+		delete next_cell_lat_index; next_cell_lat_index = nullptr;
+		delete next_cell_lon_index; next_cell_lon_index = nullptr;
+		delete _grid; _grid = nullptr;
+		throw err;
+	}
+	auto rdir = (*rdirs)(nbr_coords);
+	delete rdirs; rdirs = nullptr;
+	delete next_cell_lat_index; next_cell_lat_index = nullptr;
+	delete next_cell_lon_index; next_cell_lon_index = nullptr;
+	delete _grid; _grid = nullptr;
+	return rdir;
 }

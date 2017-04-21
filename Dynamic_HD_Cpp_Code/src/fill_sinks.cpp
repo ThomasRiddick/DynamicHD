@@ -61,13 +61,14 @@ void latlon_fill_sinks(double* orography_in, int nlat, int nlon, int method,
 	cout << "Entering sink filling C++ code now" << endl;
 	const bool debug = false;
 	const bool tarasov_mod = false;
+	latlon_grid_params* grid_params = new latlon_grid_params(nlat,nlon);
 	switch(method){
 		case 1:
 			{
 				cout << "Using Algorithm 1" << endl;
 				auto alg1 = sink_filling_algorithm_1_latlon();
 				alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
-				alg1.setup_fields(orography_in,landsea_in,true_sinks_in,new latlon_grid_params(nlat,nlon));
+				alg1.setup_fields(orography_in,landsea_in,true_sinks_in,grid_params);
 				alg1.fill_sinks();
 			}
 			break;
@@ -78,7 +79,7 @@ void latlon_fill_sinks(double* orography_in, int nlat, int nlon, int method,
 				alg4.setup_flags(set_ls_as_no_data_flag,prefer_non_diagonal_initial_dirs,tarasov_mod,debug,
 								 index_based_rdirs_only_in);
 				alg4.setup_fields(orography_in,landsea_in,true_sinks_in,next_cell_lat_index_in,
-							      next_cell_lon_index_in,new latlon_grid_params(nlat,nlon),
+							      next_cell_lon_index_in,grid_params,
 								  rdirs_in,catchment_nums_in);
 				alg4.fill_sinks();
 			}
@@ -87,5 +88,5 @@ void latlon_fill_sinks(double* orography_in, int nlat, int nlon, int method,
 			cout << "Algorithm selected does not exist" << endl;
 			break;
 	}
-
+	delete grid_params;
 }

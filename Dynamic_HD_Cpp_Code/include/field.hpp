@@ -72,6 +72,8 @@ public:
 	void set_all(field_type);
 	//Overload the equality operator, defining equality as all corresponding entries in the two
 	//field being the same
+	//Delete array and replace with a nullptr; useful if you want to keep the field class object
+	//but delete the underlying data
 	bool operator== (const field<field_type>&) const;
 	//check if two field are almost equal to within a tolerance
 	bool almost_equal(const field<field_type>&, double = 1.0e-12) const;
@@ -128,8 +130,13 @@ vector<coords*>* field<field_type>::get_neighbors_coords(coords* coords_in, int 
 template <typename field_type>
 void field<field_type>::process_edge_cases_and_push_back(vector<coords*>* neighbors_coords,
 																   coords* coords_in){
-	if(_grid->outside_limits(coords_in)) return;
-	neighbors_coords->push_back(_grid->wrapped_coords(coords_in));
+	if(_grid->outside_limits(coords_in)) {
+		delete coords_in;
+		return;
+	}
+	auto wrapped_coords = _grid->wrapped_coords(coords_in);
+	neighbors_coords->push_back(wrapped_coords);
+	if (wrapped_coords != coords_in) delete coords_in;
 }
 
 //provides no check that the array on the right hand side is of the same size
