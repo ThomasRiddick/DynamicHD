@@ -19,6 +19,7 @@ def drive_connected_lsmask_creation(input_lsmask_filename,
                                     input_ls_seed_points_list_filename = None,
                                     use_diagonals_in=True,
                                     rotate_seeds_about_polar_axis=False,
+                                    flip_seeds_ud=False,
                                     flip_input_mask_ud=False,
                                     grid_type='HD',**grid_kwargs):
     """Drives the creation of a fully connected land-sea mask
@@ -39,6 +40,8 @@ def drive_connected_lsmask_creation(input_lsmask_filename,
     rotate_seeds_about_polar_axis:  if true then rotate the seeds about the polar axis by 180
         degrees, i.e. shift the position of the zero longitude by 180 degrees when reading the
         seed points
+    flip_seeds_upside_down: boolean; if true then flip the seeds upside down (i.e. about 
+                            the equator)
     grid_type: string; the code for this grid type
     **grid_kwargs:  dictionary; key word arguments specifying parameters of the grid
     Returns: Nothing
@@ -76,9 +79,13 @@ def drive_connected_lsmask_creation(input_lsmask_filename,
         input_ls_seedpts.flag_listed_points(points_list)
     if rotate_seeds_about_polar_axis:
         input_ls_seedpts.rotate_field_by_a_hundred_and_eighty_degrees()
+    if flip_seeds_ud:
+        input_ls_seedpts.flip_data_ud()
     lsmask.change_dtype(np.int32)
     cc_lsmask_wrapper.create_connected_ls_mask(lsmask.get_data(),
-                                               input_ls_seedpts.get_data(),
+                                               input_ls_seedpts.get_data().astype(dtype=np.int32,
+                                                                                  order='C',
+                                                                                  copy=False),
                                                use_diagonals_in)
     dynamic_hd.write_field(output_lsmask_filename,lsmask,
                            file_type=dynamic_hd.\

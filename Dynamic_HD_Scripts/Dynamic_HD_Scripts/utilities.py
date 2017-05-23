@@ -17,6 +17,80 @@ import cdo
 from context import fortran_source_path
 from Dynamic_HD_Scripts.field import makeField
 
+def replace_corrected_orography_with_original_for_glaciated_grid_points(input_corrected_orography,
+                                                                        input_original_orography,
+                                                                        input_glacier_mask):
+    input_corrected_orography.mask_field_with_external_mask(input_glacier_mask.get_data())
+    input_original_orography.update_field_with_partially_masked_data(input_corrected_orography)
+    return input_original_orography
+
+def replace_corrected_orography_with_original_for_glaciated_grid_points_drivers(input_corrected_orography_file,
+                                                                                input_original_orography_file,
+                                                                                input_glacier_mask_file,
+                                                                                out_orography_file,
+                                                                                grid_type='HD',**grid_kwargs):
+    input_corrected_orography = dynamic_hd.load_field(input_corrected_orography_file,
+                                                      file_type=dynamic_hd.\
+                                                      get_file_extension(input_corrected_orography_file),
+                                                      field_type='Orography',
+                                                      unmask=True,grid_type=grid_type,
+                                                      **grid_kwargs)
+    input_original_orography = dynamic_hd.load_field(input_original_orography_file,
+                                                     file_type=dynamic_hd.\
+                                                     get_file_extension(input_original_orography_file),
+                                                     field_type='Orography',
+                                                     unmask=True,grid_type=grid_type,
+                                                     **grid_kwargs)
+    input_glacier_mask = dynamic_hd.load_field(input_glacier_mask_file,
+                                               file_type=dynamic_hd.\
+                                               get_file_extension(input_glacier_mask_file),
+                                               fieldname='sftgif',
+                                               field_type='Orography',
+                                               unmask=True,grid_type=grid_type,
+                                               **grid_kwargs)
+    output_orography = replace_corrected_orography_with_original_for_glaciated_grid_points(input_corrected_orography, 
+                                                                                           input_original_orography, 
+                                                                                           input_glacier_mask)
+    dynamic_hd.write_field(filename=out_orography_file,
+                           field=output_orography,
+                           file_type=dynamic_hd.\
+                           get_file_extension(out_orography_file))
+
+def merge_corrected_and_tarasov_upscaled_orography(input_corrected_orography_file,
+                                                   input_tarasov_upscaled_orography_file,
+                                                   output_merged_orography_file,
+                                                   use_upscaled_orogrography_only_in_region=None,
+                                                   grid_type='HD',**grid_kwargs):
+    corrected_orography_field = dynamic_hd.load_field(input_corrected_orography_file,
+                                                      file_type=dynamic_hd.get_file_extension(input_corrected_orography_file),
+                                                      field_type='Orography',
+                                                      unmask=True,grid_type=grid_type,
+                                                      **grid_kwargs)
+    tarasov_upscaled_orography_field = dynamic_hd.load_field(input_tarasov_upscaled_orography_file,
+                                                             file_type=dynamic_hd.get_file_extension(input_corrected_orography_file),
+                                                             field_type='Orography',
+                                                             unmask=True,grid_type=grid_type,
+                                                             **grid_kwargs)
+    corrected_orography_field.mask_where_greater_than(tarasov_upscaled_orography_field)
+    tarasov_upscaled_orography_field.update_field_with_partially_masked_data(corrected_orography_field)
+    if use_upscaled_orogrography_only_in_region is not None:
+        _grid = grid.makeGrid(grid_type)
+        not_in_region_mask = np.zeros(_grid.get_grid_dimensions(),dtype=np.bool_)
+        if use_upscaled_orogrography_only_in_region == "North America":
+            if grid_type == 'LatLong10min': 
+                not_in_region_mask[620:1080,1296:1925] = True
+                not_in_region_mask[572:620, 1296:1682] = True 
+            else:
+                raise RuntimeError('Not definition for specified region on specified grid type')
+        else:
+            raise RuntimeError("Specified region not recognised by merging orographies")
+        corrected_orography_field.mask_field_with_external_mask(not_in_region_mask)
+        tarasov_upscaled_orography_field.update_field_with_partially_masked_data(corrected_orography_field)
+    dynamic_hd.write_field(output_merged_orography_file,
+                           tarasov_upscaled_orography_field,
+                           file_type=dynamic_hd.get_file_extension(output_merged_orography_file),
+                           griddescfile=None)
+
 def prepare_hdrestart_field(input_field,resnum_riv_field,ref_resnum_field,is_river_res_field=True):
     """Create a hd restart reservoir content field by adapting an existing hd restart field
     

@@ -49,6 +49,8 @@ void latlon_fill_sinks_cython_interface(double* orography_in, int nlat, int nlon
 	latlon_fill_sinks(orography_in, nlat, nlon, method, landsea_in, bool(set_ls_as_no_data_flag),
 			   	   	  true_sinks_in,bool(add_slope),epsilon,next_cell_lat_index_in,next_cell_lon_index_in,
 					  rdirs_in,catchment_nums_in,bool(prefer_non_diagonal_initial_dirs));
+	if (landsea_in) delete landsea_in;
+	if (true_sinks_in) delete true_sinks_in;
 }
 
 void latlon_fill_sinks(double* orography_in, int nlat, int nlon, int method,

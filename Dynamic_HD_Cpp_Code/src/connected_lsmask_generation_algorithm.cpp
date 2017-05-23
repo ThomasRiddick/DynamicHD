@@ -30,6 +30,7 @@ create_connected_landsea_mask::~create_connected_landsea_mask()
 	delete landsea;
 	delete ls_seed_points;
 	delete completed_cells;
+	delete _grid;
 }
 
 void create_connected_landsea_mask::generate_connected_mask()

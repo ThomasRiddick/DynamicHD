@@ -17,10 +17,31 @@ def find_catchment_numbers(ref_catchment_field,data_catchment_field,
                            data_catchment_field_original_scale,
                            data_original_scale_flowtocellfield,pair,
                            catchment_grid_changed,swap_ref_and_data_when_finding_labels=False,
+                           use_original_scale_field_for_determining_data_and_ref_labels=False,
+                           ref_original_scale_flowtocellfield=None,
+                           ref_catchment_field_original_scale=None,
                            data_original_scale_grid_type='HD',
-                           data_original_scale_grid_kwargs={},grid_type='HD',**grid_kwargs):
+                           ref_original_scale_grid_type='HD',
+                           data_original_scale_grid_kwargs={},
+                           ref_original_scale_grid_kwargs={},
+                           grid_type='HD',**grid_kwargs):
     """Find the catchment number of a reference and a data catchment"""
-    if swap_ref_and_data_when_finding_labels:
+    if use_original_scale_field_for_determining_data_and_ref_labels:
+        ref_course_coords=pair[0].get_coords()
+        ref_catchment_num =\
+            pts.find_data_catchment_number(ref_catchment_field,
+                                           ref_catchment_field_original_scale,
+                                           ref_original_scale_flowtocellfield,ref_course_coords,
+                                           catchment_grid_changed,ref_original_scale_grid_type,
+                                           ref_original_scale_grid_kwargs,grid_type,**grid_kwargs)[0]   
+        data_course_coords=pair[1].get_coords()
+        data_catchment_num,scale_factor =\
+            pts.find_data_catchment_number(data_catchment_field,
+                                           data_catchment_field_original_scale,
+                                           data_original_scale_flowtocellfield,data_course_coords,
+                                           catchment_grid_changed,data_original_scale_grid_type,
+                                           data_original_scale_grid_kwargs,grid_type,**grid_kwargs)
+    elif swap_ref_and_data_when_finding_labels:
         data_catchment_num = data_catchment_field[pair[0].get_coords()]
         ref_course_coords=pair[1].get_coords()
         ref_catchment_num,scale_factor =\
@@ -185,8 +206,15 @@ def plot_catchment_and_histogram_for_river(ax_hist,ax_catch,ref_catchment_field,
                                            alternative_catchment_bounds=None,
                                            use_simplified_catchment_colorscheme=False,
                                            use_upscaling_labels=False,
+                                           ref_original_scale_flowtocellfield=None,
+                                           ref_catchment_field_original_scale=None,
+                                           allow_new_sink_points=False,
+                                           use_original_scale_field_for_determining_data_and_ref_labels=False,
+                                           external_landsea_mask = None,
                                            data_original_scale_grid_type='HD',
+                                           ref_original_scale_grid_type='HD',
                                            data_original_scale_grid_kwargs={},
+                                           ref_original_scale_grid_kwargs={},
                                            **grid_kwargs):
     points_to_mark = [pair[0].get_coords(),pair[1].get_coords()]
     indices = np.arange(2)
@@ -207,8 +235,16 @@ def plot_catchment_and_histogram_for_river(ax_hist,ax_catch,ref_catchment_field,
                                                                                catchment_grid_changed,
                                                                                swap_ref_and_data_when_finding_labels=\
                                                                                swap_ref_and_data_when_finding_labels,
+                                                                               use_original_scale_field_for_determining_data_and_ref_labels=\
+                                                                               use_original_scale_field_for_determining_data_and_ref_labels,
+                                                                               ref_original_scale_flowtocellfield=\
+                                                                               ref_original_scale_flowtocellfield,
+                                                                               ref_catchment_field_original_scale=\
+                                                                               ref_catchment_field_original_scale,
                                                                                data_original_scale_grid_type=data_original_scale_grid_type,
                                                                                data_original_scale_grid_kwargs=data_original_scale_grid_kwargs,
+                                                                               ref_original_scale_grid_type=ref_original_scale_grid_type,
+                                                                               ref_original_scale_grid_kwargs=ref_original_scale_grid_kwargs,
                                                                                grid_type=grid_type,**grid_kwargs)
     catchment_section,catchment_bounds = select_catchment(ref_catchment_field,
                                                           data_catchment_field,
@@ -217,11 +253,12 @@ def plot_catchment_and_histogram_for_river(ax_hist,ax_catch,ref_catchment_field,
                                                           data_catchment_num,
                                                           points_to_mark,
                                                           data_true_sinks=data_rdirs_field,
-                                                          allow_new_sink_points=False,
+                                                          allow_new_sink_points=allow_new_sink_points,
                                                           alternative_catchment_bounds=\
                                                           alternative_catchment_bounds,
                                                           use_simplified_catchment_colorscheme=\
-                                                          use_simplified_catchment_colorscheme)
+                                                          use_simplified_catchment_colorscheme,
+                                                          external_landsea_mask=external_landsea_mask)
     plot_catchment(ax_catch,catchment_section,colors,
                    lat_offset=catchment_bounds[0],
                    lon_offset=catchment_bounds[2],
@@ -281,7 +318,8 @@ def select_catchment(ref_catchment_field,data_catchment_field,
                      data_true_sinks=None,
                      allow_new_sink_points=False,
                      alternative_catchment_bounds=None,
-                     use_simplified_catchment_colorscheme=False):
+                     use_simplified_catchment_colorscheme=False,
+                     external_landsea_mask=None):
     """Prepare a catchment field that combines both the reference and data catchments"""
     catchment_field = np.copy(ref_catchment_field)
     catchment_field[np.logical_and(data_catchment_field == data_catchment_num,
@@ -292,7 +330,10 @@ def select_catchment(ref_catchment_field,data_catchment_field,
                                    ref_catchment_field == ref_catchment_num)] = 2
     catchment_field[np.logical_and(data_catchment_field != data_catchment_num,
                                    ref_catchment_field != ref_catchment_num)] = 1
-    catchment_field[rdirs_field <= 0] = 0
+    if external_landsea_mask is None:
+        catchment_field[rdirs_field <= 0] = 0
+    else:
+        catchment_field[external_landsea_mask == 1] = 0
     if not use_simplified_catchment_colorscheme:
         catchment_field[rdirs_field == 5] = 7
     if not use_simplified_catchment_colorscheme:
@@ -356,7 +397,9 @@ def simple_catchment_and_flowmap_plots(fig,ref_ax,data_ax,ref_catchment_field,da
                                        catchment_bounds,flowtocell_threshold,
                                        catchment_grid_changed,colors,grid_type,
                                        data_original_scale_grid_type,data_original_scale_grid_kwargs={},
-                                       **grid_kwargs):
+                                       external_ls_mask=None,**grid_kwargs):
+    if external_ls_mask is not None:
+        external_ls_mask = np.logical_not(external_ls_mask.astype(np.bool_)).astype(type(external_ls_mask))
     fig.suptitle('River catchment plus cells with a cumulative flow greater than {0}'.format(flowtocell_threshold))
     ref_ax.set_title('Reference')
     data_ax.set_title('Data')
@@ -373,7 +416,9 @@ def simple_catchment_and_flowmap_plots(fig,ref_ax,data_ax,ref_catchment_field,da
     simple_catchment_and_flowmap_plot_object_ref = SimpleCatchmentAndFlowMapPlt(catchment_field=\
                                                                                 ref_catchment_field,
                                                                                 catchment_field_for_lsmask=\
-                                                                                data_catchment_field,
+                                                                                data_catchment_field if \
+                                                                                external_ls_mask is None else
+                                                                                external_ls_mask,
                                                                                 flowtocell=ref_flowtocellfield,
                                                                                 catchment_bounds=\
                                                                                 catchment_bounds,
@@ -386,7 +431,9 @@ def simple_catchment_and_flowmap_plots(fig,ref_ax,data_ax,ref_catchment_field,da
     simple_catchment_and_flowmap_plot_object_data = SimpleCatchmentAndFlowMapPlt(catchment_field=\
                                                                                  data_catchment_field,
                                                                                  catchment_field_for_lsmask=\
-                                                                                 data_catchment_field,
+                                                                                 data_catchment_field if\
+                                                                                 external_ls_mask is None else
+                                                                                 external_ls_mask,
                                                                                  flowtocell=data_flowtocellfield,
                                                                                  catchment_bounds=\
                                                                                  catchment_bounds,

@@ -18,7 +18,9 @@ class Params(object):
         {'default':self.init_default_params,
          'testing':self.init_testing_params,
          'area':self.init_area_params,
-         'extensive':self.init_extensive_params}[paramset]()
+         'extensive':self.init_extensive_params,
+         'area_extensive':self.init_area_extensive_params,
+         'magnitude_extensive':self.init_magnitdue_extensive}[paramset]()
        
     def init_default_params(self): 
         self.max_complexity = 15
@@ -56,6 +58,15 @@ class Params(object):
         self.minflow = 200
         self.range = 5
         self.magnitude_tolerance_factor = 5  
+        
+    def init_area_extensive_params(self):
+        self.init_area_params(),
+        self.range = 10
+        self.minflow= 80
+    
+    def init_magnitdue_extensive(self):
+        self.init_default_params()
+        self.minflow = 100
 
 class RiverMouth(object):
     
@@ -339,6 +350,66 @@ def load_additional_manual_matches(additional_matches_filename,reference_rmouth_
             params = Params('default')
             ref_mouth = RiverMouth(ref_lat,ref_lon,reference_field.get_data()[ref_lat,ref_lon],0,params)
             data_mouth = RiverMouth(data_lat,data_lon,data_field.get_data()[data_lat,data_lon],0,params)
+            additional_matches.append((ref_mouth,data_mouth))
+    return additional_matches
+
+def load_additional_manual_truesink_matches(additional_matches_filename,reference_rmouth_outflows_filename,
+                                            data_rmouth_outflows_filename,reference_flowmap_field_filename,
+                                            data_flowmap_field_filename,flip_data_rmouth_outflow_field=False,
+                                            rotate_data_rmouth_outflow_field=False,
+                                            flip_data_flowmap_field=False,rotate_data_flowmap_field=False,
+                                            grid_type="HD",**grid_kwargs):
+    """Any any additional matches involving true sinks by hand using details in list in a text file
+    
+    Includes both matches between a river and truesink, a truesink and a river and a true sink and a true sink.
+    True sinks are ready from the cumulative flow to cell field and are not verified.
+    """
+    reference_rmouth_field = dynamic_hd.load_field(reference_rmouth_outflows_filename, 
+                                                   file_type = dynamic_hd.\
+                                                   get_file_extension(reference_rmouth_outflows_filename), 
+                                                   field_type='Generic', 
+                                                   grid_type=grid_type,**grid_kwargs)
+    data_rmouth_field = dynamic_hd.load_field(data_rmouth_outflows_filename, 
+                                              file_type = dynamic_hd.\
+                                              get_file_extension(data_rmouth_outflows_filename), 
+                                              field_type='Generic', 
+                                              grid_type=grid_type,**grid_kwargs)
+    reference_flowmap_field = dynamic_hd.load_field(reference_flowmap_field_filename, 
+                                                    file_type = dynamic_hd.\
+                                                    get_file_extension(reference_flowmap_field_filename), 
+                                                    field_type='Generic', 
+                                                    grid_type=grid_type,**grid_kwargs)
+    data_flowmap_field = dynamic_hd.load_field(data_flowmap_field_filename, 
+                                               file_type = dynamic_hd.\
+                                               get_file_extension(data_flowmap_field_filename), 
+                                               field_type='Generic', 
+                                               grid_type=grid_type,**grid_kwargs)
+    if flip_data_rmouth_outflow_field:
+        data_rmouth_field.flip_data_ud()
+    if rotate_data_rmouth_outflow_field:
+        data_rmouth_field.rotate_field_by_a_hundred_and_eighty_degrees()
+    if flip_data_flowmap_field:
+        data_flowmap_field.flip_data_ud()
+    if rotate_data_flowmap_field:
+        data_flowmap_field.rotate_field_by_a_hundred_and_eighty_degrees()
+    first_line_pattern = re.compile(r"^ref_lat *, *ref_lon *, *ref_type *, *data_lat *, *data_lon *, *data_type *$")
+    comment_line_pattern = re.compile(r"^ *#.*$")
+    additional_matches = []
+    with open(additional_matches_filename) as f:
+        if not first_line_pattern.match(f.readline().strip()):
+            raise RuntimeError("List of corrections being loaded has incorrect format the first line")
+        for line in f:
+            if comment_line_pattern.match(line):
+                continue
+            ref_lat,ref_lon,ref_type,data_lat,data_lon,data_type = line.strip().split(",")
+            ref_lat,ref_lon,data_lat,data_lon=[int(coords) for coords in [ref_lat,ref_lon,data_lat,data_lon]]
+            params = Params('default')
+            outflow_types={"RM":{"ref":reference_rmouth_field,"data":data_rmouth_field},
+                           "TS":{"ref":reference_flowmap_field,"data":data_flowmap_field}}
+            ref_mouth = RiverMouth(ref_lat,ref_lon,
+                                   outflow_types[ref_type]["ref"].get_data()[ref_lat,ref_lon],0,params)
+            data_mouth = RiverMouth(data_lat,data_lon,
+                                    outflow_types[data_type]["data"].get_data()[data_lat,data_lon],0,params)
             additional_matches.append((ref_mouth,data_mouth))
     return additional_matches
     

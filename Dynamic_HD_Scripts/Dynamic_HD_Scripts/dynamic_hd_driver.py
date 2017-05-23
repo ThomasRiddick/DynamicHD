@@ -13,6 +13,7 @@ from matplotlib.compat.subprocess import CalledProcessError
 import flow_to_grid_cell 
 import compute_catchments
 import fill_sinks_driver
+import upscale_orography_driver
 import utilities
 import grid
 import river_mouth_marking_driver
@@ -62,10 +63,13 @@ class Dynamic_HD_Drivers(object):
         js_bach_restart_file_path_extension = 'jsbachrestartfiles'
         paragen_code_copies_path_extension = 'paragencopies'
         cotat_plus_parameters_path_extension = path.join(parameter_path_extension,'cotat_plus')
+        orography_upscaling_parameters_path_extension = path.join(parameter_path_extension,
+                                                                  'orography_upscaling')
         self.base_RFD_filepath = path.join(data_dir,rdirs_path_extension,
                                            base_RFD_filename)
         self.orography_path = path.join(data_dir,orog_path_extension)
         self.upscaled_orography_filepath = path.join(self.orography_path,'upscaled','upscaled_orog_')
+        self.tarasov_upscaled_orography_filepath = path.join(self.orography_path,'tarasov_upscaled','upscaled_orog_')
         self.generated_orography_filepath = path.join(self.orography_path,'generated','updated_orog_')
         self.corrected_orography_filepath = path.join(self.orography_path,'generated','corrected',
                                                       'corrected_orog_')
@@ -115,6 +119,10 @@ class Dynamic_HD_Drivers(object):
                                                     cotat_plus_parameters_path_extension)
         self.copied_cotat_plus_parameters_path = path.join(self.cotat_plus_parameters_path,
                                                            'copies','cotat_plus_params_')
+        self.orography_upscaling_parameters_path = path.join(data_dir,
+                                                             orography_upscaling_parameters_path_extension)
+        self.copied_orography_upscaling_parameters_path = path.join(self.orography_upscaling_parameters_path,
+                                                                    'copies','orography_upscaling_params_')
         self.orography_corrections_fields_path = path.join(data_dir,
                                                            orography_corrections_fields_path_extension)
         self.generated_orography_corrections_fields_path = path.join(self.orography_corrections_fields_path,
@@ -520,6 +528,47 @@ class Dynamic_HD_Drivers(object):
                                                        fine_grid_kwargs=super_fine_grid_kwargs,
                                                        **grid_kwargs)
         
+    def _run_orography_upscaling(self,input_fine_orography_file,output_course_orography_file,
+                                 output_file_label,landsea_file=None,true_sinks_file=None,
+                                 upscaling_parameters_filename=None,
+                                 fine_grid_type='LatLong10min',course_grid_type='HD',
+                                 input_orography_field_name=None,flip_landsea=False,
+                                 rotate_landsea=False,flip_true_sinks=False,rotate_true_sinks=False,
+                                 fine_grid_kwargs={},**course_grid_kwargs):
+        """Drive the C++ sink filling code base to make a tarasov-like orography upscaling
+        
+        Arguments:
+        input_fine_orography_file: string; full path to input fine orography file
+        output_course_orography_file: string; full path of target output course orography file
+        output_file_label: string; label to use for copy of the parameters file that is made
+        landsea_file: string; full path to input fine landsea mask file (optional)
+        true_sinks_file: string; full path to input fine true sinks file (optional)
+        upscaling_parameters_filename: string; full path to the orography upscaling parameter 
+            file (optional)    
+        fine_grid_type: string; code for the fine grid type to be upscaled from  (optional)
+        course_grid_type: string; code for the course grid type to be upscaled to (optional)
+        input_orography_field_name: string; name of field in the input orography file (optional)
+        flip_landsea: bool; flip the input landsea mask upside down
+        rotate_landsea: bool; rotate the input landsea mask by 180 degrees along the horizontal axis
+        flip_true_sinks: bool; flip the input true sinks field upside down
+        rotate_true_sinks: bool; rotate the input true sinks field by 180 degrees along the 
+            horizontal axis
+        fine_grid_kwargs:  keyword dictionary; the parameter of the fine grid to upscale 
+            from (if required)
+        **course_grid_kwargs: keyword dictionary; the parameters of the course grid to upscale 
+            to (if required)
+        Returns: Nothing.
+        """
+        shutil.copy2(upscaling_parameters_filename,self.copied_orography_upscaling_parameters_path
+                     + output_file_label + '.cfg')
+        upscale_orography_driver.drive_orography_upscaling(input_fine_orography_file,output_course_orography_file,
+                                                           landsea_file,true_sinks_file,
+                                                           upscaling_parameters_filename,
+                                                           fine_grid_type,course_grid_type,
+                                                           input_orography_field_name,flip_landsea,
+                                                           rotate_landsea,flip_true_sinks,rotate_true_sinks,
+                                                           fine_grid_kwargs,**course_grid_kwargs)
+        
     def _run_cotat_plus_upscaling(self,input_fine_rdirs_filename,input_fine_cumulative_flow_filename,
                                   cotat_plus_parameters_filename,output_course_rdirs_filename,
                                   output_file_label,fine_grid_type,fine_grid_kwargs={},
@@ -651,7 +700,8 @@ class Utilities_Drivers(Dynamic_HD_Drivers):
     def recreate_connected_HD_lsmask_from_glcc_olson_data(self):
         """Regenerate a connected version of the landsea mask extracted from upscaled glcc olson data"""
         file_label = self._generate_file_label()
-        hd_lsmask_seed_points = path.join(self.ls_seed_points_path,'lsseedpoints_HD_160530_0001900.txt')
+        hd_lsmask_seed_points = path.join(self.ls_seed_points_path,'lsseedpoints_HD_true_seas_inc'
+                                                                   '_casp_only_160718_105600.txt')
         cc_lsmask_driver.drive_connected_lsmask_creation(input_lsmask_filename=\
                                                          path.join(self.ls_masks_path,
                                                          "glcc_olson_land_cover_data",
@@ -665,6 +715,26 @@ class Utilities_Drivers(Dynamic_HD_Drivers):
                                                             hd_lsmask_seed_points, 
                                                          flip_input_mask_ud=True,
                                                          use_diagonals_in=True, grid_type='HD')
+        
+    def recreate_connected_10min_lsmask_from_glcc_olson_data(self):
+        """Regenerate a connected version of the landsea mask extracted from upscaled glcc olson data"""
+        file_label = self._generate_file_label()
+        _10min_lsmask_seed_points = path.join(self.ls_seed_points_path,'lsseedpoints_downscale_HD_ls_seed_points_to_'
+                                                                   '10min_lat_lon_true_seas_inc_casp_only_20160718_114402.txt')
+        cc_lsmask_driver.drive_connected_lsmask_creation(input_lsmask_filename=\
+                                                         path.join(self.ls_masks_path,
+                                                         "glcc_olson_land_cover_data",
+                                                         "glcc_olson-2.0_lsmask_with_bacseas_upscaled_10min.nc"),
+                                                         output_lsmask_filename=\
+                                                            self.generated_ls_mask_filepath +
+                                                            file_label + '.nc',
+                                                         rotate_seeds_about_polar_axis=True,
+                                                         flip_seeds_ud=True,
+                                                         input_ls_seed_points_filename=None, 
+                                                         input_ls_seed_points_list_filename=\
+                                                            _10min_lsmask_seed_points, 
+                                                         flip_input_mask_ud=True,
+                                                         use_diagonals_in=True, grid_type='LatLong10min')
         
     def recreate_connected_HD_lsmask_true_seas_inc_casp_only(self):
         """Recreate a connected version of the landsea mask of the original river directions with only Caspian included
@@ -752,6 +822,168 @@ class Utilities_Drivers(Dynamic_HD_Drivers):
                                                        nlon_fine=2160, 
                                                        input_grid_type='HD', 
                                                        output_grid_type='LatLong10min')
+        
+    def upscale_srtm30_plus_orog_to_10min(self):
+        """Upscale a srtm30plus orography to a 10 minute orography"""
+        file_label = self._generate_file_label()
+        orography_upscaling_parameters_file = path.join(self.orography_upscaling_parameters_path,
+                                                        "default_orography_upscaling_"
+                                                        "params_for_fac_20.cfg")
+        input_srtm30_orography = path.join(self.orography_path,"srtm30plus_v6.nc") 
+        input_30sec_landsea_mask = path.join(self.ls_masks_path,"glcc_olson_land_cover_data",
+                                             "glcc_olson-2.0_lsmask_with_bacseas.nc")
+        output_course_orography_file = self.tarasov_upscaled_orography_filepath + file_label + '.nc'
+        self._run_orography_upscaling(input_srtm30_orography,
+                                      output_course_orography_file,
+                                      output_file_label=file_label,
+                                      landsea_file=input_30sec_landsea_mask,
+                                      true_sinks_file=None,
+                                      upscaling_parameters_filename=\
+                                      orography_upscaling_parameters_file,
+                                      fine_grid_type="LatLong30sec", 
+                                      course_grid_type="LatLong10min")
+        
+    def upscale_srtm30_plus_orog_to_10min_no_lsmask(self):
+        """Upscale a srtm30plus orography to a 10 minute orography without using land sea mask"""
+        file_label = self._generate_file_label()
+        orography_upscaling_parameters_file = path.join(self.orography_upscaling_parameters_path,
+                                                        "default_orography_upscaling_"
+                                                        "params_for_fac_20.cfg")
+        input_srtm30_orography = path.join(self.orography_path,"srtm30plus_v6.nc") 
+        output_course_orography_file = self.tarasov_upscaled_orography_filepath + file_label + '.nc'
+        self._run_orography_upscaling(input_srtm30_orography,
+                                      output_course_orography_file,
+                                      output_file_label=file_label,
+                                      landsea_file=None,
+                                      true_sinks_file=None,
+                                      upscaling_parameters_filename=\
+                                      orography_upscaling_parameters_file,
+                                      fine_grid_type="LatLong30sec", 
+                                      course_grid_type="LatLong10min")
+        
+    def upscale_srtm30_plus_orog_to_10min_no_lsmask_tarasov_style_params(self):
+        """Upscale a srtm30plus orography to a 10 minute orography without using land sea mask"""
+        file_label = self._generate_file_label()
+        orography_upscaling_parameters_file = path.join(self.orography_upscaling_parameters_path,
+                                                        "tarasov_style_params_orography_upscaling_"
+                                                        "params_for_fac_20.cfg")
+        input_srtm30_orography = path.join(self.orography_path,"srtm30plus_v6.nc") 
+        output_course_orography_file = self.tarasov_upscaled_orography_filepath + file_label + '.nc'
+        self._run_orography_upscaling(input_srtm30_orography,
+                                      output_course_orography_file,
+                                      output_file_label=file_label,
+                                      landsea_file=None,
+                                      true_sinks_file=None,
+                                      upscaling_parameters_filename=\
+                                      orography_upscaling_parameters_file,
+                                      fine_grid_type="LatLong30sec", 
+                                      course_grid_type="LatLong10min")
+        
+        
+    def upscale_srtm30_plus_orog_to_10min_no_lsmask_half_cell_upscaling_params(self):
+        """Upscale a srtm30plus orography to a 10 minute orography without using land sea mask"""
+        file_label = self._generate_file_label()
+        orography_upscaling_parameters_file = path.join(self.orography_upscaling_parameters_path,
+                                                        "half_cell_min_upscaling_params"
+                                                        "_for_fac_20.cfg")
+        input_srtm30_orography = path.join(self.orography_path,"srtm30plus_v6.nc") 
+        output_course_orography_file = self.tarasov_upscaled_orography_filepath + file_label + '.nc'
+        self._run_orography_upscaling(input_srtm30_orography,
+                                      output_course_orography_file,
+                                      output_file_label=file_label,
+                                      landsea_file=None,
+                                      true_sinks_file=None,
+                                      upscaling_parameters_filename=\
+                                      orography_upscaling_parameters_file,
+                                      fine_grid_type="LatLong30sec", 
+                                      course_grid_type="LatLong10min")
+        
+        
+    def upscale_srtm30_plus_orog_to_10min_no_lsmask_reduced_back_looping(self):
+        """Upscale a srtm30plus orography to a 10 minute orography without using land sea mask"""
+        file_label = self._generate_file_label()
+        orography_upscaling_parameters_file = path.join(self.orography_upscaling_parameters_path,
+                                                        "reduced_back_looping_orography_upscaling"
+                                                        "_params_for_fac_20.cfg")
+        input_srtm30_orography = path.join(self.orography_path,"srtm30plus_v6.nc") 
+        output_course_orography_file = self.tarasov_upscaled_orography_filepath + file_label + '.nc'
+        self._run_orography_upscaling(input_srtm30_orography,
+                                      output_course_orography_file,
+                                      output_file_label=file_label,
+                                      landsea_file=None,
+                                      true_sinks_file=None,
+                                      upscaling_parameters_filename=\
+                                      orography_upscaling_parameters_file,
+                                      fine_grid_type="LatLong30sec", 
+                                      course_grid_type="LatLong10min")
+        
+    def upscale_1min_orography_to_30min(self):
+        """Upscale the ETOPO 1min orography to a 30 minute orography"""
+        file_label = self._generate_file_label()
+        orography_upscaling_parameters_file = path.join(self.orography_upscaling_parameters_path,
+                                                        "default_orography_upscaling_"
+                                                        "params_for_fac_30.cfg")
+        input_orography = path.join(self.orography_path,"ETOPO1_Ice_c_gmt4.nc") 
+        output_course_orography_file = self.tarasov_upscaled_orography_filepath + file_label + '.nc'
+        self._run_orography_upscaling(input_orography,
+                                      output_course_orography_file,
+                                      output_file_label=file_label,
+                                      landsea_file=None,
+                                      true_sinks_file=None,
+                                      upscaling_parameters_filename=\
+                                      orography_upscaling_parameters_file,
+                                      fine_grid_type="LatLong1min", 
+                                      course_grid_type="HD")
+        
+    def downscale_ICE6G_21k_landsea_mask_and_remove_disconnected_points(self):
+        """Downscale a 1 degree ICE6G landsea mask"""
+        file_label = self._generate_file_label()
+        ice6g_land_sea_mask_file = path.join(self.orography_path,"ice6g_VM5a_1deg_21_0k.nc")
+        present_day_10min_mask_file = path.join(self.ls_masks_path,"glcc_olson_land_cover_data",
+                                                "glcc_olson-2.0_lsmask_with_bacseas_upscaled_10min.nc")
+        intermediary_land_sea_mask_file = (self.generated_ls_mask_filepath + 
+                                           "intermediary_" + file_label + '.nc')
+        second_intermediary_land_sea_mask_file = (self.generated_ls_mask_filepath + 
+                                                  "2nd_intermediary_" + file_label + '.nc')
+        third_intermediary_land_sea_mask_file = (self.generated_ls_mask_filepath + 
+                                                 "3rd_intermediary_" + file_label + '.nc')
+        landsea_mask = dynamic_hd.load_field(filename=ice6g_land_sea_mask_file,
+                                             file_type=".nc",field_type="Generic",
+                                             fieldname="sftlf", grid_type="LatLong1deg")
+        landsea_mask.convert_to_binary_mask()
+        landsea_mask.invert_data()
+        dynamic_hd.write_field(filename=intermediary_land_sea_mask_file,
+                               field=landsea_mask,file_type=".nc")
+        utilities.downscale_ls_mask_driver(input_course_ls_mask_filename=intermediary_land_sea_mask_file,
+                                           output_fine_ls_mask_filename=\
+                                           second_intermediary_land_sea_mask_file,
+                                           input_flipud=False,
+                                           input_rotate180lr=False,
+                                           course_grid_type='LatLong1deg',
+                                           fine_grid_type='LatLong10min')
+        cc_lsmask_driver.drive_connected_lsmask_creation(input_lsmask_filename=\
+                                                         second_intermediary_land_sea_mask_file, 
+                                                         output_lsmask_filename=\
+                                                         third_intermediary_land_sea_mask_file,
+                                                         input_ls_seed_points_filename=None, 
+                                                         input_ls_seed_points_list_filename=\
+                                                         path.join(self.ls_seed_points_path,
+                                                                   "lsseedpoints_downscale_HD_ls_seed_points"
+                                                                   "_to_10min_lat_lon_true_seas_inc_casp_only"
+                                                                   "_20160718_114402.txt"),
+                                                         rotate_seeds_about_polar_axis=True,
+                                                         use_diagonals_in=True, grid_type='LatLong10min')
+        landsea_mask_present = dynamic_hd.load_field(filename=present_day_10min_mask_file,
+                                                     file_type=".nc",field_type="Generic",
+                                                     grid_type="LatLong10min")
+        landsea_mask = dynamic_hd.load_field(filename=third_intermediary_land_sea_mask_file,
+                                             file_type=".nc",field_type="Generic",
+                                             grid_type="LatLong10min")
+        #Copy present day Caspian
+        landsea_mask.data[756:842,272:328] = landsea_mask_present.data[756:842,272:328]
+        dynamic_hd.write_field(filename=self.generated_ls_mask_filepath +
+                               file_label + '.nc',
+                               field=landsea_mask,file_type=".nc") 
         
 class Original_HD_Model_RFD_Drivers(Dynamic_HD_Drivers):
     """Drive processes using the present day manually corrected river directions currently in JSBACH"""
@@ -979,12 +1211,14 @@ class ICE5G_Data_Drivers(Dynamic_HD_Drivers):
     """Drivers for working on the ICE5G orography dataset"""
 
     def __init__(self):
-        """Class constructor. Setupt various filepaths specific to work with this dataset"""
+        """Class constructor. Setup various filepaths specific to work with this dataset"""
         super(ICE5G_Data_Drivers,self).__init__()
         self.remap_10min_to_HD_grid_weights_filepath = path.join(self.weights_path,
                                                                 "weights10mintoHDgrid.nc")
         self.ice5g_orography_corrections_master_filepath = path.join(self.orography_corrections_path, 
                                                                      'ice5g_10min_orog_corrs_master.txt')
+        self.tarasov_style_upscaled_srtm30_extra_corrections_master_filepath = \
+            path.join(self.orography_corrections_path,'tarasov_style_upscaled_srtm30_orog_corrs_master.txt')
         self.ice5g_intelligent_burning_regions_list_master_filepath = path.\
             join(self.intelligent_burning_regions_path,'ice5g_10min_int_burning_regions_master.txt')
         self.hd_data_helper_run = False
@@ -1278,8 +1512,364 @@ class ICE5G_Data_Drivers(Dynamic_HD_Drivers):
                                  output_file_label=file_label,
                                  ls_mask_filename=connected_ls_mask_filename,
                                  compute_catchments=False,
+                                 flip_mask_ud=True,
+                                 grid_type='LatLong10min')
+        self._ICE5G_data_ALG4_sinkless_0k_upscale_riverflows_and_river_mouth_flows(file_label,new_label=False) 
+
+    def ICE5G_and_tarasov_upscaled_srtm30plus_data_ALG4_sinkless_downscaled_ls_mask_0k(self):
+        """Generate sinkless flow direction from a tarasov-style upscaled srtm30plus orogoraphy then upscale to HD grid
+        
+        The actual river direction come from the tarasov-style upscaled srtm30plus but the correction field produced is
+        relative to the ICE5G orography
+        """
+        file_label = self._generate_file_label()
+        original_orography_filename = path.join(self.orography_path,"ice5g_v1_2_00_0k_10min.nc")
+        original_tarasov_upscaled_orography_filename = path.join(self.orography_path,"tarasov_upscaled",
+                                                                 "upscaled_orog_upscale_srtm30_plus_orog_"
+                                                                 "to_10min_no_lsmask_half_cell_upscaling_"
+                                                                 "params_20170507_214815.nc")
+        original_tarasov_upscaled_orography_flipped_ud_filename = self.generated_orography_filepath +\
+                                                                  "original_tarasov_orog_flipped_" +\
+                                                                  file_label + '.nc'
+        super_fine_orography_filename = path.join(self.orography_path,"ETOPO1_Ice_c_gmt4.nc")
+        super_fine_flowmap_filename = path.join(self.flowmaps_path,
+                                                "flowmap_etopo1_data_ALG4_sinkless_20160603_112520.nc")
+        intermediary_orography_filename = self.corrected_orography_filepath +\
+                                          "intermediary_" + file_label + '.nc'
+        second_intermediary_orography_filename = self.corrected_orography_filepath +\
+                                          "2nd_intermediary_" + file_label + '.nc'
+        third_intermediary_orography_filename = self.corrected_orography_filepath +\
+                                          "3rd_intermediary_" + file_label + '.nc'
+        orography_filename = self.corrected_orography_filepath + file_label + '.nc'
+        orography_corrections_field_filename = self.generated_orography_corrections_fields_path +\
+                                                file_label + '.nc'
+        self._apply_transforms_to_field(input_filename=original_tarasov_upscaled_orography_filename,
+                                        output_filename=original_tarasov_upscaled_orography_flipped_ud_filename,
+                                        flip_ud=True, rotate180lr=True, invert_data=False,griddescfile=None,
+                                        grid_type="LatLong10min")
+        self._correct_orography(input_orography_filename=original_orography_filename, 
+                                input_corrections_list_filename=\
+                                self.ice5g_orography_corrections_master_filepath, 
+                                output_orography_filename=intermediary_orography_filename, 
+                                output_file_label=file_label, grid_type='LatLong10min')
+        self._apply_intelligent_burning(input_orography_filename=\
+                                        intermediary_orography_filename, 
+                                        input_superfine_orography_filename=\
+                                        super_fine_orography_filename, 
+                                        input_superfine_flowmap_filename=\
+                                        super_fine_flowmap_filename, 
+                                        input_intelligent_burning_regions_list=\
+                                        self.ice5g_intelligent_burning_regions_list_master_filepath, 
+                                        output_orography_filename=second_intermediary_orography_filename, 
+                                        output_file_label=file_label, 
+                                        grid_type='LatLong10min', 
+                                        super_fine_grid_type='LatLong1min')
+        utilities.merge_corrected_and_tarasov_upscaled_orography(input_corrected_orography_file=\
+                                                                 second_intermediary_orography_filename,
+                                                                 input_tarasov_upscaled_orography_file=\
+                                                                 original_tarasov_upscaled_orography_flipped_ud_filename,
+                                                                 output_merged_orography_file=\
+                                                                 third_intermediary_orography_filename,
+                                                                 grid_type='LatLong10min')
+        self._correct_orography(input_orography_filename=third_intermediary_orography_filename, 
+                                input_corrections_list_filename=\
+                                self.tarasov_style_upscaled_srtm30_extra_corrections_master_filepath, 
+                                output_orography_filename=orography_filename, 
+                                output_file_label=file_label, 
+                                grid_type="LatLong10min")
+        utilities.generate_orog_correction_field(original_orography_filename=\
+                                                 original_orography_filename, 
+                                                 corrected_orography_filename=\
+                                                 orography_filename, 
+                                                 orography_corrections_filename=\
+                                                 orography_corrections_field_filename, 
+                                                 grid_type='LatLong10min')
+        rdirs_filename = self.generated_rdir_filepath + file_label + '.nc'
+        connected_ls_mask_filename = self.generated_ls_mask_filepath + 'connected_' +\
+            file_label + '.nc'
+        unsorted_catchments_filename = self.generated_catchments_path + 'unsorted_' +\
+            file_label + '.nc'
+        truesinks_filename = self.generated_truesinks_path + file_label + '.nc'
+        HD_ls_mask_filename = self.generated_ls_mask_filepath +\
+                              "extract_ls_mask_from_corrected_HD_rdirs_20160504_142435.nc"
+        #True sinks modifications are no longer used
+        truesinks_mods_10min_filename = None 
+        truesinks_mods_HD_filename = None     
+        utilities.downscale_ls_mask_driver(input_course_ls_mask_filename=\
+                                           HD_ls_mask_filename, 
+                                           output_fine_ls_mask_filename=\
+                                           connected_ls_mask_filename, 
+                                           input_flipud=True,
+                                           input_rotate180lr=True,
+                                           course_grid_type='HD', 
+                                           fine_grid_type='LatLong10min')
+        utilities.downscale_true_sink_points_driver(input_fine_orography_filename=\
+                                                        orography_filename, 
+                                                    input_course_truesinks_filename=\
+                                                        self.hd_truesinks_filepath, 
+                                                    output_fine_truesinks_filename=\
+                                                        truesinks_filename, 
+                                                    input_fine_orography_grid_type=\
+                                                        'LatLong10min', 
+                                                    input_course_truesinks_grid_type='HD',
+                                                    flip_course_grid_ud=True,
+                                                    rotate_course_true_sink_about_polar_axis=True,
+                                                    downscaled_true_sink_modifications_filename=\
+                                                        truesinks_mods_10min_filename,
+                                                    course_true_sinks_modifications_filename=\
+                                                        truesinks_mods_HD_filename)
+        fill_sinks_driver.generate_sinkless_flow_directions(filename=orography_filename,
+                                                            output_filename=rdirs_filename,
+                                                            ls_mask_filename=\
+                                                            connected_ls_mask_filename,
+                                                            truesinks_filename=truesinks_filename,
+                                                            catchment_nums_filename=\
+                                                            unsorted_catchments_filename,
+                                                            grid_type='LatLong10min')
+        self._run_postprocessing(rdirs_filename=rdirs_filename, 
+                                 output_file_label=file_label,
+                                 ls_mask_filename=connected_ls_mask_filename,
+                                 compute_catchments=False,
+                                 flip_mask_ud=True,
                                  grid_type='LatLong10min')
         self._ICE5G_data_ALG4_sinkless_0k_upscale_riverflows_and_river_mouth_flows(file_label,new_label=False)        
+        
+    def ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless_downscaled_ls_mask_0k(self):
+        """Generate sinkless flow direction from a tarasov-style upscaled srtm30plus orogoraphy then upscale to HD grid
+        
+        The actual river direction come from the tarasov-style upscaled srtm30plus but the correction field produced is
+        relative to the ICE5G orography
+        """
+        file_label = self._generate_file_label()
+        original_orography_filename = path.join(self.orography_path,"ice5g_v1_2_00_0k_10min.nc")
+        original_tarasov_upscaled_orography_filename = path.join(self.orography_path,"tarasov_upscaled",
+                                                                 "upscaled_orog_upscale_srtm30_plus_orog_"
+                                                                 "to_10min_no_lsmask_half_cell_upscaling_"
+                                                                 "params_20170507_214815.nc")
+        original_tarasov_upscaled_orography_flipped_ud_filename = self.generated_orography_filepath +\
+                                                                  "original_tarasov_orog_flipped_" +\
+                                                                  file_label + '.nc'
+        super_fine_orography_filename = path.join(self.orography_path,"ETOPO1_Ice_c_gmt4.nc")
+        super_fine_flowmap_filename = path.join(self.flowmaps_path,
+                                                "flowmap_etopo1_data_ALG4_sinkless_20160603_112520.nc")
+        intermediary_orography_filename = self.corrected_orography_filepath +\
+                                          "intermediary_" + file_label + '.nc'
+        second_intermediary_orography_filename = self.corrected_orography_filepath +\
+                                          "2nd_intermediary_" + file_label + '.nc'
+        third_intermediary_orography_filename = self.corrected_orography_filepath +\
+                                          "3rd_intermediary_" + file_label + '.nc'
+        orography_filename = self.corrected_orography_filepath + file_label + '.nc'
+        orography_corrections_field_filename = self.generated_orography_corrections_fields_path +\
+                                                file_label + '.nc'
+        self._apply_transforms_to_field(input_filename=original_tarasov_upscaled_orography_filename,
+                                        output_filename=original_tarasov_upscaled_orography_flipped_ud_filename,
+                                        flip_ud=True, rotate180lr=True, invert_data=False,griddescfile=None,
+                                        grid_type="LatLong10min")
+        self._correct_orography(input_orography_filename=original_orography_filename, 
+                                input_corrections_list_filename=\
+                                self.ice5g_orography_corrections_master_filepath, 
+                                output_orography_filename=intermediary_orography_filename, 
+                                output_file_label=file_label, grid_type='LatLong10min')
+        self._apply_intelligent_burning(input_orography_filename=\
+                                        intermediary_orography_filename, 
+                                        input_superfine_orography_filename=\
+                                        super_fine_orography_filename, 
+                                        input_superfine_flowmap_filename=\
+                                        super_fine_flowmap_filename, 
+                                        input_intelligent_burning_regions_list=\
+                                        self.ice5g_intelligent_burning_regions_list_master_filepath, 
+                                        output_orography_filename=second_intermediary_orography_filename, 
+                                        output_file_label=file_label, 
+                                        grid_type='LatLong10min', 
+                                        super_fine_grid_type='LatLong1min')
+        utilities.merge_corrected_and_tarasov_upscaled_orography(input_corrected_orography_file=\
+                                                                 second_intermediary_orography_filename,
+                                                                 input_tarasov_upscaled_orography_file=\
+                                                                 original_tarasov_upscaled_orography_flipped_ud_filename,
+                                                                 output_merged_orography_file=\
+                                                                 third_intermediary_orography_filename,
+                                                                 use_upscaled_orogrography_only_in_region="North America",
+                                                                 grid_type='LatLong10min')
+        self._correct_orography(input_orography_filename=third_intermediary_orography_filename, 
+                                input_corrections_list_filename=\
+                                self.tarasov_style_upscaled_srtm30_extra_corrections_master_filepath, 
+                                output_orography_filename=orography_filename, 
+                                output_file_label=file_label, 
+                                grid_type="LatLong10min")
+        utilities.generate_orog_correction_field(original_orography_filename=\
+                                                 original_orography_filename, 
+                                                 corrected_orography_filename=\
+                                                 orography_filename, 
+                                                 orography_corrections_filename=\
+                                                 orography_corrections_field_filename, 
+                                                 grid_type='LatLong10min')
+        rdirs_filename = self.generated_rdir_filepath + file_label + '.nc'
+        connected_ls_mask_filename = self.generated_ls_mask_filepath + 'connected_' +\
+            file_label + '.nc'
+        unsorted_catchments_filename = self.generated_catchments_path + 'unsorted_' +\
+            file_label + '.nc'
+        truesinks_filename = self.generated_truesinks_path + file_label + '.nc'
+        HD_ls_mask_filename = self.generated_ls_mask_filepath +\
+                              "extract_ls_mask_from_corrected_HD_rdirs_20160504_142435.nc"
+        #True sinks modifications are no longer used
+        truesinks_mods_10min_filename = None 
+        truesinks_mods_HD_filename = None     
+        utilities.downscale_ls_mask_driver(input_course_ls_mask_filename=\
+                                           HD_ls_mask_filename, 
+                                           output_fine_ls_mask_filename=\
+                                           connected_ls_mask_filename, 
+                                           input_flipud=True,
+                                           input_rotate180lr=True,
+                                           course_grid_type='HD', 
+                                           fine_grid_type='LatLong10min')
+        utilities.downscale_true_sink_points_driver(input_fine_orography_filename=\
+                                                        orography_filename, 
+                                                    input_course_truesinks_filename=\
+                                                        self.hd_truesinks_filepath, 
+                                                    output_fine_truesinks_filename=\
+                                                        truesinks_filename, 
+                                                    input_fine_orography_grid_type=\
+                                                        'LatLong10min', 
+                                                    input_course_truesinks_grid_type='HD',
+                                                    flip_course_grid_ud=True,
+                                                    rotate_course_true_sink_about_polar_axis=True,
+                                                    downscaled_true_sink_modifications_filename=\
+                                                        truesinks_mods_10min_filename,
+                                                    course_true_sinks_modifications_filename=\
+                                                        truesinks_mods_HD_filename)
+        fill_sinks_driver.generate_sinkless_flow_directions(filename=orography_filename,
+                                                            output_filename=rdirs_filename,
+                                                            ls_mask_filename=\
+                                                            connected_ls_mask_filename,
+                                                            truesinks_filename=truesinks_filename,
+                                                            catchment_nums_filename=\
+                                                            unsorted_catchments_filename,
+                                                            grid_type='LatLong10min')
+        self._run_postprocessing(rdirs_filename=rdirs_filename, 
+                                 output_file_label=file_label,
+                                 ls_mask_filename=connected_ls_mask_filename,
+                                 compute_catchments=False,
+                                 flip_mask_ud=True,
+                                 grid_type='LatLong10min')
+        self._ICE5G_data_ALG4_sinkless_0k_upscale_riverflows_and_river_mouth_flows(file_label,new_label=False) 
+        
+    def ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless_glcc_olson_lsmask_0k(self):
+        """Generate sinkless flow direction from a tarasov-style upscaled srtm30plus orogoraphy then upscale to HD grid
+        
+        The actual river direction come from the tarasov-style upscaled srtm30plus but the correction field produced is
+        relative to the ICE5G orography
+        """
+        file_label = self._generate_file_label()
+        original_orography_filename = path.join(self.orography_path,"ice5g_v1_2_00_0k_10min.nc")
+        original_tarasov_upscaled_orography_filename = path.join(self.orography_path,"tarasov_upscaled",
+                                                                 "upscaled_orog_upscale_srtm30_plus_orog_"
+                                                                 "to_10min_no_lsmask_half_cell_upscaling_"
+                                                                 "params_20170507_214815.nc")
+        original_tarasov_upscaled_orography_flipped_ud_filename = self.generated_orography_filepath +\
+                                                                  "original_tarasov_orog_flipped_" +\
+                                                                  file_label + '.nc'
+        super_fine_orography_filename = path.join(self.orography_path,"ETOPO1_Ice_c_gmt4.nc")
+        super_fine_flowmap_filename = path.join(self.flowmaps_path,
+                                                "flowmap_etopo1_data_ALG4_sinkless_20160603_112520.nc")
+        intermediary_orography_filename = self.corrected_orography_filepath +\
+                                          "intermediary_" + file_label + '.nc'
+        second_intermediary_orography_filename = self.corrected_orography_filepath +\
+                                          "2nd_intermediary_" + file_label + '.nc'
+        third_intermediary_orography_filename = self.corrected_orography_filepath +\
+                                          "3rd_intermediary_" + file_label + '.nc'
+        orography_filename = self.corrected_orography_filepath + file_label + '.nc'
+        orography_corrections_field_filename = self.generated_orography_corrections_fields_path +\
+                                                file_label + '.nc'
+        self._apply_transforms_to_field(input_filename=original_tarasov_upscaled_orography_filename,
+                                        output_filename=original_tarasov_upscaled_orography_flipped_ud_filename,
+                                        flip_ud=True, rotate180lr=True, invert_data=False,griddescfile=None,
+                                        grid_type="LatLong10min")
+        self._correct_orography(input_orography_filename=original_orography_filename, 
+                                input_corrections_list_filename=\
+                                self.ice5g_orography_corrections_master_filepath, 
+                                output_orography_filename=intermediary_orography_filename, 
+                                output_file_label=file_label, grid_type='LatLong10min')
+        self._apply_intelligent_burning(input_orography_filename=\
+                                        intermediary_orography_filename, 
+                                        input_superfine_orography_filename=\
+                                        super_fine_orography_filename, 
+                                        input_superfine_flowmap_filename=\
+                                        super_fine_flowmap_filename, 
+                                        input_intelligent_burning_regions_list=\
+                                        self.ice5g_intelligent_burning_regions_list_master_filepath, 
+                                        output_orography_filename=second_intermediary_orography_filename, 
+                                        output_file_label=file_label, 
+                                        grid_type='LatLong10min', 
+                                        super_fine_grid_type='LatLong1min')
+        utilities.merge_corrected_and_tarasov_upscaled_orography(input_corrected_orography_file=\
+                                                                 second_intermediary_orography_filename,
+                                                                 input_tarasov_upscaled_orography_file=\
+                                                                 original_tarasov_upscaled_orography_flipped_ud_filename,
+                                                                 output_merged_orography_file=\
+                                                                 third_intermediary_orography_filename,
+                                                                 use_upscaled_orogrography_only_in_region="North America",
+                                                                 grid_type='LatLong10min')
+        self._correct_orography(input_orography_filename=third_intermediary_orography_filename, 
+                                input_corrections_list_filename=\
+                                self.tarasov_style_upscaled_srtm30_extra_corrections_master_filepath, 
+                                output_orography_filename=orography_filename, 
+                                output_file_label=file_label, 
+                                grid_type="LatLong10min")
+        utilities.generate_orog_correction_field(original_orography_filename=\
+                                                 original_orography_filename, 
+                                                 corrected_orography_filename=\
+                                                 orography_filename, 
+                                                 orography_corrections_filename=\
+                                                 orography_corrections_field_filename, 
+                                                 grid_type='LatLong10min')
+        rdirs_filename = self.generated_rdir_filepath + file_label + '.nc'
+        original_connected_ls_mask_filename = path.join(self.ls_masks_path,'generated',
+                                                        "ls_mask_recreate_connected_10min_"
+                                                        "lsmask_from_glcc_olson_data_"
+                                                        "20170513_195421.nc") 
+        connected_ls_mask_filename = self.generated_ls_mask_filepath +\
+                                     file_label + "_flipped.nc"
+        self._apply_transforms_to_field(input_filename=original_connected_ls_mask_filename,
+                                        output_filename=connected_ls_mask_filename,
+                                        flip_ud=True, rotate180lr=False, invert_data=False,griddescfile=None,
+                                        grid_type="LatLong10min")
+        unsorted_catchments_filename = self.generated_catchments_path + 'unsorted_' +\
+            file_label + '.nc'
+        truesinks_filename = self.generated_truesinks_path + file_label + '.nc'
+        truesinks_mods_10min_filename = path.join(self.truesinks_modifications_filepath,
+                                                  "truesinks_mods_for_HD_downscaled_to_"
+                                                  "10min_add_in_aral_sea_and_lake_chad.txt") 
+        truesinks_mods_HD_filename = None     
+        utilities.downscale_true_sink_points_driver(input_fine_orography_filename=\
+                                                        orography_filename, 
+                                                    input_course_truesinks_filename=\
+                                                        self.hd_truesinks_filepath, 
+                                                    output_fine_truesinks_filename=\
+                                                        truesinks_filename, 
+                                                    input_fine_orography_grid_type=\
+                                                        'LatLong10min', 
+                                                    input_course_truesinks_grid_type='HD',
+                                                    flip_course_grid_ud=True,
+                                                    rotate_course_true_sink_about_polar_axis=True,
+                                                    downscaled_true_sink_modifications_filename=\
+                                                        truesinks_mods_10min_filename,
+                                                    course_true_sinks_modifications_filename=\
+                                                        truesinks_mods_HD_filename)
+        fill_sinks_driver.generate_sinkless_flow_directions(filename=orography_filename,
+                                                            output_filename=rdirs_filename,
+                                                            ls_mask_filename=\
+                                                            connected_ls_mask_filename,
+                                                            truesinks_filename=truesinks_filename,
+                                                            catchment_nums_filename=\
+                                                            unsorted_catchments_filename,
+                                                            grid_type='LatLong10min')
+        self._run_postprocessing(rdirs_filename=rdirs_filename, 
+                                 output_file_label=file_label,
+                                 ls_mask_filename=connected_ls_mask_filename,
+                                 compute_catchments=False,
+                                 flip_mask_ud=True,
+                                 grid_type='LatLong10min')
+        self._ICE5G_data_ALG4_sinkless_0k_upscale_riverflows_and_river_mouth_flows(file_label,new_label=False) 
         
     def ICE5G_data_ALG4_sinkless_no_true_sinks_0k(self):
         """Generate sinkless river directions using a connected landsea mask and no true sinks"""
@@ -1332,7 +1922,150 @@ class ICE5G_Data_Drivers(Dynamic_HD_Drivers):
     def ICE5G_data_ALG4_sinkless_downscaled_ls_mask_0k_upscale_rdirs(self):
         """Generate sinkless flow direction from a downscaled HD lsmask then upscale them to the HD grid"""
         file_label = self._generate_file_label()
-        fine_fields_filelabel = "ICE5G_data_ALG4_sinkless_downscaled_ls_mask_0k_20160930_001057" 
+        fine_fields_filelabel = "ICE5G_data_ALG4_sinkless_downscaled_ls_mask_0k_20170514_104220" 
+        fine_rdirs_filename = self.generated_rdir_with_outflows_marked_filepath + fine_fields_filelabel + ".nc"
+        fine_cumulative_flow_filename = self.generated_flowmaps_filepath + fine_fields_filelabel + ".nc"
+        output_course_rdirs_filename = self.upscaled_generated_rdir_filepath + file_label + '.nc' 
+        cotat_plus_parameters_filename = path.join(self.cotat_plus_parameters_path,'cotat_plus_standard_params.nl') 
+        self._run_cotat_plus_upscaling(input_fine_rdirs_filename=fine_rdirs_filename, 
+                                       input_fine_cumulative_flow_filename=fine_cumulative_flow_filename, 
+                                       cotat_plus_parameters_filename=cotat_plus_parameters_filename, 
+                                       output_course_rdirs_filename=output_course_rdirs_filename,
+                                       output_file_label=file_label, 
+                                       fine_grid_type='LatLong10min',
+                                       course_grid_type='HD')
+        self._run_postprocessing(rdirs_filename=output_course_rdirs_filename,
+                                 output_file_label=file_label, 
+                                 ls_mask_filename=None, 
+                                 skip_marking_mouths=True, 
+                                 compute_catchments=True, grid_type='HD')
+        original_course_cumulative_flow_filename = self.generated_flowmaps_filepath + file_label + '.nc'
+        original_course_catchments_filename = self.generated_catchments_path + file_label + '.nc'
+        loops_nums_list_filename = self.generated_catchments_path + file_label + '_loops.log'
+        updated_file_label = file_label + "_updated"
+        updated_course_rdirs_filename = self.upscaled_generated_rdir_filepath + updated_file_label + '.nc'
+        loop_breaker_driver.loop_breaker_driver(input_course_rdirs_filepath=output_course_rdirs_filename, 
+                                                input_course_cumulative_flow_filepath=\
+                                                original_course_cumulative_flow_filename, 
+                                                input_course_catchments_filepath=\
+                                                original_course_catchments_filename, 
+                                                input_fine_rdirs_filepath=\
+                                                fine_rdirs_filename, 
+                                                input_fine_cumulative_flow_filepath=\
+                                                fine_cumulative_flow_filename, 
+                                                output_updated_course_rdirs_filepath=\
+                                                updated_course_rdirs_filename, 
+                                                loop_nums_list_filepath=\
+                                                loops_nums_list_filename, 
+                                                course_grid_type='HD', 
+                                                fine_grid_type='LatLong10min')
+        self._run_postprocessing(rdirs_filename=updated_course_rdirs_filename,
+                                 output_file_label=updated_file_label, 
+                                 ls_mask_filename=None, 
+                                 skip_marking_mouths=True, 
+                                 compute_catchments=True, grid_type='HD')
+        
+        
+    def ICE5G_and_tarasov_upscaled_srtm30plus_data_ALG4_sinkless_downscaled_ls_mask_0k_upscale_rdirs(self):
+        """Generate sinkless flow direction from a downscaled HD lsmask then upscale them to the HD grid"""
+        file_label = self._generate_file_label()
+        fine_fields_filelabel = ("ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only"
+                                 "_data_ALG4_sinkless_downscaled_ls_mask_0k_20170513_213910") 
+        fine_rdirs_filename = self.generated_rdir_with_outflows_marked_filepath + fine_fields_filelabel + ".nc"
+        fine_cumulative_flow_filename = self.generated_flowmaps_filepath + fine_fields_filelabel + ".nc"
+        output_course_rdirs_filename = self.upscaled_generated_rdir_filepath + file_label + '.nc' 
+        cotat_plus_parameters_filename = path.join(self.cotat_plus_parameters_path,'cotat_plus_standard_params.nl') 
+        self._run_cotat_plus_upscaling(input_fine_rdirs_filename=fine_rdirs_filename, 
+                                       input_fine_cumulative_flow_filename=fine_cumulative_flow_filename, 
+                                       cotat_plus_parameters_filename=cotat_plus_parameters_filename, 
+                                       output_course_rdirs_filename=output_course_rdirs_filename,
+                                       output_file_label=file_label, 
+                                       fine_grid_type='LatLong10min',
+                                       course_grid_type='HD')
+        self._run_postprocessing(rdirs_filename=output_course_rdirs_filename,
+                                 output_file_label=file_label, 
+                                 ls_mask_filename=None, 
+                                 skip_marking_mouths=True, 
+                                 compute_catchments=True, grid_type='HD')
+        original_course_cumulative_flow_filename = self.generated_flowmaps_filepath + file_label + '.nc'
+        original_course_catchments_filename = self.generated_catchments_path + file_label + '.nc'
+        loops_nums_list_filename = self.generated_catchments_path + file_label + '_loops.log'
+        updated_file_label = file_label + "_updated"
+        updated_course_rdirs_filename = self.upscaled_generated_rdir_filepath + updated_file_label + '.nc'
+        loop_breaker_driver.loop_breaker_driver(input_course_rdirs_filepath=output_course_rdirs_filename, 
+                                                input_course_cumulative_flow_filepath=\
+                                                original_course_cumulative_flow_filename, 
+                                                input_course_catchments_filepath=\
+                                                original_course_catchments_filename, 
+                                                input_fine_rdirs_filepath=\
+                                                fine_rdirs_filename, 
+                                                input_fine_cumulative_flow_filepath=\
+                                                fine_cumulative_flow_filename, 
+                                                output_updated_course_rdirs_filepath=\
+                                                updated_course_rdirs_filename, 
+                                                loop_nums_list_filepath=\
+                                                loops_nums_list_filename, 
+                                                course_grid_type='HD', 
+                                                fine_grid_type='LatLong10min')
+        self._run_postprocessing(rdirs_filename=updated_course_rdirs_filename,
+                                 output_file_label=updated_file_label, 
+                                 ls_mask_filename=None, 
+                                 skip_marking_mouths=True, 
+                                 compute_catchments=True, grid_type='HD')
+        
+    def ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless_downscaled_ls_mask_0k_upscale_rdirs(self):
+        """Generate sinkless flow direction from a downscaled HD lsmask then upscale them to the HD grid"""
+        file_label = self._generate_file_label()
+        fine_fields_filelabel = ("ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only"
+                                 "_data_ALG4_sinkless_downscaled_ls_mask_0k_20170511_224938") 
+        fine_rdirs_filename = self.generated_rdir_with_outflows_marked_filepath + fine_fields_filelabel + ".nc"
+        fine_cumulative_flow_filename = self.generated_flowmaps_filepath + fine_fields_filelabel + ".nc"
+        output_course_rdirs_filename = self.upscaled_generated_rdir_filepath + file_label + '.nc' 
+        cotat_plus_parameters_filename = path.join(self.cotat_plus_parameters_path,'cotat_plus_standard_params.nl') 
+        self._run_cotat_plus_upscaling(input_fine_rdirs_filename=fine_rdirs_filename, 
+                                       input_fine_cumulative_flow_filename=fine_cumulative_flow_filename, 
+                                       cotat_plus_parameters_filename=cotat_plus_parameters_filename, 
+                                       output_course_rdirs_filename=output_course_rdirs_filename,
+                                       output_file_label=file_label, 
+                                       fine_grid_type='LatLong10min',
+                                       course_grid_type='HD')
+        self._run_postprocessing(rdirs_filename=output_course_rdirs_filename,
+                                 output_file_label=file_label, 
+                                 ls_mask_filename=None, 
+                                 skip_marking_mouths=True, 
+                                 compute_catchments=True, grid_type='HD')
+        original_course_cumulative_flow_filename = self.generated_flowmaps_filepath + file_label + '.nc'
+        original_course_catchments_filename = self.generated_catchments_path + file_label + '.nc'
+        loops_nums_list_filename = self.generated_catchments_path + file_label + '_loops.log'
+        updated_file_label = file_label + "_updated"
+        updated_course_rdirs_filename = self.upscaled_generated_rdir_filepath + updated_file_label + '.nc'
+        loop_breaker_driver.loop_breaker_driver(input_course_rdirs_filepath=output_course_rdirs_filename, 
+                                                input_course_cumulative_flow_filepath=\
+                                                original_course_cumulative_flow_filename, 
+                                                input_course_catchments_filepath=\
+                                                original_course_catchments_filename, 
+                                                input_fine_rdirs_filepath=\
+                                                fine_rdirs_filename, 
+                                                input_fine_cumulative_flow_filepath=\
+                                                fine_cumulative_flow_filename, 
+                                                output_updated_course_rdirs_filepath=\
+                                                updated_course_rdirs_filename, 
+                                                loop_nums_list_filepath=\
+                                                loops_nums_list_filename, 
+                                                course_grid_type='HD', 
+                                                fine_grid_type='LatLong10min')
+        self._run_postprocessing(rdirs_filename=updated_course_rdirs_filename,
+                                 output_file_label=updated_file_label, 
+                                 ls_mask_filename=None, 
+                                 skip_marking_mouths=True, 
+                                 compute_catchments=True, grid_type='HD')
+        
+        
+    def ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless_glcc_olson_lsmask_0k_upscale_rdirs(self):
+        """Generate sinkless flow direction from a downscaled HD lsmask then upscale them to the HD grid"""
+        file_label = self._generate_file_label()
+        fine_fields_filelabel = ("ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_"
+                                 "sinkless_glcc_olson_lsmask_0k_20170517_003802") 
         fine_rdirs_filename = self.generated_rdir_with_outflows_marked_filepath + fine_fields_filelabel + ".nc"
         fine_cumulative_flow_filename = self.generated_flowmaps_filepath + fine_fields_filelabel + ".nc"
         output_course_rdirs_filename = self.upscaled_generated_rdir_filepath + file_label + '.nc' 
@@ -1666,6 +2399,44 @@ class ICE5G_Data_Drivers(Dynamic_HD_Drivers):
                                  skip_marking_mouths=True, 
                                  compute_catchments=True, grid_type='HD')
         
+    def ICE5G_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_tarasov_orog_corrs_generation_and_upscaling(self):
+        """Generate and upscale sinkless river directions for the present-day"""
+        file_label = self._generate_file_label()
+        original_orography_filename = path.join(self.orography_path,"ice5g_v1_2_00_0k_10min.nc")
+        original_ls_mask_filename = path.join(self.ls_masks_path,
+                                              "generated",
+                                              "ls_mask_ICE5G_and_tarasov_upscaled_srtm30plus_"
+                                              "north_america_only_data_ALG4_sinkless_glcc_olson"
+                                              "_lsmask_0k_20170517_003802_flipped.nc")
+        ice5g_glacial_mask_file = path.join(self.orography_path,"ice5g_v1_2_00_0k_10min.nc")
+        ten_minute_data_from_virna_driver_instance = Ten_Minute_Data_From_Virna_Driver()
+        ten_minute_data_from_virna_driver_instance.\
+        _ten_minute_data_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_helper(file_label,
+                                                                                             original_orography_filename,
+                                                                                             original_ls_mask_filename,
+                                                                                             tarasov_based_orog_correction=\
+                                                                                             True,
+                                                                                             glacial_mask=\
+                                                                                             ice5g_glacial_mask_file) 
+        
+    def ICE5G_21k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_tarasov_orog_corrs_generation_and_upscaling(self):
+        """Generate and upscale sinkless river directions for the LGM"""
+        file_label = self._generate_file_label()
+        original_orography_filename = path.join(self.orography_path,"ice5g_v1_2_21_0k_10min.nc")
+        original_ls_mask_filename = path.join(self.ls_masks_path,"generated",
+                                              "ls_mask_downscale_ICE6G_21k_landsea_mask_and_"
+                                              "remove_disconnected_points_20170521_151440.nc")
+        ice5g_glacial_mask_file = path.join(self.orography_path,"ice5g_v1_2_21_0k_10min.nc")
+        ten_minute_data_from_virna_driver_instance = Ten_Minute_Data_From_Virna_Driver()
+        ten_minute_data_from_virna_driver_instance.\
+        _ten_minute_data_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_helper(file_label,
+                                                                                             original_orography_filename,
+                                                                                             original_ls_mask_filename,
+                                                                                             tarasov_based_orog_correction=\
+                                                                                             True,
+                                                                                             glacial_mask=\
+                                                                                             ice5g_glacial_mask_file) 
+        
 class GLAC_Data_Drivers(ICE5G_Data_Drivers):
     """Driver runs on the GLAC orography data provided by Virna"""
 
@@ -1957,6 +2728,20 @@ class Ten_Minute_Data_From_Virna_Driver(ICE5G_Data_Drivers):
         self._ten_minute_data_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_helper(file_label,
                                                                                                   original_orography_filename,
                                                                                                   original_ls_mask_filename)
+        
+    def ten_minute_data_from_virna_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_tarasov_orog_corrs(self):
+        """Generate and upscale sinkless river directions for the present day"""
+        file_label = self._generate_file_label()
+        original_orography_filename = path.join(self.orography_path,"10min-topo-present-from-virna.nc")
+        original_ls_mask_filename = path.join(self.ls_masks_path,"10min-mask-present-from-virna.nc")
+        ice5g_glacial_mask_file = path.join(self.orography_path,"ice5g_v1_2_00_0k_10min.nc")
+        self._ten_minute_data_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_helper(file_label,
+                                                                                                  original_orography_filename,
+                                                                                                  original_ls_mask_filename,
+                                                                                                  tarasov_based_orog_correction=\
+                                                                                                  True,
+                                                                                                  glacial_mask=\
+                                                                                                  ice5g_glacial_mask_file)
     
     def ten_minute_data_from_virna_0k_2017v_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs(self):
         """Generate and upscale sinkless river directions for the present day"""
@@ -1978,7 +2763,10 @@ class Ten_Minute_Data_From_Virna_Driver(ICE5G_Data_Drivers):
         
     def _ten_minute_data_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_helper(self,file_label,
                                                                                              original_orography_filename,
-                                                                                             original_ls_mask_filename): 
+                                                                                             original_ls_mask_filename,
+                                                                                             tarasov_based_orog_correction=\
+                                                                                             False,
+                                                                                             glacial_mask=None): 
         """Helper for generating and upscaling sinkless river direction for a given 10 minute orography and landsea mask
         
         Arguments:
@@ -1988,9 +2776,18 @@ class Ten_Minute_Data_From_Virna_Driver(ICE5G_Data_Drivers):
         Returns: nothing
         """
 
-        orog_corrections_filename = path.join(self.orography_corrections_fields_path,
-                                              "orog_corrs_field_ICE5G_data_ALG4_sink"
-                                              "less_downscaled_ls_mask_0k_20160930_001057.nc")
+        if tarasov_based_orog_correction:
+            orog_corrections_filename = path.join(self.orography_corrections_fields_path,
+                                                  "orog_corrs_field_ICE5G_and_tarasov_upscaled_"
+                                                  "srtm30plus_north_america_only_data_ALG4_sinkless"
+                                                  "_glcc_olson_lsmask_0k_20170517_003802.nc")
+        else:
+            orog_corrections_filename = path.join(self.orography_corrections_fields_path,
+                                                  "orog_corrs_field_ICE5G_data_ALG4_sink"
+                                                  "less_downscaled_ls_mask_0k_20160930_001057.nc")
+        if glacial_mask is not None:
+            intermediary_orography_filename = self.generated_orography_filepath +\
+                                                "intermediary_" + file_label + '.nc'
         orography_filename = self.generated_orography_filepath + file_label + '.nc'
         HD_orography_filename = self.upscaled_orography_filepath + file_label + '_HD' + '.nc'
         HD_filled_orography_filename = self.upscaled_orography_filepath + file_label + '_HD_filled' + '.nc'
@@ -2004,8 +2801,18 @@ class Ten_Minute_Data_From_Virna_Driver(ICE5G_Data_Drivers):
                                new_dtype=np.int32,grid_type='LatLong10min')
         utilities.apply_orog_correction_field(original_orography_filename=original_orography_filename,
                                               orography_corrections_filename=orog_corrections_filename,
-                                              corrected_orography_filename=orography_filename,
+                                              corrected_orography_filename=
+                                              orography_filename if glacial_mask is None else 
+                                              intermediary_orography_filename,
                                               grid_type="LatLong10min")
+        if glacial_mask is not None:
+            utilities.\
+            replace_corrected_orography_with_original_for_glaciated_grid_points_drivers(
+                input_corrected_orography_file=intermediary_orography_filename, 
+                input_original_orography_file=original_orography_filename,
+                input_glacier_mask_file=glacial_mask,
+                out_orography_file=orography_filename,
+                grid_type="LatLong10min")
         fill_sinks_driver.generate_sinkless_flow_directions(filename=orography_filename,
                                                             output_filename=rdirs_filename,
                                                             ls_mask_filename=\
@@ -2204,21 +3011,25 @@ class Ten_Minute_Data_From_Virna_Driver(ICE5G_Data_Drivers):
         self._ten_minute_data_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_helper(file_label,
                                                                                                   original_orography_filename,
                                                                                                   original_ls_mask_filename)
-        
-    def ten_minute_data_from_virna_lgm_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_2017_data(self):
+   
+    def ten_minute_data_from_virna_lgm_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_tarasov_orog_corrs(self):
         """Generate and upscale sinkless river directions for the LGM"""
         file_label = self._generate_file_label()
-        original_orography_filename = path.join(self.orography_path,"OR-topography-present_data_from_virna_2017.nc")
-        original_ls_mask_filename = path.join(self.ls_masks_path,"OR-remapped-mask-present_data_from_virna_2017.nc")
+        original_orography_filename = path.join(self.orography_path,"10min-topo-lgm-from-virna.nc")
+        original_ls_mask_filename = path.join(self.ls_masks_path,"10min-mask-lgm-from-virna.nc")
+        ice5g_glacial_mask_file = path.join(self.orography_path,"ice5g_v1_2_21_0k_10min.nc")
         self._ten_minute_data_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_helper(file_label,
                                                                                                   original_orography_filename,
-                                                                                                  original_ls_mask_filename)
-    
-    def ten_minute_data_remapped_from_srtm30plus_v6(self):
-        """Generate and upscale sinkless river direction from a orography upscaled from the pool copy of srtm30plus v6"""
-        file_label = self._generate_file_label()
-        original_orography_filename = path.join(self.orography_path,"")
-        original_ls_mask_filename = path.join(self.ls_masks_path,"")
+                                                                                                  original_ls_mask_filename,
+                                                                                                  tarasov_based_orog_correction=\
+                                                                                                  True,
+                                                                                                  glacial_mask=\
+                                                                                                  ice5g_glacial_mask_file) 
+#     def ten_minute_data_remapped_from_srtm30plus_v6(self):
+#         """Generate and upscale sinkless river direction from a orography upscaled from the pool copy of srtm30plus v6"""
+#         file_label = self._generate_file_label()
+#         original_orography_filename = path.join(self.orography_path,"")
+#         original_ls_mask_filename = path.join(self.ls_masks_path,"")
 
         
 def main():
@@ -2227,7 +3038,7 @@ def main():
     Select runs by uncommenting them and also the revelant object instantation.
     """
 
-    #ice5g_data_drivers = ICE5G_Data_Drivers()
+    ice5g_data_drivers = ICE5G_Data_Drivers()
     #ice5g_data_drivers.ICE5G_as_HD_data_21k_0k_sig_grad_only_all_neighbours_driver()
     #ice5g_data_drivers.ICE5G_as_HD_data_all_points_21k()
     #ice5g_data_drivers.ICE5G_as_HD_data_all_points_0k()
@@ -2240,6 +3051,16 @@ def main():
     #ice5g_data_drivers.ICE5G_data_ALG4_sinkless_downscaled_ls_mask_0k_upscale_rdirs()
     #ice5g_data_drivers.ICE5G_data_ALG4_sinkless_21k()
     #ice5g_data_drivers.ICE_data_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_from_orog_corrs_field()
+    #ice5g_data_drivers.ICE5G_and_tarasov_upscaled_srtm30plus_data_ALG4_sinkless_downscaled_ls_mask_0k()
+    #ice5g_data_drivers.ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless_downscaled_ls_mask_0k()
+    #ice5g_data_drivers.ICE5G_and_tarasov_upscaled_srtm30plus_data_ALG4_sinkless_downscaled_ls_mask_0k_upscale_rdirs()
+    #ice5g_data_drivers.ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless_downscaled_ls_mask_0k_upscale_rdirs()
+    #ice5g_data_drivers.ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless_glcc_olson_lsmask_0k()
+    #ice5g_data_drivers.ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless_glcc_olson_lsmask_0k_upscale_rdirs()
+    #ice5g_data_drivers.\
+    #ICE5G_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_tarasov_orog_corrs_generation_and_upscaling()
+    ice5g_data_drivers.\
+    ICE5G_21k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_tarasov_orog_corrs_generation_and_upscaling()
     #etopo1_data_drivers = ETOPO1_Data_Drivers()
     #etopo1_data_drivers.etopo1_data_all_points()
     #etopo1_data_drivers.etopo1_data_ALG4_sinkless()
@@ -2252,6 +3073,14 @@ def main():
     #utilties_drivers.downscale_HD_ls_seed_points_to_10min_lat_lon_true_seas_inc_casp_only()
     #utilties_drivers.recreate_connected_lsmask_for_black_azov_and_caspian_seas_from_glcc_olson_data()
     #utilties_drivers.recreate_connected_HD_lsmask_from_glcc_olson_data()
+    #utilties_drivers.recreate_connected_10min_lsmask_from_glcc_olson_data()
+    #utilties_drivers.upscale_srtm30_plus_orog_to_10min()
+    #utilties_drivers.upscale_srtm30_plus_orog_to_10min_no_lsmask()
+    #utilties_drivers.upscale_srtm30_plus_orog_to_10min_no_lsmask_tarasov_style_params()
+    #utilties_drivers.upscale_srtm30_plus_orog_to_10min_no_lsmask_reduced_back_looping()
+    #utilties_drivers.upscale_1min_orography_to_30min()
+    #utilties_drivers.upscale_srtm30_plus_orog_to_10min_no_lsmask_half_cell_upscaling_params()
+    #utilties_drivers.downscale_ICE6G_21k_landsea_mask_and_remove_disconnected_points()
     #original_hd_model_rfd_drivers = Original_HD_Model_RFD_Drivers()
     #original_hd_model_rfd_drivers.corrected_HD_rdirs_post_processing()
     #original_hd_model_rfd_drivers.extract_ls_mask_from_corrected_HD_rdirs()
@@ -2263,12 +3092,14 @@ def main():
     #glac_data_drivers.test_paragen_on_GLAC_data()
     #glac_data_drivers.GLAC_data_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_27timeslices()
     #glac_data_drivers.GLAC_data_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_27timeslices_merge_timeslices_only()
-    ten_minute_data_from_virna_driver = Ten_Minute_Data_From_Virna_Driver()
+    #ten_minute_data_from_virna_driver = Ten_Minute_Data_From_Virna_Driver()
     #ten_minute_data_from_virna_driver.ten_minute_data_from_virna_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs()
     #ten_minute_data_from_virna_driver.ten_minute_data_from_virna_0k_2017v_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs()
-    ten_minute_data_from_virna_driver.ten_minute_data_from_virna_0k_13_04_2017v_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs()
+    #ten_minute_data_from_virna_driver.ten_minute_data_from_virna_0k_13_04_2017v_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs()
     #ten_minute_data_from_virna_driver.ten_minute_data_from_virna_lgm_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_2017_data()
     #ten_minute_data_from_virna_driver.ten_minute_data_from_virna_lgm_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs()
+    #ten_minute_data_from_virna_driver.ten_minute_data_from_virna_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_tarasov_orog_corrs()
+    #ten_minute_data_from_virna_driver.ten_minute_data_from_virna_lgm_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_tarasov_orog_corrs()
 
 if __name__ == '__main__':
     main()

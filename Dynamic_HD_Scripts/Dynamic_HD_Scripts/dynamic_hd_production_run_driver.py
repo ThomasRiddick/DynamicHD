@@ -91,25 +91,44 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         Arguments: None
         Returns: ConfigParser object; the read and checked configuration
         """
+        valid_config = True
         config = configparser.ConfigParser()
         print "Read python driver options from file {0}".format(self.python_config_filename)
         config.read(self.python_config_filename)
-        config.has_section("output_options")
-        config.has_option("output_options","output_corrected_orog")
-        config.has_option("output_options","output_fine_rdir") 
-        config.has_option("output_options","output_fine_catchments") 
-        config.has_option("output_options","output_fine_flowtocell") 
-        config.has_option("output_options","output_fine_flowtorivermouths") 
-        config.has_option("output_options","output_pre_loop_removal_course_rdirs") 
-        config.has_option("output_options","output_pre_loop_removal_course_flowtocell") 
-        config.has_option("output_options","output_pre_loop_removal_course_flowtorivermouths") 
-        config.has_option("output_options","output_pre_loop_removal_course_catchments") 
-        config.has_option("output_options","output_course_rdirs") 
-        config.has_option("output_options","output_course_unfilled_orog") 
-        config.has_option("output_options","output_course_filled_orog") 
-        config.has_option("output_options","output_course_flowtocell") 
-        config.has_option("output_options","output_course_flowtorivermouths") 
-        config.has_option("output_options","output_course_catchments") 
+        valid_config = valid_config \
+            if config.has_section("output_options") else False
+        valid_config = valid_config \
+            if config.has_option("output_options","output_corrected_orog") else False
+        valid_config = valid_config \
+            if config.has_option("output_options","output_fine_rdirs") else False
+        valid_config = valid_config \
+            if config.has_option("output_options","output_fine_catchments") else False
+        valid_config = valid_config \
+            if config.has_option("output_options","output_fine_flowtocell") else False
+        valid_config = valid_config \
+            if config.has_option("output_options","output_fine_flowtorivermouths") else False
+        valid_config = valid_config \
+            if config.has_option("output_options","output_pre_loop_removal_course_rdirs") else False
+        valid_config = valid_config \
+            if config.has_option("output_options","output_pre_loop_removal_course_flowtocell") else False
+        valid_config = valid_config \
+            if config.has_option("output_options","output_pre_loop_removal_course_flowtorivermouths") else False
+        valid_config = valid_config \
+            if config.has_option("output_options","output_pre_loop_removal_course_catchments") else False
+        valid_config = valid_config \
+            if config.has_option("output_options","output_course_rdirs") else False
+        valid_config = valid_config \
+            if config.has_option("output_options","output_course_unfilled_orog") else False 
+        valid_config = valid_config \
+            if config.has_option("output_options","output_course_filled_orog") else False
+        valid_config = valid_config \
+            if config.has_option("output_options","output_course_flowtocell") else False
+        valid_config = valid_config \
+            if config.has_option("output_options","output_course_flowtorivermouths") else False
+        valid_config = valid_config \
+            if config.has_option("output_options","output_course_catchments") else False
+        if not valid_config:
+            raise RuntimeError("Invalid configuration file supplied")
         return config
     
     def no_intermediaries_ten_minute_data_ALG4_no_true_sinks_plus_upscale_rdirs_driver(self):

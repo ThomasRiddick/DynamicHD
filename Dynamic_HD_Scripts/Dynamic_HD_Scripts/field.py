@@ -30,6 +30,7 @@ class Field(object):
     add
     invert_data
     copy
+    convert_to_binary_mask
     """
     
     def __init__(self,input_field,grid='HD',**grid_kwargs):
@@ -193,6 +194,18 @@ class Field(object):
         """
 
         return type(self)(input_field=self.data.copy(),grid=self.grid)
+    
+    def convert_to_binary_mask(self,threshold=50):
+        """Convert this field to binary mask by converting points above threshold to 1 and all others to zero
+        
+        Arguments:
+        threshold: float; threshold above which to convert field to 1's, all others points are converted to 0
+        Return: Nothing
+        """
+        temporary_data_copy = np.zeros(self.data.shape)
+        temporary_data_copy[self.data >= threshold] = 1
+        temporary_data_copy[self.data <  threshold] = 0
+        self.data = temporary_data_copy
    
 class Orography(Field):
     """A subclass of Field with various method specific to orographies.

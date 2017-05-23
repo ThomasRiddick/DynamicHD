@@ -675,7 +675,8 @@ def makeGrid(grid_type,**kwargs):
     and pass the keyword arguments to the grid constructor.
     """
     
-    shortcuts = {'HD':{'type':LatLongGrid,'params':{'nlat':360,'nlong':720}},
+    shortcuts = {'LatLong1deg':{'type':LatLongGrid,'params':{'nlat':180,'nlong':360}},
+                 'HD':{'type':LatLongGrid,'params':{'nlat':360,'nlong':720}},
                  'LatLong5min':{'type':LatLongGrid,'params':{'nlat':2160,'nlong':4320}},
                  'LatLong10min':{'type':LatLongGrid,'params':{'nlat':1080,'nlong':2160,
                                                               'longitude_offset_adjustment':-0.5/3.0}},

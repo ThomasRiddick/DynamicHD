@@ -31,6 +31,8 @@ void latlon_upscale_orography_cython_interface(double* orography_in, int nlat_fi
 							 tarasov_separation_threshold_for_returning_to_same_edge_in,
 							 tarasov_min_path_length_in,tarasov_include_corners_in_same_edge_criteria_in,
 							 prefer_non_diagonal_initial_dirs);
+	delete [] landsea_in;
+	delete [] true_sinks_in;
 }
 
 void latlon_upscale_orography(double* orography_in, int nlat_fine, int nlon_fine,
@@ -134,6 +136,9 @@ void partition_fine_orography(double* orography_in, bool* landsea_in, bool* true
 	double* orography_section = new double[scale_factor_lat*scale_factor_lon];
 	bool* landsea_section     = new bool[scale_factor_lat*scale_factor_lon];
 	bool* true_sinks_section  = new bool[scale_factor_lat*scale_factor_lon];
+	int tenth_of_total_points = 10;
+	if (nlat_course >= 10) tenth_of_total_points = nlat_course/10;
+	if (nlat_course >= 10) cout << "Each dot represents 10% completion:" << endl;
 	for (auto i = 0; i < nlat_course; i++) {
 		for (auto j = 0; j < nlon_course; j++) {
 			for (auto ifine = 0; ifine < scale_factor_lat; ifine++){
@@ -148,7 +153,9 @@ void partition_fine_orography(double* orography_in, bool* landsea_in, bool* true
 			}
 		orography_out[i*nlon_course + j] = func(orography_section,landsea_section,true_sinks_section);
 		}
+		if (i%tenth_of_total_points == 0 && ! (i == 0)) cout << ".";
 	}
+	if (nlat_course >= 10) cout << "." << endl;
 	delete[] orography_section;
 	delete[] landsea_section;
 	delete[] true_sinks_section;
