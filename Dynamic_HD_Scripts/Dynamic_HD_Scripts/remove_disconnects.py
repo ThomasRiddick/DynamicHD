@@ -5,7 +5,8 @@ Created on Mar 29, 2017
 '''
 import numpy as np
 import field
-import collections
+import heapq
+import copy
 from __builtin__ import None
 
 class RemoveDisconnects(object):
@@ -13,10 +14,7 @@ class RemoveDisconnects(object):
     classdocs
     '''
     
-    left_bias_value  = -1
-    no_bias_value    =  0
-    right_bias_value =  1
-
+    disconnect_size_threshold = 2
 
     def __init__(self, params):
         '''
@@ -28,13 +26,15 @@ class RemoveDisconnects(object):
         while (self.disconnect) > 0:
             self.order_disconnects()
             largest_disconnect = self.disconnects.pop()
-            if self.yamazaki_flowtocell.get_value(largest_disconnect) < 2: 
+            if self.yamazaki_flowtocell.get_value(largest_disconnect) < self.disconnect_size_threshold: 
                 break
-            path,cotat_disconnected_catchment_num = self.find_path(largest_disconnect)
+            path,cotat_disconnected_catchment_num,downstream_reconnection_target =\
+                 self.find_path(largest_disconnect)
             if path is None:
                 print "Couldn't solve disconnect at:"  +\
                     self.grid.coords_as_string(largest_disconnect)
                 continue
+            self.mark_path(path, largest_disconnect, downstream_reconnection_target)
             self.attempt_to_reroute_disconnected_cells(path, 
                     cotat_disconnected_catchment_num)
 
@@ -57,23 +57,14 @@ class RemoveDisconnects(object):
             downstream_reconnection_target = self.new_disconnects_map.get_target_coords(disconnect[0])
         disconnect_size = self.yamazaki_flowtocell.get_value(disconnect)
         cotat_disconnected_catchment_num = self.cotat_catchments.get_value(downstream_reconnection_target)
-        rerouting_start_points_and_biases = collections.OrderedDict()
-        next_path_step_generator = \
-            self.grid.prep_path_generator(disconnect,downstream_reconnection_target,
-                                          disconnect_size,cotat_disconnected_catchment_num,
-                                          lambda x: self.reroute_point(x,disconnect_size,
-                                                    cotat_disconnected_catchment_num),
-                                          lambda x: self.evaluate_rerouting(x,
-                                                    cotat_disconnected_catchment_num),
-                                          rerouting_start_points_and_biases) 
-        path = list(next_path_step_generator)
-        while path[-1] is None:
-            path = list(next_path_step_generator)
-            if len(rerouting_start_points_and_biases) == 0:
-                return None,None
-        for point in path:
-                self.modification_counts.increment_value(point)
-        return path,cotat_disconnected_catchment_num
+        path_generator = \
+            self.GeneratePath(disconnect,downstream_reconnection_target,
+                              lambda x: self.reroute_point(x,disconnect_size,
+                                        cotat_disconnected_catchment_num),
+                              lambda x: self.evaluate_rerouting(x,
+                                        cotat_disconnected_catchment_num)) 
+        path = path_generator.generate_path()
+        return path,cotat_disconnected_catchment_num,downstream_reconnection_target
         
     def reroute_point(self,point,disconnect_size,cotat_disconnected_catchment_num):
         if point is None:
@@ -93,6 +84,14 @@ class RemoveDisconnects(object):
             return 0 
         else:
             return self.yamazaki_flowtocell.get_value(point)
+    
+    def mark_path(self,path,disconnect,downstream_reconnection_target):         
+        previous_point = downstream_reconnection_target
+        for point in path:
+            self.modification_counts.increment_value(point)
+            self.new_cotat_rdirs.direct_rdir_to_point(point,previous_point)
+            previous_point = point
+        self.new_cotat_rdirs.direct_rdir_to_point(disconnect,previous_point)
         
     def attempt_to_reroute_disconnected_cells(self,path,primary_cotat_disconnected_catchment_num):
         self.reconnected_points = field.Field(self.grid.create_empty_field(np.bool_),
@@ -167,108 +166,55 @@ class RemoveDisconnects(object):
             disconnected_neighbors = [dc for dc in disconnected_neighbors if dc not in disconnects_solved] 
             disconnects_solved = []
             
-    @classmethod
-    def find_optimal_rerouting_step(cls,start_point,point_to_avoid,initial_bias,
-                                    reroute_point_func,evaluate_rerouting_func,
-                                    compute_rerouting_func):
-        bias = initial_bias
-        rerouting = []
-        direct_rerouting = True
-        cumulative_rerouting_penalty = 0
-        while True:
-            if bias != cls.left_bias_value: 
-                righthand_rerouting = compute_rerouting_func(start_point,point_to_avoid,divert_right=True)
-            else:
-                righthand_rerouting = None
-            if bias != cls.right_bias_value:
-                lefthand_rerouting =  compute_rerouting_func(start_point,point_to_avoid,divert_right=False)
-            else:
-                lefthand_rerouting = None
-            righthand_rerouting_valid = not reroute_point_func(righthand_rerouting)
-            lefthand_rerouting_valid  = not reroute_point_func(lefthand_rerouting)
-            valid_rerouting = righthand_rerouting or lefthand_rerouting
-            if righthand_rerouting_valid and lefthand_rerouting_valid:
-                if (bias != cls.left_bias_value):
-                    rerouting.append(righthand_rerouting)
-                    bias = cls.right_bias_value
-                else:
-                    rerouting.append(lefthand_rerouting)
-                    bias = cls.left_bias_value
-            elif righthand_rerouting_valid:
-                rerouting.append(righthand_rerouting)
-                bias = cls.right_bias_value
-            elif lefthand_rerouting_valid:
-                rerouting.append(lefthand_rerouting)
-                bias = cls.left_bias_value
-            else:
-                if not direct_rerouting: 
-                    if initial_bias != cls.no_bias_value:
-                        return None
-                    else:
-                        second_attempt_output = \
-                            cls.find_optimal_rerouting(start_point,point_to_avoid, 
-                                                       initial_bias=\
-                                                       cls.left_bias_value if bias == 
-                                                       cls.right_bias_value else cls.right_bias_value,
-                                                       reroute_point_func=reroute_point_func,
-                                                       evaluate_rerouting_func=evaluate_rerouting_func)
-                        if second_attempt_output is None:
-                            return None
-                        else:
-                            return second_attempt_output[:2]
-                else: 
-                    direct_rerouting = False
-            if direct_rerouting:
-                cumulative_rerouting_penalty += evaluate_rerouting_func(rerouting[-1])
-                if initial_bias != cls.no_bias_value:
-                    return rerouting,bias,cumulative_rerouting_penalty
-                else:
-                    second_attempt_output = \
-                            cls.find_optimal_rerouting(start_point,point_to_avoid,
-                                                       initial_bias=\
-                                                       cls.left_bias_value if bias == 
-                                                       cls.right_bias_value else cls.right_bias_value,
-                                                       reroute_point_func=reroute_point_func,
-                                                       evaluate_rerouting_func=evaluate_rerouting_func)
-                    if (second_attempt_output is not None and 
-                        second_attempt_output[2] < cumulative_rerouting_penalty):
-                        return second_attempt_output[:2] 
-                    else:
-                        return rerouting,bias
-            elif valid_rerouting:
-                cumulative_rerouting_penalty += evaluate_rerouting_func(rerouting[-1])
-                direct_rerouting = True
+class GeneratePath(object):
     
-    @classmethod
-    def find_optimal_rerouting(cls,previous_point,rerouting_start_points_and_biases,
-                               diagonal_step,reroute_point_func,evaluate_rerouting_func):
-        if previous_point == next(reversed(rerouting_start_points_and_biases)): 
-            if (rerouting_start_points_and_biases[previous_point] == 
-                cls.no_bias_value):
-                rerouting_start_points_and_biases.popitem()
-                yield None
-                break
-            else:
-                left_bias  = cls.left_bias_value
-                right_bias = cls.right_bias_value 
-                bias = left_bias if rerouting_start_points_and_biases[previous_point] ==\
-                                    right_bias else right_bias
-        else:
-            bias = cls.no_bias_value
-        optimal_rerouting_output = cls.\
-            find_optimal_rerouting_step(previous_point,
-                                        diagonal_step=diagonal_step,
-                                        bias=bias,reroute_point_func=reroute_point_func,
-                                        evaluate_rerouting_func=evaluate_rerouting_func)
-        if optimal_rerouting_output is None:
-            yield None
-            break
-        rerouting,route_bias = optimal_rerouting_output
-        if not set(rerouting).isdisjoint(rerouting_start_points_and_biases.keys()):
-            yield None
-            break
-        if bias == cls.no_bias_value:
-            rerouting_start_points_and_biases[previous_point] = route_bias
-        else:
-            rerouting_start_points_and_biases[previous_point] =\
-                cls.no_bias_value
+    frustration_constant = 5
+    search_abandonment_threshold = 25
+    
+    def __init__(self,initial_coords,target_coords,reroute_point_func,evaluate_rerouting_func,
+                 grid):
+        self.q = []
+        self.initial_coords = initial_coords
+        self.target_coords = target_coords
+        self.reroute_point_func = reroute_point_func
+        self.evaluate_rerouting_func = evaluate_rerouting_func
+        self.grid = grid
+        
+    def generate_path(self):
+        heapq.heappush(self.q,(0,self.initial_coords,[self.initial_coords],0))
+        lowest_cost_found = 0
+        lowest_cost_path = None
+        while len(self.q) > 0:
+            path_cost_including_frustration,point_coords,path_to_point,path_cost = heapq.heappop(self.q)
+            neighbors = list((neighbor for neighbor in self.grid.get_neighbors(point_coords) 
+                              if neighbor not in set(path_to_point)))
+            if lowest_cost_path is not None:
+                if (path_cost_including_frustration > lowest_cost_found 
+                    + self.search_abandonment_threshold):
+                    return lowest_cost_path[1:]
+            for neighbor_coords in neighbors:
+                if neighbor_coords == self.target_coords:
+                    if lowest_cost_path is not None:
+                        if path_cost < lowest_cost_path: 
+                            lowest_cost_found = path_to_point
+                            lowest_cost_found = path_cost
+                    else:
+                        lowest_cost_path = path_to_point 
+                    continue
+                if self.reroute_point_func(neighbor_coords):
+                    continue
+                neighbor_path_cost = path_cost +  self.evaluate_rerouting_func(neighbor_coords)
+                progress = self.grid.progress_made(neighbor_coords,point_coords,self.target_coords)
+                if progress > 0:
+                    neighbor_path_cost_including_frustration = neighbor_path_cost
+                elif progress == 0:
+                    neighbor_path_cost_including_frustration = path_cost_including_frustration +\
+                                                                self.frustration_constant
+                else:
+                    neighbor_path_cost_including_frustration = path_cost_including_frustration +\
+                                                                self.frustration_constant*2
+                neighbor_path_to_point = copy.deepcopy(path_to_point) 
+                neighbor_path_to_point.append(neighbor_coords)
+                heapq.heappush(self.q,(neighbor_path_cost_including_frustration,
+                               neighbor_coords,neighbor_path_to_point,neighbor_path_cost)) 
+        return None

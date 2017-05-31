@@ -28,7 +28,10 @@ class IndexBasedRiverDirections(field.Field):
         
     def get_downstream_neighbor(self,point):
         return self.grid.get_downstream_neighbor(self.data,point)
-        
+    
+    def direct_rdir_to_point(self,input_point,target_point):
+        self.grid.set_target_coords_of_index_based_rdirs(self.data,input_point,target_point)
+
 class ModificationCounts(FieldForDCR): 
     
     def increment_value(self,coords):
