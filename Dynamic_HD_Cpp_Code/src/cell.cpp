@@ -8,6 +8,12 @@
  */
 #include "cell.hpp"
 
+/* IMPORTANT!
+ * Note that a description of each functions purpose is provided with the function declaration in
+ * the header file not with the function definition. The definition merely provides discussion of
+ * details of the implementation.
+ */
+
 cell cell::operator= (const cell& cell_in){
 	return cell(cell_in);
 }

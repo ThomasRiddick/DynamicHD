@@ -14,7 +14,7 @@
 #include <utility>
 #include "coords.hpp"
 
-/*Stores the orography, position and order of addition for a grid cell as an object
+/** Stores the orography, position and order of addition for a grid cell as an object
  * (which can be queued)*/
 class cell{
 	//The value of orography of this cell
@@ -38,12 +38,14 @@ class cell{
 	double tarasov_path_initial_height = 0;
 
 public:
-	//Class Constructors
+	///Class Constructor
 	cell(double orography_in,coords* cell_coords_in,int catchment_num, double rim_height_in)
 	: orography(orography_in), cell_coords(cell_coords_in), k(0), catchment_num(catchment_num),
 	  rim_height(rim_height_in) {}
+	///Class Constructor
 	cell(double orography_in,coords* cell_coords_in) : orography(orography_in),
 			cell_coords(cell_coords_in), k(0), catchment_num(0), rim_height(0.0)  {}
+	///Class Constructor
 	cell(double orography_in,coords* cell_coords_in,int catchment_num_in, double rim_height_in,
 		 int tarasov_initial_edge_number_in, int tarasov_maximum_separation_from_initial_edge_in,
 		 double tarasov_path_length_in,double tarasov_path_initial_height_in)
@@ -52,6 +54,7 @@ public:
 	  tarasov_maximum_separation_from_initial_edge(tarasov_maximum_separation_from_initial_edge_in),
 	  rim_height(rim_height_in), tarasov_path_length(tarasov_path_length_in),
 	  tarasov_path_initial_height(tarasov_path_initial_height_in) {}
+	///Class Constructor
 	cell(double orography_in,coords* cell_coords_in, int catchment_num_in,
 		 int tarasov_initial_edge_number_in,int tarasov_maximum_separation_from_initial_edge_in,
 		 double tarasov_path_length_in,double tarasov_path_initial_height_in)
@@ -62,29 +65,42 @@ public:
 	  tarasov_path_initial_height(tarasov_path_initial_height_in) {}
 	//Class destructor
 	~cell() { delete cell_coords; }
-	//Getters
+	///Getter
 	coords* get_cell_coords() {return cell_coords;}
+	///Getter
 	int get_catchment_num() {return catchment_num;}
+	///Getter
 	double get_orography() {return orography;}
+	///Getter
 	double get_rim_height() {return rim_height;}
+	///Getter
 	double get_tarasov_path_length() {return tarasov_path_length;}
+	///Getter
 	double get_tarasov_path_initial_height() {return tarasov_path_initial_height;}
+	///Getter
 	int get_tarasov_initial_edge_number() {return tarasov_initial_edge_number;}
+	///Getter
 	int get_tarasov_maximum_separation_from_initial_edge()
 		{return tarasov_maximum_separation_from_initial_edge;}
-	//Setters
+	///Setter
 	void set_orography(double value) {orography = value;}
+	///Setter
 	void set_k(int k_in) {k=k_in;}
+	///Setter
 	void set_tarasov_maximum_separation_from_initial_edge(int value)
 		{tarasov_maximum_separation_from_initial_edge = value;}
-	//Overloaded operators
+	///Overloaded equals operator
 	cell operator= (const cell&);
+	///Overloaded greater than operator
 	friend bool operator> (const cell&,const cell&);
+	///Overloaded less than operator
 	friend bool operator< (const cell&,const cell&);
+	///Overloaded greater than or equals to operator
 	friend bool operator>= (const cell&,const cell&);
+	///Overloaded less than or equals to operator
 	friend bool operator<= (const cell&,const cell&);
 };
-/*
+/**
  * Contains an overloaded operator that compares two cell objects
  * for a priority queue
  */
@@ -92,12 +108,18 @@ public:
 class compare_cells{
 
 public:
-	//Operator that compares two cell objects
+	///Operator that compares two cell objects
 	bool operator() (cell* lhs,cell* rhs){return *lhs>*rhs;}
 };
 
+/**
+ * Subclass by for land-sea mask generation. Basically a wrapper
+ * that uses the superclass with the orography value set to 0.0
+ */
+
 class landsea_cell : public cell {
 public:
+	///Constructor
 	landsea_cell(coords* cell_coords) : cell(0.0,cell_coords){}
 };
 

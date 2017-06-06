@@ -372,7 +372,8 @@ def generate_orog_correction_field(original_orography_filename,
 def apply_orog_correction_field(original_orography_filename,
                                 orography_corrections_filename,
                                 corrected_orography_filename,
-                                grid_type,**grid_kwargs):
+                                original_orography_fieldname=None,
+                                grid_type='HD',**grid_kwargs):
     """Apply a field of relative orography corrections to a base orography
     
     Arguments:
@@ -388,6 +389,7 @@ def apply_orog_correction_field(original_orography_filename,
                                                      file_type=dynamic_hd.\
                                                      get_file_extension(original_orography_filename), 
                                                      field_type='Orography', grid_type=grid_type,
+                                                     fieldname=original_orography_fieldname,
                                                      **grid_kwargs)
     orography_corrections_field =  dynamic_hd.load_field(orography_corrections_filename, 
                                                          file_type=dynamic_hd.\

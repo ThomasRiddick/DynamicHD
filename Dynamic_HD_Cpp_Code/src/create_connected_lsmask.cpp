@@ -9,6 +9,14 @@
 #include "create_connected_lsmask.hpp"
 #include "grid.hpp"
 
+/* IMPORTANT!
+ * Note that a description of each functions purpose is provided with the function declaration in
+ * the header file not with the function definition. The definition merely provides discussion of
+ * details of the implementation.
+ */
+
+//The conversion of integer to boolean is required as boolean variables cannot be directly transferred
+//from Cython to C++ (and the code is design to internal use C++ native bool)
 void latlon_create_connected_lsmask_cython_wrapper(int* landsea_in_int, int* ls_seed_points_in_int,
   	  	  	  	  	  	  	  	  	  	  		   int nlat_in, int nlon_in, int use_diagonals_in_int)
 {

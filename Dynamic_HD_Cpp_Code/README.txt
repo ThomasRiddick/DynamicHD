@@ -1,0 +1,1 @@
+Information about the sink filling and orography upscaling C++ code is found in the main page of the doxygen documentation. If you are not using doxygen then an introduction can be found at the top of sink_filling_algorithm.hpp 

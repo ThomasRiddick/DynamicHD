@@ -23,22 +23,31 @@ namespace unittests {
 //A global variable equal to the smallest possible double used as a non data value
 const double no_data_value = numeric_limits<double>::lowest();
 
-/*
+/**
  * Class containing tests of a tarasov-like upscaling technique using algorithm 1 and algorithm 4
  */
 class FillSinksOrographyUpscalingTest : public ::testing::Test {
 
 protected:
+	///Set value for flag
 	bool set_ls_as_no_data_flag = false;
+	///Switch on tarasov mod
 	bool tarasov_mod= true;
+	///Switch off debug
 	bool debug = false;
+	///Empty 5 by 5 section of true sinks
 	bool* empty_true_sinks_section_five_by_five = new bool[5*5];
+	///All land 5 by 5 section of landsea mask
 	bool* all_land_landsea_mask_five_by_five    = new bool[5*5];
+	///Empty 10 by 10 section of true sinks
 	bool* empty_true_sinks_section_ten_by_ten = new bool[10*10];
+	///All land 10 by 10 section of landsea mask
 	bool* all_land_landsea_mask_ten_by_ten    = new bool[10*10];
 
 public:
+	///Constructor
 	FillSinksOrographyUpscalingTest();
+	///Destructor
 	~FillSinksOrographyUpscalingTest();
 };
 
@@ -4204,33 +4213,51 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingFourbyFourCellGridTest){
 }
 
 
-/*
+/**
  *  Class containing tests specific to algorithm 4
  */
 class FillSinksAlgorithmFourTest : public ::testing::Test {
 
 protected:
 	//Declare assorted test data
+	///Input orography test data (as 1D array)
 	double* orography_in;
+	///Input orography test data with wrapped sink (as 1D array)
 	double* orography_in_wrapped_sink;
+	///Input orography test data for prefer non diagonal test (as 1D array)
 	double* orography_in_prefer_non_diagonal_test;
+	///Landsea mask input test data (as 1D array)
 	bool*   ls_data;
+	///Landsea mask input test data for test with a wrapped sink (as 1D array)
 	bool*   ls_data_wrapped_sink;
+	///Landsea mask input test data for test of preferring (as 1D array)
+	//non-diagonals
 	bool*   ls_data_prefer_non_diagonal_test;
+	///Expected completed cell result (as 1D array)
 	bool*   expected_completed_cells_in;
+	///Expected completed cell result for test with no landsea mask (as 1D array)
 	bool*   expected_completed_cells_no_ls;
+	///Expected queue generated for test with no landsea mask (as 1D array)
 	double* expected_orography_queue_no_ls_mask;
+	///Expected orography output (as 1D array)
 	double* expected_orography_in;
+	///Expected river directions output (as 1D array)
 	double* expected_rdirs_in;
+	///Expected output river direction of the initial set-up with
+	///no landsea mask (as 1D array)
 	double* expected_rdirs_initial_no_ls_mask;
+	///Expected river directions output for no landsea mask test (as 1D array)
 	double* expected_rdirs_no_ls_mask;
+	///Expected orography after test with no landsea mask (as 1D array)
 	double* expected_orography_no_ls_mask;
+	///Use 10 latitude points
 	int nlat = 10;
+	///Use 10 longitude points
 	int nlon = 10;
 public:
-	//Constructor
+	///Constructor
 	FillSinksAlgorithmFourTest();
-	//Destructor
+	///Destructor
 	~FillSinksAlgorithmFourTest();
 };
 
@@ -4844,7 +4871,7 @@ TEST_F(FillSinksAlgorithmFourTest,TestFillSinks){
 	delete grid_params;
 }
 
-/*
+/**
  * Class containing tests specific to algorithm 1 (though the code tested my well
  * be shared by the other algorithms)
  */
@@ -4853,34 +4880,68 @@ class FillSinksTest : public ::testing::Test {
 
 protected:
 	//Declare pseudo data and expected results
+	///Input orography test data
 	double* orography_in;
+	///Expected output orography
 	double* expected_orography_out;
+	///Input orography test data for wrapped sink test
 	double* orography_in_wrapped_sink;
+	///Input orography test data for wrapped sink with slope test
 	double* orography_in_wrapped_sink_with_slope;
+	///Input orography test with slope
 	double* orography_in_with_slope;
+	///Expected result of wrapped sink test
 	double* expected_orography_wrapped_sink;
+	///Expected rseults of wrapped sink test with landsea mask filled in
 	double* expected_orography_wrapped_sink_ls_filled;
+	///Expected queue out of points (flattened out and put into array)
+	///for test of adding points to queue
 	double* expected_orography_in_queue_out;
+	///Expected queue out of points (flattened out and put into array)
+	///for test of adding points to queue with true sinks
 	double* expected_orography_in_queue_out_with_true_sinks;
+	///Expected orography out from wrapped sink test with slope
+	///and landsea mask filled
 	double* expected_orography_wrapped_sink_ls_filled_with_slope;
+	///Expected orography out from test with slope
 	double* expected_orography_out_with_slope;
+	///Expected orography produced by unwinding queue after testing adding edges
+	///queue
 	double* adding_to_q_expected_orography;
+	///Expected orography produced by unwinding queue after testing adding edges
+	///queue basic version
 	double* adding_to_q_expected_orography_basic_version;
+	///Expected orography from unwinding queue from test of adding a true sink
+	///to the queue
 	double* adding_true_sinks_to_q_expected_orography_basic_version;
+	///Expected completed cells from unwinding queue from test of adding edges
+	///to the queue basic version
 	bool* adding_to_q_expected_completed_cells_basic_version;
+	///Expected completed cells from unwinding queue from test of adding edges
+	///to the queue
 	bool* adding_to_q_expected_completed_cells;
+	///Expected completed cells from unwinding queue from test of adding a true sink
+	///to the queue basic version
 	bool* adding_true_sinks_to_q_expected_completed_cells_basic_version;
+	///Expected completed cells from unwinding queue from test of adding a true sink
+	///to the queue
 	bool* adding_true_sinks_to_q_expected_completed_cells;
+	///Input landsea mask test data
 	bool* ls_data;
+	///Input landsea mask test data with wrapped sink
 	bool* ls_data_wrapped_sink;
+	///Input true sink mask test data
 	bool* true_sinks_input;
+	///Input true sink to use in a test with a landsea mask
 	bool* true_sinks_input_ls_mask;
+	///Number of latitude points
 	int nlat = 10;
+	///Number of longitude points
 	int nlon = 10;
 public:
-	//Constructor
+	///Constructor
 	FillSinksTest();
-	//Destructor
+	///Destructor
 	~FillSinksTest();
 
 };

@@ -8,6 +8,12 @@
 
 #include "grid.hpp"
 
+/* IMPORTANT!
+ * Note that a description of each functions purpose is provided with the function declaration in
+ * the header file not with the function definition. The definition merely provides discussion of
+ * details of the implementation.
+ */
+
 bool grid::check_if_cell_connects_two_landsea_or_true_sink_points(int edge_number, bool is_landsea_nbr,
 																		 bool is_true_sink) {
 

@@ -983,7 +983,90 @@ class Utilities_Drivers(Dynamic_HD_Drivers):
         landsea_mask.data[756:842,272:328] = landsea_mask_present.data[756:842,272:328]
         dynamic_hd.write_field(filename=self.generated_ls_mask_filepath +
                                file_label + '.nc',
-                               field=landsea_mask,file_type=".nc") 
+                               field=landsea_mask,file_type=".nc")
+        
+    def remove_disconnected_points_from_ICE6G_21k_landsea_mask_and_add_caspian(self):
+        """Remove disconnected points from ICE6G landsea mask on 10 minute resolution"""
+        file_label = self._generate_file_label()
+        ice6g_land_sea_mask_file = path.join(self.orography_path,"Ice6g_c_VM5a_10min_21k.nc")
+        present_day_10min_mask_file = path.join(self.ls_masks_path,"glcc_olson_land_cover_data",
+                                                "glcc_olson-2.0_lsmask_with_bacseas_upscaled_10min.nc")
+        intermediary_land_sea_mask_file = (self.generated_ls_mask_filepath + 
+                                           "intermediary_" + file_label + '.nc')
+        second_intermediary_land_sea_mask_file = (self.generated_ls_mask_filepath + 
+                                                  "2nd_intermediary_" + file_label + '.nc')
+        landsea_mask = dynamic_hd.load_field(filename=ice6g_land_sea_mask_file,
+                                             file_type=".nc",field_type="Generic",
+                                             fieldname="sftlf", grid_type="LatLong10min")
+        landsea_mask.convert_to_binary_mask()
+        landsea_mask.invert_data()
+        dynamic_hd.write_field(filename=intermediary_land_sea_mask_file,
+                               field=landsea_mask,file_type=".nc")
+        cc_lsmask_driver.drive_connected_lsmask_creation(input_lsmask_filename=\
+                                                         intermediary_land_sea_mask_file, 
+                                                         output_lsmask_filename=\
+                                                         second_intermediary_land_sea_mask_file,
+                                                         input_ls_seed_points_filename=None, 
+                                                         input_ls_seed_points_list_filename=\
+                                                         path.join(self.ls_seed_points_path,
+                                                                   "lsseedpoints_downscale_HD_ls_seed_points"
+                                                                   "_to_10min_lat_lon_true_seas_inc_casp_only"
+                                                                   "_20160718_114402.txt"),
+                                                         rotate_seeds_about_polar_axis=True,
+                                                         use_diagonals_in=True, grid_type='LatLong10min')
+        landsea_mask_present = dynamic_hd.load_field(filename=present_day_10min_mask_file,
+                                                     file_type=".nc",field_type="Generic",
+                                                     grid_type="LatLong10min")
+        landsea_mask = dynamic_hd.load_field(filename=second_intermediary_land_sea_mask_file,
+                                             file_type=".nc",field_type="Generic",
+                                             grid_type="LatLong10min")
+        #Copy present day Caspian
+        landsea_mask.data[756:842,272:328] = landsea_mask_present.data[756:842,272:328]
+        dynamic_hd.write_field(filename=self.generated_ls_mask_filepath +
+                               file_label + '.nc',
+                               field=landsea_mask,file_type=".nc")
+        
+        
+    def remove_disconnected_points_from_ICE6G_0k_landsea_mask_and_add_caspian(self):
+        """Remove disconnected points from ICE6G landsea mask on 10 minute resolution"""
+        file_label = self._generate_file_label()
+        ice6g_land_sea_mask_file = path.join(self.orography_path,"Ice6g_c_VM5a_10min_0k.nc")
+        present_day_10min_mask_file = path.join(self.ls_masks_path,"glcc_olson_land_cover_data",
+                                                "glcc_olson-2.0_lsmask_with_bacseas_upscaled_10min.nc")
+        intermediary_land_sea_mask_file = (self.generated_ls_mask_filepath + 
+                                           "intermediary_" + file_label + '.nc')
+        second_intermediary_land_sea_mask_file = (self.generated_ls_mask_filepath + 
+                                                  "2nd_intermediary_" + file_label + '.nc')
+        landsea_mask = dynamic_hd.load_field(filename=ice6g_land_sea_mask_file,
+                                             file_type=".nc",field_type="Generic",
+                                             fieldname="sftlf", grid_type="LatLong10min")
+        landsea_mask.convert_to_binary_mask()
+        landsea_mask.invert_data()
+        dynamic_hd.write_field(filename=intermediary_land_sea_mask_file,
+                               field=landsea_mask,file_type=".nc")
+        cc_lsmask_driver.drive_connected_lsmask_creation(input_lsmask_filename=\
+                                                         intermediary_land_sea_mask_file, 
+                                                         output_lsmask_filename=\
+                                                         second_intermediary_land_sea_mask_file,
+                                                         input_ls_seed_points_filename=None, 
+                                                         input_ls_seed_points_list_filename=\
+                                                         path.join(self.ls_seed_points_path,
+                                                                   "lsseedpoints_downscale_HD_ls_seed_points"
+                                                                   "_to_10min_lat_lon_true_seas_inc_casp_only"
+                                                                   "_20160718_114402.txt"),
+                                                         rotate_seeds_about_polar_axis=True,
+                                                         use_diagonals_in=True, grid_type='LatLong10min')
+        landsea_mask_present = dynamic_hd.load_field(filename=present_day_10min_mask_file,
+                                                     file_type=".nc",field_type="Generic",
+                                                     grid_type="LatLong10min")
+        landsea_mask = dynamic_hd.load_field(filename=second_intermediary_land_sea_mask_file,
+                                             file_type=".nc",field_type="Generic",
+                                             grid_type="LatLong10min")
+        #Copy present day Caspian
+        landsea_mask.data[756:842,272:328] = landsea_mask_present.data[756:842,272:328]
+        dynamic_hd.write_field(filename=self.generated_ls_mask_filepath +
+                               file_label + '.nc',
+                               field=landsea_mask,file_type=".nc")    
         
 class Original_HD_Model_RFD_Drivers(Dynamic_HD_Drivers):
     """Drive processes using the present day manually corrected river directions currently in JSBACH"""
@@ -2766,7 +2849,8 @@ class Ten_Minute_Data_From_Virna_Driver(ICE5G_Data_Drivers):
                                                                                              original_ls_mask_filename,
                                                                                              tarasov_based_orog_correction=\
                                                                                              False,
-                                                                                             glacial_mask=None): 
+                                                                                             glacial_mask=None,
+                                                                                             original_orography_fieldname=None): 
         """Helper for generating and upscaling sinkless river direction for a given 10 minute orography and landsea mask
         
         Arguments:
@@ -2804,6 +2888,8 @@ class Ten_Minute_Data_From_Virna_Driver(ICE5G_Data_Drivers):
                                               corrected_orography_filename=
                                               orography_filename if glacial_mask is None else 
                                               intermediary_orography_filename,
+                                              original_orography_fieldname=\
+                                              original_orography_fieldname,
                                               grid_type="LatLong10min")
         if glacial_mask is not None:
             utilities.\
@@ -3025,12 +3111,26 @@ class Ten_Minute_Data_From_Virna_Driver(ICE5G_Data_Drivers):
                                                                                                   True,
                                                                                                   glacial_mask=\
                                                                                                   ice5g_glacial_mask_file) 
-#     def ten_minute_data_remapped_from_srtm30plus_v6(self):
-#         """Generate and upscale sinkless river direction from a orography upscaled from the pool copy of srtm30plus v6"""
-#         file_label = self._generate_file_label()
-#         original_orography_filename = path.join(self.orography_path,"")
-#         original_ls_mask_filename = path.join(self.ls_masks_path,"")
 
+
+class ICE6g_Data_Drivers(Ten_Minute_Data_From_Virna_Driver):
+    
+    def ICE6g_lgm_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_tarasov_orog_corrs(self):
+        """Generate and upscale sinkless river directions for the LGM"""
+        file_label = self._generate_file_label()
+        ice6g_orography_lgm_filename = path.join(self.orography_path,"Ice6g_c_VM5a_10min_21k.nc")
+        ice6g_ls_mask_lgm_filename = path.join(self.ls_masks_path,
+                                               "10min_ice6g_lsmask_with_disconnected_point_removed_21k.nc")
+        ice6g_glacial_mask_file = path.join(self.orography_path,"Ice6g_c_VM5a_10min_21k.nc")
+        self._ten_minute_data_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_helper(file_label,
+                                                                                                  ice6g_orography_lgm_filename,
+                                                                                                  ice6g_ls_mask_lgm_filename,
+                                                                                                  tarasov_based_orog_correction=\
+                                                                                                  True,
+                                                                                                  glacial_mask=\
+                                                                                                  ice6g_glacial_mask_file,
+                                                                                                  original_orography_fieldname=\
+                                                                                                  'Topo') 
         
 def main():
     """Select the revelant runs to make 
@@ -3038,7 +3138,7 @@ def main():
     Select runs by uncommenting them and also the revelant object instantation.
     """
 
-    ice5g_data_drivers = ICE5G_Data_Drivers()
+    #ice5g_data_drivers = ICE5G_Data_Drivers()
     #ice5g_data_drivers.ICE5G_as_HD_data_21k_0k_sig_grad_only_all_neighbours_driver()
     #ice5g_data_drivers.ICE5G_as_HD_data_all_points_21k()
     #ice5g_data_drivers.ICE5G_as_HD_data_all_points_0k()
@@ -3059,12 +3159,12 @@ def main():
     #ice5g_data_drivers.ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless_glcc_olson_lsmask_0k_upscale_rdirs()
     #ice5g_data_drivers.\
     #ICE5G_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_tarasov_orog_corrs_generation_and_upscaling()
-    ice5g_data_drivers.\
-    ICE5G_21k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_tarasov_orog_corrs_generation_and_upscaling()
+    #ice5g_data_drivers.\
+    #ICE5G_21k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_tarasov_orog_corrs_generation_and_upscaling()
     #etopo1_data_drivers = ETOPO1_Data_Drivers()
     #etopo1_data_drivers.etopo1_data_all_points()
     #etopo1_data_drivers.etopo1_data_ALG4_sinkless()
-    #utilties_drivers = Utilities_Drivers()
+    utilties_drivers = Utilities_Drivers()
     #utilties_drivers.convert_corrected_HD_hydrology_dat_files_to_nc()
     #utilties_drivers.recreate_connected_HD_lsmask()
     #utilties_drivers.recreate_connected_HD_lsmask_true_seas_inc_casp_only()
@@ -3081,6 +3181,8 @@ def main():
     #utilties_drivers.upscale_1min_orography_to_30min()
     #utilties_drivers.upscale_srtm30_plus_orog_to_10min_no_lsmask_half_cell_upscaling_params()
     #utilties_drivers.downscale_ICE6G_21k_landsea_mask_and_remove_disconnected_points()
+    utilties_drivers.remove_disconnected_points_from_ICE6G_21k_landsea_mask_and_add_caspian()
+    #utilties_drivers.remove_disconnected_points_from_ICE6G_0k_landsea_mask_and_add_caspian()
     #original_hd_model_rfd_drivers = Original_HD_Model_RFD_Drivers()
     #original_hd_model_rfd_drivers.corrected_HD_rdirs_post_processing()
     #original_hd_model_rfd_drivers.extract_ls_mask_from_corrected_HD_rdirs()
@@ -3100,6 +3202,8 @@ def main():
     #ten_minute_data_from_virna_driver.ten_minute_data_from_virna_lgm_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs()
     #ten_minute_data_from_virna_driver.ten_minute_data_from_virna_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_tarasov_orog_corrs()
     #ten_minute_data_from_virna_driver.ten_minute_data_from_virna_lgm_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_tarasov_orog_corrs()
+    #ice6g_data_drivers = ICE6g_Data_Drivers()
+    #ice6g_data_drivers.ICE6g_lgm_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_tarasov_orog_corrs()
 
 if __name__ == '__main__':
     main()

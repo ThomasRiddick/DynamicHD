@@ -8,6 +8,12 @@
 #include "connected_lsmask_generation_algorithm.hpp"
 #include <cmath>
 
+/* IMPORTANT!
+ * Note that a description of each functions purpose is provided with the function declaration in
+ * the header file not with the function definition. The definition merely provides discussion of
+ * details of the implementation.
+ */
+
 void create_connected_landsea_mask::setup_flags(bool use_diagonals_in)
 {
 	use_diagonals = use_diagonals_in;
@@ -33,6 +39,8 @@ create_connected_landsea_mask::~create_connected_landsea_mask()
 	delete _grid;
 }
 
+//By the end of function this the completed_cell field contains the landsea mask
+//hence then copy to the landsea field
 void create_connected_landsea_mask::generate_connected_mask()
 {
 	add_ls_seed_points_to_q();
@@ -56,6 +64,8 @@ void create_connected_landsea_mask::add_ls_seed_points_to_q()
 	_grid->for_all(add_ls_point_to_q_func);
 }
 
+//Using get_neighbors_coords with the argument '4' for method ensures
+//the non-diagonal neighbors come first in the returned vector
 void create_connected_landsea_mask::process_neighbors()
 {
 	neighbors_coords = landsea->get_neighbors_coords(center_coords,4);

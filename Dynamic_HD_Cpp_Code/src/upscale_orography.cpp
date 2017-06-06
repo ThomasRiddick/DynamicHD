@@ -10,6 +10,12 @@
 #include "sink_filling_algorithm.hpp"
 #include "grid.hpp"
 
+/* IMPORTANT!
+ * Note that a description of each functions purpose is provided with the function declaration in
+ * the header file not with the function definition. The definition merely provides discussion of
+ * details of the implementation.
+ */
+
 void latlon_upscale_orography_cython_interface(double* orography_in, int nlat_fine, int nlon_fine,
 							  	  	  	       double* orography_out, int nlat_course, int nlon_course,
 											   int method, int* landsea_in_int,int* true_sinks_in_int,

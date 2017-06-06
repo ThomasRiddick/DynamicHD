@@ -19,78 +19,82 @@
 
 using namespace std;
 
-/*
- * This class is essentially a 2D array of a given type with an additional
- * set of function that calculate the neighbors of a given cell. It is indexed
- * by latitude then longitude (in keeping with standard matrix index notation
- * and in opposition to standard Cartesian coordinate notation).
+/**
+ * This class contains a field data on a specified grid and provides a number
+ * of functions on that field along with wrapping round the globe at the edges
+ * where required. Is a template so it can be used for fields of any generic
+ * data type
+ * For a latitude-longitude grid this class is essentially a 2D array of a given
+ * type with an additional set of function that calculate the neighbors of a
+ * given cell. It is indexed by latitude then longitude (in keeping with
+ * standard matrix index notation and in opposition to standard Cartesian
+ * coordinate notation).
  */
 template <typename field_type>
 class field
 {
-	//Does this object own the underlying_array (for garbage keeping purposes)
-	//or was it passed in when the object was constructed
+	///Does this object own the underlying_array (for garbage keeping purposes)
+	///or was it passed in when the object was constructed
 	bool data_passed_in;
-	//The data as a 1D array
+	///The data as a 1D array
 	field_type* array = nullptr;
-	//Assists with finding the neighbors of a cell by treating edge cases for a given
-	//neighbor then pushing the relevant cell onto the list of neighbor
+	///Assists with finding the neighbors of a cell by treating edge cases for a given
+	///neighbor then pushing the relevant cell onto the list of neighbor
 	void process_edge_cases_and_push_back(vector<coords*>*,coords*);
-	//The grid object to use to interpret the underlying 1D
+	///The grid object to use to interpret the underlying 1D
 	grid* _grid = nullptr;
 public:
-	//Constructor when initializing without passing in underlying data
+	///Constructor when initializing without passing in underlying data
 	field(grid_params* params) :
 		data_passed_in(false), array(nullptr),
 		_grid(grid_factory(params)){
 		array = new field_type[_grid->get_total_size()];
 	};
-	//Constructor when initializing with passed in underlying data
+	///Constructor when initializing with passed in underlying data
 	field(field_type* data_in, grid_params* params) :
 			data_passed_in(true), array(data_in),
 			_grid(grid_factory(params)) {};
-	//Copy constructor
+	///Copy constructor
 	field(const field<field_type>& field_object) :
 		data_passed_in(true),array(field_object.array),
 		_grid(field_object._grid){};
-	//Destructor, clean up where necessary
+	///Destructor, clean up where necessary
 	~field();
-	//Overloaded bracket operator to be a 2D indexing operator
+	///Overloaded bracket operator to be a generic indexing operator
 	field_type& operator () (coords* coords_in) { return array[_grid->get_index(coords_in)]; }
-	//Overloaded bracket operator to be a 2D indexing operator (const version)
+	///Overloaded bracket operator to be a generic indexing operator (const version)
 	field_type operator () (coords* coords_in) const { return array[_grid->get_index(coords_in)]; }
-	//Get the underlying array
+	///Get the underlying array
 	field_type* get_array() {return array;}
-	//Get the underlying array (const version)
+	///Get the underlying array (const version)
 	field_type* get_array() const {return array;}
-	//Get a list of neighbors accounting for edge cases
+	///Get a list of neighbors accounting for edge cases
 	vector<coords*>* get_neighbors_coords(coords*);
-	//Get a list of neighbors accounting for edge cases
-	//specifying which algorithm is being used
+	///Get a list of neighbors accounting for edge cases
+	///specifying which algorithm is being used
 	vector<coords*>* get_neighbors_coords(coords*,int);
-	//Set all the cells/points in this field to a given value
+	///Set all the cells/points in this field to a given value
 	void set_all(field_type);
-	//Overload the equality operator, defining equality as all corresponding entries in the two
-	//field being the same
-	//Delete array and replace with a nullptr; useful if you want to keep the field class object
-	//but delete the underlying data
+	///Overload the equality operator, defining equality as all corresponding entries in the two
+	///field being the same
 	bool operator== (const field<field_type>&) const;
-	//check if two field are almost equal to within a tolerance
+	///check if two field are almost equal to within a tolerance
 	bool almost_equal(const field<field_type>&, double = 1.0e-12) const;
-	//Overload the output stream operator to print out the values of all the entries in the field
-	//and the values of nlat and nlon.
+	///Overload the output stream operator to print out the values of all the entries in the field
+	///and the values of nlat and nlon.
 	template <typename friends_field_type>
 	friend ostream& operator<< (ostream&, const field<friends_field_type>&);
 };
 
 //If this object created the underlying_array then delete it; always delete the
-//array of pointers
+//grid object
 template <typename field_type>
 field<field_type>::~field(){
 	if (!data_passed_in) delete[] array;
 	delete _grid;
 }
 
+//Set all the cells/points in this field to a given value
 template <typename field_type>
 void field<field_type>::set_all(field_type value){
 	for (auto i = 0; i < _grid->get_total_size(); i++){
@@ -127,6 +131,8 @@ vector<coords*>* field<field_type>::get_neighbors_coords(coords* coords_in, int 
 	return neighbors_coords;
 }
 
+//Assists with finding the neighbors of a cell by treating edge cases for a given
+//neighbor then pushing the relevant cell onto the list of neighbor
 template <typename field_type>
 void field<field_type>::process_edge_cases_and_push_back(vector<coords*>* neighbors_coords,
 																   coords* coords_in){
@@ -149,6 +155,7 @@ bool field<field_type>::operator==(const field<field_type>& rhs) const {
 	return fields_are_equal;
 }
 
+//check if two field are almost equal to within a tolerance
 template <typename field_type>
 bool field<field_type>::almost_equal(const field<field_type>& rhs, double absolute_tolerance) const {
 	auto fields_are_almost_equal = true;
