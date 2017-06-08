@@ -75,7 +75,7 @@ void latlon_upscale_orography(double* orography_in, int nlat_fine, int nlon_fine
 						if (! landsea_section[i]) all_sea_points = false;
 					}
 					auto alg1 = sink_filling_algorithm_1_latlon();
-					if (all_sea_points) return sink_filling_algorithm::get_no_data_value();;
+					if (all_sea_points) return sink_filling_algorithm::get_no_data_value();
 					alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in,
 							  	  	 tarasov_separation_threshold_for_returning_to_same_edge_in,
 									 tarasov_min_path_length_in,
