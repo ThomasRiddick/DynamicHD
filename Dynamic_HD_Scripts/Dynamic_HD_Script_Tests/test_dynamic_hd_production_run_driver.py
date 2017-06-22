@@ -31,6 +31,18 @@ class Test_Dynamic_HD_Production_Run_Drivers(unittest.TestCase):
     hdstart_offline_run_result_for_comparison_13_04_2017_data = os.path.join(data_dir,
         "HDdata/hdrestartfiles/generated/hd_restart_file_ten_minute_data_from_virna_0k_13_04_2017v_"
         "ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_20170420_115401.nc")
+    hdpara_offline_run_result_for_comparison_ice6g_0k_data = os.path.join(data_dir,
+        "HDdata/hdfiles/generated/hd_file_ICE6g_0k_ALG4_sinkless_no_true_sinks_oceans"
+        "_lsmask_plus_upscale_rdirs_tarasov_orog_corrs_20170612_202721.nc")
+    hdstart_offline_run_result_for_comparison_ice6g_0k_data = os.path.join(data_dir,
+        "HDdata/hdrestartfiles/generated/hd_restart_file_ICE6g_0k_ALG4_sinkless_no_true_sinks_oceans_"
+        "lsmask_plus_upscale_rdirs_tarasov_orog_corrs_20170612_202721.nc") 
+    hdpara_offline_run_result_for_comparison_ice6g_21k_data = os.path.join(data_dir,
+        "HDdata/hdfiles/generated/hd_file_ICE6g_lgm_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_"
+        "rdirs_tarasov_orog_corrs_20170612_202559.nc")
+    hdstart_offline_run_result_for_comparison_ice6g_21k_data = os.path.join(data_dir,
+        "HDdata/hdrestartfiles/generated/hd_restart_file_ICE6g_lgm_ALG4_sinkless_no_true_sinks_oceans_lsmask"
+        "_plus_upscale_rdirs_tarasov_orog_corrs_20170612_202559.nc") 
 
     def setUp(self):
         """Class constructor. Create a Dynamic_HD_Production_Run_Driver object."""
@@ -93,6 +105,34 @@ class Test_Dynamic_HD_Production_Run_Drivers(unittest.TestCase):
         self.assertTrue(not hdstart_diff_out and hdstart_diff_out is not None,
                         "Trial of production script doesn't produce expected"
                         " hdstart file for 2017 data version 2")
+        
+    def testTrialUsingICE6GPresentData(self):
+        output_hdparas_filepath,output_hdstart_filepath =\
+            self.driver.trial_run_using_ice6g_present_day_data()
+        hdpara_diff_out = self.cdo_instance.diff(input=[output_hdparas_filepath,
+                                                        self.hdpara_offline_run_result_for_comparison_ice6g_0k_data])
+        hdstart_diff_out  = self.cdo_instance.diff(input=[output_hdstart_filepath,
+                                                          self.hdstart_offline_run_result_for_comparison_ice6g_0k_data])
+        self.assertTrue(not hdpara_diff_out and hdpara_diff_out is not None,
+                        "Trial of production script doesn't produce expected"
+                        " hdpara file for ICE6G 0k")
+        self.assertTrue(not hdstart_diff_out and hdstart_diff_out is not None,
+                        "Trial of production script doesn't produce expected"
+                        " hdstart file for ICE6G 0k")
+            
+    def testTrialUsingICE6GLGMData(self):
+        output_hdparas_filepath,output_hdstart_filepath =\
+            self.driver.trial_run_using_ice6g_lgm_day_data()
+        hdpara_diff_out = self.cdo_instance.diff(input=[output_hdparas_filepath,
+                                                        self.hdpara_offline_run_result_for_comparison_ice6g_21k_data])
+        hdstart_diff_out  = self.cdo_instance.diff(input=[output_hdstart_filepath,
+                                                          self.hdstart_offline_run_result_for_comparison_ice6g_21k_data])
+        self.assertTrue(not hdpara_diff_out and hdpara_diff_out is not None,
+                        "Trial of production script doesn't produce expected"
+                        " hdpara file for ICE6G 21k")
+        self.assertTrue(not hdstart_diff_out and hdstart_diff_out is not None,
+                        "Trial of production script doesn't produce expected"
+                        " hdstart file for ICE6G 21k")
 
 if __name__ == "__main__":
     unittest.main()

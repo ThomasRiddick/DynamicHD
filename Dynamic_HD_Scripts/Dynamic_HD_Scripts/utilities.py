@@ -1134,6 +1134,19 @@ def intelligent_orography_burning_driver(input_fine_orography_filename,
                            field=output_course_orography, 
                            file_type=dynamic_hd.get_file_extension(output_course_orography_filename))
     
+def generate_regular_landsea_mask_from_gaussian_landsea_mask(input_gaussian_latlon_lsmask_filename,
+                                                             output_regular_latlon_mask_filename,
+                                                             regular_grid_spacing_file):
+    """ """
+    cdo_instance = cdo.Cdo()
+    print "Generating regular land-sea mask from input gaussian mask: {0}"\
+    .format(input_gaussian_latlon_lsmask_filename)
+    print "Writing output to: {0}".format(output_regular_latlon_mask_filename)
+    cdo_instance.setname("field_value",
+                         input=cdo_instance.remaplaf(regular_grid_spacing_file,
+                                                     input=input_gaussian_latlon_lsmask_filename),
+                         output=output_regular_latlon_mask_filename)
+    
 def generate_gaussian_landsea_mask(input_lsmask_filename,output_gaussian_latlon_mask_filename,
                                    gaussian_grid_spacing):
     """Generate a lat-lon gaussian landsea mask from a regular mask (lat-lon or otherwise) using cdos
@@ -1199,3 +1212,53 @@ def insert_new_landsea_mask_into_jsbach_restart_file(input_landsea_mask_filename
         cdo_instance.replace(input=" ".join([temp_output_file2 if modify_lake_mask else temp_output_file,
                                              temp_lsm_file2]),
                              output=output_modified_js_bach_filename)
+        
+        
+def rebase_orography(orography,present_day_base_orography,present_day_reference_orography):
+    """Change the present day basis orography of an orography for any timeslice
+    
+    Arguments:
+    orography: field; an orography for a particular timeslice
+    present_day_base_orography: field; the present day base that the orography comes from
+    present_day_reference_orography: field, the present day reference orography to switch
+    the input orography's base orography to"""
+    orography.subtract(present_day_base_orography)
+    orography.add(present_day_reference_orography)
+    return orography
+    
+def rebase_orography_driver(orography_filename,present_day_base_orography_filename,
+                            present_day_reference_orography_filename,
+                            rebased_orography_filename,orography_fieldname,
+                            grid_type="HD",**grid_kwargs):
+    """Driver changing the present day basis orography of an orography for any timeslice
+    
+    Arguments:
+    orography_filename: string; the full path to the orography for a particular timeslice
+    present_day_base_orography_filename: string; the full path to the present day base that 
+    the orography comes from
+    present_day_reference_orography: string; the full path to the present day reference orography to switch
+    the input orography's base orography to
+    rebased_orography_filename: string; the full target path to save the rebased orography to 
+    orography_fieldname: string; name of the orography field in the orography and base orography files
+    if it is non-standard(optional)
+    """
+
+    orography = dynamic_hd.load_field(orography_filename,
+                                      file_type=dynamic_hd.get_file_extension(orography_filename),
+                                      field_type="Orography", unmask=True,fieldname=orography_fieldname,
+                                      grid_type=grid_type,**grid_kwargs)
+    present_day_base_orography = dynamic_hd.load_field(present_day_base_orography_filename,
+                                                       file_type=dynamic_hd.\
+                                                       get_file_extension(present_day_base_orography_filename),
+                                                       field_type="Orography", unmask=True,
+                                                       fieldname=orography_fieldname,
+                                                       grid_type=grid_type,**grid_kwargs)
+    present_day_reference_orography = dynamic_hd.load_field(present_day_reference_orography_filename,
+                                                                file_type=dynamic_hd.\
+                                                                get_file_extension(present_day_reference_orography_filename),
+                                                                field_type="Orography", unmask=True,grid_type=grid_type,
+                                                                **grid_kwargs)
+    rebased_orography = rebase_orography(orography, present_day_base_orography, present_day_reference_orography)
+    dynamic_hd.write_field(rebased_orography_filename,
+                           field=rebased_orography,
+                           file_type=dynamic_hd.get_file_extension(rebased_orography_filename))

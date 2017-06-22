@@ -211,6 +211,7 @@ def plot_catchment_and_histogram_for_river(ax_hist,ax_catch,ref_catchment_field,
                                            allow_new_sink_points=False,
                                            use_original_scale_field_for_determining_data_and_ref_labels=False,
                                            external_landsea_mask = None,
+                                           return_catchment_plotter=False,
                                            data_original_scale_grid_type='HD',
                                            ref_original_scale_grid_type='HD',
                                            data_original_scale_grid_kwargs={},
@@ -266,21 +267,93 @@ def plot_catchment_and_histogram_for_river(ax_hist,ax_catch,ref_catchment_field,
                    cax=None,use_upscaling_labels=use_upscaling_labels,
                    format_coords=True,
                    remove_ticks_flag=False)
+    if return_catchment_plotter:
+        catchment_plotter = CatchmentPlotter(catchment_section,colors,
+                                             lat_offset=catchment_bounds[0],
+                                             lon_offset=catchment_bounds[2],
+                                             simplified_colorscheme=use_simplified_catchment_colorscheme,
+                                             cax=None,use_upscaling_labels=use_upscaling_labels,
+                                             format_coords=True,
+                                             remove_ticks_flag=False)
     axis_tick_label_scale_factor=ref_grid.get_scale_factor_for_geographic_coords()
-    ax_catch.xaxis.set_major_locator(mpl.ticker.IndexLocator(10/axis_tick_label_scale_factor,
-                                                             -catchment_bounds[2]))
-    ax_catch.yaxis.set_major_locator(mpl.ticker.IndexLocator(10/axis_tick_label_scale_factor,
-                                                             -catchment_bounds[0]))
+    catch_x_axis_major_locator = mpl.ticker.IndexLocator(10/axis_tick_label_scale_factor,
+                                                             -catchment_bounds[2])
+    ax_catch.xaxis.set_major_locator(catch_x_axis_major_locator)
+    catch_y_axis_major_locator = mpl.ticker.IndexLocator(10/axis_tick_label_scale_factor,
+                                                             -catchment_bounds[0])
+    ax_catch.yaxis.set_major_locator(catch_y_axis_major_locator)
     #Scale factor is multiplied by two as formatter has a built in scale factor of a half
-    ax_catch.xaxis.set_major_formatter(mpl.ticker.\
-                                       FuncFormatter(pts.LonAxisFormatter(catchment_bounds[2] + 
-                                                                          ref_grid.get_longitude_offset_adjustment(),
-                                                                          axis_tick_label_scale_factor*2)))
-    ax_catch.yaxis.set_major_formatter(mpl.ticker.\
-                                       FuncFormatter(pts.LatAxisFormatter(catchment_bounds[0],
-                                                                          axis_tick_label_scale_factor*2)))
+    catch_x_axis_major_formatter = mpl.ticker.\
+        FuncFormatter(pts.LonAxisFormatter(catchment_bounds[2] + 
+                                           ref_grid.get_longitude_offset_adjustment(),
+                                           axis_tick_label_scale_factor*2))
+    ax_catch.xaxis.set_major_formatter(catch_x_axis_major_formatter)
+    catch_y_axis_major_formatter = mpl.ticker.\
+        FuncFormatter(pts.LatAxisFormatter(catchment_bounds[0],
+                                           axis_tick_label_scale_factor*2))
+    ax_catch.yaxis.set_major_formatter(catch_y_axis_major_formatter)
+    if return_catchment_plotter:
+        catchment_plotter.add_axis_locators_and_formatters(major_x_axis_formatter=\
+                                                           catch_x_axis_major_formatter,
+                                                           major_y_axis_formatter=\
+                                                           catch_y_axis_major_formatter,
+                                                           major_x_axis_locator=\
+                                                           catch_x_axis_major_locator,
+                                                           major_y_axis_locator=\
+                                                           catch_y_axis_major_locator)
     plt.tight_layout()
-    return catchment_section,catchment_bounds,scale_factor
+    if return_catchment_plotter:
+        return catchment_section,catchment_bounds,scale_factor,catchment_plotter
+    else:
+        return catchment_section,catchment_bounds,scale_factor
+
+class CatchmentPlotter(object):
+    
+    def __init__(self,catchment_section,colors,simplified_colorscheme=False,
+                 cax=None,legend=True,remove_ticks_flag=True,
+                 format_coords=False,lat_offset=0,lon_offset=0,
+                 use_upscaling_labels=False):
+        self.catchment_section=catchment_section
+        self.colors = colors
+        self.simplified_colorscheme = simplified_colorscheme
+        self.cax = cax
+        self.legend = legend
+        self.remove_ticks_flag = remove_ticks_flag
+        self.format_coords = format_coords
+        self.lat_offset = lat_offset
+        self.lon_offset = lon_offset
+        self.use_upscaling_labels = use_upscaling_labels
+        
+    def set_legend(self,legend):
+        self.legend=legend
+        
+    def set_cax(self,cax):
+        self.cax = cax
+        
+    def add_axis_locators_and_formatters(self,major_x_axis_formatter,major_y_axis_formatter,
+                                         major_x_axis_locator,major_y_axis_locator):
+        self.major_x_axis_formatter = major_x_axis_formatter
+        self.major_y_axis_formatter = major_y_axis_formatter
+        self.major_x_axis_locator = major_x_axis_locator
+        self.major_y_axis_locator = major_y_axis_locator
+        
+    def apply_axis_locators_and_formatters(self,ax):
+        ax.xaxis.set_major_locator(self.major_x_axis_locator)
+        ax.yaxis.set_major_locator(self.major_y_axis_locator)
+        ax.xaxis.set_major_formatter(self.major_x_axis_formatter)
+        ax.yaxis.set_major_formatter(self.major_y_axis_formatter)
+        
+    def __call__(self,ax):
+        plot_catchment(ax,catchment_section=self.catchment_section,
+                       colors=self.colors,
+                       simplified_colorscheme=self.colors,
+                       cax=self.cax,
+                       legend=self.legend,
+                       remove_ticks_flag=self.remove_ticks_flag,
+                       format_coords=self.format_coords,
+                       lat_offset=self.lat_offset,
+                       lon_offset=self.lon_offset,
+                       use_upscaling_labels=self.use_upscaling_labels)
 
 def plot_catchment(ax,catchment_section,colors,simplified_colorscheme=False,
                    cax=None,legend=True,remove_ticks_flag=True,

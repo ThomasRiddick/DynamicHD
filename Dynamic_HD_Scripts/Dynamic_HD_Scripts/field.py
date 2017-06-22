@@ -226,14 +226,14 @@ class Orography(Field):
     #deepest ocean point
     no_data_value = -99999.0
     
-    def __init__(self,input_orography,grid='HD',**grid_kwargs):
+    def __init__(self,input_field,grid='HD',**grid_kwargs):
         """Class constructor. Call parent constructor and set floating point error tolerance
         
         Arguments:
         As for parent class
         """
 
-        super(Orography,self).__init__(input_orography,grid,**grid_kwargs) 
+        super(Orography,self).__init__(input_field,grid,**grid_kwargs) 
         self.tiny = abs(self.data.max())*sys.float_info.epsilon*100.0  
 
     def get_no_data_value(self):

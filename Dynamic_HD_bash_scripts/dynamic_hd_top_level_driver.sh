@@ -12,16 +12,25 @@ if [[ $(hostname -d) == "hpc.dkrz.de" ]]; then
 else
 	eval "eval `/usr/bin/tclsh /sw/share/Modules/modulecmd.tcl bash load ${module_name}`"
 fi
-}	
+}
+
+#Define portable absolute path finding function	
+function find_abs_path
+{
+relative_path=$1
+perl -MCwd -e 'print Cwd::abs_path($ARGV[0]),qq<\n>' $relative_path
+}
 
 #Process command line arguments
 first_timestep=${1}
 input_orography_filepath=${2}
 input_ls_mask_filepath=${3}
-output_hdpara_filepath=${4}
-ancillary_data_directory=${5}
-diagostic_output_directory=${6}
-output_hdstart_filepath=${7}
+present_day_base_orography_filepath=${4}
+glacier_mask_filepath=${5}
+output_hdpara_filepath=${6}
+ancillary_data_directory=${7}
+diagostic_output_directory=${8}
+output_hdstart_filepath=${9}
 
 #Change first_timestep into a bash command for true or false
 shopt -s nocasematch
@@ -36,22 +45,22 @@ fi
 shopt -u nocasematch
 
 #Check number of arguments makes sense
-if [[ $# -ne 6 ]] && [[ $# -ne 7 ]]; then
-	echo "Wrong number of positional arguments ($# supplied), script only takes 6 or 7"	1>&2
+if [[ $# -ne 8 ]] && [[ $# -ne 9 ]]; then
+	echo "Wrong number of positional arguments ($# supplied), script only takes 8 or 9"	1>&2
 	exit 1
 fi 
 
-if $first_timestep && [[ $# -eq 6 ]]; then
-	echo "First timestep requires 7 arguments including output hdstart file path (6 supplied)" 1>&2
+if $first_timestep && [[ $# -eq 8 ]]; then
+	echo "First timestep requires 9 arguments including output hdstart file path (8 supplied)" 1>&2
 	exit 1
-elif ! $first_timestep && [[ $# -eq 7 ]]; then
-	echo "Timesteps other than the first requires 6 arguments (7 supplied)." 1>&2 
+elif ! $first_timestep && [[ $# -eq 9 ]]; then
+	echo "Timesteps other than the first requires 8 arguments (9 supplied)." 1>&2 
 	echo "Specifying an output hdstart file path is not permitted." 1>&2
 	exit 1
 fi 
 
 #Check the arguments have the correct file extensions
-if ! [[ ${input_orography_filepath##*.} == "nc" ]] || ! [[ ${input_orography_filepath##*.} == "nc" ]] ; then
+if ! [[ ${input_orography_filepath##*.} == "nc" ]] || ! [[ ${input_orography_filepath##*.} == "nc" || ! [[ ${present_day_base_orography_filepath##*.} == "nc" ]] || ! [[ ${glacier_mask_filepath##*.} == "nc" ]] ; then
 	echo "One or more input files has the wrong file extension" 1>&2
 	exit 1
 fi
@@ -102,7 +111,7 @@ load_module gcc/6.2.0
 
 #Check input files, ancillary data directory and diagnostic output directory exist
 
-if ! [[ -e $input_ls_mask_filepath ]] || ! [[ -e $input_orography_filepath ]]; then
+if ! [[ -e $input_ls_mask_filepath ]] || ! [[ -e $input_orography_filepath ]] || ! [[ -e $present_day_base_orography_filepath ]] || ! [[ -e $glacier_mask_filepath ]]; then
 	echo "One or more input files does not exist" 1>&2
 	exit 1
 fi
@@ -120,6 +129,17 @@ fi
 if $first_timestep && ! [[ -d ${output_hdstart_filepath%/*} ]]; then
 	echo "Filepath of output hdstart.nc does not exist" 1>&2
 	exit 1
+fi
+
+#Convert input filepaths from relative filepaths to absolute filepaths
+input_ls_mask_filepath=$(find_abs_path $input_ls_mask_filepath)
+input_orography_filepath=$(find_abs_path $input_orography_filepath)
+present_day_base_orography_filepath=$(find_abs_path $present_day_base_orography_filepath)
+glacier_mask_filepath=$(find_abs_path $glacier_mask_filepath)
+ancillary_data_directory=$(find_abs_path $ancillary_data_directory)
+output_hdpara_filepath=$(find_abs_path $output_hdpara_filepath)
+if $first_timestep; then
+	output_hdstart_filepath=$(find_abs_path $output_hdstart_filepath)
 fi
 
 # Define config file
@@ -259,7 +279,7 @@ fi
 
 #Run
 echo "Running Dynamic HD Code" 1>&2 
-python2.7 ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/dynamic_hd_production_run_driver.py ${input_orography_filepath} ${input_ls_mask_filepath} ${output_hdpara_filepath} ${ancillary_data_directory} ${working_directory} ${output_hdstart_filepath}
+python2.7 ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/dynamic_hd_production_run_driver.py ${input_orography_filepath} ${input_ls_mask_filepath} ${present_day_base_orography_filepath} ${glacier_mask_filepath} ${output_hdpara_filepath} ${ancillary_data_directory} ${working_directory} ${output_hdstart_filepath}
 
 #Delete paragen directory
 cd ${working_directory}/paragen

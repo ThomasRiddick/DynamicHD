@@ -218,4 +218,5 @@ def plot_composite_image(ax,image,minflowcutoff,first_datasource_name,second_dat
         tic_labels.extend(["Glacier"])
     cb.set_ticks(tic_loc) 
     cb.set_ticklabels(tic_labels)
+    cb.ax.tick_params(labelsize=20) 
     

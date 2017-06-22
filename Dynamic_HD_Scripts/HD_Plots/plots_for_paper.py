@@ -9,7 +9,7 @@ from plots_library import (Plots,HDparameterPlots,HDOutputPlots,OutflowPlots, #@
 import os
 import os.path as path
 import matplotlib.pyplot as plt
-from matplotlib import gridspec
+from matplotlib import gridspec 
 
 class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
     """Plots for GMD Paper"""
@@ -120,8 +120,7 @@ class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
         for fig_num in plt.get_fignums()[-6:]:
             plt.close(fig_num)
         corr_data_plotter = plotters[0][1]
-        #fig = 
-        plt.figure(figsize=(20,5))
+        plt.figure(figsize=(12,3))
         gs = gridspec.GridSpec(1,3)
         print "Total cumulative flow threshold used for danube plot {0}".\
             format(corr_data_plotter.get_flowtocell_threshold())
@@ -130,9 +129,9 @@ class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
         ax0 = plt.subplot(gs[0])
         ax1 = plt.subplot(gs[1])
         ax2 = plt.subplot(gs[2])
-        ax0.annotate(xy=(0, -32),xycoords="axes points",s="(a)",fontsize=30)
-        ax1.annotate(xy=(0, -32),xycoords="axes points",s="(b)",fontsize=30)
-        ax2.annotate(xy=(0, -32),xycoords="axes points",s="(c)",fontsize=30)
+        ax0.annotate(xy=(0, -34),xycoords="axes points",s="(a)",fontsize=20)
+        ax1.annotate(xy=(0, -34),xycoords="axes points",s="(b)",fontsize=20)
+        ax2.annotate(xy=(0, -34),xycoords="axes points",s="(c)",fontsize=20)
         ref_plotter(ax0)
         uncorr_data_plotter(ax1)
         corr_data_plotter(ax2)
@@ -146,69 +145,77 @@ class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
             "rmouthflows_corrected_HD_rdirs_post_processing_20160427_141158.nc")
         ice5g_ALG4_sinkless_all_points_0k_dir_upsc_field = os.path.join(self.rmouth_outflow_data_directory,
             "upscaled/rmouthflows_ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless_glcc_olson_lsmask_0k_{0}.nc".format(data_creation_datetime))
-        self.OutFlowComparisonPlotHelpers(corrected_hd_rdirs_rmouthoutflow_file,
-                                          ice5g_ALG4_sinkless_all_points_0k_dir_upsc_field,
-                                          "flowmap_corrected_HD_rdirs_post_processing_20160427_141158.nc",
-                                          "upscaled/flowmap_ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless_glcc_olson_lsmask_0k_{0}.nc".\
-                                          format(data_creation_datetime),
-                                          "rivdir_vs_1_9_data_from_stefan.nc",
-                                          flip_data_field=False,
-                                          rotate_data_field=True,
-                                          data_rdirs_filename="generated/"
-                                          "updated_RFDs_ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless_glcc_olson_lsmask_0k_{0}.nc".\
-                                          format(data_creation_datetime),
-                                          ref_catchment_filename=\
-                                          "catchmentmap_corrected_HD_rdirs_post_processing_20160427_141158.nc",
-                                          data_catchment_filename=\
-                                          "upscaled/catchmentmap_unsorted_ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless_glcc_olson_lsmask_0k_{0}.nc".\
-                                          format(data_creation_datetime),
-                                          data_catchment_original_scale_filename=\
-                                          "catchmentmap_unsorted_ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless_glcc_olson_lsmask_0k_{0}.nc".\
-                                          format(data_creation_datetime),
-                                          data_original_scale_flow_map_filename=\
-                                          "flowmap_ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless_glcc_olson_lsmask_0k_{0}.nc".\
-                                          format(data_creation_datetime),
-                                          ref_orog_filename="topo_hd_vs1_9_data_from_stefan.nc",
-                                          data_orog_original_scale_filename=
-                                          "generated/corrected/"
-                                          "corrected_orog_ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless_glcc_olson_lsmask_0k_{0}.nc".\
-                                          format(data_creation_datetime),
-                                          additional_matches_list_filename=\
-                                          'additional_matches_ice5g_10min.txt',
-                                          catchment_and_outflows_mods_list_filename='catch_and_outflow_mods_ice5g_10min.txt',
-                                          super_fine_orog_filename="ETOPO1_Ice_c_gmt4.nc",
-                                          super_fine_data_flowmap_filename=
-                                          "flowmap_etopo1_data_ALG4_sinkless_20160603_112520.nc",
-                                          flip_super_fine_orog=True,
-                                          rotate_super_fine_orog=False,
-                                          super_fine_orog_grid_type='LatLong1min',
-                                          external_ls_mask_filename="generated/ls_mask_recreate_connected_HD_lsmask_"
-                                                                    "from_glcc_olson_data_20170513_195421.nc",
-                                          flip_external_ls_mask=False,
-                                          rotate_external_ls_mask=True,
-                                          rivers_to_plot=[(160,573),(117,424),(121,176)],
-                                          allow_new_true_sinks=True,
-                                          alternative_catchment_bounds=None,
-                                          split_comparison_plots_across_multiple_canvases=True,
-                                          use_simplified_catchment_colorscheme=True,
-                                          use_simplified_flowmap_colorscheme=True,
-                                          grid_type='HD',data_original_scale_grid_type='LatLong10min')
+        catchment_plotters =\
+            self.OutFlowComparisonPlotHelpers(corrected_hd_rdirs_rmouthoutflow_file,
+                                              ice5g_ALG4_sinkless_all_points_0k_dir_upsc_field,
+                                              "flowmap_corrected_HD_rdirs_post_processing_20160427_141158.nc",
+                                              "upscaled/flowmap_ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless_glcc_olson_lsmask_0k_{0}.nc".\
+                                              format(data_creation_datetime),
+                                              "rivdir_vs_1_9_data_from_stefan.nc",
+                                              flip_data_field=False,
+                                              rotate_data_field=True,
+                                              data_rdirs_filename="generated/"
+                                              "updated_RFDs_ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless_glcc_olson_lsmask_0k_{0}.nc".\
+                                              format(data_creation_datetime),
+                                              ref_catchment_filename=\
+                                              "catchmentmap_corrected_HD_rdirs_post_processing_20160427_141158.nc",
+                                              data_catchment_filename=\
+                                              "upscaled/catchmentmap_unsorted_ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless_glcc_olson_lsmask_0k_{0}.nc".\
+                                              format(data_creation_datetime),
+                                              data_catchment_original_scale_filename=\
+                                              "catchmentmap_unsorted_ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless_glcc_olson_lsmask_0k_{0}.nc".\
+                                              format(data_creation_datetime),
+                                              data_original_scale_flow_map_filename=\
+                                              "flowmap_ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless_glcc_olson_lsmask_0k_{0}.nc".\
+                                              format(data_creation_datetime),
+                                              ref_orog_filename="topo_hd_vs1_9_data_from_stefan.nc",
+                                              data_orog_original_scale_filename=
+                                              "generated/corrected/"
+                                              "corrected_orog_ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless_glcc_olson_lsmask_0k_{0}.nc".\
+                                              format(data_creation_datetime),
+                                              additional_matches_list_filename=\
+                                              'additional_matches_ice5g_10min.txt',
+                                              catchment_and_outflows_mods_list_filename='catch_and_outflow_mods_ice5g_10min.txt',
+                                              super_fine_orog_filename="ETOPO1_Ice_c_gmt4.nc",
+                                              super_fine_data_flowmap_filename=
+                                              "flowmap_etopo1_data_ALG4_sinkless_20160603_112520.nc",
+                                              flip_super_fine_orog=True,
+                                              rotate_super_fine_orog=False,
+                                              super_fine_orog_grid_type='LatLong1min',
+                                              external_ls_mask_filename="generated/ls_mask_recreate_connected_HD_lsmask_"
+                                                                        "from_glcc_olson_data_20170513_195421.nc",
+                                              flip_external_ls_mask=False,
+                                              rotate_external_ls_mask=True,
+                                              rivers_to_plot=[(160,573),(117,424),(121,176)],
+                                              allow_new_true_sinks=True,
+                                              alternative_catchment_bounds=None,
+                                              split_comparison_plots_across_multiple_canvases=True,
+                                              use_simplified_catchment_colorscheme=True,
+                                              use_simplified_flowmap_colorscheme=True,
+                                              return_catchment_plotters=True,
+                                              grid_type='HD',data_original_scale_grid_type='LatLong10min')
         highest_fig_num = plt.get_fignums()[-1]
-        plt.close(highest_fig_num)
-        plt.close(highest_fig_num-1)
-        plt.close(highest_fig_num - 3)
-        plt.close(highest_fig_num - 4)
-        plt.close(highest_fig_num - 5)
-        plt.close(highest_fig_num - 7)
-        plt.close(highest_fig_num - 8)
-        plt.close(highest_fig_num - 9)
-        plt.close(highest_fig_num - 11)
+        for i in range(highest_fig_num-11,highest_fig_num+1):
+            plt.close(i)
+        plt.figure(figsize=(12,9))
+        gs = gridspec.GridSpec(3,5,width_ratios=[22,1,22,2,12],
+                                   height_ratios=[4,1,2])
+        ax0 = plt.subplot(gs[:-1,0])
+        ax1 = plt.subplot(gs[1:,2:])
+        ax2 = plt.subplot(gs[0,2])
+        ax3 = plt.subplot(gs[0,3])
+        catchment_plotters[0].set_legend(False)
+        catchment_plotters[1].set_legend(False)
+        catchment_plotters[2].set_cax(ax3)
+        ax3.tick_params(labelsize=20) 
+        catchment_plotters[0](ax0)
+        catchment_plotters[0].apply_axis_locators_and_formatters(ax0)
+        catchment_plotters[1](ax1)
+        catchment_plotters[1].apply_axis_locators_and_formatters(ax1)
+        catchment_plotters[2](ax2)
+        catchment_plotters[2].apply_axis_locators_and_formatters(ax2)
         if self.save:
-            for fig_num,fname in zip([highest_fig_num-2,highest_fig_num-6,highest_fig_num-10],
-                                     ["mekong_10min_vs_man_corr","mississipi_10min_vs_man_corr",
-                                      "nile_10min_vs_man_corr"]):
-                plt.figure(fig_num)
-                plt.savefig(path.join(self.save_path,fname+".png"))
+            plt.savefig(path.join(self.save_path,"me_mi_ni_10min_vs_man_corr.png"))
         
     def comparison_of_modern_river_directions_10_minute_original_vs_HD_upscaled(self):
         data_creation_datetime_directly_upscaled="20170517_003802"
@@ -221,70 +228,78 @@ class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
             "upscaled/rmouthflows_ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_"
             "sinkless_glcc_olson_lsmask_0k_{0}.nc"\
                 .format(data_creation_datetime_directly_upscaled))
-        self.OutFlowComparisonPlotHelpers(ice5g_ALG4_sinkless_all_points_0k_dir_upsc_field,
-                                          ice5g_ALG4_sinkless_all_points_0k_river_flow_dir_upsc_field,
-                                          "upscaled/flowmap_ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_"
-                                          "ALG4_sinkless_glcc_olson_lsmask_0k_{0}.nc".\
-                                          format(data_creation_datetime_directly_upscaled),
-                                          "flowmap_ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless_glcc_"
-                                          "olson_lsmask_0k_upscale_rdirs_{0}_updated.nc".\
-                                          format(data_creation_datetime_rdirs_upscaled),
-                                          "generated/upscaled/"
-                                          "upscaled_rdirs_ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless"
-                                          "_glcc_olson_lsmask_0k_upscale_rdirs_{0}_updated.nc".\
-                                          format(data_creation_datetime_rdirs_upscaled),
-                                          flip_ref_field=False,
-                                          rotate_ref_field=True,
-                                          flip_data_field=False,
-                                          rotate_data_field=True,
-                                          ref_orog_filename=\
-                                          "topo_hd_vs1_9_data_from_stefan.nc",
-                                          data_orog_original_scale_filename=\
-                                          "generated/corrected/"
-                                          "corrected_orog_ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless"
-                                          "_glcc_olson_lsmask_0k_{0}.nc".format(data_creation_datetime_directly_upscaled),
-                                          data_catchment_filename=\
-                                          "catchmentmap_ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless"
-                                          "_glcc_olson_lsmask_0k_upscale_rdirs_{0}_updated.nc".\
-                                          format(data_creation_datetime_rdirs_upscaled),
-                                          ref_catchment_filename=                                          
-                                          "upscaled/catchmentmap_unsorted_ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_"
-                                          "data_ALG4_sinkless_glcc_olson_lsmask_0k_{0}.nc".\
-                                          format(data_creation_datetime_directly_upscaled),
-                                          data_catchment_original_scale_filename=\
-                                          "catchmentmap_unsorted_ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4"
-                                          "_sinkless_glcc_olson_lsmask_0k_{0}.nc".\
-                                          format(data_creation_datetime_directly_upscaled),
-                                          data_original_scale_flow_map_filename=\
-                                          "flowmap_ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless_"
-                                          "glcc_olson_lsmask_0k_{0}.nc".\
-                                          format(data_creation_datetime_directly_upscaled),
-                                          swap_ref_and_data_when_finding_labels=True,
-                                          catchment_and_outflows_mods_list_filename=\
-                                          "catch_and_outflow_mods_ice5g_10min_directly_upscaled_rdirs_vs_indirectly_upscaled_data.txt",
-                                          matching_parameter_set='area',
-                                          rivers_to_plot=[(161,573),(120,176)],
-                                          external_ls_mask_filename="generated/ls_mask_recreate_connected_HD_lsmask_"
-                                                                    "from_glcc_olson_data_20170513_195421.nc",
-                                          flip_external_ls_mask=False,
-                                          rotate_external_ls_mask=True,
-                                          split_comparison_plots_across_multiple_canvases=True,
-                                          use_simplified_catchment_colorscheme=True,
-                                          use_simplified_flowmap_colorscheme=True,
-                                          use_upscaling_labels=True,
-                                          grid_type='HD',data_original_scale_grid_type='LatLong10min')
+        catchment_plotters =\
+            self.OutFlowComparisonPlotHelpers(ice5g_ALG4_sinkless_all_points_0k_dir_upsc_field,
+                                              ice5g_ALG4_sinkless_all_points_0k_river_flow_dir_upsc_field,
+                                              "upscaled/flowmap_ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_"
+                                              "ALG4_sinkless_glcc_olson_lsmask_0k_{0}.nc".\
+                                              format(data_creation_datetime_directly_upscaled),
+                                              "flowmap_ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless_glcc_"
+                                              "olson_lsmask_0k_upscale_rdirs_{0}_updated.nc".\
+                                              format(data_creation_datetime_rdirs_upscaled),
+                                              "generated/upscaled/"
+                                              "upscaled_rdirs_ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless"
+                                              "_glcc_olson_lsmask_0k_upscale_rdirs_{0}_updated.nc".\
+                                              format(data_creation_datetime_rdirs_upscaled),
+                                              flip_ref_field=False,
+                                              rotate_ref_field=True,
+                                              flip_data_field=False,
+                                              rotate_data_field=True,
+                                              ref_orog_filename=\
+                                              "topo_hd_vs1_9_data_from_stefan.nc",
+                                              data_orog_original_scale_filename=\
+                                              "generated/corrected/"
+                                              "corrected_orog_ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless"
+                                              "_glcc_olson_lsmask_0k_{0}.nc".format(data_creation_datetime_directly_upscaled),
+                                              data_catchment_filename=\
+                                              "catchmentmap_ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless"
+                                              "_glcc_olson_lsmask_0k_upscale_rdirs_{0}_updated.nc".\
+                                              format(data_creation_datetime_rdirs_upscaled),
+                                              ref_catchment_filename=                                          
+                                              "upscaled/catchmentmap_unsorted_ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_"
+                                              "data_ALG4_sinkless_glcc_olson_lsmask_0k_{0}.nc".\
+                                              format(data_creation_datetime_directly_upscaled),
+                                              data_catchment_original_scale_filename=\
+                                              "catchmentmap_unsorted_ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4"
+                                              "_sinkless_glcc_olson_lsmask_0k_{0}.nc".\
+                                              format(data_creation_datetime_directly_upscaled),
+                                              data_original_scale_flow_map_filename=\
+                                              "flowmap_ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless_"
+                                              "glcc_olson_lsmask_0k_{0}.nc".\
+                                              format(data_creation_datetime_directly_upscaled),
+                                              swap_ref_and_data_when_finding_labels=True,
+                                              catchment_and_outflows_mods_list_filename=\
+                                              "catch_and_outflow_mods_ice5g_10min_directly_upscaled_rdirs_vs_indirectly_upscaled_data.txt",
+                                              matching_parameter_set='area',
+                                              rivers_to_plot=[(161,573),(120,176)],
+                                              external_ls_mask_filename="generated/ls_mask_recreate_connected_HD_lsmask_"
+                                                                        "from_glcc_olson_data_20170513_195421.nc",
+                                              flip_external_ls_mask=False,
+                                              rotate_external_ls_mask=True,
+                                              split_comparison_plots_across_multiple_canvases=True,
+                                              use_simplified_catchment_colorscheme=True,
+                                              use_simplified_flowmap_colorscheme=True,
+                                              use_upscaling_labels=True,
+                                              return_catchment_plotters=True,
+                                              grid_type='HD',data_original_scale_grid_type='LatLong10min')
         highest_fig_num = plt.get_fignums()[-1]
-        plt.close(highest_fig_num)
-        plt.close(highest_fig_num - 1)
-        plt.close(highest_fig_num - 3)
-        plt.close(highest_fig_num - 4)
-        plt.close(highest_fig_num - 5)
-        plt.close(highest_fig_num - 7)
+        for i in range(highest_fig_num-7,highest_fig_num+1):
+            plt.close(i)
+        plt.figure(figsize=(9,8))
+        gs = gridspec.GridSpec(2,3,width_ratios=[25,3,20],
+                               height_ratios=[4,5])
+        ax0 = plt.subplot(gs[0,:])
+        ax1 = plt.subplot(gs[1,0])
+        ax2 = plt.subplot(gs[1,1])
+        catchment_plotters[0].set_legend(False)
+        catchment_plotters[1].set_cax(ax2)
+        ax2.tick_params(labelsize=20) 
+        catchment_plotters[0](ax0)
+        catchment_plotters[1](ax1)
+        catchment_plotters[0].apply_axis_locators_and_formatters(ax0)
+        catchment_plotters[1].apply_axis_locators_and_formatters(ax1)
         if self.save:
-            for fig_num,fname in zip([highest_fig_num-2,highest_fig_num-6],
-                                     ["mekong_upscaling","mississippi_upscaling_comp"]):
-                plt.figure(fig_num)
-                plt.savefig(path.join(self.save_path,fname+".png"))
+            plt.savefig(path.join(self.save_path,"me_mi_upscaling_comp.png"))
         
     def compare_upscaled_automatically_generated_rdirs_to_HD_manually_corrected_rdirs(self):
         ref_filename=os.path.join(self.flow_maps_data_directory,
@@ -513,7 +528,8 @@ class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
                                                                                                 (57,684),
                                                                                                 (124,136),
                                                                                                 (100,457),
-                                                                                                (121,172)],
+                                                                                                (121,172),
+                                                                                                (200,286)],
                                                             catchment_and_outflows_mods_list_filename=\
                                                             "catch_and_outflow_mods_lgm_vs_present_day_"
                                                             "tarasov_corr.txt",
