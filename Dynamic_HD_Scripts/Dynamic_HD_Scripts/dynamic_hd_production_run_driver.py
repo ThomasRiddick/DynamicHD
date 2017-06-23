@@ -51,7 +51,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         self.original_orography_filename=path.join(self.orography_path,"10min-topo-present-from-virna.nc")
         self.original_ls_mask_filename=path.join(self.ls_masks_path,"10min-mask-present-from-virna.nc")
         self.output_hdparas_filepath="/Users/thomasriddick/Documents/data/temp/hdpara_{0}.nc".format(file_label)
-        self.ancillary_data_path="/Users/thomasriddick/Documents/data/HDancillarydata"
+        self.ancillary_data_path="/Users/thomasriddick/Documents/data/HDancillarydata_original_version"
         self.working_directory_path="/Users/thomasriddick/Documents/data/temp/temp_workdir_2016_data"
         self.output_hdstart_filepath="/Users/thomasriddick/Documents/data/temp/hdstart_{0}.nc".format(file_label)
         self.python_config_filename=path.join("/Users/thomasriddick/Documents/data/HDancillarydata/"
@@ -66,7 +66,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         self.original_orography_filename=path.join(self.orography_path,"OR-topography-present_data_from_virna_2017.nc")
         self.original_ls_mask_filename=path.join(self.ls_masks_path,"OR-remapped-mask-present_data_from_virna_2017.nc")
         self.output_hdparas_filepath="/Users/thomasriddick/Documents/data/temp/hdpara_{0}.nc".format(file_label)
-        self.ancillary_data_path="/Users/thomasriddick/Documents/data/HDancillarydata"
+        self.ancillary_data_path="/Users/thomasriddick/Documents/data/HDancillarydata_original_version"
         self.working_directory_path="/Users/thomasriddick/Documents/data/temp/temp_workdir_2017_data"
         self.output_hdstart_filepath="/Users/thomasriddick/Documents/data/temp/hdstart_{0}.nc".format(file_label)
         self.python_config_filename=path.join("/Users/thomasriddick/Documents/data/HDancillarydata/"
@@ -83,7 +83,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         self.original_ls_mask_filename=path.join(self.ls_masks_path,
                                                  "OR-remapped-mask-present_data_from_virna_13_04_17.nc")
         self.output_hdparas_filepath="/Users/thomasriddick/Documents/data/temp/hdpara_{0}.nc".format(file_label)
-        self.ancillary_data_path="/Users/thomasriddick/Documents/data/HDancillarydata"
+        self.ancillary_data_path="/Users/thomasriddick/Documents/data/HDancillarydata_original_version"
         self.working_directory_path="/Users/thomasriddick/Documents/data/temp/temp_workdir_2017_data"
         self.output_hdstart_filepath="/Users/thomasriddick/Documents/data/temp/hdstart_{0}.nc".format(file_label)
         self.python_config_filename=path.join("/Users/thomasriddick/Documents/data/HDancillarydata/"

@@ -37,6 +37,6 @@ class ColorPalette(object):
         self.create_colormap_alternative_colors = ['lightblue','peru','blueviolet','black','red','gray','green',
                                                    'yellow','deepskyblue']
         self.basic_flowmap_comparison_plot_colors = ['lightblue','peru','yellow','grey','white']
-        self.flowmap_and_catchments_colors = ['lightblue','peru','pink','blue','green','red',
+        self.flowmap_and_catchments_colors = ['lightblue','peru','hotpink','blue','green','red',
                                               'grey','darkgrey','lightgrey']
         self.flowmap_and_catchments_colors_with_glac = self.flowmap_and_catchments_colors + ['white']

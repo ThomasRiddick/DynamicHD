@@ -440,38 +440,40 @@ class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
             plt.savefig(path.join(self.save_path,"lgm_vs_present_global_comp.png"))
             
     def compare_present_day_and_lgm_river_directions_with_catchments(self):
-        present_day_data_datetime = "20170521_002051" 
-        lgm_data_datetime = "20170521_151723"
+        present_day_data_datetime = "20170612_202721" 
+        lgm_data_datetime = "20170612_202559"
         ref_filename=os.path.join(self.flow_maps_data_directory,
-                                  "flowmap_ICE5G_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_tarasov"
-                                  "_orog_corrs_generation_and_upscaling_{0}_upscaled_updated.nc".\
+                                  "flowmap_ICE6g_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_tarasov"
+                                  "_orog_corrs_{0}_upscaled_updated.nc".\
                                   format(present_day_data_datetime))
         data_filename=os.path.join(self.flow_maps_data_directory,
-                                   "flowmap_ICE5G_21k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_"
-                                   "tarasov_orog_corrs_generation_and_upscaling_{0}_upscaled_updated.nc".\
+                                   "flowmap_ICE6g_lgm_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_"
+                                   "tarasov_orog_corrs_{0}_upscaled_updated.nc".\
                                    format(lgm_data_datetime))
         lsmask_filename=os.path.join(self.ls_masks_data_directory,"generated",
-                                     "ls_mask_ICE5G_21k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs"
-                                     "_tarasov_orog_corrs_generation_and_upscaling_{0}_HD_transf.dat".\
+                                     "ls_mask_ICE6g_lgm_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs"
+                                     "_tarasov_orog_corrs_{0}_HD_transf.nc".\
                                      format(lgm_data_datetime))
-        ref_catchment_filename=("catchmentmap_ICE5G_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_"
-                                "tarasov_orog_corrs_generation_and_upscaling_{0}_upscaled_updated.nc".\
+        ref_catchment_filename=("catchmentmap_ICE6g_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_"
+                                "tarasov_orog_corrs_{0}_upscaled_updated.nc".\
                                 format(present_day_data_datetime))
-        data_catchment_filename=("catchmentmap_ICE5G_21k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs"
-                                 "_tarasov_orog_corrs_generation_and_upscaling_{0}_upscaled_updated.nc".\
+        data_catchment_filename=("catchmentmap_ICE6g_lgm_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs"
+                                 "_tarasov_orog_corrs_{0}_upscaled_updated.nc".\
                                  format(lgm_data_datetime))
-        ref_rdirs_filename=("generated/upscaled/upscaled_rdirs_ICE5G_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_"
-                            "plus_upscale_rdirs_tarasov_orog_corrs_generation_and_upscaling_{0}_upscaled_"
-                            "updated_transf.dat".format(present_day_data_datetime))
-        reference_rmouth_outflows_filename=("/Users/thomasriddick/Documents/data/HDdata/rmouths/rmouthmap_ICE5G_0k_ALG4"
-                                            "_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_tarasov_orog_corrs"
-                                            "_generation_and_upscaling_{0}_upscaled_updated.nc".\
+        ref_rdirs_filename=("generated/upscaled/upscaled_rdirs_ICE6g_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_"
+                            "plus_upscale_rdirs_tarasov_orog_corrs_{0}_upscaled_"
+                            "updated.nc".format(present_day_data_datetime))
+        reference_rmouth_outflows_filename=os.path.join(self.rmouth_outflow_data_directory,
+                                                        "rmouthflows_ICE6g_0k_ALG4_sinkless_no_true_sinks_oceans_"
+                                                        "lsmask_plus_upscale_rdirs_tarasov_orog_corrs"
+                                                        "_{0}_upscaled_updated.nc".\
                                             format(present_day_data_datetime))
-        data_rmouth_outflows_filename=("/Users/thomasriddick/Documents/data/HDdata/rmouths/rmouthmap_ICE5G_21k_ALG4_"
-                                       "sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_tarasov_orog_corrs_"
-                                       "generation_and_upscaling_{0}_upscaled_updated.nc".\
-                                       format(lgm_data_datetime))
-        glacier_mask_filename=os.path.join(self.orog_data_directory,"ice5g_v1_2_21_0k_10min.nc")
+        data_rmouth_outflows_filename=os.path.join(self.rmouth_outflow_data_directory,
+                                                   "rmouthflows_ICE6g_lgm_ALG4_sinkless_no_true_sinks_oceans_"
+                                                   "lsmask_plus_upscale_rdirs_tarasov_orog_corrs_"
+                                                   "{0}_upscaled_updated.nc".\
+                                                   format(lgm_data_datetime))
+        glacier_mask_filename=os.path.join(self.orog_data_directory,"Ice6g_c_VM5a_10min_21k.nc")
         self.FlowMapTwoColourComparisonWithCatchmentsHelper(ref_flowmap_filename=ref_filename,
                                                             data_flowmap_filename=data_filename, 
                                                             ref_catchment_filename=\
@@ -496,46 +498,32 @@ class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
                                                             first_datasource_name="Present Day",
                                                             second_datasource_name="LGM",
                                                             matching_parameter_set='extensive',
-                                                            rivers_to_plot=[(216,431),(117,420),(182,378),
-                                                                            (169,361),(127,333),(111,381),
-                                                                            (123,460),(132,498),(149,551),
-                                                                            (147,522),(159,238),(185,276),
-                                                                            (251,247),(88,627),(250,639),
-                                                                            (207,617),(85,454),(89,419),
-                                                                            (37,629),(39,691),(121,174),
-                                                                            (60,33),(64,177)],
-                                                            rivers_to_plot_alt_color=[(238,392),(191,385),
-                                                                                      (145,326),(119,399),
-                                                                                      (100,466),(141,503),
-                                                                                      (179,258),(260,239),
-                                                                                      (144,577),(249,633),
-                                                                                      (33,613),(84,442),
-                                                                                      (51,717),(126,164),
-                                                                                      (78,360),(41,89),
-                                                                                      (81,226),(88,114)],
-                                                            rivers_to_plot_secondary_alt_color=[(232,427),
-                                                                                                (168,373),
-                                                                                                (137,538),
-                                                                                                (199,284),
-                                                                                                (264,233),
-                                                                                                (102,596),
-                                                                                                (161,567),
-                                                                                                (219,598),
-                                                                                                (30,584),
-                                                                                                (81,464),
-                                                                                                (87,425),
-                                                                                                (37,661),
-                                                                                                (57,684),
-                                                                                                (124,136),
-                                                                                                (100,457),
-                                                                                                (121,172),
-                                                                                                (200,286)],
+                                                            rivers_to_plot=[(216,433),(117,424),(112,380),(146,327),
+                                                                            (132,496),(120,176),(251,638),(115,603),
+                                                                            (33,571),(34,571),(36,660),(181,256),
+                                                                            (120,457),(77,365),(258,235),(167,361),
+                                                                            (219,598)],
+                                                            rivers_to_plot_alt_color=[(237,393),(192,384),(169,371),
+                                                                                      (119,399),(72,640),(126,165),
+                                                                                      (87,112),(88,419),(160,237),
+                                                                                      (60,35),(147,552),(245,635),
+                                                                                      (86,460),(33,603),
+                                                                                      (247,243),(41,682),(185,276),
+                                                                                      (147,522),(244,612)],
+                                                            rivers_to_plot_secondary_alt_color=[(230,427),(170,376),
+                                                                                                (180,446),(143,327),
+                                                                                                (201,287),(136,538),
+                                                                                                (100,467),(116,130),
+                                                                                                (160,572),(32,614),
+                                                                                                (50,712),(210,619),
+                                                                                                (179,445),(212,384),
+                                                                                                (261,230),(85,438)],
                                                             catchment_and_outflows_mods_list_filename=\
-                                                            "catch_and_outflow_mods_lgm_vs_present_day_"
-                                                            "tarasov_corr.txt",
+                                                            "ice6g_catch_and_outflow_mods_lgm_vs_"
+                                                            "present_day.txt",
                                                             additional_matches_list_filename=\
-                                                            "additional_matches_10min_upscaled_lgm_"
-                                                            "vs_present_tarasov_corrs.txt",
+                                                            "ice6g_additional_matches_10min_upscaled"
+                                                            "_lgm_vs_present.txt",
                                                             use_single_color_for_discrepancies=True,
                                                             use_only_one_color_for_flowmap=False,
                                                             use_title=False,remove_antartica=True,

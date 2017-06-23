@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "Running Version 1.0 of the Dynamic HD Parameters Generation Code"
+echo "Running Version 2.0 of the Dynamic HD Parameters Generation Code"
 
 #Define module loading function
 function load_module
@@ -60,7 +60,7 @@ elif ! $first_timestep && [[ $# -eq 9 ]]; then
 fi 
 
 #Check the arguments have the correct file extensions
-if ! [[ ${input_orography_filepath##*.} == "nc" ]] || ! [[ ${input_orography_filepath##*.} == "nc" || ! [[ ${present_day_base_orography_filepath##*.} == "nc" ]] || ! [[ ${glacier_mask_filepath##*.} == "nc" ]] ; then
+if ! [[ ${input_orography_filepath##*.} == "nc" ]] || ! [[ ${input_orography_filepath##*.} == "nc" ]] || ! [[ ${present_day_base_orography_filepath##*.} == "nc" ]] || ! [[ ${glacier_mask_filepath##*.} == "nc" ]] ; then
 	echo "One or more input files has the wrong file extension" 1>&2
 	exit 1
 fi
@@ -109,6 +109,17 @@ fi
 #Load a new version of gcc that doesn't have the polymorphic variable bug
 load_module gcc/6.2.0
 
+#Convert input filepaths from relative filepaths to absolute filepaths
+input_ls_mask_filepath=$(find_abs_path $input_ls_mask_filepath)
+input_orography_filepath=$(find_abs_path $input_orography_filepath)
+present_day_base_orography_filepath=$(find_abs_path $present_day_base_orography_filepath)
+glacier_mask_filepath=$(find_abs_path $glacier_mask_filepath)
+ancillary_data_directory=$(find_abs_path $ancillary_data_directory)
+output_hdpara_filepath=$(find_abs_path $output_hdpara_filepath)
+if $first_timestep; then
+	output_hdstart_filepath=$(find_abs_path $output_hdstart_filepath)
+fi
+
 #Check input files, ancillary data directory and diagnostic output directory exist
 
 if ! [[ -e $input_ls_mask_filepath ]] || ! [[ -e $input_orography_filepath ]] || ! [[ -e $present_day_base_orography_filepath ]] || ! [[ -e $glacier_mask_filepath ]]; then
@@ -129,17 +140,6 @@ fi
 if $first_timestep && ! [[ -d ${output_hdstart_filepath%/*} ]]; then
 	echo "Filepath of output hdstart.nc does not exist" 1>&2
 	exit 1
-fi
-
-#Convert input filepaths from relative filepaths to absolute filepaths
-input_ls_mask_filepath=$(find_abs_path $input_ls_mask_filepath)
-input_orography_filepath=$(find_abs_path $input_orography_filepath)
-present_day_base_orography_filepath=$(find_abs_path $present_day_base_orography_filepath)
-glacier_mask_filepath=$(find_abs_path $glacier_mask_filepath)
-ancillary_data_directory=$(find_abs_path $ancillary_data_directory)
-output_hdpara_filepath=$(find_abs_path $output_hdpara_filepath)
-if $first_timestep; then
-	output_hdstart_filepath=$(find_abs_path $output_hdstart_filepath)
 fi
 
 # Define config file
