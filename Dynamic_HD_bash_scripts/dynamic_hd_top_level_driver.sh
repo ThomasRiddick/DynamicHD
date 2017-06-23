@@ -115,6 +115,7 @@ input_orography_filepath=$(find_abs_path $input_orography_filepath)
 present_day_base_orography_filepath=$(find_abs_path $present_day_base_orography_filepath)
 glacier_mask_filepath=$(find_abs_path $glacier_mask_filepath)
 ancillary_data_directory=$(find_abs_path $ancillary_data_directory)
+diagostic_output_directory=$(find_abs_path $diagostic_output_directory)
 output_hdpara_filepath=$(find_abs_path $output_hdpara_filepath)
 if $first_timestep; then
 	output_hdstart_filepath=$(find_abs_path $output_hdstart_filepath)
