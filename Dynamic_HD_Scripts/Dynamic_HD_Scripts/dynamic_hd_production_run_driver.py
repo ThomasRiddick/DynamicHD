@@ -133,6 +133,51 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         self.tarasov_based_orog_correction=True
         self.no_intermediaries_ten_minute_data_ALG4_no_true_sinks_plus_upscale_rdirs_driver()
         return self.output_hdparas_filepath,self.output_hdstart_filepath
+    
+    def trial_run_using_ice6g_present_day_data_with_specified_fieldnames(self):
+        super(Dynamic_HD_Production_Run_Drivers,self).__init__()
+        file_label = self._generate_file_label()
+        self.original_orography_filename=path.join(self.orography_path,
+                                                   "Ice6g_c_VM5a_10min_0k.nc")
+        self.original_ls_mask_filename=path.join(self.ls_masks_path,
+                                                 "10min_ice6g_lsmask_with_disconnected_point_removed_0k.nc")
+        self.present_day_base_orography_filename=path.join(self.orography_path,
+                                                           "Ice6g_c_VM5a_10min_0k.nc")
+        self.glacier_mask_filename=path.join(self.orography_path,
+                                             "Ice6g_c_VM5a_10min_0k.nc")
+        self.output_hdparas_filepath="/Users/thomasriddick/Documents/data/temp/hdpara_{0}.nc".format(file_label)
+        self.ancillary_data_path="/Users/thomasriddick/Documents/data/HDancillarydata"
+        self.working_directory_path="/Users/thomasriddick/Documents/data/temp/temp_workdir_2017_data"
+        self.output_hdstart_filepath="/Users/thomasriddick/Documents/data/temp/hdstart_{0}.nc".format(file_label)
+        self.python_config_filename=path.join("/Users/thomasriddick/Documents/data/"
+                                              "HDancillarydata_specified_fieldnames/"
+                                              "dynamic_hd_production_driver.cfg")
+        self.tarasov_based_orog_correction=True
+        self.no_intermediaries_ten_minute_data_ALG4_no_true_sinks_plus_upscale_rdirs_driver()
+        return self.output_hdparas_filepath,self.output_hdstart_filepath
+    
+    def trial_run_using_ice6g_lgm_day_data_with_specified_fieldnames(self):
+        super(Dynamic_HD_Production_Run_Drivers,self).__init__()
+        file_label = self._generate_file_label()
+        self.original_orography_filename=path.join(self.orography_path,
+                                                   "Ice6g_c_VM5a_10min_21k.nc")
+        self.original_ls_mask_filename=path.join(self.ls_masks_path,
+                                                 "10min_ice6g_lsmask_with_disconnected_point_removed_21k.nc")
+        self.present_day_base_orography_filename=path.join(self.orography_path,
+                                                           "Ice6g_c_VM5a_10min_0k.nc")
+        self.glacier_mask_filename=path.join(self.orography_path,
+                                             "Ice6g_c_VM5a_10min_21k.nc")
+        self.output_hdparas_filepath="/Users/thomasriddick/Documents/data/temp/hdpara_{0}.nc".format(file_label)
+        self.ancillary_data_path="/Users/thomasriddick/Documents/data/HDancillarydata"
+        self.working_directory_path="/Users/thomasriddick/Documents/data/temp/temp_workdir_2017_data"
+        self.output_hdstart_filepath="/Users/thomasriddick/Documents/data/temp/hdstart_{0}.nc".format(file_label)
+        self.python_config_filename=path.join("/Users/thomasriddick/Documents/data/"
+                                              "HDancillarydata_specified_fieldnames/"
+                                              "dynamic_hd_production_driver.cfg")
+        self.tarasov_based_orog_correction=True
+        self.no_intermediaries_ten_minute_data_ALG4_no_true_sinks_plus_upscale_rdirs_driver()
+        return self.output_hdparas_filepath,self.output_hdstart_filepath
+
 
     def _read_and_validate_config(self):
         """Reads and checks format of config file
@@ -178,6 +223,16 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
             if config.has_option("output_options","output_course_catchments") else False
         if not valid_config:
             raise RuntimeError("Invalid configuration file supplied")
+        if not config.has_section("input_fieldname_options"):
+            config.add_section("input_fieldname_options")
+        if not config.has_option("input_fieldname_options","input_orography_fieldname"):
+            config.set("input_fieldname_options","input_orography_fieldname","")
+        if not config.has_option("input_fieldname_options","input_landsea_mask_fieldname"):
+            config.set("input_fieldname_options","input_landsea_mask_fieldname","")
+        if not config.has_option("input_fieldname_options","input_glacier_mask_fieldname"):
+            config.set("input_fieldname_options","input_glacier_mask_fieldname","")
+        if not config.has_option("input_fieldname_options","input_base_present_day_orography_fieldname"):
+            config.set("input_fieldname_options","input_base_present_day_orography_fieldname","")
         return config
     
     def no_intermediaries_ten_minute_data_ALG4_no_true_sinks_plus_upscale_rdirs_driver(self):
@@ -208,25 +263,38 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                        "orog_corrs_field_ICE5G_data_ALG4_sink"
                                                        "less_downscaled_ls_mask_0k_20160930_001057.nc")
         #Change ls mask to correct type
+        ls_mask_10min_fieldname = config.get("input_fieldname_options",
+                                             "input_landsea_mask_fieldname")
+        ls_mask_10min_fieldname = ls_mask_10min_fieldname if ls_mask_10min_fieldname else None
         ls_mask_10min = dynamic_hd.load_field(self.original_ls_mask_filename, 
                                               file_type=\
                                               dynamic_hd.get_file_extension(self.original_ls_mask_filename),
                                               field_type='Generic',
+                                              fieldname=ls_mask_10min_fieldname,
                                               unmask=False,
                                               timeslice=None,
                                               grid_type='LatLong10min')
         ls_mask_10min.change_dtype(np.int32)
         #Add corrections to orography
+        orography_10min_fieldname = config.get("input_fieldname_options",
+                                               "input_orography_fieldname")
+        orography_10min_fieldname = orography_10min_fieldname if orography_10min_fieldname else None
         orography_10min = dynamic_hd.load_field(self.original_orography_filename, 
                                                 file_type=dynamic_hd.\
                                                 get_file_extension(self.original_orography_filename), 
+                                                fieldname=orography_10min_fieldname,
                                                 field_type='Orography', grid_type="LatLong10min")
         if self.present_day_base_orography_filename:
+            present_day_base_orography_fieldname = config.get("input_fieldname_options",
+                                                              "input_base_present_day_orography_fieldname")
+            present_day_base_orography_fieldname = present_day_base_orography_fieldname if \
+                                                   present_day_base_orography_fieldname else None 
             present_day_base_orography = \
             dynamic_hd.load_field(self.present_day_base_orography_filename, 
                                   file_type=dynamic_hd.\
                                   get_file_extension(self.present_day_base_orography_filename), 
                                   field_type='Orography',
+                                  fieldname=present_day_base_orography_fieldname,
                                   grid_type="LatLong10min")
             present_day_reference_orography = \
             dynamic_hd.load_field(present_day_reference_orography_filename, 
@@ -246,10 +314,13 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         orography_uncorrected_10min = orography_10min.copy()
         orography_10min.add(orography_corrections_10min)
         if self.glacier_mask_filename:
+            glacier_mask_10min_fieldname = config.get("input_fieldname_options",
+                                                "input_glacier_mask_fieldname")
+            glacier_mask_10min_fieldname = glacier_mask_10min_fieldname if glacier_mask_10min_fieldname else 'sftgif' 
             glacier_mask_10min = dynamic_hd.load_field(self.glacier_mask_filename,
                                                        file_type=dynamic_hd.\
                                                        get_file_extension(self.glacier_mask_filename),
-                                                       fieldname='sftgif',
+                                                       fieldname=glacier_mask_10min_fieldname,
                                                        field_type='Orography',
                                                        unmask=True,grid_type="LatLong10min")
             orography_10min = utilities.\

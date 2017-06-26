@@ -133,6 +133,34 @@ class Test_Dynamic_HD_Production_Run_Drivers(unittest.TestCase):
         self.assertTrue(not hdstart_diff_out and hdstart_diff_out is not None,
                         "Trial of production script doesn't produce expected"
                         " hdstart file for ICE6G 21k")
+        
+    def testTrialUsingICE6GPresentDataWithSpecifiedFieldnames(self):
+        output_hdparas_filepath,output_hdstart_filepath =\
+            self.driver.trial_run_using_ice6g_present_day_data_with_specified_fieldnames()
+        hdpara_diff_out = self.cdo_instance.diff(input=[output_hdparas_filepath,
+                                                        self.hdpara_offline_run_result_for_comparison_ice6g_0k_data])
+        hdstart_diff_out  = self.cdo_instance.diff(input=[output_hdstart_filepath,
+                                                          self.hdstart_offline_run_result_for_comparison_ice6g_0k_data])
+        self.assertTrue(not hdpara_diff_out and hdpara_diff_out is not None,
+                        "Trial of production script doesn't produce expected"
+                        " hdpara file for ICE6G 0k")
+        self.assertTrue(not hdstart_diff_out and hdstart_diff_out is not None,
+                        "Trial of production script doesn't produce expected"
+                        " hdstart file for ICE6G 0k")
+            
+    def testTrialUsingICE6GLGMDataWithSpecifiedFieldnames(self):
+        output_hdparas_filepath,output_hdstart_filepath =\
+            self.driver.trial_run_using_ice6g_lgm_day_data_with_specified_fieldnames()
+        hdpara_diff_out = self.cdo_instance.diff(input=[output_hdparas_filepath,
+                                                        self.hdpara_offline_run_result_for_comparison_ice6g_21k_data])
+        hdstart_diff_out  = self.cdo_instance.diff(input=[output_hdstart_filepath,
+                                                          self.hdstart_offline_run_result_for_comparison_ice6g_21k_data])
+        self.assertTrue(not hdpara_diff_out and hdpara_diff_out is not None,
+                        "Trial of production script doesn't produce expected"
+                        " hdpara file for ICE6G 21k")
+        self.assertTrue(not hdstart_diff_out and hdstart_diff_out is not None,
+                        "Trial of production script doesn't produce expected"
+                        " hdstart file for ICE6G 21k")
 
 if __name__ == "__main__":
     unittest.main()
