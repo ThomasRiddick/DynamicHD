@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "Running Version 2.0 of the Dynamic HD Parameters Generation Code"
+echo "Running Version 2.1 of the Dynamic HD Parameters Generation Code"
 
 #Define module loading function
 function load_module
@@ -11,6 +11,15 @@ if [[ $(hostname -d) == "hpc.dkrz.de" ]]; then
 	module load ${module_name}
 else
 	eval "eval `/usr/bin/tclsh /sw/share/Modules/modulecmd.tcl bash load ${module_name}`"
+fi
+}
+
+#Define module unloading function (only works on hpc)
+function unload_module
+{
+module_name=$1
+if echo $LOADEDMODULES | fgrep -q ${module_name} ; then
+	module unload $module_name
 fi
 }
 
@@ -79,9 +88,10 @@ fi
 echo "Setting up environment"
 if [[ $(hostname -d) == "hpc.dkrz.de" ]]; then
 	source /sw/rhel6-x64/etc/profile.mistral
-	module unload netcdf_c/4.3.2-gcc48
-	module unload imagemagick/6.9.1-7-gcc48
-	module unload cdo/1.7.0-magicsxx-gcc48
+	unload_module netcdf_c
+    unload_module imagemagick
+	unload_module cdo/1.7.0-magicsxx-gcc48
+    unload_module python
 else
 	export MODULEPATH="/sw/common/Modules:/client/Modules"
 fi
@@ -98,8 +108,10 @@ if ! conda info -e | grep -q "dyhdenv"; then
 fi
 source activate dyhdenv
 
-#Load CDOs and reload version of python with CDOs included
-load_module cdo
+#Load CDOs if required and reload version of python with CDOs included
+if echo $LOADEDMODULES | fgrep -q -v "cdo" ; then
+	load_module cdo
+fi
 if [[ $(hostname -d) == "hpc.dkrz.de" ]]; then
 	load_module python/2.7.12
 else

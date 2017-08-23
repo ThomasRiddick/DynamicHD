@@ -22,6 +22,7 @@ from Dynamic_HD_Scripts import dynamic_hd
 from Dynamic_HD_Scripts import utilities
 from Dynamic_HD_Scripts import field
 from Dynamic_HD_Scripts import grid
+from netCDF4 import Dataset
 import river_comparison_plotting_routines as rc_pts
 import flowmap_plotting_routines as fmp_pts #@UnresolvedImport
 from interactive_plotting_routines import Interactive_Plots
@@ -365,6 +366,294 @@ class HDOutputPlots(Plots):
                                                                                 num_timeslices=365,lost_discharge=lost_discharge,label="Dynamic HD using 1 cycle spin-up as basis+ lost discharge") 
         ax.legend()
         print total_discharge_info
+        
+class CoupledRunOutputPlots(HDOutputPlots):
+    """A class for plotting the output of coupled runs"""
+    
+    def __init__(self,save=False,color_palette_to_use="default"):
+        """Class constructor."""
+        super(CoupledRunOutputPlots,self).__init__(save,color_palette_to_use)
+    
+    def ice6g_rdirs_lgm_run_discharge_plot(self):
+        """ """
+        cell_areas = dynamic_hd.load_field("/Users/thomasriddick/Documents/data/HDdata/"
+                                           "gridareasandspacings/hdcellareas.nc",".nc",
+                                           field_type='Generic',fieldname="cell_area",
+                                           grid_type='HD')
+        rdirs = dynamic_hd.load_field(os.path.join(self.rdirs_data_directory,
+                                                   "generated","upscaled",
+                                                   "upscaled_rdirs_ICE5G_21k_ALG4_sinkless"
+                                                   "_no_true_sinks_oceans_lsmask_plus_upscale"
+                                                   "_rdirs_tarasov_orog_corrs_generation_and_"
+                                                   "upscaling_20170615_174943_upscaled_updated"
+                                                   "_transf.nc"),
+                                      ".nc",field_type='Generic',grid_type='HD')
+        outdata_data = None
+        for time in range(120): 
+            discharge = dynamic_hd.load_field(os.path.join(self.river_discharge_output_data_path,
+                                                           "rid0004_hd_higres_mon_79900101_79991231.nc"),
+                                              ".nc",field_type='Generic',fieldname="friv",timeslice=time,
+                                              grid_type='HD')
+            if not outdata_data:
+                outflow_data = discharge.get_data()
+            else:
+                outflow_data = outflow_data + discharge.get_data()
+        outflow_data[ rdirs.get_data() != 0 ] = 0.0
+        outflow_times_area = outflow_data*cell_areas.get_data()
+        plt.figure()
+        plt.imshow(outflow_times_area,norm=mpl.colors.LogNorm(),interpolation='none')
+        plt.colorbar()
+        
+    def extended_present_day_rdirs_lgm_run_discharge_plot(self):
+        """ """
+        cell_areas = dynamic_hd.load_field("/Users/thomasriddick/Documents/data/HDdata/"
+                                           "gridareasandspacings/hdcellareas.nc",".nc",
+                                           field_type='Generic',fieldname="cell_area",
+                                           grid_type='HD')
+        rdirs = dynamic_hd.load_field(os.path.join(self.rdirs_data_directory,
+                                                   "rivdir_vs_1_9_data_from_stefan.nc"),
+                                      ".nc",field_type='Generic',grid_type='HD')
+        outdata_data = None
+        for time in range(120): 
+            discharge = dynamic_hd.load_field(os.path.join(self.river_discharge_output_data_path,
+                                                           "rid0003_hd_higres_mon_79900101_79991231.nc"),
+                                              ".nc",field_type='Generic',fieldname="friv",timeslice=time,
+                                              grid_type='HD')
+            if not outdata_data:
+                outflow_data = discharge.get_data()
+            else:
+                outflow_data = outflow_data + discharge.get_data()
+        outflow_data[ rdirs.get_data() != 0 ] = 0.0
+        outflow_times_area = outflow_data*cell_areas.get_data()
+        plt.figure()
+        plt.imshow(outflow_times_area,norm=mpl.colors.LogNorm(),interpolation='none')
+        plt.colorbar()
+        
+    def extended_present_day_rdirs_vs_ice6g_rdirs_lgm_echam(self):
+        difference_in_lgm_data_filename=os.path.join(self.river_discharge_output_data_path,
+                                                     "rid0004_minus_rid0003_jsbach_jsbach"
+                                                     "_mm_last_100_year_mean_times_area.nc")
+        lgm_lsmask_file = os.path.join(self.river_discharge_output_data_path,
+                                       "rid0003_jsbach_jsbach_tm_7900-7999.nc")
+        with Dataset(difference_in_lgm_data_filename,
+                     mode='r',format='NETCDF4') as dataset:
+            fields = dataset.get_variables_by_attributes(name="var218")
+            difference_field = np.asarray(fields[0])[0,:,:]
+        with Dataset(lgm_lsmask_file,mode='r',format='NETCDF4'):
+            fields = dataset.get_variables_by_attributes(name="land_fract")
+            lgm_lsmask_file = np.asarray(fields[0])[0,:,:]
+        difference_field_masked = np.ma.array(difference_field,
+                                              mask=lgm_lsmask_file)
+        plt.figure()
+        plt.imshow(difference_field_masked,interpolation='none')
+        cb = plt.colorbar()
+        cb.set_label(r"River Discharge ($m^{3}s^{-1}$)")
+        nlat=48
+        nlon=96
+        difference_field_total_horizontal_slice =\
+            np.mean(difference_field,axis=0)*nlat
+        difference_field_total_vertical_slice =\
+            np.mean(difference_field,axis=1)*nlon
+        xvalues1 = np.linspace(0,360,num=96)
+        ax1 = plt.subplots(1, 1, figsize=(12, 9))[1]
+        ax1.plot(xvalues1,difference_field_total_horizontal_slice)
+        ax1.set_xlabel("Longitude (Degrees East)")
+        ax1.set_ylabel(r'River Discharge ($m^{3}s^{-1}$)')
+        ax1.set_title("Latitudal Totals")
+        ax1.set_xlim(0,360)
+        xvalues2 = np.linspace(-90,90,num=48)
+        ax2 = plt.subplots(1, 1, figsize=(12, 9))[1]
+        ax2.plot(xvalues2,np.flipud(difference_field_total_vertical_slice))
+        ax2.set_xlabel("Latitude (Degrees North)")
+        ax2.set_ylabel(r'River Discharge ($m^{3}s^{-1}$)')
+        ax2.set_title("Longitude Totals")
+        ax2.set_xlim(-90,90)
+        pacific_unmasked = np.zeros((48,96),dtype=np.bool)
+        pacific_unmasked[0:7,:] = True
+        pacific_unmasked[:,0:7] = True
+        pacific_unmasked[:18,70:] = True
+        pacific_unmasked[18:21,72:] = True
+        pacific_unmasked[21:,77:] = True
+        atlantic_unmasked = np.invert(pacific_unmasked)
+        difference_field_pacific_unmasked =\
+            np.ma.array(difference_field,mask=pacific_unmasked)
+        difference_field_pacific_unmasked.filled(0)
+        difference_field_pacific_unmasked_total_vertical_slice =\
+            np.mean(difference_field_pacific_unmasked,axis=1)*nlon
+        ax3 = plt.subplots(1, 1, figsize=(12, 9))[1]
+        ax3.plot(xvalues2,
+                 np.flipud(difference_field_pacific_unmasked_total_vertical_slice))
+        ax3.set_xlim(-90,90)
+        ax3.set_xlabel("Latitude (Degrees North)")
+        ax3.set_ylabel(r'River Discharge Difference ($m^{3}s^{-1}$)')
+        ax3.set_title("Indo-Pacific")
+        difference_field_atlantic_unmasked =\
+            np.ma.array(difference_field,mask=atlantic_unmasked)
+        difference_field_atlantic_unmasked.filled(0)
+        difference_field_atlantic_unmasked_total_vertical_slice =\
+            np.mean(difference_field_atlantic_unmasked,axis=1)*nlon
+        ax4 = plt.subplots(1, 1, figsize=(12, 9))[1]
+        ax4.plot(xvalues2,
+                 np.flipud(difference_field_atlantic_unmasked_total_vertical_slice))
+        ax4.set_xlim(-90,90)
+        ax4.set_xlabel("Latitude (Degrees North)")
+        ax4.set_ylabel(r'River Discharge Difference ($m^{3}s^{-1}$)')
+        ax4.set_title("Atlantic")
+        difference_field_atlantic_unmasked_total_vertical_slice_summed = \
+            np.zeros(len(difference_field_atlantic_unmasked_total_vertical_slice))
+        it = np.nditer([difference_field_atlantic_unmasked_total_vertical_slice,
+                        difference_field_atlantic_unmasked_total_vertical_slice_summed],
+                       op_flags=['readwrite'])
+        cumulative_sum = 0
+        for x,y in it:
+            cumulative_sum += x
+            y[...] = cumulative_sum
+        ax5 = plt.subplots(1, 1, figsize=(12, 9))[1]
+        ax5.plot(xvalues2,
+                 np.flipud(difference_field_atlantic_unmasked_total_vertical_slice_summed))
+        ax5.set_xlim(-90,90)
+        ax5.set_xlabel("Latitude (Degrees North)")
+        ax5.set_ylabel(r'Cumulative River Discharge Difference ($m^{3}s^{-1}$)')
+        ax5.set_title("Integrated Atlantic Discharge Starting from the North Pole")
+        difference_field_pacific_unmasked_total_vertical_slice_summed = \
+            np.zeros(len(difference_field_pacific_unmasked_total_vertical_slice))
+        it = np.nditer([difference_field_pacific_unmasked_total_vertical_slice,
+                        difference_field_pacific_unmasked_total_vertical_slice_summed],
+                       op_flags=['readwrite'])
+        cumulative_sum = 0
+        for x,y in it:
+            cumulative_sum += x
+            y[...] = cumulative_sum
+        ax6 = plt.subplots(1, 1, figsize=(12, 9))[1]
+        ax6.plot(xvalues2,
+                 np.flipud(difference_field_pacific_unmasked_total_vertical_slice_summed))
+        ax6.set_xlim(-90,90)
+        ax6.set_xlabel("Latitude (Degrees North)")
+        ax6.set_ylabel(r'Cumulative River Discharge Difference ($m^{3}s^{-1}$)')
+        ax6.set_title("Integrated Indo-Pacific Discharge Starting from the North Pole")
+        
+#         difference_field_positive = np.copy(difference_field) 
+#         difference_field_negative = -1.0*np.copy(difference_field) 
+#         difference_field_positive[difference_field < 0] = 0
+#         difference_field_negative[difference_field > 0] = 0
+#         plt.imshow(difference_field_positive,norm=mpl.colors.LogNorm(),interpolation='none') #         plt.imshow(difference_field_negative,norm=mpl.colors.LogNorm(),interpolation='none')
+#         plt.colorbar()
+
+
+    def extended_present_day_rdirs_vs_ice6g_rdirs_lgm_mpiom_pem(self):
+        difference_in_lgm_data_filename=os.path.join(self.river_discharge_output_data_path,
+                                                     "rid0004_minus_rid0003_mpim_data_2d_mm"
+                                                     "_last_100_years_premeaned_non_nan.nc")
+        mpiom_lgm_mask_filename=os.path.join(self.river_discharge_output_data_path,
+                                             "rid0004landseamask.np")
+        with Dataset(difference_in_lgm_data_filename,
+                     mode='r',format='NETCDF4') as dataset:
+            fields = dataset.get_variables_by_attributes(name="pem")
+            difference_field = np.asarray(fields[0])[0,0,:,:]
+        with Dataset(mpiom_lgm_mask_filename,
+                     mode='r',format='NETCDF4') as dataset:
+            fields = dataset.get_variables_by_attributes(name="pem")
+            lsmask = np.asarray(fields[0])[0,0,:,:]
+        difference_field_masked = np.ma.array(difference_field,mask=lsmask)
+        plt.figure()
+        plt.imshow(difference_field_masked,interpolation='none')
+        cb = plt.colorbar()
+        cb.set_label(r"Water Flux Into Ocean $(m^{3}s^{-1})$")
+        
+    def ocean_grid_extended_present_day_rdirs_vs_ice6g_rdirs_lgm_run_discharge_plot(self):
+        extended_present_day_rdirs_data_filename=os.path.join(self.river_discharge_output_data_path,
+                                                              "rid0003_mpiom_data_moc_mm_last_100_years.nc")
+        ice6g_rdirs_data_filename=os.path.join(self.river_discharge_output_data_path,
+                                               "rid0004_mpiom_data_moc_mm_last_100_years.nc")
+        difference_on_ocean_grid_filename=os.path.join(self.river_discharge_output_data_path,
+                                                       "rid0004_minus_0003_mpiom_data_moc_mm"
+                                                       "_last_100_years.nc")
+        with Dataset(extended_present_day_rdirs_data_filename,
+                     mode='r',format='NETCDF4') as dataset:
+            fields = dataset.get_variables_by_attributes(name="atlantic_wfl")
+            atlantic_wfl_ext = np.asarray(fields[0])
+            fields = dataset.get_variables_by_attributes(name="indopacific_wfl")
+            indopacific_wfl_ext = np.asarray(fields[0]) 
+        with Dataset(ice6g_rdirs_data_filename,
+                     mode='r',format='NETCDF4') as dataset:
+            fields = dataset.get_variables_by_attributes(name="atlantic_wfl")
+            atlantic_wfl_ice6g = np.asarray(fields[0])
+            fields = dataset.get_variables_by_attributes(name="indopacific_wfl")
+            indopacific_wfl_ice6g = np.asarray(fields[0]) 
+        with Dataset(difference_on_ocean_grid_filename,mode='r',format='NETCDF4') as dataset:
+            fields = dataset.get_variables_by_attributes(name="atlantic_wfl")
+            atlantic_wfl_diff = np.asarray(fields[0])
+            fields = dataset.get_variables_by_attributes(name="indopacific_wfl")
+            indopacific_wfl_diff = np.asarray(fields[0])
+        x = np.linspace(-90,90,num=180)
+        atlantic_wfl_temporalmean_diff = np.mean(atlantic_wfl_diff,axis=0)[0,:,0]
+        indopacific_wfl_temporalmean_diff = np.mean(indopacific_wfl_diff,axis=0)[0,:,0]
+        atlantic_wfl_temporalmean_ext = np.mean(atlantic_wfl_ext,axis=0)[0,:,0]
+        indopacific_wfl_temporalmean_ext = np.mean(indopacific_wfl_ext,axis=0)[0,:,0]
+        atlantic_wfl_temporalmean_ice6g = np.mean(atlantic_wfl_ice6g,axis=0)[0,:,0]
+        indopacific_wfl_temporalmean_ice6g = np.mean(indopacific_wfl_ice6g,axis=0)[0,:,0]
+        atlantic_bins = [-90,-55,-12,0,31,65,90]
+        pacific_bins  = [-90,-56,65,90]
+        def bin_values(bins,values):
+            binned_values = np.zeros((np.size(bins)))
+            for i,cell in zip(x,values):
+                for j,bin_edge in enumerate(bins):
+                    if i > bin_edge: 
+                        binned_values[j] += cell
+                        continue
+            return binned_values
+        atlantic_bin_wfl_temporalmean_diff = \
+            bin_values(atlantic_bins,
+                       atlantic_wfl_temporalmean_diff)
+        indopacific_bin_wfl_temporalmean_diff = \
+            bin_values(pacific_bins,
+                       indopacific_wfl_temporalmean_diff)
+        ax1 = plt.subplots(1, 1, figsize=(12, 9))[1]
+        ax1_step = plt.subplots(1, 1, figsize=(12, 9))[1]
+        ax1.plot(x,atlantic_wfl_temporalmean_ext,'.',
+                 label='Extended Present Day River Directions')
+        ax1.plot(x,atlantic_wfl_temporalmean_ice6g,'.',
+                 label='ICE6G River Directions')
+        ax1.set_xlabel("Latitude (Degrees North)")
+        ax1.set_ylabel("Implied Freshwater Transport ($m^{3}s^{-1}$)")
+        ax1.set_xlim(-90,90)
+        ax1.set_xticks([-90,-60,-30,0,30,60,90]) 
+        ax1.legend()
+        ax1.set_title("Atlantic")
+        ax1_step.step(atlantic_bins,
+                      atlantic_bin_wfl_temporalmean_diff,
+                      where='post',
+                      label='Atlantic')
+        ax1_step.step(pacific_bins,
+                      indopacific_bin_wfl_temporalmean_diff,
+                      where='post',
+                      label='Indo-Pacific')
+        ax1_step.set_xlim(-90,90)
+        ax1_step.set_xticks([-90,-60,-30,0,30,60,90])
+        ax1_step.set_xlabel("Latitude (Degrees North)")
+        ax1_step.set_ylabel("Implied Freshwater Transport ($m^{3}s^{-1}$)")
+        ax1_step.legend()
+        ax2 = plt.subplots(1, 1, figsize=(12, 9))[1]
+        ax2.plot(x,indopacific_wfl_temporalmean_ext,'.',
+                 label='Extended Present Day River Directions')
+        ax2.plot(x,indopacific_wfl_temporalmean_ice6g,'.',
+                 label='ICE6G River Directions')
+        ax2.set_xlabel("Latitude (Degrees North)")
+        ax2.set_ylabel("Implied Freshwater Transport ($m^{3}s^{-1}$)")
+        ax2.set_xlim(-90,90)
+        ax2.set_xticks([-90,-60,-30,0,30,60,90])
+        ax2.set_title("Indo-Pacific")
+        ax2.legend()
+        ax3 = plt.subplots(1, 1, figsize=(12, 9))[1]
+        ax3.plot(x,atlantic_wfl_temporalmean_diff,'.',
+                 label='Atlantic')
+        ax3.plot(x,indopacific_wfl_temporalmean_diff,'.',
+                 label='Indo-Pacific')
+        ax3.set_xlabel("Latitude (Degrees North)")
+        ax3.set_ylabel(r'Change in Implied Freshwater Transport ($m^{3}s^{-1}$)')
+        ax3.set_xlim(-90,90)
+        ax3.set_xticks([-90,-60,-30,0,30,60,90])
+        ax3.legend()
         
 class OutflowPlots(Plots):
     """A class for river mouth outflow plots"""
@@ -3018,7 +3307,7 @@ def main():
     #flowmapplot.Upscaled_Rdirs_vs_Directly_Upscaled_fields_ICE5G_data_ALG4_corr_orog_downscaled_ls_mask_0k_FlowMap_comparison()
     #flowmapplot.Ten_Minute_Data_from_Virna_data_ALG4_corr_orog_downscaled_lsmask_no_sinks_21k_vs_0k_FlowMap_comparison()
     #flowmapplot.Upscaled_Rdirs_vs_Corrected_HD_Rdirs_ICE5G_data_ALG4_corr_orog_downscaled_ls_mask_0k_FlowMap_comparison()
-    flowmapplotwithcatchment = FlowMapPlotsWithCatchments(save)
+    #flowmapplotwithcatchment = FlowMapPlotsWithCatchments(save)
     #flowmapplotwithcatchment.Upscaled_Rdirs_vs_Corrected_HD_Rdirs_ICE5G_data_ALG4_corr_orog_downscaled_ls_mask_0k_FlowMap_comparison()
     #flowmapplotwithcatchment.compare_present_day_and_lgm_river_directions_with_catchments_virna_data_plus_tarasov_style_orog_corrs_for_both()
     #flowmapplotwithcatchment.compare_present_day_river_directions_with_catchments_virna_data_with_vs_without_tarasov_style_orog_corrs()
@@ -3032,8 +3321,8 @@ def main():
     #flowmapplotwithcatchment.\
     #Upscaled_Rdirs_vs_Corrected_HD_Rdirs_tarasov_upscaled_north_america_only_data_ALG4_corr_orog_glcc_olson_lsmask_0k_FlowMap_comparison()
     #flowmapplotwithcatchment.compare_present_day_and_lgm_river_directions_with_catchments_ICE5G_plus_tarasov_style_orog_corrs_for_both()
-    flowmapplotwithcatchment.compare_present_day_and_lgm_river_directions_with_catchments_ICE6G_plus_tarasov_style_orog_corrs_for_both()
-    flowmapplotwithcatchment.compare_ICE5G_and_ICE6G_with_catchments_tarasov_style_orog_corrs_for_both()
+    #flowmapplotwithcatchment.compare_present_day_and_lgm_river_directions_with_catchments_ICE6G_plus_tarasov_style_orog_corrs_for_both()
+    #flowmapplotwithcatchment.compare_ICE5G_and_ICE6G_with_catchments_tarasov_style_orog_corrs_for_both()
     #outflowplots = OutflowPlots(save)
     #outflowplots.Compare_Upscaled_Rdirs_vs_Directly_Upscaled_fields_ICE5G_data_ALG4_corr_orog_downscaled_ls_mask_0k()
     #outflowplots.Compare_Corrected_HD_Rdirs_And_ICE5G_as_HD_data_ALG4_sinkless_all_points_0k()
@@ -3050,6 +3339,12 @@ def main():
     #hd_output_plots.check_water_balance_of_1978_for_constant_forcing_of_0_01()
     #hd_output_plots.plot_comparison_using_1990_rainfall_data()
     #hd_output_plots.plot_comparison_using_1990_rainfall_data_adding_back_to_discharge()
+    coupledrunoutputplots = CoupledRunOutputPlots(save=save)
+    #coupledrunoutputplots.ice6g_rdirs_lgm_run_discharge_plot()
+    #coupledrunoutputplots.extended_present_day_rdirs_lgm_run_discharge_plot()
+    coupledrunoutputplots.ocean_grid_extended_present_day_rdirs_vs_ice6g_rdirs_lgm_run_discharge_plot()
+    coupledrunoutputplots.extended_present_day_rdirs_vs_ice6g_rdirs_lgm_echam()
+    coupledrunoutputplots.extended_present_day_rdirs_vs_ice6g_rdirs_lgm_mpiom_pem()
     if show:
         plt.show()
 
