@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "Running Version 2.1 of the Dynamic HD Parameters Generation Code"
+echo "Running Version 2.2 of the Dynamic HD Parameters Generation Code"
 
 #Define module loading function
 function load_module
@@ -38,8 +38,10 @@ present_day_base_orography_filepath=${4}
 glacier_mask_filepath=${5}
 output_hdpara_filepath=${6}
 ancillary_data_directory=${7}
-diagostic_output_directory=${8}
-output_hdstart_filepath=${9}
+diagnostic_output_directory=${8}
+diagnostic_output_exp_id_label=${9}
+diagnostic_output_time_label=${10}
+output_hdstart_filepath=${11}
 
 #Change first_timestep into a bash command for true or false
 shopt -s nocasematch
@@ -54,16 +56,16 @@ fi
 shopt -u nocasematch
 
 #Check number of arguments makes sense
-if [[ $# -ne 8 ]] && [[ $# -ne 9 ]]; then
-	echo "Wrong number of positional arguments ($# supplied), script only takes 8 or 9"	1>&2
+if [[ $# -ne 10 ]] && [[ $# -ne 11 ]]; then
+	echo "Wrong number of positional arguments ($# supplied), script only takes 10 or 11"	1>&2
 	exit 1
 fi 
 
-if $first_timestep && [[ $# -eq 8 ]]; then
-	echo "First timestep requires 9 arguments including output hdstart file path (8 supplied)" 1>&2
+if $first_timestep && [[ $# -eq 10 ]]; then
+	echo "First timestep requires 11 arguments including output hdstart file path (10 supplied)" 1>&2
 	exit 1
-elif ! $first_timestep && [[ $# -eq 9 ]]; then
-	echo "Timesteps other than the first requires 8 arguments (9 supplied)." 1>&2 
+elif ! $first_timestep && [[ $# -eq 11 ]]; then
+	echo "Timesteps other than the first requires 10 arguments (11 supplied)." 1>&2 
 	echo "Specifying an output hdstart file path is not permitted." 1>&2
 	exit 1
 fi 
@@ -84,50 +86,13 @@ if  $first_timestep && ! [[ ${output_hdstart_filepath##*.} == "nc" ]] ; then
 	exit 1
 fi
 
-#Setup conda environment
-echo "Setting up environment"
-if [[ $(hostname -d) == "hpc.dkrz.de" ]]; then
-	source /sw/rhel6-x64/etc/profile.mistral
-	unload_module netcdf_c
-    unload_module imagemagick
-	unload_module cdo/1.7.0-magicsxx-gcc48
-    unload_module python
-else
-	export MODULEPATH="/sw/common/Modules:/client/Modules"
-fi
-load_module anaconda3
-
-if $first_timestep && conda info -e | grep -q "dyhdenv"; then
-	conda env remove --yes --name dyhdenv
-fi
-if ! conda info -e | grep -q "dyhdenv"; then
-	#Use the txt file environment creation (not conda env create that requires a yml file)
-	#Create a dynamic_hd_env.txt using conda list --export > filename.txt not 
-	#conda env export which creates a yml file.
-	conda create --file "${ancillary_data_directory}/dynamic_hd_env.txt" --yes --name "dyhdenv"
-fi
-source activate dyhdenv
-
-#Load CDOs if required and reload version of python with CDOs included
-if echo $LOADEDMODULES | fgrep -q -v "cdo" ; then
-	load_module cdo
-fi
-if [[ $(hostname -d) == "hpc.dkrz.de" ]]; then
-	load_module python/2.7.12
-else
-	load_module python
-fi
-
-#Load a new version of gcc that doesn't have the polymorphic variable bug
-load_module gcc/6.2.0
-
 #Convert input filepaths from relative filepaths to absolute filepaths
 input_ls_mask_filepath=$(find_abs_path $input_ls_mask_filepath)
 input_orography_filepath=$(find_abs_path $input_orography_filepath)
 present_day_base_orography_filepath=$(find_abs_path $present_day_base_orography_filepath)
 glacier_mask_filepath=$(find_abs_path $glacier_mask_filepath)
 ancillary_data_directory=$(find_abs_path $ancillary_data_directory)
-diagostic_output_directory=$(find_abs_path $diagostic_output_directory)
+diagnostic_output_directory=$(find_abs_path $diagnostic_output_directory)
 output_hdpara_filepath=$(find_abs_path $output_hdpara_filepath)
 if $first_timestep; then
 	output_hdstart_filepath=$(find_abs_path $output_hdstart_filepath)
@@ -221,11 +186,62 @@ else
 	output_hdstart_filepath="-s ${output_hdstart_filepath}"
 fi
 
+#Check for locks if necesssary and set the compilation_required flag accordingly
+exec 200 > "${source_directory}/compilation.lock"
+if $first_timestep ; then
+	if flock -x -n 200" ; then
+		compilation_required=true
+	else
+		flock -s 200
+		compilation_required=false	
+	fi
+else
+	flock -s 200
+	compilation_required=false	
+fi
+
+#Setup conda environment
+echo "Setting up environment"
+if [[ $(hostname -d) == "hpc.dkrz.de" ]]; then
+	source /sw/rhel6-x64/etc/profile.mistral
+	unload_module netcdf_c
+    unload_module imagemagick
+	unload_module cdo/1.7.0-magicsxx-gcc48
+    unload_module python
+else
+	export MODULEPATH="/sw/common/Modules:/client/Modules"
+fi
+load_module anaconda3
+
+if $compilation_required && conda info -e | grep -q "dyhdenv"; then
+	conda env remove --yes --name dyhdenv
+fi
+if ! conda info -e | grep -q "dyhdenv"; then
+	#Use the txt file environment creation (not conda env create that requires a yml file)
+	#Create a dynamic_hd_env.txt using conda list --export > filename.txt not 
+	#conda env export which creates a yml file.
+	conda create --file "${ancillary_data_directory}/dynamic_hd_env.txt" --yes --name "dyhdenv"
+fi
+source activate dyhdenv
+
+#Load CDOs if required and reload version of python with CDOs included
+if echo $LOADEDMODULES | fgrep -q -v "cdo" ; then
+	load_module cdo
+fi
+if [[ $(hostname -d) == "hpc.dkrz.de" ]]; then
+	load_module python/2.7.12
+else
+	load_module python
+fi
+
+#Load a new version of gcc that doesn't have the polymorphic variable bug
+load_module gcc/6.2.0
+
 #Setup correct python path
 export PYTHONPATH=${source_directory}/Dynamic_HD_Scripts:${PYTHONPATH}
 
 #Compile C++ and Fortran Code if this is the first timestep
-if $first_timestep ; then
+if $compilation_required ; then
 	#Normalise external source path; use a crude yet portable method
 	cd $external_source_directory
 	external_source_directory=$(pwd -P)
@@ -260,7 +276,7 @@ if $first_timestep ; then
 fi
 
 # Clean shared libraries
-if $first_timestep; then
+if $compilation_required; then
 	cd ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts
 		make -f makefile clean
 	cd - 2>&1 > /dev/null
@@ -276,7 +292,7 @@ if [[ -d "${working_directory}/paragen" ]]; then
 fi 
 
 #Setup cython interface between python and C++
-if $first_timestep; then
+if $compilation_required; then
 	cd ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts
 	echo "Compiling Cython Modules" 1>&2
 	python2.7 ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/setup_fill_sinks.py clean --all
@@ -285,7 +301,7 @@ if $first_timestep; then
 fi
 
 #Prepare bin directory for python code and bash code
-if $first_timestep; then
+if $compilation_required; then
 	mkdir -p ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/bin
 	mkdir -p ${source_directory}/Dynamic_HD_bash_scripts/bin
 fi
@@ -304,8 +320,13 @@ rm -f catchments.log loops.log 30minute_river_dirs.dat
 rm -f 30minute_ls_mask.dat 30minute_filled_orog.dat 30minute_river_dirs_temp.nc 30minute_filled_orog_temp.nc
 rm -f 30minute_ls_mask_temp.nc
 
+#Generate full diagnostic output label
+diagnostic_output_label="${diagnostic_output_exp_id_label}_${diagnostic_output_time_label}"
+
 #Move diagnostic output to target location
 if [[ $(ls ${working_directory}) ]]; then 
-	mkdir -p ${diagostic_output_directory} || true 
-	mv ${working_directory}/* ${diagostic_output_directory}
+	mkdir -p ${diagnostic_output_directory} || true 
+	for file in ${working_directory}/* ; do
+		mv  $file "${diagnostic_output_directory}/${file%.nc}_${diagnostic_output_label}.nc"
+	done
 fi

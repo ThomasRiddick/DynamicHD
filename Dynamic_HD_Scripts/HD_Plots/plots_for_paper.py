@@ -201,13 +201,16 @@ class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
         highest_fig_num = plt.get_fignums()[-1]
         for i in range(highest_fig_num-11,highest_fig_num+1):
             plt.close(i)
-        plt.figure(figsize=(12,9))
-        gs = gridspec.GridSpec(3,5,width_ratios=[22,1,22,2,12],
-                                   height_ratios=[4,1,2])
+        plt.figure(figsize=(12.4,9))
+        gs = gridspec.GridSpec(4,5,width_ratios=[22,1,22,2,12],
+                                   height_ratios=[16,1,3,8])
         ax0 = plt.subplot(gs[:-1,0])
-        ax1 = plt.subplot(gs[1:,2:])
+        ax1 = plt.subplot(gs[2:,2:])
         ax2 = plt.subplot(gs[0,2])
         ax3 = plt.subplot(gs[0,3])
+        ax0.set_title("Nile",fontsize=14)
+        ax1.set_title("Mississippi",fontsize=14)
+        ax2.set_title("Mekong",fontsize=14)
         catchment_plotters[0].set_legend(False)
         catchment_plotters[1].set_legend(False)
         catchment_plotters[2].set_cax(ax3)
@@ -295,6 +298,8 @@ class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
         ax0 = plt.subplot(gs[0,:])
         ax1 = plt.subplot(gs[1,0])
         ax2 = plt.subplot(gs[1,1])
+        ax0.set_title("Mississippi",fontsize=14)
+        ax1.set_title("Mekong",fontsize=14)
         catchment_plotters[0].set_legend(False)
         catchment_plotters[1].set_cax(ax2)
         ax2.tick_params(labelsize=20) 
