@@ -187,7 +187,7 @@ else
 fi
 
 #Check for locks if necesssary and set the compilation_required flag accordingly
-exec 200 > "${source_directory}/compilation.lock"
+exec 200>"${source_directory}/compilation.lock"
 if $first_timestep ; then
 	if flock -x -n 200" ; then
 		compilation_required=true
