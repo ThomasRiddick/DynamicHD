@@ -37,11 +37,12 @@ input_ls_mask_filepath=${3}
 present_day_base_orography_filepath=${4}
 glacier_mask_filepath=${5}
 output_hdpara_filepath=${6}
-ancillary_data_directory=${7}
-diagnostic_output_directory=${8}
-diagnostic_output_exp_id_label=${9}
-diagnostic_output_time_label=${10}
-output_hdstart_filepath=${11}
+working_directory=${7}
+ancillary_data_directory=${8}
+diagnostic_output_directory=${9}
+diagnostic_output_exp_id_label=${10}
+diagnostic_output_time_label=${11}
+output_hdstart_filepath=${12}
 
 #Change first_timestep into a bash command for true or false
 shopt -s nocasematch
@@ -56,16 +57,16 @@ fi
 shopt -u nocasematch
 
 #Check number of arguments makes sense
-if [[ $# -ne 10 ]] && [[ $# -ne 11 ]]; then
-	echo "Wrong number of positional arguments ($# supplied), script only takes 10 or 11"	1>&2
+if [[ $# -ne 11 ]] && [[ $# -ne 12 ]]; then
+	echo "Wrong number of positional arguments ($# supplied), script only takes 11 or 12"	1>&2
 	exit 1
 fi 
 
-if $first_timestep && [[ $# -eq 10 ]]; then
-	echo "First timestep requires 11 arguments including output hdstart file path (10 supplied)" 1>&2
+if $first_timestep && [[ $# -eq 11 ]]; then
+	echo "First timestep requires 12 arguments including output hdstart file path (11 supplied)" 1>&2
 	exit 1
-elif ! $first_timestep && [[ $# -eq 11 ]]; then
-	echo "Timesteps other than the first requires 10 arguments (11 supplied)." 1>&2 
+elif ! $first_timestep && [[ $# -eq 12 ]]; then
+	echo "Timesteps other than the first requires 11 arguments (12 supplied)." 1>&2 
 	echo "Specifying an output hdstart file path is not permitted." 1>&2
 	exit 1
 fi 
@@ -135,7 +136,7 @@ if egrep -v -q "^(#.*|.*=.*)$" ${config_file}; then
 	exit 1
 fi
 
-# Read in source_directory, external_source_directory and working_directory
+# Read in source_directory and external_source_directory
 source ${config_file}
 
 # Check we have actually read the variables correctly
@@ -149,11 +150,6 @@ if [[ -z ${external_source_directory} ]]; then
 	exit 1
 fi
 
-if [[ -z ${working_directory} ]]; then
-	echo "Working directory not set in config file or set to a blank string" 1>&2
-	exit 1
-fi
-
 # Prepare a working directory if it is the first timestep and it doesn't already exist
 if $first_timestep && ! [[ -e $working_directory ]]; then
 	echo "Creating a working directory"	
@@ -162,7 +158,11 @@ fi
 
 #Check that the working directory, source directory and external source directory exist
 if ! [[ -d $working_directory ]]; then
-	echo "Working directory does not exist or is not a directory (even after attempt to create it)" 1>&2	
+	if $first_timestep ; then
+		echo "Working directory does not exist or is not a directory (even after attempt to create it)" 1>&2	
+	else
+		echo "Working directory does not exist or is not a directory" 1>&2	
+	fi
 	exit 1
 fi 
 
