@@ -189,7 +189,7 @@ fi
 #Check for locks if necesssary and set the compilation_required flag accordingly
 exec 200>"${source_directory}/compilation.lock"
 if $first_timestep ; then
-	if flock -x -n 200" ; then
+	if flock -x -n 200 ; then
 		compilation_required=true
 	else
 		flock -s 200
@@ -327,6 +327,6 @@ diagnostic_output_label="${diagnostic_output_exp_id_label}_${diagnostic_output_t
 if [[ $(ls ${working_directory}) ]]; then 
 	mkdir -p ${diagnostic_output_directory} || true 
 	for file in ${working_directory}/* ; do
-		mv  $file "${diagnostic_output_directory}/${file%.nc}_${diagnostic_output_label}.nc"
+		mv  $file "${diagnostic_output_directory}/${${file##*/}%.nc}_${diagnostic_output_label}.nc"
 	done
 fi
