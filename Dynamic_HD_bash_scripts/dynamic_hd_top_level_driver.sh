@@ -318,6 +318,7 @@ cd - 2>&1 > /dev/null
 rmdir ${working_directory}/paragen
 rm -f catchments.log loops.log 30minute_river_dirs.dat 
 rm -f 30minute_ls_mask.dat 30minute_filled_orog.dat 30minute_river_dirs_temp.nc 30minute_filled_orog_temp.nc
+rm -f 30minute_filled_orog_temp.dat 30minute_ls_mask_temp.dat 30minute_river_dirs_temp.dat 
 rm -f 30minute_ls_mask_temp.nc
 
 #Generate full diagnostic output label
