@@ -327,6 +327,6 @@ diagnostic_output_label="${diagnostic_output_exp_id_label}_${diagnostic_output_t
 if [[ $(ls ${working_directory}) ]]; then 
 	mkdir -p ${diagnostic_output_directory} || true 
 	for file in ${working_directory}/*.nc ; do
-		mv  $file "$(basename ${file} .nc)_${diagnostic_output_label}.nc"
+		mv  $file ${diagnostic_output_directory}/$(basename ${file} .nc)_${diagnostic_output_label}.nc
 	done
 fi
