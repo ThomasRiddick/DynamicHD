@@ -1,0 +1,131 @@
+\documentclass{article}
+\usepackage{geometry}                % See geometry.pdf to learn the layout options. There are lots.
+\geometry{a4paper}                   % ... or a4paper or a5paper or ... 
+%\geometry{landscape}                % Activate for for rotated page geometry
+%\usepackage[parfill]{parskip}    % Activate to begin paragraphs with an empty line rather than an indent
+\usepackage{graphicx}
+\usepackage{amssymb}
+\usepackage{gensymb}
+\usepackage{epstopdf}
+\usepackage{enumerate}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{url}
+\lstdefinestyle{bash_input}{
+language=bash,
+basicstyle=\small\sffamily,
+numbers=left,
+numberstyle=\tiny,
+numbersep=3pt,
+frame=tb,
+columns=fullflexible,
+backgroundcolor=\color{yellow!20},
+linewidth=0.9\linewidth,
+xleftmargin=0.1\linewidth
+}
+
+\DeclareGraphicsRule{.tif}{png}{.png}{`convert #1 `dirname #1`/`basename #1 .tif`.png}
+
+\title{Instruction for Running the Dynamic HD Parameter and Restart File Generation Code Version 2.3}
+\author{Thomas Riddick}
+\date{6th September 2017}                                           
+\begin{document}
+\lstset{language=bash}
+\maketitle
+\section{Overview}
+The HD model in JSBACH requires two files to run. One is the hdpara.nc file. This contains the flow directions and the water retention co-efficients (a measure of how quickly water flows) of each grid cell on the HD models regular latitude-longitude $0.5$ degree grid. The other is the hdstart.nc. This contain the initial water content of each grid cell (split into various reservoirs). A user generated hdstart.nc file is only required at the start of run; later restart of the model should use the hdstart.nc restart file provided in the set of restart files of the previous section of the run. 
+
+The Dynamic HD code always generates a hdpara.nc file. It only generates a hdstart.nc file at the very start of a run (i.e. when this dynamic HD code is first called). 
+
+The code will normally run in about $1$~minute on a quad-core  3.5GHz i7 Linux machine with 16GB of RAM (assuming the machine is otherwise unloaded). However the first use of this code in a run will take longer (maybe $5$-$10$ minutes) because the Cython, C++ and Fortran code within the script must be cleaned, compiled and built. Subsequent runs don't recompile and hence are fast. 
+\section{Instructions}
+All command issued on the command line are for the bash shell. Any lines without line numbers are merely continuations of the previous line and not separate commands.
+\begin{enumerate}
+\item Create an area to run the code in and populate it with the necessary subdirectories. For example:
+\begin{lstlisting}[style=bash_input]
+mkdir dynamic_hd_code_area
+cd dynamic_hd_code_area
+mkdir workdir
+mkdir outputdir_step1
+mkdir outputdir_step2
+\end{lstlisting}
+\item Download the dynamic HD code and switch the repository to version 2.3. (Be sure to perform this last step; version 1 probably won't work anymore and if it does then it will give erroneous results.). The code is stored in my home area. Thus you can change  \lstinline[style=bash_input]{dattel} (the name of my machine) to the name of your own machine if you wish.
+\begin{lstlisting}[style=bash_input,breaklines=true]
+git clone git+ssh://dattel.mpimet.mpg.de/home/mpim/m300468/workspace/Dynamic_HD_Code
+cd Dynamic_HD_Code
+git checkout release_version_2.3
+cd ..
+\end{lstlisting}
+\item Retrieve the necessary ancillary data from my home area. (Replacing \lstinline[style=bash_input]{m300468@dattel} with your own machine and user name.)
+\begin{lstlisting}[style=bash_input,breaklines=true]
+scp -r m300468@dattel.mpimet.mpg.de:/home/mpim/m300468/HDancillarydata .
+\end{lstlisting}
+Note the ``.'' as the second argument here!
+\item Edit the paths in the top level configuration file. (Of course you can use any editor you like; you don't have to use gvim.)
+\begin{lstlisting}[style=bash_input]
+cd HDancillarydata
+gvim top_level_driver.cfg
+\end{lstlisting}
+\lstinline[style=bash_input]{top_level_driver.cfg} is sourced by the top level run driver script when the dynamic HD code runs. This means that like the top level run script itself it is written in bash (but doesn't start with \lstinline[style=bash_input]{#!/bin/bash} as it is sourced rather than run). This config file must define the two variables \lstinline[style=bash_input]{source_directory}, \lstinline[style=bash_input]{external_source_directory} and should do nothing else besides. \lstinline[style=bash_input]{source_directory} should be the path to the \lstinline[style=bash_input]{Dynamic_HD_Code} directory downloaded from git. The \lstinline[style=bash_input]{external_source_directory} should be the path of the downloaded \lstinline[style=bash_input]{HDancillarydata} with the subdirectory \lstinline[style=bash_input]{code} appended. The format required should be clear from the original version. For these variables please use the full absolute path. An example of the content of this file once edited might be:
+\begin{lstlisting}[style=bash_input,breaklines=true]
+source_directory="$HOME/dynamic_hd_code_area/Dynamic_HD_Code"
+external_source_directory="$HOME/dynamic_hd_code_area/HDancillarydata/code"
+\end{lstlisting}
+Once you have finished editing close the editor and then switch back to the main directory of your dynamic HD setup:
+\begin{lstlisting}[style=bash_input]
+cd ..
+\end{lstlisting}
+\item Retrieve the orography, glacier mask and land-sea mask you wish to use along with the present day orography your orography is based upon. For example you can retrieve the example data from my home area (replacing \lstinline[style=bash_input]{m300468@dattel} with your username and machine name):
+\begin{lstlisting}[style=bash_input,breaklines=true]
+scp -r m300468@dattel.mpimet.mpg.de:/home/mpim/m300468/HDexampledata/* .
+\end{lstlisting}
+The data should be on a normal (\textbf{non-gaussian}) $10$-minute latitude-longitude grid. Grid boxes coordinate and values should be for their central point. The first column of cells on the $x$-axis should be cells centred on the Greenwich Meridian (i.e. exactly $0$\degree~longitude). The first row of cells on the $y$-axis should touch the south pole with their southern edge and last row of cells on the $x$-axis should touch the north pole on their northern edge. This should produce a right-way up (when North at the top is seen as the right way up) image in ncview. Heights should be in metres; the datum is not important so long as it is consistent. The orography should preferable extend below the ocean although this is not strictly necessary (however if it does not then potential errors could occur if the supplied land-sea mask doesn't match exactly the extent of the provided orography data). The land-sea mask should be binary with values of $0$ (for land points) and $1$ for sea points. The glacier mask should supply the percentage of grid cells covered by ice from $0$\% to $100$\%;  this will then be converted to a binary mask of either glacier  present or no glacier present.  The format of the files must be netCDF (extension \lstinline[style=bash_input]{.nc}) and the orography fields and land-sea mask field should be named one of \texttt{Topo}, \texttt{topo}, \texttt{field\_value}, \texttt{orog}, \texttt{z}, \texttt{ICEM}, \texttt{DEPTO}, \texttt{usurf}, and \texttt{bats}. If more than one field in the file has one of these names then the names are tried in the order above until the first match is found. (Thus the land-sea mask and orography must come in separate files.) These field names can be changed (thus allowing the landsea mask and orography to come in the same file) by altering a configurations file; more details are given in section \ref{section-notes}. The glacier mask field should be called \texttt{sftgif}. The present day orography supplied \textbf{must} be the exact present day orography that was used as basis to create the orography for the past time slice being processed. \textbf{This is important and if this criterion is not met then extremely unreliable results will be obtained.} The example data supplied here meets all these requirements and it may be therefore a good idea to compare any new data against it to make sure the new data also meets these requirements. 
+\item Run the dynamic HD code for the first time-step to obtain both a hdpara.nc and hdstart.nc file. The top level script is located in the directory \texttt{Dynamic\_HD\_Code} at \path{Dynamic_HD_Code/Dynamic_HD_bash_scripts/dynamic_hd_top_level_driver.sh} and takes twelve command lines arguments:
+\begin{enumerate}[i)]
+\item A flag (set to either \texttt{T} or \texttt{F}) to indicate if this is the first time-step. So in this case set this to \texttt{T}.
+\item The file path of the input orography file. This can be relative or absolute file path.
+\item The file path of the input land-sea mask file. This can be relative or absolute file path.
+\item The file path of the present day base orography the input orography was derived from. This can be a relative or absolute file path.
+\item The file path of the file containing the input glacial mask. This can be a relative or absolute file path.
+\item The target file path for the the output hdpara.nc file. This can be relative or absolute file path.
+\item The directory path of the ancillary data directory. This can be relative or absolute file path.
+\item The directory path of the working directory. This can be a relative or absolute path. It is strongly advised to use a empty directory for this as any loose .nc files in this directory will be moved to the diagnostic output directory at the end of the script and labelled with the time in the run and run ID. If this directory doesn't exist it will be created.
+\item The directory path of the diagnostic output directory (which must exist). This can be relative or absolute file path.
+\item The diagnostic data experiment ID label. This should be a string and will be appended to any diagnostic data output files.
+\item The diagnostic data time within run. This should be a string and will be appended to any diagnostic data output files after the experiment ID.
+\item The target file path for the the output hdstart.nc file. This can be relative or absolute file path. This is only produced when the first argument is  \texttt{T}.
+\end{enumerate}
+As noted previously, the first run will compile the necessary FORTRAN, C++ and Cython code as it goes along and will produce an hdstart.nc file. This run will thus take longer than a normal run; perhaps $5$~minutes. Output (other than the hdpara.nc and hdstart.nc files) will be moved from the working directory to the given diagnostic output directory by the final section of the script. \textbf{It is important to check the order of the command line arguments is correct as it might be possible for the script to run successfully yet give highly erroneous results if the settings are not in the correct order.} For example:
+\begin{lstlisting}[style=bash_input,breaklines=true]
+./Dynamic_HD_Code/Dynamic_HD_bash_scripts/dynamic_hd_top_level_driver.sh T ./Ice6g_c_VM5a_10min_21k.nc ./10min_ice6g_lsmask_with_disconnected_point_removed_21k.nc ./Ice6g_c_VM5a_10min_0k.nc ./Ice6g_c_VM5a_10min_21k.nc hdpara.nc ~/HDancillarydata ./workdir/ ./outputdir_step1/ aa01 21000 hdstart.nc
+\end{lstlisting}
+\item Run the dynamic HD code for subsequent time-steps to obtain a new hdpara.nc. Use this with the hdstart.nc file given as a restart file by the previous section of the model run. The top level script and command lines arguments are same as for the first step run but the twelfth and final command line argument is now not required or permitted. And of course the flag should be set to \texttt{F} for the first command line argument. For example:
+\begin{lstlisting}[style=bash_input,breaklines=true]
+./Dynamic_HD_Code/Dynamic_HD_bash_scripts/dynamic_hd_top_level_driver.sh F ./Ice6g_c_VM5a_10min_21k.nc ./10min_ice6g_lsmask_with_disconnected_point_removed_21k.nc ./Ice6g_c_VM5a_10min_0k.nc ./Ice6g_c_VM5a_10min_21k.nc hdpara_step2.nc ~/HDancillarydata ./workdir/ ./outputdir_step2/ aa01 20990
+\end{lstlisting}
+\end{enumerate}
+\section{Notes} \label{section-notes}
+\begin{description}
+\item[Diagnostic Output File Control] Diagnostic file output (i.e. things such the catchments and the cumulative flow to cell that are not required to run JSBACH but useful for understanding what is going on with the dynamic HD generation code)  can be controlled the boolean settings in the \path{[output_options]} section of \path{dynamic_hd_production_driver.cfg} in \texttt{HDancillarydata}. \texttt{True} switches the named output on; \texttt{False} switches it off. The  \path{[output_options]} must be present in the \path{dynamic_hd_production_driver.cfg} (whether they are \texttt{True} or \texttt{False}.) Some of the diagnostic output could be reconstructed offline from hdpara.nc file if it is not produced during the run; however some would require the hdpara.nc generation process to be rerun in order to regenerate.
+\item[Input Field Name Control] The names of the field loaded from the input files can also be controlled through settings in \path{dynamic_hd_production_driver.cfg}; this time the setttings are place in the \path{[input_fieldname_options]} section. These setting are not compulsory; if not present or set to blank strings then the default field names as described above will be used instead. The four possible field names that can be specified are: 
+\begin{itemize}
+\item \path{input_orography_fieldname}
+\item \path{input_landsea_mask_fieldname}
+\item \path{input_glacier_mask_fieldname}
+\item \path{input_base_present_day_orography_fieldname}
+\end{itemize}
+\item[Source Code] The top level Bash script calls a Python script which is the primary control routine of the dynamic HD parameter generation code. From this the C++ sink filing code is called via a Cython wrapper and the Fortran 2003 river direction upscaling code is called via f2py. Other ancillary tasks are performed by Fortran 90 code called via f2py. The retention co-efficient generation code is a modified version of Stefan's orginal code for this; this is called from the Python control routine via a bash script as a child process. The C++, Bash shell, Fortran 90, Cython and almost all the Python code are documented in the natural idiom of each language (e.g. document strings for Python). The Fortran 2003 is still to be documented.
+\item[Environment] The code is design to run on either Mistral or a Linux machine with the MPI-M network. It can also run MacBookPro laptops under macOS Sierra (on which is was largely written) though this would require modification of the top level Bash script. The necessary Python environment is setup automatically using Anaconda by the top level script. The DKRZ/MPI-M module system is also used along with DKRZ/MPI-M's Climate Data Operators (CDOs). The script has been tested with following modules loaded.
+\begin{itemize}
+\item \lstinline[style=bash_input]{cdo/1.7.0-magicsxx-gcc48}
+\item \lstinline[style=bash_input]{imagemagick/6.9.1-7-gcc48}
+\item \lstinline[style=bash_input]{pftp/7.4.3.2-0}
+\item \lstinline[style=bash_input]{netcdf_c/4.3.2-gcc48}
+\end{itemize}
+it should work with other combinations of modules but it may be necessary to unload some modules before running (note that unloading is fast; it is just the resetting of environmental variables). Individual experimentation may be need to determine exactly what modules must be removed.
+\item[Plots] Plots can be made using the functions contained in \path{Dynamic_HD_Code/Dynamic_HD_Scripts/HD_Plots/plots_library.py}.
+\item[External Source Code] This is open source (permissive BSD-style licensed) 3rd party code not installed at MPI-M used for unit testing C++ and FORTRAN.  It is not strictly necessary to actually run the dynamic HD parameter generation but is woven into the build process such that it is not easy to remove. This code is not included in the main git repository. A copy is provided in the \texttt{HDancillarydata} directory some of which is copied into the main source code during the compilation process. The C++ testing code is Google Test \url{https://github.com/google/googletest} while the FORTRAN testing code is FRUIT \url{https://sourceforge.net/projects/fortranxunit/}.
+\item[Unit Tests] Unit tests for most of the Python code and the result of the C++ and Fortran code are given in \path{Dynamic_HD_Code/Dynamic_HD_Scripts/Dynamic_HD_Script_Tests}. The low- and mid-level routines of the C++ code are unit tested with Google Test by running \path{Dynamic_HD_Code/Dynamic_HD_Cpp_Code/Release/Dynamic_HD_Cpp_Exec} while such low- and mid-level routines for the Fortran River Direction Upscaling code are tested with FRUIT by running \path{Dynamic_HD_Code/Dynamic_HD_Fortran_Code/Release/Dynamic_HD_Fortran_Exec}.
+\item[Running Multiple Copies of the Script in Parallel] Multiple copies of the script can run using the same ancillary data directory, \lstinline[style=bash_input]{source_directory} and \lstinline[style=bash_input]{external_source_directory} but they must use different working directories. When the preparation and compilation steps are run during the first time-step an exclusive lock is placed on the source code. All other copies of the top level script using the same source code will wait till set-up is complete before running. Any other copies of the top level script running the first time-step will skip the preparation and compilation steps when they resume. While the actual dynamic hydrological discharge code runs (either in the first time-step or any subsequent time-steps) a shared lock is place on the source code. This will block any attempts at to prepare and compile the code and cause them to skip to simply running the code assuming it is already compiled and setup (which it will be if another script is a running a copy of it). In summary multiple copies of the script can share a single set of source code and ancillary data while each running individually as if no other script were running and all issues with compilation and preparation will be handled automatically.
+\end{description}
+\end{document}  
