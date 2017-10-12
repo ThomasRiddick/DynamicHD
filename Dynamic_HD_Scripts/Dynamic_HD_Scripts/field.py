@@ -459,7 +459,7 @@ class RiverDirections(Field):
         """
         
         return (self.data == 5)
-    
+
 class CumulativeFlow(Field):
     """A subclass of field with various methods specific to cumulative flows
     
