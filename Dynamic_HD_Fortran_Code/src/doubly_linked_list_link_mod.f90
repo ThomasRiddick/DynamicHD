@@ -1,8 +1,12 @@
 module doubly_linked_list_link_mod
 implicit none
 private
+!Necessary to make constructor public as overloading default constructor is not
+!working reliably in gfortran
+public :: doubly_linked_list_link, doubly_linked_list_link_constructor
 
-type, public :: doubly_linked_list_link
+type :: doubly_linked_list_link
+    private
     class (*), pointer :: value => null()
     type(doubly_linked_list_link), pointer :: previous_element => null()
     type(doubly_linked_list_link), pointer :: next_element => null()
@@ -19,7 +23,7 @@ type, public :: doubly_linked_list_link
 end type doubly_linked_list_link
 
 interface doubly_linked_list_link
-    module procedure constructor
+    module procedure doubly_linked_list_link_constructor
 end interface doubly_linked_list_link
 
 contains
@@ -54,7 +58,8 @@ contains
             this%previous_element => previous_element
     end subroutine set_previous_element
 
-    function constructor(value,next_element,previous_element)
+    function doubly_linked_list_link_constructor(value,next_element,previous_element) &
+        result(constructor)
         class(doubly_linked_list_link), pointer :: constructor
         type(doubly_linked_list_link), pointer :: next_element
         type(doubly_linked_list_link), pointer :: previous_element
@@ -63,7 +68,7 @@ contains
             constructor%next_element => next_element
             constructor%previous_element => previous_element
             allocate(constructor%value,source=value)
-    end function constructor
+    end function doubly_linked_list_link_constructor
 
     subroutine destructor(this)
         class(doubly_linked_list_link), intent(inout) :: this

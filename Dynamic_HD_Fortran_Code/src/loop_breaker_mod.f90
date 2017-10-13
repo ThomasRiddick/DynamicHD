@@ -106,7 +106,7 @@ module loop_breaker_mod
     end type latlon_dir_based_rdirs_loop_breaker
 
     interface latlon_dir_based_rdirs_loop_breaker
-        procedure :: latlon_dir_based_rdirs_loop_breaker_constructor
+        procedure latlon_dir_based_rdirs_loop_breaker_constructor
     end interface latlon_dir_based_rdirs_loop_breaker
 
 contains
