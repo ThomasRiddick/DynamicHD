@@ -1,9 +1,11 @@
 module doubly_linked_list_link_mod
 implicit none
 private
+!For gfortran 7.2.0
 !Necessary to make constructor public as overloading default constructor is not
-!working reliably in gfortran
-public :: doubly_linked_list_link, doubly_linked_list_link_constructor
+!working reliably in gfortran7.2.0
+!public :: doubly_linked_list_link, doubly_linked_list_link_constructor
+public :: doubly_linked_list_link
 
 type :: doubly_linked_list_link
     private

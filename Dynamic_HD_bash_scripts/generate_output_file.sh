@@ -13,6 +13,7 @@ area_spacing_file=${6}
 hd_grid_specs_file=${7}
 output_file=${8}
 work_dir=${9}
+production_run=${10:=false}
 
 #Set compiler
 comp=gfortran
@@ -75,7 +76,9 @@ The End
 EOF1
 #
 cd ${work_dir}
-${comp} -o ${bin_dir}/hdfile ${src_dir}/hdfile.f ${src_dir}/globuse.f
+if [[ $production_run == "false" ]]; then
+	${comp} -o ${bin_dir}/hdfile ${src_dir}/hdfile.f ${src_dir}/globuse.f
+fi
 ${bin_dir}/hdfile
 cd -
 #

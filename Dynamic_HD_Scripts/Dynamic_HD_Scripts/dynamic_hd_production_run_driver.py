@@ -44,7 +44,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         if self.ancillary_data_path is not None:
             self.python_config_filename=path.join(self.ancillary_data_path,
                                                   "dynamic_hd_production_driver.cfg")
-        
+            
     def trial_run_using_data_from_new_data_from_virna_2016_version(self):
         super(Dynamic_HD_Production_Run_Drivers,self).__init__()
         file_label = self._generate_file_label()
@@ -57,6 +57,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         self.python_config_filename=path.join("/Users/thomasriddick/Documents/data/HDancillarydata/"
                                               "dynamic_hd_production_driver.cfg")
         self.tarasov_based_orog_correction=False
+        self.compile_paragen_and_hdfile()
         self.no_intermediaries_ten_minute_data_ALG4_no_true_sinks_plus_upscale_rdirs_driver()
         return self.output_hdparas_filepath,self.output_hdstart_filepath
         
@@ -72,6 +73,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         self.python_config_filename=path.join("/Users/thomasriddick/Documents/data/HDancillarydata/"
                                               "dynamic_hd_production_driver.cfg")
         self.tarasov_based_orog_correction=False
+        self.compile_paragen_and_hdfile()
         self.no_intermediaries_ten_minute_data_ALG4_no_true_sinks_plus_upscale_rdirs_driver()
         return self.output_hdparas_filepath,self.output_hdstart_filepath
     
@@ -89,6 +91,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         self.python_config_filename=path.join("/Users/thomasriddick/Documents/data/HDancillarydata/"
                                               "dynamic_hd_production_driver.cfg")
         self.tarasov_based_orog_correction=False
+        self.compile_paragen_and_hdfile()
         self.no_intermediaries_ten_minute_data_ALG4_no_true_sinks_plus_upscale_rdirs_driver()
         return self.output_hdparas_filepath,self.output_hdstart_filepath
         
@@ -110,6 +113,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         self.python_config_filename=path.join("/Users/thomasriddick/Documents/data/HDancillarydata/"
                                               "dynamic_hd_production_driver.cfg")
         self.tarasov_based_orog_correction=True
+        self.compile_paragen_and_hdfile()
         self.no_intermediaries_ten_minute_data_ALG4_no_true_sinks_plus_upscale_rdirs_driver()
         return self.output_hdparas_filepath,self.output_hdstart_filepath
     
@@ -131,6 +135,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         self.python_config_filename=path.join("/Users/thomasriddick/Documents/data/HDancillarydata/"
                                               "dynamic_hd_production_driver.cfg")
         self.tarasov_based_orog_correction=True
+        self.compile_paragen_and_hdfile()
         self.no_intermediaries_ten_minute_data_ALG4_no_true_sinks_plus_upscale_rdirs_driver()
         return self.output_hdparas_filepath,self.output_hdstart_filepath
     
@@ -153,6 +158,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                               "HDancillarydata_specified_fieldnames/"
                                               "dynamic_hd_production_driver.cfg")
         self.tarasov_based_orog_correction=True
+        self.compile_paragen_and_hdfile()
         self.no_intermediaries_ten_minute_data_ALG4_no_true_sinks_plus_upscale_rdirs_driver()
         return self.output_hdparas_filepath,self.output_hdstart_filepath
     
@@ -175,6 +181,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                               "HDancillarydata_specified_fieldnames/"
                                               "dynamic_hd_production_driver.cfg")
         self.tarasov_based_orog_correction=True
+        self.compile_paragen_and_hdfile()
         self.no_intermediaries_ten_minute_data_ALG4_no_true_sinks_plus_upscale_rdirs_driver()
         return self.output_hdparas_filepath,self.output_hdstart_filepath
 
@@ -526,7 +533,8 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                  'fl_dp_dl.dat'),
                                        orography_variance_file=\
                                        path.join(self.ancillary_data_path,'bin_toposig.dat'),
-                                       output_dir=path.join(self.working_directory_path,'paragen'))
+                                       output_dir=path.join(self.working_directory_path,'paragen'),
+                                       production_run=True)
         #Place parameters and rdirs into a hdparas.file
         self._generate_hd_file(rdir_file=path.splitext(transformed_course_rdirs_filename)[0] + ".dat",
                                lsmask_file=path.splitext(transformed_HD_ls_mask_filename)[0] + ".dat",
@@ -537,7 +545,8 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                          'fl_dp_dl.dat'),
                                hd_grid_specs_file=half_degree_grid_filepath,
                                output_file=self.output_hdparas_filepath,
-                               paras_dir=path.join(self.working_directory_path,'paragen'))
+                               paras_dir=path.join(self.working_directory_path,'paragen'),
+                               production_run=True)
         if self.output_hdstart_filepath is not None:
             utilities.prepare_hdrestart_file_driver(base_hdrestart_filename=base_hd_restart_file,
                                                     output_hdrestart_filename=\

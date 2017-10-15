@@ -206,7 +206,7 @@ class Dynamic_HD_Drivers(object):
                                                                                                      cperror.output))
             
     def _generate_hd_file(self,rdir_file,lsmask_file,null_file,area_spacing_file,
-                          hd_grid_specs_file,output_file,paras_dir):
+                          hd_grid_specs_file,output_file,paras_dir,production_run=False):
         """Generate an hdpara.nc file to be used as input to the standalone HD model or JSBACH
         
         Arguments:
@@ -218,6 +218,7 @@ class Dynamic_HD_Drivers(object):
         hd_grid_specs_file: string; full path to a file containing the grid specification for the HD grid
         output_file: string; full target path to write the output hd file to 
         paras_dir: string; full path to a directory of srv parameters files produced by parameter generation 
+        production_run: bool; is this a production run (in which case don't compile paragen) or not?
         
         Returns: nothing
         
@@ -245,7 +246,8 @@ class Dynamic_HD_Drivers(object):
                                            path.splitext(lsmask_file)[0] + ".dat",
                                            path.splitext(null_file)[0] + ".dat",
                                            path.splitext(area_spacing_file)[0] + ".dat",
-                                           hd_grid_specs_file,output_file,paras_dir])
+                                           hd_grid_specs_file,output_file,paras_dir,
+                                           "true" if production_run else "false"])
         except CalledProcessError as cperror:
             raise RuntimeError("Failure in called process {0}; return code {1}; output:\n{2}".format(cperror.cmd,
                                                                                                      cperror.returncode,
@@ -253,7 +255,8 @@ class Dynamic_HD_Drivers(object):
 
     def _generate_flow_parameters(self,rdir_file,topography_file,inner_slope_file,lsmask_file,
                                   null_file,area_spacing_file,orography_variance_file,
-                                  output_dir,paragen_source_label=None,grid_type="HD",**grid_kwargs):
+                                  output_dir,paragen_source_label=None,production_run=False,
+                                  grid_type="HD",**grid_kwargs):
         """Generate flow parameters files in a specified directory from given input
         
         Arguments:
@@ -268,6 +271,7 @@ class Dynamic_HD_Drivers(object):
         orography_variance_file: string; full path to a file containing the variance of the orography  
         output_dir: string; full path to directory to place the various srv output files from this script in
         paragen_source_label: string; a label for modified source files if not using an HD grid (optional)
+        production_run: bool; is this a production run (in which case don't compile paragen) or not?
         grid_type: string; code for the grid type of the grid (optional)
         grid_kwargs: dictionary; key word dictionary specifying parameters of the grid (if required)
         Returns: nothing
@@ -320,12 +324,38 @@ class Dynamic_HD_Drivers(object):
                                            path.splitext(null_file)[0] + ".dat",
                                            path.splitext(area_spacing_file)[0] + ".dat",
                                            path.splitext(orography_variance_file)[0] + ".dat",
-                                           paragen_source_filepath,paragen_bin_file,output_dir],
+                                           paragen_source_filepath,paragen_bin_file,output_dir,
+                                           "true" if production_run else "false"],
                                           stderr=subprocess.STDOUT)
         except CalledProcessError as cperror:
             raise RuntimeError("Failure in called process {0}; return code {1}; output:\n{2}".format(cperror.cmd,
                                                                                                      cperror.returncode,
                                                                                                      cperror.output))
+            
+            
+    def compile_paragen_and_hdfile(self):
+        """Compile the paragen and hdfile executables when testing the production run code
+        
+        Arguments: None
+        Returns: Nothing
+        
+        Not used for actual production runs.
+        """
+
+        try:
+            print subprocess.check_output([path.join(bash_scripts_path,
+                                                     "compile_paragen_and_hdfile.sh"),
+                                           path.join(bash_scripts_path,
+                                                     "bin"),
+                                           path.join(bash_scripts_path,
+                                                     "fortran"),
+                                           path.join(bash_scripts_path,"fortran",
+                                                     "paragen.f"),"paragen"])
+        except CalledProcessError as cperror:
+            raise RuntimeError("Failure in called process {0}; return code {1}; output:\n{2}".format(cperror.cmd,
+                                                                                                     cperror.returncode,
+                                                                                                     cperror.output))
+        
 
     def _run_postprocessing(self,rdirs_filename,output_file_label,ls_mask_filename = None,
                             skip_marking_mouths=False,compute_catchments=True,flip_mask_ud=False,
@@ -3340,7 +3370,7 @@ def main():
     #etopo1_data_drivers = ETOPO1_Data_Drivers()
     #etopo1_data_drivers.etopo1_data_all_points()
     #etopo1_data_drivers.etopo1_data_ALG4_sinkless()
-    utilties_drivers = Utilities_Drivers()
+    #utilties_drivers = Utilities_Drivers()
     #utilties_drivers.convert_corrected_HD_hydrology_dat_files_to_nc()
     #utilties_drivers.recreate_connected_HD_lsmask()
     #utilties_drivers.recreate_connected_HD_lsmask_true_seas_inc_casp_only()
@@ -3355,7 +3385,7 @@ def main():
     #utilties_drivers.upscale_srtm30_plus_orog_to_10min_no_lsmask_tarasov_style_params()
     #utilties_drivers.upscale_srtm30_plus_orog_to_10min_no_lsmask_reduced_back_looping()
     #utilties_drivers.upscale_1min_orography_to_30min()
-    utilties_drivers.upscale_srtm30_plus_orog_to_10min_no_lsmask_half_cell_upscaling_params()
+    #utilties_drivers.upscale_srtm30_plus_orog_to_10min_no_lsmask_half_cell_upscaling_params()
     #utilties_drivers.downscale_ICE6G_21k_landsea_mask_and_remove_disconnected_points()
     #utilties_drivers.remove_disconnected_points_from_ICE6G_21k_landsea_mask_and_add_caspian()
     #utilties_drivers.remove_disconnected_points_from_ICE6G_0k_landsea_mask_and_add_caspian()

@@ -16,6 +16,7 @@ orography_variance_file=${9}
 paragen_source_filepath=${10}
 paragen_bin_file=${11}
 work_dir=${12}
+production_run=${13:=false}
 
 #Set compiler
 comp=gfortran
@@ -88,8 +89,9 @@ The End
 EOF
 
 cd ${work_dir}
-
-${comp} -o ${bin_dir}/${paragen_bin_file} ${paragen_source_filepath} ${src_dir}/globuse.f ${src_dir}/mathe.f ${src_dir}/modtime.f
+if [[ $production_run == "false" ]]; then
+	${comp} -o ${bin_dir}/${paragen_bin_file} ${paragen_source_filepath} ${src_dir}/globuse.f ${src_dir}/mathe.f ${src_dir}/modtime.f
+fi
 ${bin_dir}/${paragen_bin_file}
 
 cd - 1>&2 > /dev/null

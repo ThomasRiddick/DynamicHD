@@ -1,7 +1,9 @@
 module doubly_linked_list_mod
+!For gfortran 7.2.0
 !For reasons unknown constructor function overloading is not working properly in gfortran
 !hence alias the full name of the constructor to create_link
-use doubly_linked_list_link_mod,  create_link => doubly_linked_list_link_constructor
+!use doubly_linked_list_link_mod,  create_link => doubly_linked_list_link_constructor
+use doubly_linked_list_link_mod
 use coords_mod
 implicit none
 private
@@ -64,16 +66,18 @@ contains
         class(doubly_linked_list_link), pointer :: new_element
         if (associated(this%first_element)) then
            this%length = this%length + 1
+           !For gfortran 7.2.0
            !For reasons unknown constructor function overloading is not working properly in gfortran
-           !new_element => doubly_linked_list_link(value,null(this%first_element),this%last_element)
-           new_element => create_link(value,null(this%first_element),this%last_element)
+           !new_element => create_link(value,null(this%first_element),this%last_element)
+           new_element => doubly_linked_list_link(value,null(this%first_element),this%last_element)
            call this%last_element%set_next_element(new_element)
            this%last_element => new_element
         else
            this%length = 1
+           !For gfortran 7.2.0
            !For reasons unknown constructor function overloading is not working properly in gfortran
-           !this%first_element => doubly_linked_list_link(value,null(),null())
-           this%first_element => create_link(value,null(),null())
+           !this%first_element => create_link(value,null(),null())
+           this%first_element => doubly_linked_list_link(value,null(),null())
            this%last_element => this%first_element
         end if
         deallocate(value)
@@ -85,16 +89,18 @@ contains
         class(doubly_linked_list_link), pointer :: new_element
         if (associated(this%first_element)) then
             this%length = this%length + 1
+            !For gfortran 7.2.0
             !For reasons unknown constructor function overloading is not working properly in gfortran
-            !new_element => doubly_linked_list_link(value,this%first_element,null())
-            new_element => create_link(value,this%first_element,null())
+            !new_element => create_link(value,this%first_element,null())
+            new_element => doubly_linked_list_link(value,this%first_element,null())
             call this%first_element%set_previous_element(new_element)
             this%first_element => new_element
         else
            this%length = 1
+           !For gfortran 7.2.0
            !For reasons unknown constructor function overloading is not working properly in gfortran
-           !this%first_element => doubly_linked_list_link(value,null(),null())
-           this%first_element => create_link(value,null(),null())
+           !this%first_element => create_link(value,null(),null())
+           this%first_element => doubly_linked_list_link(value,null(),null())
            this%last_element => this%first_element
         end if
         deallocate(value)

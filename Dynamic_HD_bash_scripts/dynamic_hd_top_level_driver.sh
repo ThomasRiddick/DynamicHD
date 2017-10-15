@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "Running Version 2.3 of the Dynamic HD Parameters Generation Code"
+echo "Running Version 2.4 of the Dynamic HD Parameters Generation Code"
 
 #Define module loading function
 function load_module
@@ -306,6 +306,12 @@ if $compilation_required; then
 	mkdir -p ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/bin
 	mkdir -p ${source_directory}/Dynamic_HD_bash_scripts/bin
 fi
+
+#Compile fortran code used called shell script wrappers
+if $compilation_required; then
+	echo "Compiling Fortran code called from shell script wrappers"
+	${source_directory}/Dynamic_HD_bash_scripts/compile_paragen_and_hdfile.sh ${source_directory}/Dynamic_HD_bash_scripts/bin ${source_directory}/Dynamic_HD_bash_scripts/fortran ${source_directory}/Dynamic_HD_bash_scripts/fortran/paragen.f paragen
+fi 
 
 #Run
 echo "Running Dynamic HD Code" 1>&2 
