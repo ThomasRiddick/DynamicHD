@@ -166,38 +166,6 @@ double latlon_grid::latlon_calculate_dir_based_rdir(latlon_coords* start_coords,
 				 	 + (dest_coords->get_lon() - start_lon_loc) + 5);
 }
 
-void icon_single_index_grid::for_diagonal_nbrs(coords* coords_in,function<void(coords*)> func) {
-	if (use_secondary_neighbors) {
-		for (auto i = 0; i < 9; i++) {
-			int neighbor_index = get_cell_secondary_neighbors_index(coords_in,i);
-			if ((neighbor_index >= 0 ) || ! nowrap) func(new generic_1d_coords(neighbor_index));
-		}
-	}
-}
-
-void icon_single_index_grid::for_non_diagonal_nbrs(coords* coords_in,function<void(coords*)> func) {
-	for (auto i = 0; i < 3; i++) {
-		int neighbor_index = get_cell_neighbors_index(coords_in,i);
-		if ((neighbor_index >= 0 ) || ! nowrap) func(new generic_1d_coords(neighbor_index));
-	}
-}
-
-void icon_single_index_grid::for_all_nbrs(coords* coords_in,function<void(coords*)> func) {
-	for_diagonal_nbrs(coords_in,func);
-	for_non_diagonal_nbrs(coords_in,func);
-}
-
-void icon_single_index_grid::for_all(function<void(coords*)> func) {
-	for (auto i = 0; i < ncells; i++) {
-		func(new generic_1d_coords(i));
-	}
-}
-
-generic_1d_coords* icon_single_index_grid::icon_single_index_wrapped_coords(generic_1d_coords* coords_in) {
-	//ICON grid is naturally wrapped - this function should be optimized out by the compiler
-	return coords_in;
-}
-
 grid* grid_factory(grid_params* grid_params_in){
 	if(latlon_grid_params* latlon_params = dynamic_cast<latlon_grid_params*>(grid_params_in)){
 		return new latlon_grid(latlon_params);

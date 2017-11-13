@@ -172,84 +172,6 @@ public:
 	latlon_coords* latlon_wrapped_coords(latlon_coords*);
 };
 
-/** A real class implementing functions on a ICON-style
- * grid without using blocks
- */
-
-class icon_single_index_grid : public grid {
-	int ncells;
-	//Used by the Tarasov Upscaling Code - numbers used
-	//to identify the various kinds of edge path has
-	//started from
-	const int left_diagonal_edge_num     = 1;
-	const int right_diagonal_edge_num    = 2;
-	const int bottom_horizontal_edge_num = 3;
-	//A landsea 'edge' is just a landsea point
-	const int landsea_edge_num = 4;
-	//A true sink 'edge' is just a true sink point
-	const int true_sink_edge_num = 5;
-	//Use neighbors that share only a vertex but not an
-	//edge with the center cell
-	bool use_secondary_neighbors = false;
-	//An array with ncells*3 elements with the index of the
-	//three neighbors of each cell
-	int* neighboring_cell_indices = nullptr;
-	//An array with ncells*9 elements with the index of the
-	//nine secondary neighbors (neighbors of the cells vertices
-	//that don't share an edge with the cell) of each cell
-	int* secondary_neighboring_cell_indices = nullptr;
-	//
-public:
-	///Constructor
-	icon_single_index_grid(grid_params*);
-	virtual ~icon_single_index_grid() {};
-	///Getters
-	int get_npoints() { return ncells; };
-	///Getters
-	int get_edge_number(coords*);
-	///Getters
-	int get_landsea_edge_num() { return landsea_edge_num; }
-	///Getters
-	int get_true_sink_edge_num() { return true_sink_edge_num; }
-	///Getters
-	int get_separation_from_initial_edge(coords*,int);
-	/// This get the index of a set of coordinates within a 1D array
-	/// representing the ICON field. It is not replacing
-	/// a virtual function in the base class but instead endemic to
-	/// icon_single_index_grid and called from get_index in the base class through
-	/// a select case statement coupled with static casting
-	int icon_single_index_get_index(generic_1d_coords* coords_in)
-		{ return coords_in->get_index(); }
-	//implement function that iterative apply a supplied function
-	void for_diagonal_nbrs(coords*,function<void(coords*)> );
-	void for_non_diagonal_nbrs(coords*,function<void(coords*)>);
-	void for_all_nbrs(coords*,function<void(coords*)>);
-	void for_all(function<void(coords*)>);
-	void for_all_with_line_breaks(function<void(coords*,bool)>);
-	//These next two functions are endemic to this subclass and are
-	//called from the base class via a switch-case statement and
-	//static casting
-	///is given point outside limits of grid
-	bool icon_single_index_outside_limits(generic_1d_coords* coords);
-	///Are two points linked directly by a non-diagonal
-	bool icon_single_index_non_diagonal(generic_1d_coords*, generic_1d_coords*);
-	//Implementations of virtual functions of the base class
-	bool is_corner_cell(coords*);
-	bool is_edge(coords*);
-	bool check_if_cell_is_on_given_edge_number(coords*,int);
-	///This next function is endemic to this subclass and is
-	///called from the base class via a switch-case statement and
-	///static casting
-	///Return wrapped version of supplied coordinates
-	generic_1d_coords* icon_single_index_wrapped_coords(generic_1d_coords*);
-	//Get the cell indices of the center cells three direct neighbors
-	int get_cell_neighbors_index(generic_1d_coords* cell_coords,int neighbor_num)
-		{ return neighboring_cell_indices[cell_coords->get_index()*3 + neighbor_num]; }
-	//Get the cell indices of the center cells nine secondary neighbors
-	int get_cell_secondary_neighbors_index(generic_1d_coords* cell_coords,int neighbor_num)
-		{ return secondary_neighboring_cell_indices[cell_coords->get_index()*9 + neighbor_num]; }
-};
-
 /**
  * Concrete subclass containing the parameters for a latitude-longitude grid
  */
@@ -271,45 +193,6 @@ public:
 	const int get_nlat() { return nlat; }
 	///Getter
 	const int get_nlon() { return nlon; }
-};
-
-/**
- * Concrete subclass containing the parameters for a ICON-style grid without using
- * blocks
- */
-
-class icon_single_index_grid_params : public grid_params {
-	//Number of points
-	int ncells;
-	//An array with ncells*3 elements with the index of the
-	//three neighbors of each cell
-	int* neighboring_cell_indices = nullptr;
-	//Use neighbors that share only a vertex but not an
-	//edge with the center cell
-	bool use_secondary_neighbors = false;
-	//An array with ncells*9 elements with the index of the
-	//nine secondary neighbors (neighbors of the cells vertices
-	//that don't share an edge with the cell) of each cell
-	int* secondary_neighboring_cell_indices = nullptr;
-public:
-	virtual ~icon_single_index_grid_params() {};
-	///Class constructor
-	icon_single_index_grid_params(int ncells_in,int* neighboring_cell_indices_in,
-			bool use_secondary_neighbors_in,int* secondary_neighboring_cell_indices_in)
-	 	: grid_params(false),ncells(ncells_in),
-		  neighboring_cell_indices(neighboring_cell_indices_in),
-		  use_secondary_neighbors(use_secondary_neighbors_in),
-		  secondary_neighboring_cell_indices(secondary_neighboring_cell_indices_in){};
-	///Class constructor
-	icon_single_index_grid_params(int ncells_in, int* neighboring_cell_indices_in,
-			bool use_secondary_neighbors_in, int* secondary_neighboring_cell_indices_in,
-			bool nowrap_in)
-		: grid_params(nowrap_in), ncells(ncells_in),
-		  neighboring_cell_indices(neighboring_cell_indices_in),
-		  use_secondary_neighbors(use_secondary_neighbors_in),
-		  secondary_neighboring_cell_indices(secondary_neighboring_cell_indices_in){};
-	///Getter
-	const int get_ncells() { return ncells; }
 };
 
 /*

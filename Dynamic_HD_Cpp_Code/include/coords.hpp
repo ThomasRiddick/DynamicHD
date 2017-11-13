@@ -23,7 +23,7 @@ public:
 	///Produce clone
 	coords* clone();
 	///Enumeration of subclass names
-	enum coords_types {latlon,generic_1d};
+	enum coords_types {latlon};
 	///Type of coordinate this coordinate instance is
 	coords_types coords_type;
 };
@@ -58,32 +58,6 @@ public:
 					 << field_object.lon << endl; };
 };
 
-/*
- * Single index within a flattened generic grid
- */
-
-class generic_1d_coords : public coords{
-	///Index
-	int index;
-public:
-	///Destructor
-	~generic_1d_coords(){};
-	///Constructor
-	generic_1d_coords(int index_in) :
-		index(index_in) {coords_type = coords_types::generic_1d; };
-	///Constructor
-	generic_1d_coords(const generic_1d_coords& coords_in) :
-		index(coords_in.index) {coords_type = coords_types::generic_1d; };
-	///Getter
-	const int get_index() const { return index;};
-	///Overload equals operator
-	bool operator== (const generic_1d_coords& rhs) const
-			{ return (index == rhs.index()); };
-	///Overload ostream operator
-	friend ostream& operator<< (ostream& out, generic_1d_coords& field_object)
-		{ return out << "Index: " << field_object.index << endl; };
-};
-
 /**
  * The clone class uses dynamic casting and a hand keyed switch to make
  * it possible to in-line the clone statement
@@ -92,7 +66,6 @@ inline coords* coords::clone(){
 	switch(coords_type){
 		case coords_types::latlon:
 			return new latlon_coords(*static_cast<latlon_coords*>(this));
-			return new generic_1d_coords(*static_cast<generic_1d_coords*>(this));
 		default:
 			throw runtime_error("Undefined coord type.. need to add it to clone");
 	}
