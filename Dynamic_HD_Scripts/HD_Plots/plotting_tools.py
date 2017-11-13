@@ -214,7 +214,7 @@ def calculate_lat_label(y_index,offset,scale_factor=1,precision=1):
     """
 
     return (lambda y: "{:.{prec}f}".format((0.5*y - 90)*(-1 if y < 180 else 1),prec=precision)
-                            + r'$^{\circ}$' + ('N' if y <=180 else 'S'))(((y_index+0.5)/scale_factor)+offset)
+                            + r'$^{\circ}$ ' + (('N' if y < 180 else '') if y <=180 else 'S'))(((y_index+0.5)/scale_factor)+offset)
                             
 def calculate_lon_label(x_index,offset,scale_factor=1,precision=1):
     """ 
@@ -229,7 +229,7 @@ def calculate_lon_label(x_index,offset,scale_factor=1,precision=1):
     """
 
     return (lambda x: "{:.{prec}f}".format((0.5*x-180)*(-1 if x < 360 else 1),prec=precision) 
-                            + r'$^{\circ}$' + ('W' if x <= 360 else 'E'))(((x_index+0.5)/scale_factor)+offset)
+                            + r'$^{\circ}$ ' + (('W' if ((x > 0) and (x < 360)) else '') if (x <= 360 or x >= 720) else 'E'))(((x_index+0.5)/scale_factor)+offset)
                             
 def calc_displayed_plot_size(xlim,ylim):
     return (xlim[1] - xlim[0])*(ylim[0]-ylim[1])

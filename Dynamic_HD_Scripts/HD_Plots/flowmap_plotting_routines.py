@@ -44,7 +44,7 @@ def make_basic_flowmap_comparison_plot(ax,flowmap_ref_field,flowmap_data_field,m
         cmap = mpl.colors.ListedColormap(colors.basic_flowmap_comparison_plot_colors)
     bounds = range(6)
     norm = mpl.colors.BoundaryNorm(bounds,cmap.N)
-    ax.imshow(flowmap_ref_field,cmap=cmap,norm=norm,interpolation='none')
+    ax.imshow(flowmap_ref_field,cmap=cmap,norm=norm,interpolation='none',rasterized=True)
     if add_title:
         plt.title('Cells with cumulative flow greater than or equal to {0}'.format(minflowcutoff))
     pts.remove_ticks(ax)
@@ -158,7 +158,7 @@ def plot_composite_image(ax,image,minflowcutoff,first_datasource_name,second_dat
         cmap = mpl.colors.ListedColormap(color_list)
         bounds = range(11) if not plot_glaciers else range(12)
     norm = mpl.colors.BoundaryNorm(bounds,cmap.N)
-    ax.imshow(image,cmap=cmap,norm=norm,interpolation='none')
+    ax.imshow(image,cmap=cmap,norm=norm,interpolation='none',rasterized=True)
     if use_title:
         plt.title('Cells with cumulative flow greater than or equal to {0}'.format(minflowcutoff))
     if remove_ticks:
@@ -166,7 +166,7 @@ def plot_composite_image(ax,image,minflowcutoff,first_datasource_name,second_dat
     else:
             axis_tick_label_scale_factor=\
             flowmap_grid.get_scale_factor_for_geographic_coords() if flowmap_grid is not None else 0.5 
-            ax.xaxis.set_major_locator(mpl.ticker.IndexLocator(30/axis_tick_label_scale_factor,0))
+            ax.xaxis.set_major_locator(mpl.ticker.IndexLocator(60/axis_tick_label_scale_factor,0))
             ax.yaxis.set_major_locator(mpl.ticker.IndexLocator(30/axis_tick_label_scale_factor,0))
             #Scale factor is multiplied by two as formatter has a built in scale factor of a half
             ax.xaxis.set_major_formatter(mpl.ticker.\
@@ -202,18 +202,18 @@ def plot_composite_image(ax,image,minflowcutoff,first_datasource_name,second_dat
     plt.subplots_adjust(right=0.85)
     tic_loc = (np.arange(num_colors) + 0.5)
     if use_only_one_color_for_flowmap:
-        tic_labels = ['Sea', 'Minor Catchments','{} River Path'.format(second_datasource_name)]
+        tic_labels = ['Sea', 'Minor catchments','{} river path'.format(second_datasource_name)]
     else:
-        tic_labels = ['Sea', 'Minor Catchments','{} River Path'.format(first_datasource_name),
-                      'Common River Path','{} River Path'.format(second_datasource_name)]
+        tic_labels = ['Sea', 'Minor catchments','{} river path'.format(first_datasource_name),
+                      'Common river path','{} river path'.format(second_datasource_name)]
     if use_single_color_for_discrepancies:
-        tic_labels.extend(["{} in Catchments".format(difference_in_catchment_label),
-                           "Common Catchment"])
+        tic_labels.extend(["{} in catchments".format(difference_in_catchment_label),
+                           "Common catchment"])
         if not use_only_one_common_catchment_label:
-            tic_labels.extend(["Common Catchment","Common Catchment"])
+            tic_labels.extend(["Common catchment","Common catchment"])
     else:
-        tic_labels.extend(["Model 1 Catchment","Common Catchment","Model 2 Catchment",
-                           "Common Catchment","Common Catchment"])
+        tic_labels.extend(["Model 1 catchment","Common catchment","Model 2 catchment",
+                           "Common catchment","Common catchment"])
     if plot_glaciers:
         tic_labels.extend(["Glacier"])
     cb.set_ticks(tic_loc) 

@@ -81,7 +81,7 @@ def plot_orography_section(ax,cax,section,min_height,max_height,outflow_lat,outf
             cs = ax.contour(section,levels=levels,alpha=alpha)
     elif plot_type=='Image':
         im = ax.imshow(section,interpolation='nearest',cmap=cm.get_cmap(cmap_name),
-                       norm = cm.colors.Normalize(vmax=max_height,vmin=min_height))
+                       norm = cm.colors.Normalize(vmax=max_height,vmin=min_height),rasterized=True)
     ax.format_coord = pts.OrogCoordFormatter(lon_offset,lat_offset) 
     ax.set_title(" Outflow"
                  " Lat: " + (lambda x: str((0.5*x - 90)*(-1 if x<=180 else 1))
@@ -148,7 +148,7 @@ def plot_flowmap(ax,section,reduced_map=False,cax=None,
     cmap_wholec,norm_wholec = create_colormap(section,num_colors=num_colors,
                                               alternative_colors=alternative_colors,
                                               colors=colors)
-    ax.imshow(section,interpolation=interpolation,cmap=cmap_wholec,norm=norm_wholec)
+    ax.imshow(section,interpolation=interpolation,cmap=cmap_wholec,norm=norm_wholec,rasterized=True)
     if remove_ticks_flag:
         pts.remove_ticks(ax)
     if reduced_map:
@@ -180,7 +180,7 @@ def plot_river_rmouth_flowmap(ax,ref_flowtocellfield,data_flowtocellfield,rdirs_
                                             points_to_mark=points_to_mark,
                                             allow_new_sink_points=False)
     cmap,norm = create_colormap(rmap_section,colors=colors)
-    ax.imshow(rmap_section,interpolation='none',cmap=cmap,norm=norm)
+    ax.imshow(rmap_section,interpolation='none',cmap=cmap,norm=norm,rasterized=True)
     plt.title(" Lat: " + (lambda x: str((0.5*x - 90)*(-1 if x<=180 else 1))
                           + r'$^{\circ}$' + ('N' if x <=180 else 'S'))(pair[0].get_lat())
               + ' Lon: ' + (lambda y: str((0.5*y-180)*(-1 if y<= 360 else 1)) 
@@ -363,7 +363,7 @@ def plot_catchment(ax,catchment_section,colors,simplified_colorscheme=False,
         cmap_catch,norm_catch = create_colormap(catchment_section,5,colors=colors)
     else:
         cmap_catch,norm_catch = create_colormap(catchment_section,9,colors=colors)
-    ax.imshow(catchment_section,interpolation='none',cmap=cmap_catch,norm=norm_catch)
+    ax.imshow(catchment_section,interpolation='none',cmap=cmap_catch,norm=norm_catch,rasterized=True)
     if format_coords:
         ax.format_coord = pts.OrogCoordFormatter(lon_offset,lat_offset) 
     if remove_ticks_flag:
@@ -373,14 +373,14 @@ def plot_catchment(ax,catchment_section,colors,simplified_colorscheme=False,
         mappable_catch.set_array(catchment_section)
         cb_wc = plt.colorbar(mappable_catch,ax=ax,cax=cax)
         if use_upscaling_labels:
-            tic_labels_catch = ['Sea','Land','Fine River Directions\nCatchment','Common Catchment',
-                                'Upscaled River Directions\nCatchment','Fine River Directions River Mouth',
-                                'Upscaled River Directions River Mouth','Fine River Directions True Sink',
-                                'Common True Sink'] 
+            tic_labels_catch = ['Sea','Land','Fine river directions\ncatchment','Common catchment',
+                                'Upscaled river directions\ncatchment','Fine river directions river mouth',
+                                'Upscaled river directions river mouth','Fine river directions true sink',
+                                'Common true sink'] 
         else:
-            tic_labels_catch = ['Sea','Land','Model 1 Catchment','Common Catchment','Model 2 Catchment',
-                                'Model 1 River Mouth','Model 2 River Mouth','Model 1 True Sink',
-                                'Common True Sink'] 
+            tic_labels_catch = ['Sea','Land','Model 1 catchment','Common catchment','Model 2 catchment',
+                                'Model 1 river mouth','Model 2 river mouth','Model 1 true sink',
+                                'Common true sink'] 
         tic_loc_catch = np.arange(10) + 0.5
         cb_wc.set_ticks(tic_loc_catch) 
         cb_wc.set_ticklabels(tic_labels_catch)
@@ -551,7 +551,7 @@ def simple_catchment_and_flowmap_plot(ax,catchment_field,catchment_field_for_lsm
     working_catchment_section = working_catchment[imin:imax,jmin:jmax]
     cmap_catch = mpl.colors.ListedColormap(colors.simple_catchment_and_flowmap_colors)
     norm_catch = mpl.colors.BoundaryNorm(range(5),cmap_catch.N)
-    ax.imshow(working_catchment_section,interpolation='none',cmap=cmap_catch,norm=norm_catch)
+    ax.imshow(working_catchment_section,interpolation='none',cmap=cmap_catch,norm=norm_catch,rasterized=True)
     if remove_ticks:
         pts.remove_ticks(ax)
     else:

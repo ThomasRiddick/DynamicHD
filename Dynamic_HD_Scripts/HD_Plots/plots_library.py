@@ -1969,7 +1969,7 @@ class FlowMapPlots(Plots):
                                               rotate_ref=True,
                                               lsmask_has_same_orientation_as_ref=False,
                                               invert_ls_mask=True,
-                                              first_datasource_name="Present Day",
+                                              first_datasource_name="Present day",
                                               second_datasource_name="LGM")
         
 class FlowMapPlotsWithCatchments(FlowMapPlots):
@@ -2403,7 +2403,7 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                                             rotate_ref=True,
                                                             lsmask_has_same_orientation_as_ref=False,
                                                             invert_ls_mask=True,
-                                                            first_datasource_name="Present Day",
+                                                            first_datasource_name="Present day",
                                                             second_datasource_name="LGM",
                                                             matching_parameter_set='extensive',
                                                             catchment_and_outflows_mods_list_filename=\
@@ -2467,7 +2467,7 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                                             rotate_ref=True,
                                                             lsmask_has_same_orientation_as_ref=False,
                                                             invert_ls_mask=True,
-                                                            first_datasource_name="Present Day",
+                                                            first_datasource_name="Present day",
                                                             second_datasource_name="LGM",
                                                             matching_parameter_set='extensive',
                                                             catchment_and_outflows_mods_list_filename=\
@@ -2535,7 +2535,7 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                                             rotate_ref=True,
                                                             lsmask_has_same_orientation_as_ref=False,
                                                             invert_ls_mask=True,
-                                                            first_datasource_name="Present Day",
+                                                            first_datasource_name="Present day",
                                                             second_datasource_name="LGM",
                                                             matching_parameter_set='extensive',
                                                             catchment_and_outflows_mods_list_filename=\
@@ -2930,7 +2930,7 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                                             rotate_ref=True,
                                                             lsmask_has_same_orientation_as_ref=False,
                                                             invert_ls_mask=True,
-                                                            first_datasource_name="Present Day",
+                                                            first_datasource_name="Present day",
                                                             second_datasource_name="LGM",
                                                             matching_parameter_set='extensive',
                                                             catchment_and_outflows_mods_list_filename=\
@@ -3004,7 +3004,7 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                                             rotate_ref=True,
                                                             lsmask_has_same_orientation_as_ref=False,
                                                             invert_ls_mask=True,
-                                                            first_datasource_name="Present Day",
+                                                            first_datasource_name="Present day",
                                                             second_datasource_name="LGM",
                                                             matching_parameter_set='extensive',
                                                             catchment_and_outflows_mods_list_filename=\

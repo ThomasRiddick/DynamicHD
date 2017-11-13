@@ -12,6 +12,7 @@ import plotting_tools as pts
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 from matplotlib import gridspec 
+from matplotlib import rcParams
 import numpy as np
 from netCDF4 import Dataset
 
@@ -22,6 +23,8 @@ class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
 
     def __init__(self, save):
         color_palette_to_use="gmd_paper"
+        rcParams['font.family'] = 'sans-serif'
+        rcParams['font.sans-serif'] = ['Helvetica']
         super(PlotsForGMDPaper,self).__init__(save,color_palette_to_use)
         """Class constructor"""
         
@@ -141,7 +144,7 @@ class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
         corr_data_plotter(ax2)
         plt.tight_layout(rect=(0,0.1,1,1))
         if self.save:
-            plt.savefig(path.join(self.save_path,"danube_comparison.png"))
+            plt.savefig(path.join(self.save_path,"danube_comparison.pdf"),dpi=300)
 
     def comparison_of_manually_corrected_HD_rdirs_vs_automatically_generated_10min_rdirs(self):
         data_creation_datetime="20170517_003802"
@@ -222,7 +225,7 @@ class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
         catchment_plotters[2](ax2)
         catchment_plotters[2].apply_axis_locators_and_formatters(ax2)
         if self.save:
-            plt.savefig(path.join(self.save_path,"me_mi_ni_10min_vs_man_corr.png"))
+            plt.savefig(path.join(self.save_path,"me_mi_ni_10min_vs_man_corr.pdf"),dpi=300)
         
     def comparison_of_modern_river_directions_10_minute_original_vs_HD_upscaled(self):
         data_creation_datetime_directly_upscaled="20170517_003802"
@@ -308,7 +311,7 @@ class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
         catchment_plotters[0].apply_axis_locators_and_formatters(ax0)
         catchment_plotters[1].apply_axis_locators_and_formatters(ax1)
         if self.save:
-            plt.savefig(path.join(self.save_path,"me_mi_upscaling_comp.png"))
+            plt.savefig(path.join(self.save_path,"me_mi_upscaling_comp.pdf"),dpi=300)
         
     def compare_upscaled_automatically_generated_rdirs_to_HD_manually_corrected_rdirs(self):
         ref_filename=os.path.join(self.flow_maps_data_directory,
@@ -415,7 +418,7 @@ class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
                                                             grid_type='HD')
         plt.tight_layout()
         if self.save:
-            plt.savefig(path.join(self.save_path,"global_man_corr_vs_auto_gen_upscaled_global.png"))
+            plt.savefig(path.join(self.save_path,"global_man_corr_vs_auto_gen_upscaled_global.pdf"),dpi=300)
     
     def compare_present_day_and_lgm_river_directions(self):
         ref_filename=os.path.join(self.flow_maps_data_directory,
@@ -441,12 +444,12 @@ class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
                                               rotate_ref=True,
                                               lsmask_has_same_orientation_as_ref=False,
                                               invert_ls_mask=True,
-                                              first_datasource_name="Present Day",
+                                              first_datasource_name="Present day",
                                               second_datasource_name="LGM",
                                               add_title=False)
         plt.tight_layout()
         if self.save:
-            plt.savefig(path.join(self.save_path,"lgm_vs_present_global_comp.png"))
+            plt.savefig(path.join(self.save_path,"lgm_vs_present_global_comp.pdf"),dpi=300)
             
     def compare_present_day_and_lgm_river_directions_with_catchments(self):
         present_day_data_datetime = "20170612_202721" 
@@ -504,7 +507,7 @@ class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
                                                             rotate_ref=True,
                                                             lsmask_has_same_orientation_as_ref=False,
                                                             invert_ls_mask=True,
-                                                            first_datasource_name="Present Day",
+                                                            first_datasource_name="Present day",
                                                             second_datasource_name="LGM",
                                                             matching_parameter_set='extensive',
                                                             rivers_to_plot=[(216,433),(117,424),(112,380),(146,327),
@@ -544,7 +547,7 @@ class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
                                                             grid_type='HD') 
         plt.tight_layout()
         if self.save:
-            plt.savefig(path.join(self.save_path,"lgm_vs_present_global_comp.png"))
+            plt.savefig(path.join(self.save_path,"lgm_vs_present_global_comp.pdf"),dpi=300)
         
     def discharge_plot(self): 
         ax = plt.subplots(1, 1, figsize=(12, 9))[1]
@@ -634,25 +637,142 @@ class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
             atlantic_wfl_diff = np.asarray(fields[0])
             fields = dataset.get_variables_by_attributes(name="indopacific_wfl")
             indopacific_wfl_diff = np.asarray(fields[0])
-        x = np.linspace(-90,90,num=180)
-        atlantic_wfl_temporalmean_diff = np.mean(atlantic_wfl_diff,axis=0)[0,:,0]
-        indopacific_wfl_temporalmean_diff = np.mean(indopacific_wfl_diff,axis=0)[0,:,0]
-        atlantic_wfl_temporalmean_ext = np.mean(atlantic_wfl_ext,axis=0)[0,:,0]
-        indopacific_wfl_temporalmean_ext = np.mean(indopacific_wfl_ext,axis=0)[0,:,0]
-        atlantic_wfl_temporalmean_ice6g = np.mean(atlantic_wfl_ice6g,axis=0)[0,:,0]
-        indopacific_wfl_temporalmean_ice6g = np.mean(indopacific_wfl_ice6g,axis=0)[0,:,0]
-        plt.figure(figsize=(12,18))
+        x = np.linspace(-89.5,89.5,num=180)
+        atlantic_wfl_temporalmean_diff = -np.mean(atlantic_wfl_diff,axis=0)[0,:,0]
+        indopacific_wfl_temporalmean_diff = -np.mean(indopacific_wfl_diff,axis=0)[0,:,0]
+        atlantic_wfl_temporalmean_ext = -np.mean(atlantic_wfl_ext,axis=0)[0,:,0]
+        indopacific_wfl_temporalmean_ext = -np.mean(indopacific_wfl_ext,axis=0)[0,:,0]
+        atlantic_wfl_temporalmean_ice6g = -np.mean(atlantic_wfl_ice6g,axis=0)[0,:,0]
+        indopacific_wfl_temporalmean_ice6g = -np.mean(indopacific_wfl_ice6g,axis=0)[0,:,0]
+        #Using small figsize to increase line thickness and font size
+        scale_factor = 0.70
+        plt.figure(figsize=(12*scale_factor,18*scale_factor))
         gs = gridspec.GridSpec(3,1)
         ax1 = plt.subplot(gs[0])
         ax1.plot(atlantic_wfl_temporalmean_ext,x,
-                 label='Extended present day\nriver directions',color='#af8dc3')
+                 label='Extended present day\nriver directions',color='#af8dc3',
+                 linewidth=1.5)
         ax1.plot(atlantic_wfl_temporalmean_ice6g,x,
-                 label='ICE6G river directions',color='#7fbf7b')
+                 label='ICE6G river directions',color='#7fbf7b',linewidth=1.5)
         ax1.set_ylabel("Latitude",size=15)
-        ax1.set_xlabel("Implied freshwater transport ($m^{3}s^{-1}$)",
+        ax1.set_xlabel("Implied northward freshwater transport ($m^{3}s^{-1}$)",
                        size=15)
         ax1.set_ylim(-90,90)
-        ax1.set_xlim(-700000,600000)
+        ax1.set_xlim(-700000,700000)
+        ax1.set_yticks([-90,-60,-30,0,30,60,90]) 
+        ax1.yaxis.set_major_formatter(ticker.\
+                                      FuncFormatter(pts.LatAxisFormatter(yoffset=181,
+                                                                         scale_factor=-0.5,
+                                                                         precision=0)))
+        ax1.legend(numpoints=1,loc=4,prop={'size': 15})
+        ax1.set_title("Atlantic",size=15)
+        ax1.annotate(xy=(0, -34),xycoords="axes points",s="(a)",fontsize=20)
+        ax2 = plt.subplot(gs[1])
+        ax2.plot(indopacific_wfl_temporalmean_ext,x,
+                 label='Extended present day\nriver directions',color='#af8dc3',
+                 linewidth=1.5)
+        ax2.plot(indopacific_wfl_temporalmean_ice6g,x,
+                 label='ICE6G river directions',color='#7fbf7b',linewidth=1.5)
+        ax2.set_ylabel("Latitude",size=15)
+        ax2.set_xlabel("Implied northward freshwater transport ($m^{3}s^{-1}$)",
+                       size=15)
+        ax2.set_ylim(-90,90)
+        ax2.set_xlim(-700000,700000)
+        ax2.set_yticks([-90,-60,-30,0,30,60,90])
+        ax2.yaxis.set_major_formatter(ticker.\
+                                      FuncFormatter(pts.LatAxisFormatter(yoffset=181,
+                                                                         scale_factor=-0.5,
+                                                                         precision=0)))
+        ax2.set_title("Indo-Pacific",size=15)
+        ax2.legend(numpoints=1,loc=2,prop={'size': 15})
+        ax2.annotate(xy=(0, -34),xycoords="axes points",s="(b)",fontsize=20)
+        ax3 = plt.subplot(gs[2])
+        ax3.plot(atlantic_wfl_temporalmean_diff,x,
+                 label='Atlantic',color='#ef8a62',linewidth=1.5)
+        ax3.plot(indopacific_wfl_temporalmean_diff,x,
+                 label='Indo-Pacific',color='#67a9cf',linewidth=1.5)
+        ax3.set_ylabel("Latitude",size=15)
+        ax3.set_xlabel(r'Change in implied northward freshwater transport ($m^{3}s^{-1}$)',
+                       size=15)
+        ax3.set_ylim(-90,90)
+        ax3.set_xlim(-50000,70000)
+        ax3.set_yticks([-90,-60,-30,0,30,60,90])
+        ax3.yaxis.set_major_formatter(ticker.\
+                                      FuncFormatter(pts.LatAxisFormatter(yoffset=181,
+                                                                         scale_factor=-0.5,
+                                                                         precision=0)))
+        ax3.legend(loc=4,numpoints=1,prop={'size': 15})
+        ax3.set_title('$($Value using ICE6G river directions$)-$\n$($Value using extended present day river directions$)$',
+                      size=15)
+        ax3.annotate(xy=(0, -34),xycoords="axes points",s="(c)",fontsize=20)
+        plt.tight_layout()
+        if self.save:
+            plt.savefig(path.join(self.save_path,"implied_freshwater_latitudinal_sums.pdf"),dpi=300)
+            
+    def ocean_fresh_water_input_plots_extended_present_day_vs_ice6g_rdirs(self): 
+        extended_present_day_rdirs_data_filename=os.path.join(self.river_discharge_output_data_path,
+                                                              "rid0003_mpiom_data_moc_mm_7500-7999_mean.nc")
+        ice6g_rdirs_data_filename=os.path.join(self.river_discharge_output_data_path,
+                                               "rid0004_mpiom_data_moc_mm_7500-7999_mean.nc")
+        difference_on_ocean_grid_filename=os.path.join(self.river_discharge_output_data_path,
+                                                       "rid0004meanminus0003mean_mpiom_data"
+                                                       "_moc_mm_7500-7999.nc")
+        with Dataset(extended_present_day_rdirs_data_filename,
+                     mode='r',format='NETCDF4') as dataset:
+            fields = dataset.get_variables_by_attributes(name="atlantic_wfl")
+            atlantic_wfl_ext = np.asarray(fields[0])
+            fields = dataset.get_variables_by_attributes(name="indopacific_wfl")
+            indopacific_wfl_ext = np.asarray(fields[0]) 
+        with Dataset(ice6g_rdirs_data_filename,
+                     mode='r',format='NETCDF4') as dataset:
+            fields = dataset.get_variables_by_attributes(name="atlantic_wfl")
+            atlantic_wfl_ice6g = np.asarray(fields[0])
+            fields = dataset.get_variables_by_attributes(name="indopacific_wfl")
+            indopacific_wfl_ice6g = np.asarray(fields[0]) 
+        with Dataset(difference_on_ocean_grid_filename,mode='r',format='NETCDF4') as dataset:
+            fields = dataset.get_variables_by_attributes(name="atlantic_wfl")
+            atlantic_wfl_diff = np.asarray(fields[0])
+            fields = dataset.get_variables_by_attributes(name="indopacific_wfl")
+            indopacific_wfl_diff = np.asarray(fields[0])
+        x = np.linspace(-89.5,89.5,num=180)
+        atlantic_wfl_temporalmean_diff = -np.mean(atlantic_wfl_diff,axis=0)[0,:,0]
+        #Note that the version of numpy we are using does not support suppling an array as
+        #a varargs argument to gradient - doing so will give erroneous results
+        atlantic_fwf_temporalmean_diff = np.gradient(atlantic_wfl_temporalmean_diff,-1)
+        indopacific_wfl_temporalmean_diff = -np.mean(indopacific_wfl_diff,axis=0)[0,:,0]
+        #Note that the version of numpy we are using does not support suppling an array as
+        #a varargs argument to gradient - doing so will give erroneous results
+        indopacific_fwf_temporalmean_diff = np.gradient(indopacific_wfl_temporalmean_diff,-1)
+        atlantic_wfl_temporalmean_ext = -np.mean(atlantic_wfl_ext,axis=0)[0,:,0]
+        #Note that the version of numpy we are using does not support suppling an array as
+        #a varargs argument to gradient - doing so will give erroneous results
+        atlantic_fwf_temporalmean_ext = np.gradient(atlantic_wfl_temporalmean_ext,-1)
+        indopacific_wfl_temporalmean_ext = -np.mean(indopacific_wfl_ext,axis=0)[0,:,0]
+        #Note that the version of numpy we are using does not support suppling an array as
+        #a varargs argument to gradient - doing so will give erroneous results
+        indopacific_fwf_temporalmean_ext = np.gradient(indopacific_wfl_temporalmean_ext,-1)
+        atlantic_wfl_temporalmean_ice6g = -np.mean(atlantic_wfl_ice6g,axis=0)[0,:,0]
+        #Note that the version of numpy we are using does not support suppling an array as
+        #a varargs argument to gradient - doing so will give erroneous results
+        atlantic_fwf_temporalmean_ice6g = np.gradient(atlantic_wfl_temporalmean_ice6g,-1)
+        indopacific_wfl_temporalmean_ice6g = -np.mean(indopacific_wfl_ice6g,axis=0)[0,:,0]
+        #Note that the version of numpy we are using does not support suppling an array as
+        #a varargs argument to gradient - doing so will give erroneous results
+        indopacific_fwf_temporalmean_ice6g = np.gradient(indopacific_wfl_temporalmean_ice6g,-1)
+        #Using small figsize to increase line thickness and font size
+        scale_factor = 0.70
+        plt.figure(figsize=(12*scale_factor,18*scale_factor))
+        gs = gridspec.GridSpec(3,1)
+        ax1 = plt.subplot(gs[0])
+        ax1.plot(atlantic_fwf_temporalmean_ext,x,
+                 label='Extended present day\nriver directions',color='#af8dc3',linewidth=1.5)
+        ax1.plot(atlantic_fwf_temporalmean_ice6g,x,
+                 label='ICE6G river directions',color='#7fbf7b',linewidth=1.5)
+        ax1.set_ylabel("Latitude",size=15)
+        ax1.set_xlabel("Freshwater flux ($m^{3}s^{-1}\mathrm{deg}^{-1}$)",
+                       size=15)
+        ax1.set_ylim(-90,90)
+        ax1.set_xlim(-90000,60000)
         ax1.set_yticks([-90,-60,-30,0,30,60,90]) 
         ax1.yaxis.set_major_formatter(ticker.\
                                       FuncFormatter(pts.LatAxisFormatter(yoffset=181,
@@ -662,45 +782,45 @@ class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
         ax1.set_title("Atlantic",size=15)
         ax1.annotate(xy=(0, -34),xycoords="axes points",s="(a)",fontsize=20)
         ax2 = plt.subplot(gs[1])
-        ax2.plot(indopacific_wfl_temporalmean_ext,x,
-                 label='Extended present day\nriver directions',color='#af8dc3')
-        ax2.plot(indopacific_wfl_temporalmean_ice6g,x,
-                 label='ICE6G river directions',color='#7fbf7b')
+        ax2.plot(indopacific_fwf_temporalmean_ext,x,
+                 label='Extended\npresent\nday river\ndirections',color='#af8dc3',linewidth=1.5)
+        ax2.plot(indopacific_fwf_temporalmean_ice6g,x,
+                 label='ICE6G river\ndirections',color='#7fbf7b',linewidth=1.5)
         ax2.set_ylabel("Latitude",size=15)
-        ax2.set_xlabel("Implied freshwater transport ($m^{3}s^{-1}$)",
+        ax2.set_xlabel("Freshwater flux ($m^{3}s^{-1}\mathrm{deg}^{-1}$)",
                        size=15)
         ax2.set_ylim(-90,90)
-        ax2.set_xlim(-700000,600000)
+        ax2.set_xlim(-90000,60000)
         ax2.set_yticks([-90,-60,-30,0,30,60,90])
         ax2.yaxis.set_major_formatter(ticker.\
                                       FuncFormatter(pts.LatAxisFormatter(yoffset=181,
                                                                          scale_factor=-0.5,
                                                                          precision=0)))
         ax2.set_title("Indo-Pacific",size=15)
-        ax2.legend(numpoints=1,loc=1,prop={'size': 15})
+        ax2.legend(numpoints=1,loc=2,prop={'size': 12})
         ax2.annotate(xy=(0, -34),xycoords="axes points",s="(b)",fontsize=20)
         ax3 = plt.subplot(gs[2])
-        ax3.plot(atlantic_wfl_temporalmean_diff,x,
-                 label='Atlantic',color='#ef8a62')
-        ax3.plot(indopacific_wfl_temporalmean_diff,x,
-                 label='Indo-Pacific',color='#67a9cf')
+        ax3.plot(atlantic_fwf_temporalmean_diff,x,
+                 label='Atlantic',color='#ef8a62',linewidth=1.5)
+        ax3.plot(indopacific_fwf_temporalmean_diff,x,
+                 label='Indo-Pacific',color='#67a9cf',linewidth=1.5)
         ax3.set_ylabel("Latitude",size=15)
-        ax3.set_xlabel(r'Change in implied freshwater transport ($m^{3}s^{-1}$)',
+        ax3.set_xlabel(r'Change in freshwater flux ($m^{3}s^{-1}\mathrm{deg}^{-1}$)',
                        size=15)
         ax3.set_ylim(-90,90)
-        ax3.set_xlim(-70000,50000)
+        ax3.set_xlim(-16000,24000)
         ax3.set_yticks([-90,-60,-30,0,30,60,90])
         ax3.yaxis.set_major_formatter(ticker.\
                                       FuncFormatter(pts.LatAxisFormatter(yoffset=181,
                                                                          scale_factor=-0.5,
                                                                          precision=0)))
         ax3.legend(loc=3,numpoints=1,prop={'size': 15})
-        ax3.set_title(r'$($Value using ICE6G river directions$)-($Value using extended present day river directions$)$',
+        ax3.set_title('$($Value using ICE6G river directions$)-$\n$($Value using extended present day river directions$)$',
                       size=15)
         ax3.annotate(xy=(0, -34),xycoords="axes points",s="(c)",fontsize=20)
         plt.tight_layout()
         if self.save:
-            plt.savefig(path.join(self.save_path,"implied_freshwater_latitudinal_sums.png"))
+            plt.savefig(path.join(self.save_path,"freshwater_flux_latitudinal_sums.pdf"),dpi=300)
  
 def main():
     plots_for_GMD_paper =  PlotsForGMDPaper(True)
@@ -716,6 +836,7 @@ def main():
         #Only for supplementary material
         #plots_for_GMD_paper.discharge_plot()
     plots_for_GMD_paper.ocean_pem_plots_extended_present_day_vs_ice6g_rdirs()
+    plots_for_GMD_paper.ocean_fresh_water_input_plots_extended_present_day_vs_ice6g_rdirs()
     plt.show()
 
 if __name__ == '__main__':
