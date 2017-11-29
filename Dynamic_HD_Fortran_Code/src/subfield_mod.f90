@@ -4,14 +4,27 @@ implicit none
 private
 public :: latlon_subfield_constructor
 
+!> A class to contain a subfield. Unlike a field section a subfield only has a data array
+!! that covers grid points within the selected section of field. Coordinates should be
+!! specified on the whole grid however and are converted position within subfields data
+!! array by adding specified offsets.
 type, public, abstract :: subfield
 contains
+    !> Class destructor; deallocates the array holding the classes data.
     procedure(destructor), deferred :: destructor
+    !> Wrapper to a set an integer value at given set of coordinates
     procedure :: set_integer_value
+    !> Wrapper to a set a real value at given set of coordinates
     procedure :: set_real_value
+    !> Wrapper to a set a logical value at given set of coordinates
     procedure :: set_logical_value
+    !> Generic type bound procedure to set a given value at a given coordinate
+    !! this then calls one of the type specific wrappers for setting values
     generic :: set_value => set_integer_value, set_real_value, set_logical_value
+    !> Given a pointer to an unlimited polymorphic variable set it at the given
+    !! coordinates
     procedure(set_generic_value), deferred :: set_generic_value
+    !> Get an unlimited polymorphic pointer to a value at the given coordinates
     procedure(get_value), deferred :: get_value
 end type subfield
 
@@ -41,20 +54,42 @@ abstract interface
     end subroutine
 end interface
 
+!> A concrete subclass of subfield for a latitude longitude grid
 type, extends(subfield), public :: latlon_subfield
     private
+    !> A 2D array to hold the latitude longitude subfield data
     class (*), dimension(:,:), pointer :: data => null()
+    !> Latitude offset to remove from input coordinates on the full grid to
+    !! get coordinates within the grid of the subfield
     integer :: lat_offset
+    !> Longitude offset to remove from input coordinates on the full grid to
+    !! get coordinates within the grid of the subfield
     integer :: lon_offset
 contains
+    !> Initialize a latitude longitude subfield; takes a pointer to an array of
+    !! data that fits the subfield and a section coordinates object that specifies
+    !! the position of the subfield within the main field
     procedure, private :: init_latlon_subfield
+    !> Get value in the subfield from a given set of lat-lon coordinates on the
+    !! main grid (which are then coverted to subfield coordinates by the using
+    !! the lat and lon offsets)
     procedure :: get_value => latlon_get_value
+    !> Given a pointer to an unlimited polymorphic variable set it at the given
+    !! latitude logitude coordinates on the main grid (converting to the
+    !! coordinates of the subfield using the latitude and longitude offsets)
     procedure :: set_generic_value => latlon_set_generic_value
     !In leiu of a final routine while this is not support for
     !all fortran compilers
     !final :: destructor
+    !> Class destructor; deallocates the data array if it exists
     procedure :: destructor => latlon_subfield_destructor
+    !> Set an element of the data array using the internal latitude and
+    !! longitude coordinates (as individual numbers) of the subfields grid.
+    !! The third argument is a value; this must be of the same type as this
+    !! classes data member variable
     procedure, private :: set_data_array_element => latlon_set_data_array_element
+    !> Returns a pointer to a copy of the array of data (this copy is created by
+    !! this function using sourced allocation)
     procedure :: latlon_get_data
 end type latlon_subfield
 

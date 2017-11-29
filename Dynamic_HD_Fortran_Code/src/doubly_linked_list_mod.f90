@@ -8,36 +8,76 @@ use coords_mod
 implicit none
 private
 
+!> Class that implements a doubly linked list (a list that can be iterated both backwards
+!! and forwards)
 type, public :: doubly_linked_list
     private
+    !> Pointer to the first link in the list
     type(doubly_linked_list_link), pointer :: first_element => null()
+    !> Pointer to the last link in the list
     type(doubly_linked_list_link), pointer :: last_element => null()
+    !> Pointer to the link which the iterator is currently positioned at
     type(doubly_linked_list_link), pointer :: iterator_position => null()
+    !> Current length of this list
     integer :: length
     contains
+        !> Class destructor. If the list still has links this iterates through
+        !! them and removes and deletes them
         procedure :: destructor
+        !> Getter for length
         procedure :: get_length
+        !> Add a value of a generic type to the back of the list
         procedure :: add_generic_value_to_back
+        !> Add a value of a generic type to the front of the list
         procedure :: add_generic_value_to_front
+        !> Generic type bound procedure for adding values to the back of the list;
+        !! this then calls one of the type specific wrappers for adding a value to
+        !! the back
         generic :: add_value_to_back => add_integer_to_back, add_real_to_back, &
             add_logical_to_back, add_coords_to_back
+        !> Generic type bound procedure for adding value to the front of the list;
+        !! this then calls one of the type specific wrappers for adding a value to
+        !! the front
         generic :: add_value_to_front => add_integer_to_front, add_real_to_front, &
             add_logical_to_front, add_coords_to_front
+        !> Wrapper to add an integer to the back of the list
         procedure :: add_integer_to_back
+        !> Wrapper to add a real to the back of the list
         procedure :: add_real_to_back
+        !> Wrapper to add a logical to the back of the list
         procedure :: add_logical_to_back
+        !> Wrapper to add a coords object to the back of the list
         procedure :: add_coords_to_back
+        !> Wrapper to add an integer to the front of the list
         procedure :: add_integer_to_front
+        !> Wrapper to add a real to the front of the list
         procedure :: add_real_to_front
+        !> Wrapper to add a logical to the front of the list
         procedure :: add_logical_to_front
+        !> Wrapper to add a coords object to the front of the list
         procedure :: add_coords_to_front
+        !> Move the iterator one position forward in the list; this is a
+        !! function and returns a boolean flag to indicate if the end of
+        !! the list has been reached (TRUE) or not (FALSE)
         procedure :: iterate_forward
+        !> Move the iterator one position backward in the list; this is a
+        !! function and returns a boolean flag to indicate if the start of
+        !! the list has been reached (TRUE) or not (FALSE)
         procedure :: iterate_backward
+        !> Fuction to get (a pointer to) the value located at the current
+        !! position of the iterator
         procedure :: get_value_at_iterator_position
+        !> Remove the element/link (and its value) at the current iterator
+        !! position and join the gap created in the list (unless this is
+        !! the end and/or start of the list)
         procedure :: remove_element_at_iterator_position
+        !> Reset the iterator to a null position
         procedure :: reset_iterator
+        !> Getter for pointer to last element
         procedure :: get_last_element_pointer
+        !> Getter for pointer to first element
         procedure :: get_first_element_pointer
+        !> Getter for pointer to position of the iterator
         procedure :: get_iterator_position
 end type doubly_linked_list
 

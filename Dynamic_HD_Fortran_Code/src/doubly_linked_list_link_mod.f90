@@ -7,20 +7,31 @@ private
 !public :: doubly_linked_list_link, doubly_linked_list_link_constructor
 public :: doubly_linked_list_link
 
+!> Class that implements links for a double linked list (a list that can be
+!! iterated through in either direction) for any variable type
 type :: doubly_linked_list_link
     private
+    !> A pointer to the value occupying this place/link in the chain
     class (*), pointer :: value => null()
+    !> A pointer to the previous link object in the chain
     type(doubly_linked_list_link), pointer :: previous_element => null()
+    !> A pointer to the next link object in the chain
     type(doubly_linked_list_link), pointer :: next_element => null()
     contains
+        !> Returns (a pointer to) the value of this link
         procedure :: get_value
+        !> Returns a pointer to the next link
         procedure :: get_next_element
+        !> Returns a pointer to the previous link
         procedure :: get_previous_element
+        !> Set the pointer to the next link
         procedure :: set_next_element
+        !> Set the pointer to the previous link
         procedure :: set_previous_element
         ! In lieu of a final routine as this feature is not currently (August 2016)
         ! supported by all fortran compilers
         ! final :: destructor
+        !> Class destructor. Deallocates the value occupying this link
         procedure :: destructor
 end type doubly_linked_list_link
 

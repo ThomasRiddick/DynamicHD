@@ -4,6 +4,9 @@ implicit none
 
     contains
 
+    !> Main routine for latitude longitude loop breaking. Inputs are pointers to the course and fine
+    !! river directions and cumulative flows and to the course catchments. Outputs the new loop
+    !! free course river directions via the same course river direction argument as used for input.
     subroutine break_loops_latlon(course_rdirs,course_cumulative_flow,course_catchments, &
                                   fine_rdirs,fine_cumulative_flow,loop_nums_list)
         integer, dimension(:,:), pointer, intent(inout) :: course_rdirs

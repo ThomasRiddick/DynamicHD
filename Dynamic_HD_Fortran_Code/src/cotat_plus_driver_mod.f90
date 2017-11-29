@@ -4,6 +4,9 @@ implicit none
 
 contains
 
+    !> Fortran2Python (F2Py) wrapper for the latitude longitude implementation of the COTAT+ algorithm. Input
+    !! is the fine cumulative flow and fine river directions along with the file path to the COTAT+ parameters
+    !! namelist file. Output is the course river directions. Also takes the bounds of those arrays as arguments.
     subroutine cotat_plus_latlon_f2py_wrapper(input_fine_river_directions,input_fine_total_cumulative_flow,&
                                               output_course_river_directions,cotat_parameters_filepath,&
                                               nlat_fine,nlon_fine,nlat_course,nlon_course)

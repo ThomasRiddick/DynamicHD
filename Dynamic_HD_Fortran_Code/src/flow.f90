@@ -6,6 +6,11 @@ implicit none
 
 contains
 
+    !> Main routine for the latitude longitude version of the (re-worked) FLOW algorithm.
+    !! takes the fine river direction and total cumulative flow as input alongside the
+    !! filepath to the COTAT+ parameter namelist file (this serves as the parameters
+    !! file for the FLOW algorithm as well as the COTAT+ algorithm). Returns the index
+    !! based course river direction as output.
     subroutine flow_latlon(input_fine_river_directions,input_fine_total_cumulative_flow,&
                            output_course_river_directions_lat_index,&
                            output_course_river_directions_lon_index,&

@@ -6,6 +6,10 @@ implicit none
 
 contains
 
+    !> Main routine for the latitude-longitude version of the COTAT plus routine, takes as input the
+    !! fine river direction and total cumulative flow and the filepath to the COTAT+ parameters
+    !! namelist file. Returns as output via an argument with intent OUT the generated course river
+    !! directions.
     subroutine cotat_plus_latlon(input_fine_river_directions,input_fine_total_cumulative_flow,&
                                  output_course_river_directions,cotat_parameters_filepath)
         integer, dimension(:,:) :: input_fine_river_directions

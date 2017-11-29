@@ -6,29 +6,67 @@ module loop_breaker_mod
     private
     public :: latlon_dir_based_rdirs_loop_breaker_constructor
 
+    !> An abstract class containing a loop breaker (i.e. tool to remove upwanted
+    !! loops in upscaled river directions) for a generic grid
     type, abstract, public :: loop_breaker
         private
+        !> The course catchments as a field section covering the entire field
         class(field_section), pointer :: course_catchment_field => null()
+        !> The course total cumulative flow as a field section covering the entire field
         class(field_section), pointer :: course_cumulative_flow_field => null()
+        !> The course river directions as a field section covering the entire field
         class(field_section), pointer :: course_rdirs_field => null()
+        !> The fine river directions as a field section covering the entire field
         class(field_section), pointer :: fine_rdirs_field => null()
+        !> The fine total cumulative flow as a field section covering the entire field
         class(field_section), pointer :: fine_cumulative_flow_field => null()
+        !> The number of fine cells for every course cell
         integer :: scale_factor
         contains
             private
             ! In lieu of a final routine as this feature is not currently (August 2016)
             ! supported by all fortran compilers
             ! final :: destructor
+            !> Destructor; delete any arrays necessary
             procedure, public :: destructor
+            !> Break each loop in the input list of loops
             procedure, public :: break_loops
+            !> Break the loop with the loop number specified as an argument
             procedure :: break_loop
+            !> Find the value of the highest cumulative flow in a cell at a given
+            !! set of course coordinates and return it as an integer
             procedure :: find_highest_cumulative_flow_of_cell
+            !> Find which cells are in a given loop; input is the loop number of
+            !! desired loop; output a list of the course coordinates of the cells
+            !! in the loop
             procedure(find_cells_in_loop), deferred :: find_cells_in_loop
+            !> Locate the fine cell with the highest cumulative flow within the cell and
+            !! return its coordinates. Input is a set of course coordinates for the
+            !! cell; output is a set of fine coordinates for the fine cell with the highest
+            !! cumulative flow. Also can optionally return a flag indicating if this
+            !! is next to a vertical edge (hence the flow likely crosses that edge) and a
+            !! direction indicator that is either set to the no data value (if this is not
+            !! a corner pixel/fine cell) or a direction indicating which diagonal flow
+            !! direction would be possible from this cell.
             procedure(locate_highest_cumulative_flow_of_cell), deferred :: &
                 locate_highest_cumulative_flow_of_cell
+            !> Set the rdir of a course cell based on the rdir of the highest cumulative
+            !! flow fine cell. At non-corner cells simply the choose the correct direction
+            !! to cross the edge the cell is next to. For corner cells choose the cell that
+            !! the fine river direction of the cell with highest cumulative flow points
+            !! towards. Takes as input the fine coordinates of the highest cumulative flow
+            !! cell and return nothing directly (but changes the state of this).
             procedure(assign_rdir_of_highest_cumulative_flow_of_cell), deferred :: &
                 assign_rdir_of_highest_cumulative_flow_of_cell
+            !> Function that takes the fine coordinates of the cell with the highest
+            !! cumulative flow along with the fine section coordinates that describe
+            !! the area that maps to the course cell and return the permitted diagonal
+            !! river direction (the one pointing out diagonally from the corner between
+            !! the vertical and horizontal directions possible from the cell with
+            !! the highest cumulative flow) as a direction indicator
             procedure(generate_permitted_rdir), deferred :: generate_permitted_rdir
+            !> Return a suitable direction indicator to represent a no data flow
+            !! direction.
             procedure(get_no_data_rdir_value), deferred :: get_no_data_rdir_value
     end type loop_breaker
 
@@ -82,26 +120,64 @@ module loop_breaker_mod
 
     end interface
 
+    !> Abstract subclass of loop_breaker for a latitude longitude grid
     type, extends(loop_breaker), abstract, public :: latlon_loop_breaker
+            !> The number of course latitude points
             integer :: nlat_course
+            !> The number of course longitude points
             integer :: nlon_course
         contains
             private
+            !> Subroutine to initialise a latitude longitude loop breaker. Input
+            !! arguements are a set of course catchments, the course cumulative
+            !! flow field and the course river directions along with the fine river
+            !! directions and fine cumulative flow field
             procedure :: init_latlon_loop_breaker
+            !> Find which cells are in a given loop; input is the loop number of
+            !! desired loop; output a list of the course coordinates of the cells
+            !! in the loop
             procedure :: find_cells_in_loop => latlon_find_cells_in_loop
+            !> Locate the fine cell with the highest cumulative flow within the cell and
+            !! return its coordinates. Input is a set of course coordinates for the
+            !! cell; output is a set of fine coordinates for the fine cell with the highest
+            !! cumulative flow. Also can optionally return a flag indicating if this
+            !! is next to a vertical edge (hence the flow likely crosses that edge) and a
+            !! direction indicator that is either set to the no data value (if this is not
+            !! a corner pixel/fine cell) or a direction indicating which diagonal flow
+            !! direction would be possible from this cell.
             procedure :: locate_highest_cumulative_flow_of_cell => &
                 latlon_locate_highest_cumulative_flow_of_cell
+            !> Return the a pointer to the loop free course river directions produced; this
+            !! is to be run after the loop breaker has been run in order to retrieve the
+            !! results
             procedure, public :: latlon_get_loop_free_rdirs
     end type latlon_loop_breaker
 
+    !> Concrete subclass of a latitude longitude loop breaker for direction (1-9 keypad code)
+    !! based river directions
     type, extends(latlon_loop_breaker), public :: &
         latlon_dir_based_rdirs_loop_breaker
+        !> Code for a no data river direction
         integer :: no_data_rdir = -999
         contains
             private
+            !> Set the rdir of a course cell based on the rdir of the highest cumulative
+            !! flow fine cell. At non-corner cells simply the choose the correct direction
+            !! to cross the edge the cell is next to. For corner cells choose the cell that
+            !! the fine river direction of the cell with highest cumulative flow points
+            !! towards. Takes as input the fine coordinates of the highest cumulative flow
+            !! cell and return nothing directly (but changes the state of this).
             procedure :: assign_rdir_of_highest_cumulative_flow_of_cell => &
                 dir_based_rdirs_assign_rdir_of_highest_cumulative_flow_of_cell
+            !> Function that takes the fine coordinates of the cell with the highest
+            !! cumulative flow along with the fine section coordinates that describe
+            !! the area that maps to the course cell and return the permitted diagonal
+            !! river direction (the one pointing out diagonally from the corner between
+            !! the vertical and horizontal directions possible from the cell with
+            !! the highest cumulative flow) as a direction based direction indicator
             procedure :: generate_permitted_rdir => dir_based_rdirs_generate_permitted_rdir
+            !> Return a direction based direction indicator to represent a no data flow
+            !! direction.
             procedure :: get_no_data_rdir_value => dir_based_rdirs_get_no_data_rdir_value
     end type latlon_dir_based_rdirs_loop_breaker
 
@@ -293,6 +369,8 @@ contains
                             if (associated(highest_cumulative_flow_location)) deallocate(highest_cumulative_flow_location)
                             allocate(highest_cumulative_flow_location,source=latlon_coords(i,j))
                             if (present(vertical_boundary_outflow)) then
+                                ! If this is the further right or left column then we have a flow across
+                                ! the vertical boundary; at least potentially
                                 if ( j == fine_resolution_min_lon .or. j == fine_resolution_max_lon ) then
                                     vertical_boundary_outflow = .True.
                                 else
@@ -300,6 +378,8 @@ contains
                                 end if
                             end if
                             if (present(vertical_boundary_outflow) .and. present(permitted_diagonal_outflow_rdir)) then
+                                ! If this is both on the vertical and horizontal boundary it is a corner and
+                                ! thus a diagonal outflow in one particular direction is possible
                                 if ( (i == fine_resolution_min_lat .or. i == fine_resolution_max_lat) .and. &
                                     vertical_boundary_outflow) then
                                     if (associated(permitted_diagonal_outflow_rdir)) &

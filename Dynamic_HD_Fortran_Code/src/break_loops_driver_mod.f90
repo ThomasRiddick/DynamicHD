@@ -4,6 +4,11 @@ implicit none
 
     contains
 
+    !> Fortran2Python (f2Py) wrapper for the latitude longitude loop break algorithms main routine,
+    !! takes the necessary array bounds as arguments along with the input and output fields. The
+    !! input fields are the course river directions, course cumulative flow, course catchments,
+    !! fine river direction, fine cumulative flow and a list of loop numbers to remove (as a
+    !! 1D array).
     subroutine break_loops_latlon_f2py_wrapper(course_rdirs,course_cumulative_flow, &
         course_catchments,fine_rdirs,fine_cumulative_flow,loop_nums_list, &
         nlat_course,nlon_course,nlat_fine,nlon_fine,nloop_nums_list)

@@ -1,8 +1,12 @@
 module coords_mod
 implicit none
 
+!> An abstract class for holding coordinates on a generic grid
 type, abstract :: coords
 contains
+    !> A function to check if this coords object is the same coordinates
+    !! object passed into it; if this is the case return TRUE else return
+    !! FALSE
     procedure(are_equal_to), deferred :: are_equal_to
 end type coords
 
@@ -16,10 +20,16 @@ abstract interface
     end function are_equal_to
 end interface
 
+!> A concrete subclass of coords implementing latitude longitude coordinates
 type, extends(coords) :: latlon_coords
+    !> Latitude
     integer :: lat
+    !> Longitude
     integer :: lon
     contains
+        !> A function to check if this coords object is the same coordinates
+        !! object passed into it; if this is the case return TRUE else return
+        !! FALSE
         procedure :: are_equal_to => latlon_are_equal_to
 end type latlon_coords
 
@@ -27,13 +37,21 @@ interface latlon_coords
     procedure latlon_coords_constructor
 end interface latlon_coords
 
+!> An abstract class for holding the coordinates of a subsection of a generic
+!! grid
 type, abstract :: section_coords
 end type section_coords
 
+!> A concrete subclass of section coords for holding sections of a latitude
+!! logitude grid
 type, extends(section_coords) :: latlon_section_coords
+    !> The minimum latitude of the section
     integer :: section_min_lat
+    !> The minimum longitude of the section
     integer :: section_min_lon
+    !> The latitudinal width of the section
     integer :: section_width_lat
+    !> The longitudinal width of the section
     integer :: section_width_lon
 end type latlon_section_coords
 
@@ -41,9 +59,18 @@ interface latlon_section_coords
     procedure latlat_section_coords_constructor
 end interface latlon_section_coords
 
+!> An abstract class holding a generic indicator of cell that
+!! a given cell flows to; this could be implemented as a direction
+!! or as the coordinates/index of the next cell
 type, abstract :: direction_indicator
 contains
+    !> Check if this direction indicator is equal to a given integer (works
+    !! only if it can be compared to a single integer); if it is return TRUE
+    !! else return FALSE
     procedure :: is_equal_to_integer
+    !> Check if this direction indicator object is equal to  a direction
+    !! given as a polymorphic pointer to an object of the correct type;
+    !! if it is return TRUE else return FALSE
     procedure(is_equal_to), deferred :: is_equal_to
 end type direction_indicator
 
@@ -56,10 +83,20 @@ abstract interface
     end function is_equal_to
 end interface
 
+!> A concrete subclass of direction indicator which holds a number based
+!! direction indicator - for example for a latitude longitude grid this
+!! is often a number between 1 and 9 indicating direction according to
+!! the direction from the centre of a numeric keyboard (the D9 method)
+!! with 5 as a sink. However any other single number system is also
+!! possible
 type, extends(direction_indicator) :: dir_based_direction_indicator
     integer :: direction
     contains
+        !> Getter for the direction indicator integer value
         procedure :: get_direction => dir_based_direction_indicator_get_direction
+        !> Check if this direction indicator object is equal to a given value
+        !! where the value is supplied as a polymorphic pointer to an integer
+        !! if it is return TRUE else return FALSE
         procedure :: is_equal_to => dir_based_direction_indicator_is_equal_to
 end type dir_based_direction_indicator
 
