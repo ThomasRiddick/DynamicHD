@@ -1107,6 +1107,7 @@ class Utilities_Drivers(Dynamic_HD_Drivers):
                                field=landsea_mask,file_type=".nc")
         
     def upscale_ETOPO2v2_to_10minute_grid(self): 
+        """Upscale ETOPO2v2 data to a 10 minutes grid by averaging"""
         file_label = self._generate_file_label()
         etopo2v2_file=path.join(self.orography_path,"ETOPO2v2c_f4.nc")
         intermediary_file=self.generated_orography_filepath + "intermediary_" +file_label + ".nc"
@@ -1125,6 +1126,7 @@ class Utilities_Drivers(Dynamic_HD_Drivers):
                                         grid_type='LatLong10min')
         
     def create_10min_present_day_lsmask_from_model_gaussian_mask(self):
+        """Create a 10 minute present day land-sea mask from a gaussian mask from the model"""
         file_label = self._generate_file_label()
         input_filename = path.join(self.ls_masks_path,
                                    "lsmask_from_restart_rid0002_jsbach_70091231.nc") 
@@ -1139,6 +1141,7 @@ class Utilities_Drivers(Dynamic_HD_Drivers):
                                         grid_type='LatLong10min')
         
     def create_10min_present_day_lsmask_from_model_ocean_mask(self):
+        """Create a 10 minute present day land-sea mask from an ocean mask from the model"""
         file_label = self._generate_file_label()
         input_filename = path.join(self.ls_masks_path,
                                    "hdpara_lsmask_standardGR30s.nc") 

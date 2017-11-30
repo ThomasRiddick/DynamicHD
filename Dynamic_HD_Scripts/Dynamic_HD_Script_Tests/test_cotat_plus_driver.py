@@ -85,6 +85,7 @@ class Test(unittest.TestCase):
         
         Same data was used in FRUIT unit testing
         """
+
         input_fine_river_directions_test_field = field.makeField(self.input_fine_river_directions_test_data, 
                                                                  field_type='RiverDirections',
                                                                  grid_type='LatLong',nlat=15,nlong=15)

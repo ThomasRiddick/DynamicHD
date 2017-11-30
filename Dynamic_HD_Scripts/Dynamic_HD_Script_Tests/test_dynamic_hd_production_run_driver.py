@@ -55,6 +55,7 @@ class Test_Dynamic_HD_Production_Run_Drivers(unittest.TestCase):
             os.mkdir(self.temp_dir)
     
     def tearDown(self):
+        """Unit test tear down function"""
         files_to_remove = ["bas_k.dat","global.inp","over_k.dat","over_vel.dat","riv_k.dat",
                            "riv_vel.dat","soil_partab.txt","ddir.inp","hdpara.srv","over_n.dat",
                            "paragen.inp","riv_n.dat","slope.dat",os.path.join(self.temp_dir),"paragen"]
@@ -65,6 +66,7 @@ class Test_Dynamic_HD_Production_Run_Drivers(unittest.TestCase):
                 pass
 
     def testTrialUsingNewDataFromVirna2016Version(self):
+        """Run a trial using the 2016 version of the new data from Virna"""
         output_hdparas_filepath,output_hdstart_filepath =\
             self.driver.trial_run_using_data_from_new_data_from_virna_2016_version()
         hdpara_diff_out = self.cdo_instance.diff(input=[output_hdparas_filepath,
@@ -79,6 +81,7 @@ class Test_Dynamic_HD_Production_Run_Drivers(unittest.TestCase):
                         " hdpara file for 2016 data")
         
     def testTrialUsingNewDataFromVirna2017Version(self):
+        """Run a trial using the 2017 version of the new data from Virna"""
         output_hdparas_filepath,output_hdstart_filepath =\
             self.driver.trial_run_using_data_from_new_data_from_virna_2017_version()
         hdpara_diff_out = self.cdo_instance.diff(input=[output_hdparas_filepath,
@@ -93,6 +96,7 @@ class Test_Dynamic_HD_Production_Run_Drivers(unittest.TestCase):
                         " hdstart file for 2017 data")
         
     def testTrialUsingNewDataFromVirna2017Version2(self):
+        """Run a trial using the second 2017 version of the new data from Virna"""
         output_hdparas_filepath,output_hdstart_filepath =\
             self.driver.trial_run_using_data_from_new_data_from_virna_2017_version_2()
         hdpara_diff_out = self.cdo_instance.diff(input=[output_hdparas_filepath,
@@ -107,6 +111,7 @@ class Test_Dynamic_HD_Production_Run_Drivers(unittest.TestCase):
                         " hdstart file for 2017 data version 2")
         
     def testTrialUsingICE6GPresentData(self):
+        """Run a trial using ICE6G present day data"""
         output_hdparas_filepath,output_hdstart_filepath =\
             self.driver.trial_run_using_ice6g_present_day_data()
         hdpara_diff_out = self.cdo_instance.diff(input=[output_hdparas_filepath,
@@ -121,6 +126,7 @@ class Test_Dynamic_HD_Production_Run_Drivers(unittest.TestCase):
                         " hdstart file for ICE6G 0k")
             
     def testTrialUsingICE6GLGMData(self):
+        """Run a trial using ICE6G LGM day data"""
         output_hdparas_filepath,output_hdstart_filepath =\
             self.driver.trial_run_using_ice6g_lgm_day_data()
         hdpara_diff_out = self.cdo_instance.diff(input=[output_hdparas_filepath,
@@ -135,6 +141,7 @@ class Test_Dynamic_HD_Production_Run_Drivers(unittest.TestCase):
                         " hdstart file for ICE6G 21k")
         
     def testTrialUsingICE6GPresentDataWithSpecifiedFieldnames(self):
+        """Run a trial using ICE6G present day data with specified fieldnames"""
         output_hdparas_filepath,output_hdstart_filepath =\
             self.driver.trial_run_using_ice6g_present_day_data_with_specified_fieldnames()
         hdpara_diff_out = self.cdo_instance.diff(input=[output_hdparas_filepath,
@@ -149,6 +156,7 @@ class Test_Dynamic_HD_Production_Run_Drivers(unittest.TestCase):
                         " hdstart file for ICE6G 0k")
             
     def testTrialUsingICE6GLGMDataWithSpecifiedFieldnames(self):
+        """Run a trial using ICE6G LGM data with specified fieldnames"""
         output_hdparas_filepath,output_hdstart_filepath =\
             self.driver.trial_run_using_ice6g_lgm_day_data_with_specified_fieldnames()
         hdpara_diff_out = self.cdo_instance.diff(input=[output_hdparas_filepath,

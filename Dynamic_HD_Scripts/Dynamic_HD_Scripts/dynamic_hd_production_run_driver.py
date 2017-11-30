@@ -46,6 +46,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                   "dynamic_hd_production_driver.cfg")
             
     def trial_run_using_data_from_new_data_from_virna_2016_version(self):
+        """Run a full trial using the 2016 version of the new data from Virna"""
         super(Dynamic_HD_Production_Run_Drivers,self).__init__()
         file_label = self._generate_file_label()
         self.original_orography_filename=path.join(self.orography_path,"10min-topo-present-from-virna.nc")
@@ -62,6 +63,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         return self.output_hdparas_filepath,self.output_hdstart_filepath
         
     def trial_run_using_data_from_new_data_from_virna_2017_version(self):
+        """Run a full trial using the 2017 version of the new data from Virna"""
         super(Dynamic_HD_Production_Run_Drivers,self).__init__()
         file_label = self._generate_file_label()
         self.original_orography_filename=path.join(self.orography_path,"OR-topography-present_data_from_virna_2017.nc")
@@ -78,6 +80,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         return self.output_hdparas_filepath,self.output_hdstart_filepath
     
     def trial_run_using_data_from_new_data_from_virna_2017_version_2(self):
+        """Run a full trial using the second 2017 version of the new data from Virna"""
         super(Dynamic_HD_Production_Run_Drivers,self).__init__()
         file_label = self._generate_file_label()
         self.original_orography_filename=path.join(self.orography_path,
@@ -96,6 +99,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         return self.output_hdparas_filepath,self.output_hdstart_filepath
         
     def trial_run_using_ice6g_present_day_data(self):
+        """Run a full trial using present day ICE6G data"""
         super(Dynamic_HD_Production_Run_Drivers,self).__init__()
         file_label = self._generate_file_label()
         self.original_orography_filename=path.join(self.orography_path,
@@ -118,6 +122,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         return self.output_hdparas_filepath,self.output_hdstart_filepath
     
     def trial_run_using_ice6g_lgm_day_data(self):
+        """Run a full trial using LGM ICE6G data"""
         super(Dynamic_HD_Production_Run_Drivers,self).__init__()
         file_label = self._generate_file_label()
         self.original_orography_filename=path.join(self.orography_path,
@@ -140,6 +145,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         return self.output_hdparas_filepath,self.output_hdstart_filepath
     
     def trial_run_using_ice6g_present_day_data_with_specified_fieldnames(self):
+        """Run a full trial using present day ICE6G data and specified fieldnames"""
         super(Dynamic_HD_Production_Run_Drivers,self).__init__()
         file_label = self._generate_file_label()
         self.original_orography_filename=path.join(self.orography_path,
@@ -163,6 +169,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         return self.output_hdparas_filepath,self.output_hdstart_filepath
     
     def trial_run_using_ice6g_lgm_day_data_with_specified_fieldnames(self):
+        """Run a full trial using LGM ICE6G data and specified fieldnames"""
         super(Dynamic_HD_Production_Run_Drivers,self).__init__()
         file_label = self._generate_file_label()
         self.original_orography_filename=path.join(self.orography_path,
@@ -595,6 +602,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                    file_type=".nc")
     
 def setup_and_run_dynamic_hd_para_gen_from_command_line_arguments(args):
+    """Setup and run a dynamic hd production run from the command line arguments passed in by main"""
     driver_object = Dynamic_HD_Production_Run_Drivers(**vars(args))
     driver_object.no_intermediaries_ten_minute_data_ALG4_no_true_sinks_plus_upscale_rdirs_driver()
     

@@ -11,6 +11,7 @@ from __builtin__ import False
 class Test(unittest.TestCase):
 
     def setUp(self):
+        """Unit test setup function"""
         orography_input_data_flat = np.asarray([
             100.0, 90.0,100.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,  100.0,100.0, 90.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,  100.0,100.0, 90.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0, 100.0,100.0, 90.0,100.0,100.0,  51.0,100.0, 65.0,100.0,100.0,
             100.0, 91.0,100.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,  100.0,100.0, 91.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,  100.0,100.0, 91.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0, 100.0,100.0, 91.0,100.0,100.0,  52.0,100.0, 64.0,100.0,100.0,
@@ -240,6 +241,7 @@ class Test(unittest.TestCase):
                                                                [100,-1.79769313e+308]])
 
     def testOrographyUpscalingWithFourbyFourCellGrid(self):
+        """Test orography upscaling with a 4 by 4 grid of cells"""
         add_slope_in = 0
         epsilon_in = 0.1
         tarasov_separation_threshold_for_returning_to_same_edge_in = 5
@@ -260,6 +262,7 @@ class Test(unittest.TestCase):
                                       "Test of orography upscaling code doesn't produce expected result")
         
     def testOrographyUpscalingWithTwobyTwoCellGridExtremeCases(self):
+        """Test orography upscaling on an extreme case with a 2 by 2 grid of cells"""
         add_slope_in = 0
         epsilon_in = 0.1
         tarasov_separation_threshold_for_returning_to_same_edge_in = 5
@@ -279,6 +282,7 @@ class Test(unittest.TestCase):
         np.testing.assert_allclose(orography_output,self.extreme_case_expected_result,0.0001) 
         
     def testOrographyUpscalingWithTwobyTwoCellGridExtremeCasesTwo(self):
+        """Test orography upscaling on a second extreme case with a 2 by 2 grid of cells"""
         add_slope_in = 0
         epsilon_in = 0.1
         tarasov_separation_threshold_for_returning_to_same_edge_in = 5

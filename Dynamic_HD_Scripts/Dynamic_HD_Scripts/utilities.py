@@ -20,6 +20,18 @@ from Dynamic_HD_Scripts.field import makeField
 def replace_corrected_orography_with_original_for_glaciated_grid_points(input_corrected_orography,
                                                                         input_original_orography,
                                                                         input_glacier_mask):
+    """Replace a corrected orography with the original orography at points that are glaciated
+    
+    Arguments:
+    input_corrected_orography: Field object; the corrected orography where correction are applied
+        to both glaciated and unglaciated points
+    input_original_orography: Field object; the original orography to use for glaciated points
+    input_glacier_mask: Field object; a binary glacial mask where glacier is 1/True and non-glacier
+        is 0/False
+    Returns: An orography using the corrected orography for non-glaciated points and the original
+        orography for glaciated points.
+    """
+
     input_corrected_orography.mask_field_with_external_mask(input_glacier_mask.get_data())
     input_original_orography.update_field_with_partially_masked_data(input_corrected_orography)
     return input_original_orography
@@ -29,6 +41,21 @@ def replace_corrected_orography_with_original_for_glaciated_grid_points_drivers(
                                                                                 input_glacier_mask_file,
                                                                                 out_orography_file,
                                                                                 grid_type='HD',**grid_kwargs):
+    """Drive replacing a corrected orography with the original orography at points that are glaciated
+    
+    Arguments:
+    input_corrected_orography_file: string; Full path to the file containing the corrected orography
+        where corrections are applied to both glaciated and unglaciated points
+    input_original_orography_file: string; Full path to the original uncorrected orography file
+    input_glacier_mask_file: string; Full path to the file containing the glacier mask with 1/True as
+        glacier and 0/False as non-glacier 
+    out_orography_file: string; full path to target file to write corrected orography with original
+        orography used for glacial points to 
+    grid_type: string; the code for this grid type 
+    grid_kwargs: dictionary; key word arguments specifying parameters of the grid
+    Returns: Nothing
+    """
+
     input_corrected_orography = dynamic_hd.load_field(input_corrected_orography_file,
                                                       file_type=dynamic_hd.\
                                                       get_file_extension(input_corrected_orography_file),
@@ -61,6 +88,22 @@ def merge_corrected_and_tarasov_upscaled_orography(input_corrected_orography_fil
                                                    output_merged_orography_file,
                                                    use_upscaled_orogrography_only_in_region=None,
                                                    grid_type='HD',**grid_kwargs):
+    """Merge a normal corrected orography with a tarasov upscaled orography
+    
+    Argument:
+    input_corrected_orography_file: string; Full path to the the normal corrected orography file
+    input_tarasov_upscaled_orography_file: string; Full path to the tarasov upscaled orography
+        file
+    output_merged_orography_file: string; Full path to the target merged output orography file 
+    use_upscaled_orogrography_only_in_region: string; Either None (in which case the upscaled
+        orography is used everywhere) or the name of a region (see below in fuction for region
+        names and definitions) in which to use the upscaled orography in combination with the 
+        corrected orography; outside of this the upscaled orography is not used and only the
+        corrected orography is used.
+    grid_type: string; the code for this grid type 
+    grid_kwargs: dictionary; key word arguments specifying parameters of the grid
+    """
+
     corrected_orography_field = dynamic_hd.load_field(input_corrected_orography_file,
                                                       file_type=dynamic_hd.get_file_extension(input_corrected_orography_file),
                                                       field_type='Orography',
@@ -166,6 +209,7 @@ def prepare_hdrestart_file(dataset_inout,rflow_res_num,ref_rflow_res_num,
     for prepare_hdrestart_field. Ignore lat and lon field which obviously remain 
     unchanged.
     """
+
     for var_name,var_obj in dataset_inout.variables.iteritems():
         if var_name == 'lat' or var_name == 'lon':
             continue
@@ -325,7 +369,9 @@ def invert_ls_mask(original_ls_mask_filename,
     timeslice(optional): timeslice of the input file load the field from 
     grid_type: string; the code for this grid type 
     grid_kwargs: dictionary; key word arguments specifying parameters of the grid
-    Returns: nothing"""
+    Returns: nothing
+    """
+
     ls_mask = dynamic_hd.load_field(original_ls_mask_filename, 
                                     file_type=\
                                     dynamic_hd.get_file_extension(original_ls_mask_filename),
@@ -354,6 +400,7 @@ def generate_orog_correction_field(original_orography_filename,
     grid_kwargs: dictionary; key word arguments specifying parameters of the grid
     Returns: nothing
     """
+
     original_orography_field = dynamic_hd.load_field(original_orography_filename, 
                                                      file_type=dynamic_hd.\
                                                      get_file_extension(original_orography_filename), 
@@ -385,6 +432,7 @@ def apply_orog_correction_field(original_orography_filename,
     grid_kwargs: dictionary; key word arguments specifying parameters of the grid
     Returns: nothing
     """
+
     original_orography_field = dynamic_hd.load_field(original_orography_filename, 
                                                      file_type=dynamic_hd.\
                                                      get_file_extension(original_orography_filename), 
@@ -417,6 +465,7 @@ def generate_ls_mask(orography_filename,ls_mask_filename,sea_level=0.0,
     Crudely generates a land-sea mask by assumming all points below the specified 
     sea level are sea points, even if they are disconnected from all other sea points
     """
+
     orography = dynamic_hd.load_field(filename=orography_filename, 
                                       file_type=dynamic_hd.get_file_extension(orography_filename), 
                                       field_type='Orography',
@@ -438,6 +487,7 @@ def extract_ls_mask_from_rdirs(rdirs_filename,lsmask_filename,grid_type='HD',**g
     grid_kwargs: dictionary; key word arguments specifying parameters of the grid
     Returns: nothing
     """
+
     rdirs_field = dynamic_hd.load_field(rdirs_filename, 
                                         file_type=dynamic_hd.get_file_extension(rdirs_filename), 
                                         field_type='RiverDirections', 
@@ -459,6 +509,7 @@ def extract_true_sinks_from_rdirs(rdirs_filename,truesinks_filename,grid_type='H
     Extracts all points that have the code for a sink (which is 5) from the river directions
     field
     """
+
     rdirs_field = dynamic_hd.load_field(rdirs_filename, 
                                         file_type=dynamic_hd.get_file_extension(rdirs_filename), 
                                         field_type='RiverDirections', 
@@ -490,6 +541,7 @@ def upscale_field_driver(input_filename,output_filename,input_grid_type,output_g
     Perform a crude upscaling using the basic named method. This doesn't upscale river direction; 
     this requires much more sophisticated code and is done by a seperate function.
     """
+
     input_field = dynamic_hd.load_field(input_filename, 
                                         file_type=dynamic_hd.get_file_extension(input_filename), 
                                         field_type='Generic', 
@@ -822,6 +874,7 @@ def apply_orography_corrections(input_orography_filename,
     header and are then read and applied by this method. However the output orography that is written
     out is restored to the same orientation as the input orography.
     """
+
     orography_field = dynamic_hd.load_field(input_orography_filename,
                                             file_type=dynamic_hd.\
                                             get_file_extension(input_orography_filename), 
@@ -1137,7 +1190,18 @@ def intelligent_orography_burning_driver(input_fine_orography_filename,
 def generate_regular_landsea_mask_from_gaussian_landsea_mask(input_gaussian_latlon_lsmask_filename,
                                                              output_regular_latlon_mask_filename,
                                                              regular_grid_spacing_file):
-    """ """
+    """Generate a regular landsea mask from a lat-lon gaussian landsea mask using cdos
+    
+    Arguments:
+    input_gaussian_latlon_lsmask_filename: string; full path to the input gaussian land-sea mask file 
+        to generate a regular land-sea mask from
+    output_regular_latlon_mask_filename: string; full path to the target file for  the output regular
+        landsea mask; this mask can be in any format the cdos support and is specified by the 
+        regular_grid_spacing_file (see below)
+    regular_grid_spacing_file: string; full path to the file containing the regular grid spacing desired
+        for the output file
+    """
+
     cdo_instance = cdo.Cdo()
     print "Generating regular land-sea mask from input gaussian mask: {0}"\
     .format(input_gaussian_latlon_lsmask_filename)
@@ -1221,7 +1285,9 @@ def rebase_orography(orography,present_day_base_orography,present_day_reference_
     orography: field; an orography for a particular timeslice
     present_day_base_orography: field; the present day base that the orography comes from
     present_day_reference_orography: field, the present day reference orography to switch
-    the input orography's base orography to"""
+    the input orography's base orography to
+    """
+
     orography.subtract(present_day_base_orography)
     orography.add(present_day_reference_orography)
     return orography
