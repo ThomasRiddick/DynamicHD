@@ -3,6 +3,7 @@ Created on Mar 29, 2017
 
 @author: thomasriddick
 '''
+
 import numpy as np
 import field
 import heapq

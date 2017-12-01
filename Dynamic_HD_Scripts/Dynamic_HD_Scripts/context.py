@@ -4,6 +4,7 @@ Created on May 17, 2016
 
 @author: thomasriddick
 '''
+
 import os
 module_path = os.path.abspath(__file__)
 module_dir = os.path.dirname(module_path)

@@ -6,6 +6,7 @@ Created on Apr 22, 2016
 
 @author: thomasriddick
 '''
+
 import numpy as np
 import copy
 import sys
@@ -364,6 +365,7 @@ def load_additional_manual_truesink_matches(additional_matches_filename,referenc
     Includes both matches between a river and truesink, a truesink and a river and a true sink and a true sink.
     True sinks are ready from the cumulative flow to cell field and are not verified.
     """
+
     reference_rmouth_field = dynamic_hd.load_field(reference_rmouth_outflows_filename, 
                                                    file_type = dynamic_hd.\
                                                    get_file_extension(reference_rmouth_outflows_filename), 

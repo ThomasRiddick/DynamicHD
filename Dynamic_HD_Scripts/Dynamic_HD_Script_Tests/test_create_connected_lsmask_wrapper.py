@@ -5,6 +5,7 @@ Created on May 25, 2016
 
 @author: thomasriddick
 '''
+
 import unittest
 import numpy as np
 import Dynamic_HD_Scripts.libs.create_connected_lsmask_wrapper as cc_lsmask_wrapper  #@UnresolvedImport
@@ -13,7 +14,7 @@ class Test(unittest.TestCase):
     """Unit test object"""
     
     def setUp(self):
-        """"Unit test setup function. Prepare test data"""
+        """Unit test setup function. Prepare test data"""
         self.landsea_in = np.asarray([[0,0,1,0,1,1,0,1,0,1],
                                       [1,0,0,0,0,1,0,1,1,1],
                                       [0,0,0,1,1,1,1,1,1,0],

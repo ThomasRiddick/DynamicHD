@@ -68,7 +68,8 @@ class TextFileIOHelper(IOHelper):
     """Class to load and write plain text files
     
     Public methods:
-    As for parent class"""
+    As for parent class
+    """
     
     @classmethod
     def load_field(self, filename,unmask=True,timeslice=None,fieldname=None, 
@@ -264,7 +265,8 @@ class SciPyFortranFileIOHelper(IOHelper):
     Public methods:
     As for parent class
     
-    This class will work only for reading and writing 64-bit floats"""
+    This class will work only for reading and writing 64-bit floats
+    """
     
     data_type=np.float64
    
@@ -315,7 +317,8 @@ class SciPyFortranFileIOHelperInt(SciPyFortranFileIOHelper):
      
     All methods are inherited from SciPyFortranFileIOHelper. The only difference between
     this and it's parent class SciPyFortranFileIOHelper is to redefine the data type; 
-    this should allow integers to read."""
+    this should allow integers to read.
+    """
     
     data_type=np.int64
    
@@ -323,7 +326,8 @@ class F2PyFortranFileIOHelper(IOHelper):
     """Class to read and write unformatted fortran files using f2py.
     
     Public methods:
-    As for parent class"""
+    As for parent class
+    """
     
     @classmethod
     def load_field(self, filename,unmask=True,timeslice=None,
@@ -343,6 +347,7 @@ class F2PyFortranFileIOHelper(IOHelper):
         by a f2py_manager instance. A certain amount of manipulation of the field is required 
         to ensure the field is output in the same orientation as other loading methods.
         """
+
         grid = gd.makeGrid(grid_type,**grid_kwargs)
         print "Reading input from {0}".format(filename)
         mgnr = f2py_mg.f2py_manager(path.join(fortran_source_path,

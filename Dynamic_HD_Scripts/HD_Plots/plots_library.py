@@ -7,6 +7,7 @@ Created on Jan 29, 2016
 
 @author: thomasriddick
 '''
+
 from color_palette import ColorPalette #@UnresolvedImport 
 import datetime
 import numpy as np
@@ -97,6 +98,7 @@ class HDparameterPlots(Plots):
         
 class HDOutputPlots(Plots):
     """A class for plotting HD offline (or online?) model output"""
+
     rdirs_path_extension = 'rdirs'
     jsbach_restart_file_path_extension = 'jsbachrestartfiles'
     
@@ -1973,7 +1975,7 @@ class FlowMapPlots(Plots):
                                               second_datasource_name="LGM")
         
 class FlowMapPlotsWithCatchments(FlowMapPlots):
-    """Flow map plots with selected catchments areas overlayed"""
+    """Flow map plots with selected catchments areas overlaid"""
 
     catchments_path_extension = 'catchmentmaps'
     rdirs_path_extension = 'rdirs'
@@ -3188,7 +3190,6 @@ class Ice5GComparisonPlots(OrographyPlots):
    
     def plotLine(self): 
         """Contour plot comparing the Modern and LGM Ice-5G 5-minute resolution orography datasets"""
-        
         minc = 0
         maxc = 500
         num = 500
@@ -3206,7 +3207,6 @@ class Ice5GComparisonPlots(OrographyPlots):
             
     def plotFilled(self):
         """Filled contour plot comparing the Modern and LGM Ice-5G 5-minute resolution orography datasets"""
-       
         minc = 70
         maxc = 120 
         num  = 25
@@ -3232,7 +3232,6 @@ class Ice5GComparisonPlots(OrographyPlots):
      
     def CombinedPlotHelper(self,minc=70,maxc=120,num=25):
         """Combined filled and line contour plots of orography difference between LGM and Modern ICE-5G data"""
-        
         levels = np.linspace(minc,maxc,num+1)
         title = textwrap.dedent("""\
         Orography difference between LGM and Modern ICE-5G data 

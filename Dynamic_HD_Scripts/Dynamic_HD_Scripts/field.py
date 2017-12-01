@@ -5,6 +5,7 @@ Created on Jan 14, 2016
 
 @author: thomasriddick
 '''
+
 import grid as gd
 import sys
 import numpy as np
@@ -104,6 +105,7 @@ class Field(object):
                 
         Arguments and return value are discussed in underlying grid function
         """
+
         return self.grid.get_flagged_points_coords(self.data)
     
     def flag_listed_points(self,points_list):
@@ -202,6 +204,7 @@ class Field(object):
         threshold: float; threshold above which to convert field to 1's, all others points are converted to 0
         Return: Nothing
         """
+
         temporary_data_copy = np.zeros(self.data.shape)
         temporary_data_copy[self.data >= threshold] = 1
         temporary_data_copy[self.data <  threshold] = 0
@@ -338,8 +341,8 @@ class Orography(Field):
         this new mask to this orography's data while simultaneously discarding the current mask.
         Note the potentially confusing terminology; it is the unmasked area that is extended 
         by this function while the masked area is reduced.
-        
         """
+
         if type(self.data) is np.ma.MaskedArray:
             #Using np.ma.getmaskedarray instead of np.MaskedArray.mask ensures that an array of boolean 
             #and not a singular false (for no mask) is returned
@@ -383,6 +386,7 @@ class Orography(Field):
         
         Preserve any existing mask
         """
+
         self.data = np.ma.masked_where(np.logical_or(np.ma.getmaskarray(self.data),
                                                      np.greater(self.data, 
                                                         second_orography_field.get_data())),
@@ -410,7 +414,9 @@ class RiverDirections(Field):
         river direction field. Then a check is made that there are sea points within the river
         direction field, if not then a warning is raised and the function returns. Finally the
         river directions are passed to this RiverDirections instances grid instance to be 
-        processed."""
+        processed.
+        """
+
         if lsmask is not None:
             data_as_masked_array = np.ma.array(self.data,mask=lsmask,copy=False,keep_mask=False)
             self.data = np.ma.filled(data_as_masked_array, 
@@ -430,6 +436,7 @@ class RiverDirections(Field):
         cells have been marked as river mouths are returns an array with those cells set to true
         and all others set to false
         """
+
         #As the floating point flow direction are just used as a labels there should be no
         #scope for them to drift away exact integer values and no need for a tolerance
         river_mouths = np.ma.masked_equal(self.data,0.0,copy=True)
@@ -566,6 +573,7 @@ def makeField(raw_field,field_type,grid_type,**grid_kwargs):
     grid_type: string; key to which type of grid to use
     **grid_kwargs: keyword dictionary; additional parameters for grid (if necessary)
     """
+
     field_types = {'Orography':Orography,'Generic':Field,'RiverDirections':RiverDirections,
                    'CumulativeFlow':CumulativeFlow,'ReservoirSize':ReservoirSize,
                    'RiverDischarge':RiverDischarge}
@@ -580,6 +588,7 @@ def makeEmptyField(field_type,dtype,grid_type,**kwargs):
     Arguments same as makeField except that this function has
     no raw field argument
     """
+
     grid = gd.makeGrid(grid_type=grid_type,**kwargs)
     raw_field = grid.create_empty_field(dtype)
     return makeField(raw_field, field_type, grid_type,**kwargs)

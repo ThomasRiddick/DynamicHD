@@ -5,10 +5,8 @@ Created on Apr 14, 2017
 '''
 
 import grid
-import remove_disconnects
 from abc import abstractmethod
 import numpy as np
-import math
 
 class DisconnectRemovalGrid(grid.Grid):
     '''

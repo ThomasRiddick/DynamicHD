@@ -4,6 +4,7 @@ Created on Dec 15, 2015
 
 @author: triddick
 '''
+
 import numpy as np
 import argparse
 import os
@@ -26,6 +27,7 @@ def generate_flow_directions_from_orography(orography):
     without any mask. In either case the retrieved grid is passed to the flow 
     directions field object that is returned.
     """
+
     grid = orography.get_grid()
     flow_directions = orography.compute_flow_directions()
     if type(orography.get_data() is np.ma.MaskedArray):
@@ -77,6 +79,7 @@ def write_field(filename,field,file_type,griddescfile=None):
     Uses the getFileHeper pseudo-factory function to get the appropriate IOHelper subclass
     to write this file type and then uses this to write the field object. 
     """
+
     iohelper.getFileHelper(file_type).write_field(filename,field,griddescfile=griddescfile) 
 
 def get_file_extension(filename):
@@ -224,6 +227,7 @@ def main(new_orography_file,
 
 class Arguments(object):
     """An empty class used to pass namelist arguments into the main routine as keyword arguments."""
+
     pass
     
 def parse_arguments():

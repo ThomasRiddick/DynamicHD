@@ -35,6 +35,7 @@ def fill_sinks_cpp_func(np.ndarray[double,ndim=2,mode='c'] orography_array,
     The version of the C++ function call depends on the arguments to this function; also find
     the required number of latitude and longitude points to pass in 
     """
+
     cdef int nlat,nlon
     nlat,nlon = orography_array.shape[0],orography_array.shape[1]
     if not add_slope and not use_ls_mask and not use_true_sinks and rdirs_in is None:

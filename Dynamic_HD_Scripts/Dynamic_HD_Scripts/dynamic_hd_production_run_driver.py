@@ -4,6 +4,7 @@ Created on Mar 18, 2017
 
 @author: thomasriddick
 '''
+
 import re
 import argparse
 import os.path as path
@@ -199,6 +200,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         Arguments: None
         Returns: ConfigParser object; the read and checked configuration
         """
+
         valid_config = True
         config = configparser.ConfigParser()
         print "Read python driver options from file {0}".format(self.python_config_filename)
@@ -255,6 +257,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         Arguments: None
         Returns: nothing
         """
+
         config = self._read_and_validate_config()
         base_hd_restart_file = path.join(self.ancillary_data_path,"hd_restart_from_hd_file_ten_minute_data_from_virna_"
                                         "0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_20170113_"
@@ -608,6 +611,7 @@ def setup_and_run_dynamic_hd_para_gen_from_command_line_arguments(args):
     
 class Arguments(object):
     """An empty class used to pass namelist arguments into the main routine as keyword arguments."""
+
     pass
     
 def parse_arguments():

@@ -4,6 +4,7 @@ Created on Jan 15, 2016
 
 @author: thomasriddick
 '''
+
 import imp
 import os
 import subprocess
@@ -85,6 +86,7 @@ class f2py_manager(object):
         is compiled the compile method handles the loading). If a function/subroutine name has been 
         given then call method to set it as current function.
         """
+
         self.fortran_file_name = fortran_file_name
         self.remove_wrapper = remove_wrapper
         if not os.path.isfile(self.fortran_file_name):
@@ -144,7 +146,9 @@ class f2py_manager(object):
          
         First check the compilation wrapper exists and if not create it. Then run 
         the compilation within a try-except block, printing the output and any errors. 
-        Finally load the module."""
+        Finally load the module.
+        """
+
         if not os.path.isfile(self.wrapper_path):
             self.create_wrapper()
         try:
@@ -166,6 +170,7 @@ class f2py_manager(object):
         A boolean flag - if true then fortran source code has changed since the python shared
         library created from it was compiled; if not then it hasn't
         """
+
         if not os.path.isfile(self.shared_object_file_path):
             return True
         if (os.path.getmtime(self.fortran_file_name) > 

@@ -4,6 +4,7 @@ Created on May 2, 2016
 
 @author: thomasriddick
 '''
+
 import unittest
 import numpy as np
 import os

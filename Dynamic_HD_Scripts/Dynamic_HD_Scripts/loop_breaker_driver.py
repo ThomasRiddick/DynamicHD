@@ -93,6 +93,7 @@ def loop_breaker_driver(input_course_rdirs_filepath,input_course_cumulative_flow
         grid (if required)
     Returns: nothing
     """
+
     input_course_rdirs_field = dynamic_hd.load_field(input_course_rdirs_filepath, 
                                                      file_type=dynamic_hd.\
                                                      get_file_extension(input_course_rdirs_filepath), 

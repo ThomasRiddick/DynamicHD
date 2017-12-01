@@ -3,6 +3,7 @@ Created on Apr 5, 2016
 
 @author: thomasriddick
 '''
+
 import dynamic_hd
 import numpy as np
 import field
@@ -163,6 +164,7 @@ def prepare_hdrestart_field(input_field,resnum_riv_field,ref_resnum_field,is_riv
        simply zero because they are really dry) 
     8) returning the results
     """
+
     input_field_copy = input_field.copy()
     input_field.mask_field_with_external_mask(input_field.get_data() < 0.0)
     input_field.fill_mask(0.0)

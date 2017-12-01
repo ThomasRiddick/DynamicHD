@@ -28,6 +28,7 @@ def upscale_orography(np.ndarray[double,ndim=2,mode='c'] orography_in,
    
     Also find the required number of latitude and longitude points to pass in 
     """
+
     cdef int nlat_fine,nlon_fine 
     nlat_fine, nlon_fine = orography_in.shape[0],orography_in.shape[1]
     cdef int nlat_course,nlon_course

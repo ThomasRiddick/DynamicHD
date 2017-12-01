@@ -5,6 +5,7 @@ Created on Jan 13, 2016
 
 @author: thomasriddick
 '''
+
 import numpy as np
 import scipy.ndimage as ndi
 from abc import ABCMeta, abstractmethod
@@ -242,7 +243,8 @@ class LatLongGrid(Grid):
     This class should work on any latitude-longitude grid that stores data in 2D array-like objects. Note
     iternally all the functions within this class will work even if the size of the array(s) given is not
     the same as the number of latitude and longitude points set. This allows for easy testing but means that
-    there is no check that the size of arrays given as arguments to methods of this class are correct.""" 
+    there is no check that the size of arrays given as arguments to methods of this class are correct.
+    """ 
   
     flow_direction_labels=np.arange(1,10,dtype=np.float64)
     pole_boundary_condition = 1.0e+7
@@ -289,6 +291,7 @@ class LatLongGrid(Grid):
         assume the mask to be true and any cross pole neighbours are ignore in this 
         calculation. 
         """
+
         #For an  unknown reason insert only works as required if the array axis are 
         #swapped so axis 0 is being inserted into.
         changes_mask = changes_mask.swapaxes(0,1)
@@ -500,6 +503,7 @@ class LatLongGrid(Grid):
         Calls a fortran module as the kernel to ndimage generic filter in order to actually 
         mark the river mouths
         """
+
         #For an  unknown reason insert only works as required if the array axis are 
         #swapped so axis 0 is being inserted into.
         flow_direction_data = flow_direction_data.swapaxes(0,1)
@@ -540,6 +544,7 @@ class LatLongGrid(Grid):
         the translated data This method effectively translate between a using the Greenwich 
         Meridan as the origin of the x axis and placing it in the centre of the x axis.
         """
+
         #The number of longitude points is already defined but calculate it again here to 
         #facilitate easy testing with smaller arrays;
         nlon = np.size(data,axis=1)
@@ -656,6 +661,7 @@ class LatLongGrid(Grid):
         The scale factor used to convert coordinates values for this grid to geographical coordinates
         (actual latitude and longitude)
         """
+
         return 360.0/self.nlong
         
         

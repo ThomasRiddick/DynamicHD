@@ -120,6 +120,7 @@ def read_and_validate_config(upscaling_parameters_filename):
         file (optional)    
     Returns: ConfigParser object; the read and checked configuration
     """
+
     config = configparser.ConfigParser()
     print "Read orography upscaling options from file {0}".\
         format(upscaling_parameters_filename)

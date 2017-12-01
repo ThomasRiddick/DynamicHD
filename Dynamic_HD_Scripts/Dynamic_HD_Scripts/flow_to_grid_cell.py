@@ -166,6 +166,7 @@ def main(rdirs_filename,output_filename,grid_type,**grid_kwargs):
         input and output grid that are required
     Returns: Nothing
     """
+
     rdirs = dynamic_hd.load_field(rdirs_filename, 
                                   dynamic_hd.get_file_extension(rdirs_filename), 
                                   "Generic", grid_type=grid_type,**grid_kwargs)

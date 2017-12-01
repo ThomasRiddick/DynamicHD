@@ -3,6 +3,7 @@ Created on Mar 2, 2017
 
 @author: thomasriddick
 '''
+
 from plots_library import (Plots,HDparameterPlots,HDOutputPlots,OutflowPlots, #@UnusedImport
                            FlowMapPlots,FlowMapPlotsWithCatchments,OrographyPlots, #@UnusedImport  
                            SimpleOrographyPlots, Ice5GComparisonPlots) #@UnusedImport
@@ -22,15 +23,14 @@ class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
     save_path = "/Users/thomasriddick/Documents/plots/Dynamic HD/plots_generated_for_paper"
 
     def __init__(self, save):
+        """Class constructor"""
         color_palette_to_use="gmd_paper"
         rcParams['font.family'] = 'sans-serif'
         rcParams['font.sans-serif'] = ['Helvetica']
         super(PlotsForGMDPaper,self).__init__(save,color_palette_to_use)
-        """Class constructor"""
         
     def danube_catchment_correction_plots(self):
         """Three plots of the Danube catchment showing the effect of applying correction an orography."""
-
         corrected_hd_rdirs_rmouthoutflow_file = os.path.join(self.rmouth_outflow_data_directory,
             "rmouthflows_corrected_HD_rdirs_post_processing_20160427_141158.nc")
         ice5g_ALG4_sinkless_all_points_0k_dir_upsc_field = os.path.join(self.rmouth_outflow_data_directory,

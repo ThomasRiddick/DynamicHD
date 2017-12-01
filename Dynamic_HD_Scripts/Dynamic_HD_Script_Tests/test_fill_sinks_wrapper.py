@@ -6,6 +6,7 @@ Created on Mar 31, 2016
 
 @author: thomasriddick
 '''
+
 import unittest
 import numpy as np
 import Dynamic_HD_Scripts.libs.fill_sinks_wrapper as fill_sinks_wrapper #@UnresolvedImport
@@ -13,6 +14,7 @@ import Dynamic_HD_Scripts.libs.fill_sinks_wrapper as fill_sinks_wrapper #@Unreso
 
 class TestAlgorithmOne(unittest.TestCase):
     """Tests of Algorithm 1 from Barnes et al (2014)""" 
+
     ndv = np.finfo(dtype=np.float64).min #set the no data value
     
     def setUp(self):

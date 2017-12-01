@@ -6,6 +6,7 @@ Created on Jul 21, 2016
 
 @author: thomasriddick
 '''
+
 from matplotlib.widgets import Slider,Button,RadioButtons,CheckButtons
 import matplotlib.gridspec as gridspec
 from matplotlib.ticker import FuncFormatter
@@ -98,6 +99,7 @@ class Interactive_Plots(object):
         ref_to_super_fine_scale_facto
         Returns: nothing
         """
+
         self.scale_factor = scale_factor
         self.ref_to_super_fine_scale_factor = ref_to_super_fine_scale_factor
         self.catchment_bounds = catchment_bounds

@@ -5,7 +5,6 @@ The function 'main' is intended to be the function called externally
 Created on Feb 9, 2016
 
 @author: thomasriddick
-
 '''
 
 import f2py_manager

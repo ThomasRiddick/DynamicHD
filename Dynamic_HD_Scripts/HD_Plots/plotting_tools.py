@@ -5,6 +5,7 @@ Created on Feb 5, 2016
 
 @author: thomasriddick
 '''
+
 import matplotlib.pyplot as plt
 import numpy as np
 import math
@@ -13,6 +14,7 @@ import Dynamic_HD_Scripts.grid as grid
 
 class OrogCoordFormatter(object):
     """Class that creates an object to call to give cursor position)""" 
+
     def __init__(self,xoffset,yoffset):
         self.xoffset = xoffset
         self.yoffset = yoffset
@@ -23,6 +25,7 @@ class OrogCoordFormatter(object):
 
 class LonAxisFormatter(object):
     """Class that creates an object to call to give longitude axis tick labels"""
+
     def __init__(self,xoffset,scale_factor=1,precision=0):
         self.xoffset = xoffset
         self.scale_factor = scale_factor
@@ -34,6 +37,7 @@ class LonAxisFormatter(object):
     
 class LatAxisFormatter(object):
     """Class that creates an object to call to give latitude axis tick labels"""
+
     def __init__(self,yoffset,scale_factor=1,precision=0):
         self.yoffset = yoffset
         self.scale_factor = scale_factor
@@ -48,6 +52,7 @@ def remove_ticks(ax=None):
        
     The ax argument is optional; if not specified then get the current axes.
     """
+
     params = {'axis'       :'both',
               'which'      :'both',
               'bottom'     :'off',
@@ -97,6 +102,7 @@ def apply_ocean_mask_to_catchments(catchments,field):
    
     This routine simply masks all points with elevations less than zero
     """
+
     masked_field = np.ma.masked_less_equal(field,0)
     catchments = np.ma.array(catchments,
                              mask=np.ma.getmaskarray(masked_field))

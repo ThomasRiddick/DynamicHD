@@ -6,6 +6,7 @@ Created on Oct 19, 2016
 
 @author: thomasriddick
 '''
+
 import unittest
 import numpy as np
 import Dynamic_HD_Scripts.field as field

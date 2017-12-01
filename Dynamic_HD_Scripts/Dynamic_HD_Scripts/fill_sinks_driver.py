@@ -20,10 +20,10 @@ def generate_orography_with_sinks_filled(input_orography_filename,output_orograp
                                          slope_param=0.1,**grid_kwargs):
     """Generate an orography with the sinks filled using a priority flood type technique
     Input: 
-    input_orography_filename: string, the full path to the file containing the input orography
-    output_orography_filename: string, the full path to the target file to write the output orography to
-    ls_mask_filename: string, the full path to the file containing the input landsea mask.None means ignore.
-    truesinks_filename: string, the full path to the file containing the true sinks to use. None means ignore.
+    input_orography_filename: string; the full path to the file containing the input orography
+    output_orography_filename: string; the full path to the target file to write the output orography to
+    ls_mask_filename: string; the full path to the file containing the input landsea mask.None means ignore.
+    truesinks_filename: string; the full path to the file containing the true sinks to use. None means ignore.
     flip_ud: boolean; Flip the orography upside down before processing
     flip_lsmask_ud: boolean; Flip the landsea mask upside down before processing
     flip_truesinks_ud: boolean; Flip the true sinks upside down before processing

@@ -4,6 +4,7 @@ Created on Feb 24, 2016
 
 @author: thomasriddick
 '''
+
 import inspect
 import datetime
 import subprocess
@@ -35,7 +36,9 @@ class Dynamic_HD_Drivers(object):
     def __init__(self):
         """Setup paths to various input and output data directories
         
-        Arguments: None"""
+        Arguments: None
+        """
+
         data_dir = "/Users/thomasriddick/Documents/data/HDdata"
         rdirs_path_extension = "rdirs"
         rmouth_path_extension = "rmouths"
@@ -400,6 +403,7 @@ class Dynamic_HD_Drivers(object):
         
         Returns: nothing
         """
+
         compute_catchments.main(filename=rdirs_filename,
                                 output_filename=self.generated_catchments_path +
                                 output_file_label + '.nc',
@@ -418,6 +422,7 @@ class Dynamic_HD_Drivers(object):
         
         Returns: nothing
         """
+
         flow_to_grid_cell.main(rdirs_filename=rdirs_filename, 
                                output_filename=self.generated_flowmaps_filepath
                                + output_file_label + '.nc', 
@@ -476,6 +481,7 @@ class Dynamic_HD_Drivers(object):
         The filename of the new file is the basename of the input file with the extension of the new
         filetype
         """
+
         if new_file_type==(path.splitext(filename)[1]):
             raise UserWarning('File {0} is already of type {1}'.format(filename,new_file_type))
             return
@@ -590,6 +596,7 @@ class Dynamic_HD_Drivers(object):
             to (if required)
         Returns: Nothing.
         """
+
         shutil.copy2(upscaling_parameters_filename,self.copied_orography_upscaling_parameters_path
                      + output_file_label + '.cfg')
         upscale_orography_driver.drive_orography_upscaling(input_fine_orography_file,output_course_orography_file,
@@ -690,6 +697,7 @@ class Dynamic_HD_Drivers(object):
             the mutliple slice dataset
         Returns: nothing
         """
+
         if first_timeslice:
             with netCDF4.Dataset(timeslice_hdfile_label,mode='r',format='NETCDF4') as dataset_in:
                 with netCDF4.Dataset(combined_dataset_filename,mode='w',format='NETCDF4') as dataset_out:
@@ -777,7 +785,9 @@ class Utilities_Drivers(Dynamic_HD_Drivers):
     def recreate_connected_HD_lsmask_true_seas_inc_casp_only(self):
         """Recreate a connected version of the landsea mask of the original river directions with only Caspian included
         
-        So this has only the main oceans plus the Caspian and no other inland seas"""
+        So this has only the main oceans plus the Caspian and no other inland seas
+        """
+
         file_label = self._generate_file_label()
         hd_lsmask_seed_points = path.join(self.ls_seed_points_path,"lsseedpoints_HD_true_seas_"
                                                                    "inc_casp_only_160718_105600.txt")
@@ -848,7 +858,9 @@ class Utilities_Drivers(Dynamic_HD_Drivers):
     def downscale_HD_ls_seed_points_to_10min_lat_lon_true_seas_inc_casp_only(self):
         """Downscale the set of sea seed points to a 10 minute latlon resolution including Caspian only
         
-         So this has only the main oceans plus the Caspian and no other inland seas"""
+        So this has only the main oceans plus the Caspian and no other inland seas
+        """
+
         file_label = self._generate_file_label()
         hd_lsmask_seed_points = path.join(self.ls_seed_points_path,
                                           "lsseedpoints_HD_true_seas_inc_casp_only_160718_105600.txt")
@@ -1159,7 +1171,7 @@ class Original_HD_Model_RFD_Drivers(Dynamic_HD_Drivers):
     """Drive processes using the present day manually corrected river directions currently in JSBACH"""
    
     def __init__(self):
-        """Class constructor. Set path to various files specific to this set of river directionsz"""
+        """Class constructor. Set path to various files specific to this set of river directions"""
         super(Original_HD_Model_RFD_Drivers,self).__init__()
         self.corrected_RFD_filepath = path.join(self.rdir_path,"rivdir_vs_1_9_data_from_stefan.nc")
         self.corrected_HD_orography_filepath = path.join(self.orography_path,"topo_hd_vs1_9_data_from_stefan.nc")
@@ -1692,6 +1704,7 @@ class ICE5G_Data_Drivers(Dynamic_HD_Drivers):
         The actual river direction come from the tarasov-style upscaled srtm30plus but the correction field produced is
         relative to the ICE5G orography
         """
+
         file_label = self._generate_file_label()
         original_orography_filename = path.join(self.orography_path,"ice5g_v1_2_00_0k_10min.nc")
         original_tarasov_upscaled_orography_filename = path.join(self.orography_path,"tarasov_upscaled",
@@ -1810,6 +1823,7 @@ class ICE5G_Data_Drivers(Dynamic_HD_Drivers):
         The actual river direction come from the tarasov-style upscaled srtm30plus but the correction field produced is
         relative to the ICE5G orography
         """
+
         file_label = self._generate_file_label()
         original_orography_filename = path.join(self.orography_path,"ice5g_v1_2_00_0k_10min.nc")
         original_tarasov_upscaled_orography_filename = path.join(self.orography_path,"tarasov_upscaled",
@@ -1929,6 +1943,7 @@ class ICE5G_Data_Drivers(Dynamic_HD_Drivers):
         The actual river direction come from the tarasov-style upscaled srtm30plus but the correction field produced is
         relative to the ICE5G orography
         """
+
         file_label = self._generate_file_label()
         original_orography_filename = path.join(self.orography_path,"ice5g_v1_2_00_0k_10min.nc")
         original_tarasov_upscaled_orography_filename = path.join(self.orography_path,"tarasov_upscaled",
@@ -2621,6 +2636,7 @@ class GLAC_Data_Drivers(ICE5G_Data_Drivers):
         
         To generate and then merge in a single step use the method below.
         """
+
         base_file_label="GLAC_data_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_27timeslices_20161128_170639"
         file_label = self._generate_file_label()
         combined_dataset_filename = self.generated_hd_file_path + "combined_" + file_label + '.nc'

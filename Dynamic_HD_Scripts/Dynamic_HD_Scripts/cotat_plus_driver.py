@@ -31,6 +31,7 @@ def run_cotat_plus(fine_rdirs_field,fine_total_cumulative_flow_field,cotat_plus_
     
     Compiles and runs the COTAT plus algorithm in Fortran using f2py for a lat-lon field
     """
+
     additional_fortran_filenames = ["area_mod.o","coords_mod.o","cotat_parameters_mod.o","cotat_plus.o",
                                      "doubly_linked_list_mod.o","doubly_linked_list_link_mod.o",
                                      "field_section_mod.o","precision_mod.o","subfield_mod.o"]
