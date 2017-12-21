@@ -26,9 +26,9 @@ xleftmargin=0.1\linewidth
 
 \DeclareGraphicsRule{.tif}{png}{.png}{`convert #1 `dirname #1`/`basename #1 .tif`.png}
 
-\title{Instruction for Running the Dynamic HD Parameter and Restart File Generation Code Version 2.3}
+\title{Instruction for Running the Dynamic HD Parameter and Restart File Generation Code Version 2.4}
 \author{Thomas Riddick}
-\date{6th September 2017}                                           
+\date{15th October 2017}                                           
 \begin{document}
 \lstset{language=bash}
 \maketitle
@@ -49,11 +49,11 @@ mkdir workdir
 mkdir outputdir_step1
 mkdir outputdir_step2
 \end{lstlisting}
-\item Download the dynamic HD code and switch the repository to version 2.3. (Be sure to perform this last step; version 1 probably won't work anymore and if it does then it will give erroneous results.). The code is stored in my home area. Thus you can change  \lstinline[style=bash_input]{dattel} (the name of my machine) to the name of your own machine if you wish.
+\item Download the dynamic HD code and switch the repository to version 2.4. (Be sure to perform this last step; version 1 probably won't work anymore and if it does then it will give erroneous results.). The code is stored in my home area. Thus you can change  \lstinline[style=bash_input]{dattel} (the name of my machine) to the name of your own machine if you wish.
 \begin{lstlisting}[style=bash_input,breaklines=true]
 git clone git+ssh://dattel.mpimet.mpg.de/home/mpim/m300468/workspace/Dynamic_HD_Code
 cd Dynamic_HD_Code
-git checkout release_version_2.3
+git checkout release_version_2.4
 cd ..
 \end{lstlisting}
 \item Retrieve the necessary ancillary data from my home area. (Replacing \lstinline[style=bash_input]{m300468@dattel} with your own machine and user name.)
