@@ -224,7 +224,7 @@ class ConflictResolver(object):
      
     @staticmethod
     def evaulate_configuration(allowed_configuration,params):
-        """Evaluate a configurations of pair and give it a likelyhood score"""
+        """Evaluate a configurations of pair and give it a likelihood score"""
         missing_pair_count = 0
         total_score = 0
         for pair in allowed_configuration:

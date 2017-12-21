@@ -32,6 +32,9 @@ class Field(object):
     invert_data
     copy
     convert_to_binary_mask
+    orient_data
+    set_grid_coordinates
+    grid_has_coordinates
     """
     
     def __init__(self,input_field,grid='HD',**grid_kwargs):
@@ -209,6 +212,43 @@ class Field(object):
         temporary_data_copy[self.data >= threshold] = 1
         temporary_data_copy[self.data <  threshold] = 0
         self.data = temporary_data_copy
+        
+    def orient_data(self):
+        """If underlying grid has orientation information turn the data to the standard orientation if needed
+        
+        Arguments: None
+        Return: Nothing
+
+        If the underlying grid doesn't have orientation information then do nothing and return a warning 
+        """
+        if not self.grid.has_orientation_information():
+            UserWarning('Unable to reorient; grid has no/insufficient orientation information')
+        else:
+            if self.grid.needs_ud_flip():
+                self.flip_data_ud()
+            if self.grid.needs_rotation_by_a_hundred_and_eighty_degrees():
+                self.rotate_field_by_a_hundred_and_eighty_degrees()
+            
+    def set_grid_coordinates(self,coordinates):
+        """Set the coordinates of points in the underlying grid
+        
+        Arguments:
+        coordinates: tuple of ndarrays; a tuple of arrays containing the coordinates of the points
+        in the various dimensions of the underlying grid
+        Returns: nothing
+        """ 
+        
+        self.grid.set_coordinates(coordinates)
+        
+    def grid_has_coordinates(self):
+        """Check if this field's grid has orientation information
+        
+        Arguments: None
+        Returns: A flag indicating if this field grid has orientation 
+            information (TRUE) or not (FALSE)
+        """
+        
+        return self.grid.has_orientation_information()
    
 class Orography(Field):
     """A subclass of Field with various method specific to orographies.

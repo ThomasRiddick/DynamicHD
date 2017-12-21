@@ -2023,6 +2023,7 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                                        remove_antartica=False,
                                                        difference_in_catchment_label="Discrepancy",
                                                        glacier_mask_filename=None,
+                                                       fig_size=(12,5),
                                                        grid_type='HD',
                                                        glacier_mask_grid_type='LatLong10min',
                                                        glacier_mask_grid_kwargs={},
@@ -2149,7 +2150,7 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
         ref_rdirs_field = ref_rdirs_field.get_data()
         if glacier_mask_filename:
             glacier_mask_field = glacier_mask_field.get_data()
-        plt.figure(figsize=(12,5))
+        plt.figure(figsize=fig_size)
         ax = plt.subplot(111)
         image_array =fmp_pts.\
             make_basic_flowmap_comparison_plot(ax,flowmap_ref_field,

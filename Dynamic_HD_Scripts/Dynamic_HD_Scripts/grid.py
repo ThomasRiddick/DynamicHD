@@ -32,6 +32,10 @@ class Grid(object):
     mask_outside_region
     replace_zeros_with_highest_valued_neighbor
     get_scale_factor_for_geographic_coords
+    has_orientation_information
+    needs_ud_flip
+    needs_rotation_by_a_hundred_and_eighty_degrees
+    set_coordinates
     """
     
     __metaclass__ = ABCMeta
@@ -231,6 +235,58 @@ class Grid(object):
         """
         
         pass
+    
+    @abstractmethod
+    def has_orientation_information(self):
+        """Return flag indicating if the grid has information indicating its information
+        
+        Arguments: None
+        Returns: Nothing
+        """
+        
+        pass
+    
+    @abstractmethod
+    def needs_ud_flip(self):
+        """Returns a flag indicating if this grid needs to be flipped upside down
+        
+        Arguments: None
+        Returns: 
+        A flag that is true if this grid object and any associated data needs to be flipped and false
+        if they don't need to be flipped
+
+        Only needs to be implemented for grid where up and down are meaningful concepts
+        """
+        
+        pass
+    
+    @abstractmethod
+    def needs_rotation_by_a_hundred_and_eighty_degrees(self):
+        """Returns a flag indicating if this grid needs to rotate by 180 degrees around the earth's axis
+        
+        Arguments: None
+        Returns:
+        A flag this is true if this grid boject and any associated data needs to be rotated 180 degrees 
+        around the earths axis and is otherwise false
+
+        Only needs to be implemented for grids where such a rotation is meaningful.
+        """
+        
+        pass
+    
+    @abstractmethod
+    def set_coordinates(self,coordinates):
+        """Set the coordinates of points in the grid
+        
+        Arguments:
+        coordinates: tuple of ndarrays; a tuple of arrays containing the coordinates of the points
+        in the various dimensions of the grid
+        Returns: nothing
+        """ 
+        
+        pass
+        
+
         
 class LatLongGrid(Grid):
     """Class that stores information on and functions to work with a Latitude-Longitude grid.
@@ -239,6 +295,8 @@ class LatLongGrid(Grid):
     As for parent class and in addition
     get_sea_point_flow_direction_value
     get_longitude_offset_adjustment
+    set_latitude_points
+    set_longitude_points
     
     This class should work on any latitude-longitude grid that stores data in 2D array-like objects. Note
     iternally all the functions within this class will work even if the size of the array(s) given is not
@@ -250,6 +308,8 @@ class LatLongGrid(Grid):
     pole_boundary_condition = 1.0e+7
     sea_point_flow_direction_value = -1
     default_gc_method = 'all_neighbours'
+    lat_points=None
+    lon_points=None
     
     def __init__(self,nlat=360,nlong=720,longitude_offset_adjustment=0):
         """Class constructor. Set the grid size.
@@ -532,6 +592,8 @@ class LatLongGrid(Grid):
         direction
         """
 
+        if self.lat_points is not None:
+            self.lat_points = np.flipud(self.lat_points)
         return np.flipud(data)
     
     def one_hundred_eighty_degree_longitude_translation(self,data):
@@ -548,6 +610,16 @@ class LatLongGrid(Grid):
         #The number of longitude points is already defined but calculate it again here to 
         #facilitate easy testing with smaller arrays;
         nlon = np.size(data,axis=1)
+        if self.lon_points is not None:
+            #Generate the interval like this to avoid cumulative rounding errors building up
+            interval = 360.0/nlon
+            if ((-0.1*interval < self.lon_points[0]) and 
+                (-0.1*interval < self.lon_points[0])): 
+                #Regenerate the lontitudinal points to avoid cumulative rounding errors
+                self.lon_points = np.linspace(-180+interval/2.0,180-interval/2.0,num=nlon)
+            else:
+                #Regenerate the lontitudinal points to avoid cumulative rounding errors
+                self.lon_points = np.linspace(0.0,360-interval,num=nlon)
         return np.roll(data,nlon/2,axis=1)
     
     def find_area_minima(self,data,area_corner_coords_list,area_size):
@@ -663,7 +735,73 @@ class LatLongGrid(Grid):
         """
 
         return 360.0/self.nlong
+    
+    def set_latitude_points(self,lat_points):
+        """Set an array of vertical points latitudes with an index corresponding the to data's column index
         
+        Arguments:
+        lat_points: ndarray; a single dimensional array of latitudes for the centre of each latitudinal row
+            of grid boxes
+        """
+
+        self.lat_points = lat_points
+
+    def set_longitude_points(self,lon_points):
+        """Set an array of horizontal points longitudes with an index corresponding to the data's row index
+
+        Arguments:
+        lon_points: ndarray; a single dimensional array of longitudes for the centre of each longitudinal column
+            of grid boxes
+        """
+        
+        self.lon_points = lon_points
+        
+    def has_orientation_information(self):
+        """Check if this latitude-longitude grid has arrays of latitudes/longitudes for each column/row index
+        
+        Arguments: None
+        Returns: True if the arrays of latitude values and longitude values exist; otherwise false. 
+        """
+        return ((self.lat_points is not None) and (self.lon_points is not None))
+    
+    def needs_ud_flip(self):
+        """Returns a flag indicating if this grid needs to be flipped upside down
+        
+        Arguments: None
+        Returns: 
+        A flag that is true if this grid object and any associated data needs to be flipped and false
+        if they don't need to be flipped
+        
+        The 'correct' orientation is with the lowest index both the data and lat_points being in the 
+        far north (thus positive if we are to take lat_points
+        """
+        
+        return (self.lat_points[0] < 0)
+    
+    def needs_rotation_by_a_hundred_and_eighty_degrees(self):
+        """Returns a flag indicating if this grid needs to rotate by 180 degrees around the earth's axis
+        
+        Arguments: None
+        Returns:
+        A flag this is true if this grid boject and any associated data needs to be rotated 180 degrees 
+        around the earths axis and is otherwise false
+
+        Standard configuration is with greenwich meridian in the centre of the grid.
+        """
+        
+        return (self.lon_points[-1] >  180.0)
+    
+    def set_coordinates(self,coordinates):
+        """Set the lat-lon coordinates of points in the grid
+        
+        Arguments:
+        coordinates: 2 element tuple of ndarrays; a two element tuple containing 
+        two arrays, one of latitude points, the other of longitude points 
+        Returns: nothing
+        """ 
+
+        self.set_latitude_points(coordinates[0])
+        self.set_longitude_points(coordinates[1])
         
 def makeGrid(grid_type,**kwargs):
     """Factory function that creates an object of the correct grid type given a keyword

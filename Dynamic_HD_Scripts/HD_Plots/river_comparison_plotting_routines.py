@@ -379,7 +379,7 @@ def plot_catchment(ax,catchment_section,colors,simplified_colorscheme=False,
                                 'Upscaled river directions river mouth','Fine river directions true sink',
                                 'Common true sink'] 
         else:
-            tic_labels_catch = ['Sea','Land','Model 1 catchment','Common catchment','Model 2 catchment',
+            tic_labels_catch = ['Sea','Land','Default HD catchment','Common catchment','Dynamic HD catchment',
                                 'Model 1 river mouth','Model 2 river mouth','Model 1 true sink',
                                 'Common true sink'] 
         tic_loc_catch = np.arange(10) + 0.5

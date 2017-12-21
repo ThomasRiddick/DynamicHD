@@ -38,7 +38,7 @@ def generate_flow_directions_from_orography(orography):
         return fld.Field(flow_directions,grid)
 
 def load_field(filename,file_type,field_type,unmask=True,timeslice=None,
-               fieldname=None,grid_type='HD',**grid_kwargs):
+               fieldname=None,check_for_grid_info=False,grid_type='HD',**grid_kwargs):
     """Inteface that loads a field as a raw array of data and returns it as a field object.
    
     Arguments:
@@ -50,6 +50,8 @@ def load_field(filename,file_type,field_type,unmask=True,timeslice=None,
     timeslice: integer; which timeslice to select from a (netCDF4) file with multiple time
         slices
     fieldname: string; which field to select from a (netCDF4) file with multiple fields
+    check_for_grid_info: boolean; Search to see if file has grid info and use this
+            to replace grid type specified if found
     grid_type: string; the code for this grid type
     **grid_kwargs: dictionary; key word arguments specifying parameters of the grid
     Returns:
@@ -58,12 +60,18 @@ def load_field(filename,file_type,field_type,unmask=True,timeslice=None,
     Uses the getFileHelper pseudo-factory function to get the appropriate IOHelper subclass 
     to load this file type and then uses this to loads the file; passing in any grid_kwargs 
     supplied. Uses makeField factory function to create a field of the requested type with 
-    the loaded data and returns this object. 
+    the loaded data and returns this object. Use a list to retrieve any grid information 
+    found by the loading function and add it to the field.
     """
     
+    grid_info=[]
     raw_field = iohelper.getFileHelper(file_type).load_field(filename,unmask,timeslice,fieldname,
+                                                             check_for_grid_info,grid_info,
                                                              grid_type,**grid_kwargs)
-    return fld.makeField(raw_field,field_type,grid_type,**grid_kwargs)
+    if len(grid_info) == 0:
+        return fld.makeField(raw_field,field_type,grid_type,**grid_kwargs)
+    else:
+        return fld.makeField(raw_field,field_type,grid_info[0])
 
 def write_field(filename,field,file_type,griddescfile=None):
     """Writes the given field object to the given file type.

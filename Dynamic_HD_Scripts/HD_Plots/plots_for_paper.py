@@ -369,7 +369,7 @@ class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
                                                             lsmask_has_same_orientation_as_ref=False,
                                                             flip_lsmask=False,rotate_lsmask=True,
                                                             invert_ls_mask=False,
-                                                            first_datasource_name="Model 1",
+                                                            first_datasource_name="Default HD",
                                                             matching_parameter_set='magnitude_extensive',
                                                             additional_truesink_matches_list_filename=\
                                                             "additional_truesink_matches_ice5g_upscaled_"
@@ -409,7 +409,7 @@ class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
                                                             catchment_and_outflows_mods_list_filename=\
                                                             "catch_and_outflow_mods_ice5g_10min_upscaled_"
                                                             "rdirs_vs_modern_day_glcc_olson_lsmask.txt",
-                                                            second_datasource_name="Model 2",use_title=False,
+                                                            second_datasource_name="Dynamic HD",use_title=False,
                                                             remove_antartica=True,
                                                             glacier_mask_filename=glacier_mask_filename,
                                                             glacier_mask_grid_type='LatLong10min',
@@ -655,7 +655,7 @@ class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
         ax1.plot(atlantic_wfl_temporalmean_ice6g,x,
                  label='ICE6G river directions',color='#7fbf7b',linewidth=1.5)
         ax1.set_ylabel("Latitude",size=15)
-        ax1.set_xlabel("Implied northward freshwater transport ($m^{3}s^{-1}$)",
+        ax1.set_xlabel("Implied southward ocean freshwater transport ($m^{3}s^{-1}$)",
                        size=15)
         ax1.set_ylim(-90,90)
         ax1.set_xlim(-700000,700000)
@@ -674,7 +674,7 @@ class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
         ax2.plot(indopacific_wfl_temporalmean_ice6g,x,
                  label='ICE6G river directions',color='#7fbf7b',linewidth=1.5)
         ax2.set_ylabel("Latitude",size=15)
-        ax2.set_xlabel("Implied northward freshwater transport ($m^{3}s^{-1}$)",
+        ax2.set_xlabel("Implied southward ocean freshwater transport ($m^{3}s^{-1}$)",
                        size=15)
         ax2.set_ylim(-90,90)
         ax2.set_xlim(-700000,700000)
@@ -692,7 +692,7 @@ class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
         ax3.plot(indopacific_wfl_temporalmean_diff,x,
                  label='Indo-Pacific',color='#67a9cf',linewidth=1.5)
         ax3.set_ylabel("Latitude",size=15)
-        ax3.set_xlabel(r'Change in implied northward freshwater transport ($m^{3}s^{-1}$)',
+        ax3.set_xlabel(r'Change in implied southward ocean freshwater transport ($m^{3}s^{-1}$)',
                        size=15)
         ax3.set_ylim(-90,90)
         ax3.set_xlim(-50000,70000)

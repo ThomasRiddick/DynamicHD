@@ -30,7 +30,8 @@ class IOHelper(object):
     
     @abstractmethod
     def load_field(self,filename,unmask=True,timeslice=None,
-                   fieldname=None,grid_type='HD',**grid_kwargs):
+                   fieldname=None,check_for_grid_info=False,
+                   grid_info=None,grid_type='HD',**grid_kwargs):
         """Load a field from a file
         
         Arguments:
@@ -39,6 +40,11 @@ class IOHelper(object):
             with any mask removed (True) or not (False)
         timeslice (optional): integer, which time slice to choose from file with multiple timeslices
         fieldname (optional): string, name of field to load from file with multiple fields
+        check_for_grid_info: boolean; Search to see if file has grid info and use this
+            to replace grid type specified if found
+        grid_info (optional): grid within a one element list; can be used to return grid information
+            via a grid object wrapped in a list if any has been found. Not used as an input to specify
+            the grid.
         grid_type: keyword specifying what type of grid to use
         **grid_kwargs: keyword arguments giving parameters of the grid 
         
@@ -49,7 +55,7 @@ class IOHelper(object):
         pass
 
     @abstractmethod   
-    def write_field(self,filename,field,griddescfile=None):
+    def write_field(self,filename,field,griddescfile=None,fieldname=None):
         """Write a field to a file
         
         Arguments:
@@ -58,6 +64,7 @@ class IOHelper(object):
         griddescfile (optional): string; full path to the grid description metadata 
             to add to file written out (if possible). Nothing is added if this is
             set to None
+        fieldname: string; name of the output field to create and write to 
         
         Implementation should print out a notice the file has been written to.
         """
@@ -73,7 +80,8 @@ class TextFileIOHelper(IOHelper):
     
     @classmethod
     def load_field(self, filename,unmask=True,timeslice=None,fieldname=None, 
-                   grid_type='HD',**grid_kwargs):
+                   check_for_grid_info=False,grid_info=None,grid_type='HD',
+                   **grid_kwargs):
         """Load a field from a given text file
         
         Arguments:
@@ -81,8 +89,8 @@ class TextFileIOHelper(IOHelper):
         grid_type: string; keyword specifying the grid type to use
         **grid_kwargs: keyword dictionary; keyword arguments specifying parameter of the
             grid
-        fieldname, timeslice and unmask are not used by this method and included only in 
-            order to match the abstract of method of IOFileHelper
+        fieldname, timeslice, unmask, check_for_grid_info and grid_info are not used by this
+            method and included only in order to match the abstract of method of IOFileHelper
         Returns:
         Field as a numpy array
             
@@ -95,7 +103,7 @@ class TextFileIOHelper(IOHelper):
         return np.loadtxt(filename,np.float64).reshape(grid.get_grid_dimensions())
     
     @classmethod   
-    def write_field(self,filename,field,griddescfile=None):
+    def write_field(self,filename,field,griddescfile=None,fieldname=None):
         """Write a field to a file
         
         Arguments:
@@ -103,6 +111,8 @@ class TextFileIOHelper(IOHelper):
         field: A Field (or Field subclass object); field to write
         griddescfile is not used by this method and included only in 
             order to match the abstract of method of IOFileHelper
+        fieldname is not used by this method and included only in order to match the
+            abstract of method of IOFileHelper
         Returns: nothing
         
         Write a field out such that it could be loaded by the load_field function above
@@ -122,7 +132,8 @@ class NetCDF4FileIOHelper(IOHelper):
 
     @classmethod 
     def load_field(self,filename,unmask=True,timeslice=None,fieldname=None,
-                   grid_type='HD',**grid_kwargs):
+                   check_for_grid_info=False,grid_info=None,grid_type='HD',
+                   **grid_kwargs):
         """Load a field from a given NetCDF4 file
         
         Arguments:
@@ -130,8 +141,13 @@ class NetCDF4FileIOHelper(IOHelper):
         grid_type: string; keyword specifying the grid type to use
         unmask (optional): boolean; flag to specifying whether the field is returned
             with any mask removed (True) or not (False)
-        timeslice (optional): integer, which time slice to choose from file with multiple timeslices
-        fieldname (optional): string, name of field to load from file with multiple fields 
+        timeslice (optional): integer; which time slice to choose from file with multiple timeslices
+        fieldname (optional): string; name of field to load from file with multiple fields 
+        check_for_grid_info: boolean; Search to see if file has grid info and use this
+            to replace grid type specified if found
+        grid_info (optional): grid in a list; can be used to return the grid object wrapped in a list 
+            if one was set by reading latitude and longitude parameters. Not used as input to specify
+            the grid.
         **grid_kwargs: keyword dictionary; keyword arguments specifying parameter of the
             grid
         Returns:
@@ -142,10 +158,35 @@ class NetCDF4FileIOHelper(IOHelper):
         the dimension of the given grid.
         """
 
-        grid = gd.makeGrid(grid_type,**grid_kwargs)
+        if not check_for_grid_info:
+            grid = gd.makeGrid(grid_type,**grid_kwargs)
         print "Reading input from {0}".format(filename)
         with netCDF4.Dataset(filename,mode='r',format='NETCDF4') as dataset:
-            #for now hard code the name as var1
+            if check_for_grid_info:
+                latitudes = None
+                longitudes = None
+                fields = dataset.get_variables_by_attributes(name='lat')
+                if len(fields) == 1:
+                    latitudes = fields[0][:]
+                    for longitude_names in ['lon','long']:
+                        fields = dataset.get_variables_by_attributes(name=longitude_names)
+                        if len(fields) >= 1:
+                            break
+                    if len(fields) == 1:
+                        longitudes = fields[0][:]
+                    elif len(fields) > 1:
+                        raise RuntimeError("File {0} contains"
+                                           " multiple longitude fields".format(filename))
+                elif len(fields) > 1:
+                    raise RuntimeError("File {0} contains"
+                                       " multiple latitude fields".format(filename))
+                if longitudes is not None:
+                    grid = gd.makeGrid('LatLong',nlat=len(latitudes),nlong=len(longitudes))
+                    grid.set_latitude_points(np.asarray(latitudes))
+                    grid.set_longitude_points(np.asarray(longitudes))
+                    grid_info.append(grid)
+                else: 
+                    grid = gd.makeGrid(grid_type,**grid_kwargs)
             fields = None
             if fieldname is None:
                 potential_field_names = ['Topo','topo','field_value','orog','z','ICEM',
@@ -171,7 +212,7 @@ class NetCDF4FileIOHelper(IOHelper):
                 raise RuntimeError('Field not found in file {0}'.format(filename))
             
     @classmethod
-    def write_field(self, filename, field,griddescfile=None):
+    def write_field(self, filename, field,griddescfile=None,fieldname=None):
         """Write a field to a given target NetCDF4 file
         
         Arguments:
@@ -180,10 +221,13 @@ class NetCDF4FileIOHelper(IOHelper):
         griddescfile (optional): string; full path to the grid description metadata 
             to add to file written out. Nothing is added if this is
             set to None
+        fieldname: string; name of the output field to create and write to 
         Returns:nothing
         """
 
         nlat,nlong = field.get_grid().get_grid_dimensions()
+        if fieldname is None:
+            fieldname = 'field_value'
         print "Writing output to {0}".format(filename)
         if griddescfile is not None:
             output_filename=filename
@@ -193,7 +237,7 @@ class NetCDF4FileIOHelper(IOHelper):
             dataset.createDimension("longitude",nlong)
             if field.get_data().dtype == np.bool:
                 field.set_data(field.get_data().astype(np.int64)) 
-            field_values = dataset.createVariable('field_value',field.get_data().dtype,
+            field_values = dataset.createVariable(fieldname,field.get_data().dtype,
                                                   ('latitude','longitude'))
             field_values[:,:] = field.get_data()
         if griddescfile is not None:
@@ -272,15 +316,17 @@ class SciPyFortranFileIOHelper(IOHelper):
    
     @classmethod 
     def load_field(self,filename,unmask=True,timeslice=None,
-                   fieldname=None,grid_type='HD',**grid_kwargs):
+                   fieldname=None,check_for_grid_info=False,
+                   grid_info=None,grid_type='HD',**grid_kwargs):
         """Load a field from a unformatted fortran file using a method from scipy
         
         Arguments:
         filename: string; full path of the file to load
         grid_type: string; keyword specifying what type of grid to use
         **grid_kwargs: keyword dictionary; keyword arguments giving parameters of the grid
-        fieldname, timeslice and unmask are not used by this method and included only in order 
-            to match the abstract of method of IOFileHelper
+        fieldname, timeslice, unmask, check_for_grid_info and grid_info are not used by
+            this method and included only in order to match the abstract of method of
+            IOFileHelper
         Returns:
         A numpy array containing the field
         
@@ -295,7 +341,7 @@ class SciPyFortranFileIOHelper(IOHelper):
             return f.read_record(self.data_type).reshape(grid.get_grid_dimensions())
     
     @classmethod 
-    def write_field(self, filename, field,griddescfile=None):
+    def write_field(self, filename, field,griddescfile=None,fieldname=None):
         """Write a field to an unformatted fortran file using a method from scipy
         
         Arguments:
@@ -303,6 +349,8 @@ class SciPyFortranFileIOHelper(IOHelper):
         field: A Field (or Field subclass object); field to write 
         griddescfile is ignored by this function but included to match the abstract
             function it is overriding
+        fieldname is not used by this method and included only in order to match the
+            abstract of method of IOFileHelper
         """
 
         with scipyio.FortranFile(filename,mode='w') as f: #@UndefinedVariable
@@ -331,15 +379,16 @@ class F2PyFortranFileIOHelper(IOHelper):
     
     @classmethod
     def load_field(self, filename,unmask=True,timeslice=None,
-                   fieldname=None,grid_type='HD',**grid_kwargs):
+                   fieldname=None,check_for_grid_info=False,
+                   grid_info=None,grid_type='HD',**grid_kwargs):
         """Load a field from a unformatted fortran file using f2py
         
         Arguments:
         filename: string; full path of the file to load
         grid_type: string; keyword specifying what type of grid to use
         **grid_kwargs: keyword dictionary; keyword arguments giving parameters of the grid
-        fieldname, timeslice and unmask are not used by this method and included only in 
-            order to match the abstract of method of IOFileHelper
+        fieldname, timeslice, unmask, check_for_grid_info and grid_info are not used by this
+            method and included only in order to match the abstract of method of IOFileHelper
         Returns:
         A numpy array containing the field
         
@@ -358,7 +407,7 @@ class F2PyFortranFileIOHelper(IOHelper):
         return np.fliplr(np.rot90(data,k=3))
     
     @classmethod
-    def write_field(self, filename, field,griddescfile=None):
+    def write_field(self, filename, field,griddescfile=None,fieldname=None):
         """Write a field to an unformatted fortran file using f2py
         
         Arguments:
@@ -366,6 +415,8 @@ class F2PyFortranFileIOHelper(IOHelper):
         field: A Field (or Field subclass object); field to write  
         griddescfile is ignored by this function but included to match the abstract
             function it is overriding
+        fieldname is not used by this method and included only in order to match the
+            abstract of method of IOFileHelper
        
         Writes a field using a specifically written fortran routine through f2py controlled 
         by a f2py_manager instance. The manipulation applied to the field in the load field
