@@ -18,3 +18,4 @@ fortran_project_object_path = os.path.join(workspace_dir,"Dynamic_HD_Fortran_Cod
 fortran_project_include_path = os.path.join(workspace_dir,"Dynamic_HD_Fortran_Code","Release")
 fortran_project_executable_path = os.path.join(workspace_dir,"Dynamic_HD_Fortran_Code","Release","Dynamic_HD_Fortran_Exec")
 bash_scripts_path = os.path.join(workspace_dir,"Dynamic_HD_bash_scripts")
+private_bash_scripts_path = os.path.join(bash_scripts_path, "parameter_generation_scripts")

@@ -310,7 +310,7 @@ fi
 #Compile fortran code used called shell script wrappers
 if $compilation_required; then
 	echo "Compiling Fortran code called from shell script wrappers"
-	${source_directory}/Dynamic_HD_bash_scripts/compile_paragen_and_hdfile.sh ${source_directory}/Dynamic_HD_bash_scripts/bin ${source_directory}/Dynamic_HD_bash_scripts/fortran ${source_directory}/Dynamic_HD_bash_scripts/fortran/paragen.f paragen
+	${source_directory}/Dynamic_HD_bash_scripts/compile_paragen_and_hdfile.sh ${source_directory}/Dynamic_HD_bash_scripts/bin ${source_directory}/Dynamic_HD_bash_scripts/parameter_generation_scripts/fortran ${source_directory}/Dynamic_HD_bash_scripts/parameter_generation_scripts/fortran/paragen.f paragen
 fi 
 
 #Run

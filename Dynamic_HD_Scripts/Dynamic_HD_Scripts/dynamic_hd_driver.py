@@ -20,6 +20,7 @@ import grid
 import river_mouth_marking_driver
 import create_connected_lsmask_driver as cc_lsmask_driver
 from context import bash_scripts_path
+from context import private_bash_scripts_path
 import shutil
 import cotat_plus_driver
 import loop_breaker_driver
@@ -239,7 +240,7 @@ class Dynamic_HD_Drivers(object):
         if path.splitext(output_file)[1] != '.nc':
             raise UserWarning("Output filename doesn't have a netCDF extension as expected")
         try:
-            print subprocess.check_output([path.join(bash_scripts_path,
+            print subprocess.check_output([path.join(private_bash_scripts_path,
                                                      "generate_output_file.sh"),
                                            path.join(bash_scripts_path,
                                                      "bin"),
@@ -314,7 +315,7 @@ class Dynamic_HD_Drivers(object):
         if path.splitext(orography_variance_file)[1] != '.dat':
             self._convert_data_file_type(orography_variance_file,'.dat','HD')
         try:
-            print subprocess.check_output([path.join(bash_scripts_path,
+            print subprocess.check_output([path.join(private_bash_scripts_path,
                                                      "parameter_generation_driver.sh"),
                                            path.join(bash_scripts_path,
                                                      "bin"),
@@ -350,9 +351,9 @@ class Dynamic_HD_Drivers(object):
                                                      "compile_paragen_and_hdfile.sh"),
                                            path.join(bash_scripts_path,
                                                      "bin"),
-                                           path.join(bash_scripts_path,
+                                           path.join(private_bash_scripts_path,
                                                      "fortran"),
-                                           path.join(bash_scripts_path,"fortran",
+                                           path.join(private_bash_scripts_path,"fortran",
                                                      "paragen.f"),"paragen"])
         except CalledProcessError as cperror:
             raise RuntimeError("Failure in called process {0}; return code {1}; output:\n{2}".format(cperror.cmd,
