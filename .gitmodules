@@ -1,0 +1,3 @@
+[submodule "Dynamic_HD_bash_scripts/parameter_generation_scripts"]
+	path = Dynamic_HD_bash_scripts/parameter_generation_scripts
+	url = /Users/thomasriddick/Documents/parameter_generation_scripts.git
