@@ -56,6 +56,12 @@ cd Dynamic_HD_Code
 git checkout release_version_2.4
 cd ..
 \end{lstlisting}
+\item Download the parameter generation scripts (which are a separate submodule that is nested inside the dynamic HD code). 
+\begin{lstlisting}[style=bash_input,breaklines=true]
+cd Dynamic_HD_Code/Dynamic_HD_bash_scripts
+git clone git+ssh://dattel.mpimet.mpg.de/home/mpim/m300468/workspace/Dynamic_HD_Code/Dynamic_HD_bash_scripts/parameter_generation_scripts
+cd ../..
+\end{lstlisting}
 \item Retrieve the necessary ancillary data from my home area. (Replacing \lstinline[style=bash_input]{m300468@dattel} with your own machine and user name.)
 \begin{lstlisting}[style=bash_input,breaklines=true]
 scp -r m300468@dattel.mpimet.mpg.de:/home/mpim/m300468/HDancillarydata .
