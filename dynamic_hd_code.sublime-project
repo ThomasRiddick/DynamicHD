@@ -1,0 +1,19 @@
+{
+	"folders":
+	[
+		{
+			"folder_exclude_patterns":
+			[
+				"Dynamic_HD_Cpp_Code/Release",
+				"Dynamic_HD_Cpp_Code/html",
+				"Dynamic_HD_Fortran_Code/Release",
+				"Dynamic_HD_Cpp_Code/latex",
+				"Dynamic_HD_bash_scripts/bin",
+				"Dynamic_HD_Scripts/Dynamic_HD_Scripts/libs",
+				"Dynamic_HD_Scripts/Dynamic_HD_Scripts/build",
+				"Dynamic_HD_Scripts/Dynamic_HD_Scripts/bin"
+			],
+			"path": "."
+		}
+	]
+}
