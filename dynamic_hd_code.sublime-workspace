@@ -7,18 +7,82 @@
 	},
 	"buffers":
 	[
+		{
+			"file": "/Users/thomasriddick/Library/Application Support/Sublime Text 3/Packages/User/Soda Light 3.sublime-theme",
+			"settings":
+			{
+				"buffer_size": 144,
+				"line_ending": "Unix"
+			}
+		}
 	],
-	"build_system": "",
+	"build_system": "Packages/Makefile/Make.sublime-build",
 	"build_system_choices":
 	[
+		[
+			[
+				[
+					"Packages/C++/C++ Single File.sublime-build",
+					""
+				],
+				[
+					"Packages/C++/C++ Single File.sublime-build",
+					"Run"
+				],
+				[
+					"Packages/C++ Starting Kit/C++ - Starting Kit.sublime-build",
+					""
+				],
+				[
+					"Packages/C++ Starting Kit/C++ - Starting Kit.sublime-build",
+					"Run"
+				]
+			],
+			[
+				"Packages/C++ Starting Kit/C++ - Starting Kit.sublime-build",
+				""
+			]
+		],
+		[
+			[
+				[
+					"Packages/Makefile/Make.sublime-build",
+					""
+				],
+				[
+					"Packages/Makefile/Make.sublime-build",
+					"Clean"
+				]
+			],
+			[
+				"Packages/Makefile/Make.sublime-build",
+				""
+			]
+		]
 	],
 	"build_varint": "",
 	"command_palette":
 	{
-		"height": 400.0,
-		"last_filter": "packg",
+		"height": 375.0,
+		"last_filter": ":w",
 		"selected_items":
 		[
+			[
+				":w",
+				":w - Save"
+			],
+			[
+				"git stat",
+				"Git: Status"
+			],
+			[
+				"git: ",
+				"Git: Commit"
+			],
+			[
+				"git: status",
+				"Git: Status"
+			],
 			[
 				"packg",
 				"Package Control: Remove Package"
@@ -42,10 +106,6 @@
 			[
 				"ins",
 				"Package Control: Install Package"
-			],
-			[
-				"git stat",
-				"Git: Status"
 			],
 			[
 				"git status",
@@ -76,15 +136,11 @@
 				"Package Control: Install Package"
 			],
 			[
-				":w",
-				":w - Save"
-			],
-			[
 				"insta",
 				"Install Package Control"
 			]
 		],
-		"width": 448.0
+		"width": 674.0
 	},
 	"console":
 	{
@@ -105,12 +161,33 @@
 	"expanded_folders":
 	[
 		"/Users/thomasriddick/Documents/workspace/Dynamic_HD_Code",
-		"/Users/thomasriddick/Documents/workspace/Dynamic_HD_Code/Dynamic_HD_bash_scripts",
-		"/Users/thomasriddick/Documents/workspace/Dynamic_HD_Code/Dynamic_HD_Environmental_Settings"
+		"/Users/thomasriddick/Documents/workspace/Dynamic_HD_Code/Dynamic_HD_Cpp_Code",
+		"/Users/thomasriddick/Documents/workspace/Dynamic_HD_Code/Dynamic_HD_Cpp_Code/include",
+		"/Users/thomasriddick/Documents/workspace/Dynamic_HD_Code/Dynamic_HD_Cpp_Code/include/gtest",
+		"/Users/thomasriddick/Documents/workspace/Dynamic_HD_Code/Dynamic_HD_Cpp_Code/include/gtest/internal",
+		"/Users/thomasriddick/Documents/workspace/Dynamic_HD_Code/Dynamic_HD_Cpp_Code/include/gtest/internal/custom",
+		"/Users/thomasriddick/Documents/workspace/Dynamic_HD_Code/Dynamic_HD_Cpp_Code/src",
+		"/Users/thomasriddick/Documents/workspace/Dynamic_HD_Code/Dynamic_HD_Cpp_Code/src/gtest",
+		"/Users/thomasriddick/Documents/workspace/Dynamic_HD_Code/Dynamic_HD_Fortran_Code",
+		"/Users/thomasriddick/Documents/workspace/Dynamic_HD_Code/Dynamic_HD_Fortran_Code/src",
+		"/Users/thomasriddick/Documents/workspace/Dynamic_HD_Code/Dynamic_HD_Scripts",
+		"/Users/thomasriddick/Documents/workspace/Dynamic_HD_Code/Dynamic_HD_Scripts/Dynamic_HD_Script_Tests",
+		"/Users/thomasriddick/Documents/workspace/Dynamic_HD_Code/Dynamic_HD_Scripts/Dynamic_HD_Scripts",
+		"/Users/thomasriddick/Documents/workspace/Dynamic_HD_Code/Dynamic_HD_Scripts/Dynamic_HD_Scripts/fortran",
+		"/Users/thomasriddick/Documents/workspace/Dynamic_HD_Code/Dynamic_HD_Scripts/HD_Plots"
 	],
 	"file_history":
 	[
+		"/Users/thomasriddick/Library/Application Support/Sublime Text 3/Packages/User/Soda Light 3.sublime-theme",
+		"/Users/thomasriddick/Documents/workspace/Dynamic_HD_Code/Dynamic_HD_Cpp_Code/src/test_fill_sinks.cpp",
+		"/Users/thomasriddick/Library/Application Support/Sublime Text 3/Packages/SideBarEnhancements/Side Bar.sublime-settings",
+		"/Users/thomasriddick/Documents/workspace/Dynamic_HD_Code/Dynamic_HD_Fortran_Code/makefile",
+		"/Users/thomasriddick/Documents/workspace/Dynamic_HD_Code/dynamic_hd_code.sublime-project",
+		"/Users/thomasriddick/Documents/workspace/Dynamic_HD_Code/Dynamic_HD_Fortran_Code/src/cotat_plus_driver_mod.f90",
 		"/Users/thomasriddick/Documents/workspace/Dynamic_HD_Code/Dynamic_HD_bash_scripts/generate_weights.sh",
+		"/Users/thomasriddick/Documents/workspace/Dynamic_HD_Code/Dynamic_HD_bash_scripts/.buildpath",
+		"/Users/thomasriddick/Library/Application Support/Sublime Text 3/Packages/Git/Git.sublime-settings",
+		"/Users/thomasriddick/Library/Application Support/Sublime Text 3/Packages/User/Side Bar.sublime-settings",
 		"/Users/thomasriddick/Documents/workspace/Dynamic_HD_Code/Dynamic_HD_Cpp_Code/src/carved_river_direction_burning_algorithm.cpp",
 		"/Users/thomasriddick/Library/Application Support/Sublime Text 3/Packages/SublimeGit/Default (OSX).sublime-keymap",
 		"/Users/thomasriddick/Library/Application Support/Sublime Text 3/Packages/User/Preferences.sublime-settings",
@@ -150,18 +227,51 @@
 	"groups":
 	[
 		{
+			"selected": 0,
 			"sheets":
 			[
+				{
+					"buffer": 0,
+					"file": "/Users/thomasriddick/Library/Application Support/Sublime Text 3/Packages/User/Soda Light 3.sublime-theme",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 144,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								140,
+								140
+							]
+						],
+						"settings":
+						{
+							"git_gutter_is_enabled": false,
+							"syntax": "Packages/JavaScript/JSON.sublime-syntax",
+							"tabs_extra_last_activated": 1520800113.99,
+							"tabs_extra_last_activated_sheet_index": 0,
+							"tabs_extra_spawned": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				}
 			]
 		}
 	],
 	"incremental_find":
 	{
-		"height": 25.0
+		"height": 33.0
 	},
 	"input":
 	{
-		"height": 0.0
+		"height": 37.0
 	},
 	"layout":
 	{
@@ -190,15 +300,23 @@
 	{
 		"height": 0.0
 	},
+	"output.exec":
+	{
+		"height": 205.0
+	},
 	"output.find_results":
 	{
 		"height": 0.0
+	},
+	"output.git":
+	{
+		"height": 110.0
 	},
 	"pinned_build_system": "",
 	"project": "dynamic_hd_code.sublime-project",
 	"replace":
 	{
-		"height": 46.0
+		"height": 62.0
 	},
 	"save_all_on_build": true,
 	"select_file":
@@ -236,7 +354,7 @@
 	"show_open_files": true,
 	"show_tabs": true,
 	"side_bar_visible": true,
-	"side_bar_width": 150.0,
+	"side_bar_width": 343.0,
 	"status_bar_visible": true,
 	"template_settings":
 	{
