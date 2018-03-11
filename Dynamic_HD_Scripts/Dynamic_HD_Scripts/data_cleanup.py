@@ -24,6 +24,18 @@ directories_to_clean_with_full_path = [os.path.join(data_dir, directory) for
                                        directory in directories_to_clean] 
 
 def prepare_data_cleanup():
+    """Prepare to cleanup data by moving all unreference files to a specified folder
+    
+    Arguments:None
+    Returns: Nothing
+    Scan through the dynamic hd code and find all timestamps (including those split over
+    two lines) and then moves all files that don't have one of those timestamps to a 
+    specified folder in order to earmark them for deletion after a final manual check has
+    been made that all the files that are still wanted are still in place. Copies the
+    internal directory structure of the data directory in the deletion directory so the 
+    files could be correctly restored to their originally locations if necessary
+    """
+
     creation_times_to_save = []
     files_to_delete_directory = os.path.join(data_dir,"files_to_delete") 
     try:

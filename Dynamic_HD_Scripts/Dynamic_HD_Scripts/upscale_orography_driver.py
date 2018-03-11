@@ -11,6 +11,7 @@ import field
 import libs.upscale_orography_wrapper as upscale_orography_wrapper  #@UnresolvedImport
 import configparser
 import gc
+import iodriver
 
 def drive_orography_upscaling(input_fine_orography_file,output_course_orography_file,
                               landsea_file=None,true_sinks_file=None,
@@ -111,6 +112,79 @@ def drive_orography_upscaling(input_fine_orography_file,output_course_orography_
                                                 tarasov_include_corners_in_same_edge_criteria_in)
     dynamic_hd.write_field(output_course_orography_file,output_orography,
                            file_type=get_file_extension(output_course_orography_file))
+    
+def advanced_drive_orography_upscaling(input_fine_orography_file,output_course_orography_file,
+                                       input_orography_fieldname,output_course_orography_fieldname,
+                                       landsea_file=None,
+                                       true_sinks_file=None,landsea_fieldname=None,
+                                       true_sinks_fieldname=None,
+                                       upscaling_parameters_filename=None,
+                                       scaling_factor=3):
+    if upscaling_parameters_filename:
+        config = read_and_validate_config(upscaling_parameters_filename)
+        method = config.getint("orography_upscaling_parameters","method")
+        add_slope_in = config.getboolean("orography_upscaling_parameters","add_slope_in")
+        epsilon_in = config.getfloat("orography_upscaling_parameters","epsilon_in")
+        tarasov_separation_threshold_for_returning_to_same_edge_in =\
+            config.getint("orography_upscaling_parameters",
+                          "tarasov_separation_threshold_for_returning_to_same_edge_in")
+        tarasov_min_path_length_in = config.getfloat("orography_upscaling_parameters",
+                                                     "tarasov_min_path_length_in")
+        tarasov_include_corners_in_same_edge_criteria_in = \
+            config.getboolean("orography_upscaling_parameters",
+                              "tarasov_include_corners_in_same_edge_criteria_in")
+    else:
+        #use defaults
+        method = 1
+        add_slope_in = False
+        epsilon_in = 0.1
+        tarasov_separation_threshold_for_returning_to_same_edge_in = 5
+        tarasov_min_path_length_in = 2.0
+        tarasov_include_corners_in_same_edge_criteria_in = False
+    input_orography = iodriver.advanced_field_loader(input_fine_orography_file, 
+                                                     field_type='Orography',
+                                                     fieldname=input_orography_fieldname)
+    nlat_fine,nlon_fine = input_orography.get_grid_dimensions()
+    lat_pts_fine,lon_pts_fine = input_orography.get_grid_coordinates() 
+    nlat_course = scaling_factor*nlat_fine
+    nlon_course = scaling_factor*nlon_fine
+    lat_pts_course = scaling_factor*lat_pts_fine
+    lon_pts_course = scaling_factor*lon_pts_fine
+    output_orography = field.makeEmptyField(field_type='Orography',dtype=np.float64,
+                                            grid_type='LatLong',nlat=nlat_course,
+                                            nlong=nlon_course)
+    output_orography.set_grid_coordinates([lat_pts_course,lon_pts_course])
+    if landsea_file:
+        landsea_mask = iodriver.advanced_field_loader(landsea_file,
+                                                      field_type='Generic',
+                                                      fieldname=landsea_fieldname)
+    else:
+        landsea_mask = field.makeEmptyField(field_type='Generic',dtype=np.int32,
+                                            grid_type='LatLong',nlat=nlat_fine,
+                                            nlong=nlon_fine)
+    if true_sinks_file:
+        true_sinks = iodriver.advanced_field_loader(true_sinks_file,
+                                                    field_type='Generic',
+                                                    fieldname=true_sinks_fieldname)
+    else:
+        true_sinks = field.makeEmptyField(field_type='Generic',dtype=np.int32,
+                                          grid_type='LatLong',nlat=nlat_fine,
+                                          nlong=nlon_fine) 
+    if not np.issubdtype(input_orography.get_data().dtype,np.float64()):
+        input_orography.change_dtype(np.float64)
+        #Make sure old data type array is flushed out of memory immediately
+        gc.collect()
+    upscale_orography_wrapper.upscale_orography(orography_in=input_orography.get_data(),
+                                                orography_out=output_orography.get_data(),
+                                                method=method,landsea_in=landsea_mask.get_data(),
+                                                true_sinks_in=true_sinks.get_data(),
+                                                add_slope_in=add_slope_in, epsilon_in=epsilon_in,
+                                                tarasov_separation_threshold_for_returning_to_same_edge_in=\
+                                                tarasov_separation_threshold_for_returning_to_same_edge_in,
+                                                tarasov_min_path_length_in=tarasov_min_path_length_in,
+                                                tarasov_include_corners_in_same_edge_criteria_in=\
+                                                tarasov_include_corners_in_same_edge_criteria_in)
+    iodriver.advanced_field_writer(output_course_orography_file,output_orography)
     
 def read_and_validate_config(upscaling_parameters_filename):
     """Reads and checks format of config file

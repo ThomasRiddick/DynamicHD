@@ -12,6 +12,55 @@ import field
 import dynamic_hd
 import libs.create_connected_lsmask_wrapper as cc_lsmask_wrapper #@UnresolvedImport
 import re
+import iodriver
+
+def advanced_connected_lsmask_creation_driver(input_lsmask_filename,
+                                              output_lsmask_filename,
+                                              input_lsmask_fieldname,
+                                              output_lsmask_fieldname,
+                                              input_ls_seed_points_filename=None,
+                                              input_ls_seed_points_fieldname=None,
+                                              input_ls_seed_points_list_filename = None,
+                                              use_diagonals_in=True,
+                                              rotate_seeds_about_polar_axis=False,
+                                              flip_seeds_ud=False):
+    lsmask = iodriver.advanced_field_loader(input_lsmask_filename, 
+                                            field_type='Generic',
+                                            fieldname=input_lsmask_fieldname)
+    if input_ls_seed_points_filename:
+        input_ls_seedpts = iodriver.advanced_field_loader(input_ls_seed_points_filename,
+                                                          field_type='Generic',
+                                                          fieldname=\
+                                                          input_ls_seed_points_fieldname,
+                                                          adjust_orientation=False)
+    else: 
+        input_ls_seedpts = field.makeEmptyField('Generic',np.int32)
+    if input_ls_seed_points_list_filename:
+        points_list = []
+        print "Reading input from {0}".format(input_ls_seed_points_list_filename)
+        comment_line_pattern = re.compile(r"^ *#.*$")
+        with open(input_ls_seed_points_list_filename) as f:
+            if f.readline().strip() != 'LatLong':
+                raise RuntimeError("List of landsea points being loaded is not for correct grid-type")
+            for line in f:
+                if comment_line_pattern.match(line):
+                    continue
+                points_list.append(tuple(int(coord) for coord in line.strip().split(",")))
+        input_ls_seedpts.flag_listed_points(points_list)
+    if rotate_seeds_about_polar_axis:
+        input_ls_seedpts.rotate_field_by_a_hundred_and_eighty_degrees()
+    if flip_seeds_ud:
+        input_ls_seedpts.flip_data_ud()
+    if input_ls_seedpts.get_grid().has_orientation_information():
+        input_ls_seedpts.orient_data()
+    lsmask.change_dtype(np.int32)
+    cc_lsmask_wrapper.create_connected_ls_mask(lsmask.get_data(),
+                                               input_ls_seedpts.get_data().astype(dtype=np.int32,
+                                                                                  order='C',
+                                                                                  copy=False),
+                                               use_diagonals_in)
+    iodriver.advanced_field_loader(output_lsmask_filename,lsmask,
+                                   fieldname=output_lsmask_fieldname)
 
 def drive_connected_lsmask_creation(input_lsmask_filename,
                                     output_lsmask_filename,

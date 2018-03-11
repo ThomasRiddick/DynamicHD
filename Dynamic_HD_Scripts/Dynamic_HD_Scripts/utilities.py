@@ -15,6 +15,7 @@ import copy
 import netCDF4
 import shutil
 import cdo
+import iodriver
 from context import fortran_source_path
 from Dynamic_HD_Scripts.field import makeField
 
@@ -83,11 +84,60 @@ def replace_corrected_orography_with_original_for_glaciated_grid_points_drivers(
                            field=output_orography,
                            file_type=dynamic_hd.\
                            get_file_extension(out_orography_file))
+    
+    
+def advanced_replace_corrected_orog_with_orig_for_glcted_grid_points_drivers(input_corrected_orography_file,
+                                                                             input_original_orography_file,
+                                                                             input_glacier_mask_file,
+                                                                             out_orography_file,
+                                                                             input_corrected_orography_fieldname,
+                                                                             input_original_orography_fieldname,
+                                                                             input_glacier_mask_fieldname,
+                                                                             out_orography_fieldname):
+    input_corrected_orography = iodriver.advanced_field_loader(input_corrected_orography_file,
+                                                               field_type='Orography',
+                                                               fieldname=\
+                                                               input_corrected_orography_fieldname)
+    input_original_orography = dynamic_hd.load_field(input_original_orography_file,
+                                                     field_type='Orography',
+                                                     fieldname=\
+                                                     input_original_orography_fieldname)
+    input_glacier_mask = dynamic_hd.load_field(input_glacier_mask_file,
+                                               field_type='Orography',
+                                               fieldname=\
+                                               input_glacier_mask_fieldname)
+    output_orography = replace_corrected_orography_with_original_for_glaciated_grid_points(input_corrected_orography, 
+                                                                                           input_original_orography, 
+                                                                                           input_glacier_mask)
+    dynamic_hd.write_field(filename=out_orography_file,
+                           field=output_orography,
+                           fieldname=out_orography_fieldname)
+
+def merge_corrected_and_tarasov_upscaled_orography_main_routine(corrected_orography_field,
+                                                                tarasov_upscaled_orography_field,
+                                                                use_upscaled_orography_only_in_region=None,
+                                                                grid_type='HD'):
+    corrected_orography_field.mask_where_greater_than(tarasov_upscaled_orography_field)
+    tarasov_upscaled_orography_field.update_field_with_partially_masked_data(corrected_orography_field)
+    if use_upscaled_orography_only_in_region is not None:
+        _grid = grid.makeGrid(grid_type)
+        not_in_region_mask = np.zeros(_grid.get_grid_dimensions(),dtype=np.bool_)
+        if use_upscaled_orography_only_in_region == "North America":
+            if grid_type == 'LatLong10min': 
+                not_in_region_mask[620:1080,1296:1925] = True
+                not_in_region_mask[572:620, 1296:1682] = True 
+            else:
+                raise RuntimeError('Not definition for specified region on specified grid type')
+        else:
+            raise RuntimeError("Specified region not recognised by merging orographies")
+        corrected_orography_field.mask_field_with_external_mask(not_in_region_mask)
+        tarasov_upscaled_orography_field.update_field_with_partially_masked_data(corrected_orography_field)
+    return tarasov_upscaled_orography_field
 
 def merge_corrected_and_tarasov_upscaled_orography(input_corrected_orography_file,
                                                    input_tarasov_upscaled_orography_file,
                                                    output_merged_orography_file,
-                                                   use_upscaled_orogrography_only_in_region=None,
+                                                   use_upscaled_orography_only_in_region=None,
                                                    grid_type='HD',**grid_kwargs):
     """Merge a normal corrected orography with a tarasov upscaled orography
     
@@ -96,7 +146,7 @@ def merge_corrected_and_tarasov_upscaled_orography(input_corrected_orography_fil
     input_tarasov_upscaled_orography_file: string; Full path to the tarasov upscaled orography
         file
     output_merged_orography_file: string; Full path to the target merged output orography file 
-    use_upscaled_orogrography_only_in_region: string; Either None (in which case the upscaled
+    use_upscaled_orography_only_in_region: string; Either None (in which case the upscaled
         orography is used everywhere) or the name of a region (see below in fuction for region
         names and definitions) in which to use the upscaled orography in combination with the 
         corrected orography; outside of this the upscaled orography is not used and only the
@@ -115,25 +165,43 @@ def merge_corrected_and_tarasov_upscaled_orography(input_corrected_orography_fil
                                                              field_type='Orography',
                                                              unmask=True,grid_type=grid_type,
                                                              **grid_kwargs)
-    corrected_orography_field.mask_where_greater_than(tarasov_upscaled_orography_field)
-    tarasov_upscaled_orography_field.update_field_with_partially_masked_data(corrected_orography_field)
-    if use_upscaled_orogrography_only_in_region is not None:
-        _grid = grid.makeGrid(grid_type)
-        not_in_region_mask = np.zeros(_grid.get_grid_dimensions(),dtype=np.bool_)
-        if use_upscaled_orogrography_only_in_region == "North America":
-            if grid_type == 'LatLong10min': 
-                not_in_region_mask[620:1080,1296:1925] = True
-                not_in_region_mask[572:620, 1296:1682] = True 
-            else:
-                raise RuntimeError('Not definition for specified region on specified grid type')
-        else:
-            raise RuntimeError("Specified region not recognised by merging orographies")
-        corrected_orography_field.mask_field_with_external_mask(not_in_region_mask)
-        tarasov_upscaled_orography_field.update_field_with_partially_masked_data(corrected_orography_field)
+    tarasov_upscaled_orography_field =\
+    merge_corrected_and_tarasov_upscaled_orography_main_routine(corrected_orography_field,
+                                                                tarasov_upscaled_orography_field,
+                                                                use_upscaled_orography_only_in_region,
+                                                                grid_type)
     dynamic_hd.write_field(output_merged_orography_file,
                            tarasov_upscaled_orography_field,
                            file_type=dynamic_hd.get_file_extension(output_merged_orography_file),
                            griddescfile=None)
+    
+def advanced_merge_corrected_and_tarasov_upscaled_orography(input_corrected_orography_file,
+                                                            input_tarasov_upscaled_orography_file,
+                                                            output_merged_orography_file,
+                                                            input_corrected_orography_fieldname,
+                                                            input_tarasov_upscaled_orography_fieldname,
+                                                            output_merged_orography_fieldname,
+                                                            use_upscaled_orography_only_in_region=None):
+
+    corrected_orography_field = iodriver.advanced_field_loader(input_corrected_orography_file,
+                                                               field_type='Orography',
+                                                               fieldname=input_corrected_orography_fieldname)
+    tarasov_upscaled_orography_field = dynamic_hd.load_field(input_tarasov_upscaled_orography_file,
+                                                             field_type='Orography',
+                                                             fieldname=input_tarasov_upscaled_orography_fieldname)
+    nlat,nlon = corrected_orography_field.get_grid_dimensions()
+    if nlat == 1080 and nlon == 2160:
+        grid_type="LatLong10min"
+    else:
+        grid_type=None
+    tarasov_upscaled_orography_field =\
+    merge_corrected_and_tarasov_upscaled_orography_main_routine(corrected_orography_field,
+                                                                tarasov_upscaled_orography_field,
+                                                                use_upscaled_orography_only_in_region,
+                                                                grid_type)
+    dynamic_hd.write_field(output_merged_orography_file,
+                           tarasov_upscaled_orography_field,
+                           fieldname=output_merged_orography_fieldname)
 
 def prepare_hdrestart_field(input_field,resnum_riv_field,ref_resnum_field,is_river_res_field=True):
     """Create a hd restart reservoir content field by adapting an existing hd restart field
@@ -418,6 +486,26 @@ def generate_orog_correction_field(original_orography_filename,
                            corrected_orography_field, 
                            file_type=dynamic_hd.get_file_extension(orography_corrections_filename))
     
+def advanced_orog_correction_field_generator(original_orography_filename,
+                                             corrected_orography_filename,
+                                             orography_corrections_filename,
+                                             original_orography_fieldname,
+                                             corrected_orography_fieldname,
+                                             orography_corrections_fieldname):
+    
+    original_orography_field = iodriver.advanced_field_loader(original_orography_filename, 
+                                                              field_type='Orography',
+                                                              fieldname=\
+                                                              original_orography_fieldname)
+    corrected_orography_field = iodriver.advanced_field_loader(corrected_orography_filename, 
+                                                               field_type='Orography',
+                                                               fieldname=\
+                                                               corrected_orography_fieldname) 
+    corrected_orography_field.subtract(original_orography_field)
+    iodriver.advanced_field_writer(orography_corrections_filename, 
+                                   corrected_orography_field, 
+                                   fieldname=orography_corrections_fieldname)
+    
 def apply_orog_correction_field(original_orography_filename,
                                 orography_corrections_filename,
                                 corrected_orography_filename,
@@ -451,6 +539,24 @@ def apply_orog_correction_field(original_orography_filename,
                            original_orography_field,
                            file_type=dynamic_hd.\
                            get_file_extension(corrected_orography_filename))
+    
+def advanced_apply_orog_correction_field(original_orography_filename,
+                                         orography_corrections_filename,
+                                         corrected_orography_filename,
+                                         original_orography_fieldname=None,
+                                         orography_corrections_fieldname=None,
+                                         corrected_orography_fieldname=None):
+    original_orography_field = iodriver.advanced_field_loader(original_orography_filename, 
+                                                              field_type='Orography',
+                                                              fieldname=original_orography_fieldname)
+    orography_corrections_field = iodriver.advanced_field_loader(orography_corrections_filename, 
+                                                                 field_type='Orography',
+                                                                 fieldname=\
+                                                                 orography_corrections_fieldname)
+    original_orography_field.add(orography_corrections_field)
+    dynamic_hd.write_field(corrected_orography_filename,
+                           original_orography_field,
+                           fieldname=corrected_orography_fieldname)
 
 def generate_ls_mask(orography_filename,ls_mask_filename,sea_level=0.0,
                      grid_type='HD',**grid_kwargs):
@@ -1330,3 +1436,27 @@ def rebase_orography_driver(orography_filename,present_day_base_orography_filena
     dynamic_hd.write_field(rebased_orography_filename,
                            field=rebased_orography,
                            file_type=dynamic_hd.get_file_extension(rebased_orography_filename))
+    
+def advanced_rebase_orography_driver(orography_filename,present_day_base_orography_filename,
+                                     present_day_reference_orography_filename,
+                                     rebased_orography_filename,orography_fieldname,
+                                     present_day_base_orography_fieldname,
+                                     present_day_reference_orography_fieldname,
+                                     rebased_orography_fieldname):
+    orography = iodriver.advanced_field_loader(orography_filename,
+                                               field_type="Orography", unmask=True,
+                                               fieldname=orography_fieldname)
+    present_day_base_orography = iodriver.advanced_field_loader(present_day_base_orography_filename,
+                                                                field_type="Orography", unmask=True,
+                                                                fieldname=\
+                                                                present_day_base_orography_fieldname)
+    present_day_reference_orography = iodriver.\
+        advanced_field_loader(present_day_reference_orography_filename,
+                              field_type="Orography", unmask=True,
+                              fieldname=\
+                              present_day_reference_orography_fieldname)
+    rebased_orography = rebase_orography(orography, present_day_base_orography, present_day_reference_orography)
+    iodriver.advanced_field_writer(rebased_orography_filename,
+                                   field=rebased_orography,
+                                   file_type=dynamic_hd.get_file_extension(rebased_orography_filename),
+                                   fieldname=rebased_orography_fieldname)

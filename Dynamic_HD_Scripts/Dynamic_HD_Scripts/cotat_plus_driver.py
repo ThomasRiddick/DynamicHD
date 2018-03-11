@@ -13,6 +13,7 @@ import field
 import numpy as np
 import grid
 import dynamic_hd
+import iodriver
 
 def run_cotat_plus(fine_rdirs_field,fine_total_cumulative_flow_field,cotat_plus_parameters_filepath,
                    course_grid_type,**course_grid_kwargs):
@@ -91,3 +92,30 @@ def cotat_plus_driver(input_fine_rdirs_filepath,input_fine_total_cumulative_flow
     dynamic_hd.write_field(output_course_rdirs_filepath, course_rdirs_field,
                            file_type=dynamic_hd.\
                            get_file_extension(output_course_rdirs_filepath))
+    
+def advanced_cotat_plus_driver(input_fine_rdirs_filepath,input_fine_total_cumulative_flow_path,
+                               output_course_rdirs_filepath, input_fine_rdirs_fieldname,
+                               input_fine_total_cumulative_flow_fieldname,
+                               output_course_rdirs_fieldname, 
+                               cotat_plus_parameters_filepath,scaling_factor):
+    
+    fine_rdirs_field = iodriver.advanced_field_loader(input_fine_rdirs_filepath, 
+                                                      field_type='RiverDirections',
+                                                      fieldname=input_fine_rdirs_fieldname)
+    fine_total_cumulative_flow_field =\
+        iodriver.advanced_field_loader(input_fine_total_cumulative_flow_path,
+                                       field_type='CumulativeFlow',
+                                       fieldname=input_fine_total_cumulative_flow_fieldname)
+    nlat_fine,nlon_fine = fine_rdirs_field.get_grid_dimensions()
+    lat_pts_fine,lon_pts_fine = fine_rdirs_field.get_grid_coordinates() 
+    nlat_course = scaling_factor*nlat_fine
+    nlon_course = scaling_factor*nlon_fine
+    lat_pts_course = scaling_factor*lat_pts_fine
+    lon_pts_course = scaling_factor*lon_pts_fine
+    course_rdirs_field = run_cotat_plus(fine_rdirs_field, fine_total_cumulative_flow_field, 
+                                        cotat_plus_parameters_filepath,
+                                        course_grid_type="LatLong",nlat=nlat_course,
+                                        nlong=nlon_course)
+    course_rdirs_field.set_grid_coordinates([lat_pts_course,lon_pts_course])
+    iodriver.advanced_field_writer(output_course_rdirs_filepath, course_rdirs_field,
+                                   fieldname=output_course_rdirs_fieldname)

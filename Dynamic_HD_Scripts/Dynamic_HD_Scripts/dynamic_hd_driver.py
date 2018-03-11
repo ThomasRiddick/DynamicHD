@@ -1873,7 +1873,7 @@ class ICE5G_Data_Drivers(Dynamic_HD_Drivers):
                                                                  original_tarasov_upscaled_orography_flipped_ud_filename,
                                                                  output_merged_orography_file=\
                                                                  third_intermediary_orography_filename,
-                                                                 use_upscaled_orogrography_only_in_region="North America",
+                                                                 use_upscaled_orography_only_in_region="North America",
                                                                  grid_type='LatLong10min')
         self._correct_orography(input_orography_filename=third_intermediary_orography_filename, 
                                 input_corrections_list_filename=\
@@ -1993,7 +1993,7 @@ class ICE5G_Data_Drivers(Dynamic_HD_Drivers):
                                                                  original_tarasov_upscaled_orography_flipped_ud_filename,
                                                                  output_merged_orography_file=\
                                                                  third_intermediary_orography_filename,
-                                                                 use_upscaled_orogrography_only_in_region="North America",
+                                                                 use_upscaled_orography_only_in_region="North America",
                                                                  grid_type='LatLong10min')
         self._correct_orography(input_orography_filename=third_intermediary_orography_filename, 
                                 input_corrections_list_filename=\

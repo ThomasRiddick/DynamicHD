@@ -6,6 +6,7 @@
  *      Author: thomasriddick
  */
 
+#include <cmath>
 #include "grid.hpp"
 
 /* IMPORTANT!
@@ -166,6 +167,15 @@ double latlon_grid::latlon_calculate_dir_based_rdir(latlon_coords* start_coords,
 				 	 + (dest_coords->get_lon() - start_lon_loc) + 5);
 }
 
+coords* latlon_grid::calculate_downstream_coords_from_dir_based_rdir(coords* initial_coords,
+		double rdir){
+		latlon_coords* latlon_initial_coords = dynamic_cast<latlon_coords*>(initial_coords);
+		int lon_offset = -1*int(ceil(rdir/3.0))+2;
+		int lat_offset = rdir + 3*lon_offset - 5;
+		return new latlon_coords(latlon_initial_coords->get_lat()+lat_offset,
+								 latlon_initial_coords->get_lon()+lon_offset);
+}
+
 grid* grid_factory(grid_params* grid_params_in){
 	if(latlon_grid_params* latlon_params = dynamic_cast<latlon_grid_params*>(grid_params_in)){
 		return new latlon_grid(latlon_params);
@@ -174,4 +184,3 @@ grid* grid_factory(grid_params* grid_params_in){
 	}
 	return nullptr;
 };
-

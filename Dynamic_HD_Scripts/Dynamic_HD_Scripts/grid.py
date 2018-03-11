@@ -10,8 +10,8 @@ import numpy as np
 import scipy.ndimage as ndi
 from abc import ABCMeta, abstractmethod
 import f2py_manager as f2py_mg
-import warnings
 import os.path as path
+import warnings
 from context import fortran_source_path
 
 class Grid(object):
@@ -21,6 +21,7 @@ class Grid(object):
     extend_mask_to_neighbours
     compute_flow_directions
     get_grid_dimensions
+    set_grid_dimensions
     mask_insignificant_gradient_changes
     calculate_gradients
     flip_ud
@@ -36,6 +37,8 @@ class Grid(object):
     needs_ud_flip
     needs_rotation_by_a_hundred_and_eighty_degrees
     set_coordinates
+    get_coordinates
+    find_all_loacl_minima
     """
     
     __metaclass__ = ABCMeta
@@ -70,7 +73,11 @@ class Grid(object):
     def get_grid_dimensions(self):
         """Get the dimension of the grid"""
         pass
-   
+
+    @abstractmethod
+    def set_grid_dimensions(self):
+        pass
+
     @abstractmethod
     def mask_insignificant_gradient_changes(self,gradient_changes,old_gradients,
                                             gc_method,**kwargs):
@@ -285,8 +292,14 @@ class Grid(object):
         """ 
         
         pass
-        
-
+    
+    @abstractmethod
+    def get_coordinates(self):
+        pass
+    
+    @abstractmethod
+    def find_all_local_minima(self):
+        pass
         
 class LatLongGrid(Grid):
     """Class that stores information on and functions to work with a Latitude-Longitude grid.
@@ -434,6 +447,9 @@ class LatLongGrid(Grid):
     def get_grid_dimensions(self):
         """Get the dimension of the grid and return them as a tuple"""
         return (self.nlat,self.nlong)
+    
+    def set_grid_dimensions(self,dimensions):
+        self.nlat,self.nlong = dimensions
     
     def get_sea_point_flow_direction_value(self):
         """Get the sea point flow direction value"""
@@ -802,6 +818,23 @@ class LatLongGrid(Grid):
 
         self.set_latitude_points(coordinates[0])
         self.set_longitude_points(coordinates[1])
+        
+    def get_coordinates(self):
+        return (self.lat_points,self.lon_points)
+    
+    def find_all_local_minima(self,data):
+        
+        data = np.insert(data,obj=(0,np.size(data,axis=0)),values=float('inf'), axis=0)
+        
+        f2py_mngr = f2py_mg.f2py_manager(path.join(fortran_source_path,
+                                                   'mod_local_minima_finding_kernels.f90'),
+                                         func_name='latlong_grid_is_local_minimum_kernel')
+        local_minima_finding_kernel = f2py_mngr.run_current_function_or_subroutine
+        local_minima = ndi.generic_filter(data,
+                                          local_minima_finding_kernel,
+                                          size=(3,3),
+                                          mode= 'wrap')
+        return local_minima[1:-1].astype(bool)
         
 def makeGrid(grid_type,**kwargs):
     """Factory function that creates an object of the correct grid type given a keyword

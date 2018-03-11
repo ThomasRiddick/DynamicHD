@@ -435,7 +435,7 @@ def getFileHelper(file_type):
     
     Arguments:
     file_type: string; code for the IOHelper subclass to use
-    Returns: a IOHelper subclass object of the appropriate subcalss
+    Returns: a IOHelper subclass object of the appropriate subclass
     """
 
     try:  

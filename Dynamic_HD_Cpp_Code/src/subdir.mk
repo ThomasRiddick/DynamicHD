@@ -1,7 +1,3 @@
-################################################################################
-# Automatically-generated file. Do not edit!
-################################################################################
-
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
 ../src/cell.cpp \
@@ -11,7 +7,10 @@ CPP_SRCS += \
 ../src/grid.cpp \
 ../src/sink_filling_algorithm.cpp \
 ../src/test_fill_sinks.cpp  \
-../src/upscale_orography.cpp
+../src/upscale_orography.cpp \
+../src/burn_carved_rivers.cpp \
+../src/carved_river_direction_burning_algorithm.cpp \
+../src/test_lake_operators.cpp
 
 OBJS += \
 ./src/cell.o \
@@ -21,7 +20,10 @@ OBJS += \
 ./src/grid.o \
 ./src/sink_filling_algorithm.o \
 ./src/test_fill_sinks.o \
-./src/upscale_orography.o
+./src/upscale_orography.o \
+./src/burn_carved_rivers.o \
+./src/carved_river_direction_burning_algorithm.o \
+./src/test_lake_operators.o
 
 CPP_DEPS += \
 ./src/cell.d \
@@ -31,7 +33,10 @@ CPP_DEPS += \
 ./src/grid.d \
 ./src/sink_filling_algorithm.d \
 ./src/test_fill_sinks.d \
-./src/upscale_orography.d
+./src/upscale_orography.d \
+./src/burn_carved_rivers.d \
+./src/carved_river_direction_burning_algorithm.d \
+./src/test_lake_operators.d
 
 # Each subdirectory must supply rules for building sources it contributes
 src/%.o: ../src/%.cpp

@@ -10,6 +10,7 @@ CC_SRCS += \
 ../src/gtest/gtest-printers.cc \
 ../src/gtest/gtest-test-part.cc \
 ../src/gtest/gtest-typed-test.cc \
+../src/gtest/gtest_main.cc \
 ../src/gtest/gtest.cc 
 
 CC_DEPS += \
@@ -19,6 +20,7 @@ CC_DEPS += \
 ./src/gtest/gtest-printers.d \
 ./src/gtest/gtest-test-part.d \
 ./src/gtest/gtest-typed-test.d \
+./src/gtest/gtest_main.d \
 ./src/gtest/gtest.d 
 
 OBJS += \
@@ -28,6 +30,7 @@ OBJS += \
 ./src/gtest/gtest-printers.o \
 ./src/gtest/gtest-test-part.o \
 ./src/gtest/gtest-typed-test.o \
+./src/gtest/gtest_main.o \
 ./src/gtest/gtest.o 
 
 

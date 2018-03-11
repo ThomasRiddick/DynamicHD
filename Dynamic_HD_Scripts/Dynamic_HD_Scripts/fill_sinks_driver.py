@@ -10,6 +10,7 @@ Created on Mar 14, 2016
 import dynamic_hd
 import numpy as np
 import libs.fill_sinks_wrapper as fill_sinks_wrapper #@UnresolvedImportError
+import iodriver
 from Dynamic_HD_Scripts.field import Field
 
 def generate_orography_with_sinks_filled(input_orography_filename,output_orography_filename,
@@ -58,7 +59,8 @@ def generate_orography_with_sinks_filled(input_orography_filename,output_orograp
             truesinks.flip_data_ud()
     if ls_mask_filename is None:
         use_ls_mask = False
-        ls_mask = np.zeros(grid_dims,dtype=np.int32,order='C')
+        ls_mask = Field(ls_mask = np.zeros(grid_dims,dtype=np.int32,order='C'),grid='LatLong',
+                        nlat=grid_dims[0],nlon=grid_dims[1])
     else:
         use_ls_mask = True
         ls_mask = dynamic_hd.load_field(ls_mask_filename,
@@ -80,6 +82,57 @@ def generate_orography_with_sinks_filled(input_orography_filename,output_orograp
                                            epsilon = slope_param)
     dynamic_hd.write_field(output_orography_filename,orography,
                            file_type=dynamic_hd.get_file_extension(output_orography_filename))
+    
+def generate_orography_with_sinks_filled_advanced_driver(input_orography_filename,
+                                                         output_orography_filename,
+                                                         input_orography_fieldname,
+                                                         output_orography_fieldname,
+                                                         ls_mask_filename=None,
+                                                         truesinks_filename=None,
+                                                         ls_mask_fieldname=None,
+                                                         truesinks_fieldname=None,
+                                                         add_slight_slope_when_filling_sinks=True,
+                                                         slope_param=0.1):
+
+    orography = iodriver.advanced_field_loader(input_orography_filename,
+                                               field_type='Orography',
+                                               fieldname=input_orography_fieldname)
+    nlat,nlon = orography.get_grid_dimensions()
+    lat_pts,lon_pts = orography.get_grid_coordinates() 
+    if not truesinks_filename:
+        truesinks = Field(np.empty((1,1),dtype=np.int32),grid='LatLong',
+                          nlat=nlat,nlon=nlon)
+        use_true_sinks = False;
+    else:
+        use_true_sinks = True;
+        truesinks = iodriver.advanced_field_loader(truesinks_filename,
+                                                   field_type='Generic',
+                                                   fieldname=truesinks_fieldname)
+    if ls_mask_filename is None:
+        use_ls_mask = False
+        ls_mask = Field(np.zeros((nlat,nlon),dtype=np.int32,order='C'),
+                        grid='LatLong',nlat=nlat,nlon=nlon)
+    else:
+        use_ls_mask = True
+        ls_mask = iodriver.advanced_field_loader(ls_mask_filename,
+                                                 field_type='Generic',
+                                                 fieldname=ls_mask_fieldname)
+    fill_sinks_wrapper.fill_sinks_cpp_func(orography_array=np.ascontiguousarray(orography.get_data(), #@UndefinedVariable
+                                                                                dtype=np.float64),
+                                           method = 1, 
+                                           use_ls_mask = use_ls_mask,
+                                           landsea_in = np.ascontiguousarray(ls_mask.get_data(),
+                                                                             dtype=np.int32), 
+                                           set_ls_as_no_data_flag = False, 
+                                           use_true_sinks = use_true_sinks,
+                                           true_sinks_in = np.ascontiguousarray(truesinks.get_data(),
+                                                                                dtype=np.int32),
+                                           add_slope =add_slight_slope_when_filling_sinks,
+                                           epsilon = slope_param)
+    orography.set_grid_dimensions([nlat,nlon])
+    orography.set_grid_coordinates([lat_pts,lon_pts])
+    iodriver.advanced_field_writer(output_orography_filename,orography,
+                                   fieldname=output_orography_fieldname)
 
 def generate_sinkless_flow_directions(filename,output_filename,ls_mask_filename=None,
                                       truesinks_filename=None,catchment_nums_filename=None,
@@ -159,3 +212,59 @@ def generate_sinkless_flow_directions(filename,output_filename,ls_mask_filename=
         dynamic_hd.write_field(catchment_nums_filename, 
                               field=Field(catchment_nums,grid_type,**grid_kwargs), 
                               file_type=dynamic_hd.get_file_extension(catchment_nums_filename)) 
+        
+def advanced_sinkless_flow_directions_generator(filename,output_filename,fieldname,
+                                                output_fieldname,ls_mask_filename=None,
+                                                truesinks_filename=None,
+                                                catchment_nums_filename=None,
+                                                ls_mask_fieldname=None,
+                                                truesinks_fieldname=None,
+                                                catchment_fieldname=None):
+    orography = iodriver.advanced_field_loader(filename,
+                                               field_type='Orography',
+                                               fieldname=fieldname)
+    grid_dims=orography.get_grid().get_grid_dimensions()
+    rdirs = np.zeros(grid_dims,dtype=np.float64,order='C')
+    if not truesinks_filename:
+        truesinks = Field(np.empty((1,1),dtype=np.int32),grid='HD')
+        use_true_sinks = False;
+    else:
+        use_true_sinks = True;
+        truesinks = dynamic_hd.load_field(truesinks_filename,
+                                          field_type='Generic',
+                                          fieldname=truesinks_fieldname)
+    if ls_mask_filename is None:
+        use_ls_mask = False
+        ls_mask = np.zeros(grid_dims,dtype=np.int32,order='C')
+    else:
+        use_ls_mask = True
+        ls_mask = dynamic_hd.load_field(ls_mask_filename,
+                                        field_type='Generic',
+                                        fieldname=ls_mask_fieldname)
+    catchment_nums = np.zeros(grid_dims,dtype=np.int32,order='C')
+    next_cell_lat_index_in = np.zeros(grid_dims,dtype=np.int32,order='C')
+    next_cell_lon_index_in = np.zeros(grid_dims,dtype=np.int32,order='C')
+    fill_sinks_wrapper.fill_sinks_cpp_func(orography_array=np.ascontiguousarray(orography.get_data(), #@UndefinedVariable
+                                                                                dtype=np.float64),
+                                           method = 4, 
+                                           use_ls_mask = use_ls_mask,
+                                           landsea_in = np.ascontiguousarray(ls_mask.get_data(),
+                                                                             dtype=np.int32), 
+                                           set_ls_as_no_data_flag = False, 
+                                           use_true_sinks = use_true_sinks,
+                                           true_sinks_in = np.ascontiguousarray(truesinks.get_data(),
+                                                                                dtype=np.int32),
+                                           next_cell_lat_index_in = next_cell_lat_index_in,
+                                           next_cell_lon_index_in = next_cell_lon_index_in,
+                                           rdirs_in = rdirs,
+                                           catchment_nums_in = catchment_nums,
+                                           prefer_non_diagonal_initial_dirs = False) 
+    iodriver.advanced_field_writer(output_filename,Field(rdirs,grid_type='LatLong',
+                                                         nlat=grid_dims[0],
+                                                         nlong=grid_dims[1]),
+                                   fieldname=output_fieldname)
+    if catchment_nums_filename:
+        iodriver.advanced_field_writer(catchment_nums_filename, 
+                                       field=Field(catchment_nums,grid_type='LatLong',
+                                                   nlat=grid_dims[0],nlong=grid_dims[1]), 
+                                       fieldname=catchment_fieldname)

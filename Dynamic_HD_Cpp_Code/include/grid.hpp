@@ -74,6 +74,7 @@ public:
 	///Calculate the direction based river direction from the first cell to the
 	///second
 	double calculate_dir_based_rdir(coords*,coords*);
+	virtual coords* calculate_downstream_coords_from_dir_based_rdir(coords* initial_coords,double rdir) = 0;
 protected:
 	///The type of this grid object
 	grid_types grid_type;
@@ -170,6 +171,7 @@ public:
 	double latlon_calculate_dir_based_rdir(latlon_coords*,latlon_coords*);
 	///Return wrapped version of supplied coordinates
 	latlon_coords* latlon_wrapped_coords(latlon_coords*);
+	coords* calculate_downstream_coords_from_dir_based_rdir(coords* initial_coords,double rdir);
 };
 
 /**

@@ -34,7 +34,10 @@ class Field(object):
     convert_to_binary_mask
     orient_data
     set_grid_coordinates
+    get_grid_coordinates
     grid_has_coordinates
+    get_grid_dimensions
+    set_grid_dimensions
     """
     
     def __init__(self,input_field,grid='HD',**grid_kwargs):
@@ -240,6 +243,9 @@ class Field(object):
         
         self.grid.set_coordinates(coordinates)
         
+    def get_grid_coordinates(self):
+        return self.grid.get_coordinates()
+        
     def grid_has_coordinates(self):
         """Check if this field's grid has orientation information
         
@@ -249,6 +255,12 @@ class Field(object):
         """
         
         return self.grid.has_orientation_information()
+    
+    def get_grid_dimensions(self):
+        return self.grid.get_grid_dimensions()
+    
+    def set_grid_dimensions(self,dimensions):
+        self.grid.set_grid_dimensions(dimensions)
    
 class Orography(Field):
     """A subclass of Field with various method specific to orographies.

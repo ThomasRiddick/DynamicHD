@@ -5,7 +5,7 @@
  * Google Test Framework
  *
  *  Created on: Mar 17, 2016
- *      Author: thomasriddick
+ *      Author: thomasriddick using Google's recommended template
  */
 
 #define GTEST_HAS_TR1_TUPLE 0
@@ -5633,9 +5633,3 @@ TEST_F(FieldTest,TestGetneighborsAlgorithmFour){
 }
 
 } // close namespace
-
-//The main function; runs all the tests
-int main(int argc, char **argv){
-	::testing::InitGoogleTest(&argc, argv);
-	return RUN_ALL_TESTS();
-}

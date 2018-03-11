@@ -1342,7 +1342,8 @@ static PyObject *__pyx_codeobj__8;
 
 /* Python wrapper */
 static PyObject *__pyx_pw_18Dynamic_HD_Scripts_25upscale_orography_wrapper_1upscale_orography(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static PyMethodDef __pyx_mdef_18Dynamic_HD_Scripts_25upscale_orography_wrapper_1upscale_orography = {"upscale_orography", (PyCFunction)__pyx_pw_18Dynamic_HD_Scripts_25upscale_orography_wrapper_1upscale_orography, METH_VARARGS|METH_KEYWORDS, 0};
+static char __pyx_doc_18Dynamic_HD_Scripts_25upscale_orography_wrapper_upscale_orography[] = "Call the C++ cython interface function from cython with appropriate arguments.\n   \n    Also find the required number of latitude and longitude points to pass in \n    ";
+static PyMethodDef __pyx_mdef_18Dynamic_HD_Scripts_25upscale_orography_wrapper_1upscale_orography = {"upscale_orography", (PyCFunction)__pyx_pw_18Dynamic_HD_Scripts_25upscale_orography_wrapper_1upscale_orography, METH_VARARGS|METH_KEYWORDS, __pyx_doc_18Dynamic_HD_Scripts_25upscale_orography_wrapper_upscale_orography};
 static PyObject *__pyx_pw_18Dynamic_HD_Scripts_25upscale_orography_wrapper_1upscale_orography(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   PyArrayObject *__pyx_v_orography_in = 0;
   PyArrayObject *__pyx_v_orography_out = 0;
@@ -1473,8 +1474,8 @@ static PyObject *__pyx_pw_18Dynamic_HD_Scripts_25upscale_orography_wrapper_1upsc
  *                       double tarasov_min_path_length_in,
  *                       bint tarasov_include_corners_in_same_edge_criteria_in,
  *                       bint prefer_non_diagonal_initial_dirs=False):             # <<<<<<<<<<<<<<
- *     cdef int nlat_fine,nlon_fine
- *     nlat_fine, nlon_fine = orography_in.shape[0],orography_in.shape[1]
+ *     """Call the C++ cython interface function from cython with appropriate arguments.
+ * 
  */
       __pyx_v_prefer_non_diagonal_initial_dirs = ((int)0);
     }
@@ -1574,8 +1575,8 @@ static PyObject *__pyx_pf_18Dynamic_HD_Scripts_25upscale_orography_wrapper_upsca
   }
   __pyx_pybuffernd_true_sinks_in.diminfo[0].strides = __pyx_pybuffernd_true_sinks_in.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_true_sinks_in.diminfo[0].shape = __pyx_pybuffernd_true_sinks_in.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_true_sinks_in.diminfo[1].strides = __pyx_pybuffernd_true_sinks_in.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_true_sinks_in.diminfo[1].shape = __pyx_pybuffernd_true_sinks_in.rcbuffer->pybuffer.shape[1];
 
-  /* "Dynamic_HD_Scripts/upscale_orography_wrapper.pyx":28
- *                       bint prefer_non_diagonal_initial_dirs=False):
+  /* "Dynamic_HD_Scripts/upscale_orography_wrapper.pyx":33
+ * 
  *     cdef int nlat_fine,nlon_fine
  *     nlat_fine, nlon_fine = orography_in.shape[0],orography_in.shape[1]             # <<<<<<<<<<<<<<
  *     cdef int nlat_course,nlon_course
@@ -1586,7 +1587,7 @@ static PyObject *__pyx_pf_18Dynamic_HD_Scripts_25upscale_orography_wrapper_upsca
   __pyx_v_nlat_fine = __pyx_t_1;
   __pyx_v_nlon_fine = __pyx_t_2;
 
-  /* "Dynamic_HD_Scripts/upscale_orography_wrapper.pyx":30
+  /* "Dynamic_HD_Scripts/upscale_orography_wrapper.pyx":35
  *     nlat_fine, nlon_fine = orography_in.shape[0],orography_in.shape[1]
  *     cdef int nlat_course,nlon_course
  *     nlat_course, nlon_course = orography_out.shape[0],orography_out.shape[1]             # <<<<<<<<<<<<<<
@@ -1598,7 +1599,7 @@ static PyObject *__pyx_pf_18Dynamic_HD_Scripts_25upscale_orography_wrapper_upsca
   __pyx_v_nlat_course = __pyx_t_2;
   __pyx_v_nlon_course = __pyx_t_1;
 
-  /* "Dynamic_HD_Scripts/upscale_orography_wrapper.pyx":31
+  /* "Dynamic_HD_Scripts/upscale_orography_wrapper.pyx":36
  *     cdef int nlat_course,nlon_course
  *     nlat_course, nlon_course = orography_out.shape[0],orography_out.shape[1]
  *     latlon_upscale_orography_cython_interface(&orography_in[0,0],nlat_fine,nlon_fine,             # <<<<<<<<<<<<<<
@@ -1618,10 +1619,10 @@ static PyObject *__pyx_pf_18Dynamic_HD_Scripts_25upscale_orography_wrapper_upsca
   } else if (unlikely(__pyx_t_4 >= __pyx_pybuffernd_orography_in.diminfo[1].shape)) __pyx_t_5 = 1;
   if (unlikely(__pyx_t_5 != -1)) {
     __Pyx_RaiseBufferIndexError(__pyx_t_5);
-    __PYX_ERR(0, 31, __pyx_L1_error)
+    __PYX_ERR(0, 36, __pyx_L1_error)
   }
 
-  /* "Dynamic_HD_Scripts/upscale_orography_wrapper.pyx":32
+  /* "Dynamic_HD_Scripts/upscale_orography_wrapper.pyx":37
  *     nlat_course, nlon_course = orography_out.shape[0],orography_out.shape[1]
  *     latlon_upscale_orography_cython_interface(&orography_in[0,0],nlat_fine,nlon_fine,
  *                                               &orography_out[0,0],nlat_course,nlon_course,             # <<<<<<<<<<<<<<
@@ -1641,10 +1642,10 @@ static PyObject *__pyx_pf_18Dynamic_HD_Scripts_25upscale_orography_wrapper_upsca
   } else if (unlikely(__pyx_t_7 >= __pyx_pybuffernd_orography_out.diminfo[1].shape)) __pyx_t_5 = 1;
   if (unlikely(__pyx_t_5 != -1)) {
     __Pyx_RaiseBufferIndexError(__pyx_t_5);
-    __PYX_ERR(0, 32, __pyx_L1_error)
+    __PYX_ERR(0, 37, __pyx_L1_error)
   }
 
-  /* "Dynamic_HD_Scripts/upscale_orography_wrapper.pyx":33
+  /* "Dynamic_HD_Scripts/upscale_orography_wrapper.pyx":38
  *     latlon_upscale_orography_cython_interface(&orography_in[0,0],nlat_fine,nlon_fine,
  *                                               &orography_out[0,0],nlat_course,nlon_course,
  *                                               method,&landsea_in[0,0],&true_sinks_in[0,0],             # <<<<<<<<<<<<<<
@@ -1664,7 +1665,7 @@ static PyObject *__pyx_pf_18Dynamic_HD_Scripts_25upscale_orography_wrapper_upsca
   } else if (unlikely(__pyx_t_9 >= __pyx_pybuffernd_landsea_in.diminfo[1].shape)) __pyx_t_5 = 1;
   if (unlikely(__pyx_t_5 != -1)) {
     __Pyx_RaiseBufferIndexError(__pyx_t_5);
-    __PYX_ERR(0, 33, __pyx_L1_error)
+    __PYX_ERR(0, 38, __pyx_L1_error)
   }
   __pyx_t_10 = 0;
   __pyx_t_11 = 0;
@@ -1679,10 +1680,10 @@ static PyObject *__pyx_pf_18Dynamic_HD_Scripts_25upscale_orography_wrapper_upsca
   } else if (unlikely(__pyx_t_11 >= __pyx_pybuffernd_true_sinks_in.diminfo[1].shape)) __pyx_t_5 = 1;
   if (unlikely(__pyx_t_5 != -1)) {
     __Pyx_RaiseBufferIndexError(__pyx_t_5);
-    __PYX_ERR(0, 33, __pyx_L1_error)
+    __PYX_ERR(0, 38, __pyx_L1_error)
   }
 
-  /* "Dynamic_HD_Scripts/upscale_orography_wrapper.pyx":31
+  /* "Dynamic_HD_Scripts/upscale_orography_wrapper.pyx":36
  *     cdef int nlat_course,nlon_course
  *     nlat_course, nlon_course = orography_out.shape[0],orography_out.shape[1]
  *     latlon_upscale_orography_cython_interface(&orography_in[0,0],nlat_fine,nlon_fine,             # <<<<<<<<<<<<<<

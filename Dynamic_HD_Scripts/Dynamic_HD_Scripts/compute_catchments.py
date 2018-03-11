@@ -13,6 +13,7 @@ import numpy as np
 import field
 import warnings
 import os.path as path
+import iodriver
 from context import fortran_source_path
 
 def compute_catchments(field,loop_logfile,circ_flow_check_period=1000):
@@ -117,6 +118,19 @@ def renumber_catchments_by_size(catchments,loop_logfile):
         f.write('Loops found in catchments:\n')
         f.writelines(loops)
     return catchments
+
+def advanced_main(filename,fieldname,output_filename,output_fieldname,
+                  loop_logfile):
+    rdirs = iodriver.advanced_field_loader(filename, 
+                                           field_type='Generic',
+                                           fieldname=fieldname)
+    nlat,nlon = rdirs.get_grid_dimensions()
+    catchment_types, catchments = compute_catchments(rdirs.get_data(),loop_logfile)
+    check_catchment_types(catchment_types,logfile=path.splitext(output_filename)[0]+".log")
+    numbered_catchments = field.Field(renumber_catchments_by_size(catchments,loop_logfile),
+                                      grid='LatLong',nlat=nlat,nlong=nlon)
+    iodriver.advanced_field_writer(target_filename=output_filename,field=numbered_catchments,
+                                   fieldname=output_fieldname)
 
 def main(filename,output_filename,loop_logfile,grid_type,**grid_kwargs):
     """Generates a file with numbered catchments from a given river flow direction file
