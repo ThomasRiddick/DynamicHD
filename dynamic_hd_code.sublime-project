@@ -20,6 +20,7 @@
 				"Dynamic_HD_Scripts/Dynamic_HD_Scripts/build",
 				"Dynamic_HD_Scripts/Dynamic_HD_Scripts/bin",
 				"Dynamic_HD_Fortran_Code/docs",
+				"Dynamic_HD_Fortran_Code/mods"
 			],
 			"path": "."
 		}
