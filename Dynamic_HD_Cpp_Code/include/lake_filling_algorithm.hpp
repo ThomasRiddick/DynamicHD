@@ -7,6 +7,9 @@
 
 #include <queue>
 #include "cell.hpp"
+#include "grid.hpp"
+#include "field.hpp"
+#include "priority_cell_queue.hpp"
 
 class lake_filling_algorithm {
 public:
@@ -21,8 +24,8 @@ private:
 	void adjust_lake_height(int lake_number,double height);
 	void process_neighbors();
 	void process_neighbor();
-	queue<cell*> minima_q;
-	queue<cell*> q;
+	priority_cell_queue minima_q;
+	priority_cell_queue q;
 	grid_params* _grid_params = nullptr;
 	grid* _grid = nullptr;
 	field<bool>* completed_cells = nullptr;

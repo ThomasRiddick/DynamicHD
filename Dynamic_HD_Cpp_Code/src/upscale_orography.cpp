@@ -105,7 +105,7 @@ void latlon_upscale_orography(double* orography_in, int nlat_fine, int nlon_fine
 					if (all_sea_points) sink_filling_algorithm::get_no_data_value();
 					auto next_cell_lat_index_in = new int[scale_factor_lat*scale_factor_lon];
 					auto next_cell_lon_index_in = new int[scale_factor_lat*scale_factor_lon];
-					auto rdirs_in				= new double[scale_factor_lat*scale_factor_lon];
+					auto rdirs_in				= new short[scale_factor_lat*scale_factor_lon];
 					auto catchment_nums_in   	= new int[scale_factor_lat*scale_factor_lon];
 					alg4.setup_flags(set_ls_as_no_data_flag,prefer_non_diagonal_initial_dirs,tarasov_mod,debug,
 									 index_based_rdirs_only_in,

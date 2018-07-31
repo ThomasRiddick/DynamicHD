@@ -1,5 +1,5 @@
 '''
-Unit tests for the iodriver module 
+Unit tests for the iodriver module
 
 Created on Dec 7, 2017
 
@@ -12,6 +12,8 @@ from context import data_dir
 from os.path import join
 import os
 import textwrap
+import Dynamic_HD_Scripts.field as field
+import numpy as np
 
 
 class Test(unittest.TestCase):
@@ -63,7 +65,7 @@ class Test(unittest.TestCase):
         self.assertAlmostEqual(loaded_field.grid.lat_points[0],-89.91667175,msg="Field data grid is"
                                                                                 " not correctly"
                                                                                 " oriented")
-    
+
     def testLoadingFieldWithGlobalGridDesc(self):
         """Test loading from a file using a global_DXY grid description"""
         loaded_field = iodriver.advanced_field_loader(filename=join(data_dir,
@@ -83,7 +85,7 @@ class Test(unittest.TestCase):
         self.assertAlmostEqual(loaded_field.grid.lat_points[0],89.75,msg="Field data grid is"
                                                                          " not correctly"
                                                                          " oriented")
-        
+
     def testLoadingFieldWithRXGridDesc(self):
         """Test loading from a file using a rDXxDY grid description"""
         loaded_field = iodriver.advanced_field_loader(filename=join(data_dir,
@@ -103,7 +105,7 @@ class Test(unittest.TestCase):
         self.assertAlmostEqual(loaded_field.grid.lat_points[0],89.75,msg="Field data grid is"
                                                                          " not correctly"
                                                                          " oriented")
-        
+
     def testLoadingFieldWithRXGridDescWithoutReorientation(self):
         """Test loading from a file using a rDXxDY grid description without reorienting"""
         loaded_field = iodriver.advanced_field_loader(filename=join(data_dir,
@@ -224,6 +226,139 @@ class Test(unittest.TestCase):
         self.assertAlmostEqual(loaded_field.grid.lat_points[0],89.9166666667,msg="Field data grid is"
                                                                                  " not correctly"
                                                                                  " oriented")
+
+    def testFieldWritingAndLoadingWithLatLongField(self):
+        example_field = field.makeEmptyField('Generic',dtype=np.int64,grid_type='HD')
+        lat_points=np.linspace(89.75,-89.75,360,endpoint=True)
+        lon_points=np.linspace(-179.75,179.75,720,endpoint=True)
+        example_field.set_grid_coordinates((lat_points,lon_points))
+        example_field.data[20,20] = 1
+        example_field.data[200,20] = 2
+        example_field.data[20,200] = 3
+        example_field.data[200,200] = 4
+        iodriver.advanced_field_writer(os.path.join(self.directory,
+                                               "advancedfieldwritingandloadingtest.nc"),
+                                       example_field,fieldname='test_field',
+                                       clobber=True)
+        loaded_field = iodriver.advanced_field_loader(os.path.join(self.directory,"advancedfieldwritingandloadingtest.nc"),
+                                                      fieldname='test_field')
+        np.testing.assert_array_equal(example_field.get_data(),loaded_field.get_data())
+
+    def testFieldWritingAndLoadingWithLatLongFieldWithFlip(self):
+        example_field = field.makeEmptyField('Generic',dtype=np.int64,grid_type='HD')
+        lat_points=np.linspace(89.75,-89.75,360,endpoint=True)
+        lon_points=np.linspace(-179.75,179.75,720,endpoint=True)
+        example_field.set_grid_coordinates((lat_points,lon_points))
+        example_field.data[20,20] = 1
+        example_field.data[200,20] = 2
+        example_field.data[20,200] = 3
+        example_field.data[200,200] = 4
+        example_field.flip_data_ud()
+        iodriver.advanced_field_writer(os.path.join(self.directory,
+                                               "advancedfieldwritingandloadingtest.nc"),
+                                       example_field,fieldname='test_field',
+                                       clobber=True)
+        example_field.flip_data_ud()
+        loaded_field = iodriver.advanced_field_loader(os.path.join(self.directory,"advancedfieldwritingandloadingtest.nc"),
+                                                      fieldname='test_field')
+        np.testing.assert_array_equal(example_field.get_data(),loaded_field.get_data())
+
+    def testFieldWritingAndLoadingWithLatLongFieldWithRotation(self):
+        example_field = field.makeEmptyField('Generic',dtype=np.int64,grid_type='HD')
+        lat_points=np.linspace(89.75,-89.75,360,endpoint=True)
+        lon_points=np.linspace(-179.75,179.75,720,endpoint=True)
+        example_field.set_grid_coordinates((lat_points,lon_points))
+        example_field.data[20,20] = 1
+        example_field.data[200,20] = 2
+        example_field.data[20,200] = 3
+        example_field.data[200,200] = 4
+        example_field.rotate_field_by_a_hundred_and_eighty_degrees()
+        iodriver.advanced_field_writer(os.path.join(self.directory,
+                                               "advancedfieldwritingandloadingtest.nc"),
+                                       example_field,fieldname='test_field',
+                                       clobber=True)
+        example_field.rotate_field_by_a_hundred_and_eighty_degrees()
+        loaded_field = iodriver.advanced_field_loader(os.path.join(self.directory,"advancedfieldwritingandloadingtest.nc"),
+                                                      fieldname='test_field')
+        np.testing.assert_array_equal(example_field.get_data(),loaded_field.get_data())
+
+    def testFieldWritingAndLoadingWithLatLongFieldWithRotationNoAdjustment(self):
+        example_field = field.makeEmptyField('Generic',dtype=np.int64,grid_type='HD')
+        lat_points=np.linspace(89.75,-89.75,360,endpoint=True)
+        lon_points=np.linspace(-179.75,179.75,720,endpoint=True)
+        example_field.set_grid_coordinates((lat_points,lon_points))
+        example_field.data[20,20] = 1
+        example_field.data[200,20] = 2
+        example_field.data[20,200] = 3
+        example_field.data[200,200] = 4
+        example_field.rotate_field_by_a_hundred_and_eighty_degrees()
+        iodriver.advanced_field_writer(os.path.join(self.directory,
+                                               "advancedfieldwritingandloadingtest.nc"),
+                                       example_field,fieldname='test_field',
+                                       clobber=True)
+        loaded_field = iodriver.advanced_field_loader(os.path.join(self.directory,"advancedfieldwritingandloadingtest.nc"),
+                                                      fieldname='test_field',adjust_orientation=False)
+        np.testing.assert_array_equal(example_field.get_data(),loaded_field.get_data())
+
+    def testFieldWritingAndLoadingWithLatLongFieldWithFlip(self):
+        example_field = field.makeEmptyField('Generic',dtype=np.int64,grid_type='HD')
+        lat_points=np.linspace(89.75,-89.75,360,endpoint=True)
+        lon_points=np.linspace(-179.75,179.75,720,endpoint=True)
+        example_field.set_grid_coordinates((lat_points,lon_points))
+        example_field.data[20,20] = 1
+        example_field.data[200,20] = 2
+        example_field.data[20,200] = 3
+        example_field.data[200,200] = 4
+        example_field.flip_data_ud()
+        iodriver.advanced_field_writer(os.path.join(self.directory,
+                                               "advancedfieldwritingandloadingtest.nc"),
+                                       example_field,fieldname='test_field',
+                                       clobber=True)
+        loaded_field = iodriver.advanced_field_loader(os.path.join(self.directory,"advancedfieldwritingandloadingtest.nc"),
+                                                      fieldname='test_field',adjust_orientation=False)
+        np.testing.assert_array_equal(example_field.get_data(),loaded_field.get_data())
+
+
+    def testFieldWritingAndLoadingWithLatLongFloatingPointField(self):
+        example_field = field.makeEmptyField('Generic',dtype=np.float64,grid_type='HD')
+        lat_points=np.linspace(89.75,-89.75,360,endpoint=True)
+        lon_points=np.linspace(-179.75,179.75,720,endpoint=True)
+        example_field.set_grid_coordinates((lat_points,lon_points))
+        example_field.data[20,20] = 1.5
+        example_field.data[200,20] = 2.5
+        example_field.data[20,200] = 3.5
+        example_field.data[200,200] = 4.5
+        iodriver.advanced_field_writer(os.path.join(self.directory,
+                                               "advancedfieldwritingandloadingtest.nc"),
+                                       example_field,fieldname='test_field',
+                                       clobber=True)
+        loaded_field = iodriver.advanced_field_loader(os.path.join(self.directory,"advancedfieldwritingandloadingtest.nc"),
+                                                      fieldname='test_field')
+        np.testing.assert_array_equal(example_field.get_data(),loaded_field.get_data())
+        self.assertEquals(loaded_field.data[20,20],1.5)
+        self.assertEquals(loaded_field.data[200,20],2.5)
+        self.assertEquals(loaded_field.data[20,200],3.5)
+        self.assertEquals(loaded_field.data[200,200],4.5)
+
+    def testFieldWritingAndLoadingWithLatLongNoClobber(self):
+        example_field = field.makeEmptyField('Generic',dtype=np.float64,grid_type='HD')
+        lat_points=np.linspace(89.75,-89.75,360,endpoint=True)
+        lon_points=np.linspace(-179.75,179.75,720,endpoint=True)
+        example_field.set_grid_coordinates((lat_points,lon_points))
+        example_field.data[20,20] = 1.5
+        example_field.data[200,20] = 2.5
+        example_field.data[20,200] = 3.5
+        example_field.data[200,200] = 4.5
+        iodriver.advanced_field_writer(os.path.join(self.directory,
+                                               "advancedfieldwritingandloadingtest.nc"),
+                                       example_field,fieldname='test_field',
+                                       clobber=True)
+        with self.assertRaisesRegexp(RuntimeError,r"Target file /Users/thomasriddick/Documents/data/temp/advancedfieldwritingandloadingtest.nc already exists and clobbering is not set"):
+          iodriver.advanced_field_writer(os.path.join(self.directory,
+                                         "advancedfieldwritingandloadingtest.nc"),
+                                         example_field,fieldname='test_field',
+                                         clobber=False)
+
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']

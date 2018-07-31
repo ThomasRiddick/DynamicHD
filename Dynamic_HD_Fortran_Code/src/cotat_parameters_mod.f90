@@ -1,6 +1,6 @@
 module cotat_parameters_mod
     implicit none
-    
+
     !> The minimum upstream flow path; the minimum distance through the cell that the
     !! highest flow path leading to a given exit pixel must have passed through
     real :: MUFP = 1.5
@@ -13,13 +13,16 @@ module cotat_parameters_mod
     !> The maximum number of cells to let a path go for between outlet pixels for the
     !! yamazaki algorithm
     integer :: yamazaki_max_range = 9
+    !> Wrap the grid when using the yamazaki algorithm?
+    logical :: yamazaki_wrap = .True.
 
 contains
 
     !> Read in and set the parameters from a given file
     subroutine read_cotat_parameters_namelist(filename)
         character(len=*) :: filename
-        namelist /cotat_parameters/ MUFP,area_threshold,run_check_for_sinks,yamazaki_max_range
+        namelist /cotat_parameters/ MUFP,area_threshold,run_check_for_sinks, &
+                                    yamazaki_max_range,yamazaki_wrap
             open(unit=1,file=filename)
             read(unit=1,nml=cotat_parameters)
             close(1)

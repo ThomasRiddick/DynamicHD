@@ -14,7 +14,7 @@ void latlon_compute_catchments(int* catchment_numbers_in, double* rdirs_in,
 	auto alg = catchment_computation_algorithm_latlon();
 	auto grid_params_in = new latlon_grid_params(nlat_in,nlon_in);
 	alg.setup_fields(catchment_numbers_in,
-					 rdirs_in,grid_params_in)
+					 rdirs_in,grid_params_in);
 	alg.compute_catchments();
-	delete grid_params;
+	delete grid_params_in;
 }

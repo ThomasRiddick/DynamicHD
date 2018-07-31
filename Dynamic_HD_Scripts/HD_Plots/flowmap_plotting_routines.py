@@ -15,7 +15,7 @@ def make_basic_flowmap_comparison_plot(ax,flowmap_ref_field,flowmap_data_field,m
                                        first_datasource_name,second_datasource_name,lsmask=None,
                                        return_image_array_instead_of_plotting=False,
                                        no_antarctic_rivers=True,colors=None,add_title=True,
-                                       glacier_mask=None):
+                                       glacier_mask=None,second_lsmask=None):
     flowmap_ref_field_copy = np.copy(flowmap_ref_field)
     flowmap_ref_field[flowmap_ref_field_copy < minflowcutoff] = 1
     if glacier_mask is not None:
@@ -25,7 +25,7 @@ def make_basic_flowmap_comparison_plot(ax,flowmap_ref_field,flowmap_data_field,m
     flowmap_ref_field[np.logical_and(flowmap_data_field >= minflowcutoff,
                                      flowmap_ref_field == 2)] = 3
     flowmap_ref_field[np.logical_and(flowmap_data_field >= minflowcutoff,
-                                     flowmap_ref_field != 3)] = 4                                
+                                     flowmap_ref_field != 3)] = 4
     if no_antarctic_rivers:
         if glacier_mask is not None:
             flowmap_ref_field[310:,:] = 1
@@ -36,8 +36,17 @@ def make_basic_flowmap_comparison_plot(ax,flowmap_ref_field,flowmap_data_field,m
             flowmap_ref_field[310:,:] = 1
     if lsmask is not None:
         flowmap_ref_field[lsmask == 1] = 0
+        if second_lsmask is not None:
+          extra_lsmask = np.zeros(second_lsmask.shape)
+          extra_lsmask[np.logical_and(second_lsmask == 1,
+                                      lsmask != 1)] = 1
+          extra_lsmask[np.logical_and(second_lsmask != 1,
+                                      lsmask == 1)] = 2
     if return_image_array_instead_of_plotting:
+      if lsmask is None or second_lsmask is None:
         return flowmap_ref_field
+      else:
+        return flowmap_ref_field,extra_lsmask
     if colors is None:
         cmap = mpl.colors.ListedColormap(['blue','peru','black','white','purple'])
     else:
@@ -59,9 +68,16 @@ def make_basic_flowmap_comparison_plot(ax,flowmap_ref_field,flowmap_data_field,m
     tic_loc = np.arange(6) + 0.5
     tic_labels = ['Sea', 'Land','{} River Path'.format(first_datasource_name),
                   'Common River Path','{} River Path'.format(second_datasource_name)]
-    cb.set_ticks(tic_loc) 
+    cb.set_ticks(tic_loc)
     cb.set_ticklabels(tic_labels)
-    
+
+def add_extra_flowmap(image_array,extra_ls_mask):
+    current_max = np.amax(image_array)
+    image_array[np.logical_and(image_array == 1,extra_ls_mask == 1)] = current_max+1
+    image_array[np.logical_and(image_array == 0,extra_ls_mask == 2)] = current_max+2
+    return image_array
+
+
 def add_selected_catchment_to_existing_plot(image_array,data_catchment_field,
                                             ref_catchment_field,
                                             data_catchment_field_original_scale,
@@ -113,7 +129,12 @@ def plot_composite_image(ax,image,minflowcutoff,first_datasource_name,second_dat
                          use_single_color_for_discrepancies,use_only_one_color_for_flowmap,
                          use_title=True,colors=None,use_only_one_common_catchment_label=True,
                          difference_in_catchment_label="Discrepancy",remove_ticks=False,
-                         flowmap_grid=None,plot_glaciers=False):
+                         flowmap_grid=None,plot_glaciers=False,second_ls_mask=False,
+                         no_extra_sea=True):
+    if second_ls_mask:
+      max = image.max()
+      image[image == max] = - 2
+      image[image == max - 1] = - 3
     if use_single_color_for_discrepancies:
         image[image == 8] = 7
         image[image == 9] = 8
@@ -121,7 +142,7 @@ def plot_composite_image(ax,image,minflowcutoff,first_datasource_name,second_dat
         if use_only_one_color_for_flowmap:
             if colors is None:
                 flowmap_and_catchment_colors = ['lightblue','peru','blue','red',
-                                                'grey','darkgrey','lightgrey'] 
+                                                'grey','darkgrey','lightgrey']
                 if plot_glaciers:
                     flowmap_and_catchment_colors += ['white']
             else:
@@ -132,6 +153,7 @@ def plot_composite_image(ax,image,minflowcutoff,first_datasource_name,second_dat
                     flowmap_and_catchment_colors = colors.\
                     flowmap_and_catchments_colors_single_color_flowmap
             cmap = mpl.colors.ListedColormap(flowmap_and_catchment_colors)
+            color_list = flowmap_and_catchment_colors
             bounds = range(8) if not plot_glaciers else range(9)
             image[image == 2] = 1
             image[(image == 3) | (image == 4)] = 2
@@ -148,6 +170,7 @@ def plot_composite_image(ax,image,minflowcutoff,first_datasource_name,second_dat
                 else:
                     flowmap_and_catchment_colors = colors.flowmap_and_catchments_colors
             cmap = mpl.colors.ListedColormap(flowmap_and_catchment_colors)
+            color_list = flowmap_and_catchment_colors
             bounds = range(10) if not plot_glaciers else range(11)
     else:
         image[image == -1] = 10
@@ -157,6 +180,27 @@ def plot_composite_image(ax,image,minflowcutoff,first_datasource_name,second_dat
             color_list += ['white']
         cmap = mpl.colors.ListedColormap(color_list)
         bounds = range(11) if not plot_glaciers else range(12)
+    if second_ls_mask:
+        image[image > 1] = image[image > 1] + 1
+        image[image == -3] = 2
+        if not no_extra_sea:
+          image[image > 0] = image[image > 0] + 1
+          image[image == -2] = 1
+        if colors is None:
+          extra_sea = ['green']
+          extra_land = ['orange']
+        else:
+          extra_sea = colors.extra_sea_color
+          extra_land = colors.extra_land_color
+        if no_extra_sea:
+          color_list[2:2] = extra_land
+          extra_colors = 1
+        else:
+          color_list[1:1] = extra_sea
+          color_list[3:3] = extra_land
+          extra_colors = 2
+        bounds = range(len(bounds)+ extra_colors)
+        cmap = mpl.colors.ListedColormap(color_list)
     norm = mpl.colors.BoundaryNorm(bounds,cmap.N)
     ax.imshow(image,cmap=cmap,norm=norm,interpolation='none',rasterized=True)
     if use_title:
@@ -165,7 +209,7 @@ def plot_composite_image(ax,image,minflowcutoff,first_datasource_name,second_dat
         pts.remove_ticks(ax)
     else:
             axis_tick_label_scale_factor=\
-            flowmap_grid.get_scale_factor_for_geographic_coords() if flowmap_grid is not None else 0.5 
+            flowmap_grid.get_scale_factor_for_geographic_coords() if flowmap_grid is not None else 0.5
             ax.xaxis.set_major_locator(mpl.ticker.IndexLocator(60/axis_tick_label_scale_factor,0))
             ax.yaxis.set_major_locator(mpl.ticker.IndexLocator(30/axis_tick_label_scale_factor,0))
             #Scale factor is multiplied by two as formatter has a built in scale factor of a half
@@ -179,7 +223,9 @@ def plot_composite_image(ax,image,minflowcutoff,first_datasource_name,second_dat
     if plot_glaciers:
         num_colors += 1
     if use_only_one_color_for_flowmap:
-        num_colors -= 2 
+        num_colors -= 2
+    if second_ls_mask:
+        num_colors += 1 if no_extra_sea else 2
     ax.format_coord = pts.OrogCoordFormatter(0,0)
     mappable = mpl.cm.ScalarMappable(norm=norm,cmap=cmap)
     mappable.set_array(image)
@@ -187,17 +233,20 @@ def plot_composite_image(ax,image,minflowcutoff,first_datasource_name,second_dat
     cax = dvdr.append_axes("right", size=0.2, pad=0.05)
     if use_only_one_common_catchment_label:
         if plot_glaciers:
-            adjusted_bounds = (range(num_colors)[:-4] 
-                               + [num_colors-4-2.0/3,num_colors-4-1.0/3,
-                                  num_colors-4,num_colors-3])
+            adjusted_bounds = (range(num_colors)[:-4]
+                                + [num_colors-4-2.0/3,num_colors-4-1.0/3,
+                                   num_colors-4,num_colors-3])
         else:
-            adjusted_bounds = (range(num_colors)[:-3] 
+            adjusted_bounds = (range(num_colors)[:-3]
                                + [num_colors-3-2.0/3,num_colors-3-1.0/3,num_colors-3])
         norm = mpl.colors.BoundaryNorm(adjusted_bounds,cmap.N)
         cb = mpl.colorbar.ColorbarBase(cax,cmap=cmap,norm=norm,boundaries=adjusted_bounds,
                                        spacing='proportional')
     else:
         cb = plt.colorbar(mappable,cax=cax)
+        if second_ls_mask:
+          raise UserWarning("Use of secondary ls mask is not compatible with mutliple common"
+                            "catchments label mode. Color bar will not be correct.")
     plt.tight_layout()
     plt.subplots_adjust(right=0.85)
     tic_loc = (np.arange(num_colors) + 0.5)
@@ -216,7 +265,11 @@ def plot_composite_image(ax,image,minflowcutoff,first_datasource_name,second_dat
                            "Common catchment","Common catchment"])
     if plot_glaciers:
         tic_labels.extend(["Glacier"])
-    cb.set_ticks(tic_loc) 
+    if second_ls_mask:
+        tic_labels[2:2] = ["Shelves exposed at {}".format(second_datasource_name)]
+        if not no_extra_sea:
+          tic_labels[1:1] = ["Additional Sea at {}".format(second_datasource_name)]
+    cb.set_ticks(tic_loc)
     cb.set_ticklabels(tic_labels)
-    cb.ax.tick_params(labelsize=20) 
-    
+    cb.ax.tick_params(labelsize=20)
+

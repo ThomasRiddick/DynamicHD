@@ -31,5 +31,5 @@ void latlon_fill_lakes(bool* lake_minima_in,bool* lake_mask_in,double* orography
 	alg.setup_flags(use_highest_possible_lake_water_level_in);
 	alg.setup_fields(lake_minima_in,lake_mask_in,orography_in,grid_params_in);
 	alg.fill_lakes();
-	delete grid_params;
+	delete grid_params_in;
 }

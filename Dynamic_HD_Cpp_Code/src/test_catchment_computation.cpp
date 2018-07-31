@@ -10,57 +10,97 @@
 
 #include "compute_catchments.hpp"
 #include "catchment_computation_algorithm.hpp"
+#include "gtest/gtest.h"
+#include "cell.hpp"
 
 namespace {
 
-// The fixture for testing class Foo.
-class FooTest : public ::testing::Test {
+class CatchmentComputationTest : public ::testing::Test {
  protected:
-  // You can remove any or all of the following functions if its body
-  // is empty.
 
-  FooTest() {
-    // You can do set-up work for each test here.
-  }
+  CatchmentComputationTest() {
+  };
 
-  virtual ~FooTest() {
-    // You can do clean-up work that doesn't throw exceptions here.
-  }
+  virtual ~CatchmentComputationTest() {
+  };
 
-  // If the constructor and destructor are not enough for setting up
-  // and cleaning up each test, you can define the following methods:
+  // Common object can go here
 
-  virtual void SetUp() {
-    // Code here will be called immediately after the constructor (right
-    // before each test).
-  }
-
-  virtual void TearDown() {
-    // Code here will be called immediately after each test (right
-    // before the destructor).
-  }
-
-  // Objects declared here can be used by all tests in the test case for Foo.
 };
 
-// Tests that the Foo::Bar() method does Abc.
-TEST_F(FooTest, MethodBarDoesAbc) {
-  const string input_filepath = "this/package/testdata/myinputfile.dat";
-  const string output_filepath = "this/package/testdata/myoutputfile.dat";
-  Foo f;
-  EXPECT_EQ(0, f.Bar(input_filepath, output_filepath));
+TEST_F(CatchmentComputationTest, CatchmentComputationSingleCatchmentTest){
+  int nlat = 8;
+  int nlon = 8;
+  int* catchment_numbers = new int[8*8] {0};
+  double* rdirs = new double[8*8] {
+    0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0,
+    0.0,7.0,8.0,8.0, 7.0,9.0,7.0,0.0,
+    0.0,7.0,3.0,2.0, 1.0,9.0,7.0,0.0,
+    0.0,1.0,4.0,3.0, 3.0,3.0,6.0,0.0,
+    0.0,7.0,4.0,6.0, 6.0,6.0,9.0,0.0,
+    0.0,1.0,1.0,2.0, 1.0,6.0,6.0,0.0,
+    0.0,2.0,2.0,3.0, 1.0,2.0,3.0,0.0,
+    0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0
+  };
+  int* expected_catchments_number_out = new int[8*8] {
+    207,0,0,0, 0,0,0,0,
+    0,207,0,0, 0,0,0,0,
+    0,0,0,0, 0,0,0,0,
+    0,0,0,0, 0,0,0,0,
+    0,0,0,0, 0,0,0,0,
+    0,0,0,0, 0,0,0,0,
+    0,0,0,0, 0,0,0,0,
+    0,0,0,0, 0,0,0,0,
+  };
+  auto alg = catchment_computation_algorithm_latlon();
+  auto grid_params_in = new latlon_grid_params(nlat,nlon);
+  landsea_cell* outflow_in = new landsea_cell(new latlon_coords(0,0));
+  alg.setup_fields(catchment_numbers,
+                   rdirs,grid_params_in);
+  alg.test_compute_catchment(outflow_in,207);
+  delete grid_params_in;
+  for (auto i =0; i < nlat*nlon; i++){
+    EXPECT_EQ(expected_catchments_number_out[i],catchment_numbers[i]);
+  }
+  delete[] expected_catchments_number_out;
+  delete[] catchment_numbers;
+  delete[] rdirs;
 }
 
-// Tests that Foo does Xyz.
-TEST_F(FooTest, DoesXyz) {
-  // Exercises the Xyz feature of Foo.
+TEST_F(CatchmentComputationTest, CatchmentComputationGeneralTestOne) {
+  int nlat = 8;
+  int nlon = 8;
+  int* catchment_numbers = new int[8*8] {0};
+  double* rdirs = new double[8*8] {
+    0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0,
+    0.0,7.0,8.0,8.0, 7.0,9.0,7.0,0.0,
+    0.0,7.0,3.0,2.0, 1.0,9.0,7.0,0.0,
+    0.0,1.0,4.0,3.0, 3.0,3.0,6.0,0.0,
+    0.0,7.0,4.0,6.0, 6.0,6.0,9.0,0.0,
+    0.0,1.0,1.0,2.0, 1.0,6.0,6.0,0.0,
+    0.0,2.0,2.0,3.0, 1.0,2.0,3.0,0.0,
+    0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0
+  };
+  int* expected_catchments_number_out = new int[8*8] {
+    1, 2, 3, 4,  5, 6, 7, 8,
+    9, 1, 3, 4,  4, 7, 6,10,
+   11, 9,14,14, 14, 6, 7,12,
+   13,15,15,14, 14,14,14,14,
+   15,13,13,14, 14,14,14,16,
+   17,19,22,25, 25,18,18,18,
+   19,22,23,25, 24,26,28,20,
+   21,22,23,24, 25,26,27,28
+  };
+  latlon_compute_catchments(catchment_numbers,rdirs,
+                            nlat,nlon);
+  int count = 0;
+  for (auto i =0; i < nlat*nlon; i++){
+    EXPECT_EQ(expected_catchments_number_out[i],catchment_numbers[i]);
+    if(expected_catchments_number_out[i] != catchment_numbers[i]) count++;
+  }
+  delete[] expected_catchments_number_out;
+  delete[] catchment_numbers;
+  delete[] rdirs;
 }
 
 }  // namespace
-
-int main(int argc, char **argv) {
-  ::testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
-}
-
-

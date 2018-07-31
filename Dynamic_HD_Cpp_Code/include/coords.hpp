@@ -26,6 +26,17 @@ public:
 	enum coords_types {latlon};
 	///Type of coordinate this coordinate instance is
 	coords_types coords_type;
+	//Overload equals operator
+	bool operator== (const coords& rhs){
+		return this->equals(rhs);
+	};
+	friend ostream& operator<< (ostream& out, coords& field_object) {
+		field_object.print(out);
+		return out;
+	};
+protected:
+	virtual bool equals(const coords& rhs) = 0;
+	virtual void print(ostream& out) const = 0;
 };
 
 /**
@@ -52,10 +63,23 @@ public:
 	///Overload equals operator
 	bool operator== (const latlon_coords& rhs) const
 			{ return (lat == rhs.get_lat() && lon == rhs.get_lon()); };
+
 	///Overload ostream operator
-	friend ostream& operator<< (ostream& out, latlon_coords& field_object)
-		{ return out << "lat: " << field_object.lat << " lon: "
-					 << field_object.lon << endl; };
+	friend ostream& operator<< (ostream& out, latlon_coords& field_object) {
+		field_object.print(out);
+		return out;
+		};
+	protected:
+	virtual void print(ostream& out) const {
+		out << "lat: " << this->lat << " lon: "
+				<< this->lon << endl;
+	};
+	//For overloading equals on the base class (as operators can't be virtual)
+	bool equals(const coords& rhs){
+		const latlon_coords* latlon_rhs = dynamic_cast<const latlon_coords*>(&rhs);
+		if(latlon_rhs) return *this == *latlon_rhs;
+		else return false;
+	};
 };
 
 /**

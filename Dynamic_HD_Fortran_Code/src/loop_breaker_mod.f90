@@ -10,17 +10,17 @@ module loop_breaker_mod
     !! loops in upscaled river directions) for a generic grid
     type, abstract, public :: loop_breaker
         private
-        !> The course catchments as a field section covering the entire field
-        class(field_section), pointer :: course_catchment_field => null()
-        !> The course total cumulative flow as a field section covering the entire field
-        class(field_section), pointer :: course_cumulative_flow_field => null()
-        !> The course river directions as a field section covering the entire field
-        class(field_section), pointer :: course_rdirs_field => null()
+        !> The coarse catchments as a field section covering the entire field
+        class(field_section), pointer :: coarse_catchment_field => null()
+        !> The coarse total cumulative flow as a field section covering the entire field
+        class(field_section), pointer :: coarse_cumulative_flow_field => null()
+        !> The coarse river directions as a field section covering the entire field
+        class(field_section), pointer :: coarse_rdirs_field => null()
         !> The fine river directions as a field section covering the entire field
         class(field_section), pointer :: fine_rdirs_field => null()
         !> The fine total cumulative flow as a field section covering the entire field
         class(field_section), pointer :: fine_cumulative_flow_field => null()
-        !> The number of fine cells for every course cell
+        !> The number of fine cells for every coarse cell
         integer :: scale_factor
         contains
             private
@@ -34,14 +34,14 @@ module loop_breaker_mod
             !> Break the loop with the loop number specified as an argument
             procedure :: break_loop
             !> Find the value of the highest cumulative flow in a cell at a given
-            !! set of course coordinates and return it as an integer
+            !! set of coarse coordinates and return it as an integer
             procedure :: find_highest_cumulative_flow_of_cell
             !> Find which cells are in a given loop; input is the loop number of
-            !! desired loop; output a list of the course coordinates of the cells
+            !! desired loop; output a list of the coarse coordinates of the cells
             !! in the loop
             procedure(find_cells_in_loop), deferred :: find_cells_in_loop
             !> Locate the fine cell with the highest cumulative flow within the cell and
-            !! return its coordinates. Input is a set of course coordinates for the
+            !! return its coordinates. Input is a set of coarse coordinates for the
             !! cell; output is a set of fine coordinates for the fine cell with the highest
             !! cumulative flow. Also can optionally return a flag indicating if this
             !! is next to a vertical edge (hence the flow likely crosses that edge) and a
@@ -50,7 +50,7 @@ module loop_breaker_mod
             !! direction would be possible from this cell.
             procedure(locate_highest_cumulative_flow_of_cell), deferred :: &
                 locate_highest_cumulative_flow_of_cell
-            !> Set the rdir of a course cell based on the rdir of the highest cumulative
+            !> Set the rdir of a coarse cell based on the rdir of the highest cumulative
             !! flow fine cell. At non-corner cells simply the choose the correct direction
             !! to cross the edge the cell is next to. For corner cells choose the cell that
             !! the fine river direction of the cell with highest cumulative flow points
@@ -60,7 +60,7 @@ module loop_breaker_mod
                 assign_rdir_of_highest_cumulative_flow_of_cell
             !> Function that takes the fine coordinates of the cell with the highest
             !! cumulative flow along with the fine section coordinates that describe
-            !! the area that maps to the course cell and return the permitted diagonal
+            !! the area that maps to the coarse cell and return the permitted diagonal
             !! river direction (the one pointing out diagonally from the corner between
             !! the vertical and horizontal directions possible from the cell with
             !! the highest cumulative flow) as a direction indicator
@@ -122,23 +122,23 @@ module loop_breaker_mod
 
     !> Abstract subclass of loop_breaker for a latitude longitude grid
     type, extends(loop_breaker), abstract, public :: latlon_loop_breaker
-            !> The number of course latitude points
-            integer :: nlat_course
-            !> The number of course longitude points
-            integer :: nlon_course
+            !> The number of coarse latitude points
+            integer :: nlat_coarse
+            !> The number of coarse longitude points
+            integer :: nlon_coarse
         contains
             private
             !> Subroutine to initialise a latitude longitude loop breaker. Input
-            !! arguements are a set of course catchments, the course cumulative
-            !! flow field and the course river directions along with the fine river
+            !! arguements are a set of coarse catchments, the coarse cumulative
+            !! flow field and the coarse river directions along with the fine river
             !! directions and fine cumulative flow field
             procedure :: init_latlon_loop_breaker
             !> Find which cells are in a given loop; input is the loop number of
-            !! desired loop; output a list of the course coordinates of the cells
+            !! desired loop; output a list of the coarse coordinates of the cells
             !! in the loop
             procedure :: find_cells_in_loop => latlon_find_cells_in_loop
             !> Locate the fine cell with the highest cumulative flow within the cell and
-            !! return its coordinates. Input is a set of course coordinates for the
+            !! return its coordinates. Input is a set of coarse coordinates for the
             !! cell; output is a set of fine coordinates for the fine cell with the highest
             !! cumulative flow. Also can optionally return a flag indicating if this
             !! is next to a vertical edge (hence the flow likely crosses that edge) and a
@@ -147,7 +147,7 @@ module loop_breaker_mod
             !! direction would be possible from this cell.
             procedure :: locate_highest_cumulative_flow_of_cell => &
                 latlon_locate_highest_cumulative_flow_of_cell
-            !> Return the a pointer to the loop free course river directions produced; this
+            !> Return the a pointer to the loop free coarse river directions produced; this
             !! is to be run after the loop breaker has been run in order to retrieve the
             !! results
             procedure, public :: latlon_get_loop_free_rdirs
@@ -161,7 +161,7 @@ module loop_breaker_mod
         integer :: no_data_rdir = -999
         contains
             private
-            !> Set the rdir of a course cell based on the rdir of the highest cumulative
+            !> Set the rdir of a coarse cell based on the rdir of the highest cumulative
             !! flow fine cell. At non-corner cells simply the choose the correct direction
             !! to cross the edge the cell is next to. For corner cells choose the cell that
             !! the fine river direction of the cell with highest cumulative flow points
@@ -171,7 +171,7 @@ module loop_breaker_mod
                 dir_based_rdirs_assign_rdir_of_highest_cumulative_flow_of_cell
             !> Function that takes the fine coordinates of the cell with the highest
             !! cumulative flow along with the fine section coordinates that describe
-            !! the area that maps to the course cell and return the permitted diagonal
+            !! the area that maps to the coarse cell and return the permitted diagonal
             !! river direction (the one pointing out diagonally from the corner between
             !! the vertical and horizontal directions possible from the cell with
             !! the highest cumulative flow) as a direction based direction indicator
@@ -198,12 +198,12 @@ contains
 
     subroutine destructor(this)
     class(loop_breaker) :: this
-        if (associated(this%course_catchment_field)) &
-            deallocate(this%course_catchment_field)
-        if (associated(this%course_cumulative_flow_field)) &
-            deallocate(this%course_cumulative_flow_field)
-        if  (associated(this%course_rdirs_field)) &
-            deallocate(this%course_rdirs_field)
+        if (associated(this%coarse_catchment_field)) &
+            deallocate(this%coarse_catchment_field)
+        if (associated(this%coarse_cumulative_flow_field)) &
+            deallocate(this%coarse_cumulative_flow_field)
+        if  (associated(this%coarse_rdirs_field)) &
+            deallocate(this%coarse_rdirs_field)
         if  (associated(this%fine_rdirs_field)) &
             deallocate(this%fine_rdirs_field)
         if  (associated(this%fine_cumulative_flow_field)) &
@@ -264,35 +264,35 @@ contains
             deallocate(highest_cumulative_flow_location)
     end function
 
-    subroutine init_latlon_loop_breaker(this,course_catchments,course_cumulative_flow,course_rdirs,&
+    subroutine init_latlon_loop_breaker(this,coarse_catchments,coarse_cumulative_flow,coarse_rdirs,&
                                         fine_rdirs,fine_cumulative_flow)
         class(latlon_loop_breaker) :: this
-        class(*), dimension(:,:), pointer :: course_catchments
-        class(*), dimension(:,:), pointer :: course_cumulative_flow
-        class(*), dimension(:,:), pointer :: course_rdirs
+        class(*), dimension(:,:), pointer :: coarse_catchments
+        class(*), dimension(:,:), pointer :: coarse_cumulative_flow
+        class(*), dimension(:,:), pointer :: coarse_rdirs
         class(*), dimension(:,:), pointer :: fine_rdirs
         class(*), dimension(:,:), pointer :: fine_cumulative_flow
-        this%course_catchment_field => latlon_field_section(course_catchments,&
-            latlon_section_coords(1,1,size(course_catchments,1),size(course_catchments,2)))
-        this%course_cumulative_flow_field => latlon_field_section(course_cumulative_flow,&
-            latlon_section_coords(1,1,size(course_cumulative_flow,1),size(course_cumulative_flow,2)))
-        this%course_rdirs_field => latlon_field_section(course_rdirs, &
-            latlon_section_coords(1,1,size(course_rdirs,1),size(course_rdirs,2)))
+        this%coarse_catchment_field => latlon_field_section(coarse_catchments,&
+            latlon_section_coords(1,1,size(coarse_catchments,1),size(coarse_catchments,2)))
+        this%coarse_cumulative_flow_field => latlon_field_section(coarse_cumulative_flow,&
+            latlon_section_coords(1,1,size(coarse_cumulative_flow,1),size(coarse_cumulative_flow,2)))
+        this%coarse_rdirs_field => latlon_field_section(coarse_rdirs, &
+            latlon_section_coords(1,1,size(coarse_rdirs,1),size(coarse_rdirs,2)))
         this%fine_rdirs_field => latlon_field_section(fine_rdirs, &
             latlon_section_coords(1,1,size(fine_rdirs,1),size(fine_rdirs,2)))
         this%fine_cumulative_flow_field => latlon_field_section(fine_cumulative_flow, &
             latlon_section_coords(1,1,size(fine_cumulative_flow,1),size(fine_cumulative_flow,2)))
-        this%scale_factor = size(fine_rdirs,1)/size(course_rdirs,1)
-        this%nlat_course = size(course_rdirs,1)
-        this%nlon_course = size(course_rdirs,2)
+        this%scale_factor = size(fine_rdirs,1)/size(coarse_rdirs,1)
+        this%nlat_coarse = size(coarse_rdirs,1)
+        this%nlon_coarse = size(coarse_rdirs,2)
     end subroutine init_latlon_loop_breaker
 
-    function latlon_get_loop_free_rdirs(this) result(loop_free_course_rdirs)
+    function latlon_get_loop_free_rdirs(this) result(loop_free_coarse_rdirs)
         class(latlon_loop_breaker) :: this
-        class(*), dimension(:,:), pointer :: loop_free_course_rdirs
-            select type (course_rdirs_field => this%course_rdirs_field)
+        class(*), dimension(:,:), pointer :: loop_free_coarse_rdirs
+            select type (coarse_rdirs_field => this%coarse_rdirs_field)
             class is (latlon_field_section)
-                loop_free_course_rdirs => course_rdirs_field%get_data()
+                loop_free_coarse_rdirs => coarse_rdirs_field%get_data()
             end select
     end function latlon_get_loop_free_rdirs
 
@@ -304,14 +304,14 @@ contains
         integer :: loop_num
         integer :: i,j
             allocate(cells_in_loop)
-            do j = 1,this%nlon_course
-                do i = 1,this%nlat_course
+            do j = 1,this%nlon_coarse
+                do i = 1,this%nlat_coarse
                     cumulative_flow_value => &
-                        this%course_cumulative_flow_field%get_value(latlon_coords(i,j))
+                        this%coarse_cumulative_flow_field%get_value(latlon_coords(i,j))
                     select type (cumulative_flow_value)
                         type is (integer)
                         catchment_value => &
-                            this%course_catchment_field%get_value(latlon_coords(i,j))
+                            this%coarse_catchment_field%get_value(latlon_coords(i,j))
                         select type (catchment_value)
                         type is (integer)
                             if (catchment_value == loop_num .and. cumulative_flow_value == 0 ) then
@@ -401,25 +401,25 @@ contains
     end function latlon_locate_highest_cumulative_flow_of_cell
 
 
-    function latlon_dir_based_rdirs_loop_breaker_constructor(course_catchments_in,course_cumulative_flow_in,course_rdirs_in,&
+    function latlon_dir_based_rdirs_loop_breaker_constructor(coarse_catchments_in,coarse_cumulative_flow_in,coarse_rdirs_in,&
                                                              fine_rdirs_in,fine_cumulative_flow_in) result(constructor)
         type(latlon_dir_based_rdirs_loop_breaker) :: constructor
-        integer, dimension(:,:), pointer :: course_catchments_in
-        integer, dimension(:,:), pointer :: course_cumulative_flow_in
-        integer, dimension(:,:), pointer :: course_rdirs_in
+        integer, dimension(:,:), pointer :: coarse_catchments_in
+        integer, dimension(:,:), pointer :: coarse_cumulative_flow_in
+        integer, dimension(:,:), pointer :: coarse_rdirs_in
         integer, dimension(:,:), pointer :: fine_cumulative_flow_in
         integer, dimension(:,:), pointer :: fine_rdirs_in
-        class(*), dimension(:,:), pointer :: course_catchments
-        class(*), dimension(:,:), pointer :: course_cumulative_flow
-        class(*), dimension(:,:), pointer :: course_rdirs
+        class(*), dimension(:,:), pointer :: coarse_catchments
+        class(*), dimension(:,:), pointer :: coarse_cumulative_flow
+        class(*), dimension(:,:), pointer :: coarse_rdirs
         class(*), dimension(:,:), pointer :: fine_cumulative_flow
         class(*), dimension(:,:), pointer :: fine_rdirs
-            course_catchments => course_catchments_in
-            course_cumulative_flow => course_cumulative_flow_in
-            course_rdirs => course_rdirs_in
+            coarse_catchments => coarse_catchments_in
+            coarse_cumulative_flow => coarse_cumulative_flow_in
+            coarse_rdirs => coarse_rdirs_in
             fine_cumulative_flow => fine_cumulative_flow_in
             fine_rdirs => fine_rdirs_in
-            call constructor%init_latlon_loop_breaker(course_catchments,course_cumulative_flow,course_rdirs,&
+            call constructor%init_latlon_loop_breaker(coarse_catchments,coarse_cumulative_flow,coarse_rdirs,&
                                                       fine_rdirs,fine_cumulative_flow)
     end function latlon_dir_based_rdirs_loop_breaker_constructor
 
@@ -446,44 +446,44 @@ contains
                     if (.not. permitted_diagonal_outflow_rdir%is_equal_to_integer(this%no_data_rdir) ) then
                         if ( permitted_diagonal_outflow_rdir%is_equal_to_integer(7) ) then
                             if (rdir == 1) then
-                                call this%course_rdirs_field%set_value(coords_in,4)
+                                call this%coarse_rdirs_field%set_value(coords_in,4)
                             else
-                                call this%course_rdirs_field%set_value(coords_in,8)
+                                call this%coarse_rdirs_field%set_value(coords_in,8)
                             end if
                         else if ( permitted_diagonal_outflow_rdir%is_equal_to_integer(9) ) then
                             if (rdir == 7) then
-                                call this%course_rdirs_field%set_value(coords_in,8)
+                                call this%coarse_rdirs_field%set_value(coords_in,8)
                             else
-                                call this%course_rdirs_field%set_value(coords_in,6)
+                                call this%coarse_rdirs_field%set_value(coords_in,6)
                             end if
                         else if ( permitted_diagonal_outflow_rdir%is_equal_to_integer(3) ) then
                             if (rdir == 9) then
-                                call this%course_rdirs_field%set_value(coords_in,6)
+                                call this%coarse_rdirs_field%set_value(coords_in,6)
                             else
-                                call this%course_rdirs_field%set_value(coords_in,2)
+                                call this%coarse_rdirs_field%set_value(coords_in,2)
                             end if
                         else if ( permitted_diagonal_outflow_rdir%is_equal_to_integer(1) ) then
                             if (rdir == 3) then
-                                call this%course_rdirs_field%set_value(coords_in,2)
+                                call this%coarse_rdirs_field%set_value(coords_in,2)
                             else
-                                call this%course_rdirs_field%set_value(coords_in,4)
+                                call this%coarse_rdirs_field%set_value(coords_in,4)
                             end if
                         end if
                     else if (vertical_boundary_outflow) then
                         if (rdir == 7 .or. rdir == 1) then
-                            call this%course_rdirs_field%set_value(coords_in,4)
+                            call this%coarse_rdirs_field%set_value(coords_in,4)
                         else
-                            call this%course_rdirs_field%set_value(coords_in,6)
+                            call this%coarse_rdirs_field%set_value(coords_in,6)
                         end if
                     else
                          if (rdir == 7 .or. rdir == 9) then
-                            call this%course_rdirs_field%set_value(coords_in,8)
+                            call this%coarse_rdirs_field%set_value(coords_in,8)
                          else
-                            call this%course_rdirs_field%set_value(coords_in,2)
+                            call this%coarse_rdirs_field%set_value(coords_in,2)
                          end if
                     end if
                 else
-                    call this%course_rdirs_field%set_value(coords_in,rdir)
+                    call this%coarse_rdirs_field%set_value(coords_in,rdir)
                 end if
             end select
             deallocate(permitted_diagonal_outflow_rdir)

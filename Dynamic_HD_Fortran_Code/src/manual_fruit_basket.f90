@@ -6,6 +6,21 @@ logical :: verbose = .True.
 
 contains
 
+    subroutine flow_all_tests
+    use flow_test_mod
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testSmallGrid"
+        call set_unit_name('test_something')
+        call run_test_case(testSmallGrid,&
+                           'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","wrapped_grid_section_test")
+        else
+            call case_passed_xml("test_something","wrapped_grid_section_test")
+        end if
+        call teardown
+    end subroutine flow_all_tests
+
     subroutine cotat_plus_all_tests
     use cotat_plus_test_mod
 

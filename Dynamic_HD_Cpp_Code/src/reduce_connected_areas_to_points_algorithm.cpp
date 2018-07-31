@@ -5,7 +5,8 @@
  *      Author: thomasriddick
  */
 
-#include <reduce_connected_areas_to_points_algorithm.hpp>
+#include "reduce_connected_areas_to_points_algorithm.hpp"
+#include <cmath>
 
 reduce_connected_areas_to_points_algorithm::~reduce_connected_areas_to_points_algorithm() {
 	delete completed_cells;
@@ -13,12 +14,14 @@ reduce_connected_areas_to_points_algorithm::~reduce_connected_areas_to_points_al
 	delete _grid;
 }
 
-void reduce_connected_areas_to_points_algorithm::setup_flags(bool use_diagonals_in)
+void reduce_connected_areas_to_points_algorithm::setup_flags(bool use_diagonals_in,
+                                                             bool check_for_false_minima_in)
 {
 	use_diagonals = use_diagonals_in;
+	check_for_false_minima = check_for_false_minima_in;
 }
 
-void reduce_connected_areas_to_points_algorithm::setup_fields(bool* areas_in,
+void reduce_connected_areas_to_points_algorithm::setup_fields(bool* areas_in,double* orography_in,
 		 	 	 	 	 	 	 	 	 	 	 	grid_params* grid_params_in)
 {
 	_grid_params = grid_params_in;
@@ -26,12 +29,15 @@ void reduce_connected_areas_to_points_algorithm::setup_fields(bool* areas_in,
 	areas = new field<bool>(areas_in,_grid_params);
 	completed_cells = new field<bool>(_grid_params);
 	completed_cells->set_all(false);
+	if (check_for_false_minima) {
+		orography = new field<double>(orography_in,_grid_params);
+	}
 }
 
 
 void reduce_connected_areas_to_points_algorithm::iterate_over_field() {
 	_grid->for_all([&](coords* coords_in){
-		if (*coords) reduce_connected_area_to_point(coords_in);
+		if ((*areas)(coords_in)) reduce_connected_area_to_point(coords_in);
 		delete coords_in;
 	});
 }
@@ -45,12 +51,13 @@ void reduce_connected_areas_to_points_algorithm::reduce_connected_area_to_point(
 		process_neighbors();
 		delete center_cell;
 	}
-
+	if (delete_initial_point) (*areas)(point) = false;
 }
 
 void reduce_connected_areas_to_points_algorithm::process_initial_point(coords* point) {
 	center_coords = point;
 	(*completed_cells)(center_coords) = true;
+	delete_initial_point = false;
 	process_neighbors();
 }
 
@@ -66,12 +73,21 @@ void reduce_connected_areas_to_points_algorithm::process_neighbors() {
 inline void reduce_connected_areas_to_points_algorithm::process_neighbor() {
 	auto nbr_coords = neighbors_coords->back();
 	if (use_diagonals || neighbors_coords->size() > diagonal_neighbors) {
-		if ((*areas)(nbr_coords) && !((*completed_cells)(nbr_coords))) {
-			q.push(new landsea_cell(nbr_coords));
-			(*areas)(nbr_coords) = false;
-			(*completed_cells)(nbr_coords) = true;
-		}
-	}
+		if(! (*completed_cells)(nbr_coords)) {
+			if ((*areas)(nbr_coords)) {
+				q.push(new landsea_cell(nbr_coords));
+				(*areas)(nbr_coords) = false;
+				(*completed_cells)(nbr_coords) = true;
+			} else if(check_for_false_minima) {
+				//Note a neighbour of the same height that is not marked as a minima
+				//implies that one of the neighbour's neighbours is at a lower height
+				//and hence this is a false minima
+				if ((*orography)(nbr_coords) <= (*orography)(center_coords)) {
+					delete_initial_point = true;
+				}
+			}
+		} else delete nbr_coords;
+	} else delete nbr_coords;
 	neighbors_coords->pop_back();
 }
 

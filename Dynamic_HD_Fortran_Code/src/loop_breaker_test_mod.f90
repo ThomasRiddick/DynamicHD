@@ -11,9 +11,9 @@ contains
 
     subroutine testLoopBreaker
         use loop_breaker_mod
-        integer, dimension(:,:), pointer :: course_rdirs
-        integer, dimension(:,:), pointer :: course_cumulative_flow
-        integer, dimension(:,:), pointer :: course_catchments
+        integer, dimension(:,:), pointer :: coarse_rdirs
+        integer, dimension(:,:), pointer :: coarse_cumulative_flow
+        integer, dimension(:,:), pointer :: coarse_catchments
         integer, dimension(:,:), pointer :: fine_rdirs
         integer, dimension(:,:), pointer :: fine_cumulative_flow
         integer, dimension(:,:), pointer :: expected_results
@@ -21,31 +21,31 @@ contains
         integer, dimension(:,:), pointer :: result0
         class(*), dimension(:,:), pointer :: result_ptr
         type(latlon_dir_based_rdirs_loop_breaker) :: dir_based_rdirs_loop_breaker
-            allocate(course_rdirs(5,5))
-            allocate(course_cumulative_flow(5,5))
-            allocate(course_catchments(5,5))
+            allocate(coarse_rdirs(5,5))
+            allocate(coarse_cumulative_flow(5,5))
+            allocate(coarse_catchments(5,5))
             allocate(expected_results(5,5))
             allocate(fine_rdirs(15,15))
             allocate(fine_cumulative_flow(15,15))
             loop_nums_list = (/ 25,61,9,58,13 /)
-            course_rdirs = transpose(reshape((/ 6,1,6,6,1,&
+            coarse_rdirs = transpose(reshape((/ 6,1,6,6,1,&
                                                 8,4,4,8,7, &
                                                 1,-1,5,0,6, &
                                                 2,4,9,8,8, &
                                                 9,6,8,7,6 /), &
-                                                shape(transpose(course_rdirs))))
-            course_cumulative_flow = transpose(reshape((/ 0,0,1,0,0, &
+                                                shape(transpose(coarse_rdirs))))
+            coarse_cumulative_flow = transpose(reshape((/ 0,0,1,0,0, &
                                                           0,2,1,0,1, &
                                                           0,0,1,0,0, &
                                                           0,0,0,1,0, &
                                                           0,0,0,1,1 /), &
-                                                          shape(transpose(course_cumulative_flow))))
-            course_catchments = transpose(reshape((/ 25,25,61,61,61, &
+                                                          shape(transpose(coarse_cumulative_flow))))
+            coarse_catchments = transpose(reshape((/ 25,25,61,61,61, &
                                                      25,25,25,61,61, &
                                                      13,0,14,58,13,  &
                                                      9,9,58,19,13, &
                                                      9,58,58,58,9 /), &
-                                                     shape(transpose(course_catchments))))
+                                                     shape(transpose(coarse_catchments))))
             fine_rdirs = transpose(reshape((/ 6,6,6, 6,6,2, 6,6,3, 6,6,6, 6,6,2, &
                                               6,6,6, 6,6,6, 9,8,4, 4,6,6, 6,6,2, &
                                               6,6,6, 6,6,8, 8,8,8,  6,6,6, 6,6,2, &
@@ -91,10 +91,10 @@ contains
                                                     1,-1,5,0,7, &
                                                     2,6,5,8,8, &
                                                     9,6,8,7,6 /), &
-                                                    shape(transpose(course_rdirs))))
+                                                    shape(transpose(coarse_rdirs))))
             dir_based_rdirs_loop_breaker = &
-                latlon_dir_based_rdirs_loop_breaker(course_catchments,course_cumulative_flow,&
-                course_rdirs,fine_rdirs,fine_cumulative_flow)
+                latlon_dir_based_rdirs_loop_breaker(coarse_catchments,coarse_cumulative_flow,&
+                coarse_rdirs,fine_rdirs,fine_cumulative_flow)
             call dir_based_rdirs_loop_breaker%break_loops(loop_nums_list)
             result_ptr => dir_based_rdirs_loop_breaker%latlon_get_loop_free_rdirs()
             call dir_based_rdirs_loop_breaker%destructor()
@@ -103,9 +103,9 @@ contains
                 result0 => result_ptr
             end select
             call assert_equals(expected_results,result0,5,5)
-            deallocate(course_rdirs)
-            deallocate(course_cumulative_flow)
-            deallocate(course_catchments)
+            deallocate(coarse_rdirs)
+            deallocate(coarse_cumulative_flow)
+            deallocate(coarse_catchments)
             deallocate(fine_rdirs)
             deallocate(fine_cumulative_flow)
             deallocate(expected_results)
@@ -114,9 +114,9 @@ contains
 
     subroutine testLoopBreakerTwo
         use loop_breaker_mod
-        integer, dimension(:,:), pointer :: course_rdirs
-        integer, dimension(:,:), pointer :: course_cumulative_flow
-        integer, dimension(:,:), pointer :: course_catchments
+        integer, dimension(:,:), pointer :: coarse_rdirs
+        integer, dimension(:,:), pointer :: coarse_cumulative_flow
+        integer, dimension(:,:), pointer :: coarse_catchments
         integer, dimension(:,:), pointer :: fine_rdirs
         integer, dimension(:,:), pointer :: fine_cumulative_flow
         integer, dimension(:,:), pointer :: expected_results
@@ -124,31 +124,31 @@ contains
         integer, dimension(:,:), pointer :: result0
         class(*), dimension(:,:), pointer :: result_ptr
         type(latlon_dir_based_rdirs_loop_breaker) :: dir_based_rdirs_loop_breaker
-            allocate(course_rdirs(5,5))
-            allocate(course_cumulative_flow(5,5))
-            allocate(course_catchments(5,5))
+            allocate(coarse_rdirs(5,5))
+            allocate(coarse_cumulative_flow(5,5))
+            allocate(coarse_catchments(5,5))
             allocate(expected_results(5,5))
             allocate(fine_rdirs(15,15))
             allocate(fine_cumulative_flow(15,15))
             loop_nums_list = (/ 10,20,30,40 /)
-            course_rdirs = transpose(reshape((/ 6,1,5,6,2,&
+            coarse_rdirs = transpose(reshape((/ 6,1,5,6,2,&
                                                 8,5,5,5,7, &
                                                 5,5,5,5,5, &
                                                 3,5,5,5,2, &
                                                 8,4,5,9,4 /), &
-                                                shape(transpose(course_rdirs))))
-            course_cumulative_flow = transpose(reshape((/ 0,0,1,0,0, &
+                                                shape(transpose(coarse_rdirs))))
+            coarse_cumulative_flow = transpose(reshape((/ 0,0,1,0,0, &
                                                           0,1,1,1,0, &
                                                           1,1,1,1,1, &
                                                           0,1,1,1,0, &
                                                           0,0,1,0,0 /), &
-                                                          shape(transpose(course_cumulative_flow))))
-            course_catchments = transpose(reshape((/ 10,10,1,30,30, &
+                                                          shape(transpose(coarse_cumulative_flow))))
+            coarse_catchments = transpose(reshape((/ 10,10,1,30,30, &
                                                      10, 1,1, 1,30, &
                                                       1, 1,1, 1, 1,  &
                                                      20, 1,1, 1,40, &
                                                      20,20,1,40,40 /), &
-                                                     shape(transpose(course_catchments))))
+                                                     shape(transpose(coarse_catchments))))
             fine_rdirs = transpose(reshape((/ 6,6,6, 6,6,2, 6,6,3, 6,6,6, 6,6,2, &
                                               6,6,6, 6,6,6, 9,8,4, 4,6,6, 6,6,2, &
                                               6,6,6, 6,6,3, 8,8,8,  1,6,6, 6,6,2, &
@@ -194,10 +194,10 @@ contains
                                                     5,5,5,5,5, &
                                                     3,5,5,5,2, &
                                                     8,9,5,9,7 /), &
-                                                    shape(transpose(course_rdirs))))
+                                                    shape(transpose(coarse_rdirs))))
             dir_based_rdirs_loop_breaker = &
-                latlon_dir_based_rdirs_loop_breaker(course_catchments,course_cumulative_flow,&
-                course_rdirs,fine_rdirs,fine_cumulative_flow)
+                latlon_dir_based_rdirs_loop_breaker(coarse_catchments,coarse_cumulative_flow,&
+                coarse_rdirs,fine_rdirs,fine_cumulative_flow)
             call dir_based_rdirs_loop_breaker%break_loops(loop_nums_list)
             result_ptr => dir_based_rdirs_loop_breaker%latlon_get_loop_free_rdirs()
             call dir_based_rdirs_loop_breaker%destructor()
@@ -206,9 +206,9 @@ contains
                 result0 => result_ptr
             end select
             call assert_equals(expected_results,result0,5,5)
-            deallocate(course_rdirs)
-            deallocate(course_cumulative_flow)
-            deallocate(course_catchments)
+            deallocate(coarse_rdirs)
+            deallocate(coarse_cumulative_flow)
+            deallocate(coarse_catchments)
             deallocate(fine_rdirs)
             deallocate(fine_cumulative_flow)
             deallocate(expected_results)
@@ -217,9 +217,9 @@ contains
 
 subroutine testLoopBreakerThree
         use loop_breaker_mod
-        integer, dimension(:,:), pointer :: course_rdirs
-        integer, dimension(:,:), pointer :: course_cumulative_flow
-        integer, dimension(:,:), pointer :: course_catchments
+        integer, dimension(:,:), pointer :: coarse_rdirs
+        integer, dimension(:,:), pointer :: coarse_cumulative_flow
+        integer, dimension(:,:), pointer :: coarse_catchments
         integer, dimension(:,:), pointer :: fine_rdirs
         integer, dimension(:,:), pointer :: fine_cumulative_flow
         integer, dimension(:,:), pointer :: expected_results
@@ -227,31 +227,31 @@ subroutine testLoopBreakerThree
         integer, dimension(:,:), pointer :: result0
         class(*), dimension(:,:), pointer :: result_ptr
         type(latlon_dir_based_rdirs_loop_breaker) :: dir_based_rdirs_loop_breaker
-            allocate(course_rdirs(5,5))
-            allocate(course_cumulative_flow(5,5))
-            allocate(course_catchments(5,5))
+            allocate(coarse_rdirs(5,5))
+            allocate(coarse_cumulative_flow(5,5))
+            allocate(coarse_catchments(5,5))
             allocate(expected_results(5,5))
             allocate(fine_rdirs(15,15))
             allocate(fine_cumulative_flow(15,15))
             loop_nums_list = (/ 10,20,30,40 /)
-            course_rdirs = transpose(reshape((/ 6,1,5,6,2, &
+            coarse_rdirs = transpose(reshape((/ 6,1,5,6,2, &
                                                 8,5,5,5,7, &
                                                 5,5,5,5,5, &
                                                 3,5,5,5,2, &
                                                 8,4,5,9,4 /), &
-                                                shape(transpose(course_rdirs))))
-            course_cumulative_flow = transpose(reshape((/ 0,0,1,0,0, &
+                                                shape(transpose(coarse_rdirs))))
+            coarse_cumulative_flow = transpose(reshape((/ 0,0,1,0,0, &
                                                           0,1,1,1,0, &
                                                           1,1,1,1,1, &
                                                           0,1,1,1,0, &
                                                           0,0,1,0,0 /), &
-                                                          shape(transpose(course_cumulative_flow))))
-            course_catchments = transpose(reshape((/ 10,10,1,30,30, &
+                                                          shape(transpose(coarse_cumulative_flow))))
+            coarse_catchments = transpose(reshape((/ 10,10,1,30,30, &
                                                      10, 1,1, 1,30, &
                                                       1, 1,1, 1, 1,  &
                                                      20, 1,1, 1,40, &
                                                      20,20,1,40,40 /), &
-                                                     shape(transpose(course_catchments))))
+                                                     shape(transpose(coarse_catchments))))
             fine_rdirs = transpose(reshape((/ 6,6,6, 6,6,2, 6,6,3, 6,6,6, 6,6,2, &
                                               6,6,6, 6,6,6, 9,8,4, 4,6,6, 6,6,2, &
                                               6,6,6, 6,6,1, 8,8,8,  7,6,6, 6,6,2, &
@@ -297,10 +297,10 @@ subroutine testLoopBreakerThree
                                                     5,5,5,5,5, &
                                                     3,5,5,5,2, &
                                                     8,6,5,8,4 /), &
-                                                    shape(transpose(course_rdirs))))
+                                                    shape(transpose(coarse_rdirs))))
             dir_based_rdirs_loop_breaker = &
-                latlon_dir_based_rdirs_loop_breaker(course_catchments,course_cumulative_flow,&
-                course_rdirs,fine_rdirs,fine_cumulative_flow)
+                latlon_dir_based_rdirs_loop_breaker(coarse_catchments,coarse_cumulative_flow,&
+                coarse_rdirs,fine_rdirs,fine_cumulative_flow)
             call dir_based_rdirs_loop_breaker%break_loops(loop_nums_list)
             result_ptr => dir_based_rdirs_loop_breaker%latlon_get_loop_free_rdirs()
             call dir_based_rdirs_loop_breaker%destructor()
@@ -309,9 +309,9 @@ subroutine testLoopBreakerThree
                 result0 => result_ptr
             end select
             call assert_equals(expected_results,result0,5,5)
-            deallocate(course_rdirs)
-            deallocate(course_cumulative_flow)
-            deallocate(course_catchments)
+            deallocate(coarse_rdirs)
+            deallocate(coarse_cumulative_flow)
+            deallocate(coarse_catchments)
             deallocate(fine_rdirs)
             deallocate(fine_cumulative_flow)
             deallocate(expected_results)
@@ -320,9 +320,9 @@ subroutine testLoopBreakerThree
 
 subroutine testLoopBreakerFour
         use loop_breaker_mod
-        integer, dimension(:,:), pointer :: course_rdirs
-        integer, dimension(:,:), pointer :: course_cumulative_flow
-        integer, dimension(:,:), pointer :: course_catchments
+        integer, dimension(:,:), pointer :: coarse_rdirs
+        integer, dimension(:,:), pointer :: coarse_cumulative_flow
+        integer, dimension(:,:), pointer :: coarse_catchments
         integer, dimension(:,:), pointer :: fine_rdirs
         integer, dimension(:,:), pointer :: fine_cumulative_flow
         integer, dimension(:,:), pointer :: expected_results
@@ -330,31 +330,31 @@ subroutine testLoopBreakerFour
         integer, dimension(:,:), pointer :: result0
         class(*), dimension(:,:), pointer :: result_ptr
         type(latlon_dir_based_rdirs_loop_breaker) :: dir_based_rdirs_loop_breaker
-            allocate(course_rdirs(5,5))
-            allocate(course_cumulative_flow(5,5))
-            allocate(course_catchments(5,5))
+            allocate(coarse_rdirs(5,5))
+            allocate(coarse_cumulative_flow(5,5))
+            allocate(coarse_catchments(5,5))
             allocate(expected_results(5,5))
             allocate(fine_rdirs(15,15))
             allocate(fine_cumulative_flow(15,15))
             loop_nums_list = (/ 10,20,30,40 /)
-            course_rdirs = transpose(reshape((/ 6,1,5,6,2, &
+            coarse_rdirs = transpose(reshape((/ 6,1,5,6,2, &
                                                 8,5,5,5,7, &
                                                 5,5,5,5,5, &
                                                 3,5,5,5,2, &
                                                 8,4,5,9,4 /), &
-                                                shape(transpose(course_rdirs))))
-            course_cumulative_flow = transpose(reshape((/ 0,0,1,0,0, &
+                                                shape(transpose(coarse_rdirs))))
+            coarse_cumulative_flow = transpose(reshape((/ 0,0,1,0,0, &
                                                           0,1,1,1,0, &
                                                           1,1,1,1,1, &
                                                           0,1,1,1,0, &
                                                           0,0,1,0,0 /), &
-                                                          shape(transpose(course_cumulative_flow))))
-            course_catchments = transpose(reshape((/ 10,10,1,30,30, &
+                                                          shape(transpose(coarse_cumulative_flow))))
+            coarse_catchments = transpose(reshape((/ 10,10,1,30,30, &
                                                      10, 1,1, 1,30, &
                                                       1, 1,1, 1, 1,  &
                                                      20, 1,1, 1,40, &
                                                      20,20,1,40,40 /), &
-                                                     shape(transpose(course_catchments))))
+                                                     shape(transpose(coarse_catchments))))
             fine_rdirs = transpose(reshape((/ 6,6,6, 6,6,2, 6,6,3, 6,6,6, 6,6,2, &
                                               6,6,6, 6,6,6, 9,8,4, 4,6,6, 6,6,2, &
                                               6,6,6, 6,6,9, 8,8,8,  3,6,6, 6,6,2, &
@@ -400,10 +400,10 @@ subroutine testLoopBreakerFour
                                                     5,5,5,5,5, &
                                                     3,5,5,5,2, &
                                                     8,8,5,4,4 /), &
-                                                    shape(transpose(course_rdirs))))
+                                                    shape(transpose(coarse_rdirs))))
             dir_based_rdirs_loop_breaker = &
-                latlon_dir_based_rdirs_loop_breaker(course_catchments,course_cumulative_flow,&
-                course_rdirs,fine_rdirs,fine_cumulative_flow)
+                latlon_dir_based_rdirs_loop_breaker(coarse_catchments,coarse_cumulative_flow,&
+                coarse_rdirs,fine_rdirs,fine_cumulative_flow)
             call dir_based_rdirs_loop_breaker%break_loops(loop_nums_list)
             result_ptr => dir_based_rdirs_loop_breaker%latlon_get_loop_free_rdirs()
             call dir_based_rdirs_loop_breaker%destructor()
@@ -412,9 +412,9 @@ subroutine testLoopBreakerFour
                 result0 => result_ptr
             end select
             call assert_equals(expected_results,result0,5,5)
-            deallocate(course_rdirs)
-            deallocate(course_cumulative_flow)
-            deallocate(course_catchments)
+            deallocate(coarse_rdirs)
+            deallocate(coarse_cumulative_flow)
+            deallocate(coarse_catchments)
             deallocate(fine_rdirs)
             deallocate(fine_cumulative_flow)
             deallocate(expected_results)
@@ -423,9 +423,9 @@ end subroutine testLoopBreakerFour
 
 subroutine testLoopBreakerFive
         use loop_breaker_mod
-        integer, dimension(:,:), pointer :: course_rdirs
-        integer, dimension(:,:), pointer :: course_cumulative_flow
-        integer, dimension(:,:), pointer :: course_catchments
+        integer, dimension(:,:), pointer :: coarse_rdirs
+        integer, dimension(:,:), pointer :: coarse_cumulative_flow
+        integer, dimension(:,:), pointer :: coarse_catchments
         integer, dimension(:,:), pointer :: fine_rdirs
         integer, dimension(:,:), pointer :: fine_cumulative_flow
         integer, dimension(:,:), pointer :: expected_results
@@ -433,31 +433,31 @@ subroutine testLoopBreakerFive
         integer, dimension(:,:), pointer :: result0
         class(*), dimension(:,:), pointer :: result_ptr
         type(latlon_dir_based_rdirs_loop_breaker) :: dir_based_rdirs_loop_breaker
-            allocate(course_rdirs(5,5))
-            allocate(course_cumulative_flow(5,5))
-            allocate(course_catchments(5,5))
+            allocate(coarse_rdirs(5,5))
+            allocate(coarse_cumulative_flow(5,5))
+            allocate(coarse_catchments(5,5))
             allocate(expected_results(5,5))
             allocate(fine_rdirs(15,15))
             allocate(fine_cumulative_flow(15,15))
             loop_nums_list = (/ 10,20,30,40 /)
-            course_rdirs = transpose(reshape((/ 6,1,5,6,2, &
+            coarse_rdirs = transpose(reshape((/ 6,1,5,6,2, &
                                                 8,5,5,5,7, &
                                                 5,5,5,5,5, &
                                                 3,5,5,5,2, &
                                                 8,4,5,9,4 /), &
-                                                shape(transpose(course_rdirs))))
-            course_cumulative_flow = transpose(reshape((/ 0,0,1,0,0, &
+                                                shape(transpose(coarse_rdirs))))
+            coarse_cumulative_flow = transpose(reshape((/ 0,0,1,0,0, &
                                                           0,1,1,1,0, &
                                                           1,1,1,1,1, &
                                                           0,1,1,1,0, &
                                                           0,0,1,0,0 /), &
-                                                          shape(transpose(course_cumulative_flow))))
-            course_catchments = transpose(reshape((/ 10,10,1,30,30, &
+                                                          shape(transpose(coarse_cumulative_flow))))
+            coarse_catchments = transpose(reshape((/ 10,10,1,30,30, &
                                                      10, 1,1, 1,30, &
                                                       1, 1,1, 1, 1,  &
                                                      20, 1,1, 1,40, &
                                                      20,20,1,40,40 /), &
-                                                     shape(transpose(course_catchments))))
+                                                     shape(transpose(coarse_catchments))))
             fine_rdirs = transpose(reshape((/ 6,6,6, 6,6,2, 6,6,3, 6,6,6, 6,6,2, &
                                               6,6,6, 6,6,6, 9,8,4, 4,6,6, 6,6,2, &
                                               6,6,6, 6,1,6, 8,8,8,  6,6,6, 6,6,2, &
@@ -503,10 +503,10 @@ subroutine testLoopBreakerFive
                                                     5,5,5,5,5, &
                                                     6,5,5,5,2, &
                                                     8,4,5,8,4 /), &
-                                                    shape(transpose(course_rdirs))))
+                                                    shape(transpose(coarse_rdirs))))
             dir_based_rdirs_loop_breaker = &
-                latlon_dir_based_rdirs_loop_breaker(course_catchments,course_cumulative_flow,&
-                course_rdirs,fine_rdirs,fine_cumulative_flow)
+                latlon_dir_based_rdirs_loop_breaker(coarse_catchments,coarse_cumulative_flow,&
+                coarse_rdirs,fine_rdirs,fine_cumulative_flow)
             call dir_based_rdirs_loop_breaker%break_loops(loop_nums_list)
             result_ptr => dir_based_rdirs_loop_breaker%latlon_get_loop_free_rdirs()
             call dir_based_rdirs_loop_breaker%destructor()
@@ -515,9 +515,9 @@ subroutine testLoopBreakerFive
                 result0 => result_ptr
             end select
             call assert_equals(expected_results,result0,5,5)
-            deallocate(course_rdirs)
-            deallocate(course_cumulative_flow)
-            deallocate(course_catchments)
+            deallocate(coarse_rdirs)
+            deallocate(coarse_cumulative_flow)
+            deallocate(coarse_catchments)
             deallocate(fine_rdirs)
             deallocate(fine_cumulative_flow)
             deallocate(expected_results)
@@ -526,9 +526,9 @@ end subroutine testLoopBreakerFive
 
 subroutine testLoopBreakerSix
         use loop_breaker_mod
-        integer, dimension(:,:), pointer :: course_rdirs
-        integer, dimension(:,:), pointer :: course_cumulative_flow
-        integer, dimension(:,:), pointer :: course_catchments
+        integer, dimension(:,:), pointer :: coarse_rdirs
+        integer, dimension(:,:), pointer :: coarse_cumulative_flow
+        integer, dimension(:,:), pointer :: coarse_catchments
         integer, dimension(:,:), pointer :: fine_rdirs
         integer, dimension(:,:), pointer :: fine_cumulative_flow
         integer, dimension(:,:), pointer :: expected_results
@@ -536,31 +536,31 @@ subroutine testLoopBreakerSix
         integer, dimension(:,:), pointer :: result0
         class(*), dimension(:,:), pointer :: result_ptr
         type(latlon_dir_based_rdirs_loop_breaker) :: dir_based_rdirs_loop_breaker
-            allocate(course_rdirs(5,5))
-            allocate(course_cumulative_flow(5,5))
-            allocate(course_catchments(5,5))
+            allocate(coarse_rdirs(5,5))
+            allocate(coarse_cumulative_flow(5,5))
+            allocate(coarse_catchments(5,5))
             allocate(expected_results(5,5))
             allocate(fine_rdirs(15,15))
             allocate(fine_cumulative_flow(15,15))
             loop_nums_list = (/ 10,20,30,40 /)
-            course_rdirs = transpose(reshape((/ 6,1,5,6,2, &
+            coarse_rdirs = transpose(reshape((/ 6,1,5,6,2, &
                                                 8,5,5,5,7, &
                                                 5,5,5,5,5, &
                                                 3,5,5,5,2, &
                                                 8,4,5,9,4 /), &
-                                                shape(transpose(course_rdirs))))
-            course_cumulative_flow = transpose(reshape((/ 0,0,1,0,0, &
+                                                shape(transpose(coarse_rdirs))))
+            coarse_cumulative_flow = transpose(reshape((/ 0,0,1,0,0, &
                                                           0,1,1,1,0, &
                                                           1,1,1,1,1, &
                                                           0,1,1,1,0, &
                                                           0,0,1,0,0 /), &
-                                                          shape(transpose(course_cumulative_flow))))
-            course_catchments = transpose(reshape((/ 10,10,1,30,30, &
+                                                          shape(transpose(coarse_cumulative_flow))))
+            coarse_catchments = transpose(reshape((/ 10,10,1,30,30, &
                                                      10, 1,1, 1,30, &
                                                       1, 1,1, 1, 1,  &
                                                      20, 1,1, 1,40, &
                                                      20,20,1,40,40 /), &
-                                                     shape(transpose(course_catchments))))
+                                                     shape(transpose(coarse_catchments))))
             fine_rdirs = transpose(reshape((/ 6,6,6, 6,6,2, 6,6,3, 6,6,6, 6,6,2, &
                                               6,6,6, 6,6,6, 9,8,4, 4,6,6, 6,6,2, &
                                               6,6,6, 6,2,6, 8,8,8,  6,6,6, 6,6,2, &
@@ -606,10 +606,10 @@ subroutine testLoopBreakerSix
                                                     5,5,5,5,5, &
                                                     6,5,5,5,2, &
                                                     8,4,5,8,4 /), &
-                                                    shape(transpose(course_rdirs))))
+                                                    shape(transpose(coarse_rdirs))))
             dir_based_rdirs_loop_breaker = &
-                latlon_dir_based_rdirs_loop_breaker(course_catchments,course_cumulative_flow,&
-                course_rdirs,fine_rdirs,fine_cumulative_flow)
+                latlon_dir_based_rdirs_loop_breaker(coarse_catchments,coarse_cumulative_flow,&
+                coarse_rdirs,fine_rdirs,fine_cumulative_flow)
             call dir_based_rdirs_loop_breaker%break_loops(loop_nums_list)
             result_ptr => dir_based_rdirs_loop_breaker%latlon_get_loop_free_rdirs()
             call dir_based_rdirs_loop_breaker%destructor()
@@ -618,9 +618,9 @@ subroutine testLoopBreakerSix
                 result0 => result_ptr
             end select
             call assert_equals(expected_results,result0,5,5)
-                        deallocate(course_rdirs)
-            deallocate(course_cumulative_flow)
-            deallocate(course_catchments)
+                        deallocate(coarse_rdirs)
+            deallocate(coarse_cumulative_flow)
+            deallocate(coarse_catchments)
             deallocate(fine_rdirs)
             deallocate(fine_cumulative_flow)
             deallocate(expected_results)
@@ -629,9 +629,9 @@ end subroutine testLoopBreakerSix
 
 subroutine testLoopBreakerSeven
         use loop_breaker_mod
-        integer, dimension(:,:), pointer :: course_rdirs
-        integer, dimension(:,:), pointer :: course_cumulative_flow
-        integer, dimension(:,:), pointer :: course_catchments
+        integer, dimension(:,:), pointer :: coarse_rdirs
+        integer, dimension(:,:), pointer :: coarse_cumulative_flow
+        integer, dimension(:,:), pointer :: coarse_catchments
         integer, dimension(:,:), pointer :: fine_rdirs
         integer, dimension(:,:), pointer :: fine_cumulative_flow
         integer, dimension(:,:), pointer :: expected_results
@@ -639,31 +639,31 @@ subroutine testLoopBreakerSeven
         integer, dimension(:,:), pointer :: result0
         class(*), dimension(:,:), pointer :: result_ptr
         type(latlon_dir_based_rdirs_loop_breaker) :: dir_based_rdirs_loop_breaker
-            allocate(course_rdirs(5,5))
-            allocate(course_cumulative_flow(5,5))
-            allocate(course_catchments(5,5))
+            allocate(coarse_rdirs(5,5))
+            allocate(coarse_cumulative_flow(5,5))
+            allocate(coarse_catchments(5,5))
             allocate(expected_results(5,5))
             allocate(fine_rdirs(15,15))
             allocate(fine_cumulative_flow(15,15))
             loop_nums_list = (/ 10,20,30,40 /)
-            course_rdirs = transpose(reshape((/ 6,1,5,6,2, &
+            coarse_rdirs = transpose(reshape((/ 6,1,5,6,2, &
                                                 8,5,5,5,7, &
                                                 5,5,5,5,5, &
                                                 3,5,5,5,2, &
                                                 8,4,5,9,4 /), &
-                                                shape(transpose(course_rdirs))))
-            course_cumulative_flow = transpose(reshape((/ 0,0,1,0,0, &
+                                                shape(transpose(coarse_rdirs))))
+            coarse_cumulative_flow = transpose(reshape((/ 0,0,1,0,0, &
                                                           0,1,1,1,0, &
                                                           1,1,1,1,1, &
                                                           0,1,1,1,0, &
                                                           0,0,1,0,0 /), &
-                                                          shape(transpose(course_cumulative_flow))))
-            course_catchments = transpose(reshape((/ 10,10,1,30,30, &
+                                                          shape(transpose(coarse_cumulative_flow))))
+            coarse_catchments = transpose(reshape((/ 10,10,1,30,30, &
                                                      10, 1,1, 1,30, &
                                                       1, 1,1, 1, 1,  &
                                                      20, 1,1, 1,40, &
                                                      20,20,1,40,40 /), &
-                                                     shape(transpose(course_catchments))))
+                                                     shape(transpose(coarse_catchments))))
             fine_rdirs = transpose(reshape((/ 6,6,6, 6,6,2, 6,6,3, 6,6,6, 6,6,2, &
                                               6,6,6, 6,6,6, 9,8,4, 4,6,6, 6,6,2, &
                                               6,6,6, 6,3,6, 8,8,8,  6,6,6, 6,6,2, &
@@ -709,10 +709,10 @@ subroutine testLoopBreakerSeven
                                                     5,5,5,5,5, &
                                                     6,5,5,5,2, &
                                                     8,4,5,8,4 /), &
-                                                    shape(transpose(course_rdirs))))
+                                                    shape(transpose(coarse_rdirs))))
             dir_based_rdirs_loop_breaker = &
-                latlon_dir_based_rdirs_loop_breaker(course_catchments,course_cumulative_flow,&
-                course_rdirs,fine_rdirs,fine_cumulative_flow)
+                latlon_dir_based_rdirs_loop_breaker(coarse_catchments,coarse_cumulative_flow,&
+                coarse_rdirs,fine_rdirs,fine_cumulative_flow)
             call dir_based_rdirs_loop_breaker%break_loops(loop_nums_list)
             result_ptr => dir_based_rdirs_loop_breaker%latlon_get_loop_free_rdirs()
             call dir_based_rdirs_loop_breaker%destructor()
@@ -721,9 +721,9 @@ subroutine testLoopBreakerSeven
                 result0 => result_ptr
             end select
             call assert_equals(expected_results,result0,5,5)
-            deallocate(course_rdirs)
-            deallocate(course_cumulative_flow)
-            deallocate(course_catchments)
+            deallocate(coarse_rdirs)
+            deallocate(coarse_cumulative_flow)
+            deallocate(coarse_catchments)
             deallocate(fine_rdirs)
             deallocate(fine_cumulative_flow)
             deallocate(expected_results)

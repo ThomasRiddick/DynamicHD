@@ -9,9 +9,9 @@ class ColorPalette(object):
 
     def __init__(self,palette_to_use='default'):
         """Class constructor. Initialize chosen palette"""
-        palettes = {'default':self.initialize_default_palette,'gmd_paper':self.initialize_gmd_paper_palette} 
+        palettes = {'default':self.initialize_default_palette,'gmd_paper':self.initialize_gmd_paper_palette}
         palettes[palette_to_use]()
-        
+
     def initialize_default_palette(self):
         """Initialize the default color palette"""
         print "Using default colors"
@@ -28,7 +28,12 @@ class ColorPalette(object):
         self.flowmap_and_catchments_colors_with_glac = self.flowmap_and_catchments_colors + ['white']
         self.flowmap_and_catchments_colors_single_color_flowmap_with_glac =\
             self.flowmap_and_catchments_colors_single_color_flowmap + ['white']
-    
+        self.simple_thresholded_data_flowmap_and_catchments_colors = ['lightblue','black','peru',
+                                                                      'white','blue','red',
+                                                                      'green']
+        self.extra_sea_color = ['cadetblue']
+        self.extra_land_color = ['moccasin']
+
     def initialize_gmd_paper_palette(self):
         """Initialize the color palette for the GMD paper"""
         print "Using colors for GMD paper"
@@ -42,3 +47,6 @@ class ColorPalette(object):
         self.flowmap_and_catchments_colors = ['lightblue','peru','hotpink','blue','green','red',
                                               'grey','darkgrey','lightgrey']
         self.flowmap_and_catchments_colors_with_glac = self.flowmap_and_catchments_colors + ['white']
+        self.simple_thresholded_data_flowmap_and_catchments_colors = ['lightblue','peru','blue',
+                                                                      'white','#984ea3','#e41a1c',
+                                                                      '#4daf4a']

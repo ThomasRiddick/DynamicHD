@@ -4242,12 +4242,12 @@ protected:
 	///Expected orography output (as 1D array)
 	double* expected_orography_in;
 	///Expected river directions output (as 1D array)
-	double* expected_rdirs_in;
+	short* expected_rdirs_in;
 	///Expected output river direction of the initial set-up with
 	///no landsea mask (as 1D array)
-	double* expected_rdirs_initial_no_ls_mask;
+	short* expected_rdirs_initial_no_ls_mask;
 	///Expected river directions output for no landsea mask test (as 1D array)
-	double* expected_rdirs_no_ls_mask;
+	short* expected_rdirs_no_ls_mask;
 	///Expected orography after test with no landsea mask (as 1D array)
 	double* expected_orography_no_ls_mask;
 	///Use 10 latitude points
@@ -4374,17 +4374,17 @@ FillSinksAlgorithmFourTest::FillSinksAlgorithmFourTest(){
     0.0,-10.0,-10.0,-10.0,-10.0,-10.0,-10.0,-10.0,1.1,0.0,
     -10.0,-10.0,-10.0,-10.0,-10.0,-10.0,-10.0,-10.0,0.0,0.0};
 
-	expected_rdirs_in = new double[nlat*nlon] {
-		0.0,0.0,0.0,0.0,0.0,0.0,0.0,6.0,0.0,4.0,
-		0.0,0.0,0.0,0.0,0.0,0.0,0.0,9.0,0.0,7.0,
-		0.0,0.0,0.0,0.0,0.0,0.0,0.0,9.0,8.0,7.0,
-	    3.0,2.0,1.0,3.0,2.0,1.0,0.0,0.0,0.0,0.0,
-	    6.0,0.0,0.0,0.0,0.0,4.0,0.0,0.0,0.0,0.0,
-	    9.0,8.0,0.0,0.0,0.0,7.0,0.0,0.0,0.0,0.0,
-	    0.0,9.0,0.0,9.0,8.0,7.0,0.0,0.0,0.0,0.0,
-	    3.0,2.0,0.0,1.0,1.0,1.0,1.0,1.0,1.0,0.0,
-	    2.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,3.0,
-	    0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,4.0,6.0
+	expected_rdirs_in = new short[nlat*nlon] {
+		0,0,0,0,0,0,0,6,0,4,
+		0,0,0,0,0,0,0,9,0,7,
+		0,0,0,0,0,0,0,9,8,7,
+	    3,2,1,3,2,1,0,0,0,0,
+	    6,0,0,0,0,4,0,0,0,0,
+	    9,8,0,0,0,7,0,0,0,0,
+	    0,9,0,9,8,7,0,0,0,0,
+	    3,2,0,1,1,1,1,1,1,0,
+	    2,0,0,0,0,0,0,0,1,3,
+	    0,0,0,0,0,0,0,0,4,6
 	};
 
 	expected_orography_queue_no_ls_mask = new double[nlat*nlon]{
@@ -4400,17 +4400,17 @@ FillSinksAlgorithmFourTest::FillSinksAlgorithmFourTest(){
 		0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
 	};
 
-	expected_rdirs_initial_no_ls_mask = new double[nlat*nlon]{
-		4.0,8.0,8.0,8.0,8.0,8.0,8.0,8.0,8.0,6.0,
-		4.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,6.0,
-		4.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,6.0,
-		4.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,6.0,
-		4.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,6.0,
-		4.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,6.0,
-		4.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,6.0,
-		4.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,6.0,
-		4.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,6.0,
-		4.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,6.0
+	expected_rdirs_initial_no_ls_mask = new short[nlat*nlon]{
+		4,8,8,8,8,8,8,8,8,6,
+		4,0,0,0,0,0,0,0,0,6,
+		4,0,0,0,0,0,0,0,0,6,
+		4,0,0,0,0,0,0,0,0,6,
+		4,0,0,0,0,0,0,0,0,6,
+		4,0,0,0,0,0,0,0,0,6,
+		4,0,0,0,0,0,0,0,0,6,
+		4,0,0,0,0,0,0,0,0,6,
+		4,0,0,0,0,0,0,0,0,6,
+		4,2,2,2,2,2,2,2,2,6
 	};
 
 	expected_orography_no_ls_mask = new double[nlat*nlon] {
@@ -4425,17 +4425,17 @@ FillSinksAlgorithmFourTest::FillSinksAlgorithmFourTest(){
 	    0.0,1.1,1.1,1.1,1.1,1.1,1.1,1.1,1.1,0.0,
 	    0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
 
-	expected_rdirs_no_ls_mask = new double[nlat*nlon]{
-		4.0,8.0,8.0,8.0,8.0,8.0,8.0,8.0,8.0,6.0,
-		4.0,7.0,7.0,7.0,7.0,7.0,7.0,7.0,9.0,6.0,
-		4.0,7.0,7.0,7.0,7.0,7.0,7.0,9.0,9.0,6.0,
-		4.0,7.0,7.0,9.0,8.0,7.0,4.0,9.0,9.0,6.0,
-		4.0,7.0,7.0,6.0,9.0,8.0,7.0,9.0,9.0,6.0,
-		4.0,7.0,7.0,9.0,9.0,8.0,7.0,9.0,9.0,6.0,
-		4.0,7.0,7.0,9.0,9.0,8.0,7.0,9.0,9.0,6.0,
-		4.0,7.0,7.0,1.0,1.0,1.0,1.0,9.0,9.0,6.0,
-		4.0,7.0,1.0,1.0,1.0,1.0,1.0,1.0,9.0,6.0,
-		4.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,6.0
+	expected_rdirs_no_ls_mask = new short[nlat*nlon]{
+		4,8,8,8,8,8,8,8,8,6,
+		4,7,7,7,7,7,7,7,9,6,
+		4,7,7,7,7,7,7,9,9,6,
+		4,7,7,9,8,7,4,9,9,6,
+		4,7,7,6,9,8,7,9,9,6,
+		4,7,7,9,9,8,7,9,9,6,
+		4,7,7,9,9,8,7,9,9,6,
+		4,7,7,1,1,1,1,9,9,6,
+		4,7,1,1,1,1,1,1,9,6,
+		4,2,2,2,2,2,2,2,2,6
 	};
 }
 
@@ -4771,8 +4771,8 @@ TEST_F(FillSinksAlgorithmFourTest,TestAddingEdgesToQueueNoLSMask){
 	bool* landsea_mask = nullptr;
 	auto* next_cell_lat_index = new field<int>(grid_params);
 	auto* next_cell_lon_index = new field<int>(grid_params);
-	field<double>* rdirs = new field<double>(grid_params);
-	rdirs->set_all(0.0);
+	field<short>* rdirs = new field<short>(grid_params);
+	rdirs->set_all(0);
 	auto alg4 = sink_filling_algorithm_4_latlon(orography,grid_params,
 												completed_cells,landsea_mask,false,
 												catchment_nums,false,false,
@@ -4794,7 +4794,7 @@ TEST_F(FillSinksAlgorithmFourTest,TestAddingEdgesToQueueNoLSMask){
 	}
 	EXPECT_TRUE(orography_in_queue ==
 				field<double>(expected_orography_queue_no_ls_mask,grid_params));
-	EXPECT_TRUE(*rdirs == field<double>(expected_rdirs_initial_no_ls_mask,grid_params));
+	EXPECT_TRUE(*rdirs == field<short>(expected_rdirs_initial_no_ls_mask,grid_params));
 	EXPECT_TRUE(*completed_cells ==
 		        field<bool>(expected_completed_cells_no_ls,grid_params));
 	delete grid_params;
@@ -4808,8 +4808,8 @@ TEST_F(FillSinksAlgorithmFourTest,TestAddingEdgesToQueue){
 	auto* completed_cells = new field<bool>(grid_params);
 	completed_cells->set_all(false);
 	bool* landsea_mask = ls_data;
-	field<double>* rdirs = new field<double>(grid_params);
-	rdirs->set_all(0.0);
+	field<short>* rdirs = new field<short>(grid_params);
+	rdirs->set_all(0);
 	auto* catchment_nums = new field<int>(grid_params);
 	auto* next_cell_lat_index = new field<int>(grid_params);
 	auto* next_cell_lon_index = new field<int>(grid_params);
@@ -4836,7 +4836,7 @@ TEST_F(FillSinksAlgorithmFourTest,TestAddingEdgesToQueue){
 	EXPECT_TRUE(*completed_cells == expected_completed_cells);
 	auto expected_orography_in_queue = field<double>(expected_orography_in,grid_params);
 	EXPECT_TRUE(orography_in_queue == expected_orography_in_queue);
-	auto expected_rdirs = field<double>(expected_rdirs_in,grid_params);
+	auto expected_rdirs = field<short>(expected_rdirs_in,grid_params);
 	EXPECT_TRUE((*rdirs) == expected_rdirs);
 	EXPECT_EQ(count,35);
 	delete grid_params;
@@ -4849,12 +4849,12 @@ TEST_F(FillSinksAlgorithmFourTest,TestFillSinks){
 	auto method = 4;
 	bool* landsea_in = nullptr;
 	bool* true_sinks_in = nullptr;
-	double* rdirs_in = new double[nlat*nlon];
+	short* rdirs_in = new short[nlat*nlon];
 	int* next_cell_lat_index_in = new int[nlat*nlon];
 	int* next_cell_lon_index_in = new int[nlat*nlon];
 	int* catchment_nums_in = new int[nlat*nlon];
 	for (auto i = 0; i < nlat*nlon; i++){
-		rdirs_in[i] = 0.0;
+		rdirs_in[i] = 0;
 		catchment_nums_in[i] = 0;
 	}
 	latlon_fill_sinks(orography_in,nlat,nlon,method,landsea_in,false,true_sinks_in,
@@ -4862,8 +4862,8 @@ TEST_F(FillSinksAlgorithmFourTest,TestFillSinks){
 					  rdirs_in,catchment_nums_in,false);
 	EXPECT_TRUE(field<double>(orography_in,grid_params) ==
 			    field<double>(expected_orography_no_ls_mask,grid_params));
-	EXPECT_TRUE(field<double>(rdirs_in,grid_params) ==
-			    field<double>(expected_rdirs_no_ls_mask,grid_params));
+	EXPECT_TRUE(field<short>(rdirs_in,grid_params) ==
+			    field<short>(expected_rdirs_no_ls_mask,grid_params));
 	delete[] rdirs_in;
 	delete[] next_cell_lat_index_in;
 	delete[] next_cell_lon_index_in;

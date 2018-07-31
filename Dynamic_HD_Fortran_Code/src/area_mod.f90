@@ -4,7 +4,8 @@ use doubly_linked_list_mod
 use subfield_mod
 use field_section_mod
 use precision_mod
-use cotat_parameters_mod, only: MUFP, area_threshold, run_check_for_sinks, yamazaki_max_range
+use cotat_parameters_mod, only: MUFP, area_threshold, run_check_for_sinks, &
+                                yamazaki_max_range, yamazaki_wrap
 implicit none
 private
 
@@ -291,7 +292,7 @@ abstract interface
 end interface
 
 !> An object to contain the fine field sections corresponding to a single cell of the
-!! course grid; also includes the necessary functions that act on that cell to
+!! coarse grid; also includes the necessary functions that act on that cell to
 !! produce upscaled COTAT+ and yamazaki style upscalings. Each cell contains a
 !! neighborhood object that contains both it and its surrounding cells.
 
@@ -319,8 +320,7 @@ type, extends(area), abstract :: cell
         !> Process the cell represented by this cell object to produce a river direction
         procedure, public :: process_cell
         !> Find and mark the outlet pixel of this cell for the yamazaki style algorithm;
-        !! an input flag indicates if the LCDA criterion is being used and if so an
-        !! optional output boolean indicates whether outlet has the LCDA or not
+        !! an input flag indicates if the LCDA criterion is being used
         procedure, public :: yamazaki_mark_cell_outlet_pixel
         !> Setter for the logical variable contain_river_mouths
         procedure, public :: set_contains_river_mouths
@@ -494,10 +494,10 @@ abstract interface
         class(cell), intent(inout) :: this
     end subroutine mark_ocean_and_river_mouth_points
 
-    subroutine yamazaki_calculate_river_directions_as_indices(this,course_river_direction_indices)
+    subroutine yamazaki_calculate_river_directions_as_indices(this,coarse_river_direction_indices)
         import cell
         class(cell), intent(inout) :: this
-        integer, dimension(:,:,:), intent(inout) :: course_river_direction_indices
+        integer, dimension(:,:,:), intent(inout) :: coarse_river_direction_indices
     end subroutine yamazaki_calculate_river_directions_as_indices
 end interface
 
@@ -575,7 +575,7 @@ type, extends(neighborhood), abstract :: latlon_neighborhood
         !! cell of the neighborhood it is in. This works only for the COTAT+ algorithm
         procedure :: in_which_cell => latlon_in_which_cell
         !> Function that given a the coordinates of a pixel (on the fine grid) returns the
-        !! coordinates of the cell that pixel is in on the course grid
+        !! coordinates of the cell that pixel is in on the coarse grid
         procedure :: yamazaki_get_cell_coords => yamazaki_latlon_get_cell_coords
         !> Subroutine to wrap pixel coords around globe for the yamazaki-style
         !! algorithm; takes the pixels location as an argument and returns the
@@ -926,16 +926,17 @@ contains
             end if
     end function process_cell
 
-    subroutine yamazaki_mark_cell_outlet_pixel(this,use_LCDA_criterion,outlet_is_LCDA)
+    subroutine yamazaki_mark_cell_outlet_pixel(this,use_LCDA_criterion)
         class(cell) :: this
         logical, intent(in) :: use_LCDA_criterion
-        logical, optional, intent(inout) :: outlet_is_LCDA
         class(coords), pointer :: outlet_pixel_coords => null()
         logical :: no_remaining_outlets
         logical :: mark_sink
         logical :: mark_outflow
+        logical :: outlet_is_LCDA
         integer :: outlet_type
             if (.not. this%ocean_cell) then
+                outlet_is_LCDA = .False.
                 outlet_pixel_coords => this%find_outlet_pixel(no_remaining_outlets,use_LCDA_criterion,&
                                                               outlet_is_LCDA)
                 call this%check_for_sinks_and_rmouth_outflows(outlet_pixel_coords,no_remaining_outlets,mark_sink, &
@@ -1605,9 +1606,9 @@ contains
                      total_cumulative_flow,yamazaki_outlet_pixels,yamazaki_section_coords))
     end subroutine yamazaki_init_dir_based_rdirs_latlon_cell
 
-    subroutine yamazaki_latlon_calculate_river_directions_as_indices(this,course_river_direction_indices)
+    subroutine yamazaki_latlon_calculate_river_directions_as_indices(this,coarse_river_direction_indices)
         class(latlon_cell), intent(inout) :: this
-        integer, dimension(:,:,:), intent(inout) :: course_river_direction_indices
+        integer, dimension(:,:,:), intent(inout) :: coarse_river_direction_indices
         class(coords), pointer :: destination_cell_coords
         class(coords), pointer :: initial_outlet_pixel
         class(coords), pointer :: initial_cell_coords
@@ -1617,9 +1618,9 @@ contains
             if (outlet_pixel_type == this%yamazaki_sink_outlet .or. outlet_pixel_type == this%yamazaki_rmouth_outlet) then
                 select type (initial_cell_coords)
                 type is (latlon_coords)
-                    course_river_direction_indices(initial_cell_coords%lat,initial_cell_coords%lon,1) = &
+                    coarse_river_direction_indices(initial_cell_coords%lat,initial_cell_coords%lon,1) = &
                         -abs(outlet_pixel_type)
-                    course_river_direction_indices(initial_cell_coords%lat,initial_cell_coords%lon,2) = &
+                    coarse_river_direction_indices(initial_cell_coords%lat,initial_cell_coords%lon,2) = &
                         -abs(outlet_pixel_type)
                 end select
                 return
@@ -1629,9 +1630,9 @@ contains
             type is (latlon_coords)
                 select type (destination_cell_coords)
                 type is (latlon_coords)
-                    course_river_direction_indices(initial_cell_coords%lat,initial_cell_coords%lon,1) = &
+                    coarse_river_direction_indices(initial_cell_coords%lat,initial_cell_coords%lon,1) = &
                         destination_cell_coords%lat
-                    course_river_direction_indices(initial_cell_coords%lat,initial_cell_coords%lon,2) = &
+                    coarse_river_direction_indices(initial_cell_coords%lat,initial_cell_coords%lon,2) = &
                         destination_cell_coords%lon
                 end select
             end select
@@ -1804,6 +1805,8 @@ contains
                 select type (yamazaki_outlet_pixel_type)
                 type is (integer)
                     if (yamazaki_outlet_pixel_type == this%yamazaki_normal_outlet .and. downstream_path_length > MUFP) exit
+                    if (yamazaki_outlet_pixel_type == this%yamazaki_rmouth_outlet .or. &
+                        yamazaki_outlet_pixel_type == this%yamazaki_sink_outlet) exit
                 end select
                 deallocate(yamazaki_outlet_pixel_type)
                 if (count_of_cells_passed_through > yamazaki_max_range) then
@@ -1946,6 +1949,7 @@ contains
     subroutine yamazaki_latlon_wrap_coordinates(this,pixel_coords)
         class(latlon_neighborhood), intent(in) :: this
         class(coords), intent(inout) :: pixel_coords
+            if ( .not. yamazaki_wrap ) return
             select type (pixel_coords)
             class is (latlon_coords)
                 if (pixel_coords%lon < this%section_min_lon) then

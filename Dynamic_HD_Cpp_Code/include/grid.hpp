@@ -14,6 +14,49 @@
 using namespace std;
 
 /**
+ * Abstract generic class for holding parameters of a grid. Real subclasses
+ * are required for actual grids
+ */
+
+class grid_params {
+protected:
+	///Does this grid wrap east-west?
+	bool nowrap = false;
+public:
+	///Constructor
+	grid_params(bool nowrap_in) : nowrap(nowrap_in) {}
+	///Destructor
+	virtual ~grid_params() {};
+	///Getter
+	const int get_nowrap() { return nowrap; }
+	///Setter
+	void set_nowrap(bool nowrap_in) { nowrap = nowrap_in; }
+};
+
+/**
+ * Concrete subclass containing the parameters for a latitude-longitude grid
+ */
+
+class latlon_grid_params : public grid_params {
+	//Number of latitude points
+	int nlat;
+	//Number of longitude points
+	int nlon;
+public:
+	virtual ~latlon_grid_params() {};
+	///Class constructor
+	latlon_grid_params(int nlat_in,int nlon_in)
+	 	: grid_params(false),nlat(nlat_in), nlon(nlon_in){};
+	///Class constructor
+	latlon_grid_params(int nlat_in,int nlon_in,bool nowrap_in)
+		: grid_params(nowrap_in), nlat(nlat_in), nlon(nlon_in) {};
+	///Getter
+	const int get_nlat() { return nlat; }
+	///Getter
+	const int get_nlon() { return nlon; }
+};
+
+/**
  * Generic grid class describing the relationship between cells on an abstract grid
  *  Subclasses of this describe specific grids. Uses hand written redirections to the
  *  appropriate subclasses functions via static casting instead of relying on virtual
@@ -74,7 +117,12 @@ public:
 	///Calculate the direction based river direction from the first cell to the
 	///second
 	double calculate_dir_based_rdir(coords*,coords*);
+	bool fine_coords_in_same_cell(coords* fine_coords_set_one,
+	                              coords* fine_coords_set_two,
+	                              grid_params* fine_grid_params);
 	virtual coords* calculate_downstream_coords_from_dir_based_rdir(coords* initial_coords,double rdir) = 0;
+	virtual coords* convert_fine_coords(coords* fine_coords,grid_params* fine_grid_params) = 0;
+
 protected:
 	///The type of this grid object
 	grid_types grid_type;
@@ -87,25 +135,7 @@ protected:
 	bool nowrap = false;
 };
 
-/**
- * Abstract generic class for holding parameters of a grid. Real subclasses
- * are required for actual grids
- */
 
-class grid_params {
-protected:
-	///Does this grid wrap east-west?
-	bool nowrap = false;
-public:
-	///Constructor
-	grid_params(bool nowrap_in) : nowrap(nowrap_in) {}
-	///Destructor
-	virtual ~grid_params() {};
-	///Getter
-	const int get_nowrap() { return nowrap; }
-	///Setter
-	void set_nowrap(bool nowrap_in) { nowrap = nowrap_in; }
-};
 
 /** A real class implementing functions on a latitude-longitude
  * grid
@@ -172,30 +202,9 @@ public:
 	///Return wrapped version of supplied coordinates
 	latlon_coords* latlon_wrapped_coords(latlon_coords*);
 	coords* calculate_downstream_coords_from_dir_based_rdir(coords* initial_coords,double rdir);
+	coords* convert_fine_coords(coords* fine_coords,grid_params* fine_grid_params);
 };
 
-/**
- * Concrete subclass containing the parameters for a latitude-longitude grid
- */
-
-class latlon_grid_params : public grid_params {
-	//Number of latitude points
-	int nlat;
-	//Number of longitude points
-	int nlon;
-public:
-	virtual ~latlon_grid_params() {};
-	///Class constructor
-	latlon_grid_params(int nlat_in,int nlon_in)
-	 	: grid_params(false),nlat(nlat_in), nlon(nlon_in){};
-	///Class constructor
-	latlon_grid_params(int nlat_in,int nlon_in,bool nowrap_in)
-		: grid_params(nowrap_in), nlat(nlat_in), nlon(nlon_in) {};
-	///Getter
-	const int get_nlat() { return nlat; }
-	///Getter
-	const int get_nlon() { return nlon; }
-};
 
 /*
  * A factory function that produces a grid subclass to match the

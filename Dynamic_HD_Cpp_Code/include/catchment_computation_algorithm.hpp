@@ -7,21 +7,25 @@
 
 #include <queue>
 #include <cell.hpp>
+#include "grid.hpp"
+#include "field.hpp"
 
 class catchment_computation_algorithm {
 public:
 	virtual ~catchment_computation_algorithm()
-		{delete completed_cells; delete catchment_numbers;};
+		{delete completed_cells; delete catchment_numbers; delete _grid; };
 	void setup_fields(int* catchment_numbers_in,
 					  grid_params* grid_params_in);
 	void compute_catchments();
-private:
+	void test_compute_catchment(landsea_cell* outflow_in,
+	                            int catchmentnumber_in);
+protected:
 	void process_neighbors();
 	void process_neighbor();
 	void compute_catchment();
 	void add_outflows_to_queue();
-	virtual bool check_if_neighbor_is_upstream();
-	virtual bool check_for_outflow(coords* cell_coords);
+	virtual bool check_if_neighbor_is_upstream() = 0;
+	virtual bool check_for_outflow(coords* cell_coords) = 0;
 	queue<landsea_cell*> outflow_q;
 	queue<landsea_cell*> q;
 	grid_params* _grid_params = nullptr;
@@ -41,7 +45,7 @@ public:
 	virtual ~catchment_computation_algorithm_latlon() {delete rdirs;};
 	void setup_fields(int* catchment_numbers_in,double* rdirs_in,
 					  grid_params* grid_params_in);
-private:
+protected:
 	bool check_if_neighbor_is_upstream();
 	bool check_for_outflow(coords* cell_coords);
 	field<double>* rdirs = nullptr;

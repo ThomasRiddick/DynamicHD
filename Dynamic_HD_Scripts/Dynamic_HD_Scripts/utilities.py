@@ -19,11 +19,46 @@ import iodriver
 from context import fortran_source_path
 from Dynamic_HD_Scripts.field import makeField
 
+def create_30sec_lgm_orography_from_highres_present_day_and_low_res_pair(input_lgm_low_res_orog,
+                                                                         input_present_day_low_res_orog,
+                                                                         input_present_day_high_res_orog):
+  low_res_anomalies = input_lgm_low_res_orog.subtract(input_present_day_low_res_orog)
+  #This is not a landsea mask but this function should also work to downscale a field of anomalies
+  high_res_anomalies = downscale_ls_mask(low_res_anomalies,fine_grid_type='LatLong30sec')
+  return input_present_day_high_res_orog.add(high_res_anomalies)
+
+def create_30s_lgm_orog_from_hr_present_day_and_lr_pair_driver(input_lgm_low_res_orog_filename,
+                                                               input_present_day_low_res_orog_filename,
+                                                               input_present_day_high_res_orog_filename,
+                                                               output_lgm_high_res_orog_filename,
+                                                               input_lgm_low_res_orog_fieldname,
+                                                               input_present_day_low_res_orog_fieldname,
+                                                               input_present_day_high_res_orog_fieldname,
+                                                               output_lgm_high_res_orog_fieldname):
+  lgm_low_res_orog = iodriver.advanced_field_loader(input_lgm_low_res_orog_filename,
+                                                    field_type='Orogoraphy',
+                                                    fieldname=input_lgm_low_res_orog_fieldname)
+  present_day_low_res_orog = iodriver.advanced_field_loader(input_present_day_low_res_orog_filename,
+                                                            field_type='Orogoraphy',
+                                                            fieldname=
+                                                            input_present_day_low_res_orog_fieldname)
+  present_day_hi_res_orog = iodriver.advanced_field_loader(input_present_day_high_res_orog_filename,
+                                                           field_type='Orogoraphy',
+                                                           fieldname=
+                                                           input_present_day_high_res_orog_fieldname)
+  lgm_high_res_orog = \
+    create_30sec_lgm_orography_from_highres_present_day_and_low_res_pair(lgm_low_res_orog,
+                                                                         present_day_low_res_orog,
+                                                                         present_day_high_res_orog)
+  iodriver.advanced_field_writer(output_lgm_high_res_orog_filename,lgm_high_res_orog,
+                                 fieldname=output_lgm_high_res_orog_fieldname)
+
+
 def replace_corrected_orography_with_original_for_glaciated_grid_points(input_corrected_orography,
                                                                         input_original_orography,
                                                                         input_glacier_mask):
     """Replace a corrected orography with the original orography at points that are glaciated
-    
+
     Arguments:
     input_corrected_orography: Field object; the corrected orography where correction are applied
         to both glaciated and unglaciated points
@@ -44,16 +79,16 @@ def replace_corrected_orography_with_original_for_glaciated_grid_points_drivers(
                                                                                 out_orography_file,
                                                                                 grid_type='HD',**grid_kwargs):
     """Drive replacing a corrected orography with the original orography at points that are glaciated
-    
+
     Arguments:
     input_corrected_orography_file: string; Full path to the file containing the corrected orography
         where corrections are applied to both glaciated and unglaciated points
     input_original_orography_file: string; Full path to the original uncorrected orography file
     input_glacier_mask_file: string; Full path to the file containing the glacier mask with 1/True as
-        glacier and 0/False as non-glacier 
+        glacier and 0/False as non-glacier
     out_orography_file: string; full path to target file to write corrected orography with original
-        orography used for glacial points to 
-    grid_type: string; the code for this grid type 
+        orography used for glacial points to
+    grid_type: string; the code for this grid type
     grid_kwargs: dictionary; key word arguments specifying parameters of the grid
     Returns: Nothing
     """
@@ -77,15 +112,15 @@ def replace_corrected_orography_with_original_for_glaciated_grid_points_drivers(
                                                field_type='Orography',
                                                unmask=True,grid_type=grid_type,
                                                **grid_kwargs)
-    output_orography = replace_corrected_orography_with_original_for_glaciated_grid_points(input_corrected_orography, 
-                                                                                           input_original_orography, 
+    output_orography = replace_corrected_orography_with_original_for_glaciated_grid_points(input_corrected_orography,
+                                                                                           input_original_orography,
                                                                                            input_glacier_mask)
     dynamic_hd.write_field(filename=out_orography_file,
                            field=output_orography,
                            file_type=dynamic_hd.\
                            get_file_extension(out_orography_file))
-    
-    
+
+
 def advanced_replace_corrected_orog_with_orig_for_glcted_grid_points_drivers(input_corrected_orography_file,
                                                                              input_original_orography_file,
                                                                              input_glacier_mask_file,
@@ -106,8 +141,8 @@ def advanced_replace_corrected_orog_with_orig_for_glcted_grid_points_drivers(inp
                                                field_type='Orography',
                                                fieldname=\
                                                input_glacier_mask_fieldname)
-    output_orography = replace_corrected_orography_with_original_for_glaciated_grid_points(input_corrected_orography, 
-                                                                                           input_original_orography, 
+    output_orography = replace_corrected_orography_with_original_for_glaciated_grid_points(input_corrected_orography,
+                                                                                           input_original_orography,
                                                                                            input_glacier_mask)
     dynamic_hd.write_field(filename=out_orography_file,
                            field=output_orography,
@@ -123,9 +158,9 @@ def merge_corrected_and_tarasov_upscaled_orography_main_routine(corrected_orogra
         _grid = grid.makeGrid(grid_type)
         not_in_region_mask = np.zeros(_grid.get_grid_dimensions(),dtype=np.bool_)
         if use_upscaled_orography_only_in_region == "North America":
-            if grid_type == 'LatLong10min': 
+            if grid_type == 'LatLong10min':
                 not_in_region_mask[620:1080,1296:1925] = True
-                not_in_region_mask[572:620, 1296:1682] = True 
+                not_in_region_mask[572:620, 1296:1682] = True
             else:
                 raise RuntimeError('Not definition for specified region on specified grid type')
         else:
@@ -140,18 +175,18 @@ def merge_corrected_and_tarasov_upscaled_orography(input_corrected_orography_fil
                                                    use_upscaled_orography_only_in_region=None,
                                                    grid_type='HD',**grid_kwargs):
     """Merge a normal corrected orography with a tarasov upscaled orography
-    
+
     Argument:
     input_corrected_orography_file: string; Full path to the the normal corrected orography file
     input_tarasov_upscaled_orography_file: string; Full path to the tarasov upscaled orography
         file
-    output_merged_orography_file: string; Full path to the target merged output orography file 
+    output_merged_orography_file: string; Full path to the target merged output orography file
     use_upscaled_orography_only_in_region: string; Either None (in which case the upscaled
         orography is used everywhere) or the name of a region (see below in fuction for region
-        names and definitions) in which to use the upscaled orography in combination with the 
+        names and definitions) in which to use the upscaled orography in combination with the
         corrected orography; outside of this the upscaled orography is not used and only the
         corrected orography is used.
-    grid_type: string; the code for this grid type 
+    grid_type: string; the code for this grid type
     grid_kwargs: dictionary; key word arguments specifying parameters of the grid
     """
 
@@ -174,7 +209,7 @@ def merge_corrected_and_tarasov_upscaled_orography(input_corrected_orography_fil
                            tarasov_upscaled_orography_field,
                            file_type=dynamic_hd.get_file_extension(output_merged_orography_file),
                            griddescfile=None)
-    
+
 def advanced_merge_corrected_and_tarasov_upscaled_orography(input_corrected_orography_file,
                                                             input_tarasov_upscaled_orography_file,
                                                             output_merged_orography_file,
@@ -205,18 +240,18 @@ def advanced_merge_corrected_and_tarasov_upscaled_orography(input_corrected_orog
 
 def prepare_hdrestart_field(input_field,resnum_riv_field,ref_resnum_field,is_river_res_field=True):
     """Create a hd restart reservoir content field by adapting an existing hd restart field
-    
+
     Arguments:
     input_field: Field object; the input reservoir content field to adapt
     resnum_riv_field: Field object; the reservoir number field for the new river directions
-    ref_resnum_field: Field object; the reservior number field for the reference river 
+    ref_resnum_field: Field object; the reservior number field for the reference river
         directions
-    is_river_res_field: boolean; if true process this as a river reservoir content field 
+    is_river_res_field: boolean; if true process this as a river reservoir content field
         otherwise process it as a ground flow or overland flow reservoir content field.
     Return: Field object of the generated reservoir content
-    
+
     An hd restart field is prepared using the field from a hd restart files for the present day
-    (assuming the reference is field is the present day field) and the reservoir number from the 
+    (assuming the reference is field is the present day field) and the reservoir number from the
     reference field (which indicates whether the cell is a lake (or sea) or if it is a river and
     the reservoir number field for the timeslice this hd restart file is being prepared for.
     The hd restart reservoir field is prepared by
@@ -225,11 +260,11 @@ def prepare_hdrestart_field(input_field,resnum_riv_field,ref_resnum_field,is_riv
         zero temporarily to minus one
     3) replacing any lake points in the reference with zero
     4) replacing any sea points in the timeslice in question with zero
-    5) replacing all zeros with the value of the highest value neighbor (including 
+    5) replacing all zeros with the value of the highest value neighbor (including
         the zero itself if that is highest) where possible
     6) replacing all remaining zeros with the average value of postive sized reservoirs
     7) setting the points set to minus one back to zero (thus perserving points that are
-       simply zero because they are really dry) 
+       simply zero because they are really dry)
     8) returning the results
     """
 
@@ -259,24 +294,24 @@ def prepare_hdrestart_file(dataset_inout,rflow_res_num,ref_rflow_res_num,
                            base_flow_res_num,ref_base_flow_res_num,
                            grid_type,**grid_kwargs):
     """Creates an hd restart file by adapting an existing one to a different timeslice
-   
+
     Arguments:
     dataset_inout: netCDF4 Dataset object; the object containing the data to
         adapt and then return
     rflow_res_num: Field object, the river flow reservoir number field
     ref_rflow_res_num: Field object, the reference river flow reservoir number field
     overland_flow_res_num: Field object, the overland flow reservoir number field
-    ref_overland_flow_res_num: Field object, the reference overland flow reservoir 
+    ref_overland_flow_res_num: Field object, the reference overland flow reservoir
         number field
-    base_flow_res_num: Field object, the base flow reservoir number field 
+    base_flow_res_num: Field object, the base flow reservoir number field
     ref_base_flow_res_num: Field object, the reference base flow reservoir number
         field
-    grid_type: string; the code for this grid type 
+    grid_type: string; the code for this grid type
     grid_kwargs: dictionary; key word arguments specifying parameters of the grid
     Returns: netCDF4 Dataset
-    
-    Prepares each field in the dataset using the method detailed in the doc string 
-    for prepare_hdrestart_field. Ignore lat and lon field which obviously remain 
+
+    Prepares each field in the dataset using the method detailed in the doc string
+    for prepare_hdrestart_field. Ignore lat and lon field which obviously remain
     unchanged.
     """
 
@@ -310,12 +345,12 @@ def prepare_hdrestart_file(dataset_inout,rflow_res_num,ref_rflow_res_num,
                                                     is_river_res_field=True)
         else:
             raise RuntimeError("Unknown field in hd restart file to transform")
-        #Slicing of whole array is critical, otherwise var_obj becomes an numpy array instead of 
+        #Slicing of whole array is critical, otherwise var_obj becomes an numpy array instead of
         #a netcdf4 variable
         var_obj[:,:] = reservoir_field.get_data()
     return dataset_inout
-        
-        
+
+
 def prepare_hdrestart_file_driver(base_hdrestart_filename,output_hdrestart_filename,
                                   hdparas_filename,ref_hdparas_filename,timeslice=None,
                                   res_num_data_rotate180lr=False,res_num_data_flipup=False,
@@ -323,30 +358,30 @@ def prepare_hdrestart_file_driver(base_hdrestart_filename,output_hdrestart_filen
                                   netcdf_dataset_format='NETCDF3_CLASSIC',
                                   grid_type='HD',**grid_kwargs):
     """Drive the hd restart file creation code
-   
+
     Arguments:
-    base_hdrestart_filename: string; the full path to the hdrestart file to copy and adapt 
-    output_hdrestart_filename: string; the full path to write the adapted hd restart file 
+    base_hdrestart_filename: string; the full path to the hdrestart file to copy and adapt
+    output_hdrestart_filename: string; the full path to write the adapted hd restart file
         to
     hdparas_filename: string; the full path to a hdparameter file for this timeslice (or
         many timeslices if a timeslice arguments is given)
     ref_hdparas_filename: string; the full path to the reference hd parameters file
     timeslice(optional): integer; timeslice to use from hd parameters fields
-    res_num_data_rotate180lr: boolean; rotate the reservoir number field by 
+    res_num_data_rotate180lr: boolean; rotate the reservoir number field by
     180 degrees about the pole
     res_num_data_flipup: flip the reservoir number field about the equator
-    res_num_ref_rotate180lr: boolean; rotate the reference reservoir number field by 
+    res_num_ref_rotate180lr: boolean; rotate the reference reservoir number field by
     180 degrees about the pole
     res_num_ref_flipud: boolean; flip the reference reservoir number field about the
         equator
     netcdf_dataset_format: string; code for the type of NETCDF dataset format to give
         to the netCDF4-dataset method when opening the base hd restart file
-    grid_type: string; the code for this grid type 
+    grid_type: string; the code for this grid type
     grid_kwargs: dictionary; key word arguments specifying parameters of the grid
     Returns: nothing
 
     Further details of codes working given in docstrings for prepare_hdrestart_file and
-    prepare_hdrestart_field. This routine makes of copy of the base hd restart file 
+    prepare_hdrestart_field. This routine makes of copy of the base hd restart file
     to work with, handles filehandling and calls prepare_hdrestart_file.
     """
 
@@ -399,50 +434,55 @@ def prepare_hdrestart_file_driver(base_hdrestart_filename,output_hdrestart_filen
                                        ref_overland_flow_res_num,base_flow_res_num,ref_base_flow_res_num,
                                        grid_type,**grid_kwargs)
 
-def change_dtype(input_filename,output_filename,new_dtype,grid_type,**grid_kwargs):
+def change_dtype(input_filename,output_filename,input_fieldname,
+                 output_fieldname,new_dtype,grid_type,**grid_kwargs):
     """Change the data type of a field in a file
-    
+
     Arguments:
     input_filename: string; the filename of the input file to read the field from
     output_filename: string; the filename of hte output file to write the field with
         its new datatype to
-    new_dtype: numpy datatype; the datatype to change the field to 
+    input_fieldname: string; fieldname within the input cdf file of the input field
+    output_fieldname: string; fieldname for the output field in the output cdf file
+    new_dtype: numpy datatype; the datatype to change the field to
     grid_type: string; the code for this grid type
     grid_kwargs: dictionary; key word arguments specifying parameters of the grid
     Returns: nothing
-    
+
     It is possible to use a new dtype that is identical to the old one; this function
     then effectively does nothing but copy the file.
     """
 
-    field = dynamic_hd.load_field(input_filename, 
+    field = dynamic_hd.load_field(input_filename,
                                   file_type=\
                                   dynamic_hd.get_file_extension(input_filename),
                                   field_type='Generic',
+                                  fieldname=input_fieldname,
                                   unmask=False,
                                   timeslice=None,
                                   grid_type=grid_type,
                                   **grid_kwargs)
     field.change_dtype(new_dtype)
     dynamic_hd.write_field(output_filename,field,
-                           file_type=dynamic_hd.get_file_extension(output_filename))
+                           file_type=dynamic_hd.get_file_extension(output_filename),
+                           fieldname=output_fieldname)
 
 def invert_ls_mask(original_ls_mask_filename,
                    inverted_ls_mask_filename,
                    timeslice=None,
                    grid_type='HD',**grid_kwargs):
     """Invert a landsea mask, i.e. change 1s to zeros and visa-versa
-    
+
     Arguments:
-    original_ls_mask_filename: file to load input field from 
+    original_ls_mask_filename: file to load input field from
     inverted_ls_mask_filename: file to write field with change data type to
-    timeslice(optional): timeslice of the input file load the field from 
-    grid_type: string; the code for this grid type 
+    timeslice(optional): timeslice of the input file load the field from
+    grid_type: string; the code for this grid type
     grid_kwargs: dictionary; key word arguments specifying parameters of the grid
     Returns: nothing
     """
 
-    ls_mask = dynamic_hd.load_field(original_ls_mask_filename, 
+    ls_mask = dynamic_hd.load_field(original_ls_mask_filename,
                                     file_type=\
                                     dynamic_hd.get_file_extension(original_ls_mask_filename),
                                     field_type='Generic',
@@ -459,79 +499,79 @@ def generate_orog_correction_field(original_orography_filename,
                                    orography_corrections_filename,
                                    grid_type,**grid_kwargs):
     """Compare an original and corrected orography to create a field of relative orography corrections
-    
+
     Arguments:
     original_orography_filename: string; the full path to file with the original base orography
     corrected_orography_filename: string; the full path to the file with the absolute corrected
         orography
-    orography_corrections_filename: string; full path to write the generated field of relative 
+    orography_corrections_filename: string; full path to write the generated field of relative
         corrections to
-    grid_type: string; the code for this grid type 
+    grid_type: string; the code for this grid type
     grid_kwargs: dictionary; key word arguments specifying parameters of the grid
     Returns: nothing
     """
 
-    original_orography_field = dynamic_hd.load_field(original_orography_filename, 
+    original_orography_field = dynamic_hd.load_field(original_orography_filename,
                                                      file_type=dynamic_hd.\
-                                                     get_file_extension(original_orography_filename), 
+                                                     get_file_extension(original_orography_filename),
                                                      field_type='Orography', grid_type=grid_type,
                                                      **grid_kwargs)
-    corrected_orography_field = dynamic_hd.load_field(corrected_orography_filename, 
+    corrected_orography_field = dynamic_hd.load_field(corrected_orography_filename,
                                                       file_type=dynamic_hd.\
-                                                      get_file_extension(corrected_orography_filename), 
+                                                      get_file_extension(corrected_orography_filename),
                                                       field_type='Orography', grid_type=grid_type,
                                                       **grid_kwargs)
     corrected_orography_field.subtract(original_orography_field)
-    dynamic_hd.write_field(orography_corrections_filename, 
-                           corrected_orography_field, 
+    dynamic_hd.write_field(orography_corrections_filename,
+                           corrected_orography_field,
                            file_type=dynamic_hd.get_file_extension(orography_corrections_filename))
-    
+
 def advanced_orog_correction_field_generator(original_orography_filename,
                                              corrected_orography_filename,
                                              orography_corrections_filename,
                                              original_orography_fieldname,
                                              corrected_orography_fieldname,
                                              orography_corrections_fieldname):
-    
-    original_orography_field = iodriver.advanced_field_loader(original_orography_filename, 
+
+    original_orography_field = iodriver.advanced_field_loader(original_orography_filename,
                                                               field_type='Orography',
                                                               fieldname=\
                                                               original_orography_fieldname)
-    corrected_orography_field = iodriver.advanced_field_loader(corrected_orography_filename, 
+    corrected_orography_field = iodriver.advanced_field_loader(corrected_orography_filename,
                                                                field_type='Orography',
                                                                fieldname=\
-                                                               corrected_orography_fieldname) 
+                                                               corrected_orography_fieldname)
     corrected_orography_field.subtract(original_orography_field)
-    iodriver.advanced_field_writer(orography_corrections_filename, 
-                                   corrected_orography_field, 
+    iodriver.advanced_field_writer(orography_corrections_filename,
+                                   corrected_orography_field,
                                    fieldname=orography_corrections_fieldname)
-    
+
 def apply_orog_correction_field(original_orography_filename,
                                 orography_corrections_filename,
                                 corrected_orography_filename,
                                 original_orography_fieldname=None,
                                 grid_type='HD',**grid_kwargs):
     """Apply a field of relative orography corrections to a base orography
-    
+
     Arguments:
     original_orography_filename: string; full file path to the orography to apply the corrections to
     orography_corrections_filename: string; full file path of the relative orography to apply
     corrected_orography_filename: string; full file path to write the generated absolute corrected
         orography to
-    grid_type: string; the code for this grid type 
+    grid_type: string; the code for this grid type
     grid_kwargs: dictionary; key word arguments specifying parameters of the grid
     Returns: nothing
     """
 
-    original_orography_field = dynamic_hd.load_field(original_orography_filename, 
+    original_orography_field = dynamic_hd.load_field(original_orography_filename,
                                                      file_type=dynamic_hd.\
-                                                     get_file_extension(original_orography_filename), 
+                                                     get_file_extension(original_orography_filename),
                                                      field_type='Orography', grid_type=grid_type,
                                                      fieldname=original_orography_fieldname,
                                                      **grid_kwargs)
-    orography_corrections_field =  dynamic_hd.load_field(orography_corrections_filename, 
+    orography_corrections_field =  dynamic_hd.load_field(orography_corrections_filename,
                                                          file_type=dynamic_hd.\
-                                                         get_file_extension(orography_corrections_filename), 
+                                                         get_file_extension(orography_corrections_filename),
                                                          field_type='Orography', grid_type=grid_type,
                                                          **grid_kwargs)
     original_orography_field.add(orography_corrections_field)
@@ -539,17 +579,17 @@ def apply_orog_correction_field(original_orography_filename,
                            original_orography_field,
                            file_type=dynamic_hd.\
                            get_file_extension(corrected_orography_filename))
-    
+
 def advanced_apply_orog_correction_field(original_orography_filename,
                                          orography_corrections_filename,
                                          corrected_orography_filename,
                                          original_orography_fieldname=None,
                                          orography_corrections_fieldname=None,
                                          corrected_orography_fieldname=None):
-    original_orography_field = iodriver.advanced_field_loader(original_orography_filename, 
+    original_orography_field = iodriver.advanced_field_loader(original_orography_filename,
                                                               field_type='Orography',
                                                               fieldname=original_orography_fieldname)
-    orography_corrections_field = iodriver.advanced_field_loader(orography_corrections_filename, 
+    orography_corrections_field = iodriver.advanced_field_loader(orography_corrections_filename,
                                                                  field_type='Orography',
                                                                  fieldname=\
                                                                  orography_corrections_fieldname)
@@ -561,122 +601,122 @@ def advanced_apply_orog_correction_field(original_orography_filename,
 def generate_ls_mask(orography_filename,ls_mask_filename,sea_level=0.0,
                      grid_type='HD',**grid_kwargs):
     """Generate a land-sea mask from an orography given a sea level
-    
+
     Arguments:
     orography_filename: string; full path to file containing the orography to use
     ls_mask_filename: string; full path to write the generated land sea mask to
     sea_level: float; sea level height to generated landsea mask for
-    grid_type: string; the code for this grid type 
+    grid_type: string; the code for this grid type
     grid_kwargs: dictionary; key word arguments specifying parameters of the grid
     Returns: nothing
-    
-    Crudely generates a land-sea mask by assumming all points below the specified 
+
+    Crudely generates a land-sea mask by assumming all points below the specified
     sea level are sea points, even if they are disconnected from all other sea points
     """
 
-    orography = dynamic_hd.load_field(filename=orography_filename, 
-                                      file_type=dynamic_hd.get_file_extension(orography_filename), 
+    orography = dynamic_hd.load_field(filename=orography_filename,
+                                      file_type=dynamic_hd.get_file_extension(orography_filename),
                                       field_type='Orography',
                                       grid_type=grid_type,**grid_kwargs)
     ls_mask = orography.generate_ls_mask(sea_level).astype(dtype=np.int32,order='C')
-    dynamic_hd.write_field(filename=ls_mask_filename, 
-                           field=field.Field(ls_mask,grid_type,**grid_kwargs), 
+    dynamic_hd.write_field(filename=ls_mask_filename,
+                           field=field.Field(ls_mask,grid_type,**grid_kwargs),
                            file_type=dynamic_hd.get_file_extension(ls_mask_filename))
-    
+
 def extract_ls_mask_from_rdirs(rdirs_filename,lsmask_filename,grid_type='HD',**grid_kwargs):
     """Extract an land sea mask from river directions with coast and sea cells marked
-    
+
     Arguments:
-    rdirs_filename: string, full path to the river directions file to extract the land-sea mask 
+    rdirs_filename: string, full path to the river directions file to extract the land-sea mask
         from
     lsmask_filename: string, full path to the target file to the write the extracted land-sea mask
         to
-    grid_type: string; the code for this grid type 
+    grid_type: string; the code for this grid type
     grid_kwargs: dictionary; key word arguments specifying parameters of the grid
     Returns: nothing
     """
 
-    rdirs_field = dynamic_hd.load_field(rdirs_filename, 
-                                        file_type=dynamic_hd.get_file_extension(rdirs_filename), 
-                                        field_type='RiverDirections', 
+    rdirs_field = dynamic_hd.load_field(rdirs_filename,
+                                        file_type=dynamic_hd.get_file_extension(rdirs_filename),
+                                        field_type='RiverDirections',
                                         grid_type=grid_type,
                                         **grid_kwargs)
-    lsmask = field.RiverDirections(rdirs_field.get_lsmask(),grid=grid_type,**grid_kwargs) 
+    lsmask = field.RiverDirections(rdirs_field.get_lsmask(),grid=grid_type,**grid_kwargs)
     dynamic_hd.write_field(lsmask_filename, lsmask, file_type=dynamic_hd.get_file_extension(lsmask_filename))
 
 def extract_true_sinks_from_rdirs(rdirs_filename,truesinks_filename,grid_type='HD',**grid_kwargs):
     """Extract a set of true sinks from an rdirs file
-    
+
     Arguments:
     rdirs_filename: string; full path to river directions file containing true sink points
     truesinks_filename: string; full path to write the field of extracted true sinks to
-    grid_type: string; the code for this grid type 
+    grid_type: string; the code for this grid type
     grid_kwargs: dictionary; key word arguments specifying parameters of the grid
     Returns: nothing
-    
+
     Extracts all points that have the code for a sink (which is 5) from the river directions
     field
     """
 
-    rdirs_field = dynamic_hd.load_field(rdirs_filename, 
-                                        file_type=dynamic_hd.get_file_extension(rdirs_filename), 
-                                        field_type='RiverDirections', 
+    rdirs_field = dynamic_hd.load_field(rdirs_filename,
+                                        file_type=dynamic_hd.get_file_extension(rdirs_filename),
+                                        field_type='RiverDirections',
                                         grid_type=grid_type,
                                         **grid_kwargs)
     truesinks = field.Field(rdirs_field.extract_truesinks(),grid=grid_type,**grid_kwargs)
     dynamic_hd.write_field(truesinks_filename, truesinks,
                            file_type=dynamic_hd.get_file_extension(truesinks_filename))
-    
+
 def upscale_field_driver(input_filename,output_filename,input_grid_type,output_grid_type,
                   method,timeslice=None,input_grid_kwargs={},output_grid_kwargs={},scalenumbers=False):
     """Load input, drive the process of upscaling a field using a specified method, and write output
-    
+
     Arguments:
     input_filename: string; full path to file with input fine scale field to upscale
     output_filename: string; full path to file with output course scale upscaled field
-    input_grid_type: string; the code for the type of the input fine grid 
-    output_grid_type: string; the code for the type of the input course grid 
-    method: string; upscaling method to use - see upscale_field for valid methods 
-    timeslice(optional): integer; timeslice to upscale if input file contains multiple timeslices 
+    input_grid_type: string; the code for the type of the input fine grid
+    output_grid_type: string; the code for the type of the input course grid
+    method: string; upscaling method to use - see upscale_field for valid methods
+    timeslice(optional): integer; timeslice to upscale if input file contains multiple timeslices
     input_grid_kwargs: dictionary; key word arguments specifying parameters of the fine input grid
         (if required)
     output_grid_kwargs: dictionary; key word arguments specifying parameters of the course output grid
         (if required)
-    scalenumbers: scale numbers according to difference in size between the two grids 
+    scalenumbers: scale numbers according to difference in size between the two grids
         (assuming a density-like number is being upscaled)
     Returns: nothing
-    
-    Perform a crude upscaling using the basic named method. This doesn't upscale river direction; 
+
+    Perform a crude upscaling using the basic named method. This doesn't upscale river direction;
     this requires much more sophisticated code and is done by a seperate function.
     """
 
-    input_field = dynamic_hd.load_field(input_filename, 
-                                        file_type=dynamic_hd.get_file_extension(input_filename), 
-                                        field_type='Generic', 
+    input_field = dynamic_hd.load_field(input_filename,
+                                        file_type=dynamic_hd.get_file_extension(input_filename),
+                                        field_type='Generic',
                                         timeslice=timeslice,
                                         grid_type=input_grid_type,
                                         **input_grid_kwargs)
     output_field = upscale_field(input_field,output_grid_type, method,output_grid_kwargs,scalenumbers)
-    dynamic_hd.write_field(output_filename,output_field, 
-                           file_type=dynamic_hd.get_file_extension(output_filename)) 
-    
+    dynamic_hd.write_field(output_filename,output_field,
+                           file_type=dynamic_hd.get_file_extension(output_filename))
+
 def upscale_field(input_field,output_grid_type,method,output_grid_kwargs,scalenumbers=False):
     """Upscale a field using a specified method
-    
+
     Arguments:
     input_field: Field object, input field to upscale
-    output_grid_type: string; the code for the grid type of the course 
+    output_grid_type: string; the code for the grid type of the course
         grid to upscale to
     method: string, upscaling method to use - see defined method below
     output_grid_kwargs: dictionary; key word arguments specifying parameters of
         the course grid type to upscale to (if required)
-    scalenumbers: scale numbers according to difference in size between the two grids 
-        (assuming a density-like number is being upscaled) 
+    scalenumbers: scale numbers according to difference in size between the two grids
+        (assuming a density-like number is being upscaled)
     Returns: Field object, the upscaled field
-    
-    Works by manipulating field into a particular 4 dimensional shape then 
-    reducing two of those dimensions via a specified reduction operator using 
-    wrapped fortran code. 
+
+    Works by manipulating field into a particular 4 dimensional shape then
+    reducing two of those dimensions via a specified reduction operator using
+    wrapped fortran code.
     """
 
     try:
@@ -694,20 +734,20 @@ def upscale_field(input_field,output_grid_type,method,output_grid_kwargs,scalenu
                            ' can be upscaled')
     if nlat_in % nlat_out != 0 or nlon_in % nlon_out != 0:
         raise RuntimeError('Incompatible input and output grid dimensions')
-    scalingfactor = (nlat_out*1.0/nlat_in)*(nlon_out*1.0/nlon_in) if scalenumbers else 1 
+    scalingfactor = (nlat_out*1.0/nlat_in)*(nlon_out*1.0/nlon_in) if scalenumbers else 1
     reshaped_data_array = input_field.get_data().reshape(nlat_out,nlat_in/nlat_out,
                                                          nlon_out,nlon_in/nlon_out)
     return field.Field(reduction_op(reduction_op(reshaped_data_array,
-                                                 axis=3),axis=1)*scalingfactor,output_grid) 
+                                                 axis=3),axis=1)*scalingfactor,output_grid)
 
 def mode_wrapper(array,axis):
     """Wrapper for the mode finding FORTRAN kernel
-    
+
     Arguments:
-    array: ndarray, 3 or 4 dimensional array to be reduced in order to upscale dimension 
+    array: ndarray, 3 or 4 dimensional array to be reduced in order to upscale dimension
     axis: axis to reduce
     Returns: ndarray, reduced 2 or 3 dimensional array
-    
+
     Runs fortran code using f2py. Find modal value of each cell in the given dimension
     """
 
@@ -721,15 +761,15 @@ def mode_wrapper(array,axis):
 
 def check_for_value_wrapper(array,axis,value=5):
     """Wrapper for the check for value FORTRAN kernel
-    
+
     Arguments:
-    array: ndarray, 3 or 4 dimensional array to be reduced in order to upscale dimension 
+    array: ndarray, 3 or 4 dimensional array to be reduced in order to upscale dimension
     axis: axis to reduce
     value: integer, value to check for
     Returns: ndarray, reduced 2 or 3 dimensional array
-    
+
     Runs fortran code using f2py. Check to see if a value is present in the reduced dimension,
-        if so reduce to that value if not reduce to zero 
+        if so reduce to that value if not reduce to zero
     """
 
     array = np.asfortranarray(np.rollaxis(array,axis=axis,start=0))
@@ -739,7 +779,7 @@ def check_for_value_wrapper(array,axis,value=5):
                                                     "mod_check_for_value.f90"),
                                           func_name="check_for_value_{0}d".format(dims))
     return f2py_mngr.run_current_function_or_subroutine(array,value,*axis_lengths)
-    
+
 def downscale_true_sink_points_driver(input_fine_orography_filename,input_course_truesinks_filename,
                                       output_fine_truesinks_filename,input_fine_orography_grid_type,
                                       input_course_truesinks_grid_type,input_fine_orography_grid_kwargs={},
@@ -748,41 +788,41 @@ def downscale_true_sink_points_driver(input_fine_orography_filename,input_course
                                       downscaled_true_sink_modifications_filename=None,
                                       course_true_sinks_modifications_filename=None):
     """Load input, drive the process of downscale a true sinks a field and write output
-    
+
     Argument:
     input_fine_orography_filename: string; full path to input fine orography
     input_course_truesinks_filename: string; full path to input true sinks array file
-    output_fine_truesinks_filename: string; full path to target output true sinks array 
+    output_fine_truesinks_filename: string; full path to target output true sinks array
         file to write to
-    input_fine_orography_grid_type: string; the code for the grid type of the input 
+    input_fine_orography_grid_type: string; the code for the grid type of the input
         orography to downscale the true sinks to
     input_course_truesinks_grid_type: string; the code for the grid type of the input
         course grid that the input true sinks are on
-    input_fine_orography_grid_kwargs: dictionary; key word arguments specifying 
+    input_fine_orography_grid_kwargs: dictionary; key word arguments specifying
         parameters of the fine input grid (if required)
-    input_course_truesinks_grid_kwargs: dictionary; key word arguments specifying 
+    input_course_truesinks_grid_kwargs: dictionary; key word arguments specifying
         parameters of the course input grid (if required)
     flip_course_grid_ud: boolean; flip the course truesinks field about the
         equator
     rotate_course_true_sink_about_polar_axis: boolean; rotate the course truesinks
     field by 180 degrees about the pole
     downscaled_true_sink_modifications_filename: string; full path to text file (see
-        apply_modifications_to_truesinks_field for the correct format) with the 
+        apply_modifications_to_truesinks_field for the correct format) with the
         modification to apply to the downscaled truesinks
     course_true_sinks_modifications_filename: string; full path to text file (see
         apply_modifications_to_truesinks_field for the correct format) with the
         modification
         to apply to the course truesinks before downscaling
     Returns: nothing
-    
+
     Place the true sinks at the lowest point in the set of fine cells covered by the
-    course sell. Can make modifications both to the course true sinks field before 
+    course sell. Can make modifications both to the course true sinks field before
     processing and the fine true sinks field after processing.
     """
 
     input_fine_orography_field = dynamic_hd.load_field(input_fine_orography_filename,
-                                                       file_type=dynamic_hd.get_file_extension(input_fine_orography_filename), 
-                                                       field_type='Orography', 
+                                                       file_type=dynamic_hd.get_file_extension(input_fine_orography_filename),
+                                                       field_type='Orography',
                                                        grid_type=input_fine_orography_grid_type,
                                                        **input_fine_orography_grid_kwargs)
     input_course_truesinks_field = dynamic_hd.load_field(input_course_truesinks_filename,
@@ -793,7 +833,7 @@ def downscale_true_sink_points_driver(input_fine_orography_filename,input_course
     if course_true_sinks_modifications_filename:
         input_course_truesinks_field =\
             field.Field(apply_modifications_to_truesinks_field(truesinks_field=\
-                                                               input_course_truesinks_field.get_data(), 
+                                                               input_course_truesinks_field.get_data(),
                                                                true_sink_modifications_filename=\
                                                                course_true_sinks_modifications_filename),
                         grid=input_course_truesinks_grid_type,
@@ -802,13 +842,13 @@ def downscale_true_sink_points_driver(input_fine_orography_filename,input_course
         input_course_truesinks_field.flip_data_ud()
     if rotate_course_true_sink_about_polar_axis:
         input_course_truesinks_field.rotate_field_by_a_hundred_and_eighty_degrees()
-    output_fine_truesinks_field = field.Field(downscale_true_sink_points(input_fine_orography_field, 
+    output_fine_truesinks_field = field.Field(downscale_true_sink_points(input_fine_orography_field,
                                                                          input_course_truesinks_field),
                                               input_fine_orography_grid_type,
-                                              **input_fine_orography_grid_kwargs) 
-                                              
+                                              **input_fine_orography_grid_kwargs)
+
     if downscaled_true_sink_modifications_filename:
-        #Assume that same orientation of grid for course and fine grid is used in mods files 
+        #Assume that same orientation of grid for course and fine grid is used in mods files
         #and it the course grid orientation - thus in this case flip fine grid and flip back
         #after
         if flip_course_grid_ud:
@@ -816,7 +856,7 @@ def downscale_true_sink_points_driver(input_fine_orography_filename,input_course
         if rotate_course_true_sink_about_polar_axis:
             output_fine_truesinks_field.rotate_field_by_a_hundred_and_eighty_degrees()
         output_fine_truesinks_field =\
-            field.Field(apply_modifications_to_truesinks_field(output_fine_truesinks_field.get_data(), 
+            field.Field(apply_modifications_to_truesinks_field(output_fine_truesinks_field.get_data(),
                                                                downscaled_true_sink_modifications_filename),
                         input_fine_orography_grid_type,
                         **input_fine_orography_grid_kwargs)
@@ -831,7 +871,7 @@ def downscale_true_sink_points_driver(input_fine_orography_filename,input_course
 def apply_modifications_to_truesinks_field(truesinks_field,
                                            true_sink_modifications_filename):
     """Remove and/or add points to a logical field of true sinks points
-    
+
     Arguments:
     truesinks_field: Field object, field of true sinks to modify
     true_sink_modifications_filename: string; full path to file containing
@@ -852,10 +892,10 @@ def apply_modifications_to_truesinks_field(truesinks_field,
         for line in f:
             if third_line_pattern.match(line):
                 break
-            points_to_remove.append(tuple(int(coord) 
+            points_to_remove.append(tuple(int(coord)
                                           for coord in line.strip().split(",")))
         for line in f:
-            points_to_add.append(tuple(int(coord) 
+            points_to_add.append(tuple(int(coord)
                                        for coord in line.strip().split(",")))
     for point in points_to_remove:
         print 'Removing true sink point at {0},{1}'.format(point[0],point[1])
@@ -864,19 +904,19 @@ def apply_modifications_to_truesinks_field(truesinks_field,
         print 'Adding true sink point at {0},{1}'.format(point[0],point[1])
         truesinks_field[point[0],point[1]] = True
     return truesinks_field
-   
+
 def downscale_true_sink_points(input_fine_orography_field,input_course_truesinks_field):
     """Downscale a field of true sink points flags
-    
+
     Arguments:
     input_fine_orography_field: Field object, the input fine orography field to place the
         downscaled true sinks in
-    input_course_truesinks_field: Field object, the input course true sinks field (as 
+    input_course_truesinks_field: Field object, the input course true sinks field (as
         a logical field)
     Returns: Field object contain the logical fine true sinks field
-    
+
     Downscale true sinks by placing each course true sink at the mimima (of height) of
-        the set of fine orography pixels covered by the course cell. 
+        the set of fine orography pixels covered by the course cell.
     """
 
     nlat_fine,nlon_fine = input_fine_orography_field.grid.get_grid_dimensions()
@@ -891,7 +931,7 @@ def downscale_true_sink_points(input_fine_orography_field,input_course_truesinks
     flagged_points_coords_scaled=[]
     for coord_pair in flagged_points_coords:
         lat_scaled = coord_pair[0]*scalingfactor_lat
-        lon_scaled = coord_pair[1]*scalingfactor_lon 
+        lon_scaled = coord_pair[1]*scalingfactor_lon
         flagged_points_coords_scaled.append((lat_scaled,lon_scaled))
     return input_fine_orography_field.find_area_minima(flagged_points_coords_scaled,
                                                        (scalingfactor_lat,
@@ -899,11 +939,11 @@ def downscale_true_sink_points(input_fine_orography_field,input_course_truesinks
 
 def downscale_ls_seed_points_list_driver(input_ls_seed_points_list_filename,
                                          output_ls_seed_points_list_filename,
-                                         factor, nlat_fine, nlon_fine, 
+                                         factor, nlat_fine, nlon_fine,
                                          input_grid_type,
                                          output_grid_type):
     """Downscale a list of land sea mask ocean seeding points
-    
+
     Arguments:
     input_ls_seed_points_list_filename: string, input course land sea point list
     output_ls_seed_points_list_filename: string, output fine land sea point list
@@ -913,7 +953,7 @@ def downscale_ls_seed_points_list_driver(input_ls_seed_points_list_filename,
     input_grid_type: string; the code for the type of the input fine grid
     output_grid_type: string; the code for the type of the output course grid
     Return: nothing
-    
+
     Checks that the grid type of the course and fine grid match then downscale
     using downscale_ls_seed_points_list.
     """
@@ -927,18 +967,18 @@ def downscale_ls_seed_points_list_driver(input_ls_seed_points_list_filename,
             if comment_line_pattern.match(line):
                 continue
             input_points_list.append(tuple(int(coord) for coord in line.strip().split(",")))
-    output_points_list = downscale_ls_seed_points_list(input_course_list=input_points_list, 
-                                                       downscale_factor=factor, 
-                                                       nlat_fine=nlat_fine, 
+    output_points_list = downscale_ls_seed_points_list(input_course_list=input_points_list,
+                                                       downscale_factor=factor,
+                                                       nlat_fine=nlat_fine,
                                                        nlon_fine=nlon_fine)
     with open(output_ls_seed_points_list_filename,'w') as f:
         f.write(output_grid_type + '\n')
         for entry in output_points_list:
             f.write("{0},{1}\n".format(entry[0],entry[1]))
-    
+
 def downscale_ls_seed_points_list(input_course_list,downscale_factor,nlat_fine,nlon_fine):
     """Downscale a list of land sea seed points by scaling their coordinates
-    
+
     Arguments:
     input_course_list: list of tuples, a list of course latitude longitude coordinates
     (latitude first) giving the position of the course land-sea seed points
@@ -946,11 +986,11 @@ def downscale_ls_seed_points_list(input_course_list,downscale_factor,nlat_fine,n
     nlat_fine: integer, total number of fine latitude points on the fine grid
     nlon_fine: integer, total number of fine longitude points on the fine grid
     Returns:  list of tuple, a list of fine latitude longitude coordinates (latitude
-        first) created by downscaling the course grid points 
-    
-    Each downscale course point is turned into a course cell size block of 
+        first) created by downscaling the course grid points
+
+    Each downscale course point is turned into a course cell size block of
     fine points. Longitude is simply downscaled. Latitude is also inverted (the
-    implied field of points flipped up down) during the process. 
+    implied field of points flipped up down) during the process.
     """
 
     output_fine_list = []
@@ -966,7 +1006,7 @@ def apply_orography_corrections(input_orography_filename,
                                 output_orography_filename,
                                 grid_type,**grid_kwargs):
     """Apply a specified list of corrections to an orography
-    
+
     Arguments
     input_orography_filename: string, full path to the orography to apply the corrections to
     input_corrections_list_filename: string, full path to the file with the list of corrections
@@ -977,7 +1017,7 @@ def apply_orography_corrections(input_orography_filename,
     grid_kwargs: dictionary; key word arguments specifying parameters of
         the grid type used
     Returns: nothing
-    
+
     Any manipulations of the field required are specified in the correction list file itself in the
     header and are then read and applied by this method. However the output orography that is written
     out is restored to the same orientation as the input orography.
@@ -985,8 +1025,8 @@ def apply_orography_corrections(input_orography_filename,
 
     orography_field = dynamic_hd.load_field(input_orography_filename,
                                             file_type=dynamic_hd.\
-                                            get_file_extension(input_orography_filename), 
-                                            field_type='Orography', 
+                                            get_file_extension(input_orography_filename),
+                                            field_type='Orography',
                                             grid_type=grid_type,
                                             **grid_kwargs)
     first_line_pattern = re.compile(r"^grid_type *= *" + grid_type + r"$")
@@ -1026,7 +1066,7 @@ def apply_orography_corrections(input_orography_filename,
     if rotate180lr:
         orography_field.rotate_field_by_a_hundred_and_eighty_degrees()
     dynamic_hd.write_field(output_orography_filename,
-                           orography_field, 
+                           orography_field,
                            file_type=dynamic_hd.get_file_extension(output_orography_filename))
 
 def downscale_ls_mask_driver(input_course_ls_mask_filename,
@@ -1036,13 +1076,13 @@ def downscale_ls_mask_driver(input_course_ls_mask_filename,
                              course_grid_type='HD',fine_grid_type='LatLong10min',
                              course_grid_kwargs={},**fine_grid_kwargs):
     """Drive process of downscaling a land-sea mask
-    
+
     Arguments:
     input_course_ls_mask_filename: string; full path to input course land sea mask file
     output_fine_ls_mask_filename: string; full path to target fine land sea mask file
     input_flipud: boolean, flip the input land sea mask about the equator
-    input_rotate180lr: boolean; rotate the input land sea mask by 180 degrees about 
-        the pole 
+    input_rotate180lr: boolean; rotate the input land sea mask by 180 degrees about
+        the pole
     course_grid_type: string; code for the course grid type of the input field
     fine_grid_type: string;  code for the fine grid type of the output field
     course_grid_kwargs: dictionary; key word argument dictionary for the course grid type
@@ -1050,38 +1090,38 @@ def downscale_ls_mask_driver(input_course_ls_mask_filename,
     fine_grid_kwargs: dictionary; key word arguments dictionary for the fine grid type of
         the output field (if required)
     Returns: nothing
-    
+
     Outflow field orientations is the same as input field orientation.
     """
 
     input_course_ls_mask_field = dynamic_hd.load_field(input_course_ls_mask_filename,
                                                        file_type=dynamic_hd.\
-                                                       get_file_extension(input_course_ls_mask_filename), 
-                                                       field_type='Generic', 
+                                                       get_file_extension(input_course_ls_mask_filename),
+                                                       field_type='Generic',
                                                        grid_type=course_grid_type,
                                                        **course_grid_kwargs)
     if input_flipud:
-        input_course_ls_mask_field.flip_data_ud() 
+        input_course_ls_mask_field.flip_data_ud()
     if input_rotate180lr:
         input_course_ls_mask_field.rotate_field_by_a_hundred_and_eighty_degrees()
-    output_fine_ls_mask_field = downscale_ls_mask(input_course_ls_mask_field, 
+    output_fine_ls_mask_field = downscale_ls_mask(input_course_ls_mask_field,
                                                   fine_grid_type,**fine_grid_kwargs)
     dynamic_hd.write_field(output_fine_ls_mask_filename,output_fine_ls_mask_field,
                            file_type=dynamic_hd.get_file_extension(output_fine_ls_mask_filename))
-    
+
 def downscale_ls_mask(input_course_ls_mask_field,fine_grid_type,**fine_grid_kwargs):
     """Downscale a land-sea mask
-    
+
     Arguments:
     input_course_ls_mask_field: Field object; the input course field to downscale
     fine_grid_type: string; the code of the grid type to downscale to
     fine_grid_kwargs: dictionary; key word dictionary for the grid type to be
         downscaled to (if required)
     Returns: The downscaled field in a Field object
-    
+
     The downscaling is done crudely by assuming that all fine pixels/cells covered by
     a course cell have the same land-sea value (1 or 0) as the course cell itself; thus
-    this will produce a blocky land-sea mask on the fine grid with a granular size equal 
+    this will produce a blocky land-sea mask on the fine grid with a granular size equal
     to that of the course grid.
     """
 
@@ -1110,7 +1150,7 @@ def intelligently_burn_orography(input_fine_orography_field,course_orography_fie
                                  input_fine_fmap,threshold,region,
                                  course_grid_type,**course_grid_kwargs):
     """Intelligently burn an orography in a given reason using a given threshold
-    
+
     Arguments:
     input_fine_orography_field: Field object; the input fine orography to take intelligent
         burning height values
@@ -1118,20 +1158,20 @@ def intelligently_burn_orography(input_fine_orography_field,course_orography_fie
         too
     input_fine_fmap: Field object; fine culumalative flow to cell to determine which fine cell are
         river cells (using the threshold)
-    threshold: integer; the threshold using to decide if cumulative flow to a cell is high enough for 
+    threshold: integer; the threshold using to decide if cumulative flow to a cell is high enough for
         it to be eligible for intelligent burning
-    region: dictionary: a dictionary specifying the coordinate of a region on this grid type 
+    region: dictionary: a dictionary specifying the coordinate of a region on this grid type
     course_grid_type: string; code for the the course grid type
     course_grid_kwarg: dictionary; keyword parameter dictionary specifying parameters of the
         course grid type (if required)
     Returns: Orography with intelligent burning applied in a Field object
-    
+
     Intelligent burn course field by masking the pixels of a fine orography field inside a course cell
     where the flow is less than a given threshold in the comparable fine total cumulative flow field
     then taking the highest height of the fine orography inside the course cell where it is not masked.
     If this height is greater than that of the course cell itself in the course orography field then
     replace the course orography field value with this height. So a river flowing through a course cell
-    must pass over the maximum height of the river flowing through the pixels of a fine field equivalent 
+    must pass over the maximum height of the river flowing through the pixels of a fine field equivalent
     to the course field.
     """
 
@@ -1139,7 +1179,7 @@ def intelligently_burn_orography(input_fine_orography_field,course_orography_fie
         input_fine_fmap.generate_cumulative_flow_threshold_mask(threshold)
     input_fine_orography_field.mask_field_with_external_mask(fmap_below_threshold_mask)
     input_fine_orography_field.fill_mask(input_fine_orography_field.get_no_data_value())
-    intelligent_height_field = field.Orography(upscale_field(input_field=input_fine_orography_field, 
+    intelligent_height_field = field.Orography(upscale_field(input_field=input_fine_orography_field,
                                                              output_grid_type=course_grid_type,
                                                              method='Max',
                                                              output_grid_kwargs=course_grid_kwargs,
@@ -1160,7 +1200,7 @@ def intelligent_orography_burning_driver(input_fine_orography_filename,
                                          fine_grid_type=None,course_grid_type=None,
                                          fine_grid_kwargs={},**course_grid_kwargs):
     """Drive intelligent burning of an orography
-    
+
     Arguments:
     input_fine_orography_filename: string; full path to the fine orography field file to use as a reference
     input_course_orography_filename: string; full path to the course orography field file to intelligently burn
@@ -1168,23 +1208,23 @@ def intelligent_orography_burning_driver(input_fine_orography_filename,
     output_course_orography_filename: string; full path to target file to write the output intelligently burned
         orogrpahy to
     regions_to_burn_list_filename: string; full path of list of regions to burn and the burning thershold to use
-        for each region. See inside function the necessary format for the header and the necessary format to 
-        specifying each region to burn 
+        for each region. See inside function the necessary format for the header and the necessary format to
+        specifying each region to burn
     change_print_out_limit: integer; limit on the number of changes to the orography to individually print out
     fine_grid_type: string; code for the grid type of the fine grid
     course_grid_type: string; code for teh grid type of the course grid
     fine_grid_kwargs: dictionary; key word dictionary specifying parameters of the fine grid (if required)
     course_grid_kwargs: dictionary; key word dictionary specifying parameters of the course grid (if required)
     Returns: nothing
-    
+
     Reads input file, orientates field according to information on orientation supplied in corrections region file,
     uses intelligent burning function to burn each specified region then writes out results.
     """
 
-    input_fine_orography_field = dynamic_hd.load_field(input_fine_orography_filename, 
+    input_fine_orography_field = dynamic_hd.load_field(input_fine_orography_filename,
                                                        file_type=\
                                                        dynamic_hd.get_file_extension(input_fine_orography_filename),
-                                                       field_type='Orography', 
+                                                       field_type='Orography',
                                                        grid_type=fine_grid_type,
                                                        **fine_grid_kwargs)
     input_course_orography_field = dynamic_hd.load_field(input_course_orography_filename,
@@ -1233,10 +1273,10 @@ def intelligent_orography_burning_driver(input_fine_orography_filename,
         fine_grid_rotate180lr =  True if sixth_line_pattern_match.group(1).lower() == 'true' else False
         for line_num,line in enumerate(f,start=5):
             if comment_line_pattern.match(line):
-                continue 
+                continue
             entries = line.strip().split(",")
             threshold = None
-            region = {} 
+            region = {}
             for entry in entries:
                 threshold_pattern_match = threshold_pattern.match(entry)
                 region_bound_pattern_match = region_bound_pattern.match(entry)
@@ -1267,9 +1307,9 @@ def intelligent_orography_burning_driver(input_fine_orography_filename,
         #This is modified by the intelligently burn orography field so need to make a
         #copy to pass in each time
         working_fine_orography_field = copy.deepcopy(input_fine_orography_field)
-        output_course_orography = intelligently_burn_orography(working_fine_orography_field, 
+        output_course_orography = intelligently_burn_orography(working_fine_orography_field,
                                                                course_orography_field=output_course_orography,
-                                                               input_fine_fmap=input_fine_fmap_field, 
+                                                               input_fine_fmap=input_fine_fmap_field,
                                                                threshold=threshold, region=region,
                                                                course_grid_type=course_grid_type,
                                                                **course_grid_kwargs)
@@ -1291,20 +1331,20 @@ def intelligent_orography_burning_driver(input_fine_orography_filename,
         output_course_orography.flip_data_ud()
     if rotate180lr:
         output_course_orography.rotate_field_by_a_hundred_and_eighty_degrees()
-    dynamic_hd.write_field(output_course_orography_filename, 
-                           field=output_course_orography, 
+    dynamic_hd.write_field(output_course_orography_filename,
+                           field=output_course_orography,
                            file_type=dynamic_hd.get_file_extension(output_course_orography_filename))
-    
+
 def generate_regular_landsea_mask_from_gaussian_landsea_mask(input_gaussian_latlon_lsmask_filename,
                                                              output_regular_latlon_mask_filename,
                                                              regular_grid_spacing_file):
     """Generate a regular landsea mask from a lat-lon gaussian landsea mask using cdos
-    
+
     Arguments:
-    input_gaussian_latlon_lsmask_filename: string; full path to the input gaussian land-sea mask file 
+    input_gaussian_latlon_lsmask_filename: string; full path to the input gaussian land-sea mask file
         to generate a regular land-sea mask from
     output_regular_latlon_mask_filename: string; full path to the target file for  the output regular
-        landsea mask; this mask can be in any format the cdos support and is specified by the 
+        landsea mask; this mask can be in any format the cdos support and is specified by the
         regular_grid_spacing_file (see below)
     regular_grid_spacing_file: string; full path to the file containing the regular grid spacing desired
         for the output file
@@ -1318,11 +1358,11 @@ def generate_regular_landsea_mask_from_gaussian_landsea_mask(input_gaussian_latl
                          input=cdo_instance.remaplaf(regular_grid_spacing_file,
                                                      input=input_gaussian_latlon_lsmask_filename),
                          output=output_regular_latlon_mask_filename)
-    
+
 def generate_gaussian_landsea_mask(input_lsmask_filename,output_gaussian_latlon_mask_filename,
                                    gaussian_grid_spacing):
     """Generate a lat-lon gaussian landsea mask from a regular mask (lat-lon or otherwise) using cdos
-    
+
     Arguments:
     input_lsmask_filename: string; full path to the input land-sea mask file to generate a gaussian land-sea
         mask from; this can be any format that the cdos will recognize.
@@ -1330,33 +1370,33 @@ def generate_gaussian_landsea_mask(input_lsmask_filename,output_gaussian_latlon_
         mask
     gaussian_grid_spacing: integer, the number of latitude lines between the pole and equator.
     Returns: nothing
-    
+
     Uses the python wrapper to cdos provided by developers. Input file can any input grid allowed by cdos, output
-    grid is global lat-lon gaussian as defined by cdos. 
+    grid is global lat-lon gaussian as defined by cdos.
     """
-    
+
     cdo_instance = cdo.Cdo()
     print "Generate gaussian land-sea mask from input mask: {0}".format(input_lsmask_filename)
     print "Writing output to: {0}".format(output_gaussian_latlon_mask_filename)
     cdo_instance.remapnn('n{0}'.format(gaussian_grid_spacing),input=input_lsmask_filename,
                          output=output_gaussian_latlon_mask_filename)
-    
+
 def insert_new_landsea_mask_into_jsbach_restart_file(input_landsea_mask_filename,input_js_bach_filename,
                                                      output_modified_js_bach_filename,
                                                      modify_fractional_lsm=False,
                                                      modify_lake_mask=False):
     """Insert a new landsea mask into a jsbach restart file
-    
+
     Arguments:
     input_landsea_mask_filename: string; full path to new input landsea mask to insert
-        into jsbach file 
+        into jsbach file
     input_js_bach_filename: string; full path to jsbach file to insert landsea mask into
     output_modified_js_bach_filename: string; full target path to write the new jsbach file to
     modify_fractional_lsm: boolean; also modify the fractional land sea mask (replace it the
         input update landsea mask that may not be fractional!?)?
     modify_lake_mask: boolean, set the lake mask to zero?
     Returns: nothing
-    
+
     Uses python cdos. Always modifies the bindary landsea mask, will also modify the fractional
     land sea mask and/or set the lake mask to zero if boolean options are set accordingly.
     """
@@ -1372,10 +1412,10 @@ def insert_new_landsea_mask_into_jsbach_restart_file(input_landsea_mask_filename
     if modify_fractional_lsm:
         temp_lsm_file = cdo_instance.chname("field_value,slf",input=input_landsea_mask_filename)
         if modify_lake_mask:
-            temp_output_file2 = cdo_instance.replace(input=" ".join([temp_output_file,temp_lsm_file])) 
+            temp_output_file2 = cdo_instance.replace(input=" ".join([temp_output_file,temp_lsm_file]))
         else:
             cdo_instance.replace(input=" ".join([temp_output_file,temp_lsm_file]),
-                                 output=output_modified_js_bach_filename) 
+                                 output=output_modified_js_bach_filename)
             return
     #This if test is technically unnecessary but added for clarity/future proofing
     if modify_lake_mask:
@@ -1384,11 +1424,11 @@ def insert_new_landsea_mask_into_jsbach_restart_file(input_landsea_mask_filename
         cdo_instance.replace(input=" ".join([temp_output_file2 if modify_lake_mask else temp_output_file,
                                              temp_lsm_file2]),
                              output=output_modified_js_bach_filename)
-        
-        
+
+
 def rebase_orography(orography,present_day_base_orography,present_day_reference_orography):
     """Change the present day basis orography of an orography for any timeslice
-    
+
     Arguments:
     orography: field; an orography for a particular timeslice
     present_day_base_orography: field; the present day base that the orography comes from
@@ -1399,20 +1439,20 @@ def rebase_orography(orography,present_day_base_orography,present_day_reference_
     orography.subtract(present_day_base_orography)
     orography.add(present_day_reference_orography)
     return orography
-    
+
 def rebase_orography_driver(orography_filename,present_day_base_orography_filename,
                             present_day_reference_orography_filename,
                             rebased_orography_filename,orography_fieldname,
                             grid_type="HD",**grid_kwargs):
     """Driver changing the present day basis orography of an orography for any timeslice
-    
+
     Arguments:
     orography_filename: string; the full path to the orography for a particular timeslice
-    present_day_base_orography_filename: string; the full path to the present day base that 
+    present_day_base_orography_filename: string; the full path to the present day base that
     the orography comes from
     present_day_reference_orography: string; the full path to the present day reference orography to switch
     the input orography's base orography to
-    rebased_orography_filename: string; the full target path to save the rebased orography to 
+    rebased_orography_filename: string; the full target path to save the rebased orography to
     orography_fieldname: string; name of the orography field in the orography and base orography files
     if it is non-standard(optional)
     """
@@ -1436,7 +1476,7 @@ def rebase_orography_driver(orography_filename,present_day_base_orography_filena
     dynamic_hd.write_field(rebased_orography_filename,
                            field=rebased_orography,
                            file_type=dynamic_hd.get_file_extension(rebased_orography_filename))
-    
+
 def advanced_rebase_orography_driver(orography_filename,present_day_base_orography_filename,
                                      present_day_reference_orography_filename,
                                      rebased_orography_filename,orography_fieldname,
@@ -1444,19 +1484,18 @@ def advanced_rebase_orography_driver(orography_filename,present_day_base_orograp
                                      present_day_reference_orography_fieldname,
                                      rebased_orography_fieldname):
     orography = iodriver.advanced_field_loader(orography_filename,
-                                               field_type="Orography", unmask=True,
+                                               field_type="Orography",
                                                fieldname=orography_fieldname)
     present_day_base_orography = iodriver.advanced_field_loader(present_day_base_orography_filename,
-                                                                field_type="Orography", unmask=True,
+                                                                field_type="Orography",
                                                                 fieldname=\
                                                                 present_day_base_orography_fieldname)
     present_day_reference_orography = iodriver.\
         advanced_field_loader(present_day_reference_orography_filename,
-                              field_type="Orography", unmask=True,
+                              field_type="Orography",
                               fieldname=\
                               present_day_reference_orography_fieldname)
     rebased_orography = rebase_orography(orography, present_day_base_orography, present_day_reference_orography)
     iodriver.advanced_field_writer(rebased_orography_filename,
                                    field=rebased_orography,
-                                   file_type=dynamic_hd.get_file_extension(rebased_orography_filename),
                                    fieldname=rebased_orography_fieldname)

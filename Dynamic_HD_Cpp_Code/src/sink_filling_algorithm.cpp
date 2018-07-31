@@ -93,7 +93,7 @@ sink_filling_algorithm_4_latlon::sink_filling_algorithm_4_latlon(field<double>* 
 																 field<int>* next_cell_lat_index_in,
 																 field<int>* next_cell_lon_index_in,
 																 bool* true_sinks_in,
-																 field<double>* rdirs_in)
+																 field<short>* rdirs_in)
 	: sink_filling_algorithm(orography,grid_params_in,completed_cells,landsea_in,set_ls_as_no_data_flag,
             true_sinks_in,catchment_nums_in),
 	  sink_filling_algorithm_4(orography,grid_params_in,completed_cells,landsea_in,set_ls_as_no_data_flag,
@@ -207,11 +207,11 @@ void sink_filling_algorithm_4_latlon::setup_fields(double* orography_in, bool* l
 								            	   bool* true_sinks_in, int * next_cell_lat_index_in,
 												   int * next_cell_lon_index_in,
 												   grid_params* grid_params_in,
-												   double* rdirs_in, int* catchment_nums_in)
+												   short* rdirs_in, int* catchment_nums_in)
 {
 	sink_filling_algorithm_4::setup_fields(orography_in,landsea_in,true_sinks_in,grid_params_in,
 										   catchment_nums_in);
-	rdirs = new field<double>(rdirs_in,grid_params_in);
+	rdirs = new field<short>(rdirs_in,grid_params_in);
 	next_cell_lat_index = new field<int>(next_cell_lat_index_in,grid_params_in);
 	next_cell_lon_index = new field<int>(next_cell_lon_index_in,grid_params_in);
 	auto* grid_latlon = dynamic_cast<latlon_grid*>(_grid);
@@ -1026,7 +1026,7 @@ double sink_filling_algorithm_4_latlon::test_find_initial_cell_flow_direction(co
 	orography = orography_in; landsea = landsea_in;
 	prefer_non_diagonal_initial_dirs = prefer_non_diagonals_in;
 	index_based_rdirs_only = false;
-	rdirs = new field<double>(grid_params_in);
+	rdirs = new field<short>(grid_params_in);
 	next_cell_lat_index = new field<int>(grid_params_in);
 	next_cell_lon_index = new field<int>(grid_params_in);
 	_grid = grid_factory(grid_params_in);
@@ -1046,7 +1046,7 @@ double sink_filling_algorithm_4_latlon::test_calculate_direction_from_neighbor_t
 {
 	center_coords = coords_in;  nbr_coords = nbr_coords_in; _grid_params = grid_params_in;
 	index_based_rdirs_only = false;
-	rdirs = new field<double>(grid_params_in);
+	rdirs = new field<short>(grid_params_in);
 	next_cell_lat_index = new field<int>(grid_params_in);
 	next_cell_lon_index = new field<int>(grid_params_in);
 	_grid = grid_factory(grid_params_in);

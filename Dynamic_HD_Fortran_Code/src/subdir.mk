@@ -1,4 +1,4 @@
-# Add inputs and outputs from these tool invocations to the build variables 
+# Add inputs and outputs from these tool invocations to the build variables
 F90_SRCS += \
 $(FRUIT_LOC)/fruit.f90 \
 ../src/precision_mod.f90 \
@@ -18,10 +18,12 @@ $(FRUIT_LOC)/fruit.f90 \
 ../src/cotat_plus.f90 \
 ../src/cotat_plus_driver_mod.f90 \
 ../src/cotat_plus_test_mod.f90 \
+../src/flow.f90 \
+../src/flow_test_mod.f90 \
 ../src/loop_breaker_mod.f90 \
 ../src/loop_breaker_test_mod.f90 \
 ../src/manual_fruit_basket.f90 \
-../src/manual_fruit_basket_driver.f90 
+../src/manual_fruit_basket_driver.f90
 
 OBJS += \
 ./src/fruit.o \
@@ -42,10 +44,12 @@ OBJS += \
 ./src/cotat_plus.o \
 ./src/cotat_plus_driver_mod.o \
 ./src/cotat_plus_test_mod.o \
+./src/flow.o \
+./src/flow_test_mod.o \
 ./src/loop_breaker_mod.o \
 ./src/loop_breaker_test_mod.o \
 ./src/manual_fruit_basket.o \
-./src/manual_fruit_basket_driver.o 
+./src/manual_fruit_basket_driver.o
 
 MODS += \
 ./fruit.mod \
@@ -67,10 +71,12 @@ MODS += \
 ./cotat_plus.mod \
 ./cotat_plus_driver_mod.mod \
 ./cotat_plus_test_mod.mod \
+./src/flow.mod \
+./src/flow_test_mod.mod \
 ./loop_breaker_mod.mod \
 ./loop_breaker_test_mod.mod \
 ./manual_fruit_basket.mod \
-./manual_fruit_basket_driver.mod 
+./manual_fruit_basket_driver.mod
 
 # Each subdirectory must supply rules for building sources it contributes
 src/fruit.o: $(FRUIT_LOC)/fruit.f90
@@ -106,6 +112,10 @@ src/cotat_plus.o: ../src/cotat_plus.f90 src/area_mod.o src/coords_mod.o src/cota
 src/cotat_plus_driver_mod.o: ../src/cotat_plus_driver_mod.f90 src/cotat_plus.o
 
 src/cotat_plus_test_mod.o: ../src/cotat_plus_test_mod.f90 src/cotat_parameters_mod.o src/cotat_plus.o src/fruit.o
+
+src/flow.o: ../src/flow.f90 src/area_mod.o src/coords_mod.o src/cotat_parameters_mod.o
+
+src/flow_test_mod.o: ../src/flow_test_mod.f90 src/cotat_parameters_mod.o src/flow.o src/fruit.o
 
 src/doubly_linked_list_link_mod.o: ../src/doubly_linked_list_link_mod.f90
 

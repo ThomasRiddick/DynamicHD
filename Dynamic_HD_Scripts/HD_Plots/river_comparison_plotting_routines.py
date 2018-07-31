@@ -1,5 +1,5 @@
 '''
-Routines to plot a comparison of rivers and catchments between an evaluated dataset and a 
+Routines to plot a comparison of rivers and catchments between an evaluated dataset and a
 reference dataset.
 
 Created on Jul 21, 2016
@@ -34,7 +34,7 @@ def find_catchment_numbers(ref_catchment_field,data_catchment_field,
                                            ref_catchment_field_original_scale,
                                            ref_original_scale_flowtocellfield,ref_course_coords,
                                            catchment_grid_changed,ref_original_scale_grid_type,
-                                           ref_original_scale_grid_kwargs,grid_type,**grid_kwargs)[0]   
+                                           ref_original_scale_grid_kwargs,grid_type,**grid_kwargs)[0]
         data_course_coords=pair[1].get_coords()
         data_catchment_num,scale_factor =\
             pts.find_data_catchment_number(data_catchment_field,
@@ -50,7 +50,7 @@ def find_catchment_numbers(ref_catchment_field,data_catchment_field,
                                            data_catchment_field_original_scale,
                                            data_original_scale_flowtocellfield,ref_course_coords,
                                            catchment_grid_changed,data_original_scale_grid_type,
-                                           data_original_scale_grid_kwargs,grid_type,**grid_kwargs)   
+                                           data_original_scale_grid_kwargs,grid_type,**grid_kwargs)
     else:
         ref_catchment_num = ref_catchment_field[pair[0].get_coords()]
         data_course_coords=pair[1].get_coords()
@@ -83,11 +83,11 @@ def plot_orography_section(ax,cax,section,min_height,max_height,outflow_lat,outf
     elif plot_type=='Image':
         im = ax.imshow(section,interpolation='nearest',cmap=cm.get_cmap(cmap_name),
                        norm = cm.colors.Normalize(vmax=max_height,vmin=min_height),rasterized=True)
-    ax.format_coord = pts.OrogCoordFormatter(lon_offset,lat_offset) 
+    ax.format_coord = pts.OrogCoordFormatter(lon_offset,lat_offset)
     ax.set_title(" Outflow"
                  " Lat: " + (lambda x: str((0.5*x - 90)*(-1 if x<=180 else 1))
                              + r'$^{\circ}$' + ('N' if x <=180 else 'S'))(outflow_lat)
-                 + ' Lon: ' + (lambda y: str((0.5*y-180)*(-1 if y<= 360 else 1)) 
+                 + ' Lon: ' + (lambda y: str((0.5*y-180)*(-1 if y<= 360 else 1))
                                + r'$^{\circ}$' + ('W' if y <= 360 else 'E'))(outflow_lon))
     ax.axis('image')
     if not new_cb:
@@ -97,7 +97,7 @@ def plot_orography_section(ax,cax,section,min_height,max_height,outflow_lat,outf
     elif plot_type=='Image':
         cb = plt.colorbar(im,cax=cax)
     cb.set_label("Height Above Sea Level (m)",labelpad=10)
-    
+
 def select_rivermaps_section(ref_flowtocellfield,data_flowtocellfield,
                              rdirs_field,imin,imax,jmin,jmax,threshold,
                              points_to_mark,mark_true_sinks=False,
@@ -122,7 +122,7 @@ def select_rivermaps_section(ref_flowtocellfield,data_flowtocellfield,
             if allow_new_sink_points:
                 rmap_field[np.logical_and(rdirs_field != 5,data_true_sinks)] = 9
             else:
-                raise RuntimeWarning("New true sink point has appeared in data") 
+                raise RuntimeWarning("New true sink point has appeared in data")
     return rmap_field[imin:imax,jmin:jmax]
 
 def plot_whole_river_flowmap(ax,pair,ref_flowtocellfield,data_flowtocellfield,rdirs_field,data_rdirs_field,
@@ -138,11 +138,11 @@ def plot_whole_river_flowmap(ax,pair,ref_flowtocellfield,data_flowtocellfield,rd
                                                             allow_new_sink_points=allow_new_sink_points)
     plot_flowmap(ax, section=whole_catchment_rmap_section,colors=colors,reduced_map=simplified_flowmap_plot)
     plt.subplots_adjust(hspace=0.25,left=0.1)
-    
+
 def plot_flowmap(ax,section,reduced_map=False,cax=None,
                  interpolation='none',alternative_colors=False,
                  remove_ticks_flag=True,colors=None):
-    if reduced_map: 
+    if reduced_map:
         num_colors = 5
     else:
         num_colors = 9
@@ -158,7 +158,7 @@ def plot_flowmap(ax,section,reduced_map=False,cax=None,
         cb_wc = plt.colorbar(mappable_wc,ax=ax,cax=cax)
         tic_labels_wc = ['Sea', 'Land','Reference River Path','Common River Path','Data River Path']
         tic_loc_wc = np.arange(5) + 0.5
-        cb_wc.set_ticks(tic_loc_wc) 
+        cb_wc.set_ticks(tic_loc_wc)
         cb_wc.set_ticklabels(tic_labels_wc)
     else:
         mappable_wc = mpl.cm.ScalarMappable(norm=norm_wholec,cmap=cmap_wholec)
@@ -166,11 +166,11 @@ def plot_flowmap(ax,section,reduced_map=False,cax=None,
         cb_wc = plt.colorbar(mappable_wc,ax=ax,cax=cax)
         tic_labels_wc = ['Sea', 'Land','Reference River Path','Common River Path','Data River Path',
                          'Reference River Mouth','Data River Mouth','Reference True Sink',
-                         'Common True Sink'] 
+                         'Common True Sink']
         tic_loc_wc = np.arange(10) + 0.5
-        cb_wc.set_ticks(tic_loc_wc) 
+        cb_wc.set_ticks(tic_loc_wc)
         cb_wc.set_ticklabels(tic_labels_wc)
-        
+
 def plot_river_rmouth_flowmap(ax,ref_flowtocellfield,data_flowtocellfield,rdirs_field,pair,colors):
     points_to_mark = [pair[0].get_coords(),pair[1].get_coords()]
     bounds = select_bounds_around_rivermouth(pair,border=20)
@@ -184,7 +184,7 @@ def plot_river_rmouth_flowmap(ax,ref_flowtocellfield,data_flowtocellfield,rdirs_
     ax.imshow(rmap_section,interpolation='none',cmap=cmap,norm=norm,rasterized=True)
     plt.title(" Lat: " + (lambda x: str((0.5*x - 90)*(-1 if x<=180 else 1))
                           + r'$^{\circ}$' + ('N' if x <=180 else 'S'))(pair[0].get_lat())
-              + ' Lon: ' + (lambda y: str((0.5*y-180)*(-1 if y<= 360 else 1)) 
+              + ' Lon: ' + (lambda y: str((0.5*y-180)*(-1 if y<= 360 else 1))
                             + r'$^{\circ}$' + ('W' if y <= 360 else 'E'))(pair[0].get_lon()))
     pts.remove_ticks(ax)
     mappable = mpl.cm.ScalarMappable(norm=norm,cmap=cmap)
@@ -193,9 +193,9 @@ def plot_river_rmouth_flowmap(ax,ref_flowtocellfield,data_flowtocellfield,rdirs_
     tic_loc = np.arange(8) + 0.5
     tic_labels = ['Sea', 'Land','Reference River Path','Common River Path','Data River Path',
                   'Reference River Mouth','Data River Mouth']
-    cb.set_ticks(tic_loc) 
+    cb.set_ticks(tic_loc)
     cb.set_ticklabels(tic_labels)
-    
+
 def plot_catchment_and_histogram_for_river(ax_hist,ax_catch,ref_catchment_field,
                                            data_catchment_field,
                                            data_catchment_field_original_scale,
@@ -285,7 +285,7 @@ def plot_catchment_and_histogram_for_river(ax_hist,ax_catch,ref_catchment_field,
     ax_catch.yaxis.set_major_locator(catch_y_axis_major_locator)
     #Scale factor is multiplied by two as formatter has a built in scale factor of a half
     catch_x_axis_major_formatter = mpl.ticker.\
-        FuncFormatter(pts.LonAxisFormatter(catchment_bounds[2] + 
+        FuncFormatter(pts.LonAxisFormatter(catchment_bounds[2] +
                                            ref_grid.get_longitude_offset_adjustment(),
                                            axis_tick_label_scale_factor*2))
     ax_catch.xaxis.set_major_formatter(catch_x_axis_major_formatter)
@@ -309,7 +309,7 @@ def plot_catchment_and_histogram_for_river(ax_hist,ax_catch,ref_catchment_field,
         return catchment_section,catchment_bounds,scale_factor
 
 class CatchmentPlotter(object):
-    
+
     def __init__(self,catchment_section,colors,simplified_colorscheme=False,
                  cax=None,legend=True,remove_ticks_flag=True,
                  format_coords=False,lat_offset=0,lon_offset=0,
@@ -324,26 +324,26 @@ class CatchmentPlotter(object):
         self.lat_offset = lat_offset
         self.lon_offset = lon_offset
         self.use_upscaling_labels = use_upscaling_labels
-        
+
     def set_legend(self,legend):
         self.legend=legend
-        
+
     def set_cax(self,cax):
         self.cax = cax
-        
+
     def add_axis_locators_and_formatters(self,major_x_axis_formatter,major_y_axis_formatter,
                                          major_x_axis_locator,major_y_axis_locator):
         self.major_x_axis_formatter = major_x_axis_formatter
         self.major_y_axis_formatter = major_y_axis_formatter
         self.major_x_axis_locator = major_x_axis_locator
         self.major_y_axis_locator = major_y_axis_locator
-        
+
     def apply_axis_locators_and_formatters(self,ax):
         ax.xaxis.set_major_locator(self.major_x_axis_locator)
         ax.yaxis.set_major_locator(self.major_y_axis_locator)
         ax.xaxis.set_major_formatter(self.major_x_axis_formatter)
         ax.yaxis.set_major_formatter(self.major_y_axis_formatter)
-        
+
     def __call__(self,ax):
         plot_catchment(ax,catchment_section=self.catchment_section,
                        colors=self.colors,
@@ -366,7 +366,7 @@ def plot_catchment(ax,catchment_section,colors,simplified_colorscheme=False,
         cmap_catch,norm_catch = create_colormap(catchment_section,9,colors=colors)
     ax.imshow(catchment_section,interpolation='none',cmap=cmap_catch,norm=norm_catch,rasterized=True)
     if format_coords:
-        ax.format_coord = pts.OrogCoordFormatter(lon_offset,lat_offset) 
+        ax.format_coord = pts.OrogCoordFormatter(lon_offset,lat_offset)
     if remove_ticks_flag:
         pts.remove_ticks(ax)
     if legend:
@@ -377,13 +377,13 @@ def plot_catchment(ax,catchment_section,colors,simplified_colorscheme=False,
             tic_labels_catch = ['Sea','Land','Fine river directions\ncatchment','Common catchment',
                                 'Upscaled river directions\ncatchment','Fine river directions river mouth',
                                 'Upscaled river directions river mouth','Fine river directions true sink',
-                                'Common true sink'] 
+                                'Common true sink']
         else:
             tic_labels_catch = ['Sea','Land','Default HD catchment','Common catchment','Dynamic HD catchment',
                                 'Model 1 river mouth','Model 2 river mouth','Model 1 true sink',
-                                'Common true sink'] 
+                                'Common true sink']
         tic_loc_catch = np.arange(10) + 0.5
-        cb_wc.set_ticks(tic_loc_catch) 
+        cb_wc.set_ticks(tic_loc_catch)
         cb_wc.set_ticklabels(tic_labels_catch)
 
 def select_catchment(ref_catchment_field,data_catchment_field,
@@ -460,7 +460,7 @@ def create_colormap(field,num_colors=7,alternative_colors=False,colors=None):
                                   'yellow','deepskyblue']
     cmap = mpl.colors.ListedColormap(color_list[:num_colors])
     if alternative_colors:
-        cmap = mpl.colors.ListedColormap(alternative_color_list[:num_colors]) 
+        cmap = mpl.colors.ListedColormap(alternative_color_list[:num_colors])
     bounds = range(num_colors+1)
     norm = mpl.colors.BoundaryNorm(bounds,cmap.N)
     return cmap,norm
@@ -477,13 +477,13 @@ def simple_catchment_and_flowmap_plots(fig,ref_ax,data_ax,ref_catchment_field,da
     fig.suptitle('River catchment plus cells with a cumulative flow greater than {0}'.format(flowtocell_threshold))
     ref_ax.set_title('Reference')
     data_ax.set_title('Data')
-    ref_catchment_num,data_catchment_num = find_catchment_numbers(ref_catchment_field, 
-                                                                  data_catchment_field, 
-                                                                  data_catchment_field_original_scale, 
-                                                                  data_original_scale_flowtocellfield, 
-                                                                  pair, catchment_grid_changed, 
+    ref_catchment_num,data_catchment_num = find_catchment_numbers(ref_catchment_field,
+                                                                  data_catchment_field,
+                                                                  data_catchment_field_original_scale,
+                                                                  data_original_scale_flowtocellfield,
+                                                                  pair, catchment_grid_changed,
                                                                   data_original_scale_grid_type=\
-                                                                  data_original_scale_grid_type, 
+                                                                  data_original_scale_grid_type,
                                                                   data_original_scale_grid_kwargs=\
                                                                   data_original_scale_grid_kwargs,
                                                                   grid_type=grid_type)[0:2]
@@ -518,9 +518,9 @@ def simple_catchment_and_flowmap_plots(fig,ref_ax,data_ax,ref_catchment_field,da
                                                                                  colors=colors)
     simple_catchment_and_flowmap_plot_object_data(data_ax)
     return simple_catchment_and_flowmap_plot_object_ref,simple_catchment_and_flowmap_plot_object_data
-    
+
 class SimpleCatchmentAndFlowMapPlt(object):
-    
+
     def __init__(self,catchment_field,catchment_field_for_lsmask,flowtocell,
                  catchment_bounds,catchment_num,flowtocell_threshold,colors):
         self.catchment_field = catchment_field
@@ -530,12 +530,12 @@ class SimpleCatchmentAndFlowMapPlt(object):
         self.catchment_num = catchment_num
         self.flowtocell_threshold = flowtocell_threshold
         self.colors = colors
-        
+
     def __call__(self,ax):
         simple_catchment_and_flowmap_plot(ax,self.catchment_field,self.catchment_field_for_lsmask,
                                           self.flowtocell,self.catchment_bounds,self.catchment_num,
                                           self.flowtocell_threshold,self.colors)
-    
+
     def get_flowtocell_threshold(self):
         return self.flowtocell_threshold
 
@@ -570,7 +570,7 @@ def simple_catchment_and_flowmap_plot(ax,catchment_field,catchment_field_for_lsm
                                                FuncFormatter(pts.LatAxisFormatter(catchment_bounds[0],
                                                             axis_tick_label_scale_factor*2)))
             plt.tight_layout()
-        
+
 
 def add_catchment_and_outflow_to_river(catchments,outflows,sink_outflow_to_remap,processing_mod_type,
                                        flowmap=None,rdirs=None,original_scale_catchment=None,
@@ -589,9 +589,9 @@ def add_catchment_and_outflow_to_river(catchments,outflows,sink_outflow_to_remap
                                            flowmap,None))
         catchments = pts.relabel_outflow_catchment(catchments, original_outflow_coords,
                                                    new_outflow_coords)
-    elif processing_mod_type == 'River Mouth': 
+    elif processing_mod_type == 'River Mouth':
         outflows.set_data(pts.move_outflow(outflows.get_data(), original_outflow_coords, new_outflow_coords,
-                                           None,None)) 
+                                           None,None))
         catchments = pts.relabel_outflow_catchment(catchments, original_outflow_coords,
                                                    new_outflow_coords,
                                                    original_scale_catchment,
@@ -627,7 +627,7 @@ def modify_catchments_and_outflows(ref_catchments,ref_outflows,ref_flowmap,ref_r
                                    original_scale_grid_type=None,original_scale_grid_kwargs={},
                                    grid_type=None,**grid_kwargs):
     """Load various temporary modifications to make to the catchment and outflows to aid comparison
-    
+
     Modifications are applied after fields have been orientated
     """
 
@@ -647,16 +647,16 @@ def modify_catchments_and_outflows(ref_catchments,ref_outflows,ref_flowmap,ref_r
         mod_second_line_pattern_match = mod_second_line_pattern.match(line.strip())
         if not mod_second_line_pattern_match:
             raise RuntimeError("Mistake in file containing list of modifications"
-                                   " at line {0}".format(i)) 
+                                   " at line {0}".format(i))
         grid_type_from_file = mod_second_line_pattern_match.group(0)
         if grid_type != grid_type_from_file:
             RuntimeError("File containing list of modifications is for wrong grid type")
         yield catchments,outflows
         if not mod_third_line_pattern.match(line.strip()):
             raise RuntimeError("Mistake in file containing list of modifications"
-                                   " at line {0}".format(i))  
+                                   " at line {0}".format(i))
         yield catchments,outflows
-        while True:            
+        while True:
             if not line_of_input_pattern.match(line):
                 raise RuntimeError("Mistake in file containing list of modifications"
                                    " at line {0}".format(i))
@@ -703,13 +703,13 @@ def modify_catchments_and_outflows(ref_catchments,ref_outflows,ref_flowmap,ref_r
             elif ref_mouths_first_line_pattern.match(line):
                 process_mod_type = 'Ref River Mouth'
                 proc_mod_gen = process_modification_generator(ref_catchments,ref_outflows,
-                                                              process_mod_type,None,ref_rdirs, 
+                                                              process_mod_type,None,ref_rdirs,
                                                               grid_type=grid_type)
             elif ref_join_catchments_first_line_pattern.match(line):
                 process_mod_type = 'Ref Join Catchments'
                 if swap_ref_and_data_when_finding_labels:
                     proc_mod_gen = process_modification_generator(ref_catchments,ref_outflows,
-                                                                  process_mod_type,None,None, 
+                                                                  process_mod_type,None,None,
                                                                   original_scale_catchment,
                                                                   original_scale_flowmap,
                                                                   catchment_grid_changed,
@@ -718,7 +718,7 @@ def modify_catchments_and_outflows(ref_catchments,ref_outflows,ref_flowmap,ref_r
                                                                   grid_type=grid_type)
                 else:
                     proc_mod_gen = process_modification_generator(ref_catchments,ref_outflows,
-                                                                  process_mod_type,None,ref_rdirs, 
+                                                                  process_mod_type,None,ref_rdirs,
                                                                   grid_type=grid_type)
             elif (process_mod_type == 'Sink' or process_mod_type == 'Ref River Mouth' or
                   process_mod_type == 'Ref Join Catchments'):
@@ -730,3 +730,69 @@ def modify_catchments_and_outflows(ref_catchments,ref_outflows,ref_flowmap,ref_r
                                    "Have reached line {0} without first reading "
                                    "necessary headers".format(i))
     return ref_catchments,ref_outflows,data_catchments,data_outflows
+
+def simple_thresholded_data_only_flowmap(ax,data_flowmap,lsmask,threshold=75,glacier_mask=None,
+                                         catchments=None,catchnumone=-1,catchnumtwo=-1,
+                                         catchnumthree=-1,bounds=None,cax=None,
+                                         colors=None):
+    """Plot cumulative flow over a threshold using single input field"""
+    if bounds is None:
+      data_flowmap_section = data_flowmap
+      lsmask_section = lsmask
+      if glacier_mask is not None:
+        glacier_mask_section = glacier_mask
+      if catchments is not None:
+        catchments_section = catchments
+    else:
+      data_flowmap_section = data_flowmap[bounds[0]:bounds[1],bounds[2]:bounds[3]]
+      lsmask_section = lsmask[bounds[0]:bounds[1],bounds[2]:bounds[3]]
+      if glacier_mask is not None:
+        glacier_mask_section = glacier_mask[bounds[0]:bounds[1],bounds[2]:bounds[3]]
+      if catchments is not None:
+        catchments_section = catchments[bounds[0]:bounds[1],bounds[2]:bounds[3]]
+    thresholded_data_flowmap_section = np.zeros(data_flowmap_section.shape)
+    thresholded_data_flowmap_section[np.logical_and(data_flowmap_section < threshold,lsmask_section)]  = 1
+    thresholded_data_flowmap_section[np.logical_and(data_flowmap_section >= threshold,lsmask_section)] = 2
+    if glacier_mask is not None:
+      thresholded_data_flowmap_section[np.logical_and(glacier_mask_section >= 0.5,
+                                                      thresholded_data_flowmap_section != 2)] = 3
+    if catchments is not None:
+      thresholded_data_flowmap_section[np.logical_and(catchments_section == catchnumone,
+                                                      thresholded_data_flowmap_section == 1)] = 4
+      thresholded_data_flowmap_section[np.logical_and(catchments_section == catchnumtwo,
+                                                      thresholded_data_flowmap_section == 1)] = 5
+      thresholded_data_flowmap_section[np.logical_and(catchments_section == catchnumthree,
+                                                      thresholded_data_flowmap_section == 1)] = 6
+    num_colors = 7
+    color_list =  (colors.simple_thresholded_data_flowmap_and_catchments_colors
+                   if colors is not None else
+                  ['blue','peru','yellow','white','gray','red','black','indigo','deepskyblue'])
+    cmap = mpl.colors.ListedColormap(color_list[:num_colors])
+    colors_bounds = range(num_colors+1)
+    norm = mpl.colors.BoundaryNorm(colors_bounds,cmap.N)
+    ax.imshow(thresholded_data_flowmap_section,interpolation='none',cmap=cmap,norm=norm)
+    #Assume HD Grid
+    axis_tick_label_scale_factor=0.5
+    ax.xaxis.set_major_locator(mpl.ticker.IndexLocator(20/axis_tick_label_scale_factor,
+                                                       -bounds[2]))
+    ax.yaxis.set_major_locator(mpl.ticker.IndexLocator(20/axis_tick_label_scale_factor,
+                                                       -bounds[0]))
+    #Scale factor is multiplied by two as formatter has a built in scale factor of a half
+    catch_x_axis_major_formatter = mpl.ticker.\
+        FuncFormatter(pts.LonAxisFormatter(bounds[2] ,#+
+                                           #ref_grid.get_longitude_offset_adjustment(),
+                                           axis_tick_label_scale_factor*2))
+    ax.xaxis.set_major_formatter(catch_x_axis_major_formatter)
+    catch_y_axis_major_formatter = mpl.ticker.\
+        FuncFormatter(pts.LatAxisFormatter(bounds[0],
+                                           axis_tick_label_scale_factor*2))
+    ax.yaxis.set_major_formatter(catch_y_axis_major_formatter)
+    if cax is not None:
+        mappable_wc = mpl.cm.ScalarMappable(norm=norm,cmap=cmap)
+        mappable_wc.set_array(thresholded_data_flowmap_section)
+        cb_wc = plt.colorbar(mappable_wc,cax=cax)
+        tic_labels_wc = ['Sea', 'Land','River Path','Glacier','Mississippi Catchment',"St Lawrence Catchment",
+                         'Mackenzie Catchment']
+        tic_loc_wc = np.arange(7) + 0.5
+        cb_wc.set_ticks(tic_loc_wc)
+        cb_wc.set_ticklabels(tic_labels_wc)

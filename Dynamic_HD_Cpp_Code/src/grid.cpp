@@ -24,6 +24,15 @@ bool grid::check_if_cell_connects_two_landsea_or_true_sink_points(int edge_numbe
 	else return false;
 }
 
+
+bool grid::fine_coords_in_same_cell(coords* fine_coords_set_one,
+	                               		coords* fine_coords_set_two,
+	                               		grid_params* fine_grid_params){
+	coords* coarse_coords_set_one = convert_fine_coords(fine_coords_set_one,fine_grid_params);
+	coords* coarse_coords_set_two = convert_fine_coords(fine_coords_set_two,fine_grid_params);
+	return (*coarse_coords_set_one == *coarse_coords_set_two);
+}
+
 latlon_grid::latlon_grid(grid_params* params){
 	grid_type = grid_types::latlon;
 	if(latlon_grid_params* params_local = dynamic_cast<latlon_grid_params*>(params)){
@@ -170,10 +179,25 @@ double latlon_grid::latlon_calculate_dir_based_rdir(latlon_coords* start_coords,
 coords* latlon_grid::calculate_downstream_coords_from_dir_based_rdir(coords* initial_coords,
 		double rdir){
 		latlon_coords* latlon_initial_coords = dynamic_cast<latlon_coords*>(initial_coords);
-		int lon_offset = -1*int(ceil(rdir/3.0))+2;
-		int lat_offset = rdir + 3*lon_offset - 5;
+		if (rdir <= 0 || rdir == 5) return initial_coords->clone();
+		int lat_offset = -int(ceil(rdir/3.0))+2;
+		int lon_offset = rdir + 3*lat_offset - 5;
 		return new latlon_coords(latlon_initial_coords->get_lat()+lat_offset,
-								 latlon_initial_coords->get_lon()+lon_offset);
+														 latlon_initial_coords->get_lon()+lon_offset);
+}
+
+coords* latlon_grid::convert_fine_coords(coords* fine_coords,grid_params* fine_grid_params){
+		latlon_coords* latlon_fine_coords = static_cast<latlon_coords*>(fine_coords);
+		latlon_grid_params* latlon_fine_grid_params =
+			static_cast<latlon_grid_params*>(fine_grid_params);
+		int fine_cells_per_coarse_cell_lat = latlon_fine_grid_params->get_nlat()/nlat;
+		int fine_cells_per_coarse_cell_lon = latlon_fine_grid_params->get_nlon()/nlon;
+		//Although C++ rounds towards zero decide to specify floor explicitly in case of negative
+		//latitude values
+		int coarse_lat = floor(double(latlon_fine_coords->get_lat())/fine_cells_per_coarse_cell_lat);
+		int coarse_lon = floor(double(latlon_fine_coords->get_lon())/fine_cells_per_coarse_cell_lon);
+		return new latlon_coords(coarse_lat,coarse_lon);
+	return new latlon_coords(1,1);
 }
 
 grid* grid_factory(grid_params* grid_params_in){

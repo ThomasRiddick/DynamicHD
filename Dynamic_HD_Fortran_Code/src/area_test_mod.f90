@@ -18,7 +18,7 @@ contains
         integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
         integer :: result0
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
-        class(direction_indicator), pointer :: output_course_river_direction
+        class(direction_indicator), pointer :: output_coarse_river_direction
         type(latlon_section_coords) :: cell_section_coords
             allocate(input_fine_river_directions(9,9))
             allocate(input_fine_total_cumulative_flow(9,9))
@@ -47,14 +47,14 @@ contains
                                                          shape(input_fine_river_directions)))
             dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
                 input_fine_river_directions, input_fine_total_cumulative_flow)
-            output_course_river_direction => dir_based_rdirs_cell%process_cell()
-            select type (output_course_river_direction)
+            output_coarse_river_direction => dir_based_rdirs_cell%process_cell()
+            select type (output_coarse_river_direction)
             type is (dir_based_direction_indicator)
-                result0 = output_course_river_direction%get_direction()
+                result0 = output_coarse_river_direction%get_direction()
             end select
             call assert_equals(7,result0)
             call dir_based_rdirs_cell%destructor()
-            deallocate(output_course_river_direction)
+            deallocate(output_coarse_river_direction)
         end subroutine testOneOutflowCellSetupOne
 
     subroutine testOneOutflowCellSetupTwo
@@ -65,7 +65,7 @@ contains
         integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
         integer :: result0
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
-        class(direction_indicator), pointer :: output_course_river_direction
+        class(direction_indicator), pointer :: output_coarse_river_direction
         type(latlon_section_coords) :: cell_section_coords
             allocate(input_fine_river_directions(9,9))
             allocate(input_fine_total_cumulative_flow(9,9))
@@ -94,14 +94,14 @@ contains
                                                          shape(input_fine_river_directions)))
             dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
                 input_fine_river_directions, input_fine_total_cumulative_flow)
-            output_course_river_direction => dir_based_rdirs_cell%process_cell()
-            select type (output_course_river_direction)
+            output_coarse_river_direction => dir_based_rdirs_cell%process_cell()
+            select type (output_coarse_river_direction)
             type is (dir_based_direction_indicator)
-                result0 = output_course_river_direction%get_direction()
+                result0 = output_coarse_river_direction%get_direction()
             end select
             call assert_equals(8,result0)
             call dir_based_rdirs_cell%destructor()
-            deallocate(output_course_river_direction)
+            deallocate(output_coarse_river_direction)
         end subroutine testOneOutflowCellSetupTwo
 
     subroutine testOneOutflowCellSetupThree
@@ -112,7 +112,7 @@ contains
         integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
         integer :: result0
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
-        class(direction_indicator), pointer :: output_course_river_direction
+        class(direction_indicator), pointer :: output_coarse_river_direction
         type(latlon_section_coords) :: cell_section_coords
             allocate(input_fine_river_directions(9,9))
             allocate(input_fine_total_cumulative_flow(9,9))
@@ -141,14 +141,14 @@ contains
                                                          shape(input_fine_river_directions)))
             dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
                 input_fine_river_directions, input_fine_total_cumulative_flow)
-            output_course_river_direction => dir_based_rdirs_cell%process_cell()
-            select type (output_course_river_direction)
+            output_coarse_river_direction => dir_based_rdirs_cell%process_cell()
+            select type (output_coarse_river_direction)
             type is (dir_based_direction_indicator)
-                result0 = output_course_river_direction%get_direction()
+                result0 = output_coarse_river_direction%get_direction()
             end select
             call assert_equals(9,result0)
             call dir_based_rdirs_cell%destructor()
-            deallocate(output_course_river_direction)
+            deallocate(output_coarse_river_direction)
         end subroutine testOneOutflowCellSetupThree
 
     subroutine testOneOutflowCellSetupFour
@@ -159,7 +159,7 @@ contains
         integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
         integer :: result0
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
-        class(direction_indicator), pointer :: output_course_river_direction
+        class(direction_indicator), pointer :: output_coarse_river_direction
         type(latlon_section_coords) :: cell_section_coords
             allocate(input_fine_river_directions(9,9))
             allocate(input_fine_total_cumulative_flow(9,9))
@@ -188,14 +188,14 @@ contains
                                                          shape(input_fine_river_directions)))
             dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
                 input_fine_river_directions, input_fine_total_cumulative_flow)
-            output_course_river_direction => dir_based_rdirs_cell%process_cell()
-            select type (output_course_river_direction)
+            output_coarse_river_direction => dir_based_rdirs_cell%process_cell()
+            select type (output_coarse_river_direction)
             type is (dir_based_direction_indicator)
-                result0 = output_course_river_direction%get_direction()
+                result0 = output_coarse_river_direction%get_direction()
             end select
             call assert_equals(2,result0)
             call dir_based_rdirs_cell%destructor()
-            deallocate(output_course_river_direction)
+            deallocate(output_coarse_river_direction)
         end subroutine testOneOutflowCellSetupFour
 
     subroutine testOneOutflowCellSetupFive
@@ -206,7 +206,7 @@ contains
         integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
         integer :: result0
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
-        class(direction_indicator), pointer :: output_course_river_direction
+        class(direction_indicator), pointer :: output_coarse_river_direction
         type(latlon_section_coords) :: cell_section_coords
             allocate(input_fine_river_directions(9,9))
             allocate(input_fine_total_cumulative_flow(9,9))
@@ -235,14 +235,14 @@ contains
                                                          shape(input_fine_river_directions)))
             dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
                 input_fine_river_directions, input_fine_total_cumulative_flow)
-            output_course_river_direction => dir_based_rdirs_cell%process_cell()
-            select type (output_course_river_direction)
+            output_coarse_river_direction => dir_based_rdirs_cell%process_cell()
+            select type (output_coarse_river_direction)
             type is (dir_based_direction_indicator)
-                result0 = output_course_river_direction%get_direction()
+                result0 = output_coarse_river_direction%get_direction()
             end select
             call assert_equals(9,result0)
             call dir_based_rdirs_cell%destructor()
-            deallocate(output_course_river_direction)
+            deallocate(output_coarse_river_direction)
     end subroutine testOneOutflowCellSetupFive
 
     subroutine testOneOutflowCellSetupSix
@@ -253,7 +253,7 @@ contains
         integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
         integer :: result0
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
-        class(direction_indicator), pointer :: output_course_river_direction
+        class(direction_indicator), pointer :: output_coarse_river_direction
         type(latlon_section_coords) :: cell_section_coords
             allocate(input_fine_river_directions(9,9))
             allocate(input_fine_total_cumulative_flow(9,9))
@@ -282,14 +282,14 @@ contains
                                                          shape(input_fine_river_directions)))
             dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
                 input_fine_river_directions, input_fine_total_cumulative_flow)
-            output_course_river_direction => dir_based_rdirs_cell%process_cell()
-            select type (output_course_river_direction)
+            output_coarse_river_direction => dir_based_rdirs_cell%process_cell()
+            select type (output_coarse_river_direction)
             type is (dir_based_direction_indicator)
-                result0 = output_course_river_direction%get_direction()
+                result0 = output_coarse_river_direction%get_direction()
             end select
             call assert_equals(6,result0)
             call dir_based_rdirs_cell%destructor()
-            deallocate(output_course_river_direction)
+            deallocate(output_coarse_river_direction)
     end subroutine testOneOutflowCellSetupSix
 
     subroutine testOneOutflowCellSetupSeven
@@ -300,7 +300,7 @@ contains
         integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
         integer :: result0
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
-        class(direction_indicator), pointer :: output_course_river_direction
+        class(direction_indicator), pointer :: output_coarse_river_direction
         type(latlon_section_coords) :: cell_section_coords
             !Extra lon column acts as buffer. Extra row makes specification of values simpler
             allocate(input_fine_river_directions(10,10))
@@ -332,14 +332,14 @@ contains
                                                          shape(transpose(input_fine_river_directions))))
             dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
                 input_fine_river_directions, input_fine_total_cumulative_flow)
-            output_course_river_direction => dir_based_rdirs_cell%process_cell()
-            select type (output_course_river_direction)
+            output_coarse_river_direction => dir_based_rdirs_cell%process_cell()
+            select type (output_coarse_river_direction)
             type is (dir_based_direction_indicator)
-                result0 = output_course_river_direction%get_direction()
+                result0 = output_coarse_river_direction%get_direction()
             end select
             call assert_equals(8,result0)
             call dir_based_rdirs_cell%destructor()
-            deallocate(output_course_river_direction)
+            deallocate(output_coarse_river_direction)
         end subroutine testOneOutflowCellSetupSeven
 
     subroutine testOneOutflowCellSetupEight
@@ -350,7 +350,7 @@ contains
         integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
         integer :: result0
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
-        class(direction_indicator), pointer :: output_course_river_direction
+        class(direction_indicator), pointer :: output_coarse_river_direction
         type(latlon_section_coords) :: cell_section_coords
             !Extra lon column acts as buffer. Extra row makes specification of values simpler
             allocate(input_fine_river_directions(10,10))
@@ -382,14 +382,14 @@ contains
                                                          shape(transpose(input_fine_river_directions))))
             dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
                 input_fine_river_directions, input_fine_total_cumulative_flow)
-            output_course_river_direction => dir_based_rdirs_cell%process_cell()
-            select type (output_course_river_direction)
+            output_coarse_river_direction => dir_based_rdirs_cell%process_cell()
+            select type (output_coarse_river_direction)
             type is (dir_based_direction_indicator)
-                result0 = output_course_river_direction%get_direction()
+                result0 = output_coarse_river_direction%get_direction()
             end select
             call assert_equals(4,result0)
             call dir_based_rdirs_cell%destructor()
-            deallocate(output_course_river_direction)
+            deallocate(output_coarse_river_direction)
         end subroutine testOneOutflowCellSetupEight
 
     subroutine testOneOutflowCellSetupNine
@@ -400,7 +400,7 @@ contains
         integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
         integer :: result0
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
-        class(direction_indicator), pointer :: output_course_river_direction
+        class(direction_indicator), pointer :: output_coarse_river_direction
         type(latlon_section_coords) :: cell_section_coords
             !Extra lon column acts as buffer. Extra row makes specification of values simpler
             allocate(input_fine_river_directions(10,10))
@@ -432,14 +432,14 @@ contains
                                                          shape(transpose(input_fine_river_directions))))
             dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
                 input_fine_river_directions, input_fine_total_cumulative_flow)
-            output_course_river_direction => dir_based_rdirs_cell%process_cell()
-            select type (output_course_river_direction)
+            output_coarse_river_direction => dir_based_rdirs_cell%process_cell()
+            select type (output_coarse_river_direction)
             type is (dir_based_direction_indicator)
-                result0 = output_course_river_direction%get_direction()
+                result0 = output_coarse_river_direction%get_direction()
             end select
             call assert_equals(8,result0)
             call dir_based_rdirs_cell%destructor()
-            deallocate(output_course_river_direction)
+            deallocate(output_coarse_river_direction)
         end subroutine testOneOutflowCellSetupNine
 
       subroutine testOneOutflowCellSetupTen
@@ -450,7 +450,7 @@ contains
         integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
         integer :: result0
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
-        class(direction_indicator), pointer :: output_course_river_direction
+        class(direction_indicator), pointer :: output_coarse_river_direction
         type(latlon_section_coords) :: cell_section_coords
             !Extra lon column acts as buffer. Extra row makes specification of values simpler
             allocate(input_fine_river_directions(10,10))
@@ -482,14 +482,14 @@ contains
                                                          shape(transpose(input_fine_river_directions))))
             dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
                 input_fine_river_directions, input_fine_total_cumulative_flow)
-            output_course_river_direction => dir_based_rdirs_cell%process_cell()
-            select type (output_course_river_direction)
+            output_coarse_river_direction => dir_based_rdirs_cell%process_cell()
+            select type (output_coarse_river_direction)
             type is (dir_based_direction_indicator)
-                result0 = output_course_river_direction%get_direction()
+                result0 = output_coarse_river_direction%get_direction()
             end select
             call assert_equals(4,result0)
             call dir_based_rdirs_cell%destructor()
-            deallocate(output_course_river_direction)
+            deallocate(output_coarse_river_direction)
         end subroutine testOneOutflowCellSetupTen
 
         subroutine testOneOutflowCellSetupEleven
@@ -500,7 +500,7 @@ contains
         integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
         integer :: result0
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
-        class(direction_indicator), pointer :: output_course_river_direction
+        class(direction_indicator), pointer :: output_coarse_river_direction
         type(latlon_section_coords) :: cell_section_coords
             !Extra lon column acts as buffer. Extra row makes specification of values simpler
             allocate(input_fine_river_directions(10,10))
@@ -532,14 +532,14 @@ contains
                                                          shape(transpose(input_fine_river_directions))))
             dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
                 input_fine_river_directions, input_fine_total_cumulative_flow)
-            output_course_river_direction => dir_based_rdirs_cell%process_cell()
-            select type (output_course_river_direction)
+            output_coarse_river_direction => dir_based_rdirs_cell%process_cell()
+            select type (output_coarse_river_direction)
             type is (dir_based_direction_indicator)
-                result0 = output_course_river_direction%get_direction()
+                result0 = output_coarse_river_direction%get_direction()
             end select
             call assert_equals(7,result0)
             call dir_based_rdirs_cell%destructor()
-            deallocate(output_course_river_direction)
+            deallocate(output_coarse_river_direction)
         end subroutine testOneOutflowCellSetupEleven
 
     subroutine testOneOutflowCellSetupTwelve
@@ -550,7 +550,7 @@ contains
         integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
         integer :: result0
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
-        class(direction_indicator), pointer :: output_course_river_direction
+        class(direction_indicator), pointer :: output_coarse_river_direction
         type(latlon_section_coords) :: cell_section_coords
             !Extra lon column acts as buffer. Extra row makes specification of values simpler
             allocate(input_fine_river_directions(10,10))
@@ -582,14 +582,14 @@ contains
                                                          shape(transpose(input_fine_river_directions))))
             dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
                 input_fine_river_directions, input_fine_total_cumulative_flow)
-            output_course_river_direction => dir_based_rdirs_cell%process_cell()
-            select type (output_course_river_direction)
+            output_coarse_river_direction => dir_based_rdirs_cell%process_cell()
+            select type (output_coarse_river_direction)
             type is (dir_based_direction_indicator)
-                result0 = output_course_river_direction%get_direction()
+                result0 = output_coarse_river_direction%get_direction()
             end select
             call assert_equals(4,result0)
             call dir_based_rdirs_cell%destructor()
-            deallocate(output_course_river_direction)
+            deallocate(output_coarse_river_direction)
         end subroutine testOneOutflowCellSetupTwelve
 
     subroutine testOneOutflowCellSetupThirteen
@@ -600,7 +600,7 @@ contains
         integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
         integer :: result0
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
-        class(direction_indicator), pointer :: output_course_river_direction
+        class(direction_indicator), pointer :: output_coarse_river_direction
         type(latlon_section_coords) :: cell_section_coords
             !Extra lon column acts as buffer. Extra row makes specification of values simpler
             allocate(input_fine_river_directions(10,10))
@@ -632,14 +632,14 @@ contains
                                                          shape(transpose(input_fine_river_directions))))
             dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
                 input_fine_river_directions, input_fine_total_cumulative_flow)
-            output_course_river_direction => dir_based_rdirs_cell%process_cell()
-            select type (output_course_river_direction)
+            output_coarse_river_direction => dir_based_rdirs_cell%process_cell()
+            select type (output_coarse_river_direction)
             type is (dir_based_direction_indicator)
-                result0 = output_course_river_direction%get_direction()
+                result0 = output_coarse_river_direction%get_direction()
             end select
             call assert_equals(1,result0)
             call dir_based_rdirs_cell%destructor()
-            deallocate(output_course_river_direction)
+            deallocate(output_coarse_river_direction)
     end subroutine testOneOutflowCellSetupThirteen
 
     subroutine testOneOutflowCellSetupFourteen
@@ -650,7 +650,7 @@ contains
         integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
         integer :: result0
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
-        class(direction_indicator), pointer :: output_course_river_direction
+        class(direction_indicator), pointer :: output_coarse_river_direction
         type(latlon_section_coords) :: cell_section_coords
             !Extra lon column acts as buffer. Extra row makes specification of values simpler
             allocate(input_fine_river_directions(10,10))
@@ -682,14 +682,14 @@ contains
                                                          shape(transpose(input_fine_river_directions))))
             dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
                 input_fine_river_directions, input_fine_total_cumulative_flow)
-            output_course_river_direction => dir_based_rdirs_cell%process_cell()
-            select type (output_course_river_direction)
+            output_coarse_river_direction => dir_based_rdirs_cell%process_cell()
+            select type (output_coarse_river_direction)
             type is (dir_based_direction_indicator)
-                result0 = output_course_river_direction%get_direction()
+                result0 = output_coarse_river_direction%get_direction()
             end select
             call assert_equals(6,result0)
             call dir_based_rdirs_cell%destructor()
-            deallocate(output_course_river_direction)
+            deallocate(output_coarse_river_direction)
     end subroutine testOneOutflowCellSetupFourteen
 
     subroutine testOneOutflowCellSetupFifteen
@@ -700,7 +700,7 @@ contains
         integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
         integer :: result0
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
-        class(direction_indicator), pointer :: output_course_river_direction
+        class(direction_indicator), pointer :: output_coarse_river_direction
         type(latlon_section_coords) :: cell_section_coords
             !Extra lon column acts as buffer. Extra row makes specification of values simpler
             allocate(input_fine_river_directions(10,10))
@@ -732,14 +732,14 @@ contains
                                                          shape(transpose(input_fine_river_directions))))
             dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
                 input_fine_river_directions, input_fine_total_cumulative_flow)
-            output_course_river_direction => dir_based_rdirs_cell%process_cell()
-            select type (output_course_river_direction)
+            output_coarse_river_direction => dir_based_rdirs_cell%process_cell()
+            select type (output_coarse_river_direction)
             type is (dir_based_direction_indicator)
-                result0 = output_course_river_direction%get_direction()
+                result0 = output_coarse_river_direction%get_direction()
             end select
             call assert_equals(8,result0)
             call dir_based_rdirs_cell%destructor()
-            deallocate(output_course_river_direction)
+            deallocate(output_coarse_river_direction)
     end subroutine testOneOutflowCellSetupFifteen
 
     subroutine testOneOutflowCellSetupSixteen
@@ -750,7 +750,7 @@ contains
         integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
         integer :: result0
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
-        class(direction_indicator), pointer :: output_course_river_direction
+        class(direction_indicator), pointer :: output_coarse_river_direction
         type(latlon_section_coords) :: cell_section_coords
             !Extra lon column acts as buffer. Extra row makes specification of values simpler
             allocate(input_fine_river_directions(10,10))
@@ -782,14 +782,14 @@ contains
                                                          shape(transpose(input_fine_river_directions))))
             dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
                 input_fine_river_directions, input_fine_total_cumulative_flow)
-            output_course_river_direction => dir_based_rdirs_cell%process_cell()
-            select type (output_course_river_direction)
+            output_coarse_river_direction => dir_based_rdirs_cell%process_cell()
+            select type (output_coarse_river_direction)
             type is (dir_based_direction_indicator)
-                result0 = output_course_river_direction%get_direction()
+                result0 = output_coarse_river_direction%get_direction()
             end select
             call assert_equals(4,result0)
             call dir_based_rdirs_cell%destructor()
-            deallocate(output_course_river_direction)
+            deallocate(output_coarse_river_direction)
     end subroutine testOneOutflowCellSetupSixteen
 
     subroutine testOneOutflowCellSetupSeventeen
@@ -800,7 +800,7 @@ contains
         integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
         integer :: result0
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
-        class(direction_indicator), pointer :: output_course_river_direction
+        class(direction_indicator), pointer :: output_coarse_river_direction
         type(latlon_section_coords) :: cell_section_coords
             !Extra lon column acts as buffer. Extra row makes specification of values simpler
             allocate(input_fine_river_directions(10,10))
@@ -832,14 +832,14 @@ contains
                                                          shape(transpose(input_fine_river_directions))))
             dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
                 input_fine_river_directions, input_fine_total_cumulative_flow)
-            output_course_river_direction => dir_based_rdirs_cell%process_cell()
-            select type (output_course_river_direction)
+            output_coarse_river_direction => dir_based_rdirs_cell%process_cell()
+            select type (output_coarse_river_direction)
             type is (dir_based_direction_indicator)
-                result0 = output_course_river_direction%get_direction()
+                result0 = output_coarse_river_direction%get_direction()
             end select
             call assert_equals(8,result0)
             call dir_based_rdirs_cell%destructor()
-            deallocate(output_course_river_direction)
+            deallocate(output_coarse_river_direction)
     end subroutine testOneOutflowCellSetupSeventeen
 
     subroutine testOneOutflowCellSetupEighteen
@@ -850,7 +850,7 @@ contains
         integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
         integer :: result0
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
-        class(direction_indicator), pointer :: output_course_river_direction
+        class(direction_indicator), pointer :: output_coarse_river_direction
         type(latlon_section_coords) :: cell_section_coords
             !Extra lon column acts as buffer. Extra row makes specification of values simpler
             allocate(input_fine_river_directions(10,10))
@@ -882,14 +882,14 @@ contains
                                                          shape(transpose(input_fine_river_directions))))
             dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
                 input_fine_river_directions, input_fine_total_cumulative_flow)
-            output_course_river_direction => dir_based_rdirs_cell%process_cell()
-            select type (output_course_river_direction)
+            output_coarse_river_direction => dir_based_rdirs_cell%process_cell()
+            select type (output_coarse_river_direction)
             type is (dir_based_direction_indicator)
-                result0 = output_course_river_direction%get_direction()
+                result0 = output_coarse_river_direction%get_direction()
             end select
             call assert_equals(2,result0)
             call dir_based_rdirs_cell%destructor()
-            deallocate(output_course_river_direction)
+            deallocate(output_coarse_river_direction)
     end subroutine testOneOutflowCellSetupEighteen
 
     subroutine testOneOutflowCellSetupNineteen
@@ -900,7 +900,7 @@ contains
         integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
         integer :: result0
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
-        class(direction_indicator), pointer :: output_course_river_direction
+        class(direction_indicator), pointer :: output_coarse_river_direction
         type(latlon_section_coords) :: cell_section_coords
             !Extra lon column acts as buffer. Extra row makes specification of values simpler
             allocate(input_fine_river_directions(10,10))
@@ -932,14 +932,14 @@ contains
                                                          shape(transpose(input_fine_river_directions))))
             dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
                 input_fine_river_directions, input_fine_total_cumulative_flow)
-            output_course_river_direction => dir_based_rdirs_cell%process_cell()
-            select type (output_course_river_direction)
+            output_coarse_river_direction => dir_based_rdirs_cell%process_cell()
+            select type (output_coarse_river_direction)
             type is (dir_based_direction_indicator)
-                result0 = output_course_river_direction%get_direction()
+                result0 = output_coarse_river_direction%get_direction()
             end select
             call assert_equals(4,result0)
             call dir_based_rdirs_cell%destructor()
-            deallocate(output_course_river_direction)
+            deallocate(output_coarse_river_direction)
     end subroutine testOneOutflowCellSetupNineteen
 
     subroutine testOneOutflowCellSetupTwenty
@@ -950,7 +950,7 @@ contains
         integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
         integer :: result0
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
-        class(direction_indicator), pointer :: output_course_river_direction
+        class(direction_indicator), pointer :: output_coarse_river_direction
         type(latlon_section_coords) :: cell_section_coords
             !Extra lon column acts as buffer. Extra row makes specification of values simpler
             allocate(input_fine_river_directions(10,10))
@@ -982,14 +982,14 @@ contains
                                                          shape(transpose(input_fine_river_directions))))
             dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
                 input_fine_river_directions, input_fine_total_cumulative_flow)
-            output_course_river_direction => dir_based_rdirs_cell%process_cell()
-            select type (output_course_river_direction)
+            output_coarse_river_direction => dir_based_rdirs_cell%process_cell()
+            select type (output_coarse_river_direction)
             type is (dir_based_direction_indicator)
-                result0 = output_course_river_direction%get_direction()
+                result0 = output_coarse_river_direction%get_direction()
             end select
             call assert_equals(8,result0)
             call dir_based_rdirs_cell%destructor()
-            deallocate(output_course_river_direction)
+            deallocate(output_coarse_river_direction)
     end subroutine testOneOutflowCellSetupTwenty
 
     subroutine testOneOutflowCellSetupTwentyOne
@@ -1000,7 +1000,7 @@ contains
         integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
         integer :: result0
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
-        class(direction_indicator), pointer :: output_course_river_direction
+        class(direction_indicator), pointer :: output_coarse_river_direction
         type(latlon_section_coords) :: cell_section_coords
             !Extra lon column acts as buffer. Extra row makes specification of values simpler
             allocate(input_fine_river_directions(10,10))
@@ -1032,14 +1032,14 @@ contains
                                                          shape(transpose(input_fine_river_directions))))
             dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
                 input_fine_river_directions, input_fine_total_cumulative_flow)
-            output_course_river_direction => dir_based_rdirs_cell%process_cell()
-            select type (output_course_river_direction)
+            output_coarse_river_direction => dir_based_rdirs_cell%process_cell()
+            select type (output_coarse_river_direction)
             type is (dir_based_direction_indicator)
-                result0 = output_course_river_direction%get_direction()
+                result0 = output_coarse_river_direction%get_direction()
             end select
             call assert_equals(2,result0)
             call dir_based_rdirs_cell%destructor()
-            deallocate(output_course_river_direction)
+            deallocate(output_coarse_river_direction)
     end subroutine testOneOutflowCellSetupTwentyOne
 
     subroutine testOneOutflowCellSetupTwentyTwo
@@ -1050,7 +1050,7 @@ contains
         integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
         integer :: result0
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
-        class(direction_indicator), pointer :: output_course_river_direction
+        class(direction_indicator), pointer :: output_coarse_river_direction
         type(latlon_section_coords) :: cell_section_coords
             !Extra lon column acts as buffer. Extra row makes specification of values simpler
             allocate(input_fine_river_directions(10,10))
@@ -1082,14 +1082,14 @@ contains
                                                          shape(transpose(input_fine_river_directions))))
             dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
                 input_fine_river_directions, input_fine_total_cumulative_flow)
-            output_course_river_direction => dir_based_rdirs_cell%process_cell()
-            select type (output_course_river_direction)
+            output_coarse_river_direction => dir_based_rdirs_cell%process_cell()
+            select type (output_coarse_river_direction)
             type is (dir_based_direction_indicator)
-                result0 = output_course_river_direction%get_direction()
+                result0 = output_coarse_river_direction%get_direction()
             end select
             call assert_equals(5,result0)
             call dir_based_rdirs_cell%destructor()
-            deallocate(output_course_river_direction)
+            deallocate(output_coarse_river_direction)
     end subroutine testOneOutflowCellSetupTwentyTwo
 
     subroutine testOneOutflowCellSetupTwentyThree
@@ -1100,7 +1100,7 @@ contains
         integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
         integer :: result0
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
-        class(direction_indicator), pointer :: output_course_river_direction
+        class(direction_indicator), pointer :: output_coarse_river_direction
         type(latlon_section_coords) :: cell_section_coords
             !Extra lon column acts as buffer. Extra row makes specification of values simpler
             allocate(input_fine_river_directions(10,10))
@@ -1133,14 +1133,14 @@ contains
                                                          shape(transpose(input_fine_river_directions))))
             dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
                 input_fine_river_directions, input_fine_total_cumulative_flow)
-            output_course_river_direction => dir_based_rdirs_cell%process_cell()
-            select type (output_course_river_direction)
+            output_coarse_river_direction => dir_based_rdirs_cell%process_cell()
+            select type (output_coarse_river_direction)
             type is (dir_based_direction_indicator)
-                result0 = output_course_river_direction%get_direction()
+                result0 = output_coarse_river_direction%get_direction()
             end select
             call assert_equals(5,result0)
             call dir_based_rdirs_cell%destructor()
-            deallocate(output_course_river_direction)
+            deallocate(output_coarse_river_direction)
     end subroutine testOneOutflowCellSetupTwentyThree
 
     subroutine testOneOutflowCellSetupTwentyFour
@@ -1151,7 +1151,7 @@ contains
         integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
         integer :: result0
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
-        class(direction_indicator), pointer :: output_course_river_direction
+        class(direction_indicator), pointer :: output_coarse_river_direction
         type(latlon_section_coords) :: cell_section_coords
             !Extra lon column acts as buffer. Extra row makes specification of values simpler
             allocate(input_fine_river_directions(10,10))
@@ -1184,14 +1184,14 @@ contains
                                                          shape(transpose(input_fine_river_directions))))
             dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
                 input_fine_river_directions, input_fine_total_cumulative_flow)
-            output_course_river_direction => dir_based_rdirs_cell%process_cell()
-            select type (output_course_river_direction)
+            output_coarse_river_direction => dir_based_rdirs_cell%process_cell()
+            select type (output_coarse_river_direction)
             type is (dir_based_direction_indicator)
-                result0 = output_course_river_direction%get_direction()
+                result0 = output_coarse_river_direction%get_direction()
             end select
             call assert_equals(5,result0)
             call dir_based_rdirs_cell%destructor()
-            deallocate(output_course_river_direction)
+            deallocate(output_coarse_river_direction)
     end subroutine testOneOutflowCellSetupTwentyFour
 
     subroutine testOneOutflowCellSetupTwentyFive
@@ -1202,7 +1202,7 @@ contains
         integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
         integer :: result0
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
-        class(direction_indicator), pointer :: output_course_river_direction
+        class(direction_indicator), pointer :: output_coarse_river_direction
         type(latlon_section_coords) :: cell_section_coords
             !Extra lon column acts as buffer. Extra row makes specification of values simpler
             allocate(input_fine_river_directions(10,10))
@@ -1235,14 +1235,14 @@ contains
                                                          shape(transpose(input_fine_river_directions))))
             dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
                 input_fine_river_directions, input_fine_total_cumulative_flow)
-            output_course_river_direction => dir_based_rdirs_cell%process_cell()
-            select type (output_course_river_direction)
+            output_coarse_river_direction => dir_based_rdirs_cell%process_cell()
+            select type (output_coarse_river_direction)
             type is (dir_based_direction_indicator)
-                result0 = output_course_river_direction%get_direction()
+                result0 = output_coarse_river_direction%get_direction()
             end select
             call assert_equals(8,result0)
             call dir_based_rdirs_cell%destructor()
-            deallocate(output_course_river_direction)
+            deallocate(output_coarse_river_direction)
     end subroutine testOneOutflowCellSetupTwentyFive
 
     subroutine testOneOutflowCellSetupTwentySix
@@ -1253,7 +1253,7 @@ contains
         integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
         integer :: result0
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
-        class(direction_indicator), pointer :: output_course_river_direction
+        class(direction_indicator), pointer :: output_coarse_river_direction
         type(latlon_section_coords) :: cell_section_coords
             !Extra lon column acts as buffer. Extra row makes specification of values simpler
             allocate(input_fine_river_directions(10,10))
@@ -1286,14 +1286,14 @@ contains
                                                          shape(transpose(input_fine_river_directions))))
             dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
                 input_fine_river_directions, input_fine_total_cumulative_flow)
-            output_course_river_direction => dir_based_rdirs_cell%process_cell()
-            select type (output_course_river_direction)
+            output_coarse_river_direction => dir_based_rdirs_cell%process_cell()
+            select type (output_coarse_river_direction)
             type is (dir_based_direction_indicator)
-                result0 = output_course_river_direction%get_direction()
+                result0 = output_coarse_river_direction%get_direction()
             end select
             call assert_equals(8,result0)
             call dir_based_rdirs_cell%destructor()
-            deallocate(output_course_river_direction)
+            deallocate(output_coarse_river_direction)
     end subroutine testOneOutflowCellSetupTwentySix
 
     subroutine testOneOutflowCellSetupTwentySeven
@@ -1304,7 +1304,7 @@ contains
         integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
         integer :: result0
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
-        class(direction_indicator), pointer :: output_course_river_direction
+        class(direction_indicator), pointer :: output_coarse_river_direction
         type(latlon_section_coords) :: cell_section_coords
             !Extra lon column acts as buffer. Extra row makes specification of values simpler
             allocate(input_fine_river_directions(10,10))
@@ -1337,14 +1337,14 @@ contains
                                                          shape(transpose(input_fine_river_directions))))
             dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
                 input_fine_river_directions, input_fine_total_cumulative_flow)
-            output_course_river_direction => dir_based_rdirs_cell%process_cell()
-            select type (output_course_river_direction)
+            output_coarse_river_direction => dir_based_rdirs_cell%process_cell()
+            select type (output_coarse_river_direction)
             type is (dir_based_direction_indicator)
-                result0 = output_course_river_direction%get_direction()
+                result0 = output_coarse_river_direction%get_direction()
             end select
             call assert_equals(5,result0)
             call dir_based_rdirs_cell%destructor()
-            deallocate(output_course_river_direction)
+            deallocate(output_coarse_river_direction)
     end subroutine testOneOutflowCellSetupTwentySeven
 
     subroutine testOneOutflowCellSetupTwentyEight
@@ -1355,7 +1355,7 @@ contains
         integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
         integer :: result0
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
-        class(direction_indicator), pointer :: output_course_river_direction
+        class(direction_indicator), pointer :: output_coarse_river_direction
         type(latlon_section_coords) :: cell_section_coords
             !Extra lon column acts as buffer. Extra row makes specification of values simpler
             allocate(input_fine_river_directions(10,10))
@@ -1388,14 +1388,14 @@ contains
                                                          shape(transpose(input_fine_river_directions))))
             dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
                 input_fine_river_directions, input_fine_total_cumulative_flow)
-            output_course_river_direction => dir_based_rdirs_cell%process_cell()
-            select type (output_course_river_direction)
+            output_coarse_river_direction => dir_based_rdirs_cell%process_cell()
+            select type (output_coarse_river_direction)
             type is (dir_based_direction_indicator)
-                result0 = output_course_river_direction%get_direction()
+                result0 = output_coarse_river_direction%get_direction()
             end select
             call assert_equals(5,result0)
             call dir_based_rdirs_cell%destructor()
-            deallocate(output_course_river_direction)
+            deallocate(output_coarse_river_direction)
     end subroutine testOneOutflowCellSetupTwentyEight
 
     subroutine testOneOutflowCellSetupTwentyNine
@@ -1406,7 +1406,7 @@ contains
         integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
         integer :: result0
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
-        class(direction_indicator), pointer :: output_course_river_direction
+        class(direction_indicator), pointer :: output_coarse_river_direction
         type(latlon_section_coords) :: cell_section_coords
             !Extra lon column acts as buffer. Extra row makes specification of values simpler
             allocate(input_fine_river_directions(10,10))
@@ -1439,14 +1439,14 @@ contains
                                                          shape(transpose(input_fine_river_directions))))
             dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
                 input_fine_river_directions, input_fine_total_cumulative_flow)
-            output_course_river_direction => dir_based_rdirs_cell%process_cell()
-            select type (output_course_river_direction)
+            output_coarse_river_direction => dir_based_rdirs_cell%process_cell()
+            select type (output_coarse_river_direction)
             type is (dir_based_direction_indicator)
-                result0 = output_course_river_direction%get_direction()
+                result0 = output_coarse_river_direction%get_direction()
             end select
             call assert_equals(8,result0)
             call dir_based_rdirs_cell%destructor()
-            deallocate(output_course_river_direction)
+            deallocate(output_coarse_river_direction)
     end subroutine testOneOutflowCellSetupTwentyNine
 
     subroutine testOneOutflowCellSetupThirty
@@ -1457,7 +1457,7 @@ contains
         integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
         integer :: result0
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
-        class(direction_indicator), pointer :: output_course_river_direction
+        class(direction_indicator), pointer :: output_coarse_river_direction
         type(latlon_section_coords) :: cell_section_coords
             !Extra lon column acts as buffer. Extra row makes specification of values simpler
             allocate(input_fine_river_directions(10,10))
@@ -1490,14 +1490,14 @@ contains
                                                          shape(transpose(input_fine_river_directions))))
             dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
                 input_fine_river_directions, input_fine_total_cumulative_flow)
-            output_course_river_direction => dir_based_rdirs_cell%process_cell()
-            select type (output_course_river_direction)
+            output_coarse_river_direction => dir_based_rdirs_cell%process_cell()
+            select type (output_coarse_river_direction)
             type is (dir_based_direction_indicator)
-                result0 = output_course_river_direction%get_direction()
+                result0 = output_coarse_river_direction%get_direction()
             end select
             call assert_equals(5,result0)
             call dir_based_rdirs_cell%destructor()
-            deallocate(output_course_river_direction)
+            deallocate(output_coarse_river_direction)
     end subroutine testOneOutflowCellSetupThirty
 
     subroutine testOneOutflowCellSetupThirtyOne
@@ -1508,7 +1508,7 @@ contains
         integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
         integer :: result0
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
-        class(direction_indicator), pointer :: output_course_river_direction
+        class(direction_indicator), pointer :: output_coarse_river_direction
         type(latlon_section_coords) :: cell_section_coords
             !Extra lon column acts as buffer. Extra row makes specification of values simpler
             allocate(input_fine_river_directions(10,10))
@@ -1541,14 +1541,14 @@ contains
                                                          shape(transpose(input_fine_river_directions))))
             dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
                 input_fine_river_directions, input_fine_total_cumulative_flow)
-            output_course_river_direction => dir_based_rdirs_cell%process_cell()
-            select type (output_course_river_direction)
+            output_coarse_river_direction => dir_based_rdirs_cell%process_cell()
+            select type (output_coarse_river_direction)
             type is (dir_based_direction_indicator)
-                result0 = output_course_river_direction%get_direction()
+                result0 = output_coarse_river_direction%get_direction()
             end select
             call assert_equals(8,result0)
             call dir_based_rdirs_cell%destructor()
-            deallocate(output_course_river_direction)
+            deallocate(output_coarse_river_direction)
     end subroutine testOneOutflowCellSetupThirtyOne
 
     subroutine testOneOutflowCellSetupThirtyTwo
@@ -1559,7 +1559,7 @@ contains
         integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
         integer :: result0
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
-        class(direction_indicator), pointer :: output_course_river_direction
+        class(direction_indicator), pointer :: output_coarse_river_direction
         type(latlon_section_coords) :: cell_section_coords
             !Extra lon column acts as buffer. Extra row makes specification of values simpler
             allocate(input_fine_river_directions(10,10))
@@ -1592,14 +1592,14 @@ contains
                                                          shape(transpose(input_fine_river_directions))))
             dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
                 input_fine_river_directions, input_fine_total_cumulative_flow)
-            output_course_river_direction => dir_based_rdirs_cell%process_cell()
-            select type (output_course_river_direction)
+            output_coarse_river_direction => dir_based_rdirs_cell%process_cell()
+            select type (output_coarse_river_direction)
             type is (dir_based_direction_indicator)
-                result0 = output_course_river_direction%get_direction()
+                result0 = output_coarse_river_direction%get_direction()
             end select
             call assert_equals(9,result0)
             call dir_based_rdirs_cell%destructor()
-            deallocate(output_course_river_direction)
+            deallocate(output_coarse_river_direction)
     end subroutine testOneOutflowCellSetupThirtyTwo
 
         subroutine testOneOutflowCellSetupThirtyThree
@@ -1610,7 +1610,7 @@ contains
         integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
         integer :: result0
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
-        class(direction_indicator), pointer :: output_course_river_direction
+        class(direction_indicator), pointer :: output_coarse_river_direction
         type(latlon_section_coords) :: cell_section_coords
             !Extra lon column acts as buffer. Extra row makes specification of values simpler
             allocate(input_fine_river_directions(10,10))
@@ -1643,14 +1643,14 @@ contains
                                                          shape(transpose(input_fine_river_directions))))
             dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
                 input_fine_river_directions, input_fine_total_cumulative_flow)
-            output_course_river_direction => dir_based_rdirs_cell%process_cell()
-            select type (output_course_river_direction)
+            output_coarse_river_direction => dir_based_rdirs_cell%process_cell()
+            select type (output_coarse_river_direction)
             type is (dir_based_direction_indicator)
-                result0 = output_course_river_direction%get_direction()
+                result0 = output_coarse_river_direction%get_direction()
             end select
             call assert_equals(6,result0)
             call dir_based_rdirs_cell%destructor()
-            deallocate(output_course_river_direction)
+            deallocate(output_coarse_river_direction)
     end subroutine testOneOutflowCellSetupThirtyThree
 
     subroutine testOneOutflowCellSetupThirtyFour
@@ -1661,7 +1661,7 @@ contains
         integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
         integer :: result0
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
-        class(direction_indicator), pointer :: output_course_river_direction
+        class(direction_indicator), pointer :: output_coarse_river_direction
         type(latlon_section_coords) :: cell_section_coords
             !Extra lon column acts as buffer. Extra row makes specification of values simpler
             allocate(input_fine_river_directions(10,10))
@@ -1694,14 +1694,14 @@ contains
                                                          shape(transpose(input_fine_river_directions))))
             dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
                 input_fine_river_directions, input_fine_total_cumulative_flow)
-            output_course_river_direction => dir_based_rdirs_cell%process_cell()
-            select type (output_course_river_direction)
+            output_coarse_river_direction => dir_based_rdirs_cell%process_cell()
+            select type (output_coarse_river_direction)
             type is (dir_based_direction_indicator)
-                result0 = output_course_river_direction%get_direction()
+                result0 = output_coarse_river_direction%get_direction()
             end select
             call assert_equals(6,result0)
             call dir_based_rdirs_cell%destructor()
-            deallocate(output_course_river_direction)
+            deallocate(output_coarse_river_direction)
     end subroutine testOneOutflowCellSetupThirtyFour
 
     subroutine testOneOutflowCellSetupThirtyFive
@@ -1712,7 +1712,7 @@ contains
         integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
         integer :: result0
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
-        class(direction_indicator), pointer :: output_course_river_direction
+        class(direction_indicator), pointer :: output_coarse_river_direction
         type(latlon_section_coords) :: cell_section_coords
             !Extra lon column acts as buffer. Extra row makes specification of values simpler
             allocate(input_fine_river_directions(10,10))
@@ -1745,14 +1745,14 @@ contains
                                                          shape(transpose(input_fine_river_directions))))
             dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
                 input_fine_river_directions, input_fine_total_cumulative_flow)
-            output_course_river_direction => dir_based_rdirs_cell%process_cell()
-            select type (output_course_river_direction)
+            output_coarse_river_direction => dir_based_rdirs_cell%process_cell()
+            select type (output_coarse_river_direction)
             type is (dir_based_direction_indicator)
-                result0 = output_course_river_direction%get_direction()
+                result0 = output_coarse_river_direction%get_direction()
             end select
             call assert_equals(5,result0)
             call dir_based_rdirs_cell%destructor()
-            deallocate(output_course_river_direction)
+            deallocate(output_coarse_river_direction)
     end subroutine testOneOutflowCellSetupThirtyFive
 
     subroutine testOneOutflowCellSetupThirtySix
@@ -1763,7 +1763,7 @@ contains
         integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
         integer :: result0
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
-        class(direction_indicator), pointer :: output_course_river_direction
+        class(direction_indicator), pointer :: output_coarse_river_direction
         type(latlon_section_coords) :: cell_section_coords
             !Extra lon column acts as buffer. Extra row makes specification of values simpler
             allocate(input_fine_river_directions(10,10))
@@ -1796,14 +1796,14 @@ contains
                                                          shape(transpose(input_fine_river_directions))))
             dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
                 input_fine_river_directions, input_fine_total_cumulative_flow)
-            output_course_river_direction => dir_based_rdirs_cell%process_cell()
-            select type (output_course_river_direction)
+            output_coarse_river_direction => dir_based_rdirs_cell%process_cell()
+            select type (output_coarse_river_direction)
             type is (dir_based_direction_indicator)
-                result0 = output_course_river_direction%get_direction()
+                result0 = output_coarse_river_direction%get_direction()
             end select
             call assert_equals(5,result0)
             call dir_based_rdirs_cell%destructor()
-            deallocate(output_course_river_direction)
+            deallocate(output_coarse_river_direction)
     end subroutine testOneOutflowCellSetupThirtySix
 
     subroutine testOneOutflowCellSetupThirtySeven
@@ -1814,7 +1814,7 @@ contains
         integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
         integer :: result0
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
-        class(direction_indicator), pointer :: output_course_river_direction
+        class(direction_indicator), pointer :: output_coarse_river_direction
         type(latlon_section_coords) :: cell_section_coords
             !Extra lon column acts as buffer. Extra row makes specification of values simpler
             allocate(input_fine_river_directions(10,10))
@@ -1847,14 +1847,14 @@ contains
                                                          shape(transpose(input_fine_river_directions))))
             dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
                 input_fine_river_directions, input_fine_total_cumulative_flow)
-            output_course_river_direction => dir_based_rdirs_cell%process_cell()
-            select type (output_course_river_direction)
+            output_coarse_river_direction => dir_based_rdirs_cell%process_cell()
+            select type (output_coarse_river_direction)
             type is (dir_based_direction_indicator)
-                result0 = output_course_river_direction%get_direction()
+                result0 = output_coarse_river_direction%get_direction()
             end select
             call assert_equals(8,result0)
             call dir_based_rdirs_cell%destructor()
-            deallocate(output_course_river_direction)
+            deallocate(output_coarse_river_direction)
     end subroutine testOneOutflowCellSetupThirtySeven
 
     subroutine testOneOutflowCellSetupThirtyEight
@@ -1865,7 +1865,7 @@ contains
         integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
         integer :: result0
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
-        class(direction_indicator), pointer :: output_course_river_direction
+        class(direction_indicator), pointer :: output_coarse_river_direction
         type(latlon_section_coords) :: cell_section_coords
             !Extra lon column acts as buffer. Extra row makes specification of values simpler
             allocate(input_fine_river_directions(10,10))
@@ -1898,14 +1898,14 @@ contains
                                                          shape(transpose(input_fine_river_directions))))
             dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
                 input_fine_river_directions, input_fine_total_cumulative_flow)
-            output_course_river_direction => dir_based_rdirs_cell%process_cell()
-            select type (output_course_river_direction)
+            output_coarse_river_direction => dir_based_rdirs_cell%process_cell()
+            select type (output_coarse_river_direction)
             type is (dir_based_direction_indicator)
-                result0 = output_course_river_direction%get_direction()
+                result0 = output_coarse_river_direction%get_direction()
             end select
             call assert_equals(8,result0)
             call dir_based_rdirs_cell%destructor()
-            deallocate(output_course_river_direction)
+            deallocate(output_coarse_river_direction)
     end subroutine testOneOutflowCellSetupThirtyEight
 
     subroutine testOneOutflowCellSetupThirtyNine
@@ -1916,7 +1916,7 @@ contains
         integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
         integer :: result0
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
-        class(direction_indicator), pointer :: output_course_river_direction
+        class(direction_indicator), pointer :: output_coarse_river_direction
         type(latlon_section_coords) :: cell_section_coords
             !Extra lon column acts as buffer. Extra row makes specification of values simpler
             allocate(input_fine_river_directions(10,10))
@@ -1950,14 +1950,14 @@ contains
             dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
                 input_fine_river_directions, input_fine_total_cumulative_flow)
             call dir_based_rdirs_cell%set_contains_river_mouths(.TRUE.)
-            output_course_river_direction => dir_based_rdirs_cell%process_cell()
-            select type (output_course_river_direction)
+            output_coarse_river_direction => dir_based_rdirs_cell%process_cell()
+            select type (output_coarse_river_direction)
             type is (dir_based_direction_indicator)
-                result0 = output_course_river_direction%get_direction()
+                result0 = output_coarse_river_direction%get_direction()
             end select
             call assert_equals(0,result0)
             call dir_based_rdirs_cell%destructor()
-            deallocate(output_course_river_direction)
+            deallocate(output_coarse_river_direction)
     end subroutine testOneOutflowCellSetupThirtyNine
 
     subroutine testOneOutflowCellSetupForty
@@ -1968,7 +1968,7 @@ contains
         integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
         integer :: result0
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
-        class(direction_indicator), pointer :: output_course_river_direction
+        class(direction_indicator), pointer :: output_coarse_river_direction
         type(latlon_section_coords) :: cell_section_coords
             !Extra lon column acts as buffer. Extra row makes specification of values simpler
             allocate(input_fine_river_directions(10,10))
@@ -2002,14 +2002,14 @@ contains
             dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
                 input_fine_river_directions, input_fine_total_cumulative_flow)
             call dir_based_rdirs_cell%set_contains_river_mouths(.TRUE.)
-            output_course_river_direction => dir_based_rdirs_cell%process_cell()
-            select type (output_course_river_direction)
+            output_coarse_river_direction => dir_based_rdirs_cell%process_cell()
+            select type (output_coarse_river_direction)
             type is (dir_based_direction_indicator)
-                result0 = output_course_river_direction%get_direction()
+                result0 = output_coarse_river_direction%get_direction()
             end select
             call assert_equals(0,result0)
             call dir_based_rdirs_cell%destructor()
-            deallocate(output_course_river_direction)
+            deallocate(output_coarse_river_direction)
     end subroutine testOneOutflowCellSetupForty
 
     subroutine testOneOutflowCellSetupFortyOne
@@ -2020,7 +2020,7 @@ contains
         integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
         integer :: result0
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
-        class(direction_indicator), pointer :: output_course_river_direction
+        class(direction_indicator), pointer :: output_coarse_river_direction
         type(latlon_section_coords) :: cell_section_coords
             !Extra lon column acts as buffer. Extra row makes specification of values simpler
             allocate(input_fine_river_directions(10,10))
@@ -2054,14 +2054,14 @@ contains
             dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
                 input_fine_river_directions, input_fine_total_cumulative_flow)
             call dir_based_rdirs_cell%set_contains_river_mouths(.TRUE.)
-            output_course_river_direction => dir_based_rdirs_cell%process_cell()
-            select type (output_course_river_direction)
+            output_coarse_river_direction => dir_based_rdirs_cell%process_cell()
+            select type (output_coarse_river_direction)
             type is (dir_based_direction_indicator)
-                result0 = output_course_river_direction%get_direction()
+                result0 = output_coarse_river_direction%get_direction()
             end select
             call assert_equals(0,result0)
             call dir_based_rdirs_cell%destructor()
-            deallocate(output_course_river_direction)
+            deallocate(output_coarse_river_direction)
     end subroutine testOneOutflowCellSetupFortyOne
 
     subroutine testOneOutflowCellSetupFortyTwo
@@ -2072,7 +2072,7 @@ contains
         integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
         integer :: result0
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
-        class(direction_indicator), pointer :: output_course_river_direction
+        class(direction_indicator), pointer :: output_coarse_river_direction
         type(latlon_section_coords) :: cell_section_coords
             !Extra lon column acts as buffer. Extra row makes specification of values simpler
             allocate(input_fine_river_directions(10,10))
@@ -2106,14 +2106,14 @@ contains
             dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
                 input_fine_river_directions, input_fine_total_cumulative_flow)
             call dir_based_rdirs_cell%set_contains_river_mouths(.TRUE.)
-            output_course_river_direction => dir_based_rdirs_cell%process_cell()
-            select type (output_course_river_direction)
+            output_coarse_river_direction => dir_based_rdirs_cell%process_cell()
+            select type (output_coarse_river_direction)
             type is (dir_based_direction_indicator)
-                result0 = output_course_river_direction%get_direction()
+                result0 = output_coarse_river_direction%get_direction()
             end select
             call assert_equals(6,result0)
             call dir_based_rdirs_cell%destructor()
-            deallocate(output_course_river_direction)
+            deallocate(output_coarse_river_direction)
     end subroutine testOneOutflowCellSetupFortyTwo
 
     subroutine testOneOutflowCellSetupFortyThree
@@ -2124,7 +2124,7 @@ contains
         integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
         integer :: result0
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
-        class(direction_indicator), pointer :: output_course_river_direction
+        class(direction_indicator), pointer :: output_coarse_river_direction
         type(latlon_section_coords) :: cell_section_coords
             !Extra lon column acts as buffer. Extra row makes specification of values simpler
             allocate(input_fine_river_directions(10,10))
@@ -2158,14 +2158,14 @@ contains
             dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
                 input_fine_river_directions, input_fine_total_cumulative_flow)
             call dir_based_rdirs_cell%set_contains_river_mouths(.TRUE.)
-            output_course_river_direction => dir_based_rdirs_cell%process_cell()
-            select type (output_course_river_direction)
+            output_coarse_river_direction => dir_based_rdirs_cell%process_cell()
+            select type (output_coarse_river_direction)
             type is (dir_based_direction_indicator)
-                result0 = output_course_river_direction%get_direction()
+                result0 = output_coarse_river_direction%get_direction()
             end select
             call assert_equals(6,result0)
             call dir_based_rdirs_cell%destructor()
-            deallocate(output_course_river_direction)
+            deallocate(output_coarse_river_direction)
     end subroutine testOneOutflowCellSetupFortyThree
 
     subroutine testOneOutflowCellSetupFortyFour
@@ -2176,7 +2176,7 @@ contains
         integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
         integer :: result0
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
-        class(direction_indicator), pointer :: output_course_river_direction
+        class(direction_indicator), pointer :: output_coarse_river_direction
         type(latlon_section_coords) :: cell_section_coords
             !Extra lon column acts as buffer. Extra row makes specification of values simpler
             allocate(input_fine_river_directions(10,10))
@@ -2210,14 +2210,14 @@ contains
             dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
                 input_fine_river_directions, input_fine_total_cumulative_flow)
             call dir_based_rdirs_cell%set_contains_river_mouths(.TRUE.)
-            output_course_river_direction => dir_based_rdirs_cell%process_cell()
-            select type (output_course_river_direction)
+            output_coarse_river_direction => dir_based_rdirs_cell%process_cell()
+            select type (output_coarse_river_direction)
             type is (dir_based_direction_indicator)
-                result0 = output_course_river_direction%get_direction()
+                result0 = output_coarse_river_direction%get_direction()
             end select
             call assert_equals(5,result0)
             call dir_based_rdirs_cell%destructor()
-            deallocate(output_course_river_direction)
+            deallocate(output_coarse_river_direction)
     end subroutine testOneOutflowCellSetupFortyFour
 
     subroutine testOneOutflowCellSetupFortyFive
@@ -2228,7 +2228,7 @@ contains
         integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
         integer :: result0
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
-        class(direction_indicator), pointer :: output_course_river_direction
+        class(direction_indicator), pointer :: output_coarse_river_direction
         type(latlon_section_coords) :: cell_section_coords
             !Extra lon column acts as buffer. Extra row makes specification of values simpler
             allocate(input_fine_river_directions(10,10))
@@ -2262,14 +2262,14 @@ contains
             dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
                 input_fine_river_directions, input_fine_total_cumulative_flow)
             call dir_based_rdirs_cell%set_contains_river_mouths(.TRUE.)
-            output_course_river_direction => dir_based_rdirs_cell%process_cell()
-            select type (output_course_river_direction)
+            output_coarse_river_direction => dir_based_rdirs_cell%process_cell()
+            select type (output_coarse_river_direction)
             type is (dir_based_direction_indicator)
-                result0 = output_course_river_direction%get_direction()
+                result0 = output_coarse_river_direction%get_direction()
             end select
             call assert_equals(2,result0)
             call dir_based_rdirs_cell%destructor()
-            deallocate(output_course_river_direction)
+            deallocate(output_coarse_river_direction)
     end subroutine testOneOutflowCellSetupFortyFive
 
     subroutine testOneOutflowCellSetupFortySix
@@ -2280,7 +2280,7 @@ contains
         integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
         integer :: result0
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
-        class(direction_indicator), pointer :: output_course_river_direction
+        class(direction_indicator), pointer :: output_coarse_river_direction
         type(latlon_section_coords) :: cell_section_coords
             !Extra lon column acts as buffer. Extra row makes specification of values simpler
             allocate(input_fine_river_directions(10,10))
@@ -2314,14 +2314,14 @@ contains
             dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
                 input_fine_river_directions, input_fine_total_cumulative_flow)
             call dir_based_rdirs_cell%set_contains_river_mouths(.TRUE.)
-            output_course_river_direction => dir_based_rdirs_cell%process_cell()
-            select type (output_course_river_direction)
+            output_coarse_river_direction => dir_based_rdirs_cell%process_cell()
+            select type (output_coarse_river_direction)
             type is (dir_based_direction_indicator)
-                result0 = output_course_river_direction%get_direction()
+                result0 = output_coarse_river_direction%get_direction()
             end select
             call assert_equals(4,result0)
             call dir_based_rdirs_cell%destructor()
-            deallocate(output_course_river_direction)
+            deallocate(output_coarse_river_direction)
     end subroutine testOneOutflowCellSetupFortySix
 
     subroutine testCellCumulativeFlowGeneration
@@ -2331,7 +2331,7 @@ contains
         integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
         integer, dimension(3,3) :: expected_cell_cumulative_flow_result
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
-        class(direction_indicator), pointer :: output_course_river_direction
+        class(direction_indicator), pointer :: output_coarse_river_direction
         type(latlon_section_coords) :: cell_section_coords
         class(*), dimension(:,:), pointer :: cmltv_flow_array
             expected_cell_cumulative_flow_result = transpose(reshape((/ 1,4,9, &
@@ -2340,7 +2340,7 @@ contains
                                                    shape(expected_cell_cumulative_flow_result)))
             allocate(input_fine_river_directions(9,9))
             allocate(input_fine_total_cumulative_flow(9,9))
-            allocate(dir_based_direction_indicator::output_course_river_direction)
+            allocate(dir_based_direction_indicator::output_coarse_river_direction)
             cell_section_coords = latlon_section_coords(4,4,3,3)
             input_fine_river_directions = transpose(reshape((/ 4,4,4, 4,4,4, 4,6,6,&
                                                                4,4,4, 4,4,4, 4,7,6,&
@@ -2374,7 +2374,7 @@ contains
             deallocate(cmltv_flow_array)
             deallocate(input_fine_river_directions)
             deallocate(input_fine_total_cumulative_flow)
-            deallocate(output_course_river_direction)
+            deallocate(output_coarse_river_direction)
             call dir_based_rdirs_cell%destructor()
     end subroutine testCellCumulativeFlowGeneration
 
@@ -2385,7 +2385,7 @@ contains
         integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
         integer, dimension(3,3) :: expected_cell_cumulative_flow_result
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
-        class(direction_indicator), pointer :: output_course_river_direction
+        class(direction_indicator), pointer :: output_coarse_river_direction
         type(latlon_section_coords) :: cell_section_coords
         class(*), dimension(:,:), pointer :: cmltv_flow_array
             expected_cell_cumulative_flow_result = transpose(reshape((/ 1,1,1, &
@@ -2394,7 +2394,7 @@ contains
                                                    shape(expected_cell_cumulative_flow_result)))
             allocate(input_fine_river_directions(10,10))
             allocate(input_fine_total_cumulative_flow(10,10))
-            allocate(dir_based_direction_indicator::output_course_river_direction)
+            allocate(dir_based_direction_indicator::output_coarse_river_direction)
             cell_section_coords = latlon_section_coords(4,4,3,3)
             input_fine_river_directions = transpose(reshape((/ 3, 2, 1, 1, 1, 1, 9, 9, 9,5,&
                                                                3, 2, 1, 1, 2, 1, 1, 9, 9,5,&
@@ -2430,7 +2430,7 @@ contains
             deallocate(cmltv_flow_array)
             deallocate(input_fine_river_directions)
             deallocate(input_fine_total_cumulative_flow)
-            deallocate(output_course_river_direction)
+            deallocate(output_coarse_river_direction)
             call dir_based_rdirs_cell%destructor()
     end subroutine testCellCumulativeFlowGenerationTwo
 
@@ -4342,8 +4342,8 @@ contains
         integer, dimension(:,:), allocatable :: input_fine_river_directions
         integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
         integer, dimension(:,:), allocatable :: input_yamazaki_outlet_pixels
-        integer, dimension(:,:,:), allocatable :: course_river_direction_indices
-        integer, dimension(:,:,:), allocatable :: course_river_direction_indices_expected_result
+        integer, dimension(:,:,:), allocatable :: coarse_river_direction_indices
+        integer, dimension(:,:,:), allocatable :: coarse_river_direction_indices_expected_result
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
         type(latlon_section_coords) :: cell_section_coords
         type(latlon_section_coords) :: input_yamazaki_section_coords
@@ -4351,8 +4351,8 @@ contains
             allocate(input_fine_river_directions(18,18))
             allocate(input_fine_total_cumulative_flow(18,18))
             allocate(input_yamazaki_outlet_pixels(18,18))
-            allocate(course_river_direction_indices(6,6,2))
-            allocate(course_river_direction_indices_expected_result(6,6,2))
+            allocate(coarse_river_direction_indices(6,6,2))
+            allocate(coarse_river_direction_indices_expected_result(6,6,2))
             cell_section_coords = latlon_section_coords(16,4,3,3)
             input_yamazaki_section_coords = latlon_section_coords(1,1,18,18)
             input_fine_river_directions = transpose(reshape((/ 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
@@ -4429,9 +4429,9 @@ contains
                                                                 0,0,0, -1,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,1, &
                                                                 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0/), &
                                                          shape(input_fine_river_directions)))
-            course_river_direction_indices =  0
+            coarse_river_direction_indices =  0
 
-            course_river_direction_indices_expected_result(:,:,1) = &
+            coarse_river_direction_indices_expected_result(:,:,1) = &
                 transpose(reshape((/ 0,0,0, 0,0,0, &
                                      0,0,0, 0,0,0, &
                                      0,0,0, 0,0,0, &
@@ -4441,7 +4441,7 @@ contains
                                      0,-1,0, 0,0,0 /), &
                           (/6,6/)))
 
-            course_river_direction_indices_expected_result(:,:,2) = &
+            coarse_river_direction_indices_expected_result(:,:,2) = &
                 transpose(reshape((/ 0,0,0, 0,0,0, &
                                      0,0,0, 0,0,0, &
                                      0,0,0, 0,0,0, &
@@ -4454,8 +4454,8 @@ contains
             dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
                 input_fine_river_directions, input_fine_total_cumulative_flow, &
                 input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
-            call dir_based_rdirs_cell%yamazaki_calculate_river_directions_as_indices(course_river_direction_indices)
-            call assert_true(all(course_river_direction_indices .eq. course_river_direction_indices_expected_result))
+            call dir_based_rdirs_cell%yamazaki_calculate_river_directions_as_indices(coarse_river_direction_indices)
+            call assert_true(all(coarse_river_direction_indices .eq. coarse_river_direction_indices_expected_result))
     end subroutine testYamazakiLatLonCalculateRiverDirectionsAsIndicesOne
 
     subroutine testYamazakiLatLonCalculateRiverDirectionsAsIndicesTwo
@@ -4465,8 +4465,8 @@ contains
         integer, dimension(:,:), allocatable :: input_fine_river_directions
         integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
         integer, dimension(:,:), allocatable :: input_yamazaki_outlet_pixels
-        integer, dimension(:,:,:), allocatable :: course_river_direction_indices
-        integer, dimension(:,:,:), allocatable :: course_river_direction_indices_expected_result
+        integer, dimension(:,:,:), allocatable :: coarse_river_direction_indices
+        integer, dimension(:,:,:), allocatable :: coarse_river_direction_indices_expected_result
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
         type(latlon_section_coords) :: cell_section_coords
         type(latlon_section_coords) :: input_yamazaki_section_coords
@@ -4474,8 +4474,8 @@ contains
             allocate(input_fine_river_directions(18,18))
             allocate(input_fine_total_cumulative_flow(18,18))
             allocate(input_yamazaki_outlet_pixels(18,18))
-            allocate(course_river_direction_indices(6,6,2))
-            allocate(course_river_direction_indices_expected_result(6,6,2))
+            allocate(coarse_river_direction_indices(6,6,2))
+            allocate(coarse_river_direction_indices_expected_result(6,6,2))
             cell_section_coords = latlon_section_coords(16,7,3,3)
             input_yamazaki_section_coords = latlon_section_coords(1,1,18,18)
             input_fine_river_directions = transpose(reshape((/ 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
@@ -4552,9 +4552,9 @@ contains
                                                                 0,0,1, 0,0,2, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
                                                                 0,0,0, 0,0,0, 0,-2,0, 0,0,0, 0,0,0, 0,0,0/), &
                                                          shape(input_fine_river_directions)))
-            course_river_direction_indices =  0
+            coarse_river_direction_indices =  0
 
-            course_river_direction_indices_expected_result(:,:,1) = &
+            coarse_river_direction_indices_expected_result(:,:,1) = &
                 transpose(reshape((/ 0,0,0, 0,0,0, &
                                      0,0,0, 0,0,0, &
                                      0,0,0, 0,0,0, &
@@ -4564,7 +4564,7 @@ contains
                                      0,0,-2, 0,0,0 /), &
                           (/6,6/)))
 
-            course_river_direction_indices_expected_result(:,:,2) = &
+            coarse_river_direction_indices_expected_result(:,:,2) = &
                 transpose(reshape((/ 0,0,0, 0,0,0, &
                                      0,0,0, 0,0,0, &
                                      0,0,0, 0,0,0, &
@@ -4577,8 +4577,8 @@ contains
             dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
                 input_fine_river_directions, input_fine_total_cumulative_flow, &
                 input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
-            call dir_based_rdirs_cell%yamazaki_calculate_river_directions_as_indices(course_river_direction_indices)
-            call assert_true(all(course_river_direction_indices .eq. course_river_direction_indices_expected_result))
+            call dir_based_rdirs_cell%yamazaki_calculate_river_directions_as_indices(coarse_river_direction_indices)
+            call assert_true(all(coarse_river_direction_indices .eq. coarse_river_direction_indices_expected_result))
     end subroutine testYamazakiLatLonCalculateRiverDirectionsAsIndicesTwo
 
     subroutine testYamazakiLatLonCalculateRiverDirectionsAsIndicesThree
@@ -4588,8 +4588,8 @@ contains
         integer, dimension(:,:), allocatable :: input_fine_river_directions
         integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
         integer, dimension(:,:), allocatable :: input_yamazaki_outlet_pixels
-        integer, dimension(:,:,:), allocatable :: course_river_direction_indices
-        integer, dimension(:,:,:), allocatable :: course_river_direction_indices_expected_result
+        integer, dimension(:,:,:), allocatable :: coarse_river_direction_indices
+        integer, dimension(:,:,:), allocatable :: coarse_river_direction_indices_expected_result
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
         type(latlon_section_coords) :: cell_section_coords
         type(latlon_section_coords) :: input_yamazaki_section_coords
@@ -4597,8 +4597,8 @@ contains
             allocate(input_fine_river_directions(18,18))
             allocate(input_fine_total_cumulative_flow(18,18))
             allocate(input_yamazaki_outlet_pixels(18,18))
-            allocate(course_river_direction_indices(6,6,2))
-            allocate(course_river_direction_indices_expected_result(6,6,2))
+            allocate(coarse_river_direction_indices(6,6,2))
+            allocate(coarse_river_direction_indices_expected_result(6,6,2))
             cell_section_coords = latlon_section_coords(16,4,3,3)
             input_yamazaki_section_coords = latlon_section_coords(1,1,18,18)
             input_fine_river_directions = transpose(reshape((/ 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
@@ -4675,9 +4675,9 @@ contains
                                                                 2,0,0, 1,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
                                                                 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 1,0,0/), &
                                                          shape(input_fine_river_directions)))
-            course_river_direction_indices =  0
+            coarse_river_direction_indices =  0
 
-            course_river_direction_indices_expected_result(:,:,1) = &
+            coarse_river_direction_indices_expected_result(:,:,1) = &
                 transpose(reshape((/ 0,0,0, 0,0,0, &
                                      0,0,0, 0,0,0, &
                                      0,0,0, 0,0,0, &
@@ -4687,7 +4687,7 @@ contains
                                      0,6,0, 0,0,0 /), &
                           (/6,6/)))
 
-            course_river_direction_indices_expected_result(:,:,2) = &
+            coarse_river_direction_indices_expected_result(:,:,2) = &
                 transpose(reshape((/ 0,0,0, 0,0,0, &
                                      0,0,0, 0,0,0, &
                                      0,0,0, 0,0,0, &
@@ -4700,8 +4700,8 @@ contains
             dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
                 input_fine_river_directions, input_fine_total_cumulative_flow, &
                 input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
-            call dir_based_rdirs_cell%yamazaki_calculate_river_directions_as_indices(course_river_direction_indices)
-            call assert_true(all(course_river_direction_indices .eq. course_river_direction_indices_expected_result))
+            call dir_based_rdirs_cell%yamazaki_calculate_river_directions_as_indices(coarse_river_direction_indices)
+            call assert_true(all(coarse_river_direction_indices .eq. coarse_river_direction_indices_expected_result))
     end subroutine testYamazakiLatLonCalculateRiverDirectionsAsIndicesThree
 
     subroutine testYamazakiLatLonCalculateRiverDirectionsAsIndicesFour
@@ -4711,8 +4711,8 @@ contains
         integer, dimension(:,:), allocatable :: input_fine_river_directions
         integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
         integer, dimension(:,:), allocatable :: input_yamazaki_outlet_pixels
-        integer, dimension(:,:,:), allocatable :: course_river_direction_indices
-        integer, dimension(:,:,:), allocatable :: course_river_direction_indices_expected_result
+        integer, dimension(:,:,:), allocatable :: coarse_river_direction_indices
+        integer, dimension(:,:,:), allocatable :: coarse_river_direction_indices_expected_result
         type(latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
         type(latlon_section_coords) :: cell_section_coords
         type(latlon_section_coords) :: input_yamazaki_section_coords
@@ -4720,8 +4720,8 @@ contains
             allocate(input_fine_river_directions(18,18))
             allocate(input_fine_total_cumulative_flow(18,18))
             allocate(input_yamazaki_outlet_pixels(18,18))
-            allocate(course_river_direction_indices(6,6,2))
-            allocate(course_river_direction_indices_expected_result(6,6,2))
+            allocate(coarse_river_direction_indices(6,6,2))
+            allocate(coarse_river_direction_indices_expected_result(6,6,2))
             cell_section_coords = latlon_section_coords(16,4,3,3)
             input_yamazaki_section_coords = latlon_section_coords(1,1,18,18)
             input_fine_river_directions = transpose(reshape((/ 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
@@ -4798,9 +4798,9 @@ contains
                                                                 2,0,0, 2,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
                                                                 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 1,0,0/), &
                                                          shape(input_fine_river_directions)))
-            course_river_direction_indices =  0
+            coarse_river_direction_indices =  0
 
-            course_river_direction_indices_expected_result(:,:,1) = &
+            coarse_river_direction_indices_expected_result(:,:,1) = &
                 transpose(reshape((/ 0,0,0, 0,0,0, &
                                      0,0,0, 0,0,0, &
                                      0,0,0, 0,0,0, &
@@ -4810,7 +4810,7 @@ contains
                                      0,6,0, 0,0,0 /), &
                           (/6,6/)))
 
-            course_river_direction_indices_expected_result(:,:,2) = &
+            coarse_river_direction_indices_expected_result(:,:,2) = &
                 transpose(reshape((/ 0,0,0, 0,0,0, &
                                      0,0,0, 0,0,0, &
                                      0,0,0, 0,0,0, &
@@ -4823,8 +4823,8 @@ contains
             dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
                 input_fine_river_directions, input_fine_total_cumulative_flow, &
                 input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
-            call dir_based_rdirs_cell%yamazaki_calculate_river_directions_as_indices(course_river_direction_indices)
-            call assert_true(all(course_river_direction_indices .eq. course_river_direction_indices_expected_result))
+            call dir_based_rdirs_cell%yamazaki_calculate_river_directions_as_indices(coarse_river_direction_indices)
+            call assert_true(all(coarse_river_direction_indices .eq. coarse_river_direction_indices_expected_result))
     end subroutine testYamazakiLatLonCalculateRiverDirectionsAsIndicesFour
 
 end module area_test_mod

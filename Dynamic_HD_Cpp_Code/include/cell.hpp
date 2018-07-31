@@ -13,6 +13,7 @@
 
 #include <utility>
 #include "coords.hpp"
+#include "enums.hpp"
 
 /** Stores the orography, position and order of addition for a grid cell as an object
  * (which can be queued)*/
@@ -64,7 +65,7 @@ public:
 	  rim_height(0.0), tarasov_path_length(tarasov_path_length_in),
 	  tarasov_path_initial_height(tarasov_path_initial_height_in) {}
 	//Class destructor
-	~cell() { delete cell_coords; }
+	~cell() {delete cell_coords;}
 	///Getter
 	coords* get_cell_coords() {return cell_coords;}
 	///Getter
@@ -99,6 +100,11 @@ public:
 	friend bool operator>= (const cell&,const cell&);
 	///Overloaded less than or equals to operator
 	friend bool operator<= (const cell&,const cell&);
+	//Overloaded streaming operator
+	friend ostream& operator<<(ostream& out, cell& cell_object) {
+		return out << "Cell Orography: " << cell_object.orography << " "
+							 << "Cell Coords: " << *cell_object.cell_coords;
+	}
 };
 /**
  * Contains an overloaded operator that compares two cell objects
@@ -120,7 +126,22 @@ public:
 class landsea_cell : public cell {
 public:
 	///Constructor
-	landsea_cell(coords* cell_coords) : cell(0.0,cell_coords){}
+	landsea_cell(coords* cell_coords) : cell(0.0,cell_coords) {}
+};
+
+class basin_cell : public cell {
+public:
+	//Constructor
+	basin_cell(double orography_in, height_types height_type_in,
+	           coords* cell_coords_in) :
+		cell(orography_in,cell_coords_in),
+		height_type(height_type_in) {}
+		height_types get_height_type() {return height_type;}
+		friend ostream& operator<<(ostream& out, basin_cell& cell_object) {
+			return out << static_cast<cell&>(cell_object) << "Height Type: " << cell_object.height_type;
+		}
+private:
+	height_types height_type;
 };
 
 #endif /* CELL_HPP_ */

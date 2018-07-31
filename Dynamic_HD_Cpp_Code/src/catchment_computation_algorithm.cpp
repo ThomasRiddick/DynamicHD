@@ -29,9 +29,9 @@ void catchment_computation_algorithm::compute_catchments() {
 
 void catchment_computation_algorithm::add_outflows_to_queue() {
 	_grid->for_all([&](coords* coords_in){
-		if (check_if_neighbor_is_upstream(coords_in)) {
+		if (check_for_outflow(coords_in)) {
 			outflow_q.push(new landsea_cell(coords_in));
-		}
+		} else delete coords_in;
 	});
 }
 
@@ -59,13 +59,18 @@ void catchment_computation_algorithm::process_neighbors() {
 void catchment_computation_algorithm::process_neighbor() {
 	nbr_coords = neighbors_coords->back();
 	if ( ! (*completed_cells)(nbr_coords)) {
-
 		if ( check_if_neighbor_is_upstream()) {
 			q.push(new landsea_cell(nbr_coords));
-		}
-	}
+		} else delete nbr_coords;
+	} else delete nbr_coords;
 	neighbors_coords->pop_back();
-	delete nbr_coords;
+}
+
+void catchment_computation_algorithm::test_compute_catchment(landsea_cell* outflow_in,
+	                            															 int catchmentnumber_in){
+	outflow = outflow_in;
+	catchment_number = catchmentnumber_in;
+	compute_catchment();
 }
 
 void catchment_computation_algorithm_latlon::setup_fields(int* catchment_numbers_in,double* rdirs_in,
@@ -75,14 +80,14 @@ void catchment_computation_algorithm_latlon::setup_fields(int* catchment_numbers
 }
 
 bool catchment_computation_algorithm_latlon::check_for_outflow(coords* cell_coords) {
-	return ((*rdirs)(cell_coords) == 0);
+	return ((*rdirs)(cell_coords) == 0.0);
 }
 
 bool catchment_computation_algorithm_latlon::check_if_neighbor_is_upstream() {
 	coords* downstream_coords =
 			_grid->calculate_downstream_coords_from_dir_based_rdir(nbr_coords,
 																  (*rdirs)(nbr_coords));
-	if (downstream_coords == center_coords) {
+	if (*downstream_coords == *center_coords) {
 		delete downstream_coords;
 		return true;
 	}

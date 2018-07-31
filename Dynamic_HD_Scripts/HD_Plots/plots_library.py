@@ -1,5 +1,5 @@
 '''
-A module containing a library of methods and classes to generate plots 
+A module containing a library of methods and classes to generate plots
 needed for dynamic HD work. Which plots are created is controlled in
 the main function.
 
@@ -8,7 +8,7 @@ Created on Jan 29, 2016
 @author: thomasriddick
 '''
 
-from color_palette import ColorPalette #@UnresolvedImport 
+from color_palette import ColorPalette #@UnresolvedImport
 import datetime
 import numpy as np
 import matplotlib.pyplot as plt
@@ -24,6 +24,7 @@ from Dynamic_HD_Scripts import utilities
 from Dynamic_HD_Scripts import field
 from Dynamic_HD_Scripts import grid
 from netCDF4 import Dataset
+from matplotlib import gridspec
 import river_comparison_plotting_routines as rc_pts
 import flowmap_plotting_routines as fmp_pts #@UnresolvedImport
 from interactive_plotting_routines import Interactive_Plots
@@ -32,50 +33,50 @@ global interactive_plots
 
 class Plots(object):
     """A general base class for plots"""
-   
+
     hd_data_path = '/Users/thomasriddick/Documents/data/HDdata/'
-    scratch_dir = '/Users/thomasriddick/Documents/data/temp/' 
-    
+    scratch_dir = '/Users/thomasriddick/Documents/data/temp/'
+
     def __init__(self,save=False,color_palette_to_use='default'):
         """Class constructor."""
         self.colors = ColorPalette(color_palette_to_use)
         self.save = save
-        
+
 class HDparameterPlots(Plots):
-    
+
     hdfile_extension = "hdfiles"
-    
+
     def __init__(self,save=False,color_palette_to_use='default'):
         super(HDparameterPlots,self).__init__(save,color_palette_to_use)
         self.hdfile_path = os.path.join(self.hd_data_path,self.hdfile_extension)
-    
+
     def flow_parameter_distribution_for_non_lake_cells_for_current_HD_model(self):
         """Calculate the distribution of flow parameter values for the current HD model in non lake cells"""
         current_HD_model_hd_file = os.path.join(self.hdfile_path,"hdpara_file_from_current_model.nc")
         self._flow_parameter_distribution_helper(current_HD_model_hd_file)
-        
+
     def flow_parameter_distribution_current_HD_model_for_current_HD_model_reprocessed_without_lakes_and_wetlands(self):
         """Calculate the distribution of flow parameter values for the current model reprocessed without lakes/wetlands"""
         reprocessed_current_HD_model_hd_file = os.path.join(self.hdfile_path,"generated",
                                                             "hd_file_regenerate_hd_file_without_lakes_"
                                                             "and_wetlands_20170113_173241.nc")
         self._flow_parameter_distribution_helper(reprocessed_current_HD_model_hd_file)
-        
+
     def flow_parameter_distribution_ten_minute_data_from_virna_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs(self):
         """Calculate the distribution of flow parameter values for the current model reprocessed without lakes/wetlands"""
         hd_file = os.path.join(self.hdfile_path,"generated",
                                "hd_file_ten_minute_data_from_virna_0k_ALG4_sinkless_no_true_"
                                "sinks_oceans_lsmask_plus_upscale_rdirs_20170123_165707.nc")
         self._flow_parameter_distribution_helper(hd_file)
-        
-        
+
+
     def flow_parameter_distribution_ten_minute_data_from_virna_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_no_tuning(self):
         """Calculate the distribution of flow parameter values for the current model reprocessed without lakes/wetlands"""
         hd_file = os.path.join(self.hdfile_path,"generated",
                                "hd_file_ten_minute_data_from_virna_0k_ALG4_sinkless_no_true_sinks_"
                                "oceans_lsmask_plus_upscale_rdirs_20170112_161226.nc")
         self._flow_parameter_distribution_helper(hd_file)
-    
+
     def _flow_parameter_distribution_helper(self,hd_file):
         river_flow_k_param = dynamic_hd.load_field(filename=hd_file,
                                                    file_type=dynamic_hd.\
@@ -95,13 +96,13 @@ class HDparameterPlots(Plots):
         ax.hist(values,num_bins,range=(0.0,1.5))
         ax.set_ylim(0.1,100000)
         plt.yscale('log', nonposy='clip')
-        
+
 class HDOutputPlots(Plots):
     """A class for plotting HD offline (or online?) model output"""
 
     rdirs_path_extension = 'rdirs'
     jsbach_restart_file_path_extension = 'jsbachrestartfiles'
-    
+
     def __init__(self,save=False,color_palette_to_use='default'):
         """Class constructor."""
         super(HDOutputPlots,self).__init__(save,color_palette_to_use)
@@ -114,8 +115,8 @@ class HDOutputPlots(Plots):
                                                              'generated')
         self.hdinput_data_directory = os.path.join(self.hd_data_path,'hdinputdata')
         self.cell_areas_data_directory = os.path.join(self.hd_data_path,'gridareasandspacings')
-        self.river_discharge_output_data_path = '/Users/thomasriddick/Documents/data/HDoutput' 
-    
+        self.river_discharge_output_data_path = '/Users/thomasriddick/Documents/data/HDoutput'
+
     def check_water_balance_of_1978_for_constant_forcing_of_0_01(self):
         lsmask = dynamic_hd.load_field("/Users/thomasriddick/Documents/data/HDdata/lsmasks/generated/"
                                        "ls_mask_ten_minute_data_from_virna_0k_ALG4_sinkless"
@@ -135,12 +136,12 @@ class HDOutputPlots(Plots):
                 discharge_times_area = discharge.get_data()*cell_areas.get_data()
                 if i == j*5:
                     five_day_discharges.append(np.sum(discharge_times_area,dtype=np.float128))
-                else: 
+                else:
                     five_day_discharges[-1] += np.sum(discharge_times_area,dtype=np.float128)
         total_discharge = np.sum(five_day_discharges,dtype=np.float128)
         lsmask_times_area = lsmask.get_data()*cell_areas.get_data()
         change_in_water = self._calculate_total_water_in_restart("/Users/thomasriddick/Documents/data/temp/hdrestart_1978.nc") -\
-                          self._calculate_total_water_in_restart("/Users/thomasriddick/Documents/data/temp/hdrestart_1977.nc") 
+                          self._calculate_total_water_in_restart("/Users/thomasriddick/Documents/data/temp/hdrestart_1977.nc")
         days_in_year = 365.0
         inflow_per_meter_squared = 0.02
         print "Total water entering HD model: {0}".format(np.sum(lsmask_times_area,dtype=np.float128)*days_in_year*inflow_per_meter_squared)
@@ -153,24 +154,24 @@ class HDOutputPlots(Plots):
 
     def _calculate_total_water_in_restart(self,restart_filename):
         total_water = 0.0
-        fgmem_field = dynamic_hd.load_field(restart_filename, 
-                                            file_type=dynamic_hd.get_file_extension(restart_filename), 
+        fgmem_field = dynamic_hd.load_field(restart_filename,
+                                            file_type=dynamic_hd.get_file_extension(restart_filename),
                                             field_type="Generic",
                                             unmask=False,
                                             timeslice=None,
                                             fieldname="FGMEM",
                                             grid_type="HD")
         total_water += np.sum(fgmem_field.get_data(),dtype=np.float128)
-        finfl_field = dynamic_hd.load_field(restart_filename, 
-                                            file_type=dynamic_hd.get_file_extension(restart_filename), 
+        finfl_field = dynamic_hd.load_field(restart_filename,
+                                            file_type=dynamic_hd.get_file_extension(restart_filename),
                                             field_type="Generic",
                                             unmask=False,
                                             timeslice=None,
                                             fieldname="FINFL",
                                             grid_type="HD")
         total_water += np.sum(finfl_field.get_data(),dtype=np.float128)
-        flfmem_field = dynamic_hd.load_field(restart_filename, 
-                                             file_type=dynamic_hd.get_file_extension(restart_filename), 
+        flfmem_field = dynamic_hd.load_field(restart_filename,
+                                             file_type=dynamic_hd.get_file_extension(restart_filename),
                                              field_type="Generic",
                                              unmask=False,
                                              timeslice=None,
@@ -179,8 +180,8 @@ class HDOutputPlots(Plots):
         total_water += np.sum(flfmem_field.get_data(),dtype=np.float128)
         frfmem_fields = []
         for i in range(5):
-            frfmem_fields.append(dynamic_hd.load_field(restart_filename, 
-                                                       file_type=dynamic_hd.get_file_extension(restart_filename), 
+            frfmem_fields.append(dynamic_hd.load_field(restart_filename,
+                                                       file_type=dynamic_hd.get_file_extension(restart_filename),
                                                        field_type="Generic",
                                                        unmask=False,
                                                        timeslice=None,
@@ -188,7 +189,7 @@ class HDOutputPlots(Plots):
                                                        grid_type="HD"))
             total_water += np.sum(frfmem_fields[-1].get_data(),dtype=np.float128)
         return total_water
-        
+
     def _calculate_discharge_lost_to_changes_in_lsmask(self,lsmask_source_ref_filepath,lsmask_source_data_filepath,
                                                        run_off_filepath,discharge_filepath,
                                                        cell_areas_filepath,num_timeslices,grid_type="HD"):
@@ -237,7 +238,7 @@ class HDOutputPlots(Plots):
                                                     field_type='RiverDischarge',
                                                     unmask=True,
                                                     timeslice=i,
-                                                    fieldname='friv', 
+                                                    fieldname='friv',
                                                     grid_type='HD')
             river_discharge.set_non_outflow_points_to_zero(rdirs)
             daily_global_river_discharge_outflow[i] =river_discharge.sum_river_outflow()
@@ -247,7 +248,7 @@ class HDOutputPlots(Plots):
         days = np.linspace(1,365,365)
         ax.plot(days,daily_global_river_discharge_outflow,label=label)
         return total_discharge_info
-    
+
     def plot_comparison_using_1990_rainfall_data(self):
         ax = plt.subplots(1, 1, figsize=(12, 9))[1]
         plt.ylim(0,7000000)
@@ -283,7 +284,7 @@ class HDOutputPlots(Plots):
                                                                                 rdirs_filepath=\
                                                                                 os.path.join(self.upscaled_rdirs_data_directory,
                                                                                              "upscaled_rdirs_ten_minute_data_from_virna_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_20170113_135934_upscaled_updated_transf.nc"),
-                                                                                num_timeslices=365,label="Dynamic HD using 1 cycle spin-up") 
+                                                                                num_timeslices=365,label="Dynamic HD using 1 cycle spin-up")
         total_discharge_info += self._river_discharge_outflow_comparison_helper(ax,river_discharge_output_filepath=\
                                                                                 os.path.join(self.river_discharge_output_data_path,
                                                                                 "hd_1990-01-2_hd_higres_output__ten_minute_data_from_virna_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_20170116_235534.nc"),
@@ -305,7 +306,7 @@ class HDOutputPlots(Plots):
         ax.plot(days,lost_discharge,label="Lost discharge")
         ax.legend()
         print total_discharge_info
-        
+
     def plot_comparison_using_1990_rainfall_data_adding_back_to_discharge(self):
         ax = plt.subplots(1, 1, figsize=(12, 9))[1]
         plt.ylim(0,7000000)
@@ -327,14 +328,14 @@ class HDOutputPlots(Plots):
                                                                                 rdirs_filepath=\
                                                                                 os.path.join(self.upscaled_rdirs_data_directory,
                                                                                              "upscaled_rdirs_ten_minute_data_from_virna_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_20170113_135934_upscaled_updated_transf.nc"),
-                                                                                num_timeslices=365,label="Dynamic HD using 1 cycle spin-up") 
+                                                                                num_timeslices=365,label="Dynamic HD using 1 cycle spin-up")
         total_discharge_info += self._river_discharge_outflow_comparison_helper(ax,river_discharge_output_filepath=\
                                                                                 os.path.join(self.river_discharge_output_data_path,
                                                                                 "hd_1990-01-2_hd_higres_output__ten_minute_data_from_virna_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_20170116_235534.nc"),
                                                                                 rdirs_filepath=\
                                                                                 os.path.join(self.upscaled_rdirs_data_directory,
                                                                                              "upscaled_rdirs_ten_minute_data_from_virna_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_20170113_135934_upscaled_updated_transf.nc"),
-                                                                                num_timeslices=365,label="Dynamic HD using 1 cycle spin-up as basis") 
+                                                                                num_timeslices=365,label="Dynamic HD using 1 cycle spin-up as basis")
         lost_discharge =  self._calculate_discharge_lost_to_changes_in_lsmask(lsmask_source_ref_filepath=\
                                                                               os.path.join(self.jsbach_restart_file_directory,
                                                                                            "jsbach_T106_11tiles_5layers_1976.nc"),
@@ -351,31 +352,31 @@ class HDOutputPlots(Plots):
                                                                                 rdirs_filepath=\
                                                                                 os.path.join(self.upscaled_rdirs_data_directory,
                                                                                              "upscaled_rdirs_ten_minute_data_from_virna_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_20170113_135934_upscaled_updated_transf.nc"),
-                                                                                num_timeslices=365,lost_discharge=lost_discharge,label="Dynamic HD using 1 cycle spin-up + lost discharge") 
+                                                                                num_timeslices=365,lost_discharge=lost_discharge,label="Dynamic HD using 1 cycle spin-up + lost discharge")
         total_discharge_info += self._river_discharge_outflow_comparison_helper(ax,river_discharge_output_filepath=\
                                                                                 os.path.join(self.river_discharge_output_data_path,
                                                                                 "hd_1990-01-2_hd_higres_output__ten_minute_data_from_virna_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_20170113_135934_after_thirty_years_running.nc"),
                                                                                 rdirs_filepath=\
                                                                                 os.path.join(self.upscaled_rdirs_data_directory,
                                                                                              "upscaled_rdirs_ten_minute_data_from_virna_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_20170113_135934_upscaled_updated_transf.nc"),
-                                                                                num_timeslices=365,lost_discharge=lost_discharge,label="Dynamic HD using 30 cycle spin-up + lost discharge") 
+                                                                                num_timeslices=365,lost_discharge=lost_discharge,label="Dynamic HD using 30 cycle spin-up + lost discharge")
         total_discharge_info += self._river_discharge_outflow_comparison_helper(ax,river_discharge_output_filepath=\
                                                                                 os.path.join(self.river_discharge_output_data_path,
                                                                                 "hd_1990-01-2_hd_higres_output__ten_minute_data_from_virna_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_20170116_235534.nc"),
                                                                                 rdirs_filepath=\
                                                                                 os.path.join(self.upscaled_rdirs_data_directory,
                                                                                              "upscaled_rdirs_ten_minute_data_from_virna_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_20170113_135934_upscaled_updated_transf.nc"),
-                                                                                num_timeslices=365,lost_discharge=lost_discharge,label="Dynamic HD using 1 cycle spin-up as basis+ lost discharge") 
+                                                                                num_timeslices=365,lost_discharge=lost_discharge,label="Dynamic HD using 1 cycle spin-up as basis+ lost discharge")
         ax.legend()
         print total_discharge_info
-        
+
 class CoupledRunOutputPlots(HDOutputPlots):
     """A class for plotting the output of coupled runs"""
-    
+
     def __init__(self,save=False,color_palette_to_use="default"):
         """Class constructor."""
         super(CoupledRunOutputPlots,self).__init__(save,color_palette_to_use)
-    
+
     def ice6g_rdirs_lgm_run_discharge_plot(self):
         """ """
         cell_areas = dynamic_hd.load_field("/Users/thomasriddick/Documents/data/HDdata/"
@@ -391,7 +392,7 @@ class CoupledRunOutputPlots(HDOutputPlots):
                                                    "_transf.nc"),
                                       ".nc",field_type='Generic',grid_type='HD')
         outdata_data = None
-        for time in range(120): 
+        for time in range(120):
             discharge = dynamic_hd.load_field(os.path.join(self.river_discharge_output_data_path,
                                                            "rid0004_hd_higres_mon_79900101_79991231.nc"),
                                               ".nc",field_type='Generic',fieldname="friv",timeslice=time,
@@ -405,7 +406,7 @@ class CoupledRunOutputPlots(HDOutputPlots):
         plt.figure()
         plt.imshow(outflow_times_area,norm=mpl.colors.LogNorm(),interpolation='none')
         plt.colorbar()
-        
+
     def extended_present_day_rdirs_lgm_run_discharge_plot(self):
         """ """
         cell_areas = dynamic_hd.load_field("/Users/thomasriddick/Documents/data/HDdata/"
@@ -416,7 +417,7 @@ class CoupledRunOutputPlots(HDOutputPlots):
                                                    "rivdir_vs_1_9_data_from_stefan.nc"),
                                       ".nc",field_type='Generic',grid_type='HD')
         outdata_data = None
-        for time in range(120): 
+        for time in range(120):
             discharge = dynamic_hd.load_field(os.path.join(self.river_discharge_output_data_path,
                                                            "rid0003_hd_higres_mon_79900101_79991231.nc"),
                                               ".nc",field_type='Generic',fieldname="friv",timeslice=time,
@@ -430,7 +431,7 @@ class CoupledRunOutputPlots(HDOutputPlots):
         plt.figure()
         plt.imshow(outflow_times_area,norm=mpl.colors.LogNorm(),interpolation='none')
         plt.colorbar()
-        
+
     def extended_present_day_rdirs_vs_ice6g_rdirs_lgm_echam(self):
         difference_in_lgm_data_filename=os.path.join(self.river_discharge_output_data_path,
                                                      "rid0004_minus_rid0003_jsbach_jsbach"
@@ -533,9 +534,9 @@ class CoupledRunOutputPlots(HDOutputPlots):
         ax6.set_xlabel("Latitude (Degrees North)")
         ax6.set_ylabel(r'Cumulative River Discharge Difference ($m^{3}s^{-1}$)')
         ax6.set_title("Integrated Indo-Pacific Discharge Starting from the North Pole")
-        
-#         difference_field_positive = np.copy(difference_field) 
-#         difference_field_negative = -1.0*np.copy(difference_field) 
+
+#         difference_field_positive = np.copy(difference_field)
+#         difference_field_negative = -1.0*np.copy(difference_field)
 #         difference_field_positive[difference_field < 0] = 0
 #         difference_field_negative[difference_field > 0] = 0
 #         plt.imshow(difference_field_positive,norm=mpl.colors.LogNorm(),interpolation='none') #         plt.imshow(difference_field_negative,norm=mpl.colors.LogNorm(),interpolation='none')
@@ -561,7 +562,7 @@ class CoupledRunOutputPlots(HDOutputPlots):
         plt.imshow(difference_field_masked,interpolation='none')
         cb = plt.colorbar()
         cb.set_label(r"Water Flux Into Ocean $(m^{3}s^{-1})$")
-        
+
     def ocean_grid_extended_present_day_rdirs_vs_ice6g_rdirs_lgm_run_discharge_plot(self):
         extended_present_day_rdirs_data_filename=os.path.join(self.river_discharge_output_data_path,
                                                               "rid0003_mpiom_data_moc_mm_last_100_years.nc")
@@ -575,13 +576,13 @@ class CoupledRunOutputPlots(HDOutputPlots):
             fields = dataset.get_variables_by_attributes(name="atlantic_wfl")
             atlantic_wfl_ext = np.asarray(fields[0])
             fields = dataset.get_variables_by_attributes(name="indopacific_wfl")
-            indopacific_wfl_ext = np.asarray(fields[0]) 
+            indopacific_wfl_ext = np.asarray(fields[0])
         with Dataset(ice6g_rdirs_data_filename,
                      mode='r',format='NETCDF4') as dataset:
             fields = dataset.get_variables_by_attributes(name="atlantic_wfl")
             atlantic_wfl_ice6g = np.asarray(fields[0])
             fields = dataset.get_variables_by_attributes(name="indopacific_wfl")
-            indopacific_wfl_ice6g = np.asarray(fields[0]) 
+            indopacific_wfl_ice6g = np.asarray(fields[0])
         with Dataset(difference_on_ocean_grid_filename,mode='r',format='NETCDF4') as dataset:
             fields = dataset.get_variables_by_attributes(name="atlantic_wfl")
             atlantic_wfl_diff = np.asarray(fields[0])
@@ -600,7 +601,7 @@ class CoupledRunOutputPlots(HDOutputPlots):
             binned_values = np.zeros((np.size(bins)))
             for i,cell in zip(x,values):
                 for j,bin_edge in enumerate(bins):
-                    if i > bin_edge: 
+                    if i > bin_edge:
                         binned_values[j] += cell
                         continue
             return binned_values
@@ -619,7 +620,7 @@ class CoupledRunOutputPlots(HDOutputPlots):
         ax1.set_xlabel("Latitude (Degrees North)")
         ax1.set_ylabel("Implied Freshwater Transport ($m^{3}s^{-1}$)")
         ax1.set_xlim(-90,90)
-        ax1.set_xticks([-90,-60,-30,0,30,60,90]) 
+        ax1.set_xticks([-90,-60,-30,0,30,60,90])
         ax1.legend()
         ax1.set_title("Atlantic")
         ax1_step.step(atlantic_bins,
@@ -656,10 +657,10 @@ class CoupledRunOutputPlots(HDOutputPlots):
         ax3.set_xlim(-90,90)
         ax3.set_xticks([-90,-60,-30,0,30,60,90])
         ax3.legend()
-        
+
 class OutflowPlots(Plots):
     """A class for river mouth outflow plots"""
-    
+
     rmouth_outflow_path_extension = 'rmouthflow'
     flow_maps_path_extension = 'flowmaps'
     rdirs_path_extension = 'rdirs'
@@ -668,7 +669,7 @@ class OutflowPlots(Plots):
     additional_matches_list_extension = 'addmatches'
     catchment_and_outflows_mods_list_extension = 'catchmods'
     ls_mask_path_extension="lsmasks"
-    
+
     def __init__(self,save,color_palette_to_use='default'):
         super(OutflowPlots,self).__init__(save,color_palette_to_use)
         self.rmouth_outflow_data_directory = os.path.join(self.hd_data_path,self.rmouth_outflow_path_extension)
@@ -682,7 +683,7 @@ class OutflowPlots(Plots):
         self.catchment_and_outflows_mods_list_directory = os.path.join(self.hd_data_path,
                                                                        self.catchment_and_outflows_mods_list_extension)
         self.temp_label = 'temp_' + datetime.datetime.now().strftime("%Y%m%d_%H%M%S%f") + "_"
-        
+
     def OutFlowComparisonPlotHelpers(self,reference_rmouth_outflows_filename,
                                      data_rmouth_outflows_filename,
                                      ref_flowmaps_filename,data_flowmaps_filename,
@@ -691,7 +692,7 @@ class OutflowPlots(Plots):
                                      ref_catchment_filename=None,data_catchment_filename=None,
                                      data_catchment_original_scale_filename=None,
                                      data_rdirs_filename=None,
-                                     data_original_scale_flow_map_filename=None, 
+                                     data_original_scale_flow_map_filename=None,
                                      ref_orog_filename=None,
                                      data_orog_original_scale_filename=None,
                                      flip_orog_original_scale_relative_to_data=False,
@@ -774,7 +775,7 @@ class OutflowPlots(Plots):
             data_catchment_field =\
                 iohlpr.NetCDF4FileIOHelper.load_field(data_catchment_filepath,
                                                       grid_type,**grid_kwargs)
-            if grid_type == data_original_scale_grid_type and grid_kwargs == data_original_scale_grid_kwargs: 
+            if grid_type == data_original_scale_grid_type and grid_kwargs == data_original_scale_grid_kwargs:
                 catchment_grid_changed = False
                 data_catchment_field_original_scale = data_catchment_field
             else:
@@ -823,7 +824,7 @@ class OutflowPlots(Plots):
                 data_rdirs_field = utilities.upscale_field(input_field=field.\
                                                            Field(data_rdirs_field,
                                                                  grid=data_original_scale_grid_type,
-                                                                 **data_original_scale_grid_kwargs), 
+                                                                 **data_original_scale_grid_kwargs),
                                                            output_grid_type=grid_type,
                                                            method='CheckValue',
                                                            output_grid_kwargs=grid_kwargs,
@@ -837,7 +838,7 @@ class OutflowPlots(Plots):
             ref_orog_field = iohlpr.NetCDF4FileIOHelper.load_field(ref_orog_filepath,grid_type,
                                                                    **grid_kwargs)
             ref_orog_field = np.ma.array(ref_orog_field)
-            
+
         if data_orog_original_scale_filename:
             data_orog_original_scale_field = iohlpr.NetCDF4FileIOHelper.\
                 load_field(data_orog_original_scale_filepath,
@@ -867,7 +868,7 @@ class OutflowPlots(Plots):
             if flip_super_fine_orog:
                 super_fine_orog_field = np.flipud(super_fine_orog_field)
                 if super_fine_data_flowmap is not None:
-                    super_fine_data_flowmap = np.flipud(super_fine_data_flowmap) 
+                    super_fine_data_flowmap = np.flipud(super_fine_data_flowmap)
             if rotate_super_fine_orog:
                 super_fine_orog_field = np.roll(super_fine_orog_field,
                                                 np.size(super_fine_orog_field,
@@ -878,7 +879,7 @@ class OutflowPlots(Plots):
                                                       np.size(super_fine_data_flowmap,
                                                               axis=1)/2,
                                                       axis=1)
-        else:  
+        else:
             super_fine_orog_field = None
             super_fine_data_flowmap = None
             super_fine_grid = ref_grid
@@ -908,7 +909,7 @@ class OutflowPlots(Plots):
                     data_catchment_field_original_scale = np.flipud(data_catchment_field_original_scale)
             if data_orog_original_scale_filename:
                 data_orog_original_scale_field = np.flipud(data_orog_original_scale_field)
-        if rotate_ref_field: 
+        if rotate_ref_field:
             ref_flowtocellfield = np.roll(ref_flowtocellfield,
                                           np.size(ref_flowtocellfield,axis=1)/2,
                                           axis=1)
@@ -953,25 +954,25 @@ class OutflowPlots(Plots):
                 data_orog_original_scale_field = np.roll(data_orog_original_scale_field,
                                                          np.size(data_orog_original_scale_field,
                                                                  axis=1)/2,
-                                                         axis=1)  
+                                                         axis=1)
             else:
-                data_orog_original_scale_field = None   
+                data_orog_original_scale_field = None
         if flip_external_ls_mask:
             external_ls_mask = np.flipud(external_ls_mask)
         if rotate_external_ls_mask:
             external_ls_mask = np.roll(external_ls_mask,
                                        np.size(external_ls_mask,
                                                axis=1)/2,
-                                       axis=1) 
+                                       axis=1)
         temp_file_list = []
         if catchment_and_outflows_mods_list_filename:
             ref_outflow_field = dynamic_hd.load_field(reference_rmouth_outflows_filename,
                                                       file_type=dynamic_hd.\
-                                                      get_file_extension(reference_rmouth_outflows_filename), 
+                                                      get_file_extension(reference_rmouth_outflows_filename),
                                                       field_type='Generic', grid_type=grid_type,**grid_kwargs)
             data_outflow_field = dynamic_hd.load_field(data_rmouth_outflows_filename,
                                                        file_type=dynamic_hd.\
-                                                       get_file_extension(data_rmouth_outflows_filename), 
+                                                       get_file_extension(data_rmouth_outflows_filename),
                                                        field_type='Generic', grid_type=grid_type,**grid_kwargs)
             if flip_ref_field:
                 ref_outflow_field.flip_data_ud()
@@ -982,14 +983,14 @@ class OutflowPlots(Plots):
             if rotate_data_field:
                 data_outflow_field.rotate_field_by_a_hundred_and_eighty_degrees()
             ref_catchment_field, ref_outflow_field, data_catchment_field, data_outflow_field =\
-                rc_pts.modify_catchments_and_outflows(ref_catchments=ref_catchment_field, 
-                                                      ref_outflows=ref_outflow_field, 
+                rc_pts.modify_catchments_and_outflows(ref_catchments=ref_catchment_field,
+                                                      ref_outflows=ref_outflow_field,
                                                       ref_flowmap=ref_flowtocellfield,
                                                       ref_rdirs = rdirs_field,
                                                       data_catchments=data_catchment_field,
                                                       data_outflows=data_outflow_field,
                                                       catchment_and_outflows_modifications_list_filename=\
-                                                      catchment_and_outflows_mods_list_filepath, 
+                                                      catchment_and_outflows_mods_list_filepath,
                                                       original_scale_catchment=\
                                                       data_catchment_field_original_scale,
                                                       original_scale_flowmap=\
@@ -1018,18 +1019,18 @@ class OutflowPlots(Plots):
                                                        basename(reference_rmouth_outflows_filename))
             temp_file_list.append(reference_rmouth_outflows_filename)
             temp_file_list.append(data_rmouth_outflows_filename)
-            dynamic_hd.write_field(reference_rmouth_outflows_filename, 
-                                   field=ref_outflow_field, 
+            dynamic_hd.write_field(reference_rmouth_outflows_filename,
+                                   field=ref_outflow_field,
                                    file_type=dynamic_hd.\
                                    get_file_extension(reference_rmouth_outflows_filename))
-            dynamic_hd.write_field(data_rmouth_outflows_filename, 
-                                   field=data_outflow_field, 
+            dynamic_hd.write_field(data_rmouth_outflows_filename,
+                                   field=data_outflow_field,
                                    file_type=dynamic_hd.\
                                    get_file_extension(data_rmouth_outflows_filename))
         matchedpairs, unresolved_conflicts  = mtch_rm.main(reference_rmouth_outflows_filename=\
-                                                           reference_rmouth_outflows_filename, 
+                                                           reference_rmouth_outflows_filename,
                                                            data_rmouth_outflows_filename=\
-                                                           data_rmouth_outflows_filename, 
+                                                           data_rmouth_outflows_filename,
                                                            grid_type=grid_type,
                                                            flip_data_field=flip_data_field,
                                                            rotate_data_field=rotate_data_field,
@@ -1039,7 +1040,7 @@ class OutflowPlots(Plots):
                                                            **grid_kwargs)
         if additional_matches_list_filename:
             additional_matches = mtch_rm.load_additional_manual_matches(additional_matches_list_filepath,
-                                                                        reference_rmouth_outflows_filename, 
+                                                                        reference_rmouth_outflows_filename,
                                                                         data_rmouth_outflows_filename,
                                                                         flip_data_field=flip_data_field,
                                                                         rotate_data_field=rotate_data_field,
@@ -1069,10 +1070,10 @@ class OutflowPlots(Plots):
             else:
                 plt.figure(figsize=(25,12.5))
                 ax = plt.subplot(222)
-            rc_pts.plot_river_rmouth_flowmap(ax=ax, 
-                                             ref_flowtocellfield=ref_flowtocellfield, 
+            rc_pts.plot_river_rmouth_flowmap(ax=ax,
+                                             ref_flowtocellfield=ref_flowtocellfield,
                                              data_flowtocellfield=data_flowtocellfield,
-                                             rdirs_field=rdirs_field, 
+                                             rdirs_field=rdirs_field,
                                              pair=pair,colors=self.colors)
             if split_comparison_plots_across_multiple_canvases:
                 ax_hist = plt.subplot(122)
@@ -1160,7 +1161,7 @@ class OutflowPlots(Plots):
                                                                      data_original_scale_flowtocellfield=\
                                                                      data_original_scale_flowtocellfield,
                                                                      pair=pair,catchment_bounds=catchment_bounds,
-                                                                     flowtocell_threshold=flowtocell_threshold, 
+                                                                     flowtocell_threshold=flowtocell_threshold,
                                                                      catchment_grid_changed=catchment_grid_changed,
                                                                      colors=self.colors,
                                                                      external_ls_mask=external_ls_mask,
@@ -1181,15 +1182,15 @@ class OutflowPlots(Plots):
                             ref_to_super_fine_scale_factor = data_to_super_fine_scale_factor*scale_factor
                 else:
                     ref_to_super_fine_scale_factor=None
-                interactive_plots.setup_plots(catchment_section, 
-                                              ref_orog_field, 
+                interactive_plots.setup_plots(catchment_section,
+                                              ref_orog_field,
                                               data_orog_original_scale_field,
-                                              ref_flowtocellfield, 
-                                              data_flowtocellfield, 
-                                              rdirs_field, 
+                                              ref_flowtocellfield,
+                                              data_flowtocellfield,
+                                              rdirs_field,
                                               super_fine_orog_field,
                                               super_fine_data_flowmap,
-                                              pair, catchment_bounds, 
+                                              pair, catchment_bounds,
                                               scale_factor,
                                               ref_to_super_fine_scale_factor,
                                               ref_grid_offset_adjustment=ref_grid.\
@@ -1197,7 +1198,7 @@ class OutflowPlots(Plots):
                                               fine_grid_offset_adjustment=fine_grid.\
                                               get_longitude_offset_adjustment(),
                                               super_fine_grid_offset_adjustment=super_fine_grid.\
-                                              get_longitude_offset_adjustment()) 
+                                              get_longitude_offset_adjustment())
             elif ref_orog_filename or data_orog_original_scale_filename:
                 raise UserWarning("No orography plot generated, require both a reference orography"
                                   " and a data orography to generate an orography plot")
@@ -1214,7 +1215,7 @@ class OutflowPlots(Plots):
             return simple_catchment_and_flowmap_plotters
         if return_catchment_plotters:
             return catchment_plotters
-        
+
     def Compare_Corrected_HD_Rdirs_And_ICE5G_as_HD_data_ALG4_sinkless_all_points_0k(self):
         corrected_hd_rdirs_rmouthoutflow_file = os.path.join(self.rmouth_outflow_data_directory,
             "rmouthflows_corrected_HD_rdirs_post_processing_20160427_141158.nc")
@@ -1226,7 +1227,7 @@ class OutflowPlots(Plots):
                                                 "flowmap_ICE5G_as_HD_data_ALG4_sinkless_all_points_0k_20160427_134237.nc",
                                                 "rivdir_vs_1_9_data_from_stefan.nc",
                                                 grid_type='HD')
-        
+
     def Compare_Corrected_HD_Rdirs_And_ICE5G_as_HD_data_ALG4_true_sinks_all_points_0k(self):
         corrected_hd_rdirs_rmouthoutflow_file = os.path.join(self.rmouth_outflow_data_directory,
             "rmouthflows_corrected_HD_rdirs_post_processing_20160427_141158.nc")
@@ -1242,7 +1243,7 @@ class OutflowPlots(Plots):
                                                 data_catchment_filename=\
                                                 "catchmentmap_ICE5G_as_HD_data_ALG4_sinkless_all_points_0k_20160608_184931.nc",
                                                 grid_type='HD')
-        
+
     def Compare_Corrected_HD_Rdirs_And_ICE5G_ALG4_sinkless_all_points_0k_directly_upscaled_fields(self):
         corrected_hd_rdirs_rmouthoutflow_file = os.path.join(self.rmouth_outflow_data_directory,
             "rmouthflows_corrected_HD_rdirs_post_processing_20160427_141158.nc")
@@ -1261,7 +1262,7 @@ class OutflowPlots(Plots):
                                                 rotate_super_fine_orog=False,
                                                 super_fine_orog_grid_type='LatLong1min',
                                                 grid_type='HD')
-        
+
     def Compare_Corrected_HD_Rdirs_And_ICE5G_ALG4_true_sinks_all_points_0k_directly_upscaled_fields(self):
         corrected_hd_rdirs_rmouthoutflow_file = os.path.join(self.rmouth_outflow_data_directory,
             "rmouthflows_corrected_HD_rdirs_post_processing_20160427_141158.nc")
@@ -1296,7 +1297,7 @@ class OutflowPlots(Plots):
                                                 rotate_super_fine_orog=False,
                                                 super_fine_orog_grid_type='LatLong1min',
                                                 grid_type='HD',data_original_scale_grid_type='LatLong10min')
-        
+
     def Compare_Corrected_HD_Rdirs_And_ICE5G_ALG4_corr_orog_all_points_0k_directly_upscaled_fields(self):
         data_creation_datetime="20160802_112138"
         corrected_hd_rdirs_rmouthoutflow_file = os.path.join(self.rmouth_outflow_data_directory,
@@ -1339,7 +1340,7 @@ class OutflowPlots(Plots):
                                           rotate_super_fine_orog=False,
                                           super_fine_orog_grid_type='LatLong1min',
                                           grid_type='HD',data_original_scale_grid_type='LatLong10min')
-        
+
     def Compare_Corrected_HD_Rdirs_And_ICE5G_ALG4_corr_orog_downscaled_ls_mask_all_points_0k_directly_upscaled_fields(self):
         #data_creation_datetime="20160930_001057" #original rdirs from the original complete corrected orography
         data_creation_datetime="20170514_104220" #Version with Amu Darya added
@@ -1385,7 +1386,7 @@ class OutflowPlots(Plots):
                                           rotate_super_fine_orog=False,
                                           super_fine_orog_grid_type='LatLong1min',
                                           grid_type='HD',data_original_scale_grid_type='LatLong10min')
-        
+
     def Compare_ICE5G_with_and_without_tarasov_upscaled_srtm30_ALG4_corr_orog_0k_directly_upscaled_fields(self):
         data_creation_datetime_with_tarasov="20170511_121440"
         data_creation_datetime_ICE5G_alone="20170505_144847"
@@ -1453,8 +1454,8 @@ class OutflowPlots(Plots):
                                           super_fine_orog_grid_type='LatLong1min',
                                           grid_type='HD',data_original_scale_grid_type='LatLong10min',
                                           ref_original_scale_grid_type='LatLong10min')
-        
-        
+
+
     def Compare_Corrected_HD_Rdirs_And_ICE5G_plus_tarasov_upscaled_srtm30_ALG4_corr_orog_0k_directly_upscaled_fields(self):
         data_creation_datetime="20170506_105104"
         corrected_hd_rdirs_rmouthoutflow_file = os.path.join(self.rmouth_outflow_data_directory,
@@ -1507,7 +1508,7 @@ class OutflowPlots(Plots):
                                           select_only_rivers_in="North America",
                                           super_fine_orog_grid_type='LatLong1min',
                                           grid_type='HD',data_original_scale_grid_type='LatLong10min')
-               
+
     def Compare_Corrected_HD_Rdirs_And_Etopo1_ALG4_sinkless_directly_upscaled_fields(self):
         corrected_hd_rdirs_rmouthoutflow_file = os.path.join(self.rmouth_outflow_data_directory,
             "rmouthflows_corrected_HD_rdirs_post_processing_20160427_141158.nc")
@@ -1521,7 +1522,7 @@ class OutflowPlots(Plots):
                                                 "rivdir_vs_1_9_data_from_stefan.nc",
                                                 flip_data_field=True,
                                                 grid_type='HD')
-        
+
     def Compare_Corrected_HD_Rdirs_And_Etopo1_ALG4_true_sinks_directly_upscaled_fields(self):
         corrected_hd_rdirs_rmouthoutflow_file = os.path.join(self.rmouth_outflow_data_directory,
             "rmouthflows_corrected_HD_rdirs_post_processing_20160427_141158.nc")
@@ -1541,7 +1542,7 @@ class OutflowPlots(Plots):
                                                 data_original_scale_flow_map_filename=\
                                                 "flowmap_etopo1_data_ALG4_sinkless_20160603_112520.nc",
                                                 grid_type='HD',data_original_scale_grid_type='LatLong1min')
-        
+
     def Compare_Upscaled_Rdirs_vs_Directly_Upscaled_fields_ICE5G_data_ALG4_corr_orog_downscaled_ls_mask_0k(self):
         data_creation_datetime_directly_upscaled="20160930_001057"
         data_creation_datetime_rdirs_upscaled = "20161031_113238"
@@ -1572,7 +1573,7 @@ class OutflowPlots(Plots):
                                           data_catchment_filename=\
                                           "catchmentmap_ICE5G_data_ALG4_sinkless_downscaled_ls_mask_0k_upscale_rdirs_{0}_updated.nc".\
                                           format(data_creation_datetime_rdirs_upscaled),
-                                          ref_catchment_filename=                                          
+                                          ref_catchment_filename=
                                           "upscaled/catchmentmap_unsorted_ICE5G_data_ALG4_sinkless_downscaled_ls_mask_0k_{0}.nc".\
                                           format(data_creation_datetime_directly_upscaled),
                                           data_catchment_original_scale_filename=\
@@ -1589,21 +1590,204 @@ class OutflowPlots(Plots):
 
 class FlowMapPlots(Plots):
     """A general base class for flow maps"""
-    
+
     flow_maps_path_extension = 'flowmaps'
-    ls_masks_extension        = 'lsmasks'
-    
+    ls_masks_extension       = 'lsmasks'
+    hdpara_extension         = 'hdfiles'
+    orography_extension      = 'orographys'
+    catchments_extension     = 'catchmentmaps'
+
     def __init__(self,save,color_palette_to_use='default'):
         """Class Constructor"""
         super(FlowMapPlots,self).__init__(save,color_palette_to_use)
         self.flow_maps_data_directory = os.path.join(self.hd_data_path,self.flow_maps_path_extension)
         self.ls_masks_data_directory= os.path.join(self.hd_data_path,self.ls_masks_extension)
-        
+        self.hdpara_directory = os.path.join(self.hd_data_path,self.hdpara_extension)
+        self.orography_directory = os.path.join(self.hd_data_path,self.orography_extension)
+        self.catchments_directory = os.path.join(self.hd_data_path,self.catchments_extension)
+
+    def FourFlowMapSectionsFromDeglaciation(self,time_one=14000,time_two=13600,time_three=12700,time_four=12660):
+        """ """
+        flowmap_one_filename = os.path.join(self.flow_maps_data_directory,
+                                "30min_flowtocell_pmu0171a_{}.nc".format(time_one))
+        flowmap_two_filename = os.path.join(self.flow_maps_data_directory,
+                                "30min_flowtocell_pmu0171b_{}.nc".format(time_two))
+        flowmap_three_filename = os.path.join(self.flow_maps_data_directory,
+                                  "30min_flowtocell_pmu0171b_{}.nc".format(time_three))
+        flowmap_four_filename = os.path.join(self.flow_maps_data_directory,
+                                  "30min_flowtocell_pmu0171b_{}.nc".format(time_four))
+        catchments_one_filename = os.path.join(self.catchments_directory,
+                                               "30min_catchments_pmu0171a_{}.nc".format(time_one))
+        catchments_two_filename = os.path.join(self.catchments_directory,
+                                               "30min_catchments_pmu0171b_{}.nc".format(time_two))
+        catchments_three_filename = os.path.join(self.catchments_directory,
+                                               "30min_catchments_pmu0171b_{}.nc".format(time_three))
+        catchments_four_filename = os.path.join(self.catchments_directory,
+                                               "30min_catchments_pmu0171b_{}.nc".format(time_four))
+        lsmask_one_filename = os.path.join(self.hdpara_directory,
+                                  "hdpara_{}k.nc".format(time_one))
+        lsmask_two_filename = os.path.join(self.hdpara_directory,
+                                  "hdpara_{}k.nc".format(time_two))
+        lsmask_three_filename = os.path.join(self.hdpara_directory,
+                                    "hdpara_{}k.nc".format(time_three))
+        lsmask_four_filename = os.path.join(self.hdpara_directory,
+                                   "hdpara_{}k.nc".format(time_four))
+        glac_mask_one_filename = os.path.join(self.orography_directory,
+                                              "glac01_{}.nc".format(time_one))
+        glac_mask_two_filename = os.path.join(self.orography_directory,
+                                              "glac01_{}.nc".format(time_two))
+        glac_mask_three_filename = os.path.join(self.orography_directory,
+                                              "glac01_{}.nc".format(time_three))
+        glac_mask_four_filename = os.path.join(self.orography_directory,
+                                              "glac01_{}.nc".format(time_four))
+        flowmap_one = dynamic_hd.load_field(flowmap_one_filename,
+                                            file_type=dynamic_hd.get_file_extension(flowmap_one_filename),
+                                            field_type='Generic',
+                                            grid_type='HD').get_data()
+        lsmask_one = dynamic_hd.load_field(lsmask_one_filename,
+                                           file_type=dynamic_hd.get_file_extension(lsmask_one_filename),
+                                           field_type='Generic',
+                                           fieldname='FLAG',
+                                           grid_type='HD').get_data().astype(np.int32)
+        glac_mask_one = dynamic_hd.load_field(glac_mask_one_filename,
+                                              file_type=dynamic_hd.get_file_extension(glac_mask_one_filename),
+                                              field_type='Generic',
+                                              fieldname='glac',
+                                              grid_type='LatLong10min')
+        glac_mask_hd_one = utilities.upscale_field(glac_mask_one,"HD",'Sum',
+                                                   output_grid_kwargs={},
+                                                   scalenumbers=True)
+        glac_mask_hd_one.flip_data_ud()
+        glac_mask_hd_one.rotate_field_by_a_hundred_and_eighty_degrees()
+        glac_mask_hd_one = glac_mask_hd_one.get_data()
+        catchments_one = dynamic_hd.load_field(catchments_one_filename,
+                                               file_type=dynamic_hd.get_file_extension(catchments_one_filename),
+                                               field_type='Generic',
+                                               grid_type='HD').get_data()
+        flowmap_two = dynamic_hd.load_field(flowmap_two_filename,
+                                            file_type=dynamic_hd.get_file_extension(flowmap_two_filename),
+                                            field_type='Generic',
+                                            grid_type='HD').get_data()
+        lsmask_two = dynamic_hd.load_field(lsmask_two_filename,
+                                           file_type=dynamic_hd.get_file_extension(lsmask_two_filename),
+                                           field_type='Generic',
+                                           fieldname='FLAG',
+                                           grid_type='HD').get_data().astype(np.int32)
+        glac_mask_two = dynamic_hd.load_field(glac_mask_two_filename,
+                                              file_type=dynamic_hd.get_file_extension(glac_mask_two_filename),
+                                              field_type='Generic',
+                                              fieldname='glac',
+                                              grid_type='LatLong10min')
+        glac_mask_hd_two = utilities.upscale_field(glac_mask_two,"HD",'Sum',
+                                                   output_grid_kwargs={},
+                                                   scalenumbers=True)
+        glac_mask_hd_two.flip_data_ud()
+        glac_mask_hd_two.rotate_field_by_a_hundred_and_eighty_degrees()
+        glac_mask_hd_two = glac_mask_hd_two.get_data()
+        catchments_two = dynamic_hd.load_field(catchments_two_filename,
+                                               file_type=dynamic_hd.get_file_extension(catchments_two_filename),
+                                               field_type='Generic',
+                                               grid_type='HD').get_data()
+        flowmap_three = dynamic_hd.load_field(flowmap_three_filename,
+                                            file_type=dynamic_hd.get_file_extension(flowmap_three_filename),
+                                            field_type='Generic',
+                                            grid_type='HD').get_data()
+        lsmask_three = dynamic_hd.load_field(lsmask_three_filename,
+                                           file_type=dynamic_hd.get_file_extension(lsmask_three_filename),
+                                           field_type='Generic',
+                                           fieldname='FLAG',
+                                           grid_type='HD').get_data().astype(np.int32)
+        glac_mask_three = dynamic_hd.load_field(glac_mask_three_filename,
+                                              file_type=dynamic_hd.get_file_extension(glac_mask_three_filename),
+                                              field_type='Generic',
+                                              fieldname='glac',
+                                              grid_type='LatLong10min')
+        glac_mask_hd_three = utilities.upscale_field(glac_mask_three,"HD",'Sum',
+                                                   output_grid_kwargs={},
+                                                   scalenumbers=True)
+        glac_mask_hd_three.flip_data_ud()
+        glac_mask_hd_three.rotate_field_by_a_hundred_and_eighty_degrees()
+        glac_mask_hd_three = glac_mask_hd_three.get_data()
+        catchments_three = dynamic_hd.load_field(catchments_three_filename,
+                                               file_type=dynamic_hd.get_file_extension(catchments_three_filename),
+                                               field_type='Generic',
+                                               grid_type='HD').get_data()
+        flowmap_four = dynamic_hd.load_field(flowmap_four_filename,
+                                            file_type=dynamic_hd.get_file_extension(flowmap_four_filename),
+                                            field_type='Generic',
+                                            grid_type='HD').get_data()
+        lsmask_four = dynamic_hd.load_field(lsmask_four_filename,
+                                           file_type=dynamic_hd.get_file_extension(lsmask_four_filename),
+                                           field_type='Generic',
+                                           fieldname='FLAG',
+                                           grid_type='HD').get_data().astype(np.int32)
+        glac_mask_four = dynamic_hd.load_field(glac_mask_four_filename,
+                                              file_type=dynamic_hd.get_file_extension(glac_mask_four_filename),
+                                              field_type='Generic',
+                                              fieldname='glac',
+                                              grid_type='LatLong10min')
+        glac_mask_hd_four = utilities.upscale_field(glac_mask_four,"HD",'Sum',
+                                                   output_grid_kwargs={},
+                                                   scalenumbers=True)
+        catchments_four = dynamic_hd.load_field(catchments_four_filename,
+                                               file_type=dynamic_hd.get_file_extension(catchments_four_filename),
+                                               field_type='Generic',
+                                               grid_type='HD').get_data()
+        glac_mask_hd_four.flip_data_ud()
+        glac_mask_hd_four.rotate_field_by_a_hundred_and_eighty_degrees()
+        glac_mask_hd_four = glac_mask_hd_four.get_data()
+        bounds=[0,150,60,265]
+        fig = plt.figure(figsize=(14,10))
+        gs = gridspec.GridSpec(2,3,width_ratios=[4,4,1])
+        ax1 = plt.subplot(gs[0,0])
+        ax2 = plt.subplot(gs[0,1])
+        ax3 = plt.subplot(gs[1,0])
+        ax4 = plt.subplot(gs[1,1])
+        cax = plt.subplot(gs[:,2])
+        rc_pts.simple_thresholded_data_only_flowmap(ax1,flowmap_one,lsmask_one,threshold=75,
+                                                    glacier_mask=glac_mask_hd_one,
+                                                    catchments=catchments_one,
+                                                    catchnumone=4,
+                                                    catchnumtwo=30,
+                                                    catchnumthree=20,
+                                                    bounds=bounds,
+                                                    cax = cax,
+                                                    colors=self.colors)
+        ax1.set_title("{} BP".format(time_one))
+        rc_pts.simple_thresholded_data_only_flowmap(ax2,flowmap_two,lsmask_two,threshold=75,
+                                                    glacier_mask=glac_mask_hd_two,
+                                                    catchments=catchments_two,
+                                                    catchnumone=4,
+                                                    catchnumtwo=30,
+                                                    catchnumthree=51,
+                                                    bounds=bounds,
+                                                    colors=self.colors)
+        ax2.set_title("{} BP".format(time_two))
+        rc_pts.simple_thresholded_data_only_flowmap(ax3,flowmap_three,lsmask_three,threshold=75,
+                                                    glacier_mask=glac_mask_hd_three,
+                                                    catchments=catchments_three,
+                                                    catchnumone=3,
+                                                    catchnumtwo=21,
+                                                    catchnumthree=8,
+                                                    bounds=bounds,
+                                                    colors=self.colors)
+        ax3.set_title("{} BP".format(time_three))
+        rc_pts.simple_thresholded_data_only_flowmap(ax4,flowmap_four,lsmask_four,threshold=75,
+                                                    glacier_mask=glac_mask_hd_four,
+                                                    catchments=catchments_four,
+                                                    catchnumone=11,
+                                                    catchnumtwo=7,
+                                                    catchnumthree=8,
+                                                    bounds=bounds,
+                                                    colors=self.colors)
+        ax4.set_title("{} BP".format(time_four))
+        gs.tight_layout(fig,rect=(0,0.1,1,1))
+
     def SimpleFlowMapPlotHelper(self,filename,grid_type,log_max=4):
         """Help produce simple flow maps"""
         flowmap_object = dynamic_hd.load_field(filename,
-                                               file_type=dynamic_hd.get_file_extension(filename), 
-                                               field_type='Generic', 
+                                               file_type=dynamic_hd.get_file_extension(filename),
+                                               field_type='Generic',
                                                grid_type=grid_type)
         flowmap = flowmap_object.get_data()
         plt.figure()
@@ -1621,7 +1805,7 @@ class FlowMapPlots(Plots):
         if self.save:
             #plt.savefig('')
             pass
-        
+
     def FlowMapTwoColourComparisonHelper(self,ref_filename,data_filename,lsmask_filename=None,
                                          grid_type='HD',minflowcutoff=100,flip_data=False,
                                          rotate_data=False,flip_ref=False,rotate_ref=False,
@@ -1632,16 +1816,16 @@ class FlowMapPlots(Plots):
                                          add_title=True,**kwargs):
         """Help compare two two-colour flow maps"""
         flowmap_ref_field = dynamic_hd.load_field(ref_filename,
-                                                  file_type=dynamic_hd.get_file_extension(ref_filename), 
-                                                  field_type='Generic', 
+                                                  file_type=dynamic_hd.get_file_extension(ref_filename),
+                                                  field_type='Generic',
                                                   grid_type=grid_type,**kwargs)
         flowmap_data_field = dynamic_hd.load_field(data_filename,
-                                                   file_type=dynamic_hd.get_file_extension(data_filename), 
-                                                   field_type='Generic', 
+                                                   file_type=dynamic_hd.get_file_extension(data_filename),
+                                                   field_type='Generic',
                                                    grid_type=grid_type,**kwargs)
         if lsmask_filename:
-            lsmask_field = dynamic_hd.load_field(lsmask_filename, 
-                                                 file_type=dynamic_hd.get_file_extension(lsmask_filename), 
+            lsmask_field = dynamic_hd.load_field(lsmask_filename,
+                                                 file_type=dynamic_hd.get_file_extension(lsmask_filename),
                                                  field_type='Generic', grid_type=grid_type,**kwargs)
         if flip_data:
             flowmap_data_field.flip_data_ud()
@@ -1658,7 +1842,7 @@ class FlowMapPlots(Plots):
         if invert_ls_mask:
             lsmask_field.invert_data()
         if lsmask_filename:
-            lsmask = lsmask_field.get_data() 
+            lsmask = lsmask_field.get_data()
         flowmap_ref_field = flowmap_ref_field.get_data()
         flowmap_data_field = flowmap_data_field.get_data()
         plt.figure(figsize=(20,8))
@@ -1666,23 +1850,23 @@ class FlowMapPlots(Plots):
         fmp_pts.make_basic_flowmap_comparison_plot(ax,flowmap_ref_field,flowmap_data_field,minflowcutoff,
                                                    first_datasource_name,second_datasource_name,lsmask,
                                                    colors=self.colors,add_title=add_title)
-        
+
     def FlowMapTwoColourPlotHelper(self,filename,lsmask_filename=None,grid_type='HD',
                                    minflowcutoff=100,flip_data=False,flip_mask=False,
                                    **kwargs):
         """Help produce two colour flow maps"""
         flowmap_object = dynamic_hd.load_field(filename,
-                                               file_type=dynamic_hd.get_file_extension(filename), 
-                                               field_type='Generic', 
+                                               file_type=dynamic_hd.get_file_extension(filename),
+                                               field_type='Generic',
                                                grid_type=grid_type,**kwargs)
-        lsmask_field = dynamic_hd.load_field(lsmask_filename, 
-                                             file_type=dynamic_hd.get_file_extension(lsmask_filename), 
+        lsmask_field = dynamic_hd.load_field(lsmask_filename,
+                                             file_type=dynamic_hd.get_file_extension(lsmask_filename),
                                              field_type='Generic', grid_type=grid_type,**kwargs)
         if flip_data:
             flowmap_object.flip_data_ud()
         if flip_mask:
             lsmask_field.flip_data_ud()
-        lsmask = lsmask_field.get_data() 
+        lsmask = lsmask_field.get_data()
         flowmap = flowmap_object.get_data()
         plt.figure()
         plt.subplot(111)
@@ -1695,12 +1879,12 @@ class FlowMapPlots(Plots):
         norm = mpl.colors.BoundaryNorm(bounds,cmap.N)
         plt.imshow(flowmap,cmap=cmap,norm=norm,interpolation="none")
         plt.title('Cells with cumulative flow greater than or equal to {0}'.format(minflowcutoff))
-    
+
     def Etopo1FlowMap(self):
         filename=os.path.join(self.flow_maps_data_directory,
                               'flowmap_etopo1_data_ALG4_sinkless_20160603_114215.nc')
         self.SimpleFlowMapPlotHelper(filename,'LatLong1min')
-        
+
     def Etopo1FlowMap_two_colour(self):
         filename=os.path.join(self.flow_maps_data_directory,
                               'flowmap_etopo1_data_ALG4_sinkless_20160603_112520.nc')
@@ -1709,7 +1893,7 @@ class FlowMapPlots(Plots):
         self.FlowMapTwoColourPlotHelper(filename,lsmask_filename=lsmask_filename,
                                         grid_type='LatLong1min',
                                         minflowcutoff=25000,flip_data=True,flip_mask=True)
-        
+
     def Etopo1FlowMap_two_colour_directly_upscaled_fields(self):
         filename=os.path.join(self.flow_maps_data_directory,'upscaled',
                               'flowmap__etopo1_data_ALG4_sinkless_upscale_riverflows'
@@ -1730,24 +1914,24 @@ class FlowMapPlots(Plots):
         self.FlowMapTwoColourPlotHelper(filename,lsmask_filename=lsmask_filename,
                                         grid_type='HD',
                                         minflowcutoff=25,flip_data=False,flip_mask=False)
-        
+
 
     def Corrected_HD_Rdirs_And_Etopo1_ALG4_sinkless_directly_upscaled_fields_FlowMap_comparison(self):
         ref_filename=os.path.join(self.flow_maps_data_directory,
                                   'flowmap_corrected_HD_rdirs_post_processing_20160427_141158.nc')
         data_filename=os.path.join(self.flow_maps_data_directory,'upscaled',
                                    'flowmap_etopo1_data_ALG4_sinkless_upscale_riverflows'
-                                   '_and_river_mouth_flows_20160503_231022.nc')                                  
+                                   '_and_river_mouth_flows_20160503_231022.nc')
         lsmask_filename=os.path.join(self.ls_masks_data_directory,"generated",
                                      "ls_mask_extract_ls_mask_from_corrected_"
                                      "HD_rdirs_20160504_142435.nc")
         self.FlowMapTwoColourComparisonHelper(ref_filename=ref_filename,
-                                              data_filename=data_filename, 
+                                              data_filename=data_filename,
                                               lsmask_filename=lsmask_filename,
-                                              grid_type='HD', 
+                                              grid_type='HD',
                                               minflowcutoff=75,
                                               flip_data=True)
-        
+
     def Corrected_HD_Rdirs_And_Etopo1_ALG4_true_sinks_directly_upscaled_fields_FlowMap_comparison(self):
         ref_filename=os.path.join(self.flow_maps_data_directory,
                                   'flowmap_corrected_HD_rdirs_post_processing_20160427_141158.nc')
@@ -1758,12 +1942,12 @@ class FlowMapPlots(Plots):
                                      "ls_mask_extract_ls_mask_from_corrected_"
                                      "HD_rdirs_20160504_142435.nc")
         self.FlowMapTwoColourComparisonHelper(ref_filename=ref_filename,
-                                              data_filename=data_filename, 
+                                              data_filename=data_filename,
                                               lsmask_filename=lsmask_filename,
-                                              grid_type='HD', 
+                                              grid_type='HD',
                                               minflowcutoff=50,
                                               flip_data=True)
-        
+
     def Corrected_HD_Rdirs_And_ICE5G_data_ALG4_sinkless_0k_directly_upscaled_fields_FlowMap_comparison(self):
         ref_filename=os.path.join(self.flow_maps_data_directory,
                                   'flowmap_corrected_HD_rdirs_post_processing_20160427_141158.nc')
@@ -1774,13 +1958,13 @@ class FlowMapPlots(Plots):
                                      "ls_mask_extract_ls_mask_from_corrected_"
                                      "HD_rdirs_20160504_142435.nc")
         self.FlowMapTwoColourComparisonHelper(ref_filename=ref_filename,
-                                              data_filename=data_filename, 
+                                              data_filename=data_filename,
                                               lsmask_filename=lsmask_filename,
-                                              grid_type='HD', 
+                                              grid_type='HD',
                                               minflowcutoff=75,
                                               flip_data=True,
                                               rotate_data=True)
-        
+
     def Corrected_HD_Rdirs_And_ICE5G_data_ALG4_true_sinks_0k_directly_upscaled_fields_FlowMap_comparison(self):
         ref_filename=os.path.join(self.flow_maps_data_directory,
                                   'flowmap_corrected_HD_rdirs_post_processing_20160427_141158.nc')
@@ -1791,13 +1975,13 @@ class FlowMapPlots(Plots):
                                      "ls_mask_extract_ls_mask_from_corrected_"
                                      "HD_rdirs_20160504_142435.nc")
         self.FlowMapTwoColourComparisonHelper(ref_filename=ref_filename,
-                                              data_filename=data_filename, 
+                                              data_filename=data_filename,
                                               lsmask_filename=lsmask_filename,
-                                              grid_type='HD', 
+                                              grid_type='HD',
                                               minflowcutoff=75,
                                               flip_data=True,
                                               rotate_data=True)
-        
+
     def Corrected_HD_Rdirs_And_ICE5G_data_ALG4_corr_orog_0k_directly_upscaled_fields_FlowMap_comparison(self):
         ref_filename=os.path.join(self.flow_maps_data_directory,
                                   'flowmap_corrected_HD_rdirs_post_processing_20160427_141158.nc')
@@ -1807,13 +1991,13 @@ class FlowMapPlots(Plots):
                                      "ls_mask_extract_ls_mask_from_corrected_"
                                      "HD_rdirs_20160504_142435.nc")
         self.FlowMapTwoColourComparisonHelper(ref_filename=ref_filename,
-                                              data_filename=data_filename, 
+                                              data_filename=data_filename,
                                               lsmask_filename=lsmask_filename,
-                                              grid_type='HD', 
+                                              grid_type='HD',
                                               minflowcutoff=75,
                                               flip_data=True,
                                               rotate_data=True)
-        
+
     def Corrected_HD_Rdirs_And_ICE5G_data_ALG4_corr_orog_downscaled_ls_mask_0k_directly_upscaled_fields_FlowMap_comparison(self):
         ref_filename=os.path.join(self.flow_maps_data_directory,
                                   'flowmap_corrected_HD_rdirs_post_processing_20160427_141158.nc')
@@ -1823,13 +2007,13 @@ class FlowMapPlots(Plots):
                                      "ls_mask_extract_ls_mask_from_corrected_"
                                      "HD_rdirs_20160504_142435.nc")
         self.FlowMapTwoColourComparisonHelper(ref_filename=ref_filename,
-                                              data_filename=data_filename, 
+                                              data_filename=data_filename,
                                               lsmask_filename=lsmask_filename,
-                                              grid_type='HD', 
+                                              grid_type='HD',
                                               minflowcutoff=75,
                                               flip_data=True,
                                               rotate_data=True)
-        
+
     def Corrected_HD_Rdirs_And_ICE5G_data_ALG4_no_true_sinks_corr_orog_0k_directly_upscaled_fields_FlowMap_comparison(self):
         ref_filename=os.path.join(self.flow_maps_data_directory,
                                   'flowmap_corrected_HD_rdirs_post_processing_20160427_141158.nc')
@@ -1839,13 +2023,13 @@ class FlowMapPlots(Plots):
                                      "ls_mask_extract_ls_mask_from_corrected_"
                                      "HD_rdirs_20160504_142435.nc")
         self.FlowMapTwoColourComparisonHelper(ref_filename=ref_filename,
-                                              data_filename=data_filename, 
+                                              data_filename=data_filename,
                                               lsmask_filename=lsmask_filename,
-                                              grid_type='HD', 
+                                              grid_type='HD',
                                               minflowcutoff=75,
                                               flip_data=True,
                                               rotate_data=True)
-        
+
     def Corrected_HD_Rdirs_And_ICE5G_HD_as_data_ALG4_true_sinks_0k_directly_upscaled_fields_FlowMap_comparison(self):
         ref_filename=os.path.join(self.flow_maps_data_directory,
                                   'flowmap_corrected_HD_rdirs_post_processing_20160427_141158.nc')
@@ -1855,13 +2039,13 @@ class FlowMapPlots(Plots):
                                      "ls_mask_extract_ls_mask_from_corrected_"
                                      "HD_rdirs_20160504_142435.nc")
         self.FlowMapTwoColourComparisonHelper(ref_filename=ref_filename,
-                                              data_filename=data_filename, 
+                                              data_filename=data_filename,
                                               lsmask_filename=lsmask_filename,
-                                              grid_type='HD', 
+                                              grid_type='HD',
                                               minflowcutoff=75,
                                               flip_data=False,
                                               rotate_data=False)
-        
+
     def Upscaled_Rdirs_vs_Directly_Upscaled_fields_ICE5G_data_ALG4_corr_orog_downscaled_ls_mask_0k_FlowMap_comparison(self):
         ref_filename=os.path.join(self.flow_maps_data_directory,
                                   'flowmap_ICE5G_data_ALG4_sinkless_downscaled_ls_mask_0k_upscale_rdirs_20161031_113238_updated.nc')
@@ -1871,16 +2055,16 @@ class FlowMapPlots(Plots):
                                      "ls_mask_extract_ls_mask_from_corrected_"
                                      "HD_rdirs_20160504_142435.nc")
         self.FlowMapTwoColourComparisonHelper(ref_filename=ref_filename,
-                                              data_filename=data_filename, 
+                                              data_filename=data_filename,
                                               lsmask_filename=lsmask_filename,
-                                              grid_type='HD', 
+                                              grid_type='HD',
                                               minflowcutoff=50,
                                               flip_data=True,
                                               rotate_data=True,
                                               flip_ref=True,
                                               rotate_ref=True,
                                               lsmask_has_same_orientation_as_ref=False)
-        
+
     def Upscaled_Rdirs_vs_Corrected_HD_Rdirs_ICE5G_data_ALG4_corr_orog_downscaled_ls_mask_0k_FlowMap_comparison(self):
         ref_filename=os.path.join(self.flow_maps_data_directory,
                                   'flowmap_corrected_HD_rdirs_post_processing_20160427_141158.nc')
@@ -1890,16 +2074,16 @@ class FlowMapPlots(Plots):
                                      "ls_mask_extract_ls_mask_from_corrected_"
                                      "HD_rdirs_20160504_142435.nc")
         self.FlowMapTwoColourComparisonHelper(ref_filename=ref_filename,
-                                              data_filename=data_filename, 
+                                              data_filename=data_filename,
                                               lsmask_filename=lsmask_filename,
-                                              grid_type='HD', 
+                                              grid_type='HD',
                                               minflowcutoff=60,
                                               flip_data=True,
                                               rotate_data=True,
                                               flip_ref=False,
                                               rotate_ref=False,
                                               lsmask_has_same_orientation_as_ref=False)
-        
+
     def ICE5G_data_ALG4_true_sinks_21k_And_ICE5G_data_ALG4_true_sinks_0k_FlowMap_comparison(self):
         ref_filename=os.path.join(self.flow_maps_data_directory,
                                   'flowmap_ICE5G_data_ALG4_sinkless_21k_20160603_132009.nc')
@@ -1908,15 +2092,15 @@ class FlowMapPlots(Plots):
         lsmask_filename=os.path.join(self.ls_masks_data_directory,"generated",
                                      "ls_mask_connected_ICE5G_data_ALG4_sinkless_21k_20160603_132009.nc")
         self.FlowMapTwoColourComparisonHelper(ref_filename=ref_filename,
-                                              data_filename=data_filename, 
+                                              data_filename=data_filename,
                                               lsmask_filename=lsmask_filename,
-                                              grid_type='LatLong10min', 
+                                              grid_type='LatLong10min',
                                               minflowcutoff=75,
                                               flip_data=True,
                                               rotate_data=True,
                                               flip_ref=True,
                                               rotate_ref=True)
-        
+
     def ICE5G_data_all_points_0k_alg4_two_colour(self):
         filename=os.path.join(self.flow_maps_data_directory,
                               'flowmap_ICE5G_data_ALG4_sinkless_0k_20160603_112512.nc')
@@ -1926,7 +2110,7 @@ class FlowMapPlots(Plots):
                                         grid_type='LatLong10min',
                                         minflowcutoff=250,flip_data=True,
                                         flip_mask=True)
-        
+
     def ICE5G_data_all_points_21k_alg4_two_colour(self):
         filename=os.path.join(self.flow_maps_data_directory,
                               'flowmap_ICE5G_data_ALG4_sinkless_21k_20160603_132009.nc')
@@ -1936,17 +2120,17 @@ class FlowMapPlots(Plots):
                                         grid_type='LatLong10min',
                                         minflowcutoff=250,flip_data=True,
                                         flip_mask=True)
-            
+
     def ICE5G_data_all_points_0k_alg4(self):
         filename=os.path.join(self.flow_maps_data_directory,
                               'flowmap_ICE5G_data_ALG4_sinkless_0k_20160603_112520.nc')
         self.SimpleFlowMapPlotHelper(filename,'LatLong10min')
-        
+
     def ICE5G_data_all_points_0k_no_sink_filling(self):
         filename=os.path.join(self.flow_maps_data_directory,
                               'flowmap_ICE5G_data_all_points_0k_20160229_133433.nc')
         self.SimpleFlowMapPlotHelper(filename,'LatLong10min',log_max=3.0)
-        
+
     def Ten_Minute_Data_from_Virna_data_ALG4_corr_orog_downscaled_lsmask_no_sinks_21k_vs_0k_FlowMap_comparison(self):
         ref_filename=os.path.join(self.flow_maps_data_directory,
                                   "flowmap_ten_minute_data_from_virna_0k_ALG4_sinkless"
@@ -1961,9 +2145,9 @@ class FlowMapPlots(Plots):
                                      "ALG4_sinkless_no_true_sinks_oceans_lsmask"
                                      "_plus_upscale_rdirs_20170127_163957_HD_transf.nc")
         self.FlowMapTwoColourComparisonHelper(ref_filename=ref_filename,
-                                              data_filename=data_filename, 
+                                              data_filename=data_filename,
                                               lsmask_filename=lsmask_filename,
-                                              grid_type='HD', 
+                                              grid_type='HD',
                                               minflowcutoff=35,
                                               flip_data=False,
                                               rotate_data=True,
@@ -1973,7 +2157,7 @@ class FlowMapPlots(Plots):
                                               invert_ls_mask=True,
                                               first_datasource_name="Present day",
                                               second_datasource_name="LGM")
-        
+
 class FlowMapPlotsWithCatchments(FlowMapPlots):
     """Flow map plots with selected catchments areas overlaid"""
 
@@ -1984,7 +2168,7 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
     additional_matches_list_extension = 'addmatches'
     additional_truesink_matches_list_extension = 'addmatches_truesinks'
     orog_path_extension = 'orographys'
-    
+
     def __init__(self,save,color_palette_to_use='default'):
         """Class constructor"""
         super(FlowMapPlotsWithCatchments,self).__init__(save,color_palette_to_use)
@@ -2023,6 +2207,7 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                                        remove_antartica=False,
                                                        difference_in_catchment_label="Discrepancy",
                                                        glacier_mask_filename=None,
+                                                       extra_lsmask_filename=None,
                                                        fig_size=(12,5),
                                                        grid_type='HD',
                                                        glacier_mask_grid_type='LatLong10min',
@@ -2032,7 +2217,7 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                                        **grid_kwargs):
         """Help compare two two-colour flow maps"""
         if (rivers_to_plot_secondary_alt_color is not None):
-            if (rivers_to_plot is None) or (rivers_to_plot_alt_color is None): 
+            if (rivers_to_plot is None) or (rivers_to_plot_alt_color is None):
                 raise RuntimeError("Invalid options - Secondary alternative color set when primary and/or"
                                    "secondary colors unused")
             else:
@@ -2047,20 +2232,20 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
         data_catchment_filepath = os.path.join(self.catchments_data_directory,
                                                data_catchment_filename)
         flowmap_ref_field = dynamic_hd.load_field(ref_flowmaps_filepath,
-                                                  file_type=dynamic_hd.get_file_extension(ref_flowmaps_filepath), 
-                                                  field_type='Generic', 
+                                                  file_type=dynamic_hd.get_file_extension(ref_flowmaps_filepath),
+                                                  field_type='Generic',
                                                   grid_type=grid_type,**grid_kwargs)
         flowmap_data_field = dynamic_hd.load_field(data_flowmaps_filepath,
-                                                   file_type=dynamic_hd.get_file_extension(data_flowmaps_filepath), 
-                                                   field_type='Generic', 
+                                                   file_type=dynamic_hd.get_file_extension(data_flowmaps_filepath),
+                                                   field_type='Generic',
                                                    grid_type=grid_type,**grid_kwargs)
         data_catchment_field = dynamic_hd.load_field(data_catchment_filepath,
                                                      file_type=dynamic_hd.get_file_extension(data_catchment_filepath),
-                                                     field_type='Generic', 
+                                                     field_type='Generic',
                                                      grid_type=grid_type,**grid_kwargs)
         ref_catchment_field = dynamic_hd.load_field(ref_catchment_filepath,
                                                     file_type=dynamic_hd.get_file_extension(ref_catchment_filepath),
-                                                    field_type='Generic', 
+                                                    field_type='Generic',
                                                     grid_type=grid_type,**grid_kwargs)
         if data_rdirs_filename:
             data_rdirs_filepath =  os.path.join(self.rdirs_data_directory,
@@ -2069,18 +2254,24 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
         if data_rdirs_filename:
             data_rdirs_field = dynamic_hd.load_field(data_rdirs_filepath,
                                                      file_type=dynamic_hd.get_file_extension(data_rdirs_filepath),
-                                                     field_type='Generic', 
+                                                     field_type='Generic',
                                                      grid_type=grid_type,**grid_kwargs)
         else:
             data_rdirs_field = None
         ref_rdirs_field = dynamic_hd.load_field(ref_rdirs_filepath,
                                                 file_type=dynamic_hd.get_file_extension(ref_rdirs_filepath),
-                                                field_type='Generic', 
+                                                field_type='Generic',
                                                 grid_type=grid_type,**grid_kwargs)
         if lsmask_filename:
-            lsmask_field = dynamic_hd.load_field(lsmask_filename, 
-                                                 file_type=dynamic_hd.get_file_extension(lsmask_filename), 
+            lsmask_field = dynamic_hd.load_field(lsmask_filename,
+                                                 file_type=dynamic_hd.get_file_extension(lsmask_filename),
                                                  field_type='Generic', grid_type=grid_type,**grid_kwargs)
+        if extra_lsmask_filename:
+            extra_lsmask_field = dynamic_hd.load_field(extra_lsmask_filename,
+                                                       file_type=dynamic_hd.
+                                                       get_file_extension(extra_lsmask_filename),
+                                                       field_type='Generic',
+                                                       grid_type=grid_type,**grid_kwargs)
         if catchment_and_outflows_mods_list_filename:
             catchment_and_outflows_mods_list_filepath = os.path.join(self.catchment_and_outflows_mods_list_directory,
                                                                      catchment_and_outflows_mods_list_filename)
@@ -2130,6 +2321,8 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                 lsmask_field.rotate_field_by_a_hundred_and_eighty_degrees()
         if invert_ls_mask:
             lsmask_field.invert_data()
+            if extra_lsmask_filename:
+                extra_lsmask_field.invert_data()
         if flip_lsmask and not lsmask_has_same_orientation_as_ref:
             lsmask_field.flip_data_ud()
         if rotate_lsmask and not lsmask_has_same_orientation_as_ref:
@@ -2140,7 +2333,9 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
             if rotate_glacier_mask:
                 glacier_mask_field.rotate_field_by_a_hundred_and_eighty_degrees()
         if lsmask_filename:
-            lsmask = lsmask_field.get_data() 
+            lsmask = lsmask_field.get_data()
+        if extra_lsmask_filename:
+            extra_lsmask = extra_lsmask_field.get_data()
         flowmap_ref_field = flowmap_ref_field.get_data()
         flowmap_data_field = flowmap_data_field.get_data()
         data_catchment_field = data_catchment_field.get_data()
@@ -2152,24 +2347,36 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
             glacier_mask_field = glacier_mask_field.get_data()
         plt.figure(figsize=fig_size)
         ax = plt.subplot(111)
-        image_array =fmp_pts.\
-            make_basic_flowmap_comparison_plot(ax,flowmap_ref_field,
-                                               flowmap_data_field,
-                                               minflowcutoff,
-                                               first_datasource_name,
-                                               second_datasource_name,
-                                               lsmask,
-                                               return_image_array_instead_of_plotting=True,
-                                               glacier_mask=glacier_mask_field)
+        if extra_lsmask_filename:
+            image_array,extra_lsmask =fmp_pts.\
+              make_basic_flowmap_comparison_plot(ax,flowmap_ref_field,
+                                                flowmap_data_field,
+                                                minflowcutoff,
+                                                first_datasource_name,
+                                                second_datasource_name,
+                                                lsmask,
+                                                return_image_array_instead_of_plotting=True,
+                                                glacier_mask=glacier_mask_field,
+                                                second_lsmask = extra_lsmask)
+        else:
+            image_array =fmp_pts.\
+              make_basic_flowmap_comparison_plot(ax,flowmap_ref_field,
+                                                flowmap_data_field,
+                                                minflowcutoff,
+                                                first_datasource_name,
+                                                second_datasource_name,
+                                                lsmask,
+                                                return_image_array_instead_of_plotting=True,
+                                                glacier_mask=glacier_mask_field)
         temp_file_list = []
         if catchment_and_outflows_mods_list_filename:
             ref_outflow_field = dynamic_hd.load_field(reference_rmouth_outflows_filename,
                                                       file_type=dynamic_hd.\
-                                                      get_file_extension(reference_rmouth_outflows_filename), 
+                                                      get_file_extension(reference_rmouth_outflows_filename),
                                                       field_type='Generic', grid_type=grid_type,**grid_kwargs)
             data_outflow_field = dynamic_hd.load_field(data_rmouth_outflows_filename,
                                                        file_type=dynamic_hd.\
-                                                       get_file_extension(data_rmouth_outflows_filename), 
+                                                       get_file_extension(data_rmouth_outflows_filename),
                                                        field_type='Generic', grid_type=grid_type,**grid_kwargs)
             if flip_data:
                 data_outflow_field.flip_data_ud()
@@ -2179,7 +2386,7 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                 rc_pts.modify_catchments_and_outflows(ref_catchment_field,ref_outflow_field,flowmap_ref_field,
                                                       ref_rdirs_field,data_catchment_field,data_outflow_field,
                                                       catchment_and_outflows_modifications_list_filename=\
-                                                      catchment_and_outflows_mods_list_filepath, 
+                                                      catchment_and_outflows_mods_list_filepath,
                                                       grid_type=grid_type)
             if flip_data:
                 data_outflow_field.flip_data_ud()
@@ -2193,19 +2400,19 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                                        basename(reference_rmouth_outflows_filename))
             temp_file_list.append(reference_rmouth_outflows_filename)
             temp_file_list.append(data_rmouth_outflows_filename)
-            dynamic_hd.write_field(reference_rmouth_outflows_filename, 
-                                   field=ref_outflow_field, 
+            dynamic_hd.write_field(reference_rmouth_outflows_filename,
+                                   field=ref_outflow_field,
                                    file_type=dynamic_hd.\
                                    get_file_extension(reference_rmouth_outflows_filename))
-            dynamic_hd.write_field(data_rmouth_outflows_filename, 
-                                   field=data_outflow_field, 
+            dynamic_hd.write_field(data_rmouth_outflows_filename,
+                                   field=data_outflow_field,
                                    file_type=dynamic_hd.\
                                    get_file_extension(data_rmouth_outflows_filename))
-            
+
         matchedpairs,_  = mtch_rm.main(reference_rmouth_outflows_filename=\
-                                       reference_rmouth_outflows_filename, 
+                                       reference_rmouth_outflows_filename,
                                        data_rmouth_outflows_filename=\
-                                       data_rmouth_outflows_filename, 
+                                       data_rmouth_outflows_filename,
                                        flip_data_field=flip_data,
                                        rotate_data_field=rotate_data,
                                        flip_ref_field=flip_ref,
@@ -2214,24 +2421,24 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                        grid_type=grid_type,**grid_kwargs)
         if additional_matches_list_filename:
             additional_matches = mtch_rm.load_additional_manual_matches(additional_matches_list_filepath,
-                                                                        reference_rmouth_outflows_filename, 
+                                                                        reference_rmouth_outflows_filename,
                                                                         data_rmouth_outflows_filename,
                                                                         flip_data_field=flip_data,
                                                                         rotate_data_field=rotate_data,
                                                                         grid_type='HD',**grid_kwargs)
             matchedpairs.extend(additional_matches)
         if additional_truesink_matches_list_filename:
-            additional_matches = mtch_rm.load_additional_manual_truesink_matches(additional_truesink_matches_list_filepath, 
-                                                                                 reference_rmouth_outflows_filename, 
-                                                                                 data_rmouth_outflows_filename, 
-                                                                                 ref_flowmap_filename, 
-                                                                                 data_flowmap_filename, 
+            additional_matches = mtch_rm.load_additional_manual_truesink_matches(additional_truesink_matches_list_filepath,
+                                                                                 reference_rmouth_outflows_filename,
+                                                                                 data_rmouth_outflows_filename,
+                                                                                 ref_flowmap_filename,
+                                                                                 data_flowmap_filename,
                                                                                  flip_data_rmouth_outflow_field=\
-                                                                                 flip_data, 
+                                                                                 flip_data,
                                                                                  rotate_data_rmouth_outflow_field=\
-                                                                                 rotate_data, 
+                                                                                 rotate_data,
                                                                                  flip_data_flowmap_field=\
-                                                                                 flip_data, 
+                                                                                 flip_data,
                                                                                  rotate_data_flowmap_field=\
                                                                                  rotate_data,
                                                                                  grid_type=grid_type,
@@ -2250,7 +2457,7 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                     raise RuntimeError("Cannot plot a catchment in both original and alternative colors - check for duplicate")
                 elif ((pair[0].get_lat(),pair[0].get_lon()) in rivers_to_plot):
                     alt_color=False
-                elif ((pair[0].get_lat(),pair[0].get_lon()) in rivers_to_plot_secondary_alt_color): 
+                elif ((pair[0].get_lat(),pair[0].get_lon()) in rivers_to_plot_secondary_alt_color):
                     alt_color=True
                     alt_color_num = 9
                 else:
@@ -2268,8 +2475,8 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
             print "Ref Point: " + str(pair[0]) + "Matches: " + str(pair[1])
             image_array = fmp_pts.add_selected_catchment_to_existing_plot(image_array,data_catchment_field,
                                                                           ref_catchment_field,data_catchment_field,
-                                                                          flowmap_data_field, ref_rdirs_field, 
-                                                                          data_rdirs_field, pair=pair, 
+                                                                          flowmap_data_field, ref_rdirs_field,
+                                                                          data_rdirs_field, pair=pair,
                                                                           catchment_grid_changed=False,
                                                                           use_alt_color=alt_color,
                                                                           alt_color_num=alt_color_num,
@@ -2277,20 +2484,23 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                                                           use_single_color_for_discrepancies,
                                                                           use_only_one_color_for_flowmap=\
                                                                           use_only_one_color_for_flowmap,
-                                                                          grid_type=grid_type, 
+                                                                          grid_type=grid_type,
                                                                           data_original_scale_grid_type=grid_type)
+        if extra_lsmask_filename:
+            image_array = fmp_pts.add_extra_flowmap(image_array,extra_lsmask)
         if remove_antartica:
-            image_array = image_array[:320] 
+            image_array = image_array[:320]
         fmp_pts.plot_composite_image(ax,image_array,minflowcutoff,first_datasource_name,second_datasource_name,
                                      use_single_color_for_discrepancies,use_only_one_color_for_flowmap,use_title,
                                      colors=self.colors,difference_in_catchment_label=difference_in_catchment_label,
-                                     flowmap_grid=flowmap_grid,plot_glaciers=True if glacier_mask_filename else False)
+                                     flowmap_grid=flowmap_grid,plot_glaciers=True if glacier_mask_filename else False,
+                                     second_ls_mask=True if extra_lsmask_filename else False)
         for temp_file in temp_file_list:
             if os.path.basename(temp_file).startswith("temp_"):
                 print "Deleting File: {0}".format(temp_file)
                 os.remove(temp_file)
-        
-    def Upscaled_Rdirs_vs_Corrected_HD_Rdirs_ICE5G_data_ALG4_corr_orog_downscaled_ls_mask_0k_FlowMap_comparison(self): 
+
+    def Upscaled_Rdirs_vs_Corrected_HD_Rdirs_ICE5G_data_ALG4_corr_orog_downscaled_ls_mask_0k_FlowMap_comparison(self):
         ref_filename=os.path.join(self.flow_maps_data_directory,
                                   'flowmap_corrected_HD_rdirs_post_processing_20160427_141158.nc')
         data_filename=os.path.join(self.flow_maps_data_directory,
@@ -2301,7 +2511,7 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                      "HD_rdirs_20160504_142435.nc")
         corrected_hd_rdirs_rmouthoutflow_file = os.path.join(self.rmouth_outflow_data_directory,
                                                              "rmouthflows_corrected_HD_rdirs_post_processing_20160427_141158.nc")
-        upscaled_rdirs_rmouthoutflow_file = os.path.join(self.rmouth_outflow_data_directory, 
+        upscaled_rdirs_rmouthoutflow_file = os.path.join(self.rmouth_outflow_data_directory,
                                                          "rmouthflows_ICE5G_data_ALG4_sinkless_downscaled_ls_mask_0k_upscale_rdirs"
                                                          "_20161031_113238_updated.nc")
         self.FlowMapTwoColourComparisonWithCatchmentsHelper(ref_flowmap_filename=ref_filename,
@@ -2359,7 +2569,7 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                                             "catch_and_outflow_mods_ice5g_10min_upscaled_"
                                                             "rdirs_vs_modern_day.txt",
                                                             second_datasource_name="Data",grid_type='HD')
-        
+
     def compare_present_day_and_lgm_river_directions_with_catchments_virna_data_plus_tarasov_style_orog_corrs_for_both(self):
         """Compare LGM to present using Virna's data plus tarasov style orography corrections for both times"""
         ref_filename=os.path.join(self.flow_maps_data_directory,
@@ -2386,7 +2596,7 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                        "_rdirs_tarasov_orog_corrs_20170422_195436_upscaled_updated.nc")
         glacier_mask_filename=os.path.join(self.orog_data_directory,"ice5g_v1_2_21_0k_10min.nc")
         self.FlowMapTwoColourComparisonWithCatchmentsHelper(ref_flowmap_filename=ref_filename,
-                                                            data_flowmap_filename=data_filename, 
+                                                            data_flowmap_filename=data_filename,
                                                             ref_catchment_filename=\
                                                             ref_catchment_filename,
                                                             data_catchment_filename=\
@@ -2421,8 +2631,8 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                                             glacier_mask_grid_type='LatLong10min',
                                                             flip_glacier_mask=True,
                                                             rotate_glacier_mask=True,
-                                                            grid_type='HD') 
-        
+                                                            grid_type='HD')
+
     def compare_present_day_river_directions_with_catchments_virna_data_with_vs_without_tarasov_style_orog_corrs(self):
         """Compare present day data with and without tarasov upscaling using virna's data"""
         ref_filename=os.path.join(self.flow_maps_data_directory,
@@ -2450,7 +2660,7 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                        "_upscale_rdirs_20170123_165707_upscaled_updated.nc")
         glacier_mask_filename=os.path.join(self.orog_data_directory,"ice5g_v1_2_21_0k_10min.nc")
         self.FlowMapTwoColourComparisonWithCatchmentsHelper(ref_flowmap_filename=ref_filename,
-                                                            data_flowmap_filename=data_filename, 
+                                                            data_flowmap_filename=data_filename,
                                                             ref_catchment_filename=\
                                                             ref_catchment_filename,
                                                             data_catchment_filename=\
@@ -2485,8 +2695,8 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                                             glacier_mask_grid_type='LatLong10min',
                                                             flip_glacier_mask=True,
                                                             rotate_glacier_mask=True,
-                                                            grid_type='HD') 
-        
+                                                            grid_type='HD')
+
     def compare_lgm_river_directions_with_catchments_virna_data_with_vs_without_tarasov_style_orog_corrs(self):
         """Compare lgm data with and without tarasov upscaling using virna's data"""
         tarasov_upscaled_data_datetime="20170518_193949"
@@ -2518,7 +2728,7 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                        format(tarasov_upscaled_data_datetime))
         glacier_mask_filename=os.path.join(self.orog_data_directory,"ice5g_v1_2_21_0k_10min.nc")
         self.FlowMapTwoColourComparisonWithCatchmentsHelper(ref_flowmap_filename=ref_filename,
-                                                            data_flowmap_filename=data_filename, 
+                                                            data_flowmap_filename=data_filename,
                                                             ref_catchment_filename=\
                                                             ref_catchment_filename,
                                                             data_catchment_filename=\
@@ -2553,8 +2763,8 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                                             glacier_mask_grid_type='LatLong10min',
                                                             flip_glacier_mask=True,
                                                             rotate_glacier_mask=True,
-                                                            grid_type='HD')   
-        
+                                                            grid_type='HD')
+
     def upscaled_rdirs_with_and_without_tarasov_upscaled_data_ALG4_corr_orog_downscaled_ls_mask_0k_FlowMap_comparison(self):
         """
 
@@ -2571,10 +2781,10 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
         lsmask_filename=os.path.join(self.ls_masks_data_directory,"generated",
                                      "ls_mask_extract_ls_mask_from_corrected_"
                                      "HD_rdirs_20160504_142435.nc")
-        corrected_hd_rdirs_rmouthoutflow_file = os.path.join(self.rmouth_outflow_data_directory, 
+        corrected_hd_rdirs_rmouthoutflow_file = os.path.join(self.rmouth_outflow_data_directory,
                                                          "rmouthflows_ICE5G_data_ALG4_sinkless_downscaled_ls_mask_0k_upscale_rdirs"
                                                          "_20161031_113238_updated.nc")
-        upscaled_rdirs_rmouthoutflow_file = os.path.join(self.rmouth_outflow_data_directory, 
+        upscaled_rdirs_rmouthoutflow_file = os.path.join(self.rmouth_outflow_data_directory,
                                                          "rmouthflows_ICE5G_and_tarasov_upscaled_srtm30plus_data_ALG4_sinkless_"
                                                          "downscaled_ls_mask_0k_upscale_rdirs_" + data_label + "_updated.nc")
         self.FlowMapTwoColourComparisonWithCatchmentsHelper(ref_flowmap_filename=ref_filename,
@@ -2601,7 +2811,7 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                                             matching_parameter_set='magnitude_extensive',
                                                             use_single_color_for_discrepancies=True,
                                                             second_datasource_name="Data",grid_type='HD')
-        
+
     def upscaled_rdirs_with_and_without_tarasov_upscaled_north_america_only_data_ALG4_corr_orog_downscaled_ls_mask_0k_FlowMap_comparison(self):
         """
 
@@ -2619,10 +2829,10 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
         lsmask_filename=os.path.join(self.ls_masks_data_directory,"generated",
                                      "ls_mask_extract_ls_mask_from_corrected_"
                                      "HD_rdirs_20160504_142435.nc")
-        corrected_hd_rdirs_rmouthoutflow_file = os.path.join(self.rmouth_outflow_data_directory, 
+        corrected_hd_rdirs_rmouthoutflow_file = os.path.join(self.rmouth_outflow_data_directory,
                                                          "rmouthflows_ICE5G_data_ALG4_sinkless_downscaled_ls_mask_0k_upscale_rdirs"
                                                          "_{0}_updated.nc".format(ref_label))
-        upscaled_rdirs_rmouthoutflow_file = os.path.join(self.rmouth_outflow_data_directory, 
+        upscaled_rdirs_rmouthoutflow_file = os.path.join(self.rmouth_outflow_data_directory,
                                                          "rmouthflows_ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_"
                                                          "data_ALG4_sinkless_"
                                                          "downscaled_ls_mask_0k_upscale_rdirs_" + data_label + "_updated.nc")
@@ -2652,7 +2862,7 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                                             matching_parameter_set='magnitude_extensive',
                                                             use_single_color_for_discrepancies=True,
                                                             second_datasource_name="Data",grid_type='HD')
-        
+
     def Upscaled_Rdirs_vs_Corrected_HD_Rdirs_tarasov_upscaled_data_ALG4_corr_orog_downscaled_ls_mask_0k_FlowMap_comparison(self):
         data_label="20170508_021105"
         ref_filename=os.path.join(self.flow_maps_data_directory,
@@ -2665,7 +2875,7 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                      "HD_rdirs_20160504_142435.nc")
         corrected_hd_rdirs_rmouthoutflow_file = os.path.join(self.rmouth_outflow_data_directory,
                                                              "rmouthflows_corrected_HD_rdirs_post_processing_20160427_141158.nc")
-        upscaled_rdirs_rmouthoutflow_file = os.path.join(self.rmouth_outflow_data_directory, 
+        upscaled_rdirs_rmouthoutflow_file = os.path.join(self.rmouth_outflow_data_directory,
                                                          "rmouthflows_ICE5G_and_tarasov_upscaled_srtm30plus_data_ALG4_sinkless_"
                                                          "downscaled_ls_mask_0k_upscale_rdirs_" + data_label + "_updated.nc")
         self.FlowMapTwoColourComparisonWithCatchmentsHelper(ref_flowmap_filename=ref_filename,
@@ -2724,8 +2934,8 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                                             "catch_and_outflow_mods_ice5g_10min_upscaled_"
                                                             "rdirs_vs_modern_day.txt",
                                                             second_datasource_name="Data",grid_type='HD')
-        
-        
+
+
     def Upscaled_Rdirs_vs_Corrected_HD_Rdirs_tarasov_upscaled_north_america_only_data_ALG4_corr_orog_downscaled_ls_mask_0k_FlowMap_comparison(self):
         data_label="20170511_230901"
         ref_filename=os.path.join(self.flow_maps_data_directory,
@@ -2738,9 +2948,9 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                      "HD_rdirs_20160504_142435.nc")
         corrected_hd_rdirs_rmouthoutflow_file = os.path.join(self.rmouth_outflow_data_directory,
                                                              "rmouthflows_corrected_HD_rdirs_post_processing_20160427_141158.nc")
-        upscaled_rdirs_rmouthoutflow_file = os.path.join(self.rmouth_outflow_data_directory, 
+        upscaled_rdirs_rmouthoutflow_file = os.path.join(self.rmouth_outflow_data_directory,
                                                          "rmouthflows_ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only"
-                                                         "_data_ALG4_sinkless_downscaled_ls_mask_0k_upscale_rdirs_" 
+                                                         "_data_ALG4_sinkless_downscaled_ls_mask_0k_upscale_rdirs_"
                                                          + data_label + "_updated.nc")
         self.FlowMapTwoColourComparisonWithCatchmentsHelper(ref_flowmap_filename=ref_filename,
                                                             data_flowmap_filename=data_filename,
@@ -2798,7 +3008,7 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                                             "catch_and_outflow_mods_ice5g_10min_upscaled_"
                                                             "rdirs_vs_modern_day.txt",
                                                             second_datasource_name="Data",grid_type='HD')
-        
+
     def Upscaled_Rdirs_vs_Corrected_HD_Rdirs_tarasov_upscaled_north_america_only_data_ALG4_corr_orog_glcc_olson_lsmask_0k_FlowMap_comparison(self):
         data_label="20170517_004128"
         ref_filename=os.path.join(self.flow_maps_data_directory,
@@ -2811,9 +3021,9 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                      "from_glcc_olson_data_20170513_195421.nc")
         corrected_hd_rdirs_rmouthoutflow_file = os.path.join(self.rmouth_outflow_data_directory,
                                                              "rmouthflows_corrected_HD_rdirs_post_processing_20160427_141158.nc")
-        upscaled_rdirs_rmouthoutflow_file = os.path.join(self.rmouth_outflow_data_directory, 
+        upscaled_rdirs_rmouthoutflow_file = os.path.join(self.rmouth_outflow_data_directory,
                                                          "rmouthflows_ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only"
-                                                         "_data_ALG4_sinkless_glcc_olson_lsmask_0k_upscale_rdirs_" 
+                                                         "_data_ALG4_sinkless_glcc_olson_lsmask_0k_upscale_rdirs_"
                                                          + data_label + "_updated.nc")
         self.FlowMapTwoColourComparisonWithCatchmentsHelper(ref_flowmap_filename=ref_filename,
                                                             data_flowmap_filename=data_filename,
@@ -2875,10 +3085,10 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                                             "catch_and_outflow_mods_ice5g_10min_upscaled_"
                                                             "rdirs_vs_modern_day_glcc_olson_lsmask.txt",
                                                             second_datasource_name="Data",grid_type='HD')
-        
+
     def compare_present_day_and_lgm_river_directions_with_catchments_ICE5G_plus_tarasov_style_orog_corrs_for_both(self):
         """Compare LGM to present using ICE5G data plus tarasov style orography corrections for both times"""
-        present_day_data_datetime = "20170521_002051" 
+        present_day_data_datetime = "20170521_002051"
         lgm_data_datetime = "20170521_151723"
         ref_filename=os.path.join(self.flow_maps_data_directory,
                                   "flowmap_ICE5G_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_tarasov"
@@ -2913,7 +3123,7 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                                    format(lgm_data_datetime))
         glacier_mask_filename=os.path.join(self.orog_data_directory,"ice5g_v1_2_21_0k_10min.nc")
         self.FlowMapTwoColourComparisonWithCatchmentsHelper(ref_flowmap_filename=ref_filename,
-                                                            data_flowmap_filename=data_filename, 
+                                                            data_flowmap_filename=data_filename,
                                                             ref_catchment_filename=\
                                                             ref_catchment_filename,
                                                             data_catchment_filename=\
@@ -2949,10 +3159,10 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                                             flip_glacier_mask=True,
                                                             rotate_glacier_mask=True,
                                                             grid_type='HD')
-        
+
     def compare_present_day_and_lgm_river_directions_with_catchments_ICE6G_plus_tarasov_style_orog_corrs_for_both(self):
         """Compare LGM to present using ICE6G data plus tarasov style orography corrections for both times"""
-        present_day_data_datetime = "20170612_202721" 
+        present_day_data_datetime = "20170612_202721"
         lgm_data_datetime = "20170612_202559"
         ref_filename=os.path.join(self.flow_maps_data_directory,
                                   "flowmap_ICE6g_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_tarasov"
@@ -2966,6 +3176,10 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                      "ls_mask_ICE6g_lgm_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs"
                                      "_tarasov_orog_corrs_{0}_HD_transf.nc".\
                                      format(lgm_data_datetime))
+        extra_lsmask_filename=os.path.join(self.ls_masks_data_directory,"generated",
+                                           "ls_mask_ICE6g_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale"
+                                           "_rdirs_tarasov_orog_corrs_{0}_HD_transf.nc".\
+                                           format(present_day_data_datetime))
         ref_catchment_filename=("catchmentmap_ICE6g_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_"
                                 "tarasov_orog_corrs_{0}_upscaled_updated.nc".\
                                 format(present_day_data_datetime))
@@ -2987,7 +3201,7 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                                    format(lgm_data_datetime))
         glacier_mask_filename=os.path.join(self.orog_data_directory,"Ice6g_c_VM5a_10min_21k.nc")
         self.FlowMapTwoColourComparisonWithCatchmentsHelper(ref_flowmap_filename=ref_filename,
-                                                            data_flowmap_filename=data_filename, 
+                                                            data_flowmap_filename=data_filename,
                                                             ref_catchment_filename=\
                                                             ref_catchment_filename,
                                                             data_catchment_filename=\
@@ -3039,6 +3253,7 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                                                                                 (179,445),(212,384),
                                                                                                 (261,230),(85,438)],
                                                             glacier_mask_filename=glacier_mask_filename,
+                                                            extra_lsmask_filename=extra_lsmask_filename,
                                                             glacier_mask_grid_type='LatLong10min',
                                                             flip_glacier_mask=True,
                                                             rotate_glacier_mask=True,
@@ -3046,7 +3261,7 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
 
     def compare_ICE5G_and_ICE6G_with_catchments_tarasov_style_orog_corrs_for_both(self):
         """Compare LGM to present using ICE6G data plus tarasov style orography corrections for both times"""
-        ice5g_datetime = "20170615_174943" 
+        ice5g_datetime = "20170615_174943"
         ice6g_datetime = "20170612_202559"
         ref_filename=os.path.join(self.flow_maps_data_directory,
                                   "flowmap_ICE5G_21k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_tarasov"
@@ -3080,7 +3295,7 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                                    format(ice6g_datetime))
         #glacier_mask_filename=os.path.join(self.orog_data_directory,"ice5g_v1_2_21_0k_10min.nc")
         self.FlowMapTwoColourComparisonWithCatchmentsHelper(ref_flowmap_filename=ref_filename,
-                                                            data_flowmap_filename=data_filename, 
+                                                            data_flowmap_filename=data_filename,
                                                             ref_catchment_filename=\
                                                             ref_catchment_filename,
                                                             data_catchment_filename=\
@@ -3141,20 +3356,20 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
 
 class OrographyPlots(Plots):
     """A general base class for orography plots"""
-    
+
     orography_path_extension = 'orographys'
 
     def __init__(self,save,color_palette_to_use='default'):
         """Class constructor"""
         super(OrographyPlots,self).__init__(save,color_palette_to_use)
         self.orography_data_directory = os.path.join(self.hd_data_path,self.orography_path_extension)
-        
+
 class SimpleOrographyPlots(OrographyPlots):
-    
+
     def __init__(self,save,color_palette_to_use='default'):
         """Class constructor."""
         super(SimpleOrographyPlots,self).__init__(save,color_palette_to_use)
-        
+
     def SimpleArrayPlotHelper(self,filename):
         """Assists the creation of simple array plots"""
         #levels = np.linspace(-100.0, 9900.0, 100, endpoint=True)
@@ -3170,7 +3385,7 @@ class Ice5GComparisonPlots(OrographyPlots):
         """Class constructor. Sets filename (to point to either old or new data)"""
         super(Ice5GComparisonPlots,self).__init__(save,color_palette_to_use)
         print "Comparing the Modern and LGM Ice-5G 5-minute resolution orography datasets"
-        
+
         if use_old_data:
             #The data Uwe gave me; this is possibly an older version
             modern_ice_5g_filename = self.orography_data_directory +"/ice5g_0k_5min.nc"
@@ -3183,33 +3398,33 @@ class Ice5GComparisonPlots(OrographyPlots):
             lgm_ice_5g_filename = self.orography_data_directory + "/ice5g_v1_2_21_0k_10min.nc"
             modern_ice_5g_field = iohlpr.NetCDF4FileIOHelper.load_field(modern_ice_5g_filename, 'LatLong10min')
             lgm_ice_5g_field = iohlpr.NetCDF4FileIOHelper.load_field(lgm_ice_5g_filename, 'LatLong10min')
-        
+
         self.difference_in_ice_5g_orography = lgm_ice_5g_field - modern_ice_5g_field
         if use_old_data:
             #Remove antartica
             self.difference_in_ice_5g_orography = self.difference_in_ice_5g_orography[275:,:]
-   
-    def plotLine(self): 
+
+    def plotLine(self):
         """Contour plot comparing the Modern and LGM Ice-5G 5-minute resolution orography datasets"""
         minc = 0
         maxc = 500
         num = 500
         levels = np.linspace(minc,maxc,num+1)
         title = textwrap.dedent("""\
-        Orography difference between LGM and Modern ICE-5G data 
+        Orography difference between LGM and Modern ICE-5G data
         using {0} meter contour interval""").format((maxc-minc)/num)
-        plt.figure() 
+        plt.figure()
         plt.contour(self.difference_in_ice_5g_orography,levels=levels)
         plt.title(title)
         pts.remove_ticks()
         #if self.save:
             #plt.savefig('something')
         print "Line contour plot created"
-            
+
     def plotFilled(self):
         """Filled contour plot comparing the Modern and LGM Ice-5G 5-minute resolution orography datasets"""
         minc = 70
-        maxc = 120 
+        maxc = 120
         num  = 25
         levels = np.linspace(minc,maxc,num+1)
         title = "Orography difference between LGM and Modern ICE-5G data"
@@ -3222,21 +3437,21 @@ class Ice5GComparisonPlots(OrographyPlots):
         #if self.save:
             #plt.savefig('something')
         print "Filled contour plot created"
-    
+
     def plotCombined(self):
         """Basic combined plot"""
         self.CombinedPlotHelper()
-        
+
     def plotCombinedIncludingOceanFloors(self):
         """Combined plot with extended range of levels to include the ocean floor"""
         self.CombinedPlotHelper(minc=70,maxc=170,num=50)
-     
+
     def CombinedPlotHelper(self,minc=70,maxc=120,num=25):
         """Combined filled and line contour plots of orography difference between LGM and Modern ICE-5G data"""
         levels = np.linspace(minc,maxc,num+1)
         title = textwrap.dedent("""\
-        Orography difference between LGM and Modern ICE-5G data 
-        using {0} meter contour interval""").format((maxc-minc)/num) 
+        Orography difference between LGM and Modern ICE-5G data
+        using {0} meter contour interval""").format((maxc-minc)/num)
         plt.figure()
         ax = plt.subplot(111)
         contourset = plt.contourf(self.difference_in_ice_5g_orography,
@@ -3246,21 +3461,21 @@ class Ice5GComparisonPlots(OrographyPlots):
         plt.contour(self.difference_in_ice_5g_orography,levels=contourset.levels,
                     colors='black',hold=True)
         ufcntr = plt.contourf(self.difference_in_ice_5g_orography,
-                     levels=[np.min(self.difference_in_ice_5g_orography),minc], 
+                     levels=[np.min(self.difference_in_ice_5g_orography),minc],
                      colors='white',
                      hatches=['/'],hold=True)
         ofcntr = plt.contourf(self.difference_in_ice_5g_orography,
                      levels=[maxc,np.max(self.difference_in_ice_5g_orography)],
                      colors='white',
                      hatches=['\\'],hold=True)
-        ufartists,uflabels = ufcntr.legend_elements() #@UnusedVariable 
+        ufartists,uflabels = ufcntr.legend_elements() #@UnusedVariable
         ofartists,oflabels = ofcntr.legend_elements() #@UnusedVariable
         uflabels=[u'Difference $\\leq {0}$'.format(minc)]
         oflabels=[u'${0} <$ Difference'.format(maxc)]
         artists = ufartists + ofartists
         labels  = uflabels + oflabels
         plt.title(title)
-        pts.remove_ticks() 
+        pts.remove_ticks()
         axbounds = ax.get_position()
         #Shrink box by 5%
         ax.set_position([axbounds.x0,axbounds.y0 + axbounds.height*0.05,
@@ -3270,12 +3485,12 @@ class Ice5GComparisonPlots(OrographyPlots):
         #if self.save:
             #plt.savefig('something')
         print "Combined plot created"
-         
+
 def main():
     """Top level function; define some overarching options and which plots to create"""
     save = False
     show = True
-   
+
     #hd_parameter_plots =  HDparameterPlots(save=save)
     #hd_parameter_plots.flow_parameter_distribution_for_non_lake_cells_for_current_HD_model()
     #hd_parameter_plots.flow_parameter_distribution_current_HD_model_for_current_HD_model_reprocessed_without_lakes_and_wetlands()
@@ -3287,6 +3502,7 @@ def main():
     #ice5g_comparison_plots.plotCombined()
     #ice5g_comparison_plots.plotCombinedIncludingOceanFloors()
     #flowmapplot = FlowMapPlots(save)
+    #flowmapplot.FourFlowMapSectionsFromDeglaciation()
     #flowmapplot.Etopo1FlowMap()
     #flowmapplot.ICE5G_data_all_points_0k()
     #flowmapplot.ICE5G_data_all_points_0k_no_sink_filling()
@@ -3307,7 +3523,7 @@ def main():
     #flowmapplot.Upscaled_Rdirs_vs_Directly_Upscaled_fields_ICE5G_data_ALG4_corr_orog_downscaled_ls_mask_0k_FlowMap_comparison()
     #flowmapplot.Ten_Minute_Data_from_Virna_data_ALG4_corr_orog_downscaled_lsmask_no_sinks_21k_vs_0k_FlowMap_comparison()
     #flowmapplot.Upscaled_Rdirs_vs_Corrected_HD_Rdirs_ICE5G_data_ALG4_corr_orog_downscaled_ls_mask_0k_FlowMap_comparison()
-    #flowmapplotwithcatchment = FlowMapPlotsWithCatchments(save)
+    flowmapplotwithcatchment = FlowMapPlotsWithCatchments(save)
     #flowmapplotwithcatchment.Upscaled_Rdirs_vs_Corrected_HD_Rdirs_ICE5G_data_ALG4_corr_orog_downscaled_ls_mask_0k_FlowMap_comparison()
     #flowmapplotwithcatchment.compare_present_day_and_lgm_river_directions_with_catchments_virna_data_plus_tarasov_style_orog_corrs_for_both()
     #flowmapplotwithcatchment.compare_present_day_river_directions_with_catchments_virna_data_with_vs_without_tarasov_style_orog_corrs()
@@ -3321,7 +3537,7 @@ def main():
     #flowmapplotwithcatchment.\
     #Upscaled_Rdirs_vs_Corrected_HD_Rdirs_tarasov_upscaled_north_america_only_data_ALG4_corr_orog_glcc_olson_lsmask_0k_FlowMap_comparison()
     #flowmapplotwithcatchment.compare_present_day_and_lgm_river_directions_with_catchments_ICE5G_plus_tarasov_style_orog_corrs_for_both()
-    #flowmapplotwithcatchment.compare_present_day_and_lgm_river_directions_with_catchments_ICE6G_plus_tarasov_style_orog_corrs_for_both()
+    flowmapplotwithcatchment.compare_present_day_and_lgm_river_directions_with_catchments_ICE6G_plus_tarasov_style_orog_corrs_for_both()
     #flowmapplotwithcatchment.compare_ICE5G_and_ICE6G_with_catchments_tarasov_style_orog_corrs_for_both()
     #outflowplots = OutflowPlots(save)
     #outflowplots.Compare_Upscaled_Rdirs_vs_Directly_Upscaled_fields_ICE5G_data_ALG4_corr_orog_downscaled_ls_mask_0k()
@@ -3339,12 +3555,12 @@ def main():
     #hd_output_plots.check_water_balance_of_1978_for_constant_forcing_of_0_01()
     #hd_output_plots.plot_comparison_using_1990_rainfall_data()
     #hd_output_plots.plot_comparison_using_1990_rainfall_data_adding_back_to_discharge()
-    coupledrunoutputplots = CoupledRunOutputPlots(save=save)
+    #coupledrunoutputplots = CoupledRunOutputPlots(save=save)
     #coupledrunoutputplots.ice6g_rdirs_lgm_run_discharge_plot()
     #coupledrunoutputplots.extended_present_day_rdirs_lgm_run_discharge_plot()
-    coupledrunoutputplots.ocean_grid_extended_present_day_rdirs_vs_ice6g_rdirs_lgm_run_discharge_plot()
-    coupledrunoutputplots.extended_present_day_rdirs_vs_ice6g_rdirs_lgm_echam()
-    coupledrunoutputplots.extended_present_day_rdirs_vs_ice6g_rdirs_lgm_mpiom_pem()
+    #coupledrunoutputplots.ocean_grid_extended_present_day_rdirs_vs_ice6g_rdirs_lgm_run_discharge_plot()
+    #coupledrunoutputplots.extended_present_day_rdirs_vs_ice6g_rdirs_lgm_echam()
+    #coupledrunoutputplots.extended_present_day_rdirs_vs_ice6g_rdirs_lgm_mpiom_pem()
     if show:
         plt.show()
 

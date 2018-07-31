@@ -4,8 +4,8 @@ GFORTRAN := /usr/local/Cellar/gcc/6.2.0/bin/gfortran
 EXT_SOURCE :=$(shell echo ${HOME} )/Documents/code/
 else ifeq ($(shell uname -s),Linux)
 GFORTRAN := $(shell which gfortran)
-EXT_SOURCE :=$(shell echo ${HOME} )/external_code/
-else 
+EXT_SOURCE :=$(shell echo ${HOME} )/HDancillarydata/code/
+else
 $(error OS $(shell uname -s) not recognised)
 endif
 FRUIT_LOC := $(EXT_SOURCE)/fruit_3.4.1/src
@@ -22,7 +22,7 @@ ifneq ($(strip $(C_DEPS)),)
 endif
 endif
 
-# Add inputs and outputs from these tool invocations to the build variables 
+# Add inputs and outputs from these tool invocations to the build variables
 
 # All Target
 all: Dynamic_HD_Fortran_Code

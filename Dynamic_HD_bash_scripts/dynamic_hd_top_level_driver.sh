@@ -23,7 +23,7 @@ if echo $LOADEDMODULES | fgrep -q ${module_name} ; then
 fi
 }
 
-#Define portable absolute path finding function	
+#Define portable absolute path finding function
 function find_abs_path
 {
 relative_path=$1
@@ -46,7 +46,7 @@ output_hdstart_filepath=${12}
 
 #Change first_timestep into a bash command for true or false
 shopt -s nocasematch
-if [[ $first_timestep == "true" ]] || [[ $first_timestep == "t" ]]; then 
+if [[ $first_timestep == "true" ]] || [[ $first_timestep == "t" ]]; then
 	first_timestep=true
 elif [[ $first_timestep == "false" ]] || [[ $first_timestep == "f" ]]; then
 	first_timestep=false
@@ -60,16 +60,16 @@ shopt -u nocasematch
 if [[ $# -ne 11 ]] && [[ $# -ne 12 ]]; then
 	echo "Wrong number of positional arguments ($# supplied), script only takes 11 or 12"	1>&2
 	exit 1
-fi 
+fi
 
 if $first_timestep && [[ $# -eq 11 ]]; then
 	echo "First timestep requires 12 arguments including output hdstart file path (11 supplied)" 1>&2
 	exit 1
 elif ! $first_timestep && [[ $# -eq 12 ]]; then
-	echo "Timesteps other than the first requires 11 arguments (12 supplied)." 1>&2 
+	echo "Timesteps other than the first requires 11 arguments (12 supplied)." 1>&2
 	echo "Specifying an output hdstart file path is not permitted." 1>&2
 	exit 1
-fi 
+fi
 
 #Check the arguments have the correct file extensions
 if ! [[ ${input_orography_filepath##*.} == "nc" ]] || ! [[ ${input_orography_filepath##*.} == "nc" ]] || ! [[ ${present_day_base_orography_filepath##*.} == "nc" ]] || ! [[ ${glacier_mask_filepath##*.} == "nc" ]] ; then
@@ -109,7 +109,7 @@ fi
 
 if ! [[ -d $ancillary_data_directory ]]; then
 	echo "Ancillary data directory does not exist" 1>&2
-	exit 1	
+	exit 1
 fi
 
 if ! [[ -d ${output_hdpara_filepath%/*} ]]; then
@@ -128,12 +128,12 @@ config_file="${ancillary_data_directory}/top_level_driver.cfg"
 # Check config file exists  and has correct format
 
 if ! [[ -f ${config_file} ]]; then
-	echo "Top level script config file doesn't exist!"	
+	echo "Top level script config file doesn't exist!"
 	exit 1
 fi
 
 if egrep -v -q "^(#.*|.*=.*)$" ${config_file}; then
-	echo "Config file has wrong format" 1>&2	
+	echo "Config file has wrong format" 1>&2
 	exit 1
 fi
 
@@ -153,37 +153,37 @@ fi
 
 # Prepare a working directory if it is the first timestep and it doesn't already exist
 if $first_timestep && ! [[ -e $working_directory ]]; then
-	echo "Creating a working directory"	
+	echo "Creating a working directory"
 	mkdir -p $working_directory
 fi
 
 #Check that the working directory, source directory and external source directory exist
 if ! [[ -d $working_directory ]]; then
 	if $first_timestep ; then
-		echo "Working directory does not exist or is not a directory (even after attempt to create it)" 1>&2	
+		echo "Working directory does not exist or is not a directory (even after attempt to create it)" 1>&2
 	else
-		echo "Working directory does not exist or is not a directory" 1>&2	
+		echo "Working directory does not exist or is not a directory" 1>&2
 	fi
 	exit 1
-fi 
+fi
 
 if ! [[ -d $source_directory ]]; then
 	echo "Source directory does not exist." 1>&2
-	
+
 fi
 
 if ! [[ -d $external_source_directory ]]; then
 	echo "External Source directory does not exist." 1>&2
-	
-fi 
+
+fi
 
 #Change to the working directory
 cd ${working_directory}
 
 #Set output_hdstart_filepath to blank if not the first timestep
 if ! ${first_timestep}; then
-	output_hdstart_filepath=""	
-else 
+	output_hdstart_filepath=""
+else
 	output_hdstart_filepath="-s ${output_hdstart_filepath}"
 fi
 
@@ -194,11 +194,11 @@ if $first_timestep ; then
 		compilation_required=true
 	else
 		flock -s 200
-		compilation_required=false	
+		compilation_required=false
 	fi
 else
 	flock -s 200
-	compilation_required=false	
+	compilation_required=false
 fi
 
 #Setup conda environment
@@ -219,7 +219,7 @@ if $compilation_required && conda info -e | grep -q "dyhdenv"; then
 fi
 if ! conda info -e | grep -q "dyhdenv"; then
 	#Use the txt file environment creation (not conda env create that requires a yml file)
-	#Create a dynamic_hd_env.txt using conda list --export > filename.txt not 
+	#Create a dynamic_hd_env.txt using conda list --export > filename.txt not
 	#conda env export which creates a yml file.
 	conda create --file "${ancillary_data_directory}/dynamic_hd_env.txt" --yes --name "dyhdenv"
 fi
@@ -261,18 +261,18 @@ if $compilation_required ; then
 	fi
 	if ! [[ -f ${source_directory}/Dynamic_HD_Cpp_Code/src/gtest-internal-inl.h ]]; then
 		cp -r ${external_source_directory}/googletest-master/googletest/src/gtest-internal-inl.h \
-			${source_directory}/Dynamic_HD_Cpp_Code/src	
+			${source_directory}/Dynamic_HD_Cpp_Code/src
 	fi
 	cd ${source_directory}/Dynamic_HD_Cpp_Code/Release
 	make -f ../makefile clean
-	make -f ../makefile all 
+	make -f ../makefile all
 	cd - 2>&1 > /dev/null
 	echo "Compiling Fortran code" 1>&2
 	mkdir -p ${source_directory}/Dynamic_HD_Fortran_Code/Release
 	mkdir -p ${source_directory}/Dynamic_HD_Fortran_Code/Release/src
 	cd ${source_directory}/Dynamic_HD_Fortran_Code/Release
 	make -f ../makefile clean
-	make -f ../makefile -e "EXT_SOURCE=${external_source_directory}" all 
+	make -f ../makefile -e "EXT_SOURCE=${external_source_directory}" all
 	cd - 2>&1 > /dev/null
 fi
 
@@ -286,11 +286,11 @@ fi
 # Clean up paragen working directory if any
 if [[ -d "${working_directory}/paragen" ]]; then
 	cd ${working_directory}/paragen
-	rm -f paragen.inp soil_partab.txt slope.dat riv_vel.dat riv_n.dat riv_k.dat over_vel.dat over_n.dat over_k.dat || true 
+	rm -f paragen.inp soil_partab.txt slope.dat riv_vel.dat riv_n.dat riv_k.dat over_vel.dat over_n.dat over_k.dat || true
 	rm -f hdpara.srv global.inp ddir.inp bas_k.dat || true
 	cd - 2>&1 > /dev/null
-	rmdir ${working_directory}/paragen 
-fi 
+	rmdir ${working_directory}/paragen
+fi
 
 #Setup cython interface between python and C++
 if $compilation_required; then
@@ -311,29 +311,29 @@ fi
 if $compilation_required; then
 	echo "Compiling Fortran code called from shell script wrappers"
 	${source_directory}/Dynamic_HD_bash_scripts/compile_paragen_and_hdfile.sh ${source_directory}/Dynamic_HD_bash_scripts/bin ${source_directory}/Dynamic_HD_bash_scripts/parameter_generation_scripts/fortran ${source_directory}/Dynamic_HD_bash_scripts/parameter_generation_scripts/fortran/paragen.f paragen
-fi 
+fi
 
 #Run
-echo "Running Dynamic HD Code" 1>&2 
+echo "Running Dynamic HD Code" 1>&2
 python2.7 ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/dynamic_hd_production_run_driver.py ${input_orography_filepath} ${input_ls_mask_filepath} ${present_day_base_orography_filepath} ${glacier_mask_filepath} ${output_hdpara_filepath} ${ancillary_data_directory} ${working_directory} ${output_hdstart_filepath}
 
 #Delete paragen directory
 cd ${working_directory}/paragen
-rm -f paragen.inp soil_partab.txt slope.dat riv_vel.dat riv_n.dat riv_k.dat over_vel.dat over_n.dat over_k.dat 
-rm -f hdpara.srv global.inp ddir.inp bas_k.dat 
+rm -f paragen.inp soil_partab.txt slope.dat riv_vel.dat riv_n.dat riv_k.dat over_vel.dat over_n.dat over_k.dat
+rm -f hdpara.srv global.inp ddir.inp bas_k.dat
 cd - 2>&1 > /dev/null
 rmdir ${working_directory}/paragen
-rm -f catchments.log loops.log 30minute_river_dirs.dat 
+rm -f catchments.log loops.log 30minute_river_dirs.dat
 rm -f 30minute_ls_mask.dat 30minute_filled_orog.dat 30minute_river_dirs_temp.nc 30minute_filled_orog_temp.nc
-rm -f 30minute_filled_orog_temp.dat 30minute_ls_mask_temp.dat 30minute_river_dirs_temp.dat 
+rm -f 30minute_filled_orog_temp.dat 30minute_ls_mask_temp.dat 30minute_river_dirs_temp.dat
 rm -f 30minute_ls_mask_temp.nc
 
 #Generate full diagnostic output label
 diagnostic_output_label="${diagnostic_output_exp_id_label}_${diagnostic_output_time_label}"
 
 #Move diagnostic output to target location
-if [[ $(ls ${working_directory}) ]]; then 
-	mkdir -p ${diagnostic_output_directory} || true 
+if [[ $(ls ${working_directory}) ]]; then
+	mkdir -p ${diagnostic_output_directory} || true
 	for file in ${working_directory}/*.nc ; do
 		mv  $file ${diagnostic_output_directory}/$(basename ${file} .nc)_${diagnostic_output_label}.nc
 	done

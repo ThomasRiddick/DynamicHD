@@ -14,8 +14,8 @@ void latlon_burn_carved_rivers_cython_wrapper(double* orography_in,double* rdirs
 	 auto minima_in = new bool[nlat_in*nlon_in];
 	 auto lakemask_in = new bool[nlat_in*nlon_in];
 	 for (auto i = 0; i < nlat_in*nlon_in; i++ ) {
-		 minima_in   = new bool(minima_in_int[i]);
-		 lakemask_in = new bool(lakemask_in_int[i]);
+		 minima_in[i]   = bool(minima_in_int[i]);
+		 lakemask_in[i] = bool(lakemask_in_int[i]);
 	 }
 	 latlon_burn_carved_rivers(orography_in,rdirs_in,minima_in,
 	 						   lakemask_in,nlat_in,nlon_in);

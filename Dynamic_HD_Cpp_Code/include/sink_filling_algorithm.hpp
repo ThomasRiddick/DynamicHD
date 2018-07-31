@@ -400,7 +400,7 @@ public:
 
 class sink_filling_algorithm_4_latlon : public sink_filling_algorithm_4, public sink_filling_algorithm_latlon{
 	///Direction based river directions
-	field<double>* rdirs = nullptr;
+	field<short>* rdirs = nullptr;
 	///Index based river directions
 	field<int>* next_cell_lat_index = nullptr;
 	field<int>* next_cell_lon_index = nullptr;
@@ -420,7 +420,7 @@ public:
 	///Constructor
 	sink_filling_algorithm_4_latlon(field<double>*, grid_params*, field<bool>*, bool*,
 							 	 	bool, field<int>*, bool, bool, field<int>*,field<int>*,
-									bool* = nullptr, field<double>* = nullptr);
+									bool* = nullptr, field<short>* = nullptr);
 	///Set the river direction of the river direction field for the cell at the given coordinate
 	///to the given value (value is integer from 0-9 but written as double for historical reasons
 	void set_dir_based_rdir(coords*, double);
@@ -428,7 +428,7 @@ public:
 	void setup_flags(bool, bool = false, bool = false, bool = false, bool = false, int = 1,
 				     double = 1.1, bool = false);
 	///Setup fields and grid
-	void setup_fields(double*, bool*, bool*, int*, int*, grid_params*, double*, int*);
+	void setup_fields(double*, bool*, bool*, int*, int*, grid_params*, short*, int*);
 	///Calculate the direction from neighbor to cell; only need when uses direction based
 	///river directions on a latitude-longitude grid. (Could potentially make direction based
 	///river direction more abstract and more widely applicable.)

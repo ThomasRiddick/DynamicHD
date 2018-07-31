@@ -15,12 +15,12 @@ contains
     use cotat_parameters_mod
     integer, dimension(:,:), allocatable :: input_fine_river_directions
     integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
-    integer, dimension(:,:), allocatable :: output_course_river_directions
+    integer, dimension(:,:), allocatable :: output_coarse_river_directions
     integer, dimension(5,5) :: expected_result
         allocate(input_fine_river_directions(15,15))
         allocate(input_fine_total_cumulative_flow(15,15))
-        allocate(output_course_river_directions(5,5))
-        output_course_river_directions = -999
+        allocate(output_coarse_river_directions(5,5))
+        output_coarse_river_directions = -999
         MUFP = 1.5
         area_threshold = 9
         run_check_for_sinks = .True.
@@ -82,8 +82,8 @@ contains
             /), shape(transpose(expected_result))))
 
         call cotat_plus_latlon(input_fine_river_directions,input_fine_total_cumulative_flow,&
-                               output_course_river_directions)
-        call assert_equals(expected_result,output_course_river_directions,5,5)
+                               output_coarse_river_directions)
+        call assert_equals(expected_result,output_coarse_river_directions,5,5)
 
     end subroutine testSmallGrid
 
@@ -92,12 +92,12 @@ contains
     use cotat_parameters_mod
     integer, dimension(:,:), allocatable :: input_fine_river_directions
     integer, dimension(:,:), allocatable :: input_fine_total_cumulative_flow
-    integer, dimension(:,:), allocatable :: output_course_river_directions
+    integer, dimension(:,:), allocatable :: output_coarse_river_directions
     integer, dimension(5,5) :: expected_result
         allocate(input_fine_river_directions(15,15))
         allocate(input_fine_total_cumulative_flow(15,15))
-        allocate(output_course_river_directions(5,5))
-        output_course_river_directions = -999
+        allocate(output_coarse_river_directions(5,5))
+        output_coarse_river_directions = -999
         MUFP = 1.5
         area_threshold = 9
         run_check_for_sinks = .True.
@@ -159,8 +159,8 @@ contains
             /), shape(transpose(expected_result))))
 
         call cotat_plus_latlon(input_fine_river_directions,input_fine_total_cumulative_flow,&
-                               output_course_river_directions)
-        call assert_equals(expected_result,output_course_river_directions,5,5)
+                               output_coarse_river_directions)
+        call assert_equals(expected_result,output_coarse_river_directions,5,5)
 
     end subroutine testSmallGridTwo
 
