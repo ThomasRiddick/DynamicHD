@@ -177,6 +177,27 @@ if ! [[ -d $external_source_directory ]]; then
 
 fi
 
+
+no_conda=${no_conda:-"false"}
+if [[ $no_conda == "true" ]] || [[ $no_conda == "t" ]]; then
+	no_conda=true
+elif [[ $no_conda == "false" ]] || [[ $no_conda == "f" ]]; then
+	no_conda=false
+else
+	echo "Format of no_conda flag is unknown, please use True/False or T/F" 1>&2
+	exit 1
+fi
+
+no_modules=${no_modules:-"false"}
+if [[ $no_modules == "true" ]] || [[ $no_modules == "t" ]]; then
+	no_modules=true
+elif [[ $no_modules == "false" ]] || [[ $no_modules == "f" ]]; then
+	no_modules=false
+else
+	echo "Format of no_modules flag is unknown, please use True/False or T/F" 1>&2
+	exit 1
+fi
+
 #Change to the working directory
 cd ${working_directory}
 
@@ -203,40 +224,49 @@ fi
 
 #Setup conda environment
 echo "Setting up environment"
-if [[ $(hostname -d) == "hpc.dkrz.de" ]]; then
-	source /sw/rhel6-x64/etc/profile.mistral
-	unload_module netcdf_c
-    unload_module imagemagick
-	unload_module cdo/1.7.0-magicsxx-gcc48
-    unload_module python
-else
-	export MODULEPATH="/sw/common/Modules:/client/Modules"
+if ! $no_modules ; then
+	if [[ $(hostname -d) == "hpc.dkrz.de" ]]; then
+		source /sw/rhel6-x64/etc/profile.mistral
+		unload_module netcdf_c
+	    unload_module imagemagick
+		unload_module cdo/1.7.0-magicsxx-gcc48
+	    unload_module python
+	else
+		export MODULEPATH="/sw/common/Modules:/client/Modules"
+	fi
 fi
-load_module anaconda3
 
-if $compilation_required && conda info -e | grep -q "dyhdenv"; then
-	conda env remove --yes --name dyhdenv
+if ! $no_modules && ! $no_conda ; then
+	load_module anaconda3
 fi
-if ! conda info -e | grep -q "dyhdenv"; then
-	#Use the txt file environment creation (not conda env create that requires a yml file)
-	#Create a dynamic_hd_env.txt using conda list --export > filename.txt not
-	#conda env export which creates a yml file.
-	conda create --file "${ancillary_data_directory}/dynamic_hd_env.txt" --yes --name "dyhdenv"
+
+if ! $no_conda ; then
+	if $compilation_required && conda info -e | grep -q "dyhdenv"; then
+		conda env remove --yes --name dyhdenv
+	fi
+	if ! conda info -e | grep -q "dyhdenv"; then
+		#Use the txt file environment creation (not conda env create that requires a yml file)
+		#Create a dynamic_hd_env.txt using conda list --export > filename.txt not
+		#conda env export which creates a yml file.
+		conda create --file "${source_directory}/Dynamic_HD_Environmental_Settings/dynamic_hd_env.txt" --yes --name "dyhdenv"
+	fi
+	source activate dyhdenv
 fi
-source activate dyhdenv
 
 #Load CDOs if required and reload version of python with CDOs included
-if echo $LOADEDMODULES | fgrep -q -v "cdo" ; then
-	load_module cdo
-fi
-if [[ $(hostname -d) == "hpc.dkrz.de" ]]; then
-	load_module python/2.7.12
-else
-	load_module python
-fi
+# if ! $no_modules ; then
+# 	if echo $LOADEDMODULES | fgrep -q -v "cdo" ; then
+# 		load_module cdo
+# 	fi
+# 	if [[ $(hostname -d) == "hpc.dkrz.de" ]]; then
+# 		load_module python/2.7.12
+# 	fi
+# fi
 
-#Load a new version of gcc that doesn't have the polymorphic variable bug
-load_module gcc/6.2.0
+# #Load a new version of gcc that doesn't have the polymorphic variable bug
+# if ! $no_modules ; then
+# 	load_module gcc/6.2.0
+# fi
 
 #Setup correct python path
 export PYTHONPATH=${source_directory}/Dynamic_HD_Scripts:${PYTHONPATH}

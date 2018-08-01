@@ -12,7 +12,7 @@ import numpy as np
 import utilities
 import dynamic_hd
 import field
-import configparser
+import ConfigParser
 import libs.fill_sinks_wrapper as fill_sinks_wrapper
 import dynamic_hd_driver as dyn_hd_dr
 import compute_catchments as comp_catchs
@@ -27,8 +27,8 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
     def __init__(self,input_orography_filepath=None,input_ls_mask_filepath=None,output_hdparas_filepath=None,
                  ancillary_data_directory=None,working_directory=None,output_hdstart_filepath=None,
                  present_day_base_orography_filepath=None,glacier_mask_filepath=None):
-        """Class constructor. 
-        
+        """Class constructor.
+
         Deliberately does NOT call constructor of Dynamic_HD_Drivers so the many paths
         within the data directory structure used for offline runs is not initialized here
         """
@@ -45,7 +45,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         if self.ancillary_data_path is not None:
             self.python_config_filename=path.join(self.ancillary_data_path,
                                                   "dynamic_hd_production_driver.cfg")
-            
+
     def trial_run_using_data_from_new_data_from_virna_2016_version(self):
         """Run a full trial using the 2016 version of the new data from Virna"""
         super(Dynamic_HD_Production_Run_Drivers,self).__init__()
@@ -62,7 +62,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         self.compile_paragen_and_hdfile()
         self.no_intermediaries_ten_minute_data_ALG4_no_true_sinks_plus_upscale_rdirs_driver()
         return self.output_hdparas_filepath,self.output_hdstart_filepath
-        
+
     def trial_run_using_data_from_new_data_from_virna_2017_version(self):
         """Run a full trial using the 2017 version of the new data from Virna"""
         super(Dynamic_HD_Production_Run_Drivers,self).__init__()
@@ -79,7 +79,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         self.compile_paragen_and_hdfile()
         self.no_intermediaries_ten_minute_data_ALG4_no_true_sinks_plus_upscale_rdirs_driver()
         return self.output_hdparas_filepath,self.output_hdstart_filepath
-    
+
     def trial_run_using_data_from_new_data_from_virna_2017_version_2(self):
         """Run a full trial using the second 2017 version of the new data from Virna"""
         super(Dynamic_HD_Production_Run_Drivers,self).__init__()
@@ -98,7 +98,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         self.compile_paragen_and_hdfile()
         self.no_intermediaries_ten_minute_data_ALG4_no_true_sinks_plus_upscale_rdirs_driver()
         return self.output_hdparas_filepath,self.output_hdstart_filepath
-        
+
     def trial_run_using_ice6g_present_day_data(self):
         """Run a full trial using present day ICE6G data"""
         super(Dynamic_HD_Production_Run_Drivers,self).__init__()
@@ -121,7 +121,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         self.compile_paragen_and_hdfile()
         self.no_intermediaries_ten_minute_data_ALG4_no_true_sinks_plus_upscale_rdirs_driver()
         return self.output_hdparas_filepath,self.output_hdstart_filepath
-    
+
     def trial_run_using_ice6g_lgm_day_data(self):
         """Run a full trial using LGM ICE6G data"""
         super(Dynamic_HD_Production_Run_Drivers,self).__init__()
@@ -144,7 +144,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         self.compile_paragen_and_hdfile()
         self.no_intermediaries_ten_minute_data_ALG4_no_true_sinks_plus_upscale_rdirs_driver()
         return self.output_hdparas_filepath,self.output_hdstart_filepath
-    
+
     def trial_run_using_ice6g_present_day_data_with_specified_fieldnames(self):
         """Run a full trial using present day ICE6G data and specified fieldnames"""
         super(Dynamic_HD_Production_Run_Drivers,self).__init__()
@@ -168,7 +168,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         self.compile_paragen_and_hdfile()
         self.no_intermediaries_ten_minute_data_ALG4_no_true_sinks_plus_upscale_rdirs_driver()
         return self.output_hdparas_filepath,self.output_hdstart_filepath
-    
+
     def trial_run_using_ice6g_lgm_day_data_with_specified_fieldnames(self):
         """Run a full trial using LGM ICE6G data and specified fieldnames"""
         super(Dynamic_HD_Production_Run_Drivers,self).__init__()
@@ -196,13 +196,13 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
 
     def _read_and_validate_config(self):
         """Reads and checks format of config file
-        
+
         Arguments: None
         Returns: ConfigParser object; the read and checked configuration
         """
 
         valid_config = True
-        config = configparser.ConfigParser()
+        config = ConfigParser.ConfigParser()
         print "Read python driver options from file {0}".format(self.python_config_filename)
         config.read(self.python_config_filename)
         valid_config = valid_config \
@@ -228,7 +228,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         valid_config = valid_config \
             if config.has_option("output_options","output_course_rdirs") else False
         valid_config = valid_config \
-            if config.has_option("output_options","output_course_unfilled_orog") else False 
+            if config.has_option("output_options","output_course_unfilled_orog") else False
         valid_config = valid_config \
             if config.has_option("output_options","output_course_filled_orog") else False
         valid_config = valid_config \
@@ -250,10 +250,10 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         if not config.has_option("input_fieldname_options","input_base_present_day_orography_fieldname"):
             config.set("input_fieldname_options","input_base_present_day_orography_fieldname","")
         return config
-    
+
     def no_intermediaries_ten_minute_data_ALG4_no_true_sinks_plus_upscale_rdirs_driver(self):
         """Generates and upscales sinkless river direction from a initial 10 minute orography and landsea mask
-        
+
         Arguments: None
         Returns: nothing
         """
@@ -267,7 +267,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                       "hdparas_ref.nc")
         if self.present_day_base_orography_filename:
             present_day_reference_orography_filename = path.join(self.ancillary_data_path,
-                                                                 "ice5g_v1_2_00_0k_10min.nc") 
+                                                                 "ice5g_v1_2_00_0k_10min.nc")
         if self.tarasov_based_orog_correction:
             orography_corrections_filename = path.join(self.ancillary_data_path,
                                                        "orog_corrs_field_ICE5G_and_tarasov_upscaled_"
@@ -283,7 +283,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         ls_mask_10min_fieldname = config.get("input_fieldname_options",
                                              "input_landsea_mask_fieldname")
         ls_mask_10min_fieldname = ls_mask_10min_fieldname if ls_mask_10min_fieldname else None
-        ls_mask_10min = dynamic_hd.load_field(self.original_ls_mask_filename, 
+        ls_mask_10min = dynamic_hd.load_field(self.original_ls_mask_filename,
                                               file_type=\
                                               dynamic_hd.get_file_extension(self.original_ls_mask_filename),
                                               field_type='Generic',
@@ -296,44 +296,44 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         orography_10min_fieldname = config.get("input_fieldname_options",
                                                "input_orography_fieldname")
         orography_10min_fieldname = orography_10min_fieldname if orography_10min_fieldname else None
-        orography_10min = dynamic_hd.load_field(self.original_orography_filename, 
+        orography_10min = dynamic_hd.load_field(self.original_orography_filename,
                                                 file_type=dynamic_hd.\
-                                                get_file_extension(self.original_orography_filename), 
+                                                get_file_extension(self.original_orography_filename),
                                                 fieldname=orography_10min_fieldname,
                                                 field_type='Orography', grid_type="LatLong10min")
         if self.present_day_base_orography_filename:
             present_day_base_orography_fieldname = config.get("input_fieldname_options",
                                                               "input_base_present_day_orography_fieldname")
             present_day_base_orography_fieldname = present_day_base_orography_fieldname if \
-                                                   present_day_base_orography_fieldname else None 
+                                                   present_day_base_orography_fieldname else None
             present_day_base_orography = \
-            dynamic_hd.load_field(self.present_day_base_orography_filename, 
+            dynamic_hd.load_field(self.present_day_base_orography_filename,
                                   file_type=dynamic_hd.\
-                                  get_file_extension(self.present_day_base_orography_filename), 
+                                  get_file_extension(self.present_day_base_orography_filename),
                                   field_type='Orography',
                                   fieldname=present_day_base_orography_fieldname,
                                   grid_type="LatLong10min")
             present_day_reference_orography = \
-            dynamic_hd.load_field(present_day_reference_orography_filename, 
+            dynamic_hd.load_field(present_day_reference_orography_filename,
                                   file_type=dynamic_hd.\
-                                  get_file_extension(present_day_reference_orography_filename), 
-                                  field_type='Orography', 
+                                  get_file_extension(present_day_reference_orography_filename),
+                                  field_type='Orography',
                                   grid_type="LatLong10min")
             orography_10min = utilities.rebase_orography(orography=orography_10min,
                                                          present_day_base_orography=\
-                                                         present_day_base_orography, 
+                                                         present_day_base_orography,
                                                          present_day_reference_orography=\
                                                          present_day_reference_orography)
-        orography_corrections_10min =  dynamic_hd.load_field(orography_corrections_filename, 
+        orography_corrections_10min =  dynamic_hd.load_field(orography_corrections_filename,
                                                              file_type=dynamic_hd.\
-                                                             get_file_extension(orography_corrections_filename), 
+                                                             get_file_extension(orography_corrections_filename),
                                                              field_type='Orography', grid_type="LatLong10min")
         orography_uncorrected_10min = orography_10min.copy()
         orography_10min.add(orography_corrections_10min)
         if self.glacier_mask_filename:
             glacier_mask_10min_fieldname = config.get("input_fieldname_options",
                                                 "input_glacier_mask_fieldname")
-            glacier_mask_10min_fieldname = glacier_mask_10min_fieldname if glacier_mask_10min_fieldname else 'sftgif' 
+            glacier_mask_10min_fieldname = glacier_mask_10min_fieldname if glacier_mask_10min_fieldname else 'sftgif'
             glacier_mask_10min = dynamic_hd.load_field(self.glacier_mask_filename,
                                                        file_type=dynamic_hd.\
                                                        get_file_extension(self.glacier_mask_filename),
@@ -363,11 +363,11 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         orography_10min.flip_data_ud()
         fill_sinks_wrapper.fill_sinks_cpp_func(orography_array=np.ascontiguousarray(orography_10min.get_data(), #@UndefinedVariable
                                                                                     dtype=np.float64),
-                                               method = 4, 
+                                               method = 4,
                                                use_ls_mask = True,
                                                landsea_in = np.ascontiguousarray(ls_mask_10min.get_data(),
-                                                                                 dtype=np.int32), 
-                                               set_ls_as_no_data_flag = False, 
+                                                                                 dtype=np.int32),
+                                               set_ls_as_no_data_flag = False,
                                                use_true_sinks = False,
                                                true_sinks_in = np.ascontiguousarray(truesinks.get_data(),
                                                                                     dtype=np.int32),
@@ -375,7 +375,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                next_cell_lon_index_in = next_cell_lon_index_in_10min,
                                                rdirs_in = rdirs_10min.get_data(),
                                                catchment_nums_in = catchment_10min.get_data(),
-                                               prefer_non_diagonal_initial_dirs = False) 
+                                               prefer_non_diagonal_initial_dirs = False)
         if config.getboolean("output_options","output_fine_rdirs"):
             dynamic_hd.write_field(path.join(self.working_directory_path,
                                              "10min_rdirs.nc"),
@@ -388,7 +388,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                    file_type=".nc")
         #Run post processing
         nlat10,nlong10 = grid_dims_10min
-        flowtocell_10min = field.CumulativeFlow(create_hypothetical_river_paths_map(riv_dirs=rdirs_10min.get_data(), 
+        flowtocell_10min = field.CumulativeFlow(create_hypothetical_river_paths_map(riv_dirs=rdirs_10min.get_data(),
                                                                                     lsmask=ls_mask_10min.get_data(),
                                                                                     use_f2py_func=True,
                                                                                     use_f2py_sparse_iterator=True,
@@ -412,10 +412,10 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                    flowtorivermouths_10min,
                                    file_type=".nc")
         #Run Upscaling
-        loops_log_filename = path.join(self.working_directory_path,"loops.log") 
+        loops_log_filename = path.join(self.working_directory_path,"loops.log")
         catchments_log_filename= path.join(self.working_directory_path,"catchments.log")
-        cotat_plus_parameters_filename = path.join(self.ancillary_data_path,'cotat_plus_standard_params.nl') 
-        rdirs_30min = run_cotat_plus(rdirs_10min, flowtocell_10min, 
+        cotat_plus_parameters_filename = path.join(self.ancillary_data_path,'cotat_plus_standard_params.nl')
+        rdirs_30min = run_cotat_plus(rdirs_10min, flowtocell_10min,
                                       cotat_plus_parameters_filename,'HD')
         if config.getboolean("output_options","output_pre_loop_removal_course_rdirs"):
             dynamic_hd.write_field(path.join(self.working_directory_path,
@@ -424,7 +424,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                    file_type=".nc")
         #Post processing
         nlat30,nlong30 = rdirs_30min.get_grid().get_grid_dimensions()
-        flowtocell_30min = field.CumulativeFlow(create_hypothetical_river_paths_map(riv_dirs=rdirs_30min.get_data(), 
+        flowtocell_30min = field.CumulativeFlow(create_hypothetical_river_paths_map(riv_dirs=rdirs_30min.get_data(),
                                                                                     lsmask=None,
                                                                                     use_f2py_func=True,
                                                                                     use_f2py_sparse_iterator=True,
@@ -491,11 +491,11 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         truesinks = Field(np.empty((1,1),dtype=np.int32),grid='HD')
         fill_sinks_wrapper.fill_sinks_cpp_func(orography_array=np.ascontiguousarray(orography_30min.get_data(), #@UndefinedVariable
                                                                                     dtype=np.float64),
-                                               method = 1, 
+                                               method = 1,
                                                use_ls_mask = True,
                                                landsea_in = np.ascontiguousarray(ls_mask_30min.get_data(),
-                                                                             dtype=np.int32), 
-                                               set_ls_as_no_data_flag = False, 
+                                                                             dtype=np.int32),
+                                               set_ls_as_no_data_flag = False,
                                                use_true_sinks = False,
                                                true_sinks_in = np.ascontiguousarray(truesinks.get_data(),
                                                                                 dtype=np.int32),
@@ -537,7 +537,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                        path.join(self.ancillary_data_path,'bin_innerslope.dat'),
                                        lsmask_file=transformed_HD_ls_mask_filename,
                                        null_file=\
-                                       path.join(self.ancillary_data_path,'null.dat'), 
+                                       path.join(self.ancillary_data_path,'null.dat'),
                                        area_spacing_file=\
                                        path.join(self.ancillary_data_path,
                                                  'fl_dp_dl.dat'),
@@ -549,7 +549,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         self._generate_hd_file(rdir_file=path.splitext(transformed_course_rdirs_filename)[0] + ".dat",
                                lsmask_file=path.splitext(transformed_HD_ls_mask_filename)[0] + ".dat",
                                null_file=\
-                               path.join(self.ancillary_data_path,'null.dat'), 
+                               path.join(self.ancillary_data_path,'null.dat'),
                                area_spacing_file=\
                                path.join(self.ancillary_data_path,
                                          'fl_dp_dl.dat'),
@@ -563,13 +563,13 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                     self.output_hdstart_filepath,
                                                     hdparas_filename=self.output_hdparas_filepath,
                                                     ref_hdparas_filename=ref_hd_paras_file,
-                                                    timeslice=None, 
-                                                    res_num_data_rotate180lr=False, 
-                                                    res_num_data_flipup=False, 
+                                                    timeslice=None,
+                                                    res_num_data_rotate180lr=False,
+                                                    res_num_data_flipup=False,
                                                     res_num_ref_rotate180lr=False,
                                                     res_num_ref_flipud=False, grid_type='HD')
         #Post processing
-        flowtocell_30min = field.CumulativeFlow(create_hypothetical_river_paths_map(riv_dirs=rdirs_30min.get_data(), 
+        flowtocell_30min = field.CumulativeFlow(create_hypothetical_river_paths_map(riv_dirs=rdirs_30min.get_data(),
                                                                                     lsmask=None,
                                                                                     use_f2py_func=True,
                                                                                     use_f2py_sparse_iterator=True,
@@ -603,24 +603,24 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                              "30min_catchments.nc"),
                                    catchments_30min,
                                    file_type=".nc")
-    
+
 def setup_and_run_dynamic_hd_para_gen_from_command_line_arguments(args):
     """Setup and run a dynamic hd production run from the command line arguments passed in by main"""
     driver_object = Dynamic_HD_Production_Run_Drivers(**vars(args))
     driver_object.no_intermediaries_ten_minute_data_ALG4_no_true_sinks_plus_upscale_rdirs_driver()
-    
+
 class Arguments(object):
     """An empty class used to pass namelist arguments into the main routine as keyword arguments."""
 
     pass
-    
+
 def parse_arguments():
     """Parse the command line arguments using the argparse module.
-    
+
     Returns:
     An Arguments object containing the comannd line arguments.
     """
-    
+
     args = Arguments()
     parser = argparse.ArgumentParser("Update river flow directions")
     parser.add_argument('input_orography_filepath',
