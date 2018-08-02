@@ -1,6 +1,6 @@
 \documentclass{article}
 \usepackage{geometry}                % See geometry.pdf to learn the layout options. There are lots.
-\geometry{a4paper}                   % ... or a4paper or a5paper or ... 
+\geometry{a4paper}                   % ... or a4paper or a5paper or ...
 %\geometry{landscape}                % Activate for for rotated page geometry
 %\usepackage[parfill]{parskip}    % Activate to begin paragraphs with an empty line rather than an indent
 \usepackage{graphicx}
@@ -26,25 +26,25 @@ xleftmargin=0.1\linewidth
 
 \DeclareGraphicsRule{.tif}{png}{.png}{`convert #1 `dirname #1`/`basename #1 .tif`.png}
 
-\title{Instruction for Running the Dynamic HD Parameter and Restart File Generation Code Version 2.6}
+\title{Instruction for Running the Dynamic HD Parameter and Restart File Generation Code Version 3.0}
 \author{Thomas Riddick}
-\date{2nd August 2018}                                           
+\date{2nd August 2018}
 \begin{document}
 \lstset{language=bash}
 \maketitle
 \section{Overview}
 This document provides instructions for using the dynamic hydrological discharge river routing and flow parameter generation scripts. The first set of instructions, presented in section \ref{section-max-planck-instructions}, concentrates on their use on the Max Planck Institute System; however, this should also be read through by external users as it provides a general overview the main input requirements of the script. Given the wider range of the linux systems used in the geosciences I can't provide a detailed set of instructions for systems outside our institute but I give some general guidance in section \ref{section-external-instructions} including suggests how this code might be used without using the Anaconda package and environment manager.
 
-The HD model in JSBACH requires two files to run. One is the hdpara.nc file. This contains the flow directions and the water retention co-efficients (a measure of how quickly water flows) of each grid cell on the HD models regular latitude-longitude $0.5$ degree grid. The other is the hdstart.nc. This contain the initial water content of each grid cell (split into various reservoirs). A user generated hdstart.nc file is only required at the start of run; later restart of the model should use the hdstart.nc restart file provided in the set of restart files of the previous section of the run. 
+The HD model in JSBACH requires two files to run. One is the hdpara.nc file. This contains the flow directions and the water retention co-efficients (a measure of how quickly water flows) of each grid cell on the HD models regular latitude-longitude $0.5$ degree grid. The other is the hdstart.nc. This contain the initial water content of each grid cell (split into various reservoirs). A user generated hdstart.nc file is only required at the start of run; later restart of the model should use the hdstart.nc restart file provided in the set of restart files of the previous section of the run.
 
-The Dynamic HD code always generates a hdpara.nc file. It only generates a hdstart.nc file at the very start of a run (i.e. when this dynamic HD code is first called). 
+The Dynamic HD code always generates a hdpara.nc file. It only generates a hdstart.nc file at the very start of a run (i.e. when this dynamic HD code is first called).
 
-The code will normally run in about $1$~minute on a quad-core  3.5GHz i7 Linux machine with 16GB of RAM (assuming the machine is otherwise unloaded). However the first use of this code in a run will take longer (maybe $5$-$10$ minutes) because the Cython, C++ and Fortran code within the script must be cleaned, compiled and built. Subsequent runs don't recompile and hence are fast. 
+The code will normally run in about $1$~minute on a quad-core  3.5GHz i7 Linux machine with 16GB of RAM (assuming the machine is otherwise unloaded). However the first use of this code in a run will take longer (maybe $5$-$10$ minutes) because the Cython, C++ and Fortran code within the script must be cleaned, compiled and built. Subsequent runs don't recompile and hence are fast.
 
 The code is provided in two repositories. The vast bulk of the code is provided in the main repository which is available under a 3-clause BSD open source license from \url{https://github.com/ThomasRiddick/DynamicHD} or \url{https://doi.org/10.5281/zenodo.1208066}. A small subsection of the code required for the generation of flow parameters (but not river directions) is contained in a git submodule should be placed in the folder \\\lstinline[style=bash_input]{Dynamic_HD_bash_scripts/parameter_generation_scripts} within the main repository; this is only available under the Max Planck Institute for Meteorology Software License Version 2 by application to the author (it can also be found in the \lstinline[style=bash_input]{contributions} directory of JSBACH). Given that the flow parameters would likely not apply to any model other the JSBACH HD model it is unlikely external users would actually need this code unless they had access to JSBACH (which would imply they had already signed up to the MPI software license).
 
 The flow directions are given in both an index based and 1-9 numeric keypad format in the hdpara.nc file. This is only available upon signing the  It would be quite possible to use these in a hydrological discharge model other than the HD model of JSBACH; obviously after converting them to the correct format for that other model. If this alternative hydrological discharge model required flow parameters the
-dynamic HD model scripts could be adapted to produce these alternative flow parameters directly. Unfortunately, although some initial work has been done to separate out the flow parameter generation code contained in the submodule from the main river routing generation code, there is currently no way to turn off calls to the flow parameter generation code automatically. This must be done by editing the scripts by hand; I will outline how this might be done below. Internally we use the Max Planck Institute for Meteorology's (and DKRZ's) module system to manage help manage the external applications. The generation of new start files is likely specific to the HD model's treatment of flow parameters; thus unless coupled with the HD model it is likely this will be of little use and should also be edited out by hand. This obviously won't be available to external users who will need to find a replacement for it. I also use the conda package manager and the associated Anaconda repository (which focusses on managing python and R packages). This is freely available online (see \url{https://www.anaconda.com}; conda itself is open source as is the Anaconda distribution; they are managed by a firm which is also called Anaconda). 
+dynamic HD model scripts could be adapted to produce these alternative flow parameters directly. Unfortunately, although some initial work has been done to separate out the flow parameter generation code contained in the submodule from the main river routing generation code, there is currently no way to turn off calls to the flow parameter generation code automatically. This must be done by editing the scripts by hand; I will outline how this might be done below. Internally we use the Max Planck Institute for Meteorology's (and DKRZ's) module system to manage help manage the external applications. The generation of new start files is likely specific to the HD model's treatment of flow parameters; thus unless coupled with the HD model it is likely this will be of little use and should also be edited out by hand. This obviously won't be available to external users who will need to find a replacement for it. I also use the conda package manager and the associated Anaconda repository (which focusses on managing python and R packages). This is freely available online (see \url{https://www.anaconda.com}; conda itself is open source as is the Anaconda distribution; they are managed by a firm which is also called Anaconda).
 
 The instructions provided here have not been subject to rigorous testing as the code evolves continually and I don't have the resources to test this instruction set with each new release. However, they should provide a framework to guide any attempt to setup and run the dynamic hydrology scripts. In the case of problems it is recommend to contact the author.
 \section{Instructions for use on the Max Planck Institute for Meteorology systems} \label{section-max-planck-instructions}
@@ -58,14 +58,14 @@ mkdir workdir
 mkdir outputdir_step1
 mkdir outputdir_step2
 \end{lstlisting}
-\item Download the dynamic HD code and switch the repository to version 2.6. (Be sure to perform this last step; version 1 probably won't work anymore and if it does then it will give erroneous results.). The code is stored in my home area. Thus you can change  \lstinline[style=bash_input]{dattel} (the name of my machine) to the name of your own machine if you wish.
+\item Download the dynamic HD code and switch the repository to version 3.0. (Be sure to perform this last step; version 1 probably won't work anymore and if it does then it will give erroneous results.). The code is stored in my home area. Thus you can change  \lstinline[style=bash_input]{dattel} (the name of my machine) to the name of your own machine if you wish.
 \begin{lstlisting}[style=bash_input,breaklines=true]
 git clone git+ssh://dattel.mpimet.mpg.de/home/mpim/m300468/workspace/Dynamic_HD_Code
 cd Dynamic_HD_Code
-git checkout release_version_2.5
+git checkout release_version_3.0
 cd ..
 \end{lstlisting}
-\item Download the parameter generation scripts (which are a separate submodule that is nested inside the dynamic HD code). 
+\item Download the parameter generation scripts (which are a separate submodule that is nested inside the dynamic HD code).
 \begin{lstlisting}[style=bash_input,breaklines=true]
 cd Dynamic_HD_Code/Dynamic_HD_bash_scripts
 git clone git+ssh://dattel.mpimet.mpg.de/home/mpim/m300468/workspace/Dynamic_HD_Code/Dynamic_HD_bash_scripts/parameter_generation_scripts
@@ -94,7 +94,7 @@ cd ..
 \begin{lstlisting}[style=bash_input,breaklines=true]
 scp -r m300468@dattel.mpimet.mpg.de:/home/mpim/m300468/HDexampledata/* .
 \end{lstlisting}
-The data should be on a normal (\textbf{non-gaussian}) $10$-minute latitude-longitude grid. Grid boxes coordinate and values should be for their central point. The first column of cells on the $x$-axis should be cells centred on the Greenwich Meridian (i.e. exactly $0$\degree~longitude). The first row of cells on the $y$-axis should touch the south pole with their southern edge and last row of cells on the $x$-axis should touch the north pole on their northern edge. This should produce a right-way up (when North at the top is seen as the right way up) image in ncview. Heights should be in metres; the datum is not important so long as it is consistent. The orography should preferable extend below the ocean although this is not strictly necessary (however if it does not then potential errors could occur if the supplied land-sea mask doesn't match exactly the extent of the provided orography data). The land-sea mask should be binary with values of $0$ (for land points) and $1$ for sea points. The glacier mask should supply the percentage of grid cells covered by ice from $0$\% to $100$\%;  this will then be converted to a binary mask of either glacier  present or no glacier present.  The format of the files must be netCDF (extension \lstinline[style=bash_input]{.nc}) and the orography fields and land-sea mask field should be named one of \texttt{Topo}, \texttt{topo}, \texttt{field\_value}, \texttt{orog}, \texttt{z}, \texttt{ICEM}, \texttt{DEPTO}, \texttt{usurf}, and \texttt{bats}. If more than one field in the file has one of these names then the names are tried in the order above until the first match is found. (Thus the land-sea mask and orography must come in separate files.) These field names can be changed (thus allowing the landsea mask and orography to come in the same file) by altering a configurations file; more details are given in section \ref{section-notes}. The glacier mask field should be called \texttt{sftgif}. The present day orography supplied \textbf{must} be the exact present day orography that was used as basis to create the orography for the past time slice being processed. \textbf{This is important and if this criterion is not met then extremely unreliable results will be obtained.} The example data supplied here meets all these requirements and it may be therefore a good idea to compare any new data against it to make sure the new data also meets these requirements. 
+The data should be on a normal (\textbf{non-gaussian}) $10$-minute latitude-longitude grid. Grid boxes coordinate and values should be for their central point. The first column of cells on the $x$-axis should be cells centred on the Greenwich Meridian (i.e. exactly $0$\degree~longitude). The first row of cells on the $y$-axis should touch the south pole with their southern edge and last row of cells on the $x$-axis should touch the north pole on their northern edge. This should produce a right-way up (when North at the top is seen as the right way up) image in ncview. Heights should be in metres; the datum is not important so long as it is consistent. The orography should preferable extend below the ocean although this is not strictly necessary (however if it does not then potential errors could occur if the supplied land-sea mask doesn't match exactly the extent of the provided orography data). The land-sea mask should be binary with values of $0$ (for land points) and $1$ for sea points. The glacier mask should supply the percentage of grid cells covered by ice from $0$\% to $100$\%;  this will then be converted to a binary mask of either glacier  present or no glacier present.  The format of the files must be netCDF (extension \lstinline[style=bash_input]{.nc}) and the orography fields and land-sea mask field should be named one of \texttt{Topo}, \texttt{topo}, \texttt{field\_value}, \texttt{orog}, \texttt{z}, \texttt{ICEM}, \texttt{DEPTO}, \texttt{usurf}, and \texttt{bats}. If more than one field in the file has one of these names then the names are tried in the order above until the first match is found. (Thus the land-sea mask and orography must come in separate files.) These field names can be changed (thus allowing the landsea mask and orography to come in the same file) by altering a configurations file; more details are given in section \ref{section-notes}. The glacier mask field should be called \texttt{sftgif}. The present day orography supplied \textbf{must} be the exact present day orography that was used as basis to create the orography for the past time slice being processed. \textbf{This is important and if this criterion is not met then extremely unreliable results will be obtained.} The example data supplied here meets all these requirements and it may be therefore a good idea to compare any new data against it to make sure the new data also meets these requirements.
 \item Run the dynamic HD code for the first time-step to obtain both a hdpara.nc and hdstart.nc file. The top level script is located in the directory \texttt{Dynamic\_HD\_Code} at \path{Dynamic_HD_Code/Dynamic_HD_bash_scripts/dynamic_hd_top_level_driver.sh} and takes twelve command lines arguments:
 \begin{enumerate}[i)]
 \item A flag (set to either \texttt{T} or \texttt{F}) to indicate if this is the first time-step. So in this case set this to \texttt{T}.
@@ -145,39 +145,39 @@ The author strongly recommends the use of the Conda package manager and Anaconda
 
 \begin{description}
 \item[Python 2.7.11] \hfill
-\begin{itemize} 
+\begin{itemize}
 \item Download and compile from \\ \url{https://www.python.org/downloads/release/python-2711rc1/}
-\end{itemize} 
+\end{itemize}
 \item[CDO 1.9.4] \hfill
-\begin{enumerate} 	
+\begin{enumerate}
 \item Download from \url{https://code.mpimet.mpg.de/projects/cdo/files}.
 \item \lstinline[style=bash_input]{make && make install}
-\end{enumerate} 
+\end{enumerate}
 \item[CDO Python Bindings 1.3.6 (must be after CDO)]\hfill
-\begin{itemize} 
+\begin{itemize}
 \item Install Python cdo bindings at tag 1.3.6 from \url{https://github.com/Try2Code/cdo-bindings/tree/1.3.6}.
-\end{itemize} 
+\end{itemize}
 \item[cython 0.24] \hfill
-\begin{itemize} 
+\begin{itemize}
 \item Use \lstinline[style=bash_input]{pip install --user cython==0.24} (pip is python?s main package manager) or download, unzip/tar and install from \url{https://pypi.org/project/Cython/0.24/#files} using python setup.py install
-\end{itemize} 
+\end{itemize}
 \item[netcdf4 1.4.0] \hfill
-\begin{itemize} 
+\begin{itemize}
 \item Download and compile from \url{https://pypi.org/project/netCDF4/1.4.0/#files}
-\end{itemize} 
+\end{itemize}
 \item[scipy 0.17.1 numpy 1.4.0]\hfill
-\begin{itemize} 
+\begin{itemize}
 \item Use \lstinline[style=bash_input]{pip install ?user scipy==0.17.1 numpy==1.4.0}
-\end{itemize} 
+\end{itemize}
 \item[xarray 0.10.8]\hfill
-\begin{enumerate}  
+\begin{enumerate}
 \item Download and install pandas from \url{https://pypi.org/project/pandas/0.23.3/#files}.
 \item Install xarray using  \lstinline[style=bash_input]{pip install --user xarray==0.10.8}
-\end{enumerate} 
+\end{enumerate}
 \item[matplotlib 1.5.1 (necessary for plotting only - main code should run without it)] \hfill
-\begin{enumerate} 
+\begin{enumerate}
 \item Install the large number of dependencies of matplotlib (these are just the requirements? may also need to install some of the optional dependencies). A possible alternative might be to use sudo apt-get build-dep python-matplotlib which should install the dependencies automatically. See \url{https://matplotlib.org/users/installing.html#linux} for links:
-\begin{enumerate}  
+\begin{enumerate}
 \item	Python ($>= 2.7$ or $>= 3.4$) (above)
 \item	NumPy ($>= 1.7.1$) (above)
 \item	setuptools
@@ -200,7 +200,7 @@ The author strongly recommends the use of the Conda package manager and Anaconda
 \section{Notes} \label{section-notes}
 \begin{description}
 \item[Diagnostic Output File Control] Diagnostic file output (i.e. things such the catchments and the cumulative flow to cell that are not required to run JSBACH but useful for understanding what is going on with the dynamic HD generation code)  can be controlled the boolean settings in the \path{[output_options]} section of \path{dynamic_hd_production_driver.cfg} in \texttt{HDancillarydata}. \texttt{True} switches the named output on; \texttt{False} switches it off. The  \path{[output_options]} must be present in the \path{dynamic_hd_production_driver.cfg} (whether they are \texttt{True} or \texttt{False}.) Some of the diagnostic output could be reconstructed offline from hdpara.nc file if it is not produced during the run; however some would require the hdpara.nc generation process to be rerun in order to regenerate.
-\item[Input Field Name Control] The names of the field loaded from the input files can also be controlled through settings in \path{dynamic_hd_production_driver.cfg}; this time the settings are place in the \path{[input_fieldname_options]} section. These setting are not compulsory; if not present or set to blank strings then the default field names as described above will be used instead. The four possible field names that can be specified are: 
+\item[Input Field Name Control] The names of the field loaded from the input files can also be controlled through settings in \path{dynamic_hd_production_driver.cfg}; this time the settings are place in the \path{[input_fieldname_options]} section. These setting are not compulsory; if not present or set to blank strings then the default field names as described above will be used instead. The four possible field names that can be specified are:
 \begin{itemize}
 \item \path{input_orography_fieldname}
 \item \path{input_landsea_mask_fieldname}
@@ -221,4 +221,4 @@ it should work with other combinations of modules but it may be necessary to unl
 \item[Unit Tests] Unit tests for most of the Python code and the result of the C++ and Fortran code are given in \path{Dynamic_HD_Code/Dynamic_HD_Scripts/Dynamic_HD_Script_Tests}. The low- and mid-level routines of the C++ code are unit tested with Google Test by running \path{Dynamic_HD_Code/Dynamic_HD_Cpp_Code/Release/Dynamic_HD_Cpp_Exec} while such low- and mid-level routines for the Fortran River Direction Upscaling code are tested with FRUIT by running \path{Dynamic_HD_Code/Dynamic_HD_Fortran_Code/Release/Dynamic_HD_Fortran_Exec}.
 \item[Running Multiple Copies of the Script in Parallel] Multiple copies of the script can run using the same ancillary data directory, \lstinline[style=bash_input]{source_directory} and \lstinline[style=bash_input]{external_source_directory} but they must use different working directories. When the preparation and compilation steps are run during the first time-step an exclusive lock is placed on the source code. All other copies of the top level script using the same source code will wait till set-up is complete before running. Any other copies of the top level script running the first time-step will skip the preparation and compilation steps when they resume. While the actual dynamic hydrological discharge code runs (either in the first time-step or any subsequent time-steps) a shared lock is place on the source code. This will block any attempts at to prepare and compile the code and cause them to skip to simply running the code assuming it is already compiled and setup (which it will be if another script is a running a copy of it). In summary multiple copies of the script can share a single set of source code and ancillary data while each running individually as if no other script were running and all issues with compilation and preparation will be handled automatically.
 \end{description}
-\end{document}  
+\end{document}
