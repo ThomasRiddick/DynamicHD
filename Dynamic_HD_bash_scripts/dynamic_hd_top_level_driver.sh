@@ -253,20 +253,10 @@ if ! $no_conda ; then
 	source activate dyhdenv
 fi
 
-#Load CDOs if required and reload version of python with CDOs included
-# if ! $no_modules ; then
-# 	if echo $LOADEDMODULES | fgrep -q -v "cdo" ; then
-# 		load_module cdo
-# 	fi
-# 	if [[ $(hostname -d) == "hpc.dkrz.de" ]]; then
-# 		load_module python/2.7.12
-# 	fi
-# fi
-
-# #Load a new version of gcc that doesn't have the polymorphic variable bug
-# if ! $no_modules ; then
-# 	load_module gcc/6.2.0
-# fi
+#Load a new version of gcc that doesn't have the polymorphic variable bug
+if ! $no_modules ; then
+	load_module gcc/6.2.0
+fi
 
 #Setup correct python path
 export PYTHONPATH=${source_directory}/Dynamic_HD_Scripts:${PYTHONPATH}
