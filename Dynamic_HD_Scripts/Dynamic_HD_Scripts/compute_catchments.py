@@ -1,5 +1,5 @@
 '''
-A number of functions related to computing catchments from a field of flow directions. 
+A number of functions related to computing catchments from a field of flow directions.
 The function 'main' is intended to be the function called externally
 
 Created on Feb 9, 2016
@@ -18,23 +18,23 @@ from context import fortran_source_path
 
 def compute_catchments(field,loop_logfile,circ_flow_check_period=1000):
     """Compute the unordered catchments on all grid points
-   
+
     Input:
     field: numpy-like; field of river flow directions
     loop_logfile: string; the path to a file in which to store any loops found
-    circ_flow_check_period (optional): integer; how often (in terms of step 
+    circ_flow_check_period (optional): integer; how often (in terms of step
         along a river) to check if the river is going in a loop
     Output:
-    An tuple consisting of an numpy array of the number of each of the six catchment 
-    types found and a second numpy array containing the unordered catchments calculated 
+    An tuple consisting of an numpy array of the number of each of the six catchment
+    types found and a second numpy array containing the unordered catchments calculated
     themselves.
-    
+
     Use a fortran module to calculate the unordered catchements (labelling them by
     order of discovery) on all the grid points in the supplied array of river flow
     direction. Store any loops found in the named logfile. (The axis swap is required
     to ensure the data is processed in the correct orientation).
     """
-    
+
     f2py_mngr = f2py_manager.f2py_manager(path.join(fortran_source_path,
                                                      "mod_compute_catchments.f90"),
                                           func_name="compute_catchments")
@@ -49,16 +49,16 @@ def compute_catchments(field,loop_logfile,circ_flow_check_period=1000):
 
 def check_catchment_types(catchment_types,logfile=None):
     """Check the catchment types returned for potential problems
-   
+
     Input:
     catchment_types: numpy-like array; the number of each catchment type found
     logfile(optional): string; full path to a logfile to record catchment_type information
     Return: None
-    
+
     The output is both printed to screen and saved to a file if one is specified. Warnings
     are given for unknown flow directions, flows over the pole and circular flows.
     """
-    
+
     catchment_type_names = ["coast","ocean","local","unknown"]
     other_type_names     = ["flow over pole","circular flow"]
     output = ""
@@ -76,21 +76,21 @@ def check_catchment_types(catchment_types,logfile=None):
         with open(logfile,'w') as f:
             print "Logging catchment type counts in file {0}".format(logfile)
             f.write(output)
-    
-def renumber_catchments_by_size(catchments,loop_logfile):
+
+def renumber_catchments_by_size(catchments,loop_logfile=None):
     """Renumber catchments according to there size in terms of number of cells
-   
+
     Input:
     catchments: numpy-like array; catchments to be relabelled catchments
-    loop_logfile: string; the full path to the existing loop_logfile
+    loop_logfile: string; the full path to the existing loop_logfile (optional)
     Returns: Relabelled catchements
-    
+
     Label catchments in order of desceding size using a fortran function
     to assist a time critical part of the procedure that can't be done in
     numpy effectively. Also opens the existing loop logfile and changes the
     catchment numbers with loops to reflect the new catchment labelling.
     """
-    
+
     f2py_mngr = f2py_manager.f2py_manager(path.join(fortran_source_path,
                                                     "mod_compute_catchments.f90"),
                                           func_name="relabel_catchments")
@@ -109,19 +109,20 @@ def renumber_catchments_by_size(catchments,loop_logfile):
                                            order='catch_nums'))['new_catch_nums']
     f2py_mngr.run_current_function_or_subroutine(catchments,
                                                  old_to_new_label_map)
-    with open(loop_logfile,'r') as f:
-        f.next()
-        loops = [int(line.strip()) for line in f]
-    #-1 to account for differing array offset between Fortran and python
-    loops = [str(old_to_new_label_map[old_loop_num-1])+'\n' for old_loop_num in loops]
-    with open(loop_logfile,'w') as f:
-        f.write('Loops found in catchments:\n')
-        f.writelines(loops)
+    if loop_logfile is not None:
+        with open(loop_logfile,'r') as f:
+            f.next()
+            loops = [int(line.strip()) for line in f]
+        #-1 to account for differing array offset between Fortran and python
+        loops = [str(old_to_new_label_map[old_loop_num-1])+'\n' for old_loop_num in loops]
+        with open(loop_logfile,'w') as f:
+            f.write('Loops found in catchments:\n')
+            f.writelines(loops)
     return catchments
 
 def advanced_main(filename,fieldname,output_filename,output_fieldname,
                   loop_logfile):
-    rdirs = iodriver.advanced_field_loader(filename, 
+    rdirs = iodriver.advanced_field_loader(filename,
                                            field_type='Generic',
                                            fieldname=fieldname)
     nlat,nlon = rdirs.get_grid_dimensions()
@@ -134,24 +135,24 @@ def advanced_main(filename,fieldname,output_filename,output_fieldname,
 
 def main(filename,output_filename,loop_logfile,grid_type,**grid_kwargs):
     """Generates a file with numbered catchments from a given river flow direction file
-    
+
     Inputs:
     filename: string; the input file of river directions
     output_filename: string; the target file for the output numbered catchments
     loop_logfile: string; an input file of catchments with loop to be updated
     grid_type: string; a keyword giving the type of grid being used
-    **grid_kwargs(optional): keyword dictionary; the parameter of the grid to 
+    **grid_kwargs(optional): keyword dictionary; the parameter of the grid to
     be used (if required)
     Returns: Nothing
-    
+
     Produces the numbered catchments where the numbering is in descending order of size;
-    also update the loop log file to reflect the relabelling of catchements and runs a 
+    also update the loop log file to reflect the relabelling of catchements and runs a
     check on the type of catchments generated (which are placed in a log file with the
     same basename as the output catchments but with the extension '.log').
     """
-    
-    rdirs = dynamic_hd.load_field(filename, 
-                                  file_type=dynamic_hd.get_file_extension(filename), 
+
+    rdirs = dynamic_hd.load_field(filename,
+                                  file_type=dynamic_hd.get_file_extension(filename),
                                   field_type='Generic',grid_type=grid_type,**grid_kwargs)
     catchment_types, catchments = compute_catchments(rdirs.get_data(),loop_logfile)
     check_catchment_types(catchment_types,logfile=path.splitext(output_filename)[0]+".log")

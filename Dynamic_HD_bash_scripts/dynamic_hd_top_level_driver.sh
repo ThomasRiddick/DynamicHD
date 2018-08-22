@@ -330,23 +330,33 @@ fi
 
 #Compile fortran code used called shell script wrappers
 if $compilation_required; then
-	echo "Compiling Fortran code called from shell script wrappers"
-	${source_directory}/Dynamic_HD_bash_scripts/compile_paragen_and_hdfile.sh ${source_directory}/Dynamic_HD_bash_scripts/bin ${source_directory}/Dynamic_HD_bash_scripts/parameter_generation_scripts/fortran ${source_directory}/Dynamic_HD_bash_scripts/parameter_generation_scripts/fortran/paragen.f paragen
+	if [[ -e "${source_directory}/Dynamic_HD_bash_scripts/parameter_generation_scripts/.git" ]]; then
+		echo "Compiling Fortran code called from shell script wrappers"
+		${source_directory}/Dynamic_HD_bash_scripts/compile_paragen_and_hdfile.sh ${source_directory}/Dynamic_HD_bash_scripts/bin ${source_directory}/Dynamic_HD_bash_scripts/parameter_generation_scripts/fortran ${source_directory}/Dynamic_HD_bash_scripts/parameter_generation_scripts/fortran/paragen.f paragen
+	else
+		echo "No parameter_generation_scripts submodule; this is an error if parameter\ngeneration is required but otherwise is not"
+	fi
 fi
 
 #Run
 echo "Running Dynamic HD Code" 1>&2
 python2.7 ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/dynamic_hd_production_run_driver.py ${input_orography_filepath} ${input_ls_mask_filepath} ${present_day_base_orography_filepath} ${glacier_mask_filepath} ${output_hdpara_filepath} ${ancillary_data_directory} ${working_directory} ${output_hdstart_filepath}
 
-#Delete paragen directory
-cd ${working_directory}/paragen
-rm -f paragen.inp soil_partab.txt slope.dat riv_vel.dat riv_n.dat riv_k.dat over_vel.dat over_n.dat over_k.dat
-rm -f hdpara.srv global.inp ddir.inp bas_k.dat
-cd - 2>&1 > /dev/null
-rmdir ${working_directory}/paragen
-rm -f catchments.log loops.log 30minute_river_dirs.dat
-rm -f 30minute_ls_mask.dat 30minute_filled_orog.dat 30minute_river_dirs_temp.nc 30minute_filled_orog_temp.nc
-rm -f 30minute_filled_orog_temp.dat 30minute_ls_mask_temp.dat 30minute_river_dirs_temp.dat
+#Delete paragen directory if it exists
+if [[ -d "${working_directory}/paragen" ]]; then
+	cd ${working_directory}/paragen
+	rm -f paragen.inp soil_partab.txt slope.dat riv_vel.dat riv_n.dat riv_k.dat over_vel.dat over_n.dat over_k.dat
+	rm -f hdpara.srv global.inp ddir.inp bas_k.dat
+	cd - 2>&1 > /dev/null
+	rmdir ${working_directory}/paragen
+fi
+
+#Delete other files if they exist
+rm -f 30minute_filled_orog_temp.dat 30minute_ls_mask_temp.dat 30minute_river_dirs_temp.dat || true
+rm -f 30minute_ls_mask.dat 30minute_filled_orog.dat 30minute_river_dirs.dat || true
+
+#Delete other files
+rm -f catchments.log loops.log 30minute_filled_orog_temp.nc 30minute_river_dirs_temp.nc
 rm -f 30minute_ls_mask_temp.nc
 
 #Generate full diagnostic output label

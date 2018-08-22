@@ -284,6 +284,5 @@ def advanced_sinkless_flow_directions_generator(filename,output_filename,fieldna
                                    fieldname=output_fieldname)
     if catchment_nums_filename:
         iodriver.advanced_field_writer(catchment_nums_filename,
-                                       field=Field(catchment_nums,grid_type='LatLong',
-                                                   nlat=grid_dims[0],nlong=grid_dims[1]),
+                                       field=Field(catchment_nums,grid=orography.get_grid()),
                                        fieldname=catchment_fieldname)

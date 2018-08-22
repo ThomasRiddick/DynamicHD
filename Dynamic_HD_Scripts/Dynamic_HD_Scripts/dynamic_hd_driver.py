@@ -17,6 +17,7 @@ import fill_sinks_driver
 import upscale_orography_driver
 import utilities
 import grid
+import field
 import river_mouth_marking_driver
 import create_connected_lsmask_driver as cc_lsmask_driver
 from context import bash_scripts_path
@@ -26,6 +27,7 @@ import cotat_plus_driver
 import loop_breaker_driver
 import numpy as np
 import iohelper
+import iodriver
 import netCDF4
 
 class Dynamic_HD_Drivers(object):
@@ -979,8 +981,8 @@ class Utilities_Drivers(Dynamic_HD_Drivers):
         input_srtm30_orography = path.join(self.orography_path,"srtm30plus_v6.nc")
         lsmask = path.join(self.ls_masks_path,"glcc_olson_land_cover_data",
                            "glcc_olson-2.0_lsmask_with_bacseas.nc")
-        output_rdirs_file =\
-          "/Users/thomasriddick/Documents/data/temp/30sec_rdirs_test{}.nc".format(file_label)
+        output_rdirs_file = self.generated_orography_filepath + file_label + '.nc'
+        output_catch_file = self.generated_catchments_path + file_label + '.nc'
         fill_sinks_driver.advanced_sinkless_flow_directions_generator(filename=
                                                                       input_srtm30_orography,
                                                                       output_filename=
@@ -990,7 +992,81 @@ class Utilities_Drivers(Dynamic_HD_Drivers):
                                                                       ls_mask_filename=
                                                                       lsmask,
                                                                       ls_mask_fieldname=
-                                                                      "field_value")
+                                                                      "field_value",
+                                                                      catchment_nums_filename=
+                                                                      output_catch_file,
+                                                                      catchment_fieldname="catch")
+
+    def renumber_catchments_from_strm30_plus(self):
+      catchment_file_label = "generate_rdirs_from_srtm30_plus_20180802_202027"
+      catchment_filename = \
+          "/Users/thomasriddick/Documents/data/temp/30sec_catch_test{}.nc".format(catchment_file_label)
+      reordered_catchment_file_label = output_rdirs_file = self.generated_orography_filepath + file_label + '.nc'
+      unordered_catchments = iodriver.advanced_field_loader(catchment_filename,
+                                                            fieldname='catch')
+      ordered_catchments = compute_catchments.renumber_catchments_by_size(unordered_catchments.get_data())
+      iodriver.advanced_field_writer(reordered_catchment_file_label,
+                                     field.Field(ordered_catchments,grid=unordered_catchments.get_grid()),
+                                     fieldname='catch')
+
+    def create_lgm_orography_from_strm30_plus_and_ice_6g(self):
+        file_label = self._generate_file_label()
+        input_srtm30_orography_filename = path.join(self.orography_path,"srtm30plus_v6.nc")
+        ice6g_0k_filename = path.join(self.orography_path,"Ice6g_c_VM5a_10min_0k.nc")
+        ice6g_21k_filename = path.join(self.orography_path,"Ice6g_c_VM5a_10min_21k.nc")
+        output_lgm_orography_filename = self.generated_orography_filepath + file_label + '.nc'
+        utilities.\
+        create_30s_lgm_orog_from_hr_present_day_and_lr_pair_driver(input_lgm_low_res_orog_filename=
+                                                                   ice6g_21k_filename,
+                                                                   input_present_day_low_res_orog_filename=
+                                                                   ice6g_0k_filename,
+                                                                   input_present_day_high_res_orog_filename=
+                                                                   input_srtm30_orography_filename,
+                                                                   output_lgm_high_res_orog_filename=
+                                                                   output_lgm_orography_filename,
+                                                                   input_lgm_low_res_orog_fieldname="Topo",
+                                                                   input_present_day_low_res_orog_fieldname=
+                                                                   "Topo",
+                                                                   input_present_day_high_res_orog_fieldname=
+                                                                   "topo",
+                                                                   output_lgm_high_res_orog_fieldname="topo")
+
+    def generate_rdirs_from_srtm30_plus_iceg6_30sec_lgm(self):
+        """Generate river directions on a 30 second grid from the strm30plus orography"""
+        file_label = self._generate_file_label()
+        input_srtm30_orography = path.join(self.orography_path,"generated",
+            "updated_orog_create_lgm_orography_from_strm30_plus_and_ice_6g_20180803_080552.nc")
+        ls_mask = path.join(self.ls_masks_path,"generated",
+                            "ls_mask_generate_rdirs_from_srtm30_plus_iceg6_30sec_lgm_20180803_091544_with_grid.nc")
+        output_rdirs_file = self.generated_rdir_filepath + file_label + '.nc'
+        output_catch_file = self.generated_catchments_path + file_label + '.nc'
+        fill_sinks_driver.advanced_sinkless_flow_directions_generator(filename=
+                                                                      input_srtm30_orography,
+                                                                      output_filename=
+                                                                      output_rdirs_file,
+                                                                      fieldname="topo",
+                                                                      output_fieldname="rdirs",
+                                                                      ls_mask_filename=
+                                                                      ls_mask,
+                                                                      ls_mask_fieldname=
+                                                                      "slm",
+                                                                      catchment_nums_filename=
+                                                                      output_catch_file,
+                                                                      catchment_fieldname="catch")
+
+    def renumber_catchments_from_strm30_plus_ice6g_30sec_lgm(self):
+      file_label = "generate_rdirs_from_srtm30_plus_iceg6_30sec_lgm_20180803_100943"
+      catchment_filename = path.join(self.catchments_path,
+                                     "catchmentmap_generate_rdirs_from_srtm30"
+                                     "_plus_iceg6_30sec_lgm_20180803_100943.nc")
+      reordered_catchment_file_label = output_rdirs_file = self.generated_catchments_path + file_label + '.nc'
+      unordered_catchments = iodriver.advanced_field_loader(catchment_filename,
+                                                            fieldname='catch')
+      ordered_catchments = compute_catchments.renumber_catchments_by_size(unordered_catchments.get_data())
+      iodriver.advanced_field_writer(reordered_catchment_file_label,
+                                     field.Field(ordered_catchments,grid=unordered_catchments.get_grid()),
+                                     fieldname='catch')
+
     def generate_rdirs_from_ice5g_21k(self):
         """Generate river directions on a 30 second grid from the strm30plus orography"""
         file_label = self._generate_file_label()
@@ -3461,7 +3537,11 @@ def main():
     #utilities_drivers.create_10min_present_day_lsmask_from_model_gaussian_mask()
     #utilities_drivers.create_10min_present_day_lsmask_from_model_ocean_mask()
     #utilities_drivers.create_catchments_from_hdpara_file_from_swati()
-    utilities_drivers.generate_rdirs_from_srtm30_plus()
+    #utilities_drivers.generate_rdirs_from_srtm30_plus()
+    #utilities_drivers.renumber_catchments_from_strm30_plus()
+    #utilities_drivers.create_lgm_orography_from_strm30_plus_and_ice_6g()
+    #utilities_drivers.generate_rdirs_from_srtm30_plus_iceg6_30sec_lgm()
+    utilities_drivers.renumber_catchments_from_strm30_plus_ice6g_30sec_lgm()
     #utilities_drivers.generate_rdirs_from_ice5g_21k()
     #original_hd_model_rfd_drivers = Original_HD_Model_RFD_Drivers()
     #original_hd_model_rfd_drivers.corrected_HD_rdirs_post_processing()

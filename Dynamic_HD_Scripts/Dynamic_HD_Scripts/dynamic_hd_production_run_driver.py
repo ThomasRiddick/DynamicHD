@@ -13,6 +13,7 @@ import utilities
 import dynamic_hd
 import field
 import ConfigParser
+import shutil
 import libs.fill_sinks_wrapper as fill_sinks_wrapper
 import dynamic_hd_driver as dyn_hd_dr
 import compute_catchments as comp_catchs
@@ -249,6 +250,10 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
             config.set("input_fieldname_options","input_glacier_mask_fieldname","")
         if not config.has_option("input_fieldname_options","input_base_present_day_orography_fieldname"):
             config.set("input_fieldname_options","input_base_present_day_orography_fieldname","")
+        if not config.has_section("general_options"):
+            config.add_section("general_options")
+        if not config.has_option("general_options","generate_flow_parameters"):
+            config.set("general_options","generate_flow_parameters","True")
         return config
 
     def no_intermediaries_ten_minute_data_ALG4_no_true_sinks_plus_upscale_rdirs_driver(self):
@@ -530,33 +535,39 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                file_type=dynamic_hd.\
                                get_file_extension(transformed_HD_ls_mask_filename),
                                griddescfile=half_degree_grid_filepath)
-        #Generate parameters
-        self._generate_flow_parameters(rdir_file=transformed_course_rdirs_filename,
-                                       topography_file=transformed_HD_filled_orography_filename,
-                                       inner_slope_file=\
-                                       path.join(self.ancillary_data_path,'bin_innerslope.dat'),
-                                       lsmask_file=transformed_HD_ls_mask_filename,
-                                       null_file=\
-                                       path.join(self.ancillary_data_path,'null.dat'),
-                                       area_spacing_file=\
-                                       path.join(self.ancillary_data_path,
-                                                 'fl_dp_dl.dat'),
-                                       orography_variance_file=\
-                                       path.join(self.ancillary_data_path,'bin_toposig.dat'),
-                                       output_dir=path.join(self.working_directory_path,'paragen'),
-                                       production_run=True)
-        #Place parameters and rdirs into a hdparas.file
-        self._generate_hd_file(rdir_file=path.splitext(transformed_course_rdirs_filename)[0] + ".dat",
-                               lsmask_file=path.splitext(transformed_HD_ls_mask_filename)[0] + ".dat",
-                               null_file=\
-                               path.join(self.ancillary_data_path,'null.dat'),
-                               area_spacing_file=\
-                               path.join(self.ancillary_data_path,
-                                         'fl_dp_dl.dat'),
-                               hd_grid_specs_file=half_degree_grid_filepath,
-                               output_file=self.output_hdparas_filepath,
-                               paras_dir=path.join(self.working_directory_path,'paragen'),
-                               production_run=True)
+        #If required generate flow parameters and create a hdparas.file otherwise
+        #use a river direction file with coordinates as the hdparas.file
+        if config.getboolean("general_options","generate_flow_parameters"):
+            #Generate parameters
+            self._generate_flow_parameters(rdir_file=transformed_course_rdirs_filename,
+                                           topography_file=transformed_HD_filled_orography_filename,
+                                           inner_slope_file=\
+                                           path.join(self.ancillary_data_path,'bin_innerslope.dat'),
+                                           lsmask_file=transformed_HD_ls_mask_filename,
+                                           null_file=\
+                                           path.join(self.ancillary_data_path,'null.dat'),
+                                           area_spacing_file=\
+                                           path.join(self.ancillary_data_path,
+                                                     'fl_dp_dl.dat'),
+                                           orography_variance_file=\
+                                           path.join(self.ancillary_data_path,'bin_toposig.dat'),
+                                           output_dir=path.join(self.working_directory_path,'paragen'),
+                                           production_run=True)
+            #Place parameters and rdirs into a hdparas.file
+            self._generate_hd_file(rdir_file=path.splitext(transformed_course_rdirs_filename)[0] + ".dat",
+                                   lsmask_file=path.splitext(transformed_HD_ls_mask_filename)[0] + ".dat",
+                                   null_file=\
+                                   path.join(self.ancillary_data_path,'null.dat'),
+                                   area_spacing_file=\
+                                   path.join(self.ancillary_data_path,
+                                             'fl_dp_dl.dat'),
+                                   hd_grid_specs_file=half_degree_grid_filepath,
+                                   output_file=self.output_hdparas_filepath,
+                                   paras_dir=path.join(self.working_directory_path,'paragen'),
+                                   production_run=True)
+        else:
+            #Use a river direction file including coordinates as the hdparas file
+            shutil.copy2(transformed_course_rdirs_filename,self.output_hdparas_filepath)
         if self.output_hdstart_filepath is not None:
             utilities.prepare_hdrestart_file_driver(base_hdrestart_filename=base_hd_restart_file,
                                                     output_hdrestart_filename=\

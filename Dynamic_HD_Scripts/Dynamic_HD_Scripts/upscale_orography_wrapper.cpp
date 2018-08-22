@@ -4,9 +4,9 @@
 {
     "distutils": {
         "depends": [
-            "/Users/thomasriddick/Documents/workspace/Dynamic_HD_Code/Dynamic_HD_Cpp_Code/src/upscale_orography.cpp", 
-            "/anaconda/envs/mpiwork/lib/python2.7/site-packages/numpy/core/include/numpy/arrayobject.h", 
-            "/anaconda/envs/mpiwork/lib/python2.7/site-packages/numpy/core/include/numpy/ufuncobject.h"
+            "//anaconda/envs/mpiwork/lib/python2.7/site-packages/numpy/core/include/numpy/arrayobject.h", 
+            "//anaconda/envs/mpiwork/lib/python2.7/site-packages/numpy/core/include/numpy/ufuncobject.h", 
+            "/Users/thomasriddick/Documents/workspace/Dynamic_HD_Code/Dynamic_HD_Cpp_Code/src/upscale_orography.cpp"
         ], 
         "extra_compile_args": [
             "-std=gnu++11", 
@@ -19,7 +19,7 @@
         "include_dirs": [
             "/Users/thomasriddick/Documents/workspace/Dynamic_HD_Code/Dynamic_HD_Cpp_Code/src", 
             "/Users/thomasriddick/Documents/workspace/Dynamic_HD_Code/Dynamic_HD_Cpp_Code/include", 
-            "/anaconda/envs/mpiwork/lib/python2.7/site-packages/numpy/core/include"
+            "//anaconda/envs/mpiwork/lib/python2.7/site-packages/numpy/core/include"
         ], 
         "language": "c++"
     }, 

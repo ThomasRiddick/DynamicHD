@@ -22,10 +22,11 @@ from Dynamic_HD_Scripts.field import makeField
 def create_30sec_lgm_orography_from_highres_present_day_and_low_res_pair(input_lgm_low_res_orog,
                                                                          input_present_day_low_res_orog,
                                                                          input_present_day_high_res_orog):
-  low_res_anomalies = input_lgm_low_res_orog.subtract(input_present_day_low_res_orog)
+  input_lgm_low_res_orog.subtract(input_present_day_low_res_orog)
   #This is not a landsea mask but this function should also work to downscale a field of anomalies
-  high_res_anomalies = downscale_ls_mask(low_res_anomalies,fine_grid_type='LatLong30sec')
-  return input_present_day_high_res_orog.add(high_res_anomalies)
+  high_res_anomalies = downscale_ls_mask(input_lgm_low_res_orog,fine_grid_type='LatLong30sec')
+  input_present_day_high_res_orog.add(high_res_anomalies)
+  return input_present_day_high_res_orog
 
 def create_30s_lgm_orog_from_hr_present_day_and_lr_pair_driver(input_lgm_low_res_orog_filename,
                                                                input_present_day_low_res_orog_filename,
@@ -36,16 +37,16 @@ def create_30s_lgm_orog_from_hr_present_day_and_lr_pair_driver(input_lgm_low_res
                                                                input_present_day_high_res_orog_fieldname,
                                                                output_lgm_high_res_orog_fieldname):
   lgm_low_res_orog = iodriver.advanced_field_loader(input_lgm_low_res_orog_filename,
-                                                    field_type='Orogoraphy',
+                                                    field_type='Orography',
                                                     fieldname=input_lgm_low_res_orog_fieldname)
   present_day_low_res_orog = iodriver.advanced_field_loader(input_present_day_low_res_orog_filename,
-                                                            field_type='Orogoraphy',
+                                                            field_type='Orography',
                                                             fieldname=
                                                             input_present_day_low_res_orog_fieldname)
-  present_day_hi_res_orog = iodriver.advanced_field_loader(input_present_day_high_res_orog_filename,
-                                                           field_type='Orogoraphy',
-                                                           fieldname=
-                                                           input_present_day_high_res_orog_fieldname)
+  present_day_high_res_orog = iodriver.advanced_field_loader(input_present_day_high_res_orog_filename,
+                                                             field_type='Orography',
+                                                             fieldname=
+                                                             input_present_day_high_res_orog_fieldname)
   lgm_high_res_orog = \
     create_30sec_lgm_orography_from_highres_present_day_and_low_res_pair(lgm_low_res_orog,
                                                                          present_day_low_res_orog,
@@ -1108,6 +1109,40 @@ def downscale_ls_mask_driver(input_course_ls_mask_filename,
                                                   fine_grid_type,**fine_grid_kwargs)
     dynamic_hd.write_field(output_fine_ls_mask_filename,output_fine_ls_mask_field,
                            file_type=dynamic_hd.get_file_extension(output_fine_ls_mask_filename))
+
+def advanced_downscale_ls_mask_driver(input_course_ls_mask_filename,
+                                      output_fine_ls_mask_filename,
+                                      input_course_ls_mask_fieldname,
+                                      output_fine_ls_mask_fieldname,
+                                      fine_grid_type='LatLong10min',
+                                      **fine_grid_kwargs):
+    """Drive process of downscaling a land-sea mask using advanced loader/writer
+
+    Arguments:
+    input_course_ls_mask_filename: string; full path to input course land sea mask file
+    output_fine_ls_mask_filename: string; full path to target fine land sea mask file
+    fine_grid_type: string;  code for the fine grid type of the output field
+    fine_grid_kwargs: dictionary; key word arguments dictionary for the fine grid type of
+        the output field (if required)
+    Returns: nothing
+
+    Outflow field orientations is the same as input field orientation.
+    """
+
+    input_course_ls_mask_field = iodriver.advanced_field_loader(input_course_ls_mask_filename,
+                                                                fieldname=
+                                                                input_course_ls_mask_fieldname)
+    output_fine_ls_mask_field = downscale_ls_mask(input_course_ls_mask_field,
+                                                  fine_grid_type,**fine_grid_kwargs)
+    #scale_factor = (output_fine_ls_mask_field.get_grid().nlong/
+    #               input_course_ls_mask_field.get_grid().nlong)
+    #coarse_coords = input_course_ls_mask_field.get_grid().get_coordinates()
+    #fine_nlat = scale_factor*input_course_ls_mask_field.get_grid().nlat
+    #fine_nlong = scale_factor*input_course_ls_mask_field.get_grid().nlong
+    #output_fine_ls_mask.get_grid().set_coordinates()
+    raise UserWarning("Coordinates not set for fine grid!")
+    iodriver.advanced_field_writer(output_fine_ls_mask_filename,output_fine_ls_mask_field,
+                                   fieldname=output_fine_ls_mask_fieldname)
 
 def downscale_ls_mask(input_course_ls_mask_field,fine_grid_type,**fine_grid_kwargs):
     """Downscale a land-sea mask
