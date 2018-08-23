@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "Running Version 3.0 of the Dynamic HD Parameters Generation Code"
+echo "Running Version 3.1 of the Dynamic HD Parameters Generation Code"
 
 #Define module loading function
 function load_module
@@ -334,7 +334,7 @@ if $compilation_required; then
 		echo "Compiling Fortran code called from shell script wrappers"
 		${source_directory}/Dynamic_HD_bash_scripts/compile_paragen_and_hdfile.sh ${source_directory}/Dynamic_HD_bash_scripts/bin ${source_directory}/Dynamic_HD_bash_scripts/parameter_generation_scripts/fortran ${source_directory}/Dynamic_HD_bash_scripts/parameter_generation_scripts/fortran/paragen.f paragen
 	else
-		echo "No parameter_generation_scripts submodule; this is an error if parameter\ngeneration is required but otherwise is not"
+		echo "No parameter_generation_scripts submodule; this is an error if parameter generation is required but otherwise is not"
 	fi
 fi
 
