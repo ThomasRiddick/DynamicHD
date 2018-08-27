@@ -198,6 +198,15 @@ generic_1d_coords* icon_single_index_grid::icon_single_index_wrapped_coords(gene
 	return coords_in;
 }
 
+bool icon_single_index_grid::icon_single_index_non_diagonal(generic_1d_coords* start_coords,
+                                                            generic_1d_coords* dest_coords){
+	int start_index = get_cell_neighbors_index(start_coords,i);
+	for (auto i = 0; i < 3; i++) {
+		if (get_cell_neighbors_index(dest_coords,i) == start_index) return true;
+	}
+	return false;
+}
+
 grid* grid_factory(grid_params* grid_params_in){
 	if(latlon_grid_params* latlon_params = dynamic_cast<latlon_grid_params*>(grid_params_in)){
 		return new latlon_grid(latlon_params);

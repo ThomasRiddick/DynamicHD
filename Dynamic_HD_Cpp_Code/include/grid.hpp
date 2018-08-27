@@ -406,4 +406,11 @@ inline bool latlon_grid::latlon_outside_limits(latlon_coords* coords){
 	else return (coords->get_lat() < 0 || coords->get_lat() >= nlat);
 }
 
+//avoid making this virtual so that it can be in-lined
+inline bool icon_single_index_grid::
+	icon_single_index_outside_limits(generic_1d_coords* coords_in){
+	//ICON grid is naturally wrapped - this function should be optimized out by the compiler
+	return false;
+}
+
 #endif /* INCLUDE_GRID_HPP_ */
