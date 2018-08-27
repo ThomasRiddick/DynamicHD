@@ -1,0 +1,38 @@
+{
+	"build_systems":
+	[
+	],
+	"folders":
+	[
+		{
+			"file_exclude_patterns":
+			[
+				"Dynamic_HD_Scripts/Dynamic_HD_Scripts/fill_sinks_wrapper.cpp",
+				"Dynamic_HD_Scripts/Dynamic_HD_Scripts/upscale_orography_wrapper.cpp"
+			],
+			"folder_exclude_patterns":
+			[
+				"Dynamic_HD_Cpp_Code/Release",
+				"Dynamic_HD_Cpp_Code/docs",
+				"Dynamic_HD_Fortran_Code/Release",
+				"Dynamic_HD_bash_scripts/bin",
+				"Dynamic_HD_Scripts/Dynamic_HD_Scripts/libs",
+				"Dynamic_HD_Scripts/Dynamic_HD_Scripts/build",
+				"Dynamic_HD_Scripts/Dynamic_HD_Scripts/bin",
+				"Dynamic_HD_Fortran_Code/docs",
+				"Dynamic_HD_Fortran_Code/mods"
+			],
+			"path": "."
+		}
+	],
+	"settings":
+	{
+		"env":
+		{
+			"Darwin":
+			{
+				"PYTHONPATH": "$PYTHONPATH:/Users/thomasriddick/Documents/workspace/Dynamic_HD_Code/Dynamic_HD_Scripts"
+			}
+		}
+	}
+}
