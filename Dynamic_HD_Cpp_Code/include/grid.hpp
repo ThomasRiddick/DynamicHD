@@ -14,6 +14,27 @@
 using namespace std;
 
 /**
+ * Abstract generic class for holding parameters of a grid. Real subclasses
+ * are required for actual grids
+ */
+
+class grid_params {
+protected:
+	///Does this grid wrap east-west?
+	bool nowrap = false;
+public:
+	///Constructor
+	grid_params(bool nowrap_in) : nowrap(nowrap_in) {}
+	///Destructor
+	virtual ~grid_params() {};
+	///Getter
+	const int get_nowrap() { return nowrap; }
+	///Setter
+	void set_nowrap(bool nowrap_in) { nowrap = nowrap_in; }
+};
+
+
+/**
  * Generic grid class describing the relationship between cells on an abstract grid
  *  Subclasses of this describe specific grids. Uses hand written redirections to the
  *  appropriate subclasses functions via static casting instead of relying on virtual
@@ -90,26 +111,6 @@ protected:
 	///and therefore wrapping; it doesn't affect wrapping directly merely ensures
 	///that no is required when it is set to true
 	bool nowrap = false;
-};
-
-/**
- * Abstract generic class for holding parameters of a grid. Real subclasses
- * are required for actual grids
- */
-
-class grid_params {
-protected:
-	///Does this grid wrap east-west?
-	bool nowrap = false;
-public:
-	///Constructor
-	grid_params(bool nowrap_in) : nowrap(nowrap_in) {}
-	///Destructor
-	virtual ~grid_params() {};
-	///Getter
-	const int get_nowrap() { return nowrap; }
-	///Setter
-	void set_nowrap(bool nowrap_in) { nowrap = nowrap_in; }
 };
 
 /** A real class implementing functions on a latitude-longitude

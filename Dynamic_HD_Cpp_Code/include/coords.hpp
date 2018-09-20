@@ -105,6 +105,16 @@ public:
 	///Overload ostream operator
 	friend ostream& operator<< (ostream& out, generic_1d_coords& field_object)
 		{ return out << "Index: " << field_object.index << endl; };
+protected:
+	virtual void print(ostream& out) const {
+		out << "index: " << this->index << endl;
+	};
+	//For overloading equals on the base class (as operators can't be virtual)
+	bool equals(const coords& rhs){
+		const generic_1d_coords* generic_1d_coords_rhs = dynamic_cast<const generic_1d_coords*>(&rhs);
+		if(generic_1d_coords_rhs) return *this == *generic_1d_coords_rhs;
+		else return false;
+	};
 };
 
 /**
