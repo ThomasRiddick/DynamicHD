@@ -14,9 +14,9 @@ cdef extern from 'upscale_orography.cpp':
                                                    double tarasov_min_path_length_in,
                                                    bint tarasov_include_corners_in_same_edge_criteria_in,
                                                    bint prefer_non_diagonal_initial_dirs)
-    
-def upscale_orography(np.ndarray[double,ndim=2,mode='c'] orography_in, 
-                      np.ndarray[double,ndim=2,mode='c'] orography_out, int method, 
+
+def upscale_orography(np.ndarray[double,ndim=2,mode='c'] orography_in,
+                      np.ndarray[double,ndim=2,mode='c'] orography_out, int method,
                       np.ndarray[int,ndim=2,mode='c'] landsea_in,
                       np.ndarray[int,ndim=2,mode='c'] true_sinks_in,
                       bint add_slope_in, double epsilon_in,
@@ -25,11 +25,11 @@ def upscale_orography(np.ndarray[double,ndim=2,mode='c'] orography_in,
                       bint tarasov_include_corners_in_same_edge_criteria_in,
                       bint prefer_non_diagonal_initial_dirs=False):
     """Call the C++ cython interface function from cython with appropriate arguments.
-   
-    Also find the required number of latitude and longitude points to pass in 
+
+    Also find the required number of latitude and longitude points to pass in
     """
 
-    cdef int nlat_fine,nlon_fine 
+    cdef int nlat_fine,nlon_fine
     nlat_fine, nlon_fine = orography_in.shape[0],orography_in.shape[1]
     cdef int nlat_course,nlon_course
     nlat_course, nlon_course = orography_out.shape[0],orography_out.shape[1]

@@ -90,6 +90,8 @@ public:
 	///Setter
 	void set_tarasov_maximum_separation_from_initial_edge(int value)
 		{tarasov_maximum_separation_from_initial_edge = value;}
+	//Clone operator
+	cell* clone();
 	///Overloaded equals operator
 	cell operator= (const cell&);
 	///Overloaded greater than operator
@@ -106,6 +108,15 @@ public:
 							 << "Cell Coords: " << *cell_object.cell_coords;
 	}
 };
+
+
+inline cell* cell::clone(){
+	return new cell(orography,cell_coords->clone(),
+	                catchment_num,tarasov_initial_edge_number,
+	                tarasov_maximum_separation_from_initial_edge,
+		 							tarasov_path_length,tarasov_path_initial_height);
+}
+
 /**
  * Contains an overloaded operator that compares two cell objects
  * for a priority queue
@@ -136,12 +147,19 @@ public:
 	           coords* cell_coords_in) :
 		cell(orography_in,cell_coords_in),
 		height_type(height_type_in) {}
-		height_types get_height_type() {return height_type;}
-		friend ostream& operator<<(ostream& out, basin_cell& cell_object) {
-			return out << static_cast<cell&>(cell_object) << "Height Type: " << cell_object.height_type;
-		}
+	//Clone operator
+	basin_cell* clone();
+	height_types get_height_type() {return height_type;}
+	friend ostream& operator<<(ostream& out, basin_cell& cell_object) {
+		return out << static_cast<cell&>(cell_object) << "Height Type: " << cell_object.height_type;
+	}
 private:
 	height_types height_type;
 };
+
+inline basin_cell* basin_cell::clone(){
+	return new basin_cell(get_orography(),height_type,
+	           						get_cell_coords()->clone());
+}
 
 #endif /* CELL_HPP_ */

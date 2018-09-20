@@ -441,6 +441,7 @@ TEST_F(BurnCarvedRiversTest, BurnCarvedRiversTestSix) {
   delete[] expected_orography_out;
   delete[] orography;
   delete[] rdirs;
+  delete[] rdirs_double;
 }
 
 TEST_F(BurnCarvedRiversTest, BurnCarvedRiversTestSeven) {
@@ -573,6 +574,7 @@ TEST_F(BurnCarvedRiversTest, BurnCarvedRiversTestSeven) {
   delete[] expected_orography_out;
   delete[] orography;
   delete[] rdirs;
+  delete[] rdirs_double;
 }
 
 class ConnectedAreaReductionTest : public ::testing::Test {

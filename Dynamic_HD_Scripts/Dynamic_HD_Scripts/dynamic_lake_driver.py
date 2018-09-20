@@ -212,9 +212,11 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
         original_ls_mask_with_grid_filename= (self.generated_ls_mask_filepath +
                                                     file_label + '_grid' + '.nc')
         minima_filename = self.generated_minima_filepath+file_label+".nc"
+        minima_filename_21k = self.generated_minima_filepath+file_label+"_21k.nc"
         minima_reduced_filename = self.generated_minima_filepath+file_label+"_reduced.nc"
+        minima_reduced_filename_21k = self.generated_minima_filepath+file_label+"_reduced_21k.nc"
         minima_fieldname = "minima"
-        lakemask_filename= self.lakemask_filepath+"empty_lakemask.nc"
+        lakemask_filename= self.lakemask_filepath+"/empty_lakemask.nc"
         lakemask_fieldname="lakemask"
         glacial_mask_file = join(self.orography_path,"ice5g_v1_2_21_0k_10min.nc")
         utilities.change_dtype(input_filename=original_ls_mask_filename,
@@ -329,6 +331,35 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
         ice6g_sinkless_field.update_field_with_partially_masked_data(ice6g_field)
         iodriver.advanced_field_writer(output_21k_ice6g_orog_sinkless_improved_filename,
                                        ice6g_sinkless_field,fieldname="Topo",clobber=True)
+        dynamic_lake_operators.advanced_local_minima_finding_driver(output_21k_ice6g_orog_filename,
+                                                                    "Topo",
+                                                                    minima_filename_21k,
+                                                                    minima_fieldname)
+        dynamic_lake_operators.reduce_connected_areas_to_points(minima_filename_21k,
+                                                                minima_fieldname,
+                                                                minima_reduced_filename_21k,
+                                                                minima_fieldname)
+        dynamic_lake_operators.\
+          advanced_basin_evaluation_driver(input_minima_file=minima_reduced_filename_21k,
+                                           input_minima_fieldname=minima_fieldname,
+                                           input_raw_orography_file=ice6g_21k_filename,
+                                           input_raw_orography_fieldname="Topo",
+                                           input_corrected_orography_file=output_21k_ice6g_orog_filename,
+                                           input_corrected_orography_fieldname="Topo",
+                                           input_prior_fine_rdirs_file=
+                                           "/Users/thomasriddick/Documents/data/HDdata/rdirs/generated/""updated_RFDs_ICE6g_lgm_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_""rdirs_tarasov_orog_corrs_20171015_031541.nc",
+                                           input_prior_fine_rdirs_fieldname="field_value",
+                                           input_prior_fine_catchments_file=
+                                           "/Users/thomasriddick/Documents/data/HDdata/catchmentmaps/"
+                                           "catchmentmap_unsorted_ICE6g_lgm_ALG4_sinkless_no_true_sinks"
+                                           "_oceans_lsmask_plus_upscale_rdirs_tarasov_orog_corrs_20171015_031541.nc",
+                                           input_prior_fine_catchments_fieldname="field_value",
+                                           input_coarse_catchment_nums_file=
+                                           "/Users/thomasriddick/Documents/data/HDdata/catchmentmaps/"
+                                           "catchmentmap_ICE6g_lgm_ALG4_sinkless_no_true_sinks"
+                                           "_oceans_lsmask_plus_upscale_rdirs_tarasov_orog_corrs"
+                                           "_20171015_031541_upscaled_updated.nc",
+                                           input_coarse_catchment_nums_fieldname="field_value")
 
 def main():
     """Select the revelant runs to make

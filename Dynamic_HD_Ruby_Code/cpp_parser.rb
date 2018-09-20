@@ -166,10 +166,11 @@ class CppToPythonConverter < CppParser
       array_statement.sub!(/\n\s*\w+\s*=\s*(0|false|0.0)\s*$/,"")
     else
       array_statement.sub!(/\s*new\s*(int|double|bool)\[[*0-9a-zA-Z_]+\]\s*\{\s*(\d|true|false|-)/," np.array\(\[\[\\2")
-      array_statement =~ /\[\[/
-      spaces="\t\t"+" "*($`.length+1)
-      array_statement.gsub!(/(\d|true|false),\s*\n\s*(\d|-|true|false)/,"\\1\],\n#{spaces}\[\\2")
-      array_statement.gsub!(/(\d|true|false)\s*,?\s*\}/,"\\1\]\],\n#{spaces}dtype=np.#{type}\)")
+      if array_statement =~ /\[\[/
+        spaces="\t\t"+" "*($`.length+1)
+        array_statement.gsub!(/(\d|true|false),\s*\n\s*(\d|-|true|false)/,"\\1\],\n#{spaces}\[\\2")
+        array_statement.gsub!(/(\d|true|false)\s*,?\s*\}/,"\\1\]\],\n#{spaces}dtype=np.#{type}\)")
+      end
     end
     while array_statement.sub!(/(\s+|\[|,)true(\s+|\]|,)/,"\\1True\\2"); end
     while array_statement.sub!(/(\s+|\[|,)false(\s+|\]|,)/,"\\1False\\2"); end

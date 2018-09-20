@@ -308,6 +308,7 @@ void sink_filling_algorithm::add_landsea_edge_cells_to_q(){
 				tarasov_path_initial_height = (*orography)(coords_in);
 				(*tarasov_path_initial_heights)(coords_in) =
 						tarasov_path_initial_height;
+				(*catchment_nums)(coords_in) = -1;
 			}
 			//Calculate and the process the neighbors of every landsea point and
 			//add them to the queue (if they aren't already in the queue or themselves
@@ -649,9 +650,12 @@ inline void sink_filling_algorithm_4::push_true_sink(coords* coords_in)
 {
 	int new_catchment_num = q.get_next_k_value();
 	double cell_orog = (*orography)(coords_in);
-	if (tarasov_mod) q.push_true_sink(new cell(cell_orog,coords_in,new_catchment_num,
-	  	     	 	 	 	 	 	  cell_orog,_grid->get_true_sink_edge_num(),
-									  0,1.0,cell_orog));
+	if (tarasov_mod) {
+		q.push_true_sink(new cell(cell_orog,coords_in,new_catchment_num,
+	  	     	 	 	 	 	 cell_orog,_grid->get_true_sink_edge_num(),
+									   0,1.0,cell_orog));
+		(*tarasov_path_initial_heights)(coords_in) = cell_orog;
+	}
 	else q.push_true_sink(new cell(cell_orog,coords_in,new_catchment_num,
 							  	   cell_orog));
 }

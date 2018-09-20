@@ -12,6 +12,7 @@ reduce_connected_areas_to_points_algorithm::~reduce_connected_areas_to_points_al
 	delete completed_cells;
 	delete areas;
 	delete _grid;
+	if (orography) delete orography;
 }
 
 void reduce_connected_areas_to_points_algorithm::setup_flags(bool use_diagonals_in,
@@ -85,7 +86,8 @@ inline void reduce_connected_areas_to_points_algorithm::process_neighbor() {
 				if ((*orography)(nbr_coords) <= (*orography)(center_coords)) {
 					delete_initial_point = true;
 				}
-			}
+				delete nbr_coords;
+			} else delete nbr_coords;
 		} else delete nbr_coords;
 	} else delete nbr_coords;
 	neighbors_coords->pop_back();

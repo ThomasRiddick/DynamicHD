@@ -82,6 +82,16 @@ extensions=[Extension("libs.fill_sinks_wrapper",[path.join(module_dir,"fill_sink
                       include_dirs=[src,include,np.get_include()],
                       language="c++",
                       extra_compile_args=extra_compile_args,
+                      extra_link_args=extra_links_args),
+            Extension("libs.evaluate_basins_wrapper",[path.join(module_dir,
+                                                                "evaluate_basins_wrapper.pyx"),
+                                                      path.join(src,"grid.cpp"),
+                                                      path.join(src,"cell.cpp"),
+                                                      path.join(src,
+                                                                "basin_evaluation_algorithm.cpp")],
+                      include_dirs=[src,include,np.get_include()],
+                      language="c++",
+                      extra_compile_args=extra_compile_args,
                       extra_link_args=extra_links_args)]
 
 setup(

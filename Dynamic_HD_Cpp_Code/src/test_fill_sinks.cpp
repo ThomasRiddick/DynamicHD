@@ -36,13 +36,13 @@ protected:
 	///Switch off debug
 	bool debug = false;
 	///Empty 5 by 5 section of true sinks
-	bool* empty_true_sinks_section_five_by_five = new bool[5*5];
+	bool* empty_true_sinks_section_five_by_five = nullptr;
 	///All land 5 by 5 section of landsea mask
-	bool* all_land_landsea_mask_five_by_five    = new bool[5*5];
+	bool* all_land_landsea_mask_five_by_five    = nullptr;
 	///Empty 10 by 10 section of true sinks
-	bool* empty_true_sinks_section_ten_by_ten = new bool[10*10];
+	bool* empty_true_sinks_section_ten_by_ten   = nullptr;
 	///All land 10 by 10 section of landsea mask
-	bool* all_land_landsea_mask_ten_by_ten    = new bool[10*10];
+	bool* all_land_landsea_mask_ten_by_ten      = nullptr;
 
 public:
 	///Constructor
@@ -52,9 +52,13 @@ public:
 };
 
 FillSinksOrographyUpscalingTest::FillSinksOrographyUpscalingTest(){
+	empty_true_sinks_section_five_by_five = new bool[5*5];
 	for (auto i=0; i < 25; i++) empty_true_sinks_section_five_by_five[i] = false;
+	all_land_landsea_mask_five_by_five    = new bool[5*5];
 	for (auto i=0; i < 25; i++) all_land_landsea_mask_five_by_five[i] = false;
+	empty_true_sinks_section_ten_by_ten   = new bool[10*10];
 	for (auto i=0; i < 100; i++) empty_true_sinks_section_ten_by_ten[i] = false;
+	all_land_landsea_mask_ten_by_ten      = new bool[10*10];
 	for (auto i=0; i < 100; i++) all_land_landsea_mask_ten_by_ten[i] = false;
 }
 
@@ -544,7 +548,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFifteen){
 		false,false,false,false,false,false,false,false,false,false,
 		false,false,false,false,false,false,false, true,false,false,
 		false,false,false,false,false,false,false,false,false,false,
-		false,false,false,false,false,false,false,false,true,false,
+		false,false,false,false,false,false,false,false,true,false
 	};
 	double* orography_section = new double[10*10] {
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0,100.0,100.0,

@@ -30,7 +30,9 @@ bool grid::fine_coords_in_same_cell(coords* fine_coords_set_one,
 	                               		grid_params* fine_grid_params){
 	coords* coarse_coords_set_one = convert_fine_coords(fine_coords_set_one,fine_grid_params);
 	coords* coarse_coords_set_two = convert_fine_coords(fine_coords_set_two,fine_grid_params);
-	return (*coarse_coords_set_one == *coarse_coords_set_two);
+	bool coords_in_same_cell = (*coarse_coords_set_one == *coarse_coords_set_two);
+	delete coarse_coords_set_one; delete coarse_coords_set_two;
+	return coords_in_same_cell;
 }
 
 latlon_grid::latlon_grid(grid_params* params){
