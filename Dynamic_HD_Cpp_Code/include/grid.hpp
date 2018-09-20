@@ -25,7 +25,7 @@ class grid {
 public:
 	virtual ~grid(){};
 	///a enum with the title of the possible grid types
-	enum grid_types {latlon};
+	enum grid_types {latlon,icon_single_index};
 	///Getter
 	int get_total_size() {return total_size;}
 	///Getter
@@ -198,7 +198,19 @@ class icon_single_index_grid : public grid {
 	//nine secondary neighbors (neighbors of the cells vertices
 	//that don't share an edge with the cell) of each cell
 	int* secondary_neighboring_cell_indices = nullptr;
-	//
+	//An array to use if no_wrap is set to allow a segment of a
+	//global grid to be selected; inside area is true
+	bool* subgrid_mask = nullptr;
+	//Premarked edges for orography upscaling acts both lookup for number and mask
+	bool* edge_nums = nullptr;
+	//Value for non edges in edge nums array
+	const int no_edge = 0;
+	//Values for corners
+	const int top_corner             = 4;
+	const int bottom_right_corner    = 5;
+	const int bottom_left_corner     = 6;
+	//Precalculated edge seperation values (will be 3 entries per cell so size is ncells*3)
+	double* edge_separations = nullptr;
 public:
 	///Constructor
 	icon_single_index_grid(grid_params*);
@@ -220,6 +232,8 @@ public:
 	/// a select case statement coupled with static casting
 	int icon_single_index_get_index(generic_1d_coords* coords_in)
 		{ return coords_in->get_index(); }
+	//setter
+	void set_subgrid_mask(bool* subgrid_mask_in) { subgrid_mask = subgrid_mask_in; }
 	//implement function that iterative apply a supplied function
 	void for_diagonal_nbrs(coords*,function<void(coords*)> );
 	void for_non_diagonal_nbrs(coords*,function<void(coords*)>);
@@ -291,6 +305,8 @@ class icon_single_index_grid_params : public grid_params {
 	//nine secondary neighbors (neighbors of the cells vertices
 	//that don't share an edge with the cell) of each cell
 	int* secondary_neighboring_cell_indices = nullptr;
+	//If no wrap is set this can use to specify a subsection of the gri
+	bool* subgrid_mask = nullptr;
 public:
 	virtual ~icon_single_index_grid_params() {};
 	///Class constructor
@@ -303,13 +319,18 @@ public:
 	///Class constructor
 	icon_single_index_grid_params(int ncells_in, int* neighboring_cell_indices_in,
 			bool use_secondary_neighbors_in, int* secondary_neighboring_cell_indices_in,
-			bool nowrap_in)
+			bool nowrap_in, bool* subgrid_mask_in)
 		: grid_params(nowrap_in), ncells(ncells_in),
 		  neighboring_cell_indices(neighboring_cell_indices_in),
 		  use_secondary_neighbors(use_secondary_neighbors_in),
-		  secondary_neighboring_cell_indices(secondary_neighboring_cell_indices_in){};
+		  secondary_neighboring_cell_indices(secondary_neighboring_cell_indices_in),
+		  subgrid_mask(subgrid_mask_in){};
 	///Getter
 	const int get_ncells() { return ncells; }
+	int* get_neighboring_cell_indices() { return neighboring_cell_indices; }
+	const bool get_use_secondary_neighbors() { return use_secondary_neighbors; }
+	int* get_secondary_neighboring_cell_indices() { return secondary_neighboring_cell_indices; }
+	bool* get_subgrid_mask() { return subgrid_mask; }
 };
 
 /*
@@ -326,6 +347,11 @@ inline int grid::get_index(coords* coords_in){
 			latlon_grid* this_as_latlon = static_cast<latlon_grid*>(this);
 			latlon_coords* coords_in_latlon = static_cast<latlon_coords*>(coords_in);
 			return this_as_latlon->latlon_get_index(coords_in_latlon); }
+		break;
+	case grid_types::icon_single_index: {
+			icon_single_index_grid* this_as_icon_single_index = static_cast<icon_single_index_grid*>(this);
+			generic_1d_coords* coords_in_generic_1d = static_cast<generic_1d_coords*>(coords_in);
+			return this_as_icon_single_index->icon_single_index_get_index(coords_in_generic_1d); }
 		break;
 	default:
 		throw runtime_error("Unknown grid type in get_index... need to add static casting to new grid types by hand");
@@ -345,6 +371,12 @@ inline coords* grid::wrapped_coords(coords* coords_in){
 			latlon_coords* coords_in_latlon = static_cast<latlon_coords*>(coords_in);
 			return static_cast<coords*>(this_as_latlon->latlon_wrapped_coords(coords_in_latlon)); }
 		break;
+	case grid_types::icon_single_index: {
+			icon_single_index_grid* this_as_icon_single_index = static_cast<icon_single_index_grid*>(this);
+			generic_1d_coords* coords_in_generic_1d = static_cast<generic_1d_coords*>(coords_in);
+			return static_cast<coords*>(this_as_icon_single_index->
+			                            icon_single_index_wrapped_coords(coords_in_generic_1d));}
+		break;
 	default:
 		throw runtime_error("Unknown grid type in wrapped_coords... need to add static casting to new grid types by hand");
 	}
@@ -359,6 +391,12 @@ inline bool grid::outside_limits(coords* coords_in){
 			latlon_grid* this_as_latlon = static_cast<latlon_grid*>(this);
 			latlon_coords* coords_in_latlon = static_cast<latlon_coords*>(coords_in);
 			return this_as_latlon->latlon_outside_limits(coords_in_latlon); }
+		break;
+	case grid_types::icon_single_index: {
+			icon_single_index_grid* this_as_icon_single_index = static_cast<icon_single_index_grid*>(this);
+			generic_1d_coords* coords_in_generic_1d = static_cast<generic_1d_coords*>(coords_in);
+			return this_as_icon_single_index->icon_single_index_outside_limits(coords_in_generic_1d);
+	}
 		break;
 	default:
 		throw runtime_error("Unknown grid type in wrapped_coords... need to add static casting to new grid types by hand");
@@ -376,6 +414,14 @@ inline bool grid::non_diagonal(coords* start_coords,coords* dest_coords){
 			latlon_coords* dest_coords_latlon = static_cast<latlon_coords*>(dest_coords);
 			return this_as_latlon->latlon_non_diagonal(start_coords_latlon,dest_coords_latlon); }
 		break;
+	case grid_types::icon_single_index: {
+			icon_single_index_grid* this_as_icon_single_index = static_cast<icon_single_index_grid*>(this);
+			generic_1d_coords* start_coords_generic_1d = static_cast<generic_1d_coords*>(start_coords);
+			generic_1d_coords* dest_coords_generic_1d = static_cast<generic_1d_coords*>(dest_coords);
+			return this_as_icon_single_index->icon_single_index_non_diagonal(start_coords_generic_1d,
+			                                                          			 dest_coords_generic_1d);
+	}
+		break;
 	default:
 		throw runtime_error("Unknown grid type in wrapped_coords... need to add static casting to new grid types by hand");
 	}
@@ -392,6 +438,8 @@ inline double grid::calculate_dir_based_rdir(coords* start_coords,coords* dest_c
 			latlon_coords* dest_coords_latlon = static_cast<latlon_coords*>(dest_coords);
 			return this_as_latlon->latlon_calculate_dir_based_rdir(start_coords_latlon,dest_coords_latlon); }
 		break;
+	case grid_types::icon_single_index:
+		throw runtime_error("Direction based river directions not defined for triangular icon grid");
 	default:
 		throw runtime_error("Unknown grid type in wrapped_coords... need to add static casting to new grid types by hand");
 	}
@@ -409,8 +457,9 @@ inline bool latlon_grid::latlon_outside_limits(latlon_coords* coords){
 //avoid making this virtual so that it can be in-lined
 inline bool icon_single_index_grid::
 	icon_single_index_outside_limits(generic_1d_coords* coords_in){
-	//ICON grid is naturally wrapped - this function should be optimized out by the compiler
-	return false;
+	//ICON grid is naturally wrapped
+	if (nowrap && subgrid_mask) return subgrid_mask[icon_single_index_get_index(coords_in)];
+	else return false;
 }
 
 #endif /* INCLUDE_GRID_HPP_ */

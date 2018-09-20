@@ -78,7 +78,7 @@ public:
 	const int get_index() const { return index;};
 	///Overload equals operator
 	bool operator== (const generic_1d_coords& rhs) const
-			{ return (index == rhs.index()); };
+			{ return (index == rhs.get_index()); };
 	///Overload ostream operator
 	friend ostream& operator<< (ostream& out, generic_1d_coords& field_object)
 		{ return out << "Index: " << field_object.index << endl; };
