@@ -425,6 +425,10 @@ void sink_filling_algorithm_latlon::add_geometric_edge_cells_to_q(){
 	}
 }
 
+void sink_filling_algorithm_icon_single_index::add_geometric_edge_cells_to_q(){
+	throw runtime_error("Adding geometric edge cells to queue not implemented for ICON grid");
+}
+
 void sink_filling_algorithm::add_true_sinks_to_q()
 {
 	_grid->for_all([&](coords* coords_in){
@@ -527,6 +531,10 @@ void sink_filling_algorithm_1_latlon::push_vertical_edge(int i, bool push_left, 
 	}
 }
 
+void sink_filling_algorithm_1_icon_single_index::push_diagonal_edge(int i, bool push_left, bool push_right){
+	throw runtime_error("Adding geometric edge cells to queue not implemented for ICON grid");
+}
+
 inline void sink_filling_algorithm_4_latlon::push_vertical_edge(int i, bool push_left, bool push_right)
 {
 	int new_catchment_num = 0;
@@ -560,6 +568,10 @@ inline void sink_filling_algorithm_4_latlon::push_vertical_edge(int i, bool push
 		(*catchment_nums)(cell_coords) = new_catchment_num;
 		(*rdirs)(cell_coords) = 6;
 	}
+}
+
+void sink_filling_algorithm_4_icon_single_index::push_diagonal_edge(int i, bool push_left, bool push_right){
+	throw runtime_error("Adding geometric edge cells to queue not implemented for ICON grid");
 }
 
 inline void sink_filling_algorithm_1_latlon::push_horizontal_edge(int j, bool push_top, bool push_bottom)
@@ -598,6 +610,10 @@ inline void sink_filling_algorithm_1_latlon::push_horizontal_edge(int j, bool pu
 	}
 }
 
+void sink_filling_algorithm_1_icon_single_index::push_horizontal_edge(int i){
+	throw runtime_error("Adding geometric edge cells to queue not implemented for ICON grid");
+}
+
 inline void sink_filling_algorithm_4_latlon::push_horizontal_edge(int j, bool push_top, bool push_bottom)
 {
 	int new_catchment_num = 0;
@@ -631,6 +647,10 @@ inline void sink_filling_algorithm_4_latlon::push_horizontal_edge(int j, bool pu
 		(*catchment_nums)(cell_coords) = new_catchment_num;
 		(*rdirs)(cell_coords) = 2;
 	}
+}
+
+void sink_filling_algorithm_4_icon_single_index::push_horizontal_edge(int i){
+	throw runtime_error("Adding geometric edge cells to queue not implemented for ICON grid");
 }
 
 inline void sink_filling_algorithm_1::push_true_sink(coords* coords_in)
@@ -998,10 +1018,19 @@ double sink_filling_algorithm_latlon::tarasov_calculate_neighbors_path_length_ch
 	else return SQRT_TWO;
 }
 
+double sink_filling_algorithm_icon_single_index::
+			 tarasov_calculate_neighbors_path_length_change(coords* center_coords_in) {
+	throw runtime_error("Path length change function not yet implemented for triangular grid");
+}
+
 void sink_filling_algorithm_4_latlon::set_cell_to_no_data_value(coords* coords_in){
 	(*next_cell_lat_index)(coords_in) = no_data_value;
 	(*next_cell_lon_index)(coords_in) = no_data_value;
 	if(not index_based_rdirs_only)(*rdirs)(coords_in) = 0.0;
+}
+
+void sink_filling_algorithm_4_icon_single_index::set_cell_to_no_data_value(coords* coords_in){
+	(*next_cell_index)(coords_in) = no_data_value;
 }
 
 void sink_filling_algorithm_4_latlon::set_cell_to_true_sink_value(coords* coords_in){
@@ -1010,10 +1039,19 @@ void sink_filling_algorithm_4_latlon::set_cell_to_true_sink_value(coords* coords
 	if(not index_based_rdirs_only)(*rdirs)(coords_in) = 5.0;
 }
 
+void sink_filling_algorithm_4_icon_single_index::set_cell_to_true_sink_value(coords* coords_in){
+	(*next_cell_index)(coords_in) = true_sink_value;
+}
+
 void sink_filling_algorithm_4_latlon::set_index_based_rdirs(coords* start_coords,coords* dest_coords){
 	auto latlon_dest_coords = static_cast<latlon_coords*>(dest_coords);
 	(*next_cell_lat_index)(start_coords) = latlon_dest_coords->get_lat();
 	(*next_cell_lon_index)(start_coords) = latlon_dest_coords->get_lon();
+}
+
+void sink_filling_algorithm_4_icon_single_index::set_index_based_rdirs(coords* start_coords,coords* dest_coords){
+	auto icon_single_index_dest_coords = static_cast<generic_1d_coords*>(dest_coords);
+	(*next_cell_index)(start_coords) = icon_single_index_dest_coords->get_index();
 }
 
 void sink_filling_algorithm_4_latlon::set_dir_based_rdir(coords* coords_in, double direction){

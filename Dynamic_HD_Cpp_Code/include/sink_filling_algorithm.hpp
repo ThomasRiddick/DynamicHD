@@ -270,6 +270,31 @@ protected:
 };
 
 /**
+ * Subclass of sink_filling_algorithm for the ICON grid
+ */
+
+
+class sink_filling_algorithm_icon_single_index :  virtual public sink_filling_algorithm {
+public:
+	///Constructor
+	sink_filling_algorithm_icon_single_index() {};
+	///Implement concrete version of this for ICON grid
+	void add_geometric_edge_cells_to_q();
+	///Push the two diagonal edges' cells onto the queue
+	virtual void push_diagonal_edge(int, bool = true, bool = true) = 0;
+	///Push the horizontal edge's cells onto the queue
+	virtual void push_horizontal_edge(int) = 0;
+	///Destructor
+	virtual ~sink_filling_algorithm_icon_single_index() {};
+	///Only used by Tarasov style orography upscaling code; calculate
+	///change in path length from center cell to neighbor
+	double tarasov_calculate_neighbors_path_length_change(coords*);
+protected:
+	///Number of points in grid
+	int ncells = 0;
+};
+
+/**
  * A normal priority flood sink filling algorithm likes algorithms 1/3 of Barnes et al 2013
  * (Based on algorithm 1 of this paper but can add a small slope/epsilon factor to slopes like
  * algorithm 3
@@ -395,6 +420,26 @@ public:
 };
 
 /**
+ * Algorithm 1 implemented for an ICON grid. Multiply inherits from derived classes of base class
+ */
+
+class sink_filling_algorithm_1_icon_single_index : public sink_filling_algorithm_1, public sink_filling_algorithm_icon_single_index{
+	///Implement virtual function of sink_filling_algorithm_latlon
+	void push_diagonal_edge(int,bool,bool);
+	void push_horizontal_edge(int);
+public:
+	///Constructor
+	sink_filling_algorithm_1_icon_single_index() {};
+	///Constructor
+	sink_filling_algorithm_1_icon_single_index(field<double>*, grid_params*, field<bool>*, bool*, bool,
+					         	 	bool = false, double = 0.1, bool* = nullptr);
+	///Setup the necessary fields and grid
+	void setup_fields(double*, bool*,bool*,grid_params*);
+	///Destructor
+	virtual ~sink_filling_algorithm_1_icon_single_index() {};
+};
+
+/**
  * Algorithm 4 implemented for a latitude-longitude grid. Multiply inherits from derived classes of base class
  */
 
@@ -441,6 +486,43 @@ public:
 												 field<bool>*, bool = false);
 	///Setup and test calculate_direction_from_neighbor_to_cell function
 	double test_calculate_direction_from_neighbor_to_cell(coords*,coords*,grid_params*);
+	///Implement virtual function of sink_filling_algorithm_4
+	void set_index_based_rdirs(coords*,coords*);
+};
+
+/**
+ * Algorithm 4 implemented for an ICON grid. Multiply inherits from derived classes of base class
+ */
+
+class sink_filling_algorithm_4_icon_single_index : public sink_filling_algorithm_4, public sink_filling_algorithm_icon_single_index{
+	field<int>* next_cell_index = nullptr;
+	///River direction value to use for true sinks
+	const int true_sink_value = -5;
+	///River direction value to use for no data
+	const int no_data_value = -1;
+	///Implement virtual function of sink_filling_algorithm_latlon
+	void push_diagonal_edge(int,bool,bool);
+	void push_horizontal_edge(int);
+	///Implement virtual function of sink_filling_algorithm_4
+	void set_cell_to_no_data_value(coords*);
+	void set_cell_to_true_sink_value(coords*);
+public:
+	///Constructor
+	sink_filling_algorithm_4_icon_single_index() {};
+	///Constructor
+	sink_filling_algorithm_4_icon_single_index(field<double>*, grid_params*, field<bool>*, bool*,
+							 	 	bool, field<int>*, bool, bool, field<int>*,field<int>*,
+									bool* = nullptr, field<short>* = nullptr);
+	///Setup flags and parameters
+	void setup_flags(bool, bool = false, bool = false, bool = false, bool = false, int = 1,
+				     double = 1.1, bool = false);
+	///Setup fields and grid
+	void setup_fields(double*, bool*, bool*, int*, int*, grid_params*, short*, int*);
+	///Destructor
+	virtual ~sink_filling_algorithm_4_icon_single_index() {delete next_cell_index; };
+	///Setup and test find_initial_cell_flow_direction function on a latitude-longitude grid
+	double test_find_initial_cell_flow_direction(coords*,grid_params*,field<double>*,
+												 field<bool>*, bool = false);
 	///Implement virtual function of sink_filling_algorithm_4
 	void set_index_based_rdirs(coords*,coords*);
 };
