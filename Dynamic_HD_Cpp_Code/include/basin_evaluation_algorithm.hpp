@@ -60,6 +60,10 @@ protected:
 	void process_center_cell();
 	void process_neighbors();
 	void process_neighbor();
+  void read_new_center_cell_variables();
+  void update_center_cell_variables();
+  void update_previous_filled_cell_variables();
+  bool possible_merge_point_reached();
   void set_merge_type(basic_merge_types current_merge_type);
   void set_primary_merge();
 	void set_remaining_redirects();
@@ -110,13 +114,17 @@ protected:
 	vector<coords*>* neighbors_coords = nullptr;
 	vector<coords*>* search_neighbors_coords = nullptr;
 	vector<coords*> basin_catchment_centers;
+  height_types new_center_cell_height_type;
   height_types center_cell_height_type;
   height_types previous_filled_cell_height_type;
 	int cell_number;
 	int basin_catchment_number;
+  bool skipped_previous_center_cell;
+  double new_center_cell_height;
 	double center_cell_height;
 	double previous_filled_cell_height;
 	double center_cell_volume_threshold;
+  double surface_height;
 	const int null_catchment = 0;
 };
 

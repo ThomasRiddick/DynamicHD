@@ -104,10 +104,6 @@ void latlon_evaluate_basins(bool* minima_in,
   auto coarse_grid_params_in = new latlon_grid_params(nlat_coarse,
                                                       nlon_coarse);
   merge_types* merge_points_in = new merge_types[nlat_fine*nlon_fine];
-  cout << "nlat" << nlat_fine << endl;
-  cout << "nlon" << nlon_fine << endl;
-  cout << "nlat coarse" << nlat_coarse << endl;
-  cout << "nlon coarse" << nlon_coarse << endl;
   alg.setup_fields(minima_in,
                    raw_orography_in,
                    corrected_orography_in,

@@ -167,18 +167,28 @@ void basin_evaluation_algorithm::add_minima_to_queue() {
 }
 
 void basin_evaluation_algorithm::evaluate_basin(){
-	q.push(minimum->clone());
+	center_cell = minimum->clone();
 	completed_cells->set_all(false);
-	cell_number = 0;
 	center_cell_volume_threshold = 0.0;
-	center_coords = static_cast<basin_cell*>(q.top())->get_cell_coords()->clone();
+	center_coords = center_cell->get_cell_coords()->clone();
+	center_cell_height_type = center_cell->get_height_type();
+	center_cell_height = center_cell->get_orography();
+	surface_height = center_cell_height;
 	previous_filled_cell_coords = center_coords->clone();
-	center_cell_height_type = static_cast<basin_cell*>(q.top())->get_height_type();
-	center_cell_height = static_cast<basin_cell*>(q.top())->get_orography();
 	previous_filled_cell_height_type = center_cell_height_type;
 	previous_filled_cell_height = center_cell_height;
+	read_new_center_cell_variables();
+	if (center_cell_height_type == connection_height) {
+		(*connected_cells)(center_coords) = true;
+		cell_number = 0;
+	} else if (center_cell_height_type == flood_height) {
+		(*flooded_cells)(center_coords) = true;
+		cell_number = 1;
+	} else throw runtime_error("Cell type not recognized");
 	(*completed_cells)(center_coords) = true;
-	bool skipped_previous_center_cell = false;
+	//Make partial first teration
+	process_neighbors();
+	delete center_cell;
 	while( ! q.empty()){
 		center_cell = static_cast<basin_cell*>(q.top());
 		q.pop();
@@ -186,9 +196,8 @@ void basin_evaluation_algorithm::evaluate_basin(){
 		//until after making the test for merges then relabel. Center cell height/coords
 		//without the 'new' moniker refers to the previous center cell; previous center cell
 		//height/coords the previous previous center cell
-		new_center_coords = center_cell->get_cell_coords()->clone();
-		double new_center_cell_height = center_cell->get_orography();
-		if ( new_center_cell_height < center_cell_height && ! skipped_previous_center_cell) {
+		read_new_center_cell_variables();
+		if (possible_merge_point_reached()) {
 			if ((*raw_orography)(center_coords) <= (*corrected_orography)(center_coords) ||
 			    center_cell_height_type == connection_height) {
 				if((*basin_catchment_numbers)(new_center_coords) == null_catchment) {
@@ -210,18 +219,8 @@ void basin_evaluation_algorithm::evaluate_basin(){
 		//need height type to check for fetch here before checking for
 		//skip and then updating all values for center cell to be those
 		//of the new center cell
-		if ( ! skipped_previous_center_cell) {
-				if (previous_filled_cell_height_type == flood_height) {
-					delete previous_filled_cell_coords;
-				}
-				previous_filled_cell_coords = center_coords;
-				previous_filled_cell_height = center_cell_height;
-				previous_filled_cell_height_type = center_cell_height_type;
-				skipped_previous_center_cell = true;
-		}
-		center_cell_height_type = center_cell->get_height_type();
-		center_cell_height = new_center_cell_height;
-		center_coords = new_center_coords;
+		if ( ! skipped_previous_center_cell) update_previous_filled_cell_variables();
+		update_center_cell_variables();
 		if (! skip_center_cell()) {
 			process_center_cell();
 			skipped_previous_center_cell = false;
@@ -235,6 +234,39 @@ void basin_evaluation_algorithm::evaluate_basin(){
 		(*completed_cells)(center_coords) = false;
 		delete center_cell;
 	}
+}
+
+inline void basin_evaluation_algorithm::read_new_center_cell_variables(){
+		new_center_coords = center_cell->get_cell_coords()->clone();
+		new_center_cell_height_type = center_cell->get_height_type();
+		new_center_cell_height = center_cell->get_orography();
+}
+
+inline void basin_evaluation_algorithm::update_previous_filled_cell_variables(){
+		if (previous_filled_cell_height_type == flood_height) {
+			delete previous_filled_cell_coords;
+		}
+		previous_filled_cell_coords = center_coords;
+		previous_filled_cell_height = center_cell_height;
+		previous_filled_cell_height_type = center_cell_height_type;
+		skipped_previous_center_cell = true;
+}
+
+inline void basin_evaluation_algorithm::update_center_cell_variables(){
+		center_cell_height_type = new_center_cell_height_type;
+		center_cell_height = new_center_cell_height;
+		center_coords = new_center_coords;
+		if (center_cell_height > surface_height) surface_height = center_cell_height;
+}
+
+inline bool basin_evaluation_algorithm::possible_merge_point_reached(){
+	return ((new_center_cell_height < surface_height ||
+		    	(new_center_cell_height == surface_height &&
+		    	(((*flooded_cells)(new_center_coords) &&
+		       		new_center_cell_height_type == flood_height) ||
+		     	((*connected_cells)(new_center_coords) &&
+		        new_center_cell_height_type == connection_height))))
+		    	&& ! skipped_previous_center_cell);
 }
 
 bool basin_evaluation_algorithm::skip_center_cell() {

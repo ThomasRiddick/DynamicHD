@@ -1,17 +1,17 @@
 RM := rm -rf
 ifeq ($(shell uname -s),Darwin)
-GPLUSPLUS := /usr/bin/g++ 
+GPLUSPLUS := /usr/bin/g++
 STDLIB_OPT := -stdlib=libc++
-FLAGS :=
+FLAGS := -DPROCESSED_CELL_COUNTER
 else ifeq ($(shell hostname -d),hpc.dkrz.de)
 GPLUSPLUS := /sw/rhel6-x64/gcc/gcc-6.2.0/bin/g++
-STDLIB_OPT := 
+STDLIB_OPT :=
 FLAGS :=-pthread
 else ifeq ($(shell uname -s),Linux)
-GPLUSPLUS := $(shell which g++) 
-STDLIB_OPT := 
+GPLUSPLUS := $(shell which g++)
+STDLIB_OPT :=
 FLAGS :=-pthread
-else 
+else
 $(error OS $(uname -s) not recognised)
 endif
 
@@ -43,7 +43,7 @@ ifneq ($(strip $(C_DEPS)),)
 endif
 endif
 
-# Add inputs and outputs from these tool invocations to the build variables 
+# Add inputs and outputs from these tool invocations to the build variables
 
 # All Target
 all: Dynamic_HD_Cpp_Code

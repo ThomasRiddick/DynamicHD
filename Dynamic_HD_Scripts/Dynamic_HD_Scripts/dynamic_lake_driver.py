@@ -339,15 +339,32 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
                                                                 minima_fieldname,
                                                                 minima_reduced_filename_21k,
                                                                 minima_fieldname)
+        print "minima filename: " + minima_reduced_filename_21k
+        print "minima fieldname" + minima_fieldname
+        print "ice6g_21k_filename" + ice6g_21k_filename
+        print "output21k_orog_filename" + output_21k_ice6g_orog_filename
+
+    def evaluate_ICE6G_lgm_basins(self):
         dynamic_lake_operators.\
-          advanced_basin_evaluation_driver(input_minima_file=minima_reduced_filename_21k,
-                                           input_minima_fieldname=minima_fieldname,
-                                           input_raw_orography_file=ice6g_21k_filename,
+          advanced_basin_evaluation_driver(input_minima_file=
+                                           "/Users/thomasriddick/Documents/data/HDdata/minima/"
+                                           "minima_prepare_orography_ICE6G_21k_corrected_20180921"
+                                           "_155937_reduced_21k_landonly.nc",
+                                           input_minima_fieldname="minima",
+                                           input_raw_orography_file=
+                                           "/Users/thomasriddick/Documents/data/HDdata/orographys/"
+                                           "generated/updated_orog_21k_ice6g_lake_prepare_orography"
+                                           "_ICE6G_21k_corrected_20180921_155937.nc",
                                            input_raw_orography_fieldname="Topo",
-                                           input_corrected_orography_file=output_21k_ice6g_orog_filename,
+                                           input_corrected_orography_file=
+                                           "/Users/thomasriddick/Documents/data/HDdata/orographys/"
+                                           "generated/updated_orog_21k_ice6g_lake_prepare_orography"
+                                           "_ICE6G_21k_corrected_20180921_155937.nc",
                                            input_corrected_orography_fieldname="Topo",
                                            input_prior_fine_rdirs_file=
-                                           "/Users/thomasriddick/Documents/data/HDdata/rdirs/generated/""updated_RFDs_ICE6g_lgm_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_""rdirs_tarasov_orog_corrs_20171015_031541.nc",
+                                           "/Users/thomasriddick/Documents/data/HDdata/rdirs/generated/"
+                                           "updated_RFDs_ICE6g_lgm_ALG4_sinkless_no_true_sinks_oceans_"
+                                           "lsmask_plus_upscale_""rdirs_tarasov_orog_corrs_20171015_031541.nc",
                                            input_prior_fine_rdirs_fieldname="field_value",
                                            input_prior_fine_catchments_file=
                                            "/Users/thomasriddick/Documents/data/HDdata/catchmentmaps/"
@@ -369,7 +386,8 @@ def main():
     lake_drivers = Dynamic_Lake_Drivers()
     #lake_drivers.prepare_orography_ICE5G_0k_uncorrected()
     #lake_drivers.prepare_orography_ICE5G_0k_corrected()
-    lake_drivers.prepare_orography_ICE6G_21k_corrected()
+    #lake_drivers.prepare_orography_ICE6G_21k_corrected()
+    lake_drivers.evaluate_ICE6G_lgm_basins()
 
 if __name__ == '__main__':
     main()

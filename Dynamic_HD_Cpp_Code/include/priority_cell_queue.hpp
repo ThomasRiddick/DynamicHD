@@ -30,7 +30,12 @@ public:
 	///Class constructor
 	priority_cell_queue() : k_count(0) {};
 	///Pushes a cell on the queue labeled by it order of entry (and updates the count)
-	void push(cell* input) {input->set_k(k_count++); priority_cell_queue_type::push(input); if (k_count%1000000 == 0) cout << k_count/1000000 << "million" << endl;}
+	void push(cell* input) {
+			input->set_k(k_count++); priority_cell_queue_type::push(input);
+		#if PROCESSED_CELL_COUNTER
+		if (k_count%1000000 == 0) cout << k_count/1000000 << "million" << endl;
+		#endif
+	}
 	///Push a true sink labeled by the negation of the current count of entries
 	///(and updates the count)
 	void push_true_sink(cell* input) {
