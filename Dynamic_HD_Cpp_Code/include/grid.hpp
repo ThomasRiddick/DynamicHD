@@ -10,6 +10,9 @@
 
 #include <sstream>
 #include <functional>
+#if USE_NETCDFCPP
+#include <netcdfcpp.h>
+#endif
 #include "coords.hpp"
 using namespace std;
 
@@ -182,7 +185,9 @@ public:
 };
 
 /** A real class implementing functions on a ICON-style
- * grid without using blocks
+ * grid without using blocks. Store index values as
+ * FORTAN indices thus require an offset of one when
+ * using them to index arrays
  */
 
 class icon_single_index_grid : public grid {
@@ -220,6 +225,9 @@ class icon_single_index_grid : public grid {
 	const int bottom_left_corner     = 6;
 	//Precalculated edge seperation values (will be 3 entries per cell so size is ncells*3)
 	double* edge_separations = nullptr;
+	//Array offset
+	const int array_offset = 1;
+	const int no_neighbor = -1;
 public:
 	///Constructor
 	icon_single_index_grid(grid_params*);
@@ -239,8 +247,9 @@ public:
 	/// a virtual function in the base class but instead endemic to
 	/// icon_single_index_grid and called from get_index in the base class through
 	/// a select case statement coupled with static casting
+	/// The index return includes the array offset
 	int icon_single_index_get_index(generic_1d_coords* coords_in)
-		{ return coords_in->get_index(); }
+		{ return coords_in->get_index() - array_offset; }
 	//setter
 	void set_subgrid_mask(bool* subgrid_mask_in) { subgrid_mask = subgrid_mask_in; }
 	//implement function that iterative apply a supplied function
@@ -267,10 +276,13 @@ public:
 	generic_1d_coords* icon_single_index_wrapped_coords(generic_1d_coords*);
 	//Get the cell indices of the center cells three direct neighbors
 	int get_cell_neighbors_index(generic_1d_coords* cell_coords,int neighbor_num)
-		{ return neighboring_cell_indices[cell_coords->get_index()*3 + neighbor_num]; }
+		{ return neighboring_cell_indices[icon_single_index_get_index(cell_coords)*3 + neighbor_num]; }
 	//Get the cell indices of the center cells nine secondary neighbors
 	int get_cell_secondary_neighbors_index(generic_1d_coords* cell_coords,int neighbor_num)
-		{ return secondary_neighboring_cell_indices[cell_coords->get_index()*9 + neighbor_num]; }
+		{ return secondary_neighboring_cell_indices[icon_single_index_get_index(cell_coords)*9 + neighbor_num]; }
+	coords* convert_fine_coords(coords* fine_coords,grid_params* fine_grid_params);
+	//Not implemeted for icon grid; return a runtime error
+	coords* calculate_downstream_coords_from_dir_based_rdir(coords* initial_coords,double rdir);
 };
 
 /**
@@ -316,6 +328,16 @@ class icon_single_index_grid_params : public grid_params {
 	int* secondary_neighboring_cell_indices = nullptr;
 	//If no wrap is set this can use to specify a subsection of the gri
 	bool* subgrid_mask = nullptr;
+	#if USE_NETCDFCPP
+	//ICON grid parameter file path
+	string icon_grid_params_filepath = "";
+	#endif
+	//Array offset
+	const int array_offset = 1;
+	//One corner of this cell is a five point vertices and thus it has
+	//only 8 secondary neighbors and one entry in the array of secondary
+	//neighbors is thus blank - use this value to signify that
+	const int no_neighbor = -1;
 public:
 	virtual ~icon_single_index_grid_params() {};
 	///Class constructor
@@ -334,12 +356,25 @@ public:
 		  use_secondary_neighbors(use_secondary_neighbors_in),
 		  secondary_neighboring_cell_indices(secondary_neighboring_cell_indices_in),
 		  subgrid_mask(subgrid_mask_in){};
+	#if USE_NETCDFCPP
+	icon_single_index_grid_params(string icon_grid_params_filepath_in,
+	                              bool use_secondary_neighbors_in = true,
+	                              bool read_params_file_immediately = true)
+	: grid_params(true),
+		use_secondary_neighbors(use_secondary_neighbors_in),
+	  icon_grid_params_filepath(icon_grid_params_filepath_in)
+	{ if (read_params_file_immediately) icon_single_index_grid_read_params_file(); }
+	#endif
 	///Getter
 	const int get_ncells() { return ncells; }
 	int* get_neighboring_cell_indices() { return neighboring_cell_indices; }
 	const bool get_use_secondary_neighbors() { return use_secondary_neighbors; }
 	int* get_secondary_neighboring_cell_indices() { return secondary_neighboring_cell_indices; }
 	bool* get_subgrid_mask() { return subgrid_mask; }
+	void icon_single_index_grid_calculate_secondary_neighbors();
+	#if USE_NETCDFCPP
+	void icon_single_index_grid_read_params_file();
+	#endif
 };
 
 /*
@@ -466,7 +501,7 @@ inline bool latlon_grid::latlon_outside_limits(latlon_coords* coords){
 //avoid making this virtual so that it can be in-lined
 inline bool icon_single_index_grid::
 	icon_single_index_outside_limits(generic_1d_coords* coords_in){
-	//ICON grid is naturally wrapped
+	//ICON grid is naturally wrapped. Get index takes care of the array offset
 	if (nowrap && subgrid_mask) return subgrid_mask[icon_single_index_get_index(coords_in)];
 	else return false;
 }

@@ -12,13 +12,15 @@ import textwrap
 import stat
 import socket
 import re
+import shutil
+from numpy.distutils import core as distutils_core
 from subprocess import CalledProcessError
-from context import shared_object_path, bin_path
+from context import shared_object_path, bin_path,build_path
 from sys import platform
 
 class f2py_manager(object):
     """Manages a f2py fortran module.
-    
+
     Public methods:
     set_function_or_subroutine_name
     run_current_fuction_or_subroutine
@@ -26,52 +28,26 @@ class f2py_manager(object):
     get_module_signature
     get_named_function_or_subroutine_signature
     get_current_function_or_subroutine_signature
-    
+
     This module compiles a fortran module using f2py and allows the user to
     run functions or subroutines from it and to get the module, function and
     subroutine signatures.
     """
-    
+
     mod=None
     func=None
     fortran_module_name=None
     fortran_file_name=None
     shared_object_file_path=None
     remove_wrapper=None
-    additional_fortran_files = ''
-    include_path = ''
-    if re.match(r'.*\.hpc\.dkrz\.de',socket.getfqdn()):
-        path_env_var=("/sw/rhel6-x64/gcc/gcc-6.2.0/bin:"
-                      "/sw/rhel6-x64/gcc/binutils-2.24-gccsys/bin:"
-                      "/sw/rhel6-x64/cdo/cdo-1.8.0-magicsxx-gcc48/bin:"
-                      "/sw/rhel6-x64/python/python-2.7.12-gcc49/bin:"
-                      "/sw/rhel6-x64/conda/anaconda3-4.2.0-python-3.5.2/bin:"
-                      "/usr/lib64/qt-3.3/bin:/usr/local/bin:/bin:/usr/bin:"
-                      "/usr/local/sbin:/usr/sbin:/sbin")
-    elif platform == "linux" or platform == "linux2":
-        path_env_var=("/home/mpim/m300468/.conda/envs/dyhdenv/bin:"
-                      "/sw/jessie-x64/gcc/gcc-6.2.0/bin:"
-                      "/sw/jessie-x64/anaconda3-4.1.1/bin:"
-                      "/usr/local/bin:/usr/bin")
-    elif platform == "darwin":
-        path_env_var="/anaconda/envs/mpiwork/bin:/usr/local/bin:/usr/bin"
-    else:
-        raise RuntimeError("Platform not supported")
-    wrapper_path=os.path.join(bin_path,'f2py_wrapper')
-    wrapper_text= textwrap.dedent("""\
-    #!/bin/bash
-    #f2py_wrapper [Include Path] [Filename] [Module name]
-    #A simple wrapper for f2py calls that sets up the enviroment correctly
-    unset PYTHONPATH
-    export $PYTHONPATH
-    export PATH="{0}"
-    """.format(path_env_var))
-    wrapper_text += "f2py -c ${1} ${2} -m ${3}"
+    additional_fortran_files = []
+    include_path = []
+    wrapper_path=os.path.join(bin_path,'f2py_setup_wrapper.py')
 
     def __init__(self, fortran_file_name,func_name=None,remove_wrapper=False,
                  additional_fortran_files=None,include_path=None):
         """Class Constructor. Ensure that the fortran module is compiled and then import it.
-        
+
         Arguments:
         fortran_file_name: string; the full path to the file contain the fortran module
         func_name (optional): string; the name of the function or subroutine to set as the
@@ -80,10 +56,10 @@ class f2py_manager(object):
             up after use or not (default False)
         additional_fortran_files: list of strings, list of names of any additional
             fortran files that need to be included in compilation
-            
+
         Perform standard setup; checks fortran file exists; extracts module name from filename supplied
         and then checks if fortran module has changed. If so recompile it; if not simply load it (if it
-        is compiled the compile method handles the loading). If a function/subroutine name has been 
+        is compiled the compile method handles the loading). If a function/subroutine name has been
         given then call method to set it as current function.
         """
 
@@ -94,27 +70,55 @@ class f2py_manager(object):
         self.fortran_module_name = os.path.basename(self.fortran_file_name).split('.')[0]
         self.shared_object_file_path = os.path.join(shared_object_path,
                                                     self.fortran_module_name+'.so')
+        self.sources = [self.fortran_file_name]
         if additional_fortran_files is not None:
             self.additional_fortran_files = additional_fortran_files
-        if include_path is not None:
-            self.include_path = '-I' + include_path
+        if include_path:
+            self.include_path = [include_path]
+        self.wrapper_text = textwrap.dedent("""\
+            import numpy.distutils.core as npdistutils_core
+            import os
+            import sys
+            import shutil
+            import argparse
+            import ast
+            parser = argparse.ArgumentParser(add_help=False)
+            parser.add_argument("--build-path",required=True)
+            parser.add_argument("--module-name",required=True)
+            parser.add_argument("--sources",required=True)
+            parser.add_argument("--include-path",required=True)
+            parser.add_argument("--objects",required=True)
+            params, unknown_args = parser.parse_known_args()
+            sys.argv = [sys.argv[0]] + unknown_args
+            path_to_build_dir = os.path.join(params.build_path,params.module_name,
+                                             "temp")
+            owd = os.getcwd()
+            os.chdir(path_to_build_dir)
+            ext = npdistutils_core.Extension(name=params.module_name,
+                                             sources=ast.literal_eval(params.sources),
+                                             include_dirs=ast.literal_eval(params.include_path),
+                                             extra_objects=ast.literal_eval(params.objects),
+                                             language="f90")
+            npdistutils_core.setup(name=params.module_name,
+                                   ext_modules=[ext])
+            os.chdir(owd)""")
         if self.check_for_changes():
             self.run_f2py_compilation()
         else:
             self.load_module()
         if func_name is not None:
             self.set_function_or_subroutine_name(func_name)
-             
+
     def __del__(self):
         """Class destructor. If remove_wrapper is set then remove the wrapper script"""
         if os.path.isfile(self.wrapper_path) and self.remove_wrapper:
             os.remove(self.wrapper_path)
-   
+
     def set_function_or_subroutine_name(self,func_name):
         """Set the name of the function or subroutine to use."""
         fortranmod=getattr(self.mod,self.fortran_module_name.lower())
         self.func = getattr(fortranmod,func_name.lower())
-   
+
     def run_current_function_or_subroutine(self,*args):
         """Run the current function or subroutine with given arguments."""
         return self.func(*args)
@@ -123,49 +127,55 @@ class f2py_manager(object):
         """Run a given function or subroutine with given arguments"""
         self.set_function_or_subroutine_name(func_name)
         return self.func(*args)
-    
+
     def get_module_signature(self):
         """Get the signture of the current fortran module"""
         fortranmod=getattr(self.mod,self.fortran_module_name.lower())
-        return fortranmod.__doc__ 
-     
+        return fortranmod.__doc__
+
     def get_named_function_or_subroutine_signature(self,func_name):
         """Get the signature of a named function or subroutine"""
         self.set_function_or_subroutine_name(func_name)
         return self.func.__doc__
-        
+
     def get_current_function_or_subroutine_signature(self):
         """Get the signature of the current function or subroutine"""
         return self.func.__doc__
-       
+
     def run_f2py_compilation(self):
         """Compile fortran module using f2py and then load it
-       
+
         Raises (on error):
         RuntimeError
-         
-        First check the compilation wrapper exists and if not create it. Then run 
-        the compilation within a try-except block, printing the output and any errors. 
+
+        First check the compilation wrapper exists and if not create it. Then run
+        the compilation within a try-except block, printing the output and any errors.
         Finally load the module.
         """
 
         if not os.path.isfile(self.wrapper_path):
             self.create_wrapper()
-        try:
-            print subprocess.check_output([self.wrapper_path,self.include_path,
-                                           self.fortran_file_name + ' ' +\
-                                            " ".join(self.additional_fortran_files),
-                                           self.fortran_module_name], 
-                                          stderr=subprocess.STDOUT,cwd=shared_object_path)
-        except CalledProcessError as cperror:
-            raise RuntimeError("Failure in called process {0}; return code {1}; output:\n{2}".format(cperror.cmd,
-                                                                                                    cperror.returncode,
-                                                                                                    cperror.output)) 
+        path_to_build_dir = os.path.join(build_path,self.fortran_module_name,"temp")
+        if os.path.isdir(path_to_build_dir):
+            shutil.rmtree(path_to_build_dir)
+        os.makedirs(path_to_build_dir)
+        distutils_core.run_setup(self.wrapper_path,["build_ext",
+                                                    "--build-lib={0}".format(shared_object_path),
+                                                    "--build-temp={0}".format(os.path.join(build_path,
+                                                                                      self.fortran_module_name,
+                                                                                      "temp")),
+                                                    "--build-path={0}".format(build_path),
+                                                    "--module-name={0}".format(self.fortran_module_name),
+                                                    "--sources={0}".format(str(self.sources)),
+                                                    "--include-path={0}".format(str(self.include_path)),
+                                                    "--objects={0}".
+                                                    format(str(self.additional_fortran_files))],
+                                 stop_after="run")
         self.load_module()
-            
+
     def check_for_changes(self):
         """Check if fortran source code has changed since shared library was created or not
-        
+
         Returns:
         A boolean flag - if true then fortran source code has changed since the python shared
         library created from it was compiled; if not then it hasn't
@@ -173,24 +183,24 @@ class f2py_manager(object):
 
         if not os.path.isfile(self.shared_object_file_path):
             return True
-        if (os.path.getmtime(self.fortran_file_name) > 
+        if (os.path.getmtime(self.fortran_file_name) >
             os.path.getmtime(self.shared_object_file_path)):
             return True
         if self.additional_fortran_files is not None:
             for additional_file in self.additional_fortran_files:
-                if(os.path.getmtime(additional_file) > 
+                if(os.path.getmtime(additional_file) >
                    os.path.getmtime(self.shared_object_file_path)):
                     return True
         else:
             return False
-        
+
     def create_wrapper(self):
         """Create a f2py compilation wrapper and set the correct permissions for it"""
         with open(self.wrapper_path,'w') as f:
-            f.write(self.wrapper_text) 
+            f.write(self.wrapper_text)
         filestatinfo = os.stat(self.wrapper_path)
-        os.chmod(self.wrapper_path, filestatinfo.st_mode | stat.S_IEXEC) 
-        
+        os.chmod(self.wrapper_path, filestatinfo.st_mode | stat.S_IEXEC)
+
     def load_module(self):
         """Load a shared library created for the current fortran module"""
         #There does not appear to any way to correctly reload a shared libary and get

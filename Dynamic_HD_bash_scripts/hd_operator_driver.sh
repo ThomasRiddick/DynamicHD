@@ -23,7 +23,7 @@ if echo $LOADEDMODULES | fgrep -q ${module_name} ; then
 fi
 }
 
-#Define portable absolute path finding function	
+#Define portable absolute path finding function
 function find_abs_path
 {
 relative_path=$1
@@ -33,24 +33,24 @@ perl -MCwd -e 'print Cwd::abs_path($ARGV[0]),qq<\n>' $relative_path
 #Process command line arguments
 
 while getopts ":r:p:c:n" opt; do
-	case $opt in 
+	case $opt in
 	r)
 		hd_driver_config_filepath=$OPTARG
 		;;
 	p)
 		hd_driver_print_info_target_filepath=$OPTARG
 		;;
-	c) 
+	c)
 		config_file=$OPTARG
 		;;
-	n) 
+	n)
 		no_compilation=true
 		;;
-	\?) 
+	\?)
 		echo "Invalid option: -$OPTARG" >&2
 		exit 1
 		;;
-	:) 
+	:)
 		echo "Option -$OPTARG requires an argument." >&2
 		exit 1
 		;;
@@ -90,12 +90,12 @@ hd_driver_print_info_target_filepath=$(find_abs_path $hd_driver_print_info_targe
 # Check config file exists and has correct format (if a config file has been specified)
 if [[ -z ${config_file} ]]; then
 	if ! [[ -f ${config_file} ]]; then
-		echo "Top level script config file doesn't exist!"	
+		echo "Top level script config file doesn't exist!"
 		exit 1
 	fi
 
 	if egrep -v -q "^(#.*|.*=.*)$" ${config_file}; then
-		echo "Config file has wrong format" 1>&2	
+		echo "Config file has wrong format" 1>&2
 		exit 1
 	fi
 
@@ -116,13 +116,13 @@ fi
 
 if ! [[ -d $source_directory ]]; then
 	echo "Source directory does not exist." 1>&2
-	
+
 fi
 
 if ! [[ -d $external_source_directory ]]; then
 	echo "External Source directory does not exist." 1>&2
-	
-fi 
+
+fi
 
 #Check for locks if necesssary and set the compilation_required flag accordingly
 exec 200>"${source_directory}/compilation.lock"
@@ -131,11 +131,11 @@ if ! ${no_compilation} ; then
 		compilation_required=true
 	else
 		flock -s 200
-		compilation_required=false	
+		compilation_required=false
 	fi
 else
 	flock -s 200
-	compilation_required=false	
+	compilation_required=false
 fi
 
 #Setup conda environment
@@ -156,7 +156,7 @@ if $compilation_required && conda info -e | grep -q "dyhdenv"; then
 fi
 if ! conda info -e | grep -q "dyhdenv"; then
 	#Use the txt file environment creation (not conda env create that requires a yml file)
-	#Create a dynamic_hd_env.txt using conda list --export > filename.txt not 
+	#Create a dynamic_hd_env.txt using conda list --export > filename.txt not
 	#conda env export which creates a yml file.
 	conda create --file "${source_directory}/Dynamic_HD_Environmental_Settings/dynamic_hd_env.txt" --yes --name "dyhdenv"
 fi
@@ -187,29 +187,16 @@ if $compilation_required ; then
 	echo "Compiling C++ code" 1>&2
 	mkdir -p ${source_directory}/Dynamic_HD_Cpp_Code/Release
 	mkdir -p ${source_directory}/Dynamic_HD_Cpp_Code/Release/src
-	mkdir -p ${source_directory}/Dynamic_HD_Cpp_Code/Release/src/gtest
-	if ! [[ -f ${source_directory}/Dynamic_HD_Cpp_Code/src/gtest/*.cc ]]; then
-		cp ${external_source_directory}/googletest-master/googletest/src/*.cc \
-			${source_directory}/Dynamic_HD_Cpp_Code/src/gtest
-	fi
-	if ! [[ -d ${source_directory}/Dynamic_HD_Cpp_Code/include/gtest ]]; then
-		cp -r ${external_source_directory}/googletest-master/googletest/include/gtest \
-			${source_directory}/Dynamic_HD_Cpp_Code/include/gtest
-	fi
-	if ! [[ -f ${source_directory}/Dynamic_HD_Cpp_Code/src/gtest-internal-inl.h ]]; then
-		cp -r ${external_source_directory}/googletest-master/googletest/src/gtest-internal-inl.h \
-			${source_directory}/Dynamic_HD_Cpp_Code/src	
-	fi
 	cd ${source_directory}/Dynamic_HD_Cpp_Code/Release
 	make -f ../makefile clean
-	make -f ../makefile all 
+	make -f ../makefile compile_only
 	cd - 2>&1 > /dev/null
 	echo "Compiling Fortran code" 1>&2
 	mkdir -p ${source_directory}/Dynamic_HD_Fortran_Code/Release
 	mkdir -p ${source_directory}/Dynamic_HD_Fortran_Code/Release/src
 	cd ${source_directory}/Dynamic_HD_Fortran_Code/Release
 	make -f ../makefile clean
-	make -f ../makefile -e "EXT_SOURCE=${external_source_directory}" all 
+	make -f ../makefile -e "EXT_SOURCE=${external_source_directory}" all
 	cd - 2>&1 > /dev/null
 fi
 
@@ -229,20 +216,20 @@ if $compilation_required; then
 	cd - 2>&1 > /dev/null
 fi
 
-#Prepare bin directory for python code 
+#Prepare bin directory for python code
 if $compilation_required; then
 	mkdir -p ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/bin
 fi
 
 #Prepare python script arguments
 if [[ -n ${hd_driver_config_filepath+x} ]]; then
-	python_script_arguments="-r ${hd_driver_config_filepath}" 
+	python_script_arguments="-r ${hd_driver_config_filepath}"
 elif [[ -n ${hd_driver_print_info_target_filepath+x} ]]; then
-	python_script_arguments="-p ${hd_driver_print_info_target_filepath}" 
+	python_script_arguments="-p ${hd_driver_print_info_target_filepath}"
 else:
 	echo "Incompatible options set or no options set. Early checks for this where ineffective!" >&2
 fi
 
 #Run
-echo "Running HD Command Line Operator Code" 1>&2 
+echo "Running HD Command Line Operator Code" 1>&2
 python2.7 ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/hd_operator_driver.py ${python_script_arguments}

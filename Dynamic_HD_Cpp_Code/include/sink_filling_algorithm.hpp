@@ -76,8 +76,7 @@ public:
 						   bool* = nullptr, field<int>* = nullptr);
 	virtual ~sink_filling_algorithm();
 	///Setup the necessary flags and parameters
-	void setup_flags(bool, bool = false, int = 1, double = 1.1, bool = false,
-					 bool = false);
+	void setup_flags(bool, bool = false, int = 1, double = 1.1, bool = false);
 	///Setup the necessary field given an input set of grid_params and 1D fields
 	void setup_fields(double*,bool*,bool*,grid_params*);
 	///Run the sink filling algorithm
@@ -154,9 +153,15 @@ protected:
 	///Set the value for height of area to height of highest point along shortest/
 	///lowest valid path
 	virtual void tarasov_set_area_height() = 0;
+	//Pop center cell from q
+	virtual void pop_center_cell() = 0;
 
 	///Main priority queue
 	priority_cell_queue q;
+	//Plain queue for accelerating algorithm 1
+	queue<cell*> pit_q;
+	//Plain queue for accelerating algorithm 1
+	queue<cell*> slope_q;
 	///Coordinates of center cell being processed
 	coords* center_coords = nullptr;
 	///Coordinates of neighboring cell being processed
@@ -195,8 +200,12 @@ protected:
 	///orography upscaling
 	///Field of the number assign to the catchment at each point
 	field<int>* catchment_nums = nullptr;
-	///Print debug printout
-	bool debug = false;
+	#if PARALLELIZE
+	//Field used in parallelization to keep catchment labels
+	field<int>* labels = nullptr;
+	//Variable to store label of center catchment when parallelizing
+	int center_label = 0;
+	#endif
 	///Flag to switch on setting sea points as no data
 	bool set_ls_as_no_data_flag = false;
 	///Height of a neighbor
@@ -240,6 +249,11 @@ protected:
 	int tarasov_center_cell_maximum_separations_from_initial_edge = 0;
 	///Initial edge number of the path of the center cell
 	int tarasov_center_cell_initial_edge_num = 0;
+	//Used to denote when processing interior slope in accelerated algorithm 1
+	bool on_slope = false;
+	//Used to assist in the acceleration of algorithm 1 (to denote a suspected sill point)
+	//has been added to the main priority queue from the plain slope queue
+	bool requeued = false;
 };
 
 /**
@@ -309,7 +323,7 @@ public:
 	sink_filling_algorithm_1(field<double>*, grid_params*, field<bool>*, bool*, bool,
 							 bool, double, bool* = nullptr);
 	///Set flags and parameters of a sink-filling run
-	void setup_flags(bool, bool = false, bool = false, bool = false, double = 0.1,
+	void setup_flags(bool, bool = false, bool = false, double = 0.1,
 					 int = 1, double = 1.1, bool = false);
 	///Destructor
 	virtual ~sink_filling_algorithm_1() {};
@@ -320,6 +334,7 @@ protected:
 	///The number labeling the method being used
 	const int method = 1;
 	///Implement the various virtual functions of the base class
+	void pop_center_cell();
 	void process_neighbor();
 	void set_ls_as_no_data(coords*);
 	void push_land_sea_neighbor();
@@ -360,6 +375,7 @@ protected:
 	///Label which method is being used
 	const int method = 4;
 	///Implement the various virtual functions of the base class
+	void pop_center_cell();
 	void process_neighbor();
 	void push_land_sea_neighbor();
 	void set_ls_as_no_data(coords*);
@@ -375,8 +391,7 @@ protected:
 	///Setup required fields and grid
 	void setup_fields(double*, bool*, bool*, grid_params*, int*);
 	///Setup required parameter and flags
-	void setup_flags(bool, bool = false, bool = false, int = 1, double = 1.1, bool = false,
-			 	 	 bool = false);
+	void setup_flags(bool, bool = false, bool = false, int = 1, double = 1.1, bool = false);
 	///Implement virtual function of base class only used by Tarasov code
 	void tarasov_set_area_height();
 	///Set the flow direction of a cell to no data
@@ -470,7 +485,7 @@ public:
 	///to the given value (value is integer from 0-9 but written as double for historical reasons
 	void set_dir_based_rdir(coords*, double);
 	///Setup flags and parameters
-	void setup_flags(bool, bool = false, bool = false, bool = false, bool = false, int = 1,
+	void setup_flags(bool, bool = false, bool = false, bool = false, int = 1,
 				     double = 1.1, bool = false);
 	///Setup fields and grid
 	void setup_fields(double*, bool*, bool*, int*, int*, grid_params*, short*, int*);
@@ -513,9 +528,6 @@ public:
 	sink_filling_algorithm_4_icon_single_index(field<double>*, grid_params*, field<bool>*, bool*,
 							 	 	bool, field<int>*, bool, bool, field<int>*,field<int>*,
 									bool* = nullptr, field<short>* = nullptr);
-	///Setup flags and parameters
-	void setup_flags(bool, bool = false, bool = false, bool = false, bool = false, int = 1,
-				     double = 1.1, bool = false);
 	///Setup fields and grid
 	void setup_fields(double*, bool*, bool*, int*, int*, grid_params*, short*, int*);
 	///Destructor

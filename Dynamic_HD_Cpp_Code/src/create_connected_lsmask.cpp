@@ -26,7 +26,7 @@ void latlon_create_connected_lsmask_cython_wrapper(int* landsea_in_int, int* ls_
 		landsea_in[i] = bool(landsea_in_int[i]);
 		ls_seed_points_in[i] = bool(ls_seed_points_in_int[i]);
 	}
-	latlon_create_connected_lsmask_main(landsea_in, ls_seed_points_in,
+	latlon_create_connected_lsmask(landsea_in, ls_seed_points_in,
 	  	  	  	  	  	  	     nlat_in, nlon_in, bool(use_diagonals_in_int));
 	for (auto i = 0; i < nlat_in*nlon_in; i++){
 		landsea_in_int[i] = int(landsea_in[i]);
@@ -35,7 +35,7 @@ void latlon_create_connected_lsmask_cython_wrapper(int* landsea_in_int, int* ls_
 	delete [] ls_seed_points_in;
 }
 
-void latlon_create_connected_lsmask_main(bool* landsea_in, bool* ls_seed_points_in,
+void latlon_create_connected_lsmask(bool* landsea_in, bool* ls_seed_points_in,
 		  	  	  	  	  	  	  	     int nlat_in, int nlon_in, bool use_diagonals_in)
 {
 	cout << "Entering Connected Landsea Mask Generation C++ Code" << endl;

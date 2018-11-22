@@ -28,15 +28,17 @@ endif
 all: Dynamic_HD_Fortran_Code
 
 # Tool invocations
-Dynamic_HD_Fortran_Code: $(OBJS) $(USER_OBJS)
+compile_only: $(OBJS) $(USER_OBJS)
+
+Dynamic_HD_Fortran_Code: $(OBJS) $(TEST_OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
-	$(GFORTRAN) -o "Dynamic_HD_Fortran_Exec" $(OBJS) $(USER_OBJS) $(LIBS)
+	$(GFORTRAN) -o "Dynamic_HD_Fortran_Exec" $(OBJS) $(TEST_OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) $(EXECUTABLES)$(OBJS)$(C_DEPS) Dynamic_HD_Fortran_Exec
+	-$(RM) $(EXECUTABLES)$(OBJS)$(TEST_OBJS)$(C_DEPS) Dynamic_HD_Fortran_Exec
 	-$(RM) $(MODS)
 	-@echo ' '
 

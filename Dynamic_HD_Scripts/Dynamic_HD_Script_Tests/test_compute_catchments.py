@@ -16,7 +16,7 @@ from context import fortran_source_path,data_dir
 
 class RelabelCatchmentTestCase(unittest.TestCase):
     """Class containing tests of the relabelling of catchments into desceding order of size"""
-  
+
     original_catchments = np.array([[1,2,3,3,3],
                                     [1,2,2,3,4],
                                     [1,2,3,3,5],
@@ -35,11 +35,11 @@ class RelabelCatchmentTestCase(unittest.TestCase):
                                                     [3,2,1,1,5],
                                                     [2,1,8,5,4],
                                                     [2,7,1,6,4]],order='F',dtype=np.int32)
-    
+
     loop_logfile = os.path.join(data_dir,"temp/loop_log.txt")
     input_loop_list = ['1','2','3','6','7','9']
     loop_list_expected_results = ['3','2','1','8','4','6']
-    
+
     def setUp(self):
         """Unit test setup function"""
         try:
@@ -49,31 +49,31 @@ class RelabelCatchmentTestCase(unittest.TestCase):
         with open(self.loop_logfile,'w') as f:
             f.write('Loops found in catchments:\n')
             f.writelines([loop+'\n' for loop in self.input_loop_list])
-     
+
     def testRenumbering(self):
         """Test the core Fortran renumbering subroutine"""
         f2py_mngr = f2py_mg.f2py_manager(os.path.join(fortran_source_path,
                                                       "mod_compute_catchments.f90"),
-                                         func_name="relabel_catchments")         
+                                         func_name="relabel_catchments")
         input_catchments = np.copy(self.original_catchments)
         f2py_mngr.run_current_function_or_subroutine(input_catchments,
                                                      self.old_to_new_label_map)
         np.testing.assert_equal(input_catchments,self.expected_results,
                                 "Catchment renumbering not producing expected results")
-        
+
     def testRenumberCatchmentsBySize(self):
         """Test the top level python renumbering function"""
-        input_catchments = np.copy(self.original_catchments) 
-        renumbered_catchments = cc.renumber_catchments_by_size(input_catchments, 
+        input_catchments = np.copy(self.original_catchments)
+        renumbered_catchments = cc.renumber_catchments_by_size(input_catchments,
                                                                self.loop_logfile)
-        np.testing.assert_array_equal(renumbered_catchments, 
+        np.testing.assert_array_equal(renumbered_catchments,
                                       self.expected_results_for_python_wrapper,
                                       "Catchment renumbering not producing expected results")
-    
+
     def testLoopsRelabellingLoops(self):
         """Test the relabelling of loops found to reflect the new labels"""
         input_catchments = np.copy(self.original_catchments)
-        cc.renumber_catchments_by_size(input_catchments, 
+        cc.renumber_catchments_by_size(input_catchments,
                                        self.loop_logfile)
         with open(self.loop_logfile,'r') as f:
             f.next()
@@ -84,16 +84,16 @@ class RelabelCatchmentTestCase(unittest.TestCase):
 class compute_catchments(unittest.TestCase):
     """Perform general tests of catchment computation"""
 
-    rivdir_test_data = np.swapaxes(np.array([[7,2,6,6,5,8,0,1,1], 
-                                             [4,3,6,9,8,9,8,4,1], 
-                                             [2,6,2,9,8,9,8,2,1], 
-                                             [5,6,2,9,8,7,8,2,2], 
-                                             [7,4,2,2,8,9,2,3,2], 
-                                             [8,2,3,2,3,1,3,8,2], 
-                                             [3,2,1,2,2,2,1,2,1], 
-                                             [3,2,1,3,2,1,2,3,6], 
+    rivdir_test_data = np.swapaxes(np.array([[7,2,6,6,5,8,0,1,1],
+                                             [4,3,6,9,8,9,8,4,1],
+                                             [2,6,2,9,8,9,8,2,1],
+                                             [5,6,2,9,8,7,8,2,2],
+                                             [7,4,2,2,8,9,2,3,2],
+                                             [8,2,3,2,3,1,3,8,2],
+                                             [3,2,1,2,2,2,1,2,1],
+                                             [3,2,1,3,2,1,2,3,6],
                                              [1,5,6,6,5,4,2,6,-1]]),0,1)
-    
+
     expected_catchment_output = np.swapaxes(np.array([[1,6,7,7,7,8,9,9,9],
                                                       [2,6,7,7,7,9,9,9,2],
                                                       [3,6,6,7,7,9,9,2,2],
@@ -103,18 +103,18 @@ class compute_catchments(unittest.TestCase):
                                                       [4,4,4,6,6,6,6,2,2],
                                                       [4,4,4,6,6,6,10,2,4],
                                                       [5,4,6,6,6,6,10,2,2]]),0,1)
-  
+
     expected_sink_type_count_output = np.array([1,1,4,0,4,0])
     loop_logfile = os.path.join(data_dir,"temp/loop_log.txt")
-   
+
     def setUp(self):
         """Unit test setUp function"""
         self.f2py_mngr = f2py_mg.f2py_manager(os.path.join(fortran_source_path,
                                                            "mod_compute_catchments.f90"),
                                               func_name="compute_catchments")
-    
+
     def testHypotheticalCatchment(self):
-        """Test the key fortran function using some hypothetical river flow direction data""" 
+        """Test the key fortran function using some hypothetical river flow direction data"""
         sink_types_found, catchments_field = \
             self.f2py_mngr.run_current_function_or_subroutine(self.rivdir_test_data,2,
                                                               self.loop_logfile)
@@ -124,7 +124,7 @@ class compute_catchments(unittest.TestCase):
         np.testing.assert_array_equal(catchments_field,
                                       self.expected_catchment_output,
                                       "Catchments calculated for tests data don't match expectation")
-        
+
     def testHypotheticalCatchmentUsingPythonWrapper(self):
         """Test the python wrapper/helper to the compute_catchments FORTRAN subroutine"""
         sink_types_found, catchments_field = cc.compute_catchments(np.swapaxes(self.rivdir_test_data,0,1),
@@ -136,83 +136,83 @@ class compute_catchments(unittest.TestCase):
         np.testing.assert_array_equal(catchments_field,
                                       np.swapaxes(self.expected_catchment_output,0,1),
                                       "Catchments calculated for tests data don't match expectation")
-    
+
 class follow_river(unittest.TestCase):
     """Functions to test the follow_river subroutine"""
-   
-    rivdir_test_data = np.swapaxes(np.array([[7,2,6,6,5,8,0,1,1], 
-                                             [4,3,6,9,8,9,8,4,1], 
-                                             [2,6,2,9,8,9,8,2,1], 
-                                             [2,6,2,9,8,7,8,2,2], 
-                                             [5,4,2,2,8,9,2,3,2], 
-                                             [8,2,3,2,3,1,3,8,2], 
-                                             [3,2,1,2,2,2,1,2,1], 
-                                             [3,2,1,3,2,1,2,3,6], 
+
+    rivdir_test_data = np.swapaxes(np.array([[7,2,6,6,5,8,0,1,1],
+                                             [4,3,6,9,8,9,8,4,1],
+                                             [2,6,2,9,8,9,8,2,1],
+                                             [2,6,2,9,8,7,8,2,2],
+                                             [5,4,2,2,8,9,2,3,2],
+                                             [8,2,3,2,3,1,3,8,2],
+                                             [3,2,1,2,2,2,1,2,1],
+                                             [3,2,1,3,2,1,2,3,6],
                                              [1,5,6,6,5,4,2,6,-1]]),0,1)
-    single_river_test_expected_output = np.swapaxes(np.array([[0,0,0,0,0,0,0,0,0], 
-                                                              [0,0,0,0,0,0,0,0,0], 
-                                                              [0,0,-18,0,0,0,0,0,0], 
-                                                              [0,0,-18,0,0,0,0,0,0], 
-                                                              [0,0,-18,0,0,0,0,0,0], 
-                                                              [0,0,-18,0,0,0,0,0,0], 
-                                                              [0,0,0,-18,0,0,0,0,0], 
-                                                              [0,0,0,-18,0,0,0,0,0], 
+    single_river_test_expected_output = np.swapaxes(np.array([[0,0,0,0,0,0,0,0,0],
+                                                              [0,0,0,0,0,0,0,0,0],
+                                                              [0,0,-18,0,0,0,0,0,0],
+                                                              [0,0,-18,0,0,0,0,0,0],
+                                                              [0,0,-18,0,0,0,0,0,0],
+                                                              [0,0,-18,0,0,0,0,0,0],
+                                                              [0,0,0,-18,0,0,0,0,0],
+                                                              [0,0,0,-18,0,0,0,0,0],
                                                               [0,0,0,0,-18,0,0,0,0]]),0,1)
 
-    adding_tributary_test_expected_output = np.swapaxes(np.array([[0,0,0,0,0,0,0,0,0], 
-                                                                  [0,0,0,0,0,0,0,0,0], 
-                                                                  [0,0,-18,0,0,0,0,0,0], 
-                                                                  [0,0,-18,0,0,0,0,0,0], 
-                                                                  [0,0,-18,-18,0,0,0,0,0], 
-                                                                  [0,0,-18,-18,0,0,0,0,0], 
-                                                                  [0,0,0,-18,0,0,0,0,0], 
-                                                                  [0,0,0,-18,0,0,0,0,0], 
+    adding_tributary_test_expected_output = np.swapaxes(np.array([[0,0,0,0,0,0,0,0,0],
+                                                                  [0,0,0,0,0,0,0,0,0],
+                                                                  [0,0,-18,0,0,0,0,0,0],
+                                                                  [0,0,-18,0,0,0,0,0,0],
+                                                                  [0,0,-18,-18,0,0,0,0,0],
+                                                                  [0,0,-18,-18,0,0,0,0,0],
+                                                                  [0,0,0,-18,0,0,0,0,0],
+                                                                  [0,0,0,-18,0,0,0,0,0],
                                                                   [0,0,0,0,-18,0,0,0,0]]),0,1)
-    left_right_boundary_wrap_test_expected_output = np.swapaxes(np.array([[0,0,0,0,0,0,0,0,0], 
-                                                                          [-18,0,0,0,0,0,0,0,-18], 
-                                                                          [0,0,0,0,0,0,0,-18,0], 
-                                                                          [0,0,0,0,0,0,0,-18,0], 
-                                                                          [0,0,0,0,0,0,0,-18,0], 
-                                                                          [0,0,0,0,0,0,0,0,-18], 
-                                                                          [0,0,0,0,0,0,0,0,-18], 
-                                                                          [0,0,0,0,0,0,0,-18,0], 
+    left_right_boundary_wrap_test_expected_output = np.swapaxes(np.array([[0,0,0,0,0,0,0,0,0],
+                                                                          [-18,0,0,0,0,0,0,0,-18],
+                                                                          [0,0,0,0,0,0,0,-18,0],
+                                                                          [0,0,0,0,0,0,0,-18,0],
+                                                                          [0,0,0,0,0,0,0,-18,0],
+                                                                          [0,0,0,0,0,0,0,0,-18],
+                                                                          [0,0,0,0,0,0,0,0,-18],
+                                                                          [0,0,0,0,0,0,0,-18,0],
                                                                           [0,0,0,0,0,0,0,0,-18]]),0,1)
-    right_left_boundary_wrap_test_expected_output = np.swapaxes(np.array([[0,0,0,0,0,0,0,0,0], 
-                                                                          [0,0,0,0,0,0,0,0,0], 
-                                                                          [0,0,0,0,0,0,0,0,0], 
-                                                                          [0,0,0,0,0,0,0,0,0], 
-                                                                          [0,0,0,0,0,0,0,0,0], 
-                                                                          [0,0,0,0,0,0,0,0,0], 
-                                                                          [0,0,0,0,0,0,0,0,0], 
-                                                                          [-18,0,0,0,0,0,0,0,-18], 
+    right_left_boundary_wrap_test_expected_output = np.swapaxes(np.array([[0,0,0,0,0,0,0,0,0],
+                                                                          [0,0,0,0,0,0,0,0,0],
+                                                                          [0,0,0,0,0,0,0,0,0],
+                                                                          [0,0,0,0,0,0,0,0,0],
+                                                                          [0,0,0,0,0,0,0,0,0],
+                                                                          [0,0,0,0,0,0,0,0,0],
+                                                                          [0,0,0,0,0,0,0,0,0],
+                                                                          [-18,0,0,0,0,0,0,0,-18],
                                                                           [0,-18,0,0,0,0,0,0,0]]),0,1)
-    flow_over_poles_set_to_sink_test_expected_output = np.swapaxes(np.array([[-18,0,0,0,0,-17,0,0,0], 
-                                                                             [0,0,0,0,0,0,0,0,0], 
-                                                                             [0,0,0,0,0,0,0,0,0], 
-                                                                             [0,0,0,0,0,0,0,0,0], 
-                                                                             [0,0,0,0,0,0,0,0,0], 
-                                                                             [0,0,0,0,0,0,0,0,0], 
-                                                                             [0,0,0,0,0,0,0,0,0], 
-                                                                             [0,0,0,0,0,0,-15,0,0], 
+    flow_over_poles_set_to_sink_test_expected_output = np.swapaxes(np.array([[-18,0,0,0,0,-17,0,0,0],
+                                                                             [0,0,0,0,0,0,0,0,0],
+                                                                             [0,0,0,0,0,0,0,0,0],
+                                                                             [0,0,0,0,0,0,0,0,0],
+                                                                             [0,0,0,0,0,0,0,0,0],
+                                                                             [0,0,0,0,0,0,0,0,0],
+                                                                             [0,0,0,0,0,0,0,0,0],
+                                                                             [0,0,0,0,0,0,-15,0,0],
                                                                              [-16,0,0,0,0,0,-15,0,0]]),0,1)
-     
-    rivdir_test_data_circular_flow = np.swapaxes(np.array([[6,6,2], 
-                                                           [8,5,2], 
+
+    rivdir_test_data_circular_flow = np.swapaxes(np.array([[6,6,2],
+                                                           [8,5,2],
                                                            [8,4,4]]),0,1)
 
-    rivdir_test_data_second_circular_flow = np.swapaxes(np.array([[6,6,2], 
-                                                                  [8,9,2], 
+    rivdir_test_data_second_circular_flow = np.swapaxes(np.array([[6,6,2],
+                                                                  [8,9,2],
                                                                   [8,8,4]]),0,1)
-    circular_flow_expected_output = np.swapaxes(np.array([[-18,-18,-18], 
-                                                          [-18,0,-18], 
+    circular_flow_expected_output = np.swapaxes(np.array([[-18,-18,-18],
+                                                          [-18,0,-18],
                                                           [-18,-18,-18]]),0,1)
 
-    second_circular_flow_expected_output = np.swapaxes(np.array([[-18,-18,-18], 
-                                                                 [-18,-18,-18], 
+    second_circular_flow_expected_output = np.swapaxes(np.array([[-18,-18,-18],
+                                                                 [-18,-18,-18],
                                                                  [-18,-18,-18]]),0,1)
-    
+
     loop_logfile = os.path.join(data_dir,"temp/loop_log.txt")
-         
+
     def setUp(self):
         """Unit test setUp function"""
         self.f2py_mngr = f2py_mg.f2py_manager(os.path.join(fortran_source_path,
@@ -226,7 +226,7 @@ class follow_river(unittest.TestCase):
             pass
         with open(self.loop_logfile,'w') as f:
             f.write('Loops found in catchments:\n')
-        
+
     def testFirstRiver(self):
         """Test follow the first river found"""
         sink_type = self.f2py_mngr.run_current_function_or_subroutine(self.rivdir_test_data,
@@ -255,13 +255,13 @@ class follow_river(unittest.TestCase):
                                                                       self.catchment_number,
                                                                       4,5,2,self.loop_logfile,
                                                                       9,9)
-        np.testing.assert_array_equal(self.catchment_field, 
-                                      self.adding_tributary_test_expected_output, 
+        np.testing.assert_array_equal(self.catchment_field,
+                                      self.adding_tributary_test_expected_output,
                                       "Failed to add tributary correctly")
         self.assertEqual(self.catchment_number,-17,
                          "Catchment Number incremented incorrectly")
         self.assertEqual(sink_type, 0, "Sink type not set correctly")
-        
+
     def testCircularFlow(self):
         """Test finding a circular flow"""
         circular_flow_catchment_field = np.zeros((3,3),order='F',dtype=np.int32)
@@ -287,7 +287,7 @@ class follow_river(unittest.TestCase):
                                       self.second_circular_flow_expected_output,
                                       "Second circular flow doesn't give correct catchment")
         self.assertEqual(sink_type, 6, "Sink type not set correctly")
-        
+
     def testCircularFlowFileOutput(self):
         """Test printing out the catchment number of a loop to a log file"""
         circular_flow_catchment_field = np.zeros((3,3),order='F',dtype=np.int32)
@@ -302,7 +302,7 @@ class follow_river(unittest.TestCase):
             loops = [int(line.strip()) for line in f]
         self.assertListEqual(loops,[-18],
                              "Circular flow diagnostic information is not being produced correctly")
-        
+
     def testAnotherCircularFlowFileOutput(self):
         """Test printing out the catchment number of another loop to a log file"""
         circular_flow_catchment_field = np.zeros((3,3),order='F',dtype=np.int32)
@@ -317,7 +317,7 @@ class follow_river(unittest.TestCase):
             loops = [int(line.strip()) for line in f]
         self.assertListEqual(loops,[-18],
                              "Circular flow diagnostic information is not being produced correctly")
-        
+
     def testLeftRightCrossBorderWrap(self):
         """Test left right flow across border"""
         sink_type = self.f2py_mngr.run_current_function_or_subroutine(self.rivdir_test_data,
@@ -325,13 +325,13 @@ class follow_river(unittest.TestCase):
                                                                       self.catchment_number,
                                                                       1,2,2,self.loop_logfile,
                                                                       9,9)
-        np.testing.assert_array_equal(self.catchment_field, 
+        np.testing.assert_array_equal(self.catchment_field,
                                       self.left_right_boundary_wrap_test_expected_output,
                                       "Cross border wrapping from left to right failed")
         self.assertEqual(self.catchment_number,-17,
                          "Catchment Number incremented incorrectly")
         self.assertEqual(sink_type, 2, "Sink type not set correctly")
-        
+
     def testRightLeftCrossBorderWrap(self):
         """Test right left flow across border"""
         sink_type = self.f2py_mngr.run_current_function_or_subroutine(self.rivdir_test_data,
@@ -341,11 +341,11 @@ class follow_river(unittest.TestCase):
                                                                       9,9)
         self.assertEqual(self.catchment_number,-17,
                          "Catchment Number incremented incorrectly")
-        np.testing.assert_array_equal(self.catchment_field, 
+        np.testing.assert_array_equal(self.catchment_field,
                                       self.right_left_boundary_wrap_test_expected_output,
                                       "Cross border wrapping from left to right failed")
         self.assertEqual(sink_type, 3, "Sink type not set correctly")
-    
+
     def testSetFlowOverPolesToSink(self):
         """Test setting flow over poles to a sink"""
         sink_type= self.f2py_mngr.run_current_function_or_subroutine(self.rivdir_test_data,
@@ -370,37 +370,37 @@ class follow_river(unittest.TestCase):
                                                                      self.catchment_field,
                                                                      self.catchment_number,
                                                                      7,8,2,self.loop_logfile,
-                                                                     9,9) 
+                                                                     9,9)
         self.assertEqual(sink_type, 5, "Sink type not set correctly")
         self.assertEqual(self.catchment_number,-14,
                          "Catchment Number incremented incorrectly")
-        np.testing.assert_array_equal(self.catchment_field, 
+        np.testing.assert_array_equal(self.catchment_field,
                                       self.flow_over_poles_set_to_sink_test_expected_output,
                                       'Failed to handle flow over poles correctly')
-                
+
 class LabelCatchmentTestCase(unittest.TestCase):
     """Tests for the catchment labelling routine"""
-    
+
     #Note column are first axis in Fortran
-    singlepointexpected_output = np.array([[0,0,0,0,0,0,0,0,0], 
-                                           [0,0,0,0,0,0,0,0,0], 
-                                           [0,0,0,0,0,0,0,0,0], 
-                                           [0,0,0,0,0,0,17,0,0], 
-                                           [0,0,0,0,0,0,0,0,0], 
-                                           [0,0,0,0,0,0,0,0,0], 
-                                           [0,0,0,0,0,0,0,0,0], 
-                                           [0,0,0,0,0,0,0,0,0], 
+    singlepointexpected_output = np.array([[0,0,0,0,0,0,0,0,0],
+                                           [0,0,0,0,0,0,0,0,0],
+                                           [0,0,0,0,0,0,0,0,0],
+                                           [0,0,0,0,0,0,17,0,0],
+                                           [0,0,0,0,0,0,0,0,0],
+                                           [0,0,0,0,0,0,0,0,0],
+                                           [0,0,0,0,0,0,0,0,0],
+                                           [0,0,0,0,0,0,0,0,0],
                                            [0,0,0,0,0,0,0,0,0]])
-    
-    severalpointsexpected_output = np.array([[0, 0, 0,-7, 0, 0, 0, 0, 0], 
-                                             [0, 0, 0, 0,-7, 0,-7, 0, 0], 
-                                             [0, 0, 0, 0,-7,-7,-7, 0, 0], 
-                                             [0, 0, 0, 0, 0, 0,-7,-7,-7], 
-                                             [0, 0, 0, 0, 0, 0, 0, 0, 0], 
-                                             [0, 0, 0, 0, 0, 0, 0, 0, 0], 
-                                             [0, 0, 0, 0, 0, 0, 0, 0, 0], 
-                                             [0, 0, 0, 0, 0, 0, 0, 0, 0], 
-                                             [0, 0, 0, 0, 0, 0, 0, 0, 0]]) 
+
+    severalpointsexpected_output = np.array([[0, 0, 0,-7, 0, 0, 0, 0, 0],
+                                             [0, 0, 0, 0,-7, 0,-7, 0, 0],
+                                             [0, 0, 0, 0,-7,-7,-7, 0, 0],
+                                             [0, 0, 0, 0, 0, 0,-7,-7,-7],
+                                             [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                                             [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                                             [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                                             [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                                             [0, 0, 0, 0, 0, 0, 0, 0, 0]])
     def setUp(self):
         """Unit test setUp function"""
         self.catchment_field = np.zeros((9,9),order='F',dtype=np.int32)
@@ -408,7 +408,7 @@ class LabelCatchmentTestCase(unittest.TestCase):
         self.f2py_mngr = f2py_mg.f2py_manager(os.path.join(fortran_source_path,
                                                            "mod_compute_catchments.f90"),
                                               func_name="label_catchment")
-        
+
     def testWithSinglePointInList(self):
         """Test labelling of a single catchment"""
         self.grid_points_in_catchment[:,0] = [4,7]
@@ -417,7 +417,7 @@ class LabelCatchmentTestCase(unittest.TestCase):
         np.testing.assert_almost_equal(self.singlepointexpected_output,
                                        self.catchment_field,
                                        err_msg="Single point catchment is being labelled incorrectly")
-        
+
     def testWithSeveralPointsInList(self):
         """Test labelling of several catchments"""
         self.grid_points_in_catchment[:,0:9] = np.swapaxes([[4,7],[4,8],[4,9],[3,7],[3,6],[3,5],[2,7],[2,5],[1,4]],0,1)
@@ -426,7 +426,7 @@ class LabelCatchmentTestCase(unittest.TestCase):
         np.testing.assert_almost_equal(self.severalpointsexpected_output,
                                        self.catchment_field,
                                        err_msg="Single point catchment is being labelled incorrectly")
-        
+
 class ComputeNextGridCellTestCase(unittest.TestCase):
     """Tests of the subroutine to compute the next grid cell"""
 
@@ -436,7 +436,7 @@ class ComputeNextGridCellTestCase(unittest.TestCase):
 
     expected_output_coords_changes = [[ [-1,-1], [0,-1], [1,-1]],
                                       [ [-1, 0], [0, 0], [1, 0]],
-                                      [ [-1, 1], [0, 1], [1, 1]]] 
+                                      [ [-1, 1], [0, 1], [1, 1]]]
 
     def setUp(self):
         """Unit test setUp function"""
@@ -449,7 +449,7 @@ class ComputeNextGridCellTestCase(unittest.TestCase):
         self.jasarray = np.array(self.j)
         self.expected_output_coords = [[[base+mod for base,mod in zip([self.i,self.j],coordmods)] #@UndefinedVariable
                                           for coordmods in row] for row in self.expected_output_coords_changes] #@UnusedVariable
-    
+
     def SinkPointReponseTestHelper(self,value,expected_return_value):
         """Help test the response to various sink types"""
         self.assertEqual(self.f2py_mngr.run_current_function_or_subroutine(value,self.i,self.j),
@@ -461,20 +461,20 @@ class ComputeNextGridCellTestCase(unittest.TestCase):
     def testOceanPointResponse(self):
         """Test the response to an ocean point"""
         self.SinkPointReponseTestHelper(-1,2)
-        
+
     def testCoastPointResponse(self):
         """Test the reponse to a coastal point"""
         self.SinkPointReponseTestHelper(0,1)
-        
+
     def testLocalSinkPointResponse(self):
         """Test the response to a local sink"""
         self.SinkPointReponseTestHelper(5,3)
-        
+
     def testUnknownRiverDirectionResponse(self):
         """Test the reponse to an unknown river direction"""
         self.SinkPointReponseTestHelper(10,4)
         self.SinkPointReponseTestHelper(-177,4)
-       
+
     def testRiverFlowDirectionResponse(self):
         """Test the reponse to the various possible flow directions"""
         for inputrow,outputrow in zip(self.river_flow_direction_input_values,

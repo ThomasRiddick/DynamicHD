@@ -123,8 +123,9 @@ protected:
  */
 inline coords* coords::clone(){
 	switch(coords_type){
-		case coords_types::latlon:
+		case latlon:
 			return new latlon_coords(*static_cast<latlon_coords*>(this));
+		case generic_1d:
 			return new generic_1d_coords(*static_cast<generic_1d_coords*>(this));
 		default:
 			throw runtime_error("Undefined coord type.. need to add it to clone");

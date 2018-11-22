@@ -129,6 +129,14 @@ public:
 	bool operator() (cell* lhs,cell* rhs){return *lhs>*rhs;}
 };
 
+class reverse_compare_cells{
+
+public:
+	///Operator that compares two cell objects
+	bool operator() (cell* lhs,cell* rhs){return *lhs<*rhs;}
+};
+
+
 /**
  * Subclass by for land-sea mask generation. Basically a wrapper
  * that uses the superclass with the orography value set to 0.0

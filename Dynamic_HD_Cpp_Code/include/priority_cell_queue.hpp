@@ -15,6 +15,9 @@ using namespace std;
 //Define a priority queue of cells
 typedef priority_queue<cell*,vector<cell*>,compare_cells> priority_cell_queue_type;
 
+//Define a priority queue of cells in descending height order
+typedef priority_queue<cell*,vector<cell*>,reverse_compare_cells> reverse_priority_cell_queue;
+
 /**
  * Very short class definition that inherits from the priority cell queue type then implements
  * a function called push that labels cells according to their order of entry.

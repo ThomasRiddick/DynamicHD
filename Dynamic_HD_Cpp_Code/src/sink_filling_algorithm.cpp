@@ -108,12 +108,10 @@ sink_filling_algorithm_4_latlon::sink_filling_algorithm_4_latlon(field<double>* 
 void sink_filling_algorithm::setup_flags(bool set_ls_as_no_data_flag_in, bool tarasov_mod_in,
 										 int tarasov_separation_threshold_for_returning_to_same_edge_in,
 										 double tarasov_min_path_length_in,
-										 bool tarasov_include_corners_in_same_edge_criteria_in,
-								         bool debug_in)
+										 bool tarasov_include_corners_in_same_edge_criteria_in)
 {
 	set_ls_as_no_data_flag = set_ls_as_no_data_flag_in;
 	tarasov_mod = tarasov_mod_in;
-	debug = debug_in;
 	tarasov_separation_threshold_for_returning_to_same_edge =
 			tarasov_separation_threshold_for_returning_to_same_edge_in;
 	tarasov_min_path_length = tarasov_min_path_length_in;
@@ -121,7 +119,7 @@ void sink_filling_algorithm::setup_flags(bool set_ls_as_no_data_flag_in, bool ta
 }
 
 void sink_filling_algorithm_1::setup_flags(bool set_ls_as_no_data_flag_in, bool tarasov_mod_in,
-										   bool debug_in,bool add_slope_in, double epsilon_in,
+										   bool add_slope_in, double epsilon_in,
 										   int tarasov_separation_threshold_for_returning_to_same_edge_in,
 										   double tarasov_min_path_length_in,
 										   bool tarasov_include_corners_in_same_edge_criteria_in)
@@ -129,8 +127,7 @@ void sink_filling_algorithm_1::setup_flags(bool set_ls_as_no_data_flag_in, bool 
 	sink_filling_algorithm::setup_flags(set_ls_as_no_data_flag_in,tarasov_mod_in,
 										tarasov_separation_threshold_for_returning_to_same_edge_in,
 										tarasov_min_path_length_in,
-										tarasov_include_corners_in_same_edge_criteria_in,
-										debug_in);
+										tarasov_include_corners_in_same_edge_criteria_in);
 	add_slope = add_slope_in; epsilon = epsilon_in;
 }
 
@@ -139,30 +136,28 @@ void sink_filling_algorithm_4::setup_flags(bool set_ls_as_no_data_flag_in,
 										   bool tarasov_mod_in,
 										   int tarasov_separation_threshold_for_returning_to_same_edge_in,
 										   double tarasov_min_path_length_in,
-										   bool tarasov_include_corners_in_same_edge_criteria_in,
-										   bool debug_in)
+										   bool tarasov_include_corners_in_same_edge_criteria_in)
 {
 	sink_filling_algorithm::setup_flags(set_ls_as_no_data_flag_in,tarasov_mod_in,
 										tarasov_separation_threshold_for_returning_to_same_edge_in,
 										tarasov_min_path_length_in,
-										tarasov_include_corners_in_same_edge_criteria_in,debug_in);
+										tarasov_include_corners_in_same_edge_criteria_in);
 	prefer_non_diagonal_initial_dirs = prefer_non_diagonal_initial_dirs_in;
 }
 
 void sink_filling_algorithm_4_latlon::setup_flags(bool set_ls_as_no_data_flag_in,
 			     	 	 	 	 	 	   	   	  bool prefer_non_diagonal_initial_dirs_in,
-												  bool tarasov_mod_in, bool debug_in,
-												  bool index_based_rdirs_only_in,
-												  int tarasov_separation_threshold_for_returning_to_same_edge_in,
-												  double tarasov_min_path_length_in,
-												  bool tarasov_include_corners_in_same_edge_criteria_in)
+												  			bool tarasov_mod_in,
+												  			bool index_based_rdirs_only_in,
+												  			int tarasov_separation_threshold_for_returning_to_same_edge_in,
+												  			double tarasov_min_path_length_in,
+												  			bool tarasov_include_corners_in_same_edge_criteria_in)
 {
 	sink_filling_algorithm_4::setup_flags(set_ls_as_no_data_flag_in,prefer_non_diagonal_initial_dirs_in,
 										  tarasov_mod_in,
 										  tarasov_separation_threshold_for_returning_to_same_edge_in,
 										  tarasov_min_path_length_in,
-										  tarasov_include_corners_in_same_edge_criteria_in,debug_in);
-	prefer_non_diagonal_initial_dirs = prefer_non_diagonal_initial_dirs_in;
+										  tarasov_include_corners_in_same_edge_criteria_in);
 	index_based_rdirs_only = index_based_rdirs_only_in;
 }
 
@@ -225,6 +220,13 @@ void sink_filling_algorithm_1_latlon::setup_fields(double* orography_in, bool* l
 	nlat = grid_latlon->get_nlat(); nlon = grid_latlon->get_nlon();
 }
 
+void sink_filling_algorithm_1_icon_single_index::setup_fields(double* orography_in, bool* landsea_in,
+									      	  	   						bool* true_sinks_in,grid_params* grid_params) {
+	sink_filling_algorithm::setup_fields(orography_in,landsea_in,true_sinks_in,grid_params);
+	auto* grid_icon_single_index = dynamic_cast<icon_single_index_grid*>(_grid);
+	ncells = grid_icon_single_index->get_npoints();
+}
+
 //Implementation as per algorithm 1 of the paper cited in the preamble to this file
 void sink_filling_algorithm::fill_sinks()
 {
@@ -239,15 +241,16 @@ void sink_filling_algorithm::fill_sinks()
 	//Loop over non out-flow points searching and filling sinks (or assigning flow directions);
 	//this is the main section of the program
 	if (!tarasov_mod) cout << "Starting to loop over non out-flow points searching for sinks" << endl;
-	while (!q.empty()) {
-		center_cell = q.top();
-		q.pop();
+	while (! (q.empty() && pit_q.empty() && slope_q.empty()) ) {
+		pop_center_cell();
 		center_coords = center_cell->get_cell_coords();
-		if (debug) {
+		#if DEBUG
 			cout << "q length: " << q.size() << endl;
 			cout << "Processing central cell:" << endl;
 			if (auto center_coords_latlon = dynamic_cast<latlon_coords*>(center_coords)){
 				cout << "lat: " << center_coords_latlon->get_lat() << " lon: "<< center_coords_latlon->get_lon() << endl;
+			} else if (auto center_coords_generic_1d = dynamic_cast<generic_1d_coords*>(center_coords)) {
+				cout << "Cell " << *center_coords_generic_1d;
 			}
 			cout << "Cell orog: " << (*orography)(center_coords) << endl;
 			if (tarasov_mod) {
@@ -257,7 +260,7 @@ void sink_filling_algorithm::fill_sinks()
 				cout << "Center cell max sep from initial edge: "
 				     << center_cell->get_tarasov_maximum_separation_from_initial_edge() << endl;
 			}
-		}
+		#endif
 		process_center_cell();
 		if (tarasov_mod) {
 			tarasov_update_maximum_separation_from_initial_edge();
@@ -743,6 +746,32 @@ void sink_filling_algorithm_4::find_initial_cell_flow_direction(){
 	if(destination_coords != nbr_coords) delete destination_coords;
 }
 
+inline void sink_filling_algorithm_1::pop_center_cell(){
+	if(tarasov_mod || add_slope){
+		center_cell = q.top();
+		q.pop();
+	} else {
+		if (! pit_q.empty()){
+			center_cell = pit_q.front();
+			pit_q.pop();
+			on_slope = false;
+		} else if (! slope_q.empty()) {
+			center_cell = slope_q.front();
+			slope_q.pop();
+			on_slope = true;
+		} else {
+			center_cell = q.top();
+			q.pop();
+			on_slope = false;
+		}
+	}
+}
+
+inline void sink_filling_algorithm_4::pop_center_cell(){
+		center_cell = q.top();
+		q.pop();
+}
+
 inline void sink_filling_algorithm_1::process_true_sink_center_cell() {
 	if (tarasov_mod) {
 		if (!(*completed_cells)(center_coords)) {
@@ -798,6 +827,31 @@ inline void sink_filling_algorithm_4::process_true_sink_center_cell(){
 
 inline void sink_filling_algorithm_1::process_center_cell() {
 	center_orography = center_cell->get_orography();
+	#if PARALLELIZE
+	if(parallelized){
+		center_label = (*labels)(center_coords)
+		if ( center_label == 0){
+			auto neighbors_coords = orography->get_neighbors_coords(center_coords,method);
+			bool needs_label = true;
+			while (!neighbors_coords->empty()){
+				nbr_coords = neighbors_coords->back();
+				int nbr_coords_label = (*labels)(nbr_coords);
+				if (needs_label &&  nbr_coords_label != 0) {
+					(*labels)(center_coords) = nbr_coords_label;
+					center_label = nbr_coords_label;
+					needs_label = false;
+				}
+				delete nbr_coords;
+			}
+			if (needs_label) {
+				(*labels)(center_coords) = unique_label_counter;
+				center_label = unique_label_counter;
+				unique_label_counter++;
+			}
+		}
+	}
+	#endif
+	if (! (add_slope || tarasov_mod)) requeued = false;
 	if (true_sinks){
 		if((*true_sinks)(center_coords)) {
 			process_true_sink_center_cell();
@@ -890,6 +944,9 @@ void sink_filling_algorithm::process_neighbors(vector<coords*>* neighbors_coords
 						tarasov_reprocessing_cell = ! nbr_processed;
 					} else nbr_processed = true;
 					if (nbr_processed){
+						#if PARALLELIZE
+						if(parallelized) update_spillover_elevation
+						#endif
 						neighbors_coords->pop_back();
 						delete nbr_coords;
 						continue;
@@ -929,26 +986,46 @@ void sink_filling_algorithm::process_neighbors(vector<coords*>* neighbors_coords
 				delete nbr_coords;
 			}
 }
+#if PARALLELIZE
+void sink_filling_algorithm_1::update_spillover_elevation{
+	int nbr_label = (*labels)(nbr_coords);
+	if (center_label != nbr_label) {
+		double spillover_elevation = max((*orography)(nbr_coords),
+		                                 center_orography)
+		if(spillover_elevations.get_value(center_label,nbr_label) >
+		   spillover_elevation){
+			spillover_elevations.push(new spillover_elevation(spillover_elevation,
+		                                                 		center_label,
+																										  	nbr_label))
+		}
+	}
+}
+#endif
 
 void sink_filling_algorithm_1::process_neighbor(){
+	nbr_orog = (*orography)(nbr_coords);
+	if (! (tarasov_mod && add_slope)) {
+		if (on_slope && center_orography >= nbr_orog) return;
+	}
 	if(add_slope){
-		nbr_orog = (*orography)(nbr_coords);
 		if (center_orography >= nbr_orog){
 			nbr_orog = center_orography + epsilon;
 		}
-	} else nbr_orog = max((*orography)(nbr_coords),center_orography);
-	if (debug) {
+	} else nbr_orog = max(nbr_orog,center_orography);
+	#if DEBUG
 		cout << " Processing neighbor: " << endl;
-		if (auto nbr_coords_latlon = dynamic_cast<latlon_coords*>(nbr_coords)){
-			cout << " lat: " <<  nbr_coords_latlon->get_lat() << " lon: "<< nbr_coords_latlon->get_lon() << endl;
-		}
+		cout << " coords: " << *nbr_coords;
 		cout << " center_orography: " << center_orography << endl;
 		cout << " new_orography:    " << nbr_orog << endl;
 		cout << " old orography:    " << (*orography)(nbr_coords) << endl;
-	}
+	#endif
 	(*orography)(nbr_coords) = nbr_orog;
 	(*completed_cells)(nbr_coords) = true;
 	if (tarasov_mod) (*catchment_nums)(nbr_coords) = center_catchment_num;
+	#if PARALLELIZE
+	if(parallelized){
+		(*labels)(nbr_coords) = center_label;
+	#endif
 }
 
 void sink_filling_algorithm_4::process_neighbor(){
@@ -963,12 +1040,10 @@ void sink_filling_algorithm_4::process_neighbor(){
 	}
 	(*completed_cells)(nbr_coords) = true;
 	(*catchment_nums)(nbr_coords) = center_catchment_num;
-	if (debug){
+	#if DEBUG
 		cout << " Processing neighbor: " << endl;
-		if (auto nbr_coords_latlon = dynamic_cast<latlon_coords*>(nbr_coords)){
-			cout << " lat: " <<  nbr_coords_latlon->get_lat() << " lon: "<< nbr_coords_latlon->get_lon() << endl;
-		}
-	}
+		cout << " coords: " << *nbr_coords << endl;
+	#endif
 }
 
 //Calculate the river flow direction from a neighbor to a central cell dealing with longitudinal
@@ -986,6 +1061,14 @@ inline void sink_filling_algorithm_1::push_neighbor()
 						tarasov_center_cell_maximum_separations_from_initial_edge,
 						tarasov_neighbor_path_length,
 						tarasov_center_cell_path_initial_height));
+	} else if(! add_slope) {
+		if (nbr_orog <= center_orography) {
+			if (! on_slope) pit_q.push(new cell(nbr_orog,nbr_coords->clone()));
+			else if (! requeued) {
+				q.push(new cell(center_orography,center_coords->clone()));
+				requeued = true;
+			}
+		} else slope_q.push(new cell(nbr_orog,nbr_coords->clone()));
 	} else q.push(new cell(nbr_orog,nbr_coords->clone()));
 }
 

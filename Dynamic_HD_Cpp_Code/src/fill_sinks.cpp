@@ -112,7 +112,6 @@ void latlon_fill_sinks(double* orography_in, int nlat, int nlon, int method,
 				bool index_based_rdirs_only_in)
 {
 	cout << "Entering sink filling C++ code now" << endl;
-	const bool debug = false;
 	const bool tarasov_mod = false;
 	latlon_grid_params* grid_params = new latlon_grid_params(nlat,nlon);
 	switch(method){
@@ -120,7 +119,7 @@ void latlon_fill_sinks(double* orography_in, int nlat, int nlon, int method,
 			{
 				cout << "Using Algorithm 1" << endl;
 				auto alg1 = sink_filling_algorithm_1_latlon();
-				alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
+				alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in);
 				alg1.setup_fields(orography_in,landsea_in,true_sinks_in,grid_params);
 				alg1.fill_sinks();
 			}
@@ -129,7 +128,7 @@ void latlon_fill_sinks(double* orography_in, int nlat, int nlon, int method,
 			{
 				cout << "Using Algorithm 4" << endl;
 				auto alg4 = sink_filling_algorithm_4_latlon();
-				alg4.setup_flags(set_ls_as_no_data_flag,prefer_non_diagonal_initial_dirs,tarasov_mod,debug,
+				alg4.setup_flags(set_ls_as_no_data_flag,prefer_non_diagonal_initial_dirs,tarasov_mod,
 								 index_based_rdirs_only_in);
 				alg4.setup_fields(orography_in,landsea_in,true_sinks_in,next_cell_lat_index_in,
 							      next_cell_lon_index_in,grid_params,

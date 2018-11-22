@@ -76,7 +76,7 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueOne) {
      null_htype,null_htype,null_htype, null_htype,null_htype,null_htype, null_htype,null_htype,null_htype,
      null_htype,null_htype,null_htype, null_htype,null_htype,null_htype, null_htype,flood_height,null_htype,
      null_htype,null_htype,null_htype, null_htype,null_htype,null_htype, null_htype,null_htype,null_htype };
-  priority_cell_queue q;
+  reverse_priority_cell_queue q;
   auto basin_eval = latlon_basin_evaluation_algorithm();
   q = basin_eval.test_add_minima_to_queue(raw_orography_in,
                                           corrected_orography_in,
@@ -148,7 +148,7 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueTwo) {
      null_htype,null_htype,null_htype, null_htype,null_htype,null_htype, null_htype,null_htype,null_htype,
      null_htype,null_htype,null_htype, null_htype,null_htype,null_htype, null_htype,flood_height,null_htype,
      null_htype,null_htype,null_htype, null_htype,null_htype,null_htype, null_htype,null_htype,null_htype };
-  priority_cell_queue q;
+  reverse_priority_cell_queue q;
   auto basin_eval = latlon_basin_evaluation_algorithm();
   q = basin_eval.test_add_minima_to_queue(raw_orography_in,
                                           corrected_orography_in,
@@ -220,7 +220,7 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueThree) {
      flood_height,null_htype,null_htype, null_htype,null_htype,null_htype, null_htype,null_htype,null_htype,
      null_htype,flood_height,null_htype, null_htype,null_htype,null_htype, null_htype,flood_height,null_htype,
      null_htype,null_htype,null_htype, null_htype,null_htype,null_htype, null_htype,null_htype,null_htype };
-  priority_cell_queue q;
+  reverse_priority_cell_queue q;
   auto basin_eval = latlon_basin_evaluation_algorithm();
   q = basin_eval.test_add_minima_to_queue(raw_orography_in,
                                           corrected_orography_in,
@@ -292,7 +292,7 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueFour) {
      null_htype,null_htype,null_htype, null_htype,null_htype,null_htype, null_htype,null_htype,null_htype,
      flood_height,null_htype,null_htype, null_htype,null_htype,null_htype, null_htype,null_htype,null_htype,
      null_htype,null_htype,null_htype, null_htype,null_htype,null_htype, flood_height,null_htype,null_htype };
-  priority_cell_queue q;
+  reverse_priority_cell_queue q;
   auto basin_eval = latlon_basin_evaluation_algorithm();
   q = basin_eval.test_add_minima_to_queue(raw_orography_in,
                                           corrected_orography_in,
@@ -364,7 +364,7 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueFive) {
      null_htype,null_htype,flood_height, null_htype,null_htype,null_htype, null_htype,flood_height,null_htype,
      null_htype,null_htype,null_htype, null_htype,null_htype,null_htype, null_htype,null_htype,null_htype,
      null_htype,null_htype,null_htype, null_htype,null_htype,null_htype, null_htype,null_htype,null_htype };
-  priority_cell_queue q;
+  reverse_priority_cell_queue q;
   auto basin_eval = latlon_basin_evaluation_algorithm();
   q = basin_eval.test_add_minima_to_queue(raw_orography_in,
                                           corrected_orography_in,
@@ -436,7 +436,7 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueSix) {
      null_htype,null_htype,null_htype, null_htype,null_htype,null_htype, null_htype,flood_height,null_htype,
      null_htype,flood_height,null_htype, null_htype,null_htype,null_htype, null_htype,null_htype,null_htype,
      null_htype,null_htype,null_htype, null_htype,null_htype,null_htype, null_htype,null_htype,null_htype };
-  priority_cell_queue q;
+  reverse_priority_cell_queue q;
   auto basin_eval = latlon_basin_evaluation_algorithm();
   q = basin_eval.test_add_minima_to_queue(raw_orography_in,
                                           corrected_orography_in,

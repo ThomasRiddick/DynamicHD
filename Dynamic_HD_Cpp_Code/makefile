@@ -2,7 +2,8 @@ RM := rm -rf
 ifeq ($(shell uname -s),Darwin)
 GPLUSPLUS := /usr/bin/g++
 STDLIB_OPT := -stdlib=libc++
-FLAGS := -DPROCESSED_CELL_COUNTER
+FLAGS := -DPROCESSED_CELL_COUNTER -DUSE_NETCDFCPP
+NCDIR := /usr/local/Cellar/netcdf/4.6.1_2
 else ifeq ($(shell hostname -d),hpc.dkrz.de)
 GPLUSPLUS := /sw/rhel6-x64/gcc/gcc-6.2.0/bin/g++
 STDLIB_OPT :=
@@ -16,11 +17,13 @@ $(error OS $(uname -s) not recognised)
 endif
 
 # All of the sources participating in the build are defined here
+-include ../objects.mk
 -include ../sources.mk
 -include ../src/gtest/subdir.mk
 -include ../src/subdir.mk
 -include ../subdir.mk
--include ../objects.mk
+
+EXECUTABLES += Dynamic_HD_Cpp_Exec Fill_Sinks_Icon_SI_Exec
 
 ifneq ($(MAKECMDGOALS),clean)
 ifneq ($(strip $(CC_DEPS)),)
@@ -46,18 +49,26 @@ endif
 # Add inputs and outputs from these tool invocations to the build variables
 
 # All Target
-all: Dynamic_HD_Cpp_Code
+all: Dynamic_HD_Cpp_Code Fill_Sinks_Icon_SI_Exec
 
 # Tool invocations
-Dynamic_HD_Cpp_Code: $(OBJS) $(USER_OBJS)
+compile_only: $(USER_OBJS)
+
+Dynamic_HD_Cpp_Code: $(OBJS) $(USER_OBJS) $(TEST_OBJS)
 	@echo 'Building target: $@'
-	$(GPLUSPLUS)  -o "Dynamic_HD_Cpp_Exec" $(OBJS) $(USER_OBJS) $(FLAGS) $(LIBS)
+	$(GPLUSPLUS)  -o "Dynamic_HD_Cpp_Exec" $(OBJS) $(USER_OBJS) $(TEST_OBJS) $(FLAGS) $(LIBS)
+	@echo 'Finished building target: $@'
+	@echo ' '
+
+Fill_Sinks_Icon_SI_Exec: $(USER_OBJS) $(SI_OBJS)
+	@echo 'Building target: $@'
+	$(GPLUSPLUS)  -o "Fill_Sinks_Icon_SI_Exec" $(USER_OBJS) $(SI_OBJS) $(FLAGS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) $(CC_DEPS)$(C++_DEPS)$(EXECUTABLES)$(OBJS)$(C_UPPER_DEPS)$(CXX_DEPS)$(CPP_DEPS)$(C_DEPS) Dynamic_HD_Cpp_Exec
+	-$(RM) $(CC_DEPS)$(C++_DEPS)$(EXECUTABLES)$(OBJS)$(USER_OBJS)$(TEST_OBJS)$(SI_OBJS)$(C_UPPER_DEPS)$(CXX_DEPS)$(CPP_DEPS)$(C_DEPS)
 	-@echo ' '
 
 .PHONY: all clean dependents

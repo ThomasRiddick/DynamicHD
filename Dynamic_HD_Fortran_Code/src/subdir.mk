@@ -26,27 +26,29 @@ $(FRUIT_LOC)/fruit.f90 \
 ../src/manual_fruit_basket_driver.f90
 
 OBJS += \
-./src/fruit.o \
 ./src/precision_mod.o \
 ./src/coords_mod.o \
 ./src/doubly_linked_list_link_mod.o \
 ./src/doubly_linked_list_mod.o \
-./src/doubly_linked_list_test_module.o \
 ./src/subfield_mod.o \
-./src/subfield_test_mod.o \
 ./src/field_section_mod.o \
-./src/field_section_test_mod.o \
 ./src/area_mod.o \
-./src/area_test_mod.o \
 ./src/break_loops_mod.o \
 ./src/break_loops_driver_mod.o \
 ./src/cotat_parameters_mod.o \
 ./src/cotat_plus.o \
 ./src/cotat_plus_driver_mod.o \
-./src/cotat_plus_test_mod.o \
 ./src/flow.o \
+./src/loop_breaker_mod.o
+
+TEST_OBJS += \
+./src/fruit.o \
+./src/doubly_linked_list_test_module.o \
+./src/subfield_test_mod.o \
+./src/field_section_test_mod.o \
+./src/area_test_mod.o \
+./src/cotat_plus_test_mod.o \
 ./src/flow_test_mod.o \
-./src/loop_breaker_mod.o \
 ./src/loop_breaker_test_mod.o \
 ./src/manual_fruit_basket.o \
 ./src/manual_fruit_basket_driver.o

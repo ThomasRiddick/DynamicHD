@@ -12,6 +12,7 @@ workspace_dir = os.path.dirname(os.path.dirname(module_dir))
 
 fortran_source_path = os.path.join(module_dir,"fortran")
 shared_object_path = os.path.join(module_dir,'libs')
+build_path = os.path.join(module_dir,'build')
 bin_path = os.path.join(module_dir,'bin')
 fortran_project_source_path = os.path.join(workspace_dir,"Dynamic_HD_Fortran_Code","src")
 fortran_project_object_path = os.path.join(workspace_dir,"Dynamic_HD_Fortran_Code","Release","src")

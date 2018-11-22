@@ -33,8 +33,6 @@ protected:
 	bool set_ls_as_no_data_flag = false;
 	///Switch on tarasov mod
 	bool tarasov_mod= true;
-	///Switch off debug
-	bool debug = false;
 	///Empty 5 by 5 section of true sinks
 	bool* empty_true_sinks_section_five_by_five = nullptr;
 	///All land 5 by 5 section of landsea mask
@@ -73,7 +71,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellOne){
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[5*5] {
 		100.0,100.0,81.0,100.0,100.0,
 		100.0,100.0,82.0,100.0,100.0,
@@ -82,7 +79,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellOne){
 		100.0,100.0,85.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(5,5,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_five_by_five,
 					  empty_true_sinks_section_five_by_five,
 					  grid_params);
@@ -97,7 +94,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellTwo){
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[5*5] {
 		100.0,100.0,81.0,100.0,100.0,
 		100.0,100.0,82.0,100.0,100.0,
@@ -106,7 +102,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellTwo){
 		100.0,100.0,85.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(5,5,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_five_by_five,
 					  empty_true_sinks_section_five_by_five,
 					  grid_params);
@@ -121,7 +117,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellThree){
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[5*5] {
 		100.0,100.0,81.0,100.0,100.0,
 		100.0,100.0,87.0, 82.0, 81.0,
@@ -130,7 +125,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellThree){
 		100.0,100.0,85.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(5,5,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_five_by_five,
 					  empty_true_sinks_section_five_by_five,
 					  grid_params);
@@ -145,7 +140,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFour){
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[5*5] {
 		100.0,100.0,81.0,100.0,100.0,
 		100.0,100.0,87.0,100.0,100.0,
@@ -154,7 +148,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFour){
 		100.0,100.0,85.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(5,5,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_five_by_five,
 					  empty_true_sinks_section_five_by_five,
 					  grid_params);
@@ -169,7 +163,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFive){
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0,100.0,81.0,100.0,100.0, 100.0,70.0,100.0,100.0,100.0,
 		100.0,100.0,87.0,100.0,100.0, 100.0,88.0,100.0,100.0,100.0,
@@ -183,7 +176,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFive){
 		83.0,100.0,90.0,100.0,79.0,  100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
 					  grid_params);
@@ -198,7 +191,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSix){
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0,100.0,81.0,100.0,100.0, 100.0,70.0,100.0,100.0,100.0,
 		100.0,100.0,87.0,100.0,100.0, 100.0,88.0,100.0,100.0,100.0,
@@ -212,7 +204,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSix){
 		83.0,100.0,90.0,100.0,79.0,  100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
 					  grid_params);
@@ -227,7 +219,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSeven){
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0,100.0, 77.0,100.0,100.0, 100.0,100.0, 92.0,100.0,100.0,
 		100.0,100.0, 78.0, 79.0, 79.0,  79.0, 79.0, 80.0,100.0,100.0,
@@ -241,7 +232,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSeven){
 		100.0,100.0, 93.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
 					  grid_params);
@@ -256,7 +247,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellEight){
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0,100.0, 77.0,100.0,100.0, 100.0,100.0, 92.0,100.0,100.0,
 		100.0,100.0, 78.0, 79.0, 79.0,  79.0, 79.0, 80.0,100.0,100.0,
@@ -270,7 +260,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellEight){
 		100.0,100.0, 92.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
 					  grid_params);
@@ -285,7 +275,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellNine){
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	bool* landsea_mask_ten_by_ten = new bool[10*10] {
 		false,false,false,false,false,false,false,false,false,false,
 		false,false,false,false,false,false,false,false,false,false,
@@ -311,7 +300,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellNine){
 		100.0,100.0, 92.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
 					  grid_params);
@@ -327,7 +316,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellTen){
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	bool* landsea_mask_ten_by_ten = new bool[10*10] {
 		false,false,false,false,false,false,false,false,false,false,
 		false,false,false,false,false,false,false,false,false,false,
@@ -353,7 +341,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellTen){
 		100.0,100.0, 92.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
 					  grid_params);
@@ -369,7 +357,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellEleven){
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	bool* landsea_mask_ten_by_ten = new bool[10*10] {
 		false,false,false,false,false,false,false,false,false,false,
 		false,false,false,false,false,false,false,false,false,false,
@@ -395,7 +382,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellEleven){
 		100.0,100.0, 75.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
 					  grid_params);
@@ -411,7 +398,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellTwelve){
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	bool* landsea_mask_ten_by_ten = new bool[10*10] {
 		false,false,false,false,false,false,false, true,false,false,
 		false,false,false,false,false,false,false,false,false,false,
@@ -437,7 +423,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellTwelve){
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0, 80.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
 					  grid_params);
@@ -453,7 +439,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellThirteen)
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	bool* landsea_mask_ten_by_ten = new bool[10*10] {
 		false,false,false,false,false,false,false, true,false,false,
 		false,false,false,false,false,false,false,false,false,false,
@@ -479,7 +464,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellThirteen)
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0, 80.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
 					  grid_params);
@@ -495,7 +480,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFourteen)
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	bool* landsea_mask_ten_by_ten = new bool[10*10] {
 		false,false,false,false,false,false,false, true,false,false,
 		false,false,false,false,false,false,false,false,false,false,
@@ -521,7 +505,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFourteen)
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0, 80.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
 					  grid_params);
@@ -537,7 +521,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFifteen){
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	bool* landsea_mask_ten_by_ten = new bool[10*10] {
 		false,false,false,false,false,false,false,false,false,false,
 		false,false,false,false,false,false,false,false,false,false,
@@ -563,7 +546,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFifteen){
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
 					  grid_params);
@@ -579,7 +562,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSixteen){
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	bool* landsea_mask_ten_by_ten = new bool[10*10] {
 		false,false,false,false,false,false,false,false,false,false,
 		false,false,false,false,false,false,false,false,false,false,
@@ -605,7 +587,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSixteen){
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
 					  grid_params);
@@ -621,7 +603,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSeventeen
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	bool* landsea_mask_ten_by_ten = new bool[10*10] {
 		false,false,false,false,false,false,false,false,false,false,
 		false,false,false,false,false,false,false,false,false,false,
@@ -647,7 +628,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSeventeen
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
 					  grid_params);
@@ -663,7 +644,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellEighteen)
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	bool* true_sinks_ten_by_ten = new bool[10*10] {
 		false,false,false,false,false,false,false,false,false,false,
 		false,false,false,false,false,false,false,false,false,false,
@@ -689,7 +669,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellEighteen)
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  true_sinks_ten_by_ten,
 					  grid_params);
@@ -705,7 +685,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellNineteen)
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	bool* true_sinks_ten_by_ten = new bool[10*10] {
 		false,false,false,false,false,false,false,false,false,false,
 		false,false,false,false,false,false,false,false,false,false,
@@ -731,7 +710,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellNineteen)
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  true_sinks_ten_by_ten,
 					  grid_params);
@@ -747,7 +726,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellTwenty){
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	bool* true_sinks_ten_by_ten = new bool[10*10] {
 		false,false,false,false,false,false,false,false,false,false,
 		false,false,false,false,false,false,false,false,false,false,
@@ -773,7 +751,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellTwenty){
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  true_sinks_ten_by_ten,
 					  grid_params);
@@ -789,7 +767,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellTwentyOne
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	bool* true_sinks_ten_by_ten = new bool[10*10] {
 		false,false,false,false,false,false,false,false,false,false,
 		false,false,false,false,false,false,false,false,false,false,
@@ -815,7 +792,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellTwentyOne
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  true_sinks_ten_by_ten,
 					  grid_params);
@@ -831,7 +808,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellTwentyTwo
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0,100.0,81.0,100.0,100.0, 100.0,70.0,100.0,100.0,100.0,
 		100.0,100.0,87.0,100.0,100.0, 100.0,88.0,100.0,100.0,100.0,
@@ -845,7 +821,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellTwentyTwo
 		83.0,100.0,90.0,100.0,79.0,  100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
 					  grid_params);
@@ -860,7 +836,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellTwentyThr
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	bool* true_sinks_ten_by_ten = new bool[10*10] {
 		false,false,false,false,false,false,false,false,false,false,
 		false,false,false,false,false,false,false,false,false,false,
@@ -886,7 +861,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellTwentyThr
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  true_sinks_ten_by_ten,
 					  grid_params);
@@ -902,7 +877,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellTwentyFou
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	bool* true_sinks_ten_by_ten = new bool[10*10] {
 		false,false,false,false,false,false,false,false,false,false,
 		false,false,false,false,false,false,false,false,false,false,
@@ -928,7 +902,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellTwentyFou
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  true_sinks_ten_by_ten,
 					  grid_params);
@@ -944,7 +918,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellTwentyFiv
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	bool* true_sinks_ten_by_ten = new bool[10*10] {
 		false,false,false,false,false,false,false,false,false,false,
 		false,false,false,false,false,false,false,false,false,false,
@@ -970,7 +943,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellTwentyFiv
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  true_sinks_ten_by_ten,
 					  grid_params);
@@ -986,7 +959,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellTwentySix
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	bool* landsea_mask_ten_by_ten = new bool[10*10] {
 		false,false,false,false,false,false,false,false,false,false,
 		false,false,false,false,false,false,false,false, true,false,
@@ -1024,7 +996,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellTwentySix
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,landsea_mask_ten_by_ten,
 					  true_sinks_ten_by_ten,
 					  grid_params);
@@ -1041,7 +1013,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellTwentySev
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	bool* landsea_mask_ten_by_ten = new bool[10*10] {
 		false,false,false,false,false,false,false,false,false,false,
 		false,false,false,false,false,false,false,false, true,false,
@@ -1079,7 +1050,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellTwentySev
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,landsea_mask_ten_by_ten,
 					  true_sinks_ten_by_ten,
 					  grid_params);
@@ -1096,7 +1067,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellTwentyEig
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	bool* landsea_mask_ten_by_ten = new bool[10*10] {
 		false,false,false,false,false,false,false,false,false,false,
 		false,false,false,false,false,false,false,false, true,false,
@@ -1134,7 +1104,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellTwentyEig
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,landsea_mask_ten_by_ten,
 					  true_sinks_ten_by_ten,
 					  grid_params);
@@ -1151,7 +1121,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellTwentyNin
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	bool* landsea_mask_ten_by_ten = new bool[10*10] {
 		false,false,false,false,false,false,false,false,false,false,
 		false,false,false,false,false,false,false,false,false,false,
@@ -1189,7 +1158,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellTwentyNin
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,landsea_mask_ten_by_ten,
 					  true_sinks_ten_by_ten,
 					  grid_params);
@@ -1206,7 +1175,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellThirty){
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	bool* true_sinks_ten_by_ten = new bool[10*10] {
 		false,false,false,false,false,false,false,false,false,false,
 		false,false,false,false,false,false,false,false,false,false,
@@ -1232,7 +1200,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellThirty){
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  true_sinks_ten_by_ten,
 					  grid_params);
@@ -1248,7 +1216,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellThirtyOne
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	bool* true_sinks_ten_by_ten = new bool[10*10] {
 		false,false,false,false,false,false,false,false,false,false,
 		false,false,false,false,false,false,false,false,false,false,
@@ -1274,7 +1241,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellThirtyOne
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  true_sinks_ten_by_ten,
 					  grid_params);
@@ -1290,7 +1257,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellThirtyTwo
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	bool* true_sinks_ten_by_ten = new bool[10*10] {
 		false,false,false,false,false,false,false,false,false,false,
 		false,false,false,false,false,false,false,false,false,false,
@@ -1316,7 +1282,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellThirtyTwo
 		100.0,100.0,100.0,100.0, 80.0, 100.0,100.0, 75.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in);
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  true_sinks_ten_by_ten,
 					  grid_params);
@@ -1332,7 +1298,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellThirtyThr
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0, 94.0,100.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0, 93.0,100.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
@@ -1346,7 +1311,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellThirtyThr
 		100.0, 85.0,100.0,100.0,100.0, 100.0,100.0,100.0, 83.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in,1,3.5);
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in,1,3.5);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
 					  grid_params);
@@ -1361,7 +1326,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellThirtyFou
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0, 94.0,100.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0, 93.0,100.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
@@ -1375,7 +1339,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellThirtyFou
 		100.0, 85.0,100.0,100.0,100.0, 100.0,100.0,100.0, 83.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in,1,3.2);
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in,1,3.2);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
 					  grid_params);
@@ -1390,7 +1354,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellThirtyFiv
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0, 94.0,100.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0, 93.0,100.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
@@ -1404,7 +1367,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellThirtyFiv
 		100.0, 85.0,100.0,100.0,100.0, 100.0,100.0,100.0, 83.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in,1,3.5);
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in,1,3.5);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
 					  grid_params);
@@ -1419,7 +1382,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellThirtySix
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0, 94.0,100.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0, 93.0,100.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
@@ -1433,7 +1395,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellThirtySix
 		100.0, 85.0,100.0,100.0,100.0, 100.0,100.0,100.0, 81.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in,1,3.5);
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in,1,3.5);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
 					  grid_params);
@@ -1448,7 +1410,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellThirtySev
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0, 94.0,100.0,100.0,100.0, 100.0, 88.0,100.0,100.0,100.0,
 		100.0,100.0, 93.0,100.0,100.0, 100.0, 87.0,100.0,100.0,100.0,
@@ -1462,7 +1423,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellThirtySev
 		100.0,100.0, 85.0,100.0,100.0, 100.0,100.0,100.0, 81.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in,1,10.8);
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in,1,10.8);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
 					  grid_params);
@@ -1477,7 +1438,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellThirtyEig
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0, 94.0,100.0,100.0,100.0, 100.0, 88.0,100.0,100.0,100.0,
 		100.0,100.0, 93.0,100.0,100.0, 100.0, 87.0,100.0,100.0,100.0,
@@ -1491,7 +1451,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellThirtyEig
 		100.0,100.0, 85.0,100.0,100.0, 100.0,100.0,100.0, 81.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in,1,11.0);
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in,1,11.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
 					  grid_params);
@@ -1506,7 +1466,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellThirtyNin
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0, 94.0,100.0,100.0,100.0, 100.0, 88.0,100.0,100.0,100.0,
 		100.0, 93.0,100.0,100.0,100.0, 100.0, 87.0,100.0,100.0,100.0,
@@ -1520,7 +1479,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellThirtyNin
 		100.0, 85.0,100.0,100.0,100.0,  87.0,100.0,100.0, 81.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in,1,10.8);
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in,1,10.8);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
 					  grid_params);
@@ -1535,7 +1494,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellForty){
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0, 94.0,100.0,100.0,100.0, 100.0, 88.0,100.0,100.0,100.0,
 		100.0, 93.0,100.0,100.0,100.0, 100.0, 87.0,100.0,100.0,100.0,
@@ -1549,7 +1507,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellForty){
 		100.0, 85.0,100.0,100.0,100.0,  87.0,100.0,100.0, 81.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in,1,6.8);
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in,1,6.8);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
 					  grid_params);
@@ -1564,7 +1522,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFortyOne)
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0, 94.0,100.0,100.0,100.0, 100.0, 88.0,100.0,100.0,100.0,
 		100.0, 93.0,100.0,100.0,100.0, 100.0, 87.0,100.0,100.0,100.0,
@@ -1578,7 +1535,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFortyOne)
 		100.0, 85.0,100.0,100.0,100.0,  87.0,100.0,100.0, 81.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in,1,7.0);
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in,1,7.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
 					  grid_params);
@@ -1593,7 +1550,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFortyTwo)
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0,100.0,100.0,100.0, 59.0, 100.0,100.0,100.0, 90.0,100.0,
 		100.0,100.0,100.0, 53.0,100.0, 100.0, 92.0, 91.0,100.0,100.0,
@@ -1607,7 +1563,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFortyTwo)
 		100.0, 58.0,100.0,100.0, 60.0, 100.0,100.0, 99.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in,1,6.4);
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in,1,6.4);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
 					  grid_params);
@@ -1622,7 +1578,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFortyThre
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0,100.0,100.0,100.0, 59.0, 100.0,100.0,100.0, 90.0,100.0,
 		100.0,100.0,100.0, 53.0,100.0, 100.0, 92.0, 91.0,100.0,100.0,
@@ -1636,7 +1591,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFortyThre
 		100.0, 58.0,100.0,100.0, 60.0, 100.0,100.0, 99.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in,1,6.6);
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in,1,6.6);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
 					  grid_params);
@@ -1651,7 +1606,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFortyFour
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0,100.0,100.0,100.0, 59.0, 100.0,100.0,100.0, 90.0,100.0,
 		100.0,100.0,100.0, 53.0,100.0, 100.0, 92.0, 91.0,100.0,100.0,
@@ -1665,7 +1619,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFortyFour
 		100.0, 58.0,100.0,100.0, 60.0, 100.0,100.0, 99.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in,1,7.0);
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in,1,7.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
 					  grid_params);
@@ -1680,7 +1634,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFortyFive
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0,100.0,100.0,100.0, 59.0, 100.0,100.0,100.0, 90.0,100.0,
 		100.0,100.0,100.0, 53.0,100.0, 100.0, 92.0, 91.0,100.0,100.0,
@@ -1694,7 +1647,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFortyFive
 		 58.0,100.0,100.0,100.0, 60.0, 100.0,100.0, 99.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in,1,6.0);
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in,1,6.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
 					  grid_params);
@@ -1709,7 +1662,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFortySix)
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0,100.0,100.0,100.0, 59.0, 100.0,100.0,100.0, 90.0,100.0,
 		100.0,100.0,100.0, 53.0,100.0, 100.0, 92.0, 91.0,100.0,100.0,
@@ -1723,7 +1675,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFortySix)
 		 58.0,100.0,100.0,100.0, 60.0, 100.0,100.0, 99.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in,1,6.1);
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in,1,6.1);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
 					  grid_params);
@@ -1738,7 +1690,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFortySeve
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0,100.0,100.0,100.0, 59.0, 100.0,100.0,100.0, 90.0,100.0,
 		100.0,100.0,100.0, 53.0,100.0, 100.0, 92.0, 91.0,100.0,100.0,
@@ -1752,7 +1703,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFortySeve
 		 54.0, 55.0, 56.0,100.0, 60.0, 100.0,100.0, 99.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in,1,7.4);
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in,1,7.4);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
 					  grid_params);
@@ -1767,7 +1718,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFortyEigh
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0,100.0,100.0,100.0, 59.0, 100.0,100.0,100.0, 90.0,100.0,
 		100.0,100.0,100.0, 53.0,100.0, 100.0, 92.0, 91.0,100.0,100.0,
@@ -1781,7 +1731,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFortyEigh
 		 54.0, 55.0, 56.0,100.0, 60.0, 100.0,100.0, 99.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in,1,7.5);
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in,1,7.5);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
 					  grid_params);
@@ -1796,7 +1746,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFortyNine
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0,100.0, 90.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0, 91.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
@@ -1810,7 +1759,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFortyNine
 		100.0,100.0, 99.0,100.0,100.0, 100.0,100.0,100.0,100.0, 75.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in,1,5.0);
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in,1,5.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
 					  grid_params);
@@ -1825,7 +1774,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFifty){
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0,100.0, 90.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0, 91.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
@@ -1839,7 +1787,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFifty){
 		100.0,100.0, 99.0,100.0,100.0, 100.0,100.0,100.0,100.0, 75.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in,1,4.8);
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in,1,4.8);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
 					  grid_params);
@@ -1854,7 +1802,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFortyFift
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0,100.0, 90.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0, 91.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
@@ -1868,7 +1815,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFortyFift
 		100.0,100.0, 99.0,100.0,100.0, 100.0,100.0,100.0,100.0, 81.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in,1,5.0);
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in,1,5.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
 					  grid_params);
@@ -1883,7 +1830,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFiftyTwo)
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0,100.0, 90.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0, 91.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
@@ -1897,7 +1843,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFiftyTwo)
 		100.0,100.0, 99.0,100.0,100.0, 100.0,100.0,100.0,100.0, 81.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in,1,4.8);
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in,1,4.8);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
 					  grid_params);
@@ -1912,7 +1858,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFiftyThre
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	bool* landsea_mask_ten_by_ten = new bool[10*10] {
 		false,false,false,false,false,false,false,false,false,false,
 		false,false,false,false,false,false,false,false,false,false,
@@ -1938,7 +1883,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFiftyThre
 		100.0,100.0, 99.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,1,3.1);
 	alg1.setup_fields(orography_section,landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
@@ -1955,7 +1900,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFiftyFour
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	bool* landsea_mask_ten_by_ten = new bool[10*10] {
 		false,false,false,false,false,false,false,false,false,false,
 		false,false,false,false,false,false,false,false,false,false,
@@ -1981,7 +1925,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFiftyFour
 		100.0,100.0, 99.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,1,2.9);
 	alg1.setup_fields(orography_section,landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
@@ -1998,7 +1942,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFiftyFive
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	bool* landsea_mask_ten_by_ten = new bool[10*10] {
 		false,false,false,false,false,false,false,false,false,false,
 		false,false,false,false,false,false,false,false,false,false,
@@ -2024,7 +1967,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFiftyFive
 		100.0,100.0, 99.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,1,3.1);
 	alg1.setup_fields(orography_section,landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
@@ -2041,7 +1984,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFiftySix)
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	bool* landsea_mask_ten_by_ten = new bool[10*10] {
 		false,false,false,false,false,false,false,false,false,false,
 		false,false,false,false,false,false,false,false,false,false,
@@ -2067,7 +2009,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFiftySix)
 		100.0,100.0, 99.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,1,2.9);
 	alg1.setup_fields(orography_section,landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
@@ -2084,7 +2026,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFiftySeve
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	bool* true_sinks_section_ten_by_ten = new bool[10*10] {
 		false,false,false,false,false,false,false,false,false,false,
 		false,false,false,false,false,false,false,false,false,false,
@@ -2110,7 +2051,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFiftySeve
 		100.0,100.0, 99.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,1,4.1);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  true_sinks_section_ten_by_ten,
@@ -2127,7 +2068,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFiftyEigh
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	bool* true_sinks_section_ten_by_ten = new bool[10*10] {
 		false,false,false,false,false,false,false,false,false,false,
 		false,false,false,false,false,false,false,false,false,false,
@@ -2153,7 +2093,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFiftyEigh
 		100.0,100.0, 99.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,1,3.9);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  true_sinks_section_ten_by_ten,
@@ -2170,7 +2110,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFiftyNine
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	bool* true_sinks_section_ten_by_ten = new bool[10*10] {
 		false,false,false,false,false,false,false,false,false,false,
 		false,false,false,false,false,false,false,false,false,false,
@@ -2196,7 +2135,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellFiftyNine
 		100.0,100.0, 99.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,1,4.1);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  true_sinks_section_ten_by_ten,
@@ -2213,7 +2152,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSixty){
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	bool* true_sinks_section_ten_by_ten = new bool[10*10] {
 		false,false,false,false,false,false,false,false,false,false,
 		false,false,false,false,false,false,false,false,false,false,
@@ -2239,7 +2177,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSixty){
 		100.0,100.0, 99.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,1,3.9);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  true_sinks_section_ten_by_ten,
@@ -2256,7 +2194,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSixtyOne)
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	bool* true_sinks_section_ten_by_ten = new bool[10*10] {
 		false,false,false,false,false,false,false,false,false,false,
 		false,false,false,false,false,false,false,false,false,false,
@@ -2282,7 +2219,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSixtyOne)
 		100.0,100.0, 99.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,1,6.3);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  true_sinks_section_ten_by_ten,
@@ -2299,7 +2236,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSixtyTwo)
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	bool* true_sinks_section_ten_by_ten = new bool[10*10] {
 		false,false,false,false,false,false,false,false,false,false,
 		false,false,false,false,false,false,false,false,false,false,
@@ -2325,7 +2261,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSixtyTwo)
 		100.0,100.0, 99.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,1,6.5);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  true_sinks_section_ten_by_ten,
@@ -2342,7 +2278,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSixtyThre
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	bool* true_sinks_section_ten_by_ten = new bool[10*10] {
 		false,false,false,false,false,false,false,false,false,false,
 		false,false,false,false,false,false,false,false,false,false,
@@ -2368,7 +2303,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSixtyThre
 		100.0,100.0, 99.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,1,6.5);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  true_sinks_section_ten_by_ten,
@@ -2385,7 +2320,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSixtyFour
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0,100.0, 90.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0, 91.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
@@ -2399,7 +2333,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSixtyFour
 		100.0,100.0, 99.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,1,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
@@ -2415,7 +2349,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSixtyFive
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0,100.0, 90.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0, 91.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
@@ -2429,7 +2362,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSixtyFive
 		100.0,100.0, 99.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,2,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
@@ -2445,7 +2378,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSixtySix)
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0,100.0, 90.0,100.0,100.0,  51.0,100.0, 65.0,100.0,100.0,
 		100.0,100.0, 91.0,100.0,100.0,  52.0,100.0, 64.0,100.0,100.0,
@@ -2459,7 +2391,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSixtySix)
 		100.0,100.0, 99.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,7,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
@@ -2475,7 +2407,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSixtySeve
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0,100.0, 90.0,100.0,100.0,  51.0,100.0, 65.0,100.0,100.0,
 		100.0,100.0, 91.0,100.0,100.0,  52.0,100.0, 64.0,100.0,100.0,
@@ -2489,7 +2420,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSixtySeve
 		100.0,100.0, 99.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,8,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
@@ -2505,7 +2436,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSixtyEigh
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0,100.0, 90.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0, 91.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
@@ -2519,7 +2449,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSixtyEigh
 		100.0,100.0, 99.0,100.0,100.0,  50.0,100.0,100.0, 55.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,2,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
@@ -2535,7 +2465,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSixtyNine
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0,100.0, 90.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0, 91.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
@@ -2549,7 +2478,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSixtyNine
 		100.0,100.0, 99.0,100.0,100.0,  50.0,100.0,100.0, 55.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,3,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
@@ -2565,7 +2494,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSeventy){
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0,100.0, 90.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0, 91.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
@@ -2579,7 +2507,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSeventy){
 		100.0,100.0, 99.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,1,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
@@ -2595,7 +2523,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSeventyOn
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0,100.0, 90.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0, 91.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
@@ -2609,7 +2536,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSeventyOn
 		100.0,100.0, 99.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,2,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
@@ -2625,7 +2552,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSeventyTw
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0,100.0, 90.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0, 91.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
@@ -2639,7 +2565,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSeventyTw
 		100.0,100.0, 99.0,100.0,100.0, 100.0, 51.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,5,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
@@ -2655,7 +2581,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSeventyTh
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0,100.0, 90.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0, 91.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
@@ -2669,7 +2594,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSeventyTh
 		100.0,100.0, 99.0,100.0,100.0, 100.0, 51.0,100.0, 57.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,5,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
@@ -2685,7 +2610,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSeventyFo
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0,100.0, 90.0,100.0,100.0, 100.0, 50.0,100.0, 54.0,100.0,
 		100.0,100.0, 91.0,100.0,100.0, 100.0, 51.0,100.0, 53.0,100.0,
@@ -2699,7 +2623,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSeventyFo
 		100.0,100.0, 99.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,3,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
@@ -2715,7 +2639,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSeventyFi
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0,100.0, 90.0,100.0,100.0, 100.0, 50.0,100.0,100.0,100.0,
 		100.0,100.0, 91.0,100.0,100.0, 100.0, 51.0,100.0,100.0,100.0,
@@ -2729,7 +2652,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSeventyFi
 		100.0,100.0, 99.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,3,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
@@ -2745,7 +2668,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSeventySi
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0,100.0, 90.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0, 91.0,100.0,100.0, 100.0,100.0,100.0, 53.0, 54.0,
@@ -2759,7 +2681,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSeventySi
 		100.0,100.0, 99.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,3,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
@@ -2775,7 +2697,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSeventySe
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0,100.0, 90.0,100.0,100.0, 100.0,100.0, 54.0,100.0,100.0,
 		100.0,100.0, 91.0,100.0,100.0, 100.0,100.0, 53.0,100.0,100.0,
@@ -2789,7 +2710,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSeventySe
 		100.0,100.0, 99.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,3,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
@@ -2805,7 +2726,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSeventyEi
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 90.0,100.0,
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 91.0,100.0,
@@ -2819,7 +2739,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSeventyEi
 		100.0,100.0, 55.0,100.0,100.0, 100.0,100.0,100.0, 99.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,3,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
@@ -2835,7 +2755,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSeventyNi
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 90.0,100.0,
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 91.0,100.0,
@@ -2849,7 +2768,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellSeventyNi
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 99.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,3,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
@@ -2865,7 +2784,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellEighty){
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0,100.0, 90.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0, 91.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
@@ -2879,7 +2797,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellEighty){
 		100.0,100.0, 99.0,100.0, 56.0, 100.0, 51.0,100.0, 57.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,5,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
@@ -2895,7 +2813,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellEightyOne
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0,100.0, 90.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0, 91.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
@@ -2909,7 +2826,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellEightyOne
 		100.0,100.0, 99.0,100.0, 56.0, 100.0, 51.0,100.0, 57.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,4,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
@@ -2925,7 +2842,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellEightyTwo
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0,100.0, 90.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0,100.0, 91.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
@@ -2939,7 +2855,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellEightyTwo
 		100.0,100.0, 99.0,100.0, 56.0, 100.0, 51.0,100.0, 57.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,2,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
@@ -2955,7 +2871,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellEightyThr
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	bool* landsea_mask_ten_by_ten = new bool[10*10] {
 		false,false,false,false,false,false,false,false,false,false,
 		false,false, true,false,false,false,false,false,false,false,
@@ -2981,7 +2896,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellEightyThr
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 99.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,3,1.0);
 	alg1.setup_fields(orography_section,landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
@@ -2998,7 +2913,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellEightyFou
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	bool* landsea_mask_ten_by_ten = new bool[10*10] {
 		false,false,false,false,false,false,false,false,false,false,
 		false,false, true,false,false,false,false,false,false,false,
@@ -3024,7 +2938,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellEightyFou
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 99.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,3,1.0);
 	alg1.setup_fields(orography_section,landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
@@ -3041,7 +2955,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellEightyFiv
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	bool* true_sinks_section_ten_by_ten = new bool[10*10] {
 		false,false,false,false,false,false,false,false,false,false,
 		false,false,false,false,false,false,false,false,false,false,
@@ -3067,7 +2980,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellEightyFiv
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 99.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,3,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  true_sinks_section_ten_by_ten,
@@ -3084,7 +2997,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellEightySix
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	bool* true_sinks_section_ten_by_ten = new bool[10*10] {
 		false,false,false,false,false,false,false,false,false,false,
 		false,false,false,false,false,false,false,false,false,false,
@@ -3110,7 +3022,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellEightySix
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 99.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,3,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  true_sinks_section_ten_by_ten,
@@ -3127,7 +3039,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellEightySev
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	bool* true_sinks_section_ten_by_ten = new bool[10*10] {
 		false,false,false,false,false,false,false,false,false,false,
 		false,false,false,false,false,false,false,false,false,false,
@@ -3153,7 +3064,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellEightySev
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 99.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,3,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  true_sinks_section_ten_by_ten,
@@ -3170,7 +3081,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellEightyEig
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	bool* true_sinks_section_ten_by_ten = new bool[10*10] {
 		false,false,false,false,false,false,false,false,false,false,
 		false,false,false,false,false,false,false,false,false,false,
@@ -3196,7 +3106,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellEightyEig
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 99.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,2,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  true_sinks_section_ten_by_ten,
@@ -3213,7 +3123,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellEightyNin
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	bool* landsea_mask_ten_by_ten = new bool[10*10] {
 		false,false,false,false,false,false,false,false,false,false,
 		false,false,false,false,false,false,false,false,false,false,
@@ -3239,7 +3148,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellEightyNin
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 99.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,3,1.0);
 	alg1.setup_fields(orography_section,landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
@@ -3256,7 +3165,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellNinety){
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	bool* landsea_mask_ten_by_ten = new bool[10*10] {
 		false,false,false,false,false,false,false,false,false,false,
 		false,false,false,false,false,false,false,false,false,false,
@@ -3282,7 +3190,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellNinety){
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 99.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,3,1.0);
 	alg1.setup_fields(orography_section,landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
@@ -3299,7 +3207,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellNinetyOne
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	bool* true_sinks_section_ten_by_ten = new bool[10*10] {
 		false,false,false,false,false,false,false,false,false,false,
 		false,false,false,false,false,false,false,false,false,false,
@@ -3325,7 +3232,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellNinetyOne
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 99.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,3,2.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  true_sinks_section_ten_by_ten,
@@ -3342,7 +3249,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellNinetyTwo
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	bool* true_sinks_section_ten_by_ten = new bool[10*10] {
 		false,false,false,false,false,false,false,false,false,false,
 		false,false,false,false,false,false,false,false,false,false,
@@ -3368,7 +3274,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellNinetyTwo
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 99.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,3,2.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  true_sinks_section_ten_by_ten,
@@ -3385,7 +3291,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellNinetyThr
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	bool* landsea_mask_ten_by_ten = new bool[10*10] {
 		false,false,false,false,false,false,false,false,false,false,
 		false,false,false,false,false,false,false,false,false,false,
@@ -3411,7 +3316,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellNinetyThr
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 99.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,3,1.0);
 	alg1.setup_fields(orography_section,landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
@@ -3428,7 +3333,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellNinetyFou
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	bool* landsea_mask_ten_by_ten = new bool[10*10] {
 		false,false,false,false,false,false,false,false,false,false,
 		false,false,false,false,false,false,false,false,false,false,
@@ -3454,7 +3358,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellNinetyFou
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 99.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,3,1.0);
 	alg1.setup_fields(orography_section,landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
@@ -3471,7 +3375,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellNinetyFiv
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 90.0,100.0,
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 91.0,100.0,
@@ -3485,7 +3388,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellNinetyFiv
 		100.0, 54.0,100.0, 50.0,100.0, 100.0,100.0,100.0, 99.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,3,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
@@ -3501,7 +3404,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellNinetySix
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 90.0,100.0,
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 91.0,100.0,
@@ -3515,7 +3417,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellNinetySix
 		 54.0,100.0,100.0, 50.0,100.0, 100.0,100.0,100.0, 99.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,3,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
@@ -3531,7 +3433,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellNinetySev
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 90.0,100.0,
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 91.0,100.0,
@@ -3545,7 +3446,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellNinetySev
 		 54.0,100.0,100.0, 50.0,100.0, 100.0,100.0,100.0, 99.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,3,1.0,true);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
@@ -3561,7 +3462,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellNinetyEig
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 90.0,100.0,
 		 54.0, 53.0,100.0,100.0,100.0, 100.0,100.0,100.0, 91.0,100.0,
@@ -3575,7 +3475,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellNinetyEig
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 99.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,3,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
@@ -3591,7 +3491,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellNinetyNin
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		 54.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 90.0,100.0,
 		100.0, 53.0,100.0,100.0,100.0, 100.0,100.0,100.0, 91.0,100.0,
@@ -3605,7 +3504,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellNinetyNin
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 99.0,100.0};
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,3,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
@@ -3621,7 +3520,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellOneHundre
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		 54.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 90.0,100.0,
 		100.0, 53.0,100.0,100.0,100.0, 100.0,100.0,100.0, 91.0,100.0,
@@ -3635,7 +3533,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellOneHundre
 		100.0,100.0,100.0,100.0,100.0, 100.0,100.0,100.0, 99.0,100.0};
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,3,1.0,true);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
@@ -3651,7 +3549,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellOneHundre
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0, 90.0,100.0,100.0,100.0, 100.0, 50.0,100.0, 54.0,100.0,
 		100.0, 91.0,100.0,100.0,100.0, 100.0, 51.0,100.0, 53.0,100.0,
@@ -3665,7 +3562,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellOneHundre
 		100.0, 99.0,100.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,3,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
@@ -3681,7 +3578,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellOneHundre
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0, 90.0,100.0,100.0,100.0, 100.0, 50.0,100.0,100.0, 54.0,
 		100.0, 91.0,100.0,100.0,100.0, 100.0, 51.0,100.0, 53.0,100.0,
@@ -3695,7 +3591,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellOneHundre
 		100.0, 99.0,100.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0};
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,3,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
@@ -3711,7 +3607,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellOneHundre
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0, 90.0,100.0,100.0,100.0, 100.0, 50.0,100.0,100.0, 54.0,
 		100.0, 91.0,100.0,100.0,100.0, 100.0, 51.0,100.0, 53.0,100.0,
@@ -3725,7 +3620,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellOneHundre
 		100.0, 99.0,100.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0};
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,3,1.0,true);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
@@ -3741,7 +3636,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellOneHundre
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0, 90.0,100.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0, 91.0,100.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
@@ -3755,7 +3649,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellOneHundre
 		100.0, 99.0,100.0,100.0,100.0, 100.0, 50.0,100.0, 54.0,100.0 };
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,3,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
@@ -3771,7 +3665,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellOneHundre
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0, 90.0,100.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0, 91.0,100.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
@@ -3785,7 +3678,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellOneHundre
 		100.0, 99.0,100.0,100.0,100.0, 100.0, 50.0,100.0,100.0, 54.0};
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,3,1.0);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
@@ -3801,7 +3694,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellOneHundre
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0, 90.0,100.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0, 91.0,100.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
@@ -3815,7 +3707,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellOneHundre
 		100.0, 99.0,100.0,100.0,100.0, 100.0, 50.0,100.0,100.0, 54.0};
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,3,1.0,true);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
@@ -3831,7 +3723,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellOneHundre
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0, 90.0,100.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0, 91.0,100.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
@@ -3845,7 +3736,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellOneHundre
 		100.0, 99.0,100.0,100.0,100.0, 100.0, 50.0,100.0, 51.0,100.0};
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,5,8.5,true);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
@@ -3861,7 +3752,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellOneHundre
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0, 90.0,100.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0, 91.0,100.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
@@ -3875,7 +3765,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellOneHundre
 		100.0, 99.0,100.0,100.0,100.0, 100.0, 50.0,100.0, 51.0,100.0};
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,5,8.0,true);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
@@ -3891,7 +3781,6 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellOneHundre
 	bool add_slope_in = false;
 	double epsilon_in = 0.0;
 	double answer;
-	debug = false;
 	double* orography_section = new double[10*10] {
 		100.0, 90.0,100.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
 		100.0, 91.0,100.0,100.0,100.0, 100.0,100.0,100.0,100.0,100.0,
@@ -3905,7 +3794,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellOneHundre
 		100.0, 99.0,100.0,100.0,100.0, 100.0, 50.0,100.0, 51.0,100.0};
 	auto alg1 = sink_filling_algorithm_1_latlon();
 	auto grid_params = new latlon_grid_params(10,10,true);
-	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,
+	alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,
 					 add_slope_in,epsilon_in,4,8.0,true);
 	alg1.setup_fields(orography_section,all_land_landsea_mask_ten_by_ten,
 					  empty_true_sinks_section_ten_by_ten,
@@ -5634,6 +5523,7164 @@ TEST_F(FieldTest,TestGetneighborsAlgorithmFour){
 	delete coords_in;
 	delete[] test_array;
 	delete neighbors_coords;
+}
+
+class IconGridTest : public ::testing::Test {
+
+};
+
+TEST_F(IconGridTest,TestAlgorithmOneOnIconGrid){
+  int* cell_neighbors = new int[80*3] {
+  //1
+  5,7,2,
+  //2
+  1,10,3,
+  //3
+  2,13,4,
+  //4
+  3,16,5,
+  //5
+  4,19,1,
+  //6
+  20,21,7,
+  //7
+  1,6,8,
+  //8
+  7,23,9,
+  //9
+  8,25,10,
+  //10
+  2,9,11,
+  //11
+  10,27,12,
+  //12
+  11,29,13,
+  //13
+  3,12,14,
+  //14
+  13,31,15,
+  //15
+  14,33,16,
+  //16
+  4,15,17,
+  //17
+  16,35,18,
+  //18
+  17,37,19,
+  //19
+  5,18,20,
+  //20
+  19,39,6,
+  //21
+  6,40,22,
+  //22
+  21,41,23,
+  //23
+  8,22,24,
+  //24
+  23,43,25,
+  //25
+  24,26,9,
+  //26
+  25,45,27,
+  //27
+  11,26,28,
+  //28
+  27,47,29,
+  //29
+  12,28,30,
+  //30
+  29,49,31,
+  //31
+  14,30,32,
+  //32
+  31,51,33,
+  //33
+  15,32,34,
+  //34
+  33,53,35,
+  //35
+  17,34,36,
+  //36
+  35,55,37,
+  //37
+  18,36,38,
+  //38
+  37,57,39,
+  //39
+  20,38,40,
+  //40
+  39,59,21,
+  //41
+  22,60,42,
+  //42
+  41,61,43,
+  //43
+  24,42,44,
+  //44
+  43,63,45,
+  //45
+  26,44,46,
+  //46
+  45,64,47,
+  //47
+  28,46,48,
+  //48
+  47,66,49,
+  //49
+  30,48,50,
+  //50
+  49,67,51,
+  //51
+  32,50,52,
+  //52
+  51,69,53,
+  //53
+  34,52,54,
+  //54
+  53,70,55,
+  //55
+  36,54,56,
+  //56
+  55,72,57,
+  //57
+  38,56,58,
+  //58
+  57,73,59,
+  //59
+  40,58,60,
+  //60
+  59,75,41,
+  //61
+  42,75,62,
+  //62
+  61,76,63,
+  //63
+  44,62,64,
+  //64
+  46,63,65,
+  //65
+  64,77,66,
+  //66
+  48,65,67,
+  //67
+  50,66,68,
+  //68
+  67,78,69,
+  //69
+  52,68,70,
+  //70
+  54,69,71,
+  //71
+  70,79,72,
+  //72
+  56,71,73,
+  //73
+  58,72,74,
+  //74
+  73,80,75,
+  //75
+  60,74,61,
+  //76
+  62,80,77,
+  //77
+  65,76,78,
+  //78
+  68,77,79,
+  //79
+  71,78,80,
+  //80
+  74,79,76
+  };
+
+  double* cell_heights = new double[80] {
+  //1
+  10.0,
+  //2
+  10.0,
+  //3
+  10.0,
+  //4
+  10.0,
+  //5
+  10.0,
+  //6
+  10.0,
+  //7
+  10.0,
+  //8
+  10.0,
+  //9
+  10.0,
+  //10
+  10.0,
+  //11
+  10.0,
+  //12
+  10.0,
+  //13
+  10.0,
+  //14
+  10.0,
+  //15
+  10.0,
+  //16
+  10.0,
+  //17
+  10.0,
+  //18
+  10.0,
+  //19
+  10.0,
+  //20
+  10.0,
+  //21
+   0.0,
+  //22
+   0.0,
+  //23
+  10.0,
+  //24
+  10.0,
+  //25
+  10.0,
+  //26
+   3.0,
+  //27
+  10.0,
+  //28
+  10.0,
+  //29
+  10.0,
+  //30
+  10.0,
+  //31
+   1.0,
+  //32
+  10.0,
+  //33
+  10.0,
+  //34
+  10.0,
+  //35
+  10.0,
+  //36
+  10.0,
+  //37
+  10.0,
+  //38
+  10.0,
+  //39
+  10.0,
+  //40
+  10.0,
+  //41
+  10.0,
+  //42
+  10.0,
+  //43
+   2.0,
+  //44
+  10.0,
+  //45
+  10.0,
+  //46
+  10.0,
+  //47
+   2.0,
+  //48
+   3.0,
+  //49
+  10.0,
+  //50
+   4.0,
+  //51
+  10.0,
+  //52
+  10.0,
+  //53
+  10.0,
+  //54
+  10.0,
+  //55
+  10.0,
+  //56
+  10.0,
+  //57
+  10.0,
+  //58
+  10.0,
+  //59
+  10.0,
+  //60
+  10.0,
+  //61
+  10.0,
+  //62
+  10.0,
+  //63
+  10.0,
+  //64
+  10.0,
+  //65
+  10.0,
+  //66
+  10.0,
+  //67
+  10.0,
+  //68
+  10.0,
+  //69
+  10.0,
+  //70
+  10.0,
+  //71
+  10.0,
+  //72
+  10.0,
+  //73
+  10.0,
+  //74
+  10.0,
+  //75
+  10.0,
+  //76
+  10.0,
+  //77
+  10.0,
+  //78
+  10.0,
+  //79
+  10.0,
+  //80
+  10.0,
+  };
+  double* cell_heights_expected_out = new double[80] {
+  //1
+  10.0,
+  //2
+  10.0,
+  //3
+  10.0,
+  //4
+  10.0,
+  //5
+  10.0,
+  //6
+  10.0,
+  //7
+  10.0,
+  //8
+  10.0,
+  //9
+  10.0,
+  //10
+  10.0,
+  //11
+  10.0,
+  //12
+  10.0,
+  //13
+  10.0,
+  //14
+  10.0,
+  //15
+  10.0,
+  //16
+  10.0,
+  //17
+  10.0,
+  //18
+  10.0,
+  //19
+  10.0,
+  //20
+  10.0,
+  //21
+   0.0,
+  //22
+   0.0,
+  //23
+  10.0,
+  //24
+  10.0,
+  //25
+  10.0,
+  //26
+   3.0,
+  //27
+  10.0,
+  //28
+  10.0,
+  //29
+  10.0,
+  //30
+  10.0,
+  //31
+   4.0,
+  //32
+  10.0,
+  //33
+  10.0,
+  //34
+  10.0,
+  //35
+  10.0,
+  //36
+  10.0,
+  //37
+  10.0,
+  //38
+  10.0,
+  //39
+  10.0,
+  //40
+  10.0,
+  //41
+  10.0,
+  //42
+  10.0,
+  //43
+   2.0,
+  //44
+  10.0,
+  //45
+  10.0,
+  //46
+  10.0,
+  //47
+   3.0,
+  //48
+   3.0,
+  //49
+  10.0,
+  //50
+   4.0,
+  //51
+  10.0,
+  //52
+  10.0,
+  //53
+  10.0,
+  //54
+  10.0,
+  //55
+  10.0,
+  //56
+  10.0,
+  //57
+  10.0,
+  //58
+  10.0,
+  //59
+  10.0,
+  //60
+  10.0,
+  //61
+  10.0,
+  //62
+  10.0,
+  //63
+  10.0,
+  //64
+  10.0,
+  //65
+  10.0,
+  //66
+  10.0,
+  //67
+  10.0,
+  //68
+  10.0,
+  //69
+  10.0,
+  //70
+  10.0,
+  //71
+  10.0,
+  //72
+  10.0,
+  //73
+  10.0,
+  //74
+  10.0,
+  //75
+  10.0,
+  //76
+  10.0,
+  //77
+  10.0,
+  //78
+  10.0,
+  //79
+  10.0,
+  //80
+  10.0,
+  };
+  bool* landsea_in  = new bool[80];
+  std::fill_n(landsea_in,80,false);
+  landsea_in[21-1] = true;
+  bool* true_sinks_in = new bool[80];
+  std::fill_n(true_sinks_in,80,false);
+  bool set_ls_as_no_data_flag = false;
+  bool tarasov_mod = false;
+  bool add_slope_in = false;
+  double epsilon_in = 0.0;
+  int* secondary_neighboring_cell_indices_in = new int[80*9];
+  icon_single_index_grid_params* grid_params_in =
+  		new icon_single_index_grid_params(80,cell_neighbors,
+																	  true,secondary_neighboring_cell_indices_in);
+  grid_params_in->icon_single_index_grid_calculate_secondary_neighbors();
+  auto alg1 = sink_filling_algorithm_1_icon_single_index();
+  alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in);
+  alg1.setup_fields(cell_heights,landsea_in,true_sinks_in,grid_params_in);
+  alg1.fill_sinks();
+  EXPECT_TRUE(field<double>(cell_heights,grid_params_in) == field<double>(cell_heights_expected_out,
+                                                                       		grid_params_in));
+}
+
+TEST_F(IconGridTest,TestAlgorithmOneOnIconGridTwo){
+  int* cell_neighbors = new int[80*3] {
+  //1
+  5,7,2,
+  //2
+  1,10,3,
+  //3
+  2,13,4,
+  //4
+  3,16,5,
+  //5
+  4,19,1,
+  //6
+  20,21,7,
+  //7
+  1,6,8,
+  //8
+  7,23,9,
+  //9
+  8,25,10,
+  //10
+  2,9,11,
+  //11
+  10,27,12,
+  //12
+  11,29,13,
+  //13
+  3,12,14,
+  //14
+  13,31,15,
+  //15
+  14,33,16,
+  //16
+  4,15,17,
+  //17
+  16,35,18,
+  //18
+  17,37,19,
+  //19
+  5,18,20,
+  //20
+  19,39,6,
+  //21
+  6,40,22,
+  //22
+  21,41,23,
+  //23
+  8,22,24,
+  //24
+  23,43,25,
+  //25
+  24,26,9,
+  //26
+  25,45,27,
+  //27
+  11,26,28,
+  //28
+  27,47,29,
+  //29
+  12,28,30,
+  //30
+  29,49,31,
+  //31
+  14,30,32,
+  //32
+  31,51,33,
+  //33
+  15,32,34,
+  //34
+  33,53,35,
+  //35
+  17,34,36,
+  //36
+  35,55,37,
+  //37
+  18,36,38,
+  //38
+  37,57,39,
+  //39
+  20,38,40,
+  //40
+  39,59,21,
+  //41
+  22,60,42,
+  //42
+  41,61,43,
+  //43
+  24,42,44,
+  //44
+  43,63,45,
+  //45
+  26,44,46,
+  //46
+  45,64,47,
+  //47
+  28,46,48,
+  //48
+  47,66,49,
+  //49
+  30,48,50,
+  //50
+  49,67,51,
+  //51
+  32,50,52,
+  //52
+  51,69,53,
+  //53
+  34,52,54,
+  //54
+  53,70,55,
+  //55
+  36,54,56,
+  //56
+  55,72,57,
+  //57
+  38,56,58,
+  //58
+  57,73,59,
+  //59
+  40,58,60,
+  //60
+  59,75,41,
+  //61
+  42,75,62,
+  //62
+  61,76,63,
+  //63
+  44,62,64,
+  //64
+  46,63,65,
+  //65
+  64,77,66,
+  //66
+  48,65,67,
+  //67
+  50,66,68,
+  //68
+  67,78,69,
+  //69
+  52,68,70,
+  //70
+  54,69,71,
+  //71
+  70,79,72,
+  //72
+  56,71,73,
+  //73
+  58,72,74,
+  //74
+  73,80,75,
+  //75
+  60,74,61,
+  //76
+  62,80,77,
+  //77
+  65,76,78,
+  //78
+  68,77,79,
+  //79
+  71,78,80,
+  //80
+  74,79,76
+  };
+
+  double* cell_heights = new double[80] {
+  //1
+  10.0,
+  //2
+  10.0,
+  //3
+  10.0,
+  //4
+  10.0,
+  //5
+  10.0,
+  //6
+  10.0,
+  //7
+  10.0,
+  //8
+  10.0,
+  //9
+  10.0,
+  //10
+  10.0,
+  //11
+  10.0,
+  //12
+  10.0,
+  //13
+  10.0,
+  //14
+  10.0,
+  //15
+  10.0,
+  //16
+  10.0,
+  //17
+  10.0,
+  //18
+  10.0,
+  //19
+  10.0,
+  //20
+  10.0,
+  //21
+  10.0,
+  //22
+  10.0,
+  //23
+  10.0,
+  //24
+   0.0,
+  //25
+  10.0,
+  //26
+  10.0,
+  //27
+   1.0,
+  //28
+   3.0,
+  //29
+  10.0,
+  //30
+  10.0,
+  //31
+  10.0,
+  //32
+  10.0,
+  //33
+  10.0,
+  //34
+  10.0,
+  //35
+  10.0,
+  //36
+  10.0,
+  //37
+  10.0,
+  //38
+  10.0,
+  //39
+  10.0,
+  //40
+  10.0,
+  //41
+  10.0,
+  //42
+  10.0,
+  //43
+   0.0,
+  //44
+   2.0,
+  //45
+  10.0,
+  //46
+  10.0,
+  //47
+  10.0,
+  //48
+  10.0,
+  //49
+   4.0,
+  //50
+  10.0,
+  //51
+  10.0,
+  //52
+  10.0,
+  //53
+  10.0,
+  //54
+  10.0,
+  //55
+  10.0,
+  //56
+  10.0,
+  //57
+  10.0,
+  //58
+  10.0,
+  //59
+  10.0,
+  //60
+  10.0,
+  //61
+  10.0,
+  //62
+  10.0,
+  //63
+  10.0,
+  //64
+   2.0,
+  //65
+   2.0,
+  //66
+   2.0,
+  //67
+  10.0,
+  //68
+  10.0,
+  //69
+  10.0,
+  //70
+  10.0,
+  //71
+  10.0,
+  //72
+  10.0,
+  //73
+  10.0,
+  //74
+  10.0,
+  //75
+  10.0,
+  //76
+  10.0,
+  //77
+  10.0,
+  //78
+  10.0,
+  //79
+  10.0,
+  //80
+  10.0
+  };
+  double* cell_heights_expected_out = new double[80] {
+  //1
+  10.0,
+  //2
+  10.0,
+  //3
+  10.0,
+  //4
+  10.0,
+  //5
+  10.0,
+  //6
+  10.0,
+  //7
+  10.0,
+  //8
+  10.0,
+  //9
+  10.0,
+  //10
+  10.0,
+  //11
+  10.0,
+  //12
+  10.0,
+  //13
+  10.0,
+  //14
+  10.0,
+  //15
+  10.0,
+  //16
+  10.0,
+  //17
+  10.0,
+  //18
+  10.0,
+  //19
+  10.0,
+  //20
+  10.0,
+  //21
+  10.0,
+  //22
+  10.0,
+  //23
+  10.0,
+  //24
+   0.0,
+  //25
+  10.0,
+  //26
+  10.0,
+  //27
+   4.0,
+  //28
+   4.0,
+  //29
+  10.0,
+  //30
+  10.0,
+  //31
+  10.0,
+  //32
+  10.0,
+  //33
+  10.0,
+  //34
+  10.0,
+  //35
+  10.0,
+  //36
+  10.0,
+  //37
+  10.0,
+  //38
+  10.0,
+  //39
+  10.0,
+  //40
+  10.0,
+  //41
+  10.0,
+  //42
+  10.0,
+  //43
+   0.0,
+  //44
+   2.0,
+  //45
+  10.0,
+  //46
+  10.0,
+  //47
+  10.0,
+  //48
+  10.0,
+  //49
+   4.0,
+  //50
+  10.0,
+  //51
+  10.0,
+  //52
+  10.0,
+  //53
+  10.0,
+  //54
+  10.0,
+  //55
+  10.0,
+  //56
+  10.0,
+  //57
+  10.0,
+  //58
+  10.0,
+  //59
+  10.0,
+  //60
+  10.0,
+  //61
+  10.0,
+  //62
+  10.0,
+  //63
+  10.0,
+  //64
+   2.0,
+  //65
+   2.0,
+  //66
+   2.0,
+  //67
+  10.0,
+  //68
+  10.0,
+  //69
+  10.0,
+  //70
+  10.0,
+  //71
+  10.0,
+  //72
+  10.0,
+  //73
+  10.0,
+  //74
+  10.0,
+  //75
+  10.0,
+  //76
+  10.0,
+  //77
+  10.0,
+  //78
+  10.0,
+  //79
+  10.0,
+  //80
+  10.0
+  };
+  bool* landsea_in  = new bool[80];
+  std::fill_n(landsea_in,80,false);
+  landsea_in[24-1] = true;
+  bool* true_sinks_in = new bool[80];
+  std::fill_n(true_sinks_in,80,false);
+  bool set_ls_as_no_data_flag = false;
+  bool tarasov_mod = false;
+  bool add_slope_in = false;
+  double epsilon_in = 0.0;
+  int* secondary_neighboring_cell_indices_in = new int[80*9];
+  icon_single_index_grid_params* grid_params_in =
+  		new icon_single_index_grid_params(80,cell_neighbors,
+																	  true,secondary_neighboring_cell_indices_in);
+  grid_params_in->icon_single_index_grid_calculate_secondary_neighbors();
+  auto alg1 = sink_filling_algorithm_1_icon_single_index();
+  alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in);
+  alg1.setup_fields(cell_heights,landsea_in,true_sinks_in,grid_params_in);
+  alg1.fill_sinks();
+  EXPECT_TRUE(field<double>(cell_heights,grid_params_in) == field<double>(cell_heights_expected_out,
+                                                                       		grid_params_in));
+}
+
+TEST_F(IconGridTest,TestAlgorithmOneOnIconGridThree){
+  int* cell_neighbors = new int[80*3] {
+  //1
+  5,7,2,
+  //2
+  1,10,3,
+  //3
+  2,13,4,
+  //4
+  3,16,5,
+  //5
+  4,19,1,
+  //6
+  20,21,7,
+  //7
+  1,6,8,
+  //8
+  7,23,9,
+  //9
+  8,25,10,
+  //10
+  2,9,11,
+  //11
+  10,27,12,
+  //12
+  11,29,13,
+  //13
+  3,12,14,
+  //14
+  13,31,15,
+  //15
+  14,33,16,
+  //16
+  4,15,17,
+  //17
+  16,35,18,
+  //18
+  17,37,19,
+  //19
+  5,18,20,
+  //20
+  19,39,6,
+  //21
+  6,40,22,
+  //22
+  21,41,23,
+  //23
+  8,22,24,
+  //24
+  23,43,25,
+  //25
+  24,26,9,
+  //26
+  25,45,27,
+  //27
+  11,26,28,
+  //28
+  27,47,29,
+  //29
+  12,28,30,
+  //30
+  29,49,31,
+  //31
+  14,30,32,
+  //32
+  31,51,33,
+  //33
+  15,32,34,
+  //34
+  33,53,35,
+  //35
+  17,34,36,
+  //36
+  35,55,37,
+  //37
+  18,36,38,
+  //38
+  37,57,39,
+  //39
+  20,38,40,
+  //40
+  39,59,21,
+  //41
+  22,60,42,
+  //42
+  41,61,43,
+  //43
+  24,42,44,
+  //44
+  43,63,45,
+  //45
+  26,44,46,
+  //46
+  45,64,47,
+  //47
+  28,46,48,
+  //48
+  47,66,49,
+  //49
+  30,48,50,
+  //50
+  49,67,51,
+  //51
+  32,50,52,
+  //52
+  51,69,53,
+  //53
+  34,52,54,
+  //54
+  53,70,55,
+  //55
+  36,54,56,
+  //56
+  55,72,57,
+  //57
+  38,56,58,
+  //58
+  57,73,59,
+  //59
+  40,58,60,
+  //60
+  59,75,41,
+  //61
+  42,75,62,
+  //62
+  61,76,63,
+  //63
+  44,62,64,
+  //64
+  46,63,65,
+  //65
+  64,77,66,
+  //66
+  48,65,67,
+  //67
+  50,66,68,
+  //68
+  67,78,69,
+  //69
+  52,68,70,
+  //70
+  54,69,71,
+  //71
+  70,79,72,
+  //72
+  56,71,73,
+  //73
+  58,72,74,
+  //74
+  73,80,75,
+  //75
+  60,74,61,
+  //76
+  62,80,77,
+  //77
+  65,76,78,
+  //78
+  68,77,79,
+  //79
+  71,78,80,
+  //80
+  74,79,76
+  };
+
+  double* cell_heights = new double[80] {
+  //1
+   1.0,
+  //2
+  10.0,
+  //3
+   4.0,
+  //4
+  10.0,
+  //5
+  10.0,
+  //6
+  10.0,
+  //7
+   0.0,
+  //8
+  10.0,
+  //9
+  10.0,
+  //10
+  10.0,
+  //11
+  10.0,
+  //12
+  10.0,
+  //13
+   1.0,
+  //14
+  10.0,
+  //15
+  10.0,
+  //16
+  10.0,
+  //17
+  10.0,
+  //18
+  10.0,
+  //19
+  10.0,
+  //20
+  10.0,
+  //21
+  10.0,
+  //22
+  10.0,
+  //23
+  10.0,
+  //24
+  10.0,
+  //25
+  10.0,
+  //26
+  10.0,
+  //27
+  10.0,
+  //28
+  10.0,
+  //29
+  10.0,
+  //30
+  10.0,
+  //31
+  10.0,
+  //32
+  10.0,
+  //33
+  10.0,
+  //34
+  10.0,
+  //35
+  10.0,
+  //36
+  10.0,
+  //37
+  10.0,
+  //38
+  10.0,
+  //39
+  10.0,
+  //40
+  10.0,
+  //41
+  10.0,
+  //42
+  10.0,
+  //43
+  10.0,
+  //44
+  10.0,
+  //45
+  10.0,
+  //46
+  10.0,
+  //47
+  10.0,
+  //48
+  10.0,
+  //49
+  10.0,
+  //50
+  10.0,
+  //51
+  10.0,
+  //52
+  10.0,
+  //53
+  10.0,
+  //54
+  10.0,
+  //55
+  10.0,
+  //56
+  10.0,
+  //57
+  10.0,
+  //58
+  10.0,
+  //59
+  10.0,
+  //60
+  10.0,
+  //61
+  10.0,
+  //62
+  10.0,
+  //63
+  10.0,
+  //64
+  10.0,
+  //65
+  10.0,
+  //66
+  10.0,
+  //67
+  10.0,
+  //68
+  10.0,
+  //69
+  10.0,
+  //70
+  10.0,
+  //71
+  10.0,
+  //72
+  10.0,
+  //73
+  10.0,
+  //74
+  10.0,
+  //75
+  10.0,
+  //76
+  10.0,
+  //77
+  10.0,
+  //78
+  10.0,
+  //79
+  10.0,
+  //80
+  10.0
+  };
+  double* cell_heights_expected_out = new double[80] {
+  //1
+   1.0,
+  //2
+  10.0,
+  //3
+   4.0,
+  //4
+  10.0,
+  //5
+  10.0,
+  //6
+  10.0,
+  //7
+   0.0,
+  //8
+  10.0,
+  //9
+  10.0,
+  //10
+  10.0,
+  //11
+  10.0,
+  //12
+  10.0,
+  //13
+   4.0,
+  //14
+  10.0,
+  //15
+  10.0,
+  //16
+  10.0,
+  //17
+  10.0,
+  //18
+  10.0,
+  //19
+  10.0,
+  //20
+  10.0,
+  //21
+  10.0,
+  //22
+  10.0,
+  //23
+  10.0,
+  //24
+  10.0,
+  //25
+  10.0,
+  //26
+  10.0,
+  //27
+  10.0,
+  //28
+  10.0,
+  //29
+  10.0,
+  //30
+  10.0,
+  //31
+  10.0,
+  //32
+  10.0,
+  //33
+  10.0,
+  //34
+  10.0,
+  //35
+  10.0,
+  //36
+  10.0,
+  //37
+  10.0,
+  //38
+  10.0,
+  //39
+  10.0,
+  //40
+  10.0,
+  //41
+  10.0,
+  //42
+  10.0,
+  //43
+  10.0,
+  //44
+  10.0,
+  //45
+  10.0,
+  //46
+  10.0,
+  //47
+  10.0,
+  //48
+  10.0,
+  //49
+  10.0,
+  //50
+  10.0,
+  //51
+  10.0,
+  //52
+  10.0,
+  //53
+  10.0,
+  //54
+  10.0,
+  //55
+  10.0,
+  //56
+  10.0,
+  //57
+  10.0,
+  //58
+  10.0,
+  //59
+  10.0,
+  //60
+  10.0,
+  //61
+  10.0,
+  //62
+  10.0,
+  //63
+  10.0,
+  //64
+  10.0,
+  //65
+  10.0,
+  //66
+  10.0,
+  //67
+  10.0,
+  //68
+  10.0,
+  //69
+  10.0,
+  //70
+  10.0,
+  //71
+  10.0,
+  //72
+  10.0,
+  //73
+  10.0,
+  //74
+  10.0,
+  //75
+  10.0,
+  //76
+  10.0,
+  //77
+  10.0,
+  //78
+  10.0,
+  //79
+  10.0,
+  //80
+  10.0
+  };
+  bool* landsea_in  = new bool[80];
+  std::fill_n(landsea_in,80,false);
+  landsea_in[7-1] = true;
+  bool* true_sinks_in = new bool[80];
+  std::fill_n(true_sinks_in,80,false);
+  bool set_ls_as_no_data_flag = false;
+  bool tarasov_mod = false;
+  bool add_slope_in = false;
+  double epsilon_in = 0.0;
+  int* secondary_neighboring_cell_indices_in = new int[80*9];
+  icon_single_index_grid_params* grid_params_in =
+  		new icon_single_index_grid_params(80,cell_neighbors,
+																	  true,secondary_neighboring_cell_indices_in);
+  grid_params_in->icon_single_index_grid_calculate_secondary_neighbors();
+  auto alg1 = sink_filling_algorithm_1_icon_single_index();
+  alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in);
+  alg1.setup_fields(cell_heights,landsea_in,true_sinks_in,grid_params_in);
+  alg1.fill_sinks();
+  EXPECT_TRUE(field<double>(cell_heights,grid_params_in) == field<double>(cell_heights_expected_out,
+                                                                       		grid_params_in));
+}
+
+TEST_F(IconGridTest,TestAlgorithmOneOnIconGridFour){
+  int* cell_neighbors = new int[80*3] {
+  //1
+  5,7,2,
+  //2
+  1,10,3,
+  //3
+  2,13,4,
+  //4
+  3,16,5,
+  //5
+  4,19,1,
+  //6
+  20,21,7,
+  //7
+  1,6,8,
+  //8
+  7,23,9,
+  //9
+  8,25,10,
+  //10
+  2,9,11,
+  //11
+  10,27,12,
+  //12
+  11,29,13,
+  //13
+  3,12,14,
+  //14
+  13,31,15,
+  //15
+  14,33,16,
+  //16
+  4,15,17,
+  //17
+  16,35,18,
+  //18
+  17,37,19,
+  //19
+  5,18,20,
+  //20
+  19,39,6,
+  //21
+  6,40,22,
+  //22
+  21,41,23,
+  //23
+  8,22,24,
+  //24
+  23,43,25,
+  //25
+  24,26,9,
+  //26
+  25,45,27,
+  //27
+  11,26,28,
+  //28
+  27,47,29,
+  //29
+  12,28,30,
+  //30
+  29,49,31,
+  //31
+  14,30,32,
+  //32
+  31,51,33,
+  //33
+  15,32,34,
+  //34
+  33,53,35,
+  //35
+  17,34,36,
+  //36
+  35,55,37,
+  //37
+  18,36,38,
+  //38
+  37,57,39,
+  //39
+  20,38,40,
+  //40
+  39,59,21,
+  //41
+  22,60,42,
+  //42
+  41,61,43,
+  //43
+  24,42,44,
+  //44
+  43,63,45,
+  //45
+  26,44,46,
+  //46
+  45,64,47,
+  //47
+  28,46,48,
+  //48
+  47,66,49,
+  //49
+  30,48,50,
+  //50
+  49,67,51,
+  //51
+  32,50,52,
+  //52
+  51,69,53,
+  //53
+  34,52,54,
+  //54
+  53,70,55,
+  //55
+  36,54,56,
+  //56
+  55,72,57,
+  //57
+  38,56,58,
+  //58
+  57,73,59,
+  //59
+  40,58,60,
+  //60
+  59,75,41,
+  //61
+  42,75,62,
+  //62
+  61,76,63,
+  //63
+  44,62,64,
+  //64
+  46,63,65,
+  //65
+  64,77,66,
+  //66
+  48,65,67,
+  //67
+  50,66,68,
+  //68
+  67,78,69,
+  //69
+  52,68,70,
+  //70
+  54,69,71,
+  //71
+  70,79,72,
+  //72
+  56,71,73,
+  //73
+  58,72,74,
+  //74
+  73,80,75,
+  //75
+  60,74,61,
+  //76
+  62,80,77,
+  //77
+  65,76,78,
+  //78
+  68,77,79,
+  //79
+  71,78,80,
+  //80
+  74,79,76
+  };
+
+  double* cell_heights = new double[80] {
+  //1
+  10.0,
+  //2
+  10.0,
+  //3
+  10.0,
+  //4
+  10.0,
+  //5
+  10.0,
+  //6
+  10.0,
+  //7
+  10.0,
+  //8
+  10.0,
+  //9
+  10.0,
+  //10
+  10.0,
+  //11
+  10.0,
+  //12
+  10.0,
+  //13
+  10.0,
+  //14
+  10.0,
+  //15
+  10.0,
+  //16
+  10.0,
+  //17
+  10.0,
+  //18
+  10.0,
+  //19
+  10.0,
+  //20
+  10.0,
+  //21
+  10.0,
+  //22
+  10.0,
+  //23
+  10.0,
+  //24
+  10.0,
+  //25
+  10.0,
+  //26
+  10.0,
+  //27
+  10.0,
+  //28
+  10.0,
+  //29
+  10.0,
+  //30
+   1.0,
+  //31
+  10.0,
+  //32
+  10.0,
+  //33
+  10.0,
+  //34
+  10.0,
+  //35
+  10.0,
+  //36
+  10.0,
+  //37
+  10.0,
+  //38
+  10.0,
+  //39
+  10.0,
+  //40
+  10.0,
+  //41
+  10.0,
+  //42
+  10.0,
+  //43
+  10.0,
+  //44
+  10.0,
+  //45
+  10.0,
+  //46
+   0.0,
+  //47
+   5.0,
+  //48
+  10.0,
+  //49
+  10.0,
+  //50
+  10.0,
+  //51
+  10.0,
+  //52
+  10.0,
+  //53
+  10.0,
+  //54
+  10.0,
+  //55
+  10.0,
+  //56
+  10.0,
+  //57
+  10.0,
+  //58
+  10.0,
+  //59
+  10.0,
+  //60
+  10.0,
+  //61
+  10.0,
+  //62
+  10.0,
+  //63
+  10.0,
+  //64
+  10.0,
+  //65
+  10.0,
+  //66
+  10.0,
+  //67
+  10.0,
+  //68
+  10.0,
+  //69
+  10.0,
+  //70
+  10.0,
+  //71
+  10.0,
+  //72
+  10.0,
+  //73
+  10.0,
+  //74
+  10.0,
+  //75
+  10.0,
+  //76
+  10.0,
+  //77
+  10.0,
+  //78
+  10.0,
+  //79
+  10.0,
+  //80
+  10.0
+  };
+  double* cell_heights_expected_out = new double[80] {
+   //1
+  10.0,
+  //2
+  10.0,
+  //3
+  10.0,
+  //4
+  10.0,
+  //5
+  10.0,
+  //6
+  10.0,
+  //7
+  10.0,
+  //8
+  10.0,
+  //9
+  10.0,
+  //10
+  10.0,
+  //11
+  10.0,
+  //12
+  10.0,
+  //13
+  10.0,
+  //14
+  10.0,
+  //15
+  10.0,
+  //16
+  10.0,
+  //17
+  10.0,
+  //18
+  10.0,
+  //19
+  10.0,
+  //20
+  10.0,
+  //21
+  10.0,
+  //22
+  10.0,
+  //23
+  10.0,
+  //24
+  10.0,
+  //25
+  10.0,
+  //26
+  10.0,
+  //27
+  10.0,
+  //28
+  10.0,
+  //29
+  10.0,
+  //30
+   5.0,
+  //31
+  10.0,
+  //32
+  10.0,
+  //33
+  10.0,
+  //34
+  10.0,
+  //35
+  10.0,
+  //36
+  10.0,
+  //37
+  10.0,
+  //38
+  10.0,
+  //39
+  10.0,
+  //40
+  10.0,
+  //41
+  10.0,
+  //42
+  10.0,
+  //43
+  10.0,
+  //44
+  10.0,
+  //45
+  10.0,
+  //46
+   0.0,
+  //47
+   5.0,
+  //48
+  10.0,
+  //49
+  10.0,
+  //50
+  10.0,
+  //51
+  10.0,
+  //52
+  10.0,
+  //53
+  10.0,
+  //54
+  10.0,
+  //55
+  10.0,
+  //56
+  10.0,
+  //57
+  10.0,
+  //58
+  10.0,
+  //59
+  10.0,
+  //60
+  10.0,
+  //61
+  10.0,
+  //62
+  10.0,
+  //63
+  10.0,
+  //64
+  10.0,
+  //65
+  10.0,
+  //66
+  10.0,
+  //67
+  10.0,
+  //68
+  10.0,
+  //69
+  10.0,
+  //70
+  10.0,
+  //71
+  10.0,
+  //72
+  10.0,
+  //73
+  10.0,
+  //74
+  10.0,
+  //75
+  10.0,
+  //76
+  10.0,
+  //77
+  10.0,
+  //78
+  10.0,
+  //79
+  10.0,
+  //80
+  10.0
+  };
+  bool* landsea_in  = new bool[80];
+  std::fill_n(landsea_in,80,false);
+  landsea_in[46-1] = true;
+  bool* true_sinks_in = new bool[80];
+  std::fill_n(true_sinks_in,80,false);
+  bool set_ls_as_no_data_flag = false;
+  bool tarasov_mod = false;
+  bool add_slope_in = false;
+  double epsilon_in = 0.0;
+  int* secondary_neighboring_cell_indices_in = new int[80*9];
+  icon_single_index_grid_params* grid_params_in =
+  		new icon_single_index_grid_params(80,cell_neighbors,
+																	  true,secondary_neighboring_cell_indices_in);
+  grid_params_in->icon_single_index_grid_calculate_secondary_neighbors();
+  auto alg1 = sink_filling_algorithm_1_icon_single_index();
+  alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in);
+  alg1.setup_fields(cell_heights,landsea_in,true_sinks_in,grid_params_in);
+  alg1.fill_sinks();
+  EXPECT_TRUE(field<double>(cell_heights,grid_params_in) == field<double>(cell_heights_expected_out,
+                                                                       		grid_params_in));
+}
+
+TEST_F(IconGridTest,TestAlgorithmOneOnIconGridFive){
+  int* cell_neighbors = new int[80*3] {
+  //1
+  5,7,2,
+  //2
+  1,10,3,
+  //3
+  2,13,4,
+  //4
+  3,16,5,
+  //5
+  4,19,1,
+  //6
+  20,21,7,
+  //7
+  1,6,8,
+  //8
+  7,23,9,
+  //9
+  8,25,10,
+  //10
+  2,9,11,
+  //11
+  10,27,12,
+  //12
+  11,29,13,
+  //13
+  3,12,14,
+  //14
+  13,31,15,
+  //15
+  14,33,16,
+  //16
+  4,15,17,
+  //17
+  16,35,18,
+  //18
+  17,37,19,
+  //19
+  5,18,20,
+  //20
+  19,39,6,
+  //21
+  6,40,22,
+  //22
+  21,41,23,
+  //23
+  8,22,24,
+  //24
+  23,43,25,
+  //25
+  24,26,9,
+  //26
+  25,45,27,
+  //27
+  11,26,28,
+  //28
+  27,47,29,
+  //29
+  12,28,30,
+  //30
+  29,49,31,
+  //31
+  14,30,32,
+  //32
+  31,51,33,
+  //33
+  15,32,34,
+  //34
+  33,53,35,
+  //35
+  17,34,36,
+  //36
+  35,55,37,
+  //37
+  18,36,38,
+  //38
+  37,57,39,
+  //39
+  20,38,40,
+  //40
+  39,59,21,
+  //41
+  22,60,42,
+  //42
+  41,61,43,
+  //43
+  24,42,44,
+  //44
+  43,63,45,
+  //45
+  26,44,46,
+  //46
+  45,64,47,
+  //47
+  28,46,48,
+  //48
+  47,66,49,
+  //49
+  30,48,50,
+  //50
+  49,67,51,
+  //51
+  32,50,52,
+  //52
+  51,69,53,
+  //53
+  34,52,54,
+  //54
+  53,70,55,
+  //55
+  36,54,56,
+  //56
+  55,72,57,
+  //57
+  38,56,58,
+  //58
+  57,73,59,
+  //59
+  40,58,60,
+  //60
+  59,75,41,
+  //61
+  42,75,62,
+  //62
+  61,76,63,
+  //63
+  44,62,64,
+  //64
+  46,63,65,
+  //65
+  64,77,66,
+  //66
+  48,65,67,
+  //67
+  50,66,68,
+  //68
+  67,78,69,
+  //69
+  52,68,70,
+  //70
+  54,69,71,
+  //71
+  70,79,72,
+  //72
+  56,71,73,
+  //73
+  58,72,74,
+  //74
+  73,80,75,
+  //75
+  60,74,61,
+  //76
+  62,80,77,
+  //77
+  65,76,78,
+  //78
+  68,77,79,
+  //79
+  71,78,80,
+  //80
+  74,79,76
+  };
+
+  double* cell_heights = new double[80] {
+  //1
+  10.0,
+  //2
+  10.0,
+  //3
+  10.0,
+  //4
+  10.0,
+  //5
+  10.0,
+  //6
+  10.0,
+  //7
+  10.0,
+  //8
+  10.0,
+  //9
+  10.0,
+  //10
+  10.0,
+  //11
+  10.0,
+  //12
+  10.0,
+  //13
+  10.0,
+  //14
+  10.0,
+  //15
+  10.0,
+  //16
+  10.0,
+  //17
+  10.0,
+  //18
+  10.0,
+  //19
+  10.0,
+  //20
+  10.0,
+  //21
+  10.0,
+  //22
+  10.0,
+  //23
+  10.0,
+  //24
+  10.0,
+  //25
+  10.0,
+  //26
+  10.0,
+  //27
+  10.0,
+  //28
+  10.0,
+  //29
+  10.0,
+  //30
+   1.0,
+  //31
+  10.0,
+  //32
+  10.0,
+  //33
+  10.0,
+  //34
+  10.0,
+  //35
+  10.0,
+  //36
+  10.0,
+  //37
+  10.0,
+  //38
+  10.0,
+  //39
+  10.0,
+  //40
+  10.0,
+  //41
+  10.0,
+  //42
+  10.0,
+  //43
+  10.0,
+  //44
+  10.0,
+  //45
+  10.0,
+  //46
+   0.0,
+  //47
+  10.0,
+  //48
+   6.0,
+  //49
+  10.0,
+  //50
+  10.0,
+  //51
+  10.0,
+  //52
+  10.0,
+  //53
+  10.0,
+  //54
+  10.0,
+  //55
+  10.0,
+  //56
+  10.0,
+  //57
+  10.0,
+  //58
+  10.0,
+  //59
+  10.0,
+  //60
+  10.0,
+  //61
+  10.0,
+  //62
+  10.0,
+  //63
+  10.0,
+  //64
+  10.0,
+  //65
+  10.0,
+  //66
+  10.0,
+  //67
+  10.0,
+  //68
+  10.0,
+  //69
+  10.0,
+  //70
+  10.0,
+  //71
+  10.0,
+  //72
+  10.0,
+  //73
+  10.0,
+  //74
+  10.0,
+  //75
+  10.0,
+  //76
+  10.0,
+  //77
+  10.0,
+  //78
+  10.0,
+  //79
+  10.0,
+  //80
+  10.0
+  };
+  double* cell_heights_expected_out = new double[80] {
+  //1
+  10.0,
+  //2
+  10.0,
+  //3
+  10.0,
+  //4
+  10.0,
+  //5
+  10.0,
+  //6
+  10.0,
+  //7
+  10.0,
+  //8
+  10.0,
+  //9
+  10.0,
+  //10
+  10.0,
+  //11
+  10.0,
+  //12
+  10.0,
+  //13
+  10.0,
+  //14
+  10.0,
+  //15
+  10.0,
+  //16
+  10.0,
+  //17
+  10.0,
+  //18
+  10.0,
+  //19
+  10.0,
+  //20
+  10.0,
+  //21
+  10.0,
+  //22
+  10.0,
+  //23
+  10.0,
+  //24
+  10.0,
+  //25
+  10.0,
+  //26
+  10.0,
+  //27
+  10.0,
+  //28
+  10.0,
+  //29
+  10.0,
+  //30
+   6.0,
+  //31
+  10.0,
+  //32
+  10.0,
+  //33
+  10.0,
+  //34
+  10.0,
+  //35
+  10.0,
+  //36
+  10.0,
+  //37
+  10.0,
+  //38
+  10.0,
+  //39
+  10.0,
+  //40
+  10.0,
+  //41
+  10.0,
+  //42
+  10.0,
+  //43
+  10.0,
+  //44
+  10.0,
+  //45
+  10.0,
+  //46
+   0.0,
+  //47
+  10.0,
+  //48
+   6.0,
+  //49
+  10.0,
+  //50
+  10.0,
+  //51
+  10.0,
+  //52
+  10.0,
+  //53
+  10.0,
+  //54
+  10.0,
+  //55
+  10.0,
+  //56
+  10.0,
+  //57
+  10.0,
+  //58
+  10.0,
+  //59
+  10.0,
+  //60
+  10.0,
+  //61
+  10.0,
+  //62
+  10.0,
+  //63
+  10.0,
+  //64
+  10.0,
+  //65
+  10.0,
+  //66
+  10.0,
+  //67
+  10.0,
+  //68
+  10.0,
+  //69
+  10.0,
+  //70
+  10.0,
+  //71
+  10.0,
+  //72
+  10.0,
+  //73
+  10.0,
+  //74
+  10.0,
+  //75
+  10.0,
+  //76
+  10.0,
+  //77
+  10.0,
+  //78
+  10.0,
+  //79
+  10.0,
+  //80
+  10.0
+  };
+  bool* landsea_in  = new bool[80];
+  std::fill_n(landsea_in,80,false);
+  landsea_in[46-1] = true;
+  bool* true_sinks_in = new bool[80];
+  std::fill_n(true_sinks_in,80,false);
+  bool set_ls_as_no_data_flag = false;
+  bool tarasov_mod = false;
+  bool add_slope_in = false;
+  double epsilon_in = 0.0;
+  int* secondary_neighboring_cell_indices_in = new int[80*9];
+  icon_single_index_grid_params* grid_params_in =
+  		new icon_single_index_grid_params(80,cell_neighbors,
+																	  true,secondary_neighboring_cell_indices_in);
+  grid_params_in->icon_single_index_grid_calculate_secondary_neighbors();
+  auto alg1 = sink_filling_algorithm_1_icon_single_index();
+  alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in);
+  alg1.setup_fields(cell_heights,landsea_in,true_sinks_in,grid_params_in);
+  alg1.fill_sinks();
+  EXPECT_TRUE(field<double>(cell_heights,grid_params_in) == field<double>(cell_heights_expected_out,
+                                                                       		grid_params_in));
+}
+
+
+TEST_F(IconGridTest,TestAlgorithmOneOnIconGridSix){
+  int* cell_neighbors = new int[80*3] {
+  //1
+  5,7,2,
+  //2
+  1,10,3,
+  //3
+  2,13,4,
+  //4
+  3,16,5,
+  //5
+  4,19,1,
+  //6
+  20,21,7,
+  //7
+  1,6,8,
+  //8
+  7,23,9,
+  //9
+  8,25,10,
+  //10
+  2,9,11,
+  //11
+  10,27,12,
+  //12
+  11,29,13,
+  //13
+  3,12,14,
+  //14
+  13,31,15,
+  //15
+  14,33,16,
+  //16
+  4,15,17,
+  //17
+  16,35,18,
+  //18
+  17,37,19,
+  //19
+  5,18,20,
+  //20
+  19,39,6,
+  //21
+  6,40,22,
+  //22
+  21,41,23,
+  //23
+  8,22,24,
+  //24
+  23,43,25,
+  //25
+  24,26,9,
+  //26
+  25,45,27,
+  //27
+  11,26,28,
+  //28
+  27,47,29,
+  //29
+  12,28,30,
+  //30
+  29,49,31,
+  //31
+  14,30,32,
+  //32
+  31,51,33,
+  //33
+  15,32,34,
+  //34
+  33,53,35,
+  //35
+  17,34,36,
+  //36
+  35,55,37,
+  //37
+  18,36,38,
+  //38
+  37,57,39,
+  //39
+  20,38,40,
+  //40
+  39,59,21,
+  //41
+  22,60,42,
+  //42
+  41,61,43,
+  //43
+  24,42,44,
+  //44
+  43,63,45,
+  //45
+  26,44,46,
+  //46
+  45,64,47,
+  //47
+  28,46,48,
+  //48
+  47,66,49,
+  //49
+  30,48,50,
+  //50
+  49,67,51,
+  //51
+  32,50,52,
+  //52
+  51,69,53,
+  //53
+  34,52,54,
+  //54
+  53,70,55,
+  //55
+  36,54,56,
+  //56
+  55,72,57,
+  //57
+  38,56,58,
+  //58
+  57,73,59,
+  //59
+  40,58,60,
+  //60
+  59,75,41,
+  //61
+  42,75,62,
+  //62
+  61,76,63,
+  //63
+  44,62,64,
+  //64
+  46,63,65,
+  //65
+  64,77,66,
+  //66
+  48,65,67,
+  //67
+  50,66,68,
+  //68
+  67,78,69,
+  //69
+  52,68,70,
+  //70
+  54,69,71,
+  //71
+  70,79,72,
+  //72
+  56,71,73,
+  //73
+  58,72,74,
+  //74
+  73,80,75,
+  //75
+  60,74,61,
+  //76
+  62,80,77,
+  //77
+  65,76,78,
+  //78
+  68,77,79,
+  //79
+  71,78,80,
+  //80
+  74,79,76
+  };
+
+  double* cell_heights = new double[80] {
+  //1
+  10.0,
+  //2
+  10.0,
+  //3
+  10.0,
+  //4
+  10.0,
+  //5
+  10.0,
+  //6
+  10.0,
+  //7
+  10.0,
+  //8
+  10.0,
+  //9
+  10.0,
+  //10
+  10.0,
+  //11
+  10.0,
+  //12
+  10.0,
+  //13
+  10.0,
+  //14
+  10.0,
+  //15
+  10.0,
+  //16
+  10.0,
+  //17
+  10.0,
+  //18
+  10.0,
+  //19
+  10.0,
+  //20
+  10.0,
+  //21
+  10.0,
+  //22
+  10.0,
+  //23
+  10.0,
+  //24
+  10.0,
+  //25
+  10.0,
+  //26
+  10.0,
+  //27
+  10.0,
+  //28
+  10.0,
+  //29
+  10.0,
+  //30
+   1.0,
+  //31
+  10.0,
+  //32
+  10.0,
+  //33
+  10.0,
+  //34
+  10.0,
+  //35
+  10.0,
+  //36
+  10.0,
+  //37
+  10.0,
+  //38
+  10.0,
+  //39
+  10.0,
+  //40
+  10.0,
+  //41
+  10.0,
+  //42
+  10.0,
+  //43
+  10.0,
+  //44
+  10.0,
+  //45
+  10.0,
+  //46
+  10.0,
+  //47
+  10.0,
+  //48
+  10.0,
+  //49
+   5.5,
+  //50
+  10.0,
+  //51
+  10.0,
+  //52
+  10.0,
+  //53
+  10.0,
+  //54
+  10.0,
+  //55
+  10.0,
+  //56
+  10.0,
+  //57
+  10.0,
+  //58
+  10.0,
+  //59
+  10.0,
+  //60
+  10.0,
+  //61
+  10.0,
+  //62
+  10.0,
+  //63
+  10.0,
+  //64
+  10.0,
+  //65
+   0.0,
+  //66
+   0.0,
+  //67
+  10.0,
+  //68
+  10.0,
+  //69
+  10.0,
+  //70
+  10.0,
+  //71
+  10.0,
+  //72
+  10.0,
+  //73
+  10.0,
+  //74
+  10.0,
+  //75
+  10.0,
+  //76
+  10.0,
+  //77
+  10.0,
+  //78
+  10.0,
+  //79
+  10.0,
+  //80
+  10.0
+  };
+  double* cell_heights_expected_out = new double[80] {
+ //1
+  10.0,
+  //2
+  10.0,
+  //3
+  10.0,
+  //4
+  10.0,
+  //5
+  10.0,
+  //6
+  10.0,
+  //7
+  10.0,
+  //8
+  10.0,
+  //9
+  10.0,
+  //10
+  10.0,
+  //11
+  10.0,
+  //12
+  10.0,
+  //13
+  10.0,
+  //14
+  10.0,
+  //15
+  10.0,
+  //16
+  10.0,
+  //17
+  10.0,
+  //18
+  10.0,
+  //19
+  10.0,
+  //20
+  10.0,
+  //21
+  10.0,
+  //22
+  10.0,
+  //23
+  10.0,
+  //24
+  10.0,
+  //25
+  10.0,
+  //26
+  10.0,
+  //27
+  10.0,
+  //28
+  10.0,
+  //29
+  10.0,
+  //30
+   5.5,
+  //31
+  10.0,
+  //32
+  10.0,
+  //33
+  10.0,
+  //34
+  10.0,
+  //35
+  10.0,
+  //36
+  10.0,
+  //37
+  10.0,
+  //38
+  10.0,
+  //39
+  10.0,
+  //40
+  10.0,
+  //41
+  10.0,
+  //42
+  10.0,
+  //43
+  10.0,
+  //44
+  10.0,
+  //45
+  10.0,
+  //46
+  10.0,
+  //47
+  10.0,
+  //48
+  10.0,
+  //49
+   5.5,
+  //50
+  10.0,
+  //51
+  10.0,
+  //52
+  10.0,
+  //53
+  10.0,
+  //54
+  10.0,
+  //55
+  10.0,
+  //56
+  10.0,
+  //57
+  10.0,
+  //58
+  10.0,
+  //59
+  10.0,
+  //60
+  10.0,
+  //61
+  10.0,
+  //62
+  10.0,
+  //63
+  10.0,
+  //64
+  10.0,
+  //65
+   0.0,
+  //66
+   0.0,
+  //67
+  10.0,
+  //68
+  10.0,
+  //69
+  10.0,
+  //70
+  10.0,
+  //71
+  10.0,
+  //72
+  10.0,
+  //73
+  10.0,
+  //74
+  10.0,
+  //75
+  10.0,
+  //76
+  10.0,
+  //77
+  10.0,
+  //78
+  10.0,
+  //79
+  10.0,
+  //80
+  10.0
+  };
+  bool* landsea_in  = new bool[80];
+  std::fill_n(landsea_in,80,false);
+  landsea_in[65-1] = true;
+  bool* true_sinks_in = new bool[80];
+  std::fill_n(true_sinks_in,80,false);
+  bool set_ls_as_no_data_flag = false;
+  bool tarasov_mod = false;
+  bool add_slope_in = false;
+  double epsilon_in = 0.0;
+  int* secondary_neighboring_cell_indices_in = new int[80*9];
+  icon_single_index_grid_params* grid_params_in =
+  		new icon_single_index_grid_params(80,cell_neighbors,
+																	  true,secondary_neighboring_cell_indices_in);
+  grid_params_in->icon_single_index_grid_calculate_secondary_neighbors();
+  auto alg1 = sink_filling_algorithm_1_icon_single_index();
+  alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in);
+  alg1.setup_fields(cell_heights,landsea_in,true_sinks_in,grid_params_in);
+  alg1.fill_sinks();
+  EXPECT_TRUE(field<double>(cell_heights,grid_params_in) == field<double>(cell_heights_expected_out,
+                                                                       		grid_params_in));
+}
+
+
+TEST_F(IconGridTest,TestAlgorithmOneOnIconGridSeven){
+  int* cell_neighbors = new int[80*3] {
+  //1
+  5,7,2,
+  //2
+  1,10,3,
+  //3
+  2,13,4,
+  //4
+  3,16,5,
+  //5
+  4,19,1,
+  //6
+  20,21,7,
+  //7
+  1,6,8,
+  //8
+  7,23,9,
+  //9
+  8,25,10,
+  //10
+  2,9,11,
+  //11
+  10,27,12,
+  //12
+  11,29,13,
+  //13
+  3,12,14,
+  //14
+  13,31,15,
+  //15
+  14,33,16,
+  //16
+  4,15,17,
+  //17
+  16,35,18,
+  //18
+  17,37,19,
+  //19
+  5,18,20,
+  //20
+  19,39,6,
+  //21
+  6,40,22,
+  //22
+  21,41,23,
+  //23
+  8,22,24,
+  //24
+  23,43,25,
+  //25
+  24,26,9,
+  //26
+  25,45,27,
+  //27
+  11,26,28,
+  //28
+  27,47,29,
+  //29
+  12,28,30,
+  //30
+  29,49,31,
+  //31
+  14,30,32,
+  //32
+  31,51,33,
+  //33
+  15,32,34,
+  //34
+  33,53,35,
+  //35
+  17,34,36,
+  //36
+  35,55,37,
+  //37
+  18,36,38,
+  //38
+  37,57,39,
+  //39
+  20,38,40,
+  //40
+  39,59,21,
+  //41
+  22,60,42,
+  //42
+  41,61,43,
+  //43
+  24,42,44,
+  //44
+  43,63,45,
+  //45
+  26,44,46,
+  //46
+  45,64,47,
+  //47
+  28,46,48,
+  //48
+  47,66,49,
+  //49
+  30,48,50,
+  //50
+  49,67,51,
+  //51
+  32,50,52,
+  //52
+  51,69,53,
+  //53
+  34,52,54,
+  //54
+  53,70,55,
+  //55
+  36,54,56,
+  //56
+  55,72,57,
+  //57
+  38,56,58,
+  //58
+  57,73,59,
+  //59
+  40,58,60,
+  //60
+  59,75,41,
+  //61
+  42,75,62,
+  //62
+  61,76,63,
+  //63
+  44,62,64,
+  //64
+  46,63,65,
+  //65
+  64,77,66,
+  //66
+  48,65,67,
+  //67
+  50,66,68,
+  //68
+  67,78,69,
+  //69
+  52,68,70,
+  //70
+  54,69,71,
+  //71
+  70,79,72,
+  //72
+  56,71,73,
+  //73
+  58,72,74,
+  //74
+  73,80,75,
+  //75
+  60,74,61,
+  //76
+  62,80,77,
+  //77
+  65,76,78,
+  //78
+  68,77,79,
+  //79
+  71,78,80,
+  //80
+  74,79,76
+  };
+
+  double* cell_heights = new double[80] {
+  //1
+  10.0,
+  //2
+  10.0,
+  //3
+  10.0,
+  //4
+  10.0,
+  //5
+  10.0,
+  //6
+  10.0,
+  //7
+  10.0,
+  //8
+  10.0,
+  //9
+  10.0,
+  //10
+  10.0,
+  //11
+  10.0,
+  //12
+  10.0,
+  //13
+  10.0,
+  //14
+  10.0,
+  //15
+  10.0,
+  //16
+  10.0,
+  //17
+  10.0,
+  //18
+  10.0,
+  //19
+  10.0,
+  //20
+  10.0,
+  //21
+  10.0,
+  //22
+  10.0,
+  //23
+  10.0,
+  //24
+  10.0,
+  //25
+  10.0,
+  //26
+  10.0,
+  //27
+  10.0,
+  //28
+  10.0,
+  //29
+  10.0,
+  //30
+   1.0,
+  //31
+  10.0,
+  //32
+  10.0,
+  //33
+  10.0,
+  //34
+  10.0,
+  //35
+  10.0,
+  //36
+  10.0,
+  //37
+  10.0,
+  //38
+  10.0,
+  //39
+  10.0,
+  //40
+  10.0,
+  //41
+  10.0,
+  //42
+  10.0,
+  //43
+  10.0,
+  //44
+  10.0,
+  //45
+  10.0,
+  //46
+  10.0,
+  //47
+  10.0,
+  //48
+  10.0,
+  //49
+  10.0,
+  //50
+   3.5,
+  //51
+  10.0,
+  //52
+   0.0,
+  //53
+   0.0,
+  //54
+  10.0,
+  //55
+  10.0,
+  //56
+  10.0,
+  //57
+  10.0,
+  //58
+  10.0,
+  //59
+  10.0,
+  //60
+  10.0,
+  //61
+  10.0,
+  //62
+  10.0,
+  //63
+  10.0,
+  //64
+  10.0,
+  //65
+  10.0,
+  //66
+  10.0,
+  //67
+  10.0,
+  //68
+  10.0,
+  //69
+  10.0,
+  //70
+  10.0,
+  //71
+  10.0,
+  //72
+  10.0,
+  //73
+  10.0,
+  //74
+  10.0,
+  //75
+  10.0,
+  //76
+  10.0,
+  //77
+  10.0,
+  //78
+  10.0,
+  //79
+  10.0,
+  //80
+  10.0
+  };
+  double* cell_heights_expected_out = new double[80] {
+  //1
+  10.0,
+  //2
+  10.0,
+  //3
+  10.0,
+  //4
+  10.0,
+  //5
+  10.0,
+  //6
+  10.0,
+  //7
+  10.0,
+  //8
+  10.0,
+  //9
+  10.0,
+  //10
+  10.0,
+  //11
+  10.0,
+  //12
+  10.0,
+  //13
+  10.0,
+  //14
+  10.0,
+  //15
+  10.0,
+  //16
+  10.0,
+  //17
+  10.0,
+  //18
+  10.0,
+  //19
+  10.0,
+  //20
+  10.0,
+  //21
+  10.0,
+  //22
+  10.0,
+  //23
+  10.0,
+  //24
+  10.0,
+  //25
+  10.0,
+  //26
+  10.0,
+  //27
+  10.0,
+  //28
+  10.0,
+  //29
+  10.0,
+  //30
+   3.5,
+  //31
+  10.0,
+  //32
+  10.0,
+  //33
+  10.0,
+  //34
+  10.0,
+  //35
+  10.0,
+  //36
+  10.0,
+  //37
+  10.0,
+  //38
+  10.0,
+  //39
+  10.0,
+  //40
+  10.0,
+  //41
+  10.0,
+  //42
+  10.0,
+  //43
+  10.0,
+  //44
+  10.0,
+  //45
+  10.0,
+  //46
+  10.0,
+  //47
+  10.0,
+  //48
+  10.0,
+  //49
+  10.0,
+  //50
+   3.5,
+  //51
+  10.0,
+  //52
+   0.0,
+  //53
+   0.0,
+  //54
+  10.0,
+  //55
+  10.0,
+  //56
+  10.0,
+  //57
+  10.0,
+  //58
+  10.0,
+  //59
+  10.0,
+  //60
+  10.0,
+  //61
+  10.0,
+  //62
+  10.0,
+  //63
+  10.0,
+  //64
+  10.0,
+  //65
+  10.0,
+  //66
+  10.0,
+  //67
+  10.0,
+  //68
+  10.0,
+  //69
+  10.0,
+  //70
+  10.0,
+  //71
+  10.0,
+  //72
+  10.0,
+  //73
+  10.0,
+  //74
+  10.0,
+  //75
+  10.0,
+  //76
+  10.0,
+  //77
+  10.0,
+  //78
+  10.0,
+  //79
+  10.0,
+  //80
+  10.0
+
+  };
+  bool* landsea_in  = new bool[80];
+  std::fill_n(landsea_in,80,false);
+  landsea_in[53-1] = true;
+  bool* true_sinks_in = new bool[80];
+  std::fill_n(true_sinks_in,80,false);
+  bool set_ls_as_no_data_flag = false;
+  bool tarasov_mod = false;
+  bool add_slope_in = false;
+  double epsilon_in = 0.0;
+  int* secondary_neighboring_cell_indices_in = new int[80*9];
+  icon_single_index_grid_params* grid_params_in =
+  		new icon_single_index_grid_params(80,cell_neighbors,
+																	  true,secondary_neighboring_cell_indices_in);
+  grid_params_in->icon_single_index_grid_calculate_secondary_neighbors();
+  auto alg1 = sink_filling_algorithm_1_icon_single_index();
+  alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in);
+  alg1.setup_fields(cell_heights,landsea_in,true_sinks_in,grid_params_in);
+  alg1.fill_sinks();
+  EXPECT_TRUE(field<double>(cell_heights,grid_params_in) == field<double>(cell_heights_expected_out,
+                                                                       		grid_params_in));
+}
+
+
+TEST_F(IconGridTest,TestAlgorithmOneOnIconGridEight){
+  int* cell_neighbors = new int[80*3] {
+  //1
+  5,7,2,
+  //2
+  1,10,3,
+  //3
+  2,13,4,
+  //4
+  3,16,5,
+  //5
+  4,19,1,
+  //6
+  20,21,7,
+  //7
+  1,6,8,
+  //8
+  7,23,9,
+  //9
+  8,25,10,
+  //10
+  2,9,11,
+  //11
+  10,27,12,
+  //12
+  11,29,13,
+  //13
+  3,12,14,
+  //14
+  13,31,15,
+  //15
+  14,33,16,
+  //16
+  4,15,17,
+  //17
+  16,35,18,
+  //18
+  17,37,19,
+  //19
+  5,18,20,
+  //20
+  19,39,6,
+  //21
+  6,40,22,
+  //22
+  21,41,23,
+  //23
+  8,22,24,
+  //24
+  23,43,25,
+  //25
+  24,26,9,
+  //26
+  25,45,27,
+  //27
+  11,26,28,
+  //28
+  27,47,29,
+  //29
+  12,28,30,
+  //30
+  29,49,31,
+  //31
+  14,30,32,
+  //32
+  31,51,33,
+  //33
+  15,32,34,
+  //34
+  33,53,35,
+  //35
+  17,34,36,
+  //36
+  35,55,37,
+  //37
+  18,36,38,
+  //38
+  37,57,39,
+  //39
+  20,38,40,
+  //40
+  39,59,21,
+  //41
+  22,60,42,
+  //42
+  41,61,43,
+  //43
+  24,42,44,
+  //44
+  43,63,45,
+  //45
+  26,44,46,
+  //46
+  45,64,47,
+  //47
+  28,46,48,
+  //48
+  47,66,49,
+  //49
+  30,48,50,
+  //50
+  49,67,51,
+  //51
+  32,50,52,
+  //52
+  51,69,53,
+  //53
+  34,52,54,
+  //54
+  53,70,55,
+  //55
+  36,54,56,
+  //56
+  55,72,57,
+  //57
+  38,56,58,
+  //58
+  57,73,59,
+  //59
+  40,58,60,
+  //60
+  59,75,41,
+  //61
+  42,75,62,
+  //62
+  61,76,63,
+  //63
+  44,62,64,
+  //64
+  46,63,65,
+  //65
+  64,77,66,
+  //66
+  48,65,67,
+  //67
+  50,66,68,
+  //68
+  67,78,69,
+  //69
+  52,68,70,
+  //70
+  54,69,71,
+  //71
+  70,79,72,
+  //72
+  56,71,73,
+  //73
+  58,72,74,
+  //74
+  73,80,75,
+  //75
+  60,74,61,
+  //76
+  62,80,77,
+  //77
+  65,76,78,
+  //78
+  68,77,79,
+  //79
+  71,78,80,
+  //80
+  74,79,76
+  };
+
+  double* cell_heights = new double[80] {
+  //1
+  10.0,
+  //2
+  10.0,
+  //3
+  10.0,
+  //4
+  10.0,
+  //5
+  10.0,
+  //6
+  10.0,
+  //7
+  10.0,
+  //8
+  10.0,
+  //9
+  10.0,
+  //10
+  10.0,
+  //11
+  10.0,
+  //12
+  10.0,
+  //13
+  10.0,
+  //14
+  10.0,
+  //15
+  10.0,
+  //16
+  10.0,
+  //17
+  10.0,
+  //18
+  10.0,
+  //19
+  10.0,
+  //20
+  10.0,
+  //21
+  10.0,
+  //22
+  10.0,
+  //23
+  10.0,
+  //24
+  10.0,
+  //25
+  10.0,
+  //26
+  10.0,
+  //27
+  10.0,
+  //28
+  10.0,
+  //29
+  10.0,
+  //30
+   1.0,
+  //31
+  10.0,
+  //32
+  10.0,
+  //33
+  10.0,
+  //34
+  10.0,
+  //35
+  10.0,
+  //36
+  10.0,
+  //37
+  10.0,
+  //38
+  10.0,
+  //39
+  10.0,
+  //40
+  10.0,
+  //41
+  10.0,
+  //42
+  10.0,
+  //43
+  10.0,
+  //44
+  10.0,
+  //45
+  10.0,
+  //46
+  10.0,
+  //47
+  10.0,
+  //48
+  10.0,
+  //49
+  10.0,
+  //50
+  10.0,
+  //51
+   6.5,
+  //52
+   0.0,
+  //53
+   0.0,
+  //54
+  10.0,
+  //55
+  10.0,
+  //56
+  10.0,
+  //57
+  10.0,
+  //58
+  10.0,
+  //59
+  10.0,
+  //60
+  10.0,
+  //61
+  10.0,
+  //62
+  10.0,
+  //63
+  10.0,
+  //64
+  10.0,
+  //65
+  10.0,
+  //66
+  10.0,
+  //67
+  10.0,
+  //68
+  10.0,
+  //69
+  10.0,
+  //70
+  10.0,
+  //71
+  10.0,
+  //72
+  10.0,
+  //73
+  10.0,
+  //74
+  10.0,
+  //75
+  10.0,
+  //76
+  10.0,
+  //77
+  10.0,
+  //78
+  10.0,
+  //79
+  10.0,
+  //80
+  10.0
+  };
+  double* cell_heights_expected_out = new double[80] {
+  //1
+  10.0,
+  //2
+  10.0,
+  //3
+  10.0,
+  //4
+  10.0,
+  //5
+  10.0,
+  //6
+  10.0,
+  //7
+  10.0,
+  //8
+  10.0,
+  //9
+  10.0,
+  //10
+  10.0,
+  //11
+  10.0,
+  //12
+  10.0,
+  //13
+  10.0,
+  //14
+  10.0,
+  //15
+  10.0,
+  //16
+  10.0,
+  //17
+  10.0,
+  //18
+  10.0,
+  //19
+  10.0,
+  //20
+  10.0,
+  //21
+  10.0,
+  //22
+  10.0,
+  //23
+  10.0,
+  //24
+  10.0,
+  //25
+  10.0,
+  //26
+  10.0,
+  //27
+  10.0,
+  //28
+  10.0,
+  //29
+  10.0,
+  //30
+   6.5,
+  //31
+  10.0,
+  //32
+  10.0,
+  //33
+  10.0,
+  //34
+  10.0,
+  //35
+  10.0,
+  //36
+  10.0,
+  //37
+  10.0,
+  //38
+  10.0,
+  //39
+  10.0,
+  //40
+  10.0,
+  //41
+  10.0,
+  //42
+  10.0,
+  //43
+  10.0,
+  //44
+  10.0,
+  //45
+  10.0,
+  //46
+  10.0,
+  //47
+  10.0,
+  //48
+  10.0,
+  //49
+  10.0,
+  //50
+  10.0,
+  //51
+   6.5,
+  //52
+   0.0,
+  //53
+   0.0,
+  //54
+  10.0,
+  //55
+  10.0,
+  //56
+  10.0,
+  //57
+  10.0,
+  //58
+  10.0,
+  //59
+  10.0,
+  //60
+  10.0,
+  //61
+  10.0,
+  //62
+  10.0,
+  //63
+  10.0,
+  //64
+  10.0,
+  //65
+  10.0,
+  //66
+  10.0,
+  //67
+  10.0,
+  //68
+  10.0,
+  //69
+  10.0,
+  //70
+  10.0,
+  //71
+  10.0,
+  //72
+  10.0,
+  //73
+  10.0,
+  //74
+  10.0,
+  //75
+  10.0,
+  //76
+  10.0,
+  //77
+  10.0,
+  //78
+  10.0,
+  //79
+  10.0,
+  //80
+  10.0
+
+  };
+  bool* landsea_in  = new bool[80];
+  std::fill_n(landsea_in,80,false);
+  landsea_in[53-1] = true;
+  bool* true_sinks_in = new bool[80];
+  std::fill_n(true_sinks_in,80,false);
+  bool set_ls_as_no_data_flag = false;
+  bool tarasov_mod = false;
+  bool add_slope_in = false;
+  double epsilon_in = 0.0;
+  int* secondary_neighboring_cell_indices_in = new int[80*9];
+  icon_single_index_grid_params* grid_params_in =
+  		new icon_single_index_grid_params(80,cell_neighbors,
+																	  true,secondary_neighboring_cell_indices_in);
+  grid_params_in->icon_single_index_grid_calculate_secondary_neighbors();
+  auto alg1 = sink_filling_algorithm_1_icon_single_index();
+  alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in);
+  alg1.setup_fields(cell_heights,landsea_in,true_sinks_in,grid_params_in);
+  alg1.fill_sinks();
+  EXPECT_TRUE(field<double>(cell_heights,grid_params_in) == field<double>(cell_heights_expected_out,
+                                                                       		grid_params_in));
+}
+
+
+TEST_F(IconGridTest,TestAlgorithmOneOnIconGridNine){
+  int* cell_neighbors = new int[80*3] {
+  //1
+  5,7,2,
+  //2
+  1,10,3,
+  //3
+  2,13,4,
+  //4
+  3,16,5,
+  //5
+  4,19,1,
+  //6
+  20,21,7,
+  //7
+  1,6,8,
+  //8
+  7,23,9,
+  //9
+  8,25,10,
+  //10
+  2,9,11,
+  //11
+  10,27,12,
+  //12
+  11,29,13,
+  //13
+  3,12,14,
+  //14
+  13,31,15,
+  //15
+  14,33,16,
+  //16
+  4,15,17,
+  //17
+  16,35,18,
+  //18
+  17,37,19,
+  //19
+  5,18,20,
+  //20
+  19,39,6,
+  //21
+  6,40,22,
+  //22
+  21,41,23,
+  //23
+  8,22,24,
+  //24
+  23,43,25,
+  //25
+  24,26,9,
+  //26
+  25,45,27,
+  //27
+  11,26,28,
+  //28
+  27,47,29,
+  //29
+  12,28,30,
+  //30
+  29,49,31,
+  //31
+  14,30,32,
+  //32
+  31,51,33,
+  //33
+  15,32,34,
+  //34
+  33,53,35,
+  //35
+  17,34,36,
+  //36
+  35,55,37,
+  //37
+  18,36,38,
+  //38
+  37,57,39,
+  //39
+  20,38,40,
+  //40
+  39,59,21,
+  //41
+  22,60,42,
+  //42
+  41,61,43,
+  //43
+  24,42,44,
+  //44
+  43,63,45,
+  //45
+  26,44,46,
+  //46
+  45,64,47,
+  //47
+  28,46,48,
+  //48
+  47,66,49,
+  //49
+  30,48,50,
+  //50
+  49,67,51,
+  //51
+  32,50,52,
+  //52
+  51,69,53,
+  //53
+  34,52,54,
+  //54
+  53,70,55,
+  //55
+  36,54,56,
+  //56
+  55,72,57,
+  //57
+  38,56,58,
+  //58
+  57,73,59,
+  //59
+  40,58,60,
+  //60
+  59,75,41,
+  //61
+  42,75,62,
+  //62
+  61,76,63,
+  //63
+  44,62,64,
+  //64
+  46,63,65,
+  //65
+  64,77,66,
+  //66
+  48,65,67,
+  //67
+  50,66,68,
+  //68
+  67,78,69,
+  //69
+  52,68,70,
+  //70
+  54,69,71,
+  //71
+  70,79,72,
+  //72
+  56,71,73,
+  //73
+  58,72,74,
+  //74
+  73,80,75,
+  //75
+  60,74,61,
+  //76
+  62,80,77,
+  //77
+  65,76,78,
+  //78
+  68,77,79,
+  //79
+  71,78,80,
+  //80
+  74,79,76
+  };
+
+  double* cell_heights = new double[80] {
+  //1
+  10.0,
+  //2
+  10.0,
+  //3
+  10.0,
+  //4
+  10.0,
+  //5
+  10.0,
+  //6
+  10.0,
+  //7
+  10.0,
+  //8
+  10.0,
+  //9
+  10.0,
+  //10
+  10.0,
+  //11
+  10.0,
+  //12
+  10.0,
+  //13
+  10.0,
+  //14
+  10.0,
+  //15
+  10.0,
+  //16
+  10.0,
+  //17
+  10.0,
+  //18
+  10.0,
+  //19
+  10.0,
+  //20
+  10.0,
+  //21
+  10.0,
+  //22
+  10.0,
+  //23
+  10.0,
+  //24
+  10.0,
+  //25
+  10.0,
+  //26
+  10.0,
+  //27
+  10.0,
+  //28
+  10.0,
+  //29
+  10.0,
+  //30
+   1.0,
+  //31
+  10.0,
+  //32
+   8.0,
+  //33
+  10.0,
+  //34
+  10.0,
+  //35
+  10.0,
+  //36
+  10.0,
+  //37
+  10.0,
+  //38
+  10.0,
+  //39
+  10.0,
+  //40
+  10.0,
+  //41
+  10.0,
+  //42
+  10.0,
+  //43
+  10.0,
+  //44
+  10.0,
+  //45
+  10.0,
+  //46
+  10.0,
+  //47
+  10.0,
+  //48
+  10.0,
+  //49
+  10.0,
+  //50
+  10.0,
+  //51
+  10.0,
+  //52
+   0.0,
+  //53
+   0.0,
+  //54
+  10.0,
+  //55
+  10.0,
+  //56
+  10.0,
+  //57
+  10.0,
+  //58
+  10.0,
+  //59
+  10.0,
+  //60
+  10.0,
+  //61
+  10.0,
+  //62
+  10.0,
+  //63
+  10.0,
+  //64
+  10.0,
+  //65
+  10.0,
+  //66
+  10.0,
+  //67
+  10.0,
+  //68
+  10.0,
+  //69
+  10.0,
+  //70
+  10.0,
+  //71
+  10.0,
+  //72
+  10.0,
+  //73
+  10.0,
+  //74
+  10.0,
+  //75
+  10.0,
+  //76
+  10.0,
+  //77
+  10.0,
+  //78
+  10.0,
+  //79
+  10.0,
+  //80
+  10.0
+  };
+  double* cell_heights_expected_out = new double[80] {
+    //1
+  10.0,
+  //2
+  10.0,
+  //3
+  10.0,
+  //4
+  10.0,
+  //5
+  10.0,
+  //6
+  10.0,
+  //7
+  10.0,
+  //8
+  10.0,
+  //9
+  10.0,
+  //10
+  10.0,
+  //11
+  10.0,
+  //12
+  10.0,
+  //13
+  10.0,
+  //14
+  10.0,
+  //15
+  10.0,
+  //16
+  10.0,
+  //17
+  10.0,
+  //18
+  10.0,
+  //19
+  10.0,
+  //20
+  10.0,
+  //21
+  10.0,
+  //22
+  10.0,
+  //23
+  10.0,
+  //24
+  10.0,
+  //25
+  10.0,
+  //26
+  10.0,
+  //27
+  10.0,
+  //28
+  10.0,
+  //29
+  10.0,
+  //30
+   8.0,
+  //31
+  10.0,
+  //32
+   8.0,
+  //33
+  10.0,
+  //34
+  10.0,
+  //35
+  10.0,
+  //36
+  10.0,
+  //37
+  10.0,
+  //38
+  10.0,
+  //39
+  10.0,
+  //40
+  10.0,
+  //41
+  10.0,
+  //42
+  10.0,
+  //43
+  10.0,
+  //44
+  10.0,
+  //45
+  10.0,
+  //46
+  10.0,
+  //47
+  10.0,
+  //48
+  10.0,
+  //49
+  10.0,
+  //50
+  10.0,
+  //51
+  10.0,
+  //52
+   0.0,
+  //53
+   0.0,
+  //54
+  10.0,
+  //55
+  10.0,
+  //56
+  10.0,
+  //57
+  10.0,
+  //58
+  10.0,
+  //59
+  10.0,
+  //60
+  10.0,
+  //61
+  10.0,
+  //62
+  10.0,
+  //63
+  10.0,
+  //64
+  10.0,
+  //65
+  10.0,
+  //66
+  10.0,
+  //67
+  10.0,
+  //68
+  10.0,
+  //69
+  10.0,
+  //70
+  10.0,
+  //71
+  10.0,
+  //72
+  10.0,
+  //73
+  10.0,
+  //74
+  10.0,
+  //75
+  10.0,
+  //76
+  10.0,
+  //77
+  10.0,
+  //78
+  10.0,
+  //79
+  10.0,
+  //80
+  10.0
+  };
+  bool* landsea_in  = new bool[80];
+  std::fill_n(landsea_in,80,false);
+  landsea_in[53-1] = true;
+  bool* true_sinks_in = new bool[80];
+  std::fill_n(true_sinks_in,80,false);
+  bool set_ls_as_no_data_flag = false;
+  bool tarasov_mod = false;
+  bool add_slope_in = false;
+  double epsilon_in = 0.0;
+  int* secondary_neighboring_cell_indices_in = new int[80*9];
+  icon_single_index_grid_params* grid_params_in =
+  		new icon_single_index_grid_params(80,cell_neighbors,
+																	  true,secondary_neighboring_cell_indices_in);
+  grid_params_in->icon_single_index_grid_calculate_secondary_neighbors();
+  auto alg1 = sink_filling_algorithm_1_icon_single_index();
+  alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in);
+  alg1.setup_fields(cell_heights,landsea_in,true_sinks_in,grid_params_in);
+  alg1.fill_sinks();
+  EXPECT_TRUE(field<double>(cell_heights,grid_params_in) == field<double>(cell_heights_expected_out,
+                                                                       		grid_params_in));
+}
+
+TEST_F(IconGridTest,TestAlgorithmOneOnIconGridTen){
+  int* cell_neighbors = new int[80*3] {
+  //1
+  5,7,2,
+  //2
+  1,10,3,
+  //3
+  2,13,4,
+  //4
+  3,16,5,
+  //5
+  4,19,1,
+  //6
+  20,21,7,
+  //7
+  1,6,8,
+  //8
+  7,23,9,
+  //9
+  8,25,10,
+  //10
+  2,9,11,
+  //11
+  10,27,12,
+  //12
+  11,29,13,
+  //13
+  3,12,14,
+  //14
+  13,31,15,
+  //15
+  14,33,16,
+  //16
+  4,15,17,
+  //17
+  16,35,18,
+  //18
+  17,37,19,
+  //19
+  5,18,20,
+  //20
+  19,39,6,
+  //21
+  6,40,22,
+  //22
+  21,41,23,
+  //23
+  8,22,24,
+  //24
+  23,43,25,
+  //25
+  24,26,9,
+  //26
+  25,45,27,
+  //27
+  11,26,28,
+  //28
+  27,47,29,
+  //29
+  12,28,30,
+  //30
+  29,49,31,
+  //31
+  14,30,32,
+  //32
+  31,51,33,
+  //33
+  15,32,34,
+  //34
+  33,53,35,
+  //35
+  17,34,36,
+  //36
+  35,55,37,
+  //37
+  18,36,38,
+  //38
+  37,57,39,
+  //39
+  20,38,40,
+  //40
+  39,59,21,
+  //41
+  22,60,42,
+  //42
+  41,61,43,
+  //43
+  24,42,44,
+  //44
+  43,63,45,
+  //45
+  26,44,46,
+  //46
+  45,64,47,
+  //47
+  28,46,48,
+  //48
+  47,66,49,
+  //49
+  30,48,50,
+  //50
+  49,67,51,
+  //51
+  32,50,52,
+  //52
+  51,69,53,
+  //53
+  34,52,54,
+  //54
+  53,70,55,
+  //55
+  36,54,56,
+  //56
+  55,72,57,
+  //57
+  38,56,58,
+  //58
+  57,73,59,
+  //59
+  40,58,60,
+  //60
+  59,75,41,
+  //61
+  42,75,62,
+  //62
+  61,76,63,
+  //63
+  44,62,64,
+  //64
+  46,63,65,
+  //65
+  64,77,66,
+  //66
+  48,65,67,
+  //67
+  50,66,68,
+  //68
+  67,78,69,
+  //69
+  52,68,70,
+  //70
+  54,69,71,
+  //71
+  70,79,72,
+  //72
+  56,71,73,
+  //73
+  58,72,74,
+  //74
+  73,80,75,
+  //75
+  60,74,61,
+  //76
+  62,80,77,
+  //77
+  65,76,78,
+  //78
+  68,77,79,
+  //79
+  71,78,80,
+  //80
+  74,79,76
+  };
+
+  double* cell_heights = new double[80] {
+  //1
+  10.0,
+  //2
+  10.0,
+  //3
+  10.0,
+  //4
+  10.0,
+  //5
+  10.0,
+  //6
+  10.0,
+  //7
+  10.0,
+  //8
+  10.0,
+  //9
+  10.0,
+  //10
+  10.0,
+  //11
+  10.0,
+  //12
+  10.0,
+  //13
+  10.0,
+  //14
+  10.0,
+  //15
+   0.0,
+  //16
+   0.0,
+  //17
+  10.0,
+  //18
+  10.0,
+  //19
+  10.0,
+  //20
+  10.0,
+  //21
+  10.0,
+  //22
+  10.0,
+  //23
+  10.0,
+  //24
+  10.0,
+  //25
+  10.0,
+  //26
+  10.0,
+  //27
+  10.0,
+  //28
+  10.0,
+  //29
+  10.0,
+  //30
+   1.0,
+  //31
+   4.2,
+  //32
+  10.0,
+  //33
+  10.0,
+  //34
+  10.0,
+  //35
+  10.0,
+  //36
+  10.0,
+  //37
+  10.0,
+  //38
+  10.0,
+  //39
+  10.0,
+  //40
+  10.0,
+  //41
+  10.0,
+  //42
+  10.0,
+  //43
+  10.0,
+  //44
+  10.0,
+  //45
+  10.0,
+  //46
+  10.0,
+  //47
+  10.0,
+  //48
+  10.0,
+  //49
+  10.0,
+  //50
+  10.0,
+  //51
+  10.0,
+  //52
+  10.0,
+  //53
+  10.0,
+  //54
+  10.0,
+  //55
+  10.0,
+  //56
+  10.0,
+  //57
+  10.0,
+  //58
+  10.0,
+  //59
+  10.0,
+  //60
+  10.0,
+  //61
+  10.0,
+  //62
+  10.0,
+  //63
+  10.0,
+  //64
+  10.0,
+  //65
+  10.0,
+  //66
+  10.0,
+  //67
+  10.0,
+  //68
+  10.0,
+  //69
+  10.0,
+  //70
+  10.0,
+  //71
+  10.0,
+  //72
+  10.0,
+  //73
+  10.0,
+  //74
+  10.0,
+  //75
+  10.0,
+  //76
+  10.0,
+  //77
+  10.0,
+  //78
+  10.0,
+  //79
+  10.0,
+  //80
+  10.0
+  };
+  double* cell_heights_expected_out = new double[80] {
+  //1
+  10.0,
+  //2
+  10.0,
+  //3
+  10.0,
+  //4
+  10.0,
+  //5
+  10.0,
+  //6
+  10.0,
+  //7
+  10.0,
+  //8
+  10.0,
+  //9
+  10.0,
+  //10
+  10.0,
+  //11
+  10.0,
+  //12
+  10.0,
+  //13
+  10.0,
+  //14
+  10.0,
+  //15
+   0.0,
+  //16
+   0.0,
+  //17
+  10.0,
+  //18
+  10.0,
+  //19
+  10.0,
+  //20
+  10.0,
+  //21
+  10.0,
+  //22
+  10.0,
+  //23
+  10.0,
+  //24
+  10.0,
+  //25
+  10.0,
+  //26
+  10.0,
+  //27
+  10.0,
+  //28
+  10.0,
+  //29
+  10.0,
+  //30
+   4.2,
+  //31
+   4.2,
+  //32
+  10.0,
+  //33
+  10.0,
+  //34
+  10.0,
+  //35
+  10.0,
+  //36
+  10.0,
+  //37
+  10.0,
+  //38
+  10.0,
+  //39
+  10.0,
+  //40
+  10.0,
+  //41
+  10.0,
+  //42
+  10.0,
+  //43
+  10.0,
+  //44
+  10.0,
+  //45
+  10.0,
+  //46
+  10.0,
+  //47
+  10.0,
+  //48
+  10.0,
+  //49
+  10.0,
+  //50
+  10.0,
+  //51
+  10.0,
+  //52
+  10.0,
+  //53
+  10.0,
+  //54
+  10.0,
+  //55
+  10.0,
+  //56
+  10.0,
+  //57
+  10.0,
+  //58
+  10.0,
+  //59
+  10.0,
+  //60
+  10.0,
+  //61
+  10.0,
+  //62
+  10.0,
+  //63
+  10.0,
+  //64
+  10.0,
+  //65
+  10.0,
+  //66
+  10.0,
+  //67
+  10.0,
+  //68
+  10.0,
+  //69
+  10.0,
+  //70
+  10.0,
+  //71
+  10.0,
+  //72
+  10.0,
+  //73
+  10.0,
+  //74
+  10.0,
+  //75
+  10.0,
+  //76
+  10.0,
+  //77
+  10.0,
+  //78
+  10.0,
+  //79
+  10.0,
+  //80
+  10.0
+  };
+  bool* landsea_in  = new bool[80];
+  std::fill_n(landsea_in,80,false);
+  landsea_in[16-1] = true;
+  bool* true_sinks_in = new bool[80];
+  std::fill_n(true_sinks_in,80,false);
+  bool set_ls_as_no_data_flag = false;
+  bool tarasov_mod = false;
+  bool add_slope_in = false;
+  double epsilon_in = 0.0;
+  int* secondary_neighboring_cell_indices_in = new int[80*9];
+  icon_single_index_grid_params* grid_params_in =
+  		new icon_single_index_grid_params(80,cell_neighbors,
+																	  true,secondary_neighboring_cell_indices_in);
+  grid_params_in->icon_single_index_grid_calculate_secondary_neighbors();
+  auto alg1 = sink_filling_algorithm_1_icon_single_index();
+  alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in);
+  alg1.setup_fields(cell_heights,landsea_in,true_sinks_in,grid_params_in);
+  alg1.fill_sinks();
+  EXPECT_TRUE(field<double>(cell_heights,grid_params_in) == field<double>(cell_heights_expected_out,
+                                                                       		grid_params_in));
+}
+
+
+TEST_F(IconGridTest,TestAlgorithmOneOnIconGridEleven){
+  int* cell_neighbors = new int[80*3] {
+  //1
+  5,7,2,
+  //2
+  1,10,3,
+  //3
+  2,13,4,
+  //4
+  3,16,5,
+  //5
+  4,19,1,
+  //6
+  20,21,7,
+  //7
+  1,6,8,
+  //8
+  7,23,9,
+  //9
+  8,25,10,
+  //10
+  2,9,11,
+  //11
+  10,27,12,
+  //12
+  11,29,13,
+  //13
+  3,12,14,
+  //14
+  13,31,15,
+  //15
+  14,33,16,
+  //16
+  4,15,17,
+  //17
+  16,35,18,
+  //18
+  17,37,19,
+  //19
+  5,18,20,
+  //20
+  19,39,6,
+  //21
+  6,40,22,
+  //22
+  21,41,23,
+  //23
+  8,22,24,
+  //24
+  23,43,25,
+  //25
+  24,26,9,
+  //26
+  25,45,27,
+  //27
+  11,26,28,
+  //28
+  27,47,29,
+  //29
+  12,28,30,
+  //30
+  29,49,31,
+  //31
+  14,30,32,
+  //32
+  31,51,33,
+  //33
+  15,32,34,
+  //34
+  33,53,35,
+  //35
+  17,34,36,
+  //36
+  35,55,37,
+  //37
+  18,36,38,
+  //38
+  37,57,39,
+  //39
+  20,38,40,
+  //40
+  39,59,21,
+  //41
+  22,60,42,
+  //42
+  41,61,43,
+  //43
+  24,42,44,
+  //44
+  43,63,45,
+  //45
+  26,44,46,
+  //46
+  45,64,47,
+  //47
+  28,46,48,
+  //48
+  47,66,49,
+  //49
+  30,48,50,
+  //50
+  49,67,51,
+  //51
+  32,50,52,
+  //52
+  51,69,53,
+  //53
+  34,52,54,
+  //54
+  53,70,55,
+  //55
+  36,54,56,
+  //56
+  55,72,57,
+  //57
+  38,56,58,
+  //58
+  57,73,59,
+  //59
+  40,58,60,
+  //60
+  59,75,41,
+  //61
+  42,75,62,
+  //62
+  61,76,63,
+  //63
+  44,62,64,
+  //64
+  46,63,65,
+  //65
+  64,77,66,
+  //66
+  48,65,67,
+  //67
+  50,66,68,
+  //68
+  67,78,69,
+  //69
+  52,68,70,
+  //70
+  54,69,71,
+  //71
+  70,79,72,
+  //72
+  56,71,73,
+  //73
+  58,72,74,
+  //74
+  73,80,75,
+  //75
+  60,74,61,
+  //76
+  62,80,77,
+  //77
+  65,76,78,
+  //78
+  68,77,79,
+  //79
+  71,78,80,
+  //80
+  74,79,76
+  };
+
+  double* cell_heights = new double[80] {
+  //1
+  10.0,
+  //2
+  10.0,
+  //3
+  10.0,
+  //4
+  10.0,
+  //5
+  10.0,
+  //6
+  10.0,
+  //7
+  10.0,
+  //8
+  10.0,
+  //9
+  10.0,
+  //10
+   0.0,
+  //11
+   0.0,
+  //12
+  10.0,
+  //13
+  10.0,
+  //14
+  10.0,
+  //15
+  10.0,
+  //16
+  10.0,
+  //17
+  10.0,
+  //18
+  10.0,
+  //19
+  10.0,
+  //20
+  10.0,
+  //21
+  10.0,
+  //22
+  10.0,
+  //23
+  10.0,
+  //24
+  10.0,
+  //25
+  10.0,
+  //26
+  10.0,
+  //27
+  10.0,
+  //28
+  10.0,
+  //29
+  8.3,
+  //30
+   1.0,
+  //31
+  10.0,
+  //32
+  10.0,
+  //33
+  10.0,
+  //34
+  10.0,
+  //35
+  10.0,
+  //36
+  10.0,
+  //37
+  10.0,
+  //38
+  10.0,
+  //39
+  10.0,
+  //40
+  10.0,
+  //41
+  10.0,
+  //42
+  10.0,
+  //43
+  10.0,
+  //44
+  10.0,
+  //45
+  10.0,
+  //46
+  10.0,
+  //47
+  10.0,
+  //48
+  10.0,
+  //49
+  10.0,
+  //50
+  10.0,
+  //51
+  10.0,
+  //52
+  10.0,
+  //53
+  10.0,
+  //54
+  10.0,
+  //55
+  10.0,
+  //56
+  10.0,
+  //57
+  10.0,
+  //58
+  10.0,
+  //59
+  10.0,
+  //60
+  10.0,
+  //61
+  10.0,
+  //62
+  10.0,
+  //63
+  10.0,
+  //64
+  10.0,
+  //65
+  10.0,
+  //66
+  10.0,
+  //67
+  10.0,
+  //68
+  10.0,
+  //69
+  10.0,
+  //70
+  10.0,
+  //71
+  10.0,
+  //72
+  10.0,
+  //73
+  10.0,
+  //74
+  10.0,
+  //75
+  10.0,
+  //76
+  10.0,
+  //77
+  10.0,
+  //78
+  10.0,
+  //79
+  10.0,
+  //80
+  10.0
+  };
+  double* cell_heights_expected_out = new double[80] {
+  //1
+  10.0,
+  //2
+  10.0,
+  //3
+  10.0,
+  //4
+  10.0,
+  //5
+  10.0,
+  //6
+  10.0,
+  //7
+  10.0,
+  //8
+  10.0,
+  //9
+  10.0,
+  //10
+   0.0,
+  //11
+   0.0,
+  //12
+  10.0,
+  //13
+  10.0,
+  //14
+  10.0,
+  //15
+  10.0,
+  //16
+  10.0,
+  //17
+  10.0,
+  //18
+  10.0,
+  //19
+  10.0,
+  //20
+  10.0,
+  //21
+  10.0,
+  //22
+  10.0,
+  //23
+  10.0,
+  //24
+  10.0,
+  //25
+  10.0,
+  //26
+  10.0,
+  //27
+  10.0,
+  //28
+  10.0,
+  //29
+  8.3,
+  //30
+   8.3,
+  //31
+  10.0,
+  //32
+  10.0,
+  //33
+  10.0,
+  //34
+  10.0,
+  //35
+  10.0,
+  //36
+  10.0,
+  //37
+  10.0,
+  //38
+  10.0,
+  //39
+  10.0,
+  //40
+  10.0,
+  //41
+  10.0,
+  //42
+  10.0,
+  //43
+  10.0,
+  //44
+  10.0,
+  //45
+  10.0,
+  //46
+  10.0,
+  //47
+  10.0,
+  //48
+  10.0,
+  //49
+  10.0,
+  //50
+  10.0,
+  //51
+  10.0,
+  //52
+  10.0,
+  //53
+  10.0,
+  //54
+  10.0,
+  //55
+  10.0,
+  //56
+  10.0,
+  //57
+  10.0,
+  //58
+  10.0,
+  //59
+  10.0,
+  //60
+  10.0,
+  //61
+  10.0,
+  //62
+  10.0,
+  //63
+  10.0,
+  //64
+  10.0,
+  //65
+  10.0,
+  //66
+  10.0,
+  //67
+  10.0,
+  //68
+  10.0,
+  //69
+  10.0,
+  //70
+  10.0,
+  //71
+  10.0,
+  //72
+  10.0,
+  //73
+  10.0,
+  //74
+  10.0,
+  //75
+  10.0,
+  //76
+  10.0,
+  //77
+  10.0,
+  //78
+  10.0,
+  //79
+  10.0,
+  //80
+  10.0
+
+  };
+  bool* landsea_in  = new bool[80];
+  std::fill_n(landsea_in,80,false);
+  landsea_in[10-1] = true;
+  bool* true_sinks_in = new bool[80];
+  std::fill_n(true_sinks_in,80,false);
+  bool set_ls_as_no_data_flag = false;
+  bool tarasov_mod = false;
+  bool add_slope_in = false;
+  double epsilon_in = 0.0;
+  int* secondary_neighboring_cell_indices_in = new int[80*9];
+  icon_single_index_grid_params* grid_params_in =
+  		new icon_single_index_grid_params(80,cell_neighbors,
+																	  true,secondary_neighboring_cell_indices_in);
+  grid_params_in->icon_single_index_grid_calculate_secondary_neighbors();
+  auto alg1 = sink_filling_algorithm_1_icon_single_index();
+  alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in);
+  alg1.setup_fields(cell_heights,landsea_in,true_sinks_in,grid_params_in);
+  alg1.fill_sinks();
+  EXPECT_TRUE(field<double>(cell_heights,grid_params_in) == field<double>(cell_heights_expected_out,
+                                                                       		grid_params_in));
+}
+
+
+TEST_F(IconGridTest,TestAlgorithmOneOnIconGridTwelve){
+  int* cell_neighbors = new int[80*3] {
+  //1
+  5,7,2,
+  //2
+  1,10,3,
+  //3
+  2,13,4,
+  //4
+  3,16,5,
+  //5
+  4,19,1,
+  //6
+  20,21,7,
+  //7
+  1,6,8,
+  //8
+  7,23,9,
+  //9
+  8,25,10,
+  //10
+  2,9,11,
+  //11
+  10,27,12,
+  //12
+  11,29,13,
+  //13
+  3,12,14,
+  //14
+  13,31,15,
+  //15
+  14,33,16,
+  //16
+  4,15,17,
+  //17
+  16,35,18,
+  //18
+  17,37,19,
+  //19
+  5,18,20,
+  //20
+  19,39,6,
+  //21
+  6,40,22,
+  //22
+  21,41,23,
+  //23
+  8,22,24,
+  //24
+  23,43,25,
+  //25
+  24,26,9,
+  //26
+  25,45,27,
+  //27
+  11,26,28,
+  //28
+  27,47,29,
+  //29
+  12,28,30,
+  //30
+  29,49,31,
+  //31
+  14,30,32,
+  //32
+  31,51,33,
+  //33
+  15,32,34,
+  //34
+  33,53,35,
+  //35
+  17,34,36,
+  //36
+  35,55,37,
+  //37
+  18,36,38,
+  //38
+  37,57,39,
+  //39
+  20,38,40,
+  //40
+  39,59,21,
+  //41
+  22,60,42,
+  //42
+  41,61,43,
+  //43
+  24,42,44,
+  //44
+  43,63,45,
+  //45
+  26,44,46,
+  //46
+  45,64,47,
+  //47
+  28,46,48,
+  //48
+  47,66,49,
+  //49
+  30,48,50,
+  //50
+  49,67,51,
+  //51
+  32,50,52,
+  //52
+  51,69,53,
+  //53
+  34,52,54,
+  //54
+  53,70,55,
+  //55
+  36,54,56,
+  //56
+  55,72,57,
+  //57
+  38,56,58,
+  //58
+  57,73,59,
+  //59
+  40,58,60,
+  //60
+  59,75,41,
+  //61
+  42,75,62,
+  //62
+  61,76,63,
+  //63
+  44,62,64,
+  //64
+  46,63,65,
+  //65
+  64,77,66,
+  //66
+  48,65,67,
+  //67
+  50,66,68,
+  //68
+  67,78,69,
+  //69
+  52,68,70,
+  //70
+  54,69,71,
+  //71
+  70,79,72,
+  //72
+  56,71,73,
+  //73
+  58,72,74,
+  //74
+  73,80,75,
+  //75
+  60,74,61,
+  //76
+  62,80,77,
+  //77
+  65,76,78,
+  //78
+  68,77,79,
+  //79
+  71,78,80,
+  //80
+  74,79,76
+  };
+
+  double* cell_heights = new double[80] {
+  //1
+  10.0,
+  //2
+  10.0,
+  //3
+   0.0,
+  //4
+   0.0,
+  //5
+  10.0,
+  //6
+  10.0,
+  //7
+  10.0,
+  //8
+  10.0,
+  //9
+  10.0,
+  //10
+  10.0,
+  //11
+  10.0,
+  //12
+   3.2,
+  //13
+  10.0,
+  //14
+  10.0,
+  //15
+  10.0,
+  //16
+  10.0,
+  //17
+  10.0,
+  //18
+  10.0,
+  //19
+  10.0,
+  //20
+  10.0,
+  //21
+  10.0,
+  //22
+  10.0,
+  //23
+  10.0,
+  //24
+  10.0,
+  //25
+  10.0,
+  //26
+  10.0,
+  //27
+  10.0,
+  //28
+  10.0,
+  //29
+  10.0,
+  //30
+    1.0,
+  //31
+  10.0,
+  //32
+  10.0,
+  //33
+  10.0,
+  //34
+  10.0,
+  //35
+  10.0,
+  //36
+  10.0,
+  //37
+  10.0,
+  //38
+  10.0,
+  //39
+  10.0,
+  //40
+  10.0,
+  //41
+  10.0,
+  //42
+  10.0,
+  //43
+  10.0,
+  //44
+  10.0,
+  //45
+  10.0,
+  //46
+  10.0,
+  //47
+  10.0,
+  //48
+  10.0,
+  //49
+  10.0,
+  //50
+  10.0,
+  //51
+  10.0,
+  //52
+  10.0,
+  //53
+  10.0,
+  //54
+  10.0,
+  //55
+  10.0,
+  //56
+  10.0,
+  //57
+  10.0,
+  //58
+  10.0,
+  //59
+  10.0,
+  //60
+  10.0,
+  //61
+  10.0,
+  //62
+  10.0,
+  //63
+  10.0,
+  //64
+  10.0,
+  //65
+  10.0,
+  //66
+  10.0,
+  //67
+  10.0,
+  //68
+  10.0,
+  //69
+  10.0,
+  //70
+  10.0,
+  //71
+  10.0,
+  //72
+  10.0,
+  //73
+  10.0,
+  //74
+  10.0,
+  //75
+  10.0,
+  //76
+  10.0,
+  //77
+  10.0,
+  //78
+  10.0,
+  //79
+  10.0,
+  //80
+  10.0
+  };
+  double* cell_heights_expected_out = new double[80] {
+  //1
+  10.0,
+  //2
+  10.0,
+  //3
+   0.0,
+  //4
+   0.0,
+  //5
+  10.0,
+  //6
+  10.0,
+  //7
+  10.0,
+  //8
+  10.0,
+  //9
+  10.0,
+  //10
+  10.0,
+  //11
+  10.0,
+  //12
+   3.2,
+  //13
+  10.0,
+  //14
+  10.0,
+  //15
+  10.0,
+  //16
+  10.0,
+  //17
+  10.0,
+  //18
+  10.0,
+  //19
+  10.0,
+  //20
+  10.0,
+  //21
+  10.0,
+  //22
+  10.0,
+  //23
+  10.0,
+  //24
+  10.0,
+  //25
+  10.0,
+  //26
+  10.0,
+  //27
+  10.0,
+  //28
+  10.0,
+  //29
+  10.0,
+  //30
+   3.2,
+  //31
+  10.0,
+  //32
+  10.0,
+  //33
+  10.0,
+  //34
+  10.0,
+  //35
+  10.0,
+  //36
+  10.0,
+  //37
+  10.0,
+  //38
+  10.0,
+  //39
+  10.0,
+  //40
+  10.0,
+  //41
+  10.0,
+  //42
+  10.0,
+  //43
+  10.0,
+  //44
+  10.0,
+  //45
+  10.0,
+  //46
+  10.0,
+  //47
+  10.0,
+  //48
+  10.0,
+  //49
+  10.0,
+  //50
+  10.0,
+  //51
+  10.0,
+  //52
+  10.0,
+  //53
+  10.0,
+  //54
+  10.0,
+  //55
+  10.0,
+  //56
+  10.0,
+  //57
+  10.0,
+  //58
+  10.0,
+  //59
+  10.0,
+  //60
+  10.0,
+  //61
+  10.0,
+  //62
+  10.0,
+  //63
+  10.0,
+  //64
+  10.0,
+  //65
+  10.0,
+  //66
+  10.0,
+  //67
+  10.0,
+  //68
+  10.0,
+  //69
+  10.0,
+  //70
+  10.0,
+  //71
+  10.0,
+  //72
+  10.0,
+  //73
+  10.0,
+  //74
+  10.0,
+  //75
+  10.0,
+  //76
+  10.0,
+  //77
+  10.0,
+  //78
+  10.0,
+  //79
+  10.0,
+  //80
+  10.0
+
+  };
+  bool* landsea_in  = new bool[80];
+  std::fill_n(landsea_in,80,false);
+  landsea_in[4-1] = true;
+  bool* true_sinks_in = new bool[80];
+  std::fill_n(true_sinks_in,80,false);
+  bool set_ls_as_no_data_flag = false;
+  bool tarasov_mod = false;
+  bool add_slope_in = false;
+  double epsilon_in = 0.0;
+  int* secondary_neighboring_cell_indices_in = new int[80*9];
+  icon_single_index_grid_params* grid_params_in =
+  		new icon_single_index_grid_params(80,cell_neighbors,
+																	  true,secondary_neighboring_cell_indices_in);
+  grid_params_in->icon_single_index_grid_calculate_secondary_neighbors();
+  auto alg1 = sink_filling_algorithm_1_icon_single_index();
+  alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in);
+  alg1.setup_fields(cell_heights,landsea_in,true_sinks_in,grid_params_in);
+  alg1.fill_sinks();
+  EXPECT_TRUE(field<double>(cell_heights,grid_params_in) == field<double>(cell_heights_expected_out,
+                                                                       		grid_params_in));
+}
+
+
+TEST_F(IconGridTest,TestAlgorithmOneOnIconGridThirteen){
+  int* cell_neighbors = new int[80*3] {
+  //1
+  5,7,2,
+  //2
+  1,10,3,
+  //3
+  2,13,4,
+  //4
+  3,16,5,
+  //5
+  4,19,1,
+  //6
+  20,21,7,
+  //7
+  1,6,8,
+  //8
+  7,23,9,
+  //9
+  8,25,10,
+  //10
+  2,9,11,
+  //11
+  10,27,12,
+  //12
+  11,29,13,
+  //13
+  3,12,14,
+  //14
+  13,31,15,
+  //15
+  14,33,16,
+  //16
+  4,15,17,
+  //17
+  16,35,18,
+  //18
+  17,37,19,
+  //19
+  5,18,20,
+  //20
+  19,39,6,
+  //21
+  6,40,22,
+  //22
+  21,41,23,
+  //23
+  8,22,24,
+  //24
+  23,43,25,
+  //25
+  24,26,9,
+  //26
+  25,45,27,
+  //27
+  11,26,28,
+  //28
+  27,47,29,
+  //29
+  12,28,30,
+  //30
+  29,49,31,
+  //31
+  14,30,32,
+  //32
+  31,51,33,
+  //33
+  15,32,34,
+  //34
+  33,53,35,
+  //35
+  17,34,36,
+  //36
+  35,55,37,
+  //37
+  18,36,38,
+  //38
+  37,57,39,
+  //39
+  20,38,40,
+  //40
+  39,59,21,
+  //41
+  22,60,42,
+  //42
+  41,61,43,
+  //43
+  24,42,44,
+  //44
+  43,63,45,
+  //45
+  26,44,46,
+  //46
+  45,64,47,
+  //47
+  28,46,48,
+  //48
+  47,66,49,
+  //49
+  30,48,50,
+  //50
+  49,67,51,
+  //51
+  32,50,52,
+  //52
+  51,69,53,
+  //53
+  34,52,54,
+  //54
+  53,70,55,
+  //55
+  36,54,56,
+  //56
+  55,72,57,
+  //57
+  38,56,58,
+  //58
+  57,73,59,
+  //59
+  40,58,60,
+  //60
+  59,75,41,
+  //61
+  42,75,62,
+  //62
+  61,76,63,
+  //63
+  44,62,64,
+  //64
+  46,63,65,
+  //65
+  64,77,66,
+  //66
+  48,65,67,
+  //67
+  50,66,68,
+  //68
+  67,78,69,
+  //69
+  52,68,70,
+  //70
+  54,69,71,
+  //71
+  70,79,72,
+  //72
+  56,71,73,
+  //73
+  58,72,74,
+  //74
+  73,80,75,
+  //75
+  60,74,61,
+  //76
+  62,80,77,
+  //77
+  65,76,78,
+  //78
+  68,77,79,
+  //79
+  71,78,80,
+  //80
+  74,79,76
+  };
+
+  double* cell_heights = new double[80] {
+  //1
+  10.0,
+  //2
+  10.0,
+  //3
+   0.0,
+  //4
+   0.0,
+  //5
+  10.0,
+  //6
+  10.0,
+  //7
+  10.0,
+  //8
+  10.0,
+  //9
+  10.0,
+  //10
+  10.0,
+  //11
+  10.0,
+  //12
+  10.0,
+  //13
+   3.3,
+  //14
+  10.0,
+  //15
+  10.0,
+  //16
+  10.0,
+  //17
+  10.0,
+  //18
+  10.0,
+  //19
+  10.0,
+  //20
+  10.0,
+  //21
+  10.0,
+  //22
+  10.0,
+  //23
+  10.0,
+  //24
+  10.0,
+  //25
+  10.0,
+  //26
+  10.0,
+  //27
+  10.0,
+  //28
+  10.0,
+  //29
+  10.0,
+  //30
+    1.0,
+  //31
+  10.0,
+  //32
+  10.0,
+  //33
+  10.0,
+  //34
+  10.0,
+  //35
+  10.0,
+  //36
+  10.0,
+  //37
+  10.0,
+  //38
+  10.0,
+  //39
+  10.0,
+  //40
+  10.0,
+  //41
+  10.0,
+  //42
+  10.0,
+  //43
+  10.0,
+  //44
+  10.0,
+  //45
+  10.0,
+  //46
+  10.0,
+  //47
+  10.0,
+  //48
+  10.0,
+  //49
+  10.0,
+  //50
+  10.0,
+  //51
+  10.0,
+  //52
+  10.0,
+  //53
+  10.0,
+  //54
+  10.0,
+  //55
+  10.0,
+  //56
+  10.0,
+  //57
+  10.0,
+  //58
+  10.0,
+  //59
+  10.0,
+  //60
+  10.0,
+  //61
+  10.0,
+  //62
+  10.0,
+  //63
+  10.0,
+  //64
+  10.0,
+  //65
+  10.0,
+  //66
+  10.0,
+  //67
+  10.0,
+  //68
+  10.0,
+  //69
+  10.0,
+  //70
+  10.0,
+  //71
+  10.0,
+  //72
+  10.0,
+  //73
+  10.0,
+  //74
+  10.0,
+  //75
+  10.0,
+  //76
+  10.0,
+  //77
+  10.0,
+  //78
+  10.0,
+  //79
+  10.0,
+  //80
+  10.0
+  };
+  double* cell_heights_expected_out = new double[80] {
+  //1
+  10.0,
+  //2
+  10.0,
+  //3
+   0.0,
+  //4
+   0.0,
+  //5
+  10.0,
+  //6
+  10.0,
+  //7
+  10.0,
+  //8
+  10.0,
+  //9
+  10.0,
+  //10
+  10.0,
+  //11
+  10.0,
+  //12
+  10.0,
+  //13
+   3.3,
+  //14
+  10.0,
+  //15
+  10.0,
+  //16
+  10.0,
+  //17
+  10.0,
+  //18
+  10.0,
+  //19
+  10.0,
+  //20
+  10.0,
+  //21
+  10.0,
+  //22
+  10.0,
+  //23
+  10.0,
+  //24
+  10.0,
+  //25
+  10.0,
+  //26
+  10.0,
+  //27
+  10.0,
+  //28
+  10.0,
+  //29
+  10.0,
+  //30
+   3.3,
+  //31
+  10.0,
+  //32
+  10.0,
+  //33
+  10.0,
+  //34
+  10.0,
+  //35
+  10.0,
+  //36
+  10.0,
+  //37
+  10.0,
+  //38
+  10.0,
+  //39
+  10.0,
+  //40
+  10.0,
+  //41
+  10.0,
+  //42
+  10.0,
+  //43
+  10.0,
+  //44
+  10.0,
+  //45
+  10.0,
+  //46
+  10.0,
+  //47
+  10.0,
+  //48
+  10.0,
+  //49
+  10.0,
+  //50
+  10.0,
+  //51
+  10.0,
+  //52
+  10.0,
+  //53
+  10.0,
+  //54
+  10.0,
+  //55
+  10.0,
+  //56
+  10.0,
+  //57
+  10.0,
+  //58
+  10.0,
+  //59
+  10.0,
+  //60
+  10.0,
+  //61
+  10.0,
+  //62
+  10.0,
+  //63
+  10.0,
+  //64
+  10.0,
+  //65
+  10.0,
+  //66
+  10.0,
+  //67
+  10.0,
+  //68
+  10.0,
+  //69
+  10.0,
+  //70
+  10.0,
+  //71
+  10.0,
+  //72
+  10.0,
+  //73
+  10.0,
+  //74
+  10.0,
+  //75
+  10.0,
+  //76
+  10.0,
+  //77
+  10.0,
+  //78
+  10.0,
+  //79
+  10.0,
+  //80
+  10.0
+
+  };
+  bool* landsea_in  = new bool[80];
+  std::fill_n(landsea_in,80,false);
+  landsea_in[4-1] = true;
+  bool* true_sinks_in = new bool[80];
+  std::fill_n(true_sinks_in,80,false);
+  bool set_ls_as_no_data_flag = false;
+  bool tarasov_mod = false;
+  bool add_slope_in = false;
+  double epsilon_in = 0.0;
+  int* secondary_neighboring_cell_indices_in = new int[80*9];
+  icon_single_index_grid_params* grid_params_in =
+  		new icon_single_index_grid_params(80,cell_neighbors,
+																	  true,secondary_neighboring_cell_indices_in);
+  grid_params_in->icon_single_index_grid_calculate_secondary_neighbors();
+  auto alg1 = sink_filling_algorithm_1_icon_single_index();
+  alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in);
+  alg1.setup_fields(cell_heights,landsea_in,true_sinks_in,grid_params_in);
+  alg1.fill_sinks();
+  EXPECT_TRUE(field<double>(cell_heights,grid_params_in) == field<double>(cell_heights_expected_out,
+                                                                       		grid_params_in));
+}
+
+
+TEST_F(IconGridTest,TestAlgorithmOneOnIconGridFourteen){
+  int* cell_neighbors = new int[80*3] {
+  //1
+  5,7,2,
+  //2
+  1,10,3,
+  //3
+  2,13,4,
+  //4
+  3,16,5,
+  //5
+  4,19,1,
+  //6
+  20,21,7,
+  //7
+  1,6,8,
+  //8
+  7,23,9,
+  //9
+  8,25,10,
+  //10
+  2,9,11,
+  //11
+  10,27,12,
+  //12
+  11,29,13,
+  //13
+  3,12,14,
+  //14
+  13,31,15,
+  //15
+  14,33,16,
+  //16
+  4,15,17,
+  //17
+  16,35,18,
+  //18
+  17,37,19,
+  //19
+  5,18,20,
+  //20
+  19,39,6,
+  //21
+  6,40,22,
+  //22
+  21,41,23,
+  //23
+  8,22,24,
+  //24
+  23,43,25,
+  //25
+  24,26,9,
+  //26
+  25,45,27,
+  //27
+  11,26,28,
+  //28
+  27,47,29,
+  //29
+  12,28,30,
+  //30
+  29,49,31,
+  //31
+  14,30,32,
+  //32
+  31,51,33,
+  //33
+  15,32,34,
+  //34
+  33,53,35,
+  //35
+  17,34,36,
+  //36
+  35,55,37,
+  //37
+  18,36,38,
+  //38
+  37,57,39,
+  //39
+  20,38,40,
+  //40
+  39,59,21,
+  //41
+  22,60,42,
+  //42
+  41,61,43,
+  //43
+  24,42,44,
+  //44
+  43,63,45,
+  //45
+  26,44,46,
+  //46
+  45,64,47,
+  //47
+  28,46,48,
+  //48
+  47,66,49,
+  //49
+  30,48,50,
+  //50
+  49,67,51,
+  //51
+  32,50,52,
+  //52
+  51,69,53,
+  //53
+  34,52,54,
+  //54
+  53,70,55,
+  //55
+  36,54,56,
+  //56
+  55,72,57,
+  //57
+  38,56,58,
+  //58
+  57,73,59,
+  //59
+  40,58,60,
+  //60
+  59,75,41,
+  //61
+  42,75,62,
+  //62
+  61,76,63,
+  //63
+  44,62,64,
+  //64
+  46,63,65,
+  //65
+  64,77,66,
+  //66
+  48,65,67,
+  //67
+  50,66,68,
+  //68
+  67,78,69,
+  //69
+  52,68,70,
+  //70
+  54,69,71,
+  //71
+  70,79,72,
+  //72
+  56,71,73,
+  //73
+  58,72,74,
+  //74
+  73,80,75,
+  //75
+  60,74,61,
+  //76
+  62,80,77,
+  //77
+  65,76,78,
+  //78
+  68,77,79,
+  //79
+  71,78,80,
+  //80
+  74,79,76
+  };
+
+  double* cell_heights = new double[80] {
+  //1
+  10.0,
+  //2
+  10.0,
+  //3
+   0.0,
+  //4
+   0.0,
+  //5
+  10.0,
+  //6
+  10.0,
+  //7
+  10.0,
+  //8
+  10.0,
+  //9
+  10.0,
+  //10
+  10.0,
+  //11
+  10.0,
+  //12
+  10.0,
+  //13
+  10.0,
+  //14
+   3.4,
+  //15
+  10.0,
+  //16
+  10.0,
+  //17
+  10.0,
+  //18
+  10.0,
+  //19
+  10.0,
+  //20
+  10.0,
+  //21
+  10.0,
+  //22
+  10.0,
+  //23
+  10.0,
+  //24
+  10.0,
+  //25
+  10.0,
+  //26
+  10.0,
+  //27
+  10.0,
+  //28
+  10.0,
+  //29
+  10.0,
+  //30
+    1.0,
+  //31
+  10.0,
+  //32
+  10.0,
+  //33
+  10.0,
+  //34
+  10.0,
+  //35
+  10.0,
+  //36
+  10.0,
+  //37
+  10.0,
+  //38
+  10.0,
+  //39
+  10.0,
+  //40
+  10.0,
+  //41
+  10.0,
+  //42
+  10.0,
+  //43
+  10.0,
+  //44
+  10.0,
+  //45
+  10.0,
+  //46
+  10.0,
+  //47
+  10.0,
+  //48
+  10.0,
+  //49
+  10.0,
+  //50
+  10.0,
+  //51
+  10.0,
+  //52
+  10.0,
+  //53
+  10.0,
+  //54
+  10.0,
+  //55
+  10.0,
+  //56
+  10.0,
+  //57
+  10.0,
+  //58
+  10.0,
+  //59
+  10.0,
+  //60
+  10.0,
+  //61
+  10.0,
+  //62
+  10.0,
+  //63
+  10.0,
+  //64
+  10.0,
+  //65
+  10.0,
+  //66
+  10.0,
+  //67
+  10.0,
+  //68
+  10.0,
+  //69
+  10.0,
+  //70
+  10.0,
+  //71
+  10.0,
+  //72
+  10.0,
+  //73
+  10.0,
+  //74
+  10.0,
+  //75
+  10.0,
+  //76
+  10.0,
+  //77
+  10.0,
+  //78
+  10.0,
+  //79
+  10.0,
+  //80
+  10.0
+  };
+  double* cell_heights_expected_out = new double[80] {
+  //1
+  10.0,
+  //2
+  10.0,
+  //3
+   0.0,
+  //4
+   0.0,
+  //5
+  10.0,
+  //6
+  10.0,
+  //7
+  10.0,
+  //8
+  10.0,
+  //9
+  10.0,
+  //10
+  10.0,
+  //11
+  10.0,
+  //12
+  10.0,
+  //13
+  10.0,
+  //14
+   3.4,
+  //15
+  10.0,
+  //16
+  10.0,
+  //17
+  10.0,
+  //18
+  10.0,
+  //19
+  10.0,
+  //20
+  10.0,
+  //21
+  10.0,
+  //22
+  10.0,
+  //23
+  10.0,
+  //24
+  10.0,
+  //25
+  10.0,
+  //26
+  10.0,
+  //27
+  10.0,
+  //28
+  10.0,
+  //29
+  10.0,
+  //30
+   3.4,
+  //31
+  10.0,
+  //32
+  10.0,
+  //33
+  10.0,
+  //34
+  10.0,
+  //35
+  10.0,
+  //36
+  10.0,
+  //37
+  10.0,
+  //38
+  10.0,
+  //39
+  10.0,
+  //40
+  10.0,
+  //41
+  10.0,
+  //42
+  10.0,
+  //43
+  10.0,
+  //44
+  10.0,
+  //45
+  10.0,
+  //46
+  10.0,
+  //47
+  10.0,
+  //48
+  10.0,
+  //49
+  10.0,
+  //50
+  10.0,
+  //51
+  10.0,
+  //52
+  10.0,
+  //53
+  10.0,
+  //54
+  10.0,
+  //55
+  10.0,
+  //56
+  10.0,
+  //57
+  10.0,
+  //58
+  10.0,
+  //59
+  10.0,
+  //60
+  10.0,
+  //61
+  10.0,
+  //62
+  10.0,
+  //63
+  10.0,
+  //64
+  10.0,
+  //65
+  10.0,
+  //66
+  10.0,
+  //67
+  10.0,
+  //68
+  10.0,
+  //69
+  10.0,
+  //70
+  10.0,
+  //71
+  10.0,
+  //72
+  10.0,
+  //73
+  10.0,
+  //74
+  10.0,
+  //75
+  10.0,
+  //76
+  10.0,
+  //77
+  10.0,
+  //78
+  10.0,
+  //79
+  10.0,
+  //80
+  10.0
+
+  };
+  bool* landsea_in  = new bool[80];
+  std::fill_n(landsea_in,80,false);
+  landsea_in[4-1] = true;
+  bool* true_sinks_in = new bool[80];
+  std::fill_n(true_sinks_in,80,false);
+  bool set_ls_as_no_data_flag = false;
+  bool tarasov_mod = false;
+  bool add_slope_in = false;
+  double epsilon_in = 0.0;
+  int* secondary_neighboring_cell_indices_in = new int[80*9];
+  icon_single_index_grid_params* grid_params_in =
+  		new icon_single_index_grid_params(80,cell_neighbors,
+																	  true,secondary_neighboring_cell_indices_in);
+  grid_params_in->icon_single_index_grid_calculate_secondary_neighbors();
+  auto alg1 = sink_filling_algorithm_1_icon_single_index();
+  alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in);
+  alg1.setup_fields(cell_heights,landsea_in,true_sinks_in,grid_params_in);
+  alg1.fill_sinks();
+  EXPECT_TRUE(field<double>(cell_heights,grid_params_in) == field<double>(cell_heights_expected_out,
+                                                                       		grid_params_in));
 }
 
 } // close namespace

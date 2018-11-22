@@ -137,17 +137,12 @@ if egrep -v -q "^(#.*|.*=.*)$" ${config_file}; then
 	exit 1
 fi
 
-# Read in source_directory and external_source_directory
+# Read in source_directory
 source ${config_file}
 
 # Check we have actually read the variables correctly
 if [[ -z ${source_directory} ]]; then
 	echo "Source directory not set in config file or set to a blank string" 1>&2
-	exit 1
-fi
-
-if [[ -z ${external_source_directory} ]]; then
-	echo "External source directory not set in config file or set to a blank string" 1>&2
 	exit 1
 fi
 
@@ -171,12 +166,6 @@ if ! [[ -d $source_directory ]]; then
 	echo "Source directory does not exist." 1>&2
 
 fi
-
-if ! [[ -d $external_source_directory ]]; then
-	echo "External Source directory does not exist." 1>&2
-
-fi
-
 
 no_conda=${no_conda:-"false"}
 if [[ $no_conda == "true" ]] || [[ $no_conda == "t" ]]; then
@@ -264,36 +253,19 @@ export PYTHONPATH=${source_directory}/Dynamic_HD_Scripts:${PYTHONPATH}
 
 #Compile C++ and Fortran Code if this is the first timestep
 if $compilation_required ; then
-	#Normalise external source path; use a crude yet portable method
-	cd $external_source_directory
-	external_source_directory=$(pwd -P)
-	cd - 2>&1 > /dev/null
 	echo "Compiling C++ code" 1>&2
 	mkdir -p ${source_directory}/Dynamic_HD_Cpp_Code/Release
 	mkdir -p ${source_directory}/Dynamic_HD_Cpp_Code/Release/src
-	mkdir -p ${source_directory}/Dynamic_HD_Cpp_Code/Release/src/gtest
-	if ! [[ -f ${source_directory}/Dynamic_HD_Cpp_Code/src/gtest/*.cc ]]; then
-		cp ${external_source_directory}/googletest-master/googletest/src/*.cc \
-			${source_directory}/Dynamic_HD_Cpp_Code/src/gtest
-	fi
-	if ! [[ -d ${source_directory}/Dynamic_HD_Cpp_Code/include/gtest ]]; then
-		cp -r ${external_source_directory}/googletest-master/googletest/include/gtest \
-			${source_directory}/Dynamic_HD_Cpp_Code/include/gtest
-	fi
-	if ! [[ -f ${source_directory}/Dynamic_HD_Cpp_Code/src/gtest-internal-inl.h ]]; then
-		cp -r ${external_source_directory}/googletest-master/googletest/src/gtest-internal-inl.h \
-			${source_directory}/Dynamic_HD_Cpp_Code/src
-	fi
 	cd ${source_directory}/Dynamic_HD_Cpp_Code/Release
 	make -f ../makefile clean
-	make -f ../makefile all
+	make -f ../makefile compile_only
 	cd - 2>&1 > /dev/null
 	echo "Compiling Fortran code" 1>&2
 	mkdir -p ${source_directory}/Dynamic_HD_Fortran_Code/Release
 	mkdir -p ${source_directory}/Dynamic_HD_Fortran_Code/Release/src
 	cd ${source_directory}/Dynamic_HD_Fortran_Code/Release
 	make -f ../makefile clean
-	make -f ../makefile -e "EXT_SOURCE=${external_source_directory}" all
+	make -f ../makefile compile_only
 	cd - 2>&1 > /dev/null
 fi
 

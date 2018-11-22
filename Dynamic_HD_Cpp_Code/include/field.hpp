@@ -172,8 +172,11 @@ bool field<field_type>::almost_equal(const field<field_type>& rhs, double absolu
 template <typename field_type>
 ostream& operator<< (ostream& out,const field<field_type>& field_object){
 	field_object._grid->for_all_with_line_breaks([&](coords* coords, bool end_of_line){
+		int width = 10;
+		if (is_same<field_type,int>::value) width = 3;
+		if (is_same<field_type,bool>::value) width = 2;
 		if (end_of_line) out << endl;
-		out <<  setw(10) << setprecision(2) << field_object(coords);
+		out <<  setw(width) << setprecision(2) << field_object(coords);
 	});
 	return out;
 }

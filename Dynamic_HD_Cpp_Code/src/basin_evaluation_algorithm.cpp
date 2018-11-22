@@ -72,6 +72,8 @@ void basin_evaluation_algorithm::setup_fields(bool* minima_in,
 	flooded_cells->set_all(false);
 	connected_cells = new field<bool>(_grid_params);
 	connected_cells->set_all(false);
+	basin_flooded_cells = new field<bool>(_grid_params);
+	basin_connected_cells = new field<bool>(_grid_params);
 }
 
 void latlon_basin_evaluation_algorithm::setup_fields(bool* minima_in,
@@ -136,7 +138,7 @@ void basin_evaluation_algorithm::evaluate_basins(){
 		basin_catchment_number++;
 		delete minimum;
 	}
-	set_remaining_redirects();
+	//set_remaining_redirects();
 	while ( ! basin_catchment_centers.empty()){
 		coords* catchment_center = basin_catchment_centers.back();
 		basin_catchment_centers.pop_back();
@@ -169,6 +171,8 @@ void basin_evaluation_algorithm::add_minima_to_queue() {
 void basin_evaluation_algorithm::evaluate_basin(){
 	center_cell = minimum->clone();
 	completed_cells->set_all(false);
+	basin_flooded_cells->set_all(false);
+	basin_connected_cells->set_all(false);
 	center_cell_volume_threshold = 0.0;
 	center_coords = center_cell->get_cell_coords()->clone();
 	center_cell_height_type = center_cell->get_height_type();
@@ -180,13 +184,15 @@ void basin_evaluation_algorithm::evaluate_basin(){
 	read_new_center_cell_variables();
 	if (center_cell_height_type == connection_height) {
 		(*connected_cells)(center_coords) = true;
+		(*basin_connected_cells)(center_coords) = true;
 		cell_number = 0;
 	} else if (center_cell_height_type == flood_height) {
 		(*flooded_cells)(center_coords) = true;
+		(*basin_flooded_cells)(center_coords) = true;
 		cell_number = 1;
 	} else throw runtime_error("Cell type not recognized");
 	(*completed_cells)(center_coords) = true;
-	//Make partial first teration
+	//Make partial first iteration
 	process_neighbors();
 	delete center_cell;
 	while( ! q.empty()){
@@ -212,6 +218,7 @@ void basin_evaluation_algorithm::evaluate_basin(){
 				} else {
 					set_primary_merge();
 					set_primary_redirect();
+					rebuild_secondary_basin(new_center_coords);
 				}
 			}
 		}
@@ -260,24 +267,30 @@ inline void basin_evaluation_algorithm::update_center_cell_variables(){
 }
 
 inline bool basin_evaluation_algorithm::possible_merge_point_reached(){
+	bool potential_catchment_edge_in_flat_area_found =
+			    ((*flooded_cells)(new_center_coords) &&
+		      		new_center_cell_height_type == flood_height) ||
+		     	((*connected_cells)(new_center_coords) &&
+		      	  new_center_cell_height_type == connection_height);
+	bool already_in_basin = ((*basin_flooded_cells)(new_center_coords) &&
+		       								new_center_cell_height_type == flood_height) ||
+		     									((*basin_connected_cells)(new_center_coords) &&
+		        							new_center_cell_height_type == connection_height);
 	return ((new_center_cell_height < surface_height ||
 		    	(new_center_cell_height == surface_height &&
-		    	(((*flooded_cells)(new_center_coords) &&
-		       		new_center_cell_height_type == flood_height) ||
-		     	((*connected_cells)(new_center_coords) &&
-		        new_center_cell_height_type == connection_height))))
-		    	&& ! skipped_previous_center_cell);
+		    	 potential_catchment_edge_in_flat_area_found))
+		    	&& ! already_in_basin);
 }
 
 bool basin_evaluation_algorithm::skip_center_cell() {
 	// here the variable center cell height type is actually
 	// new center cell height type
-	if((*flooded_cells)(center_coords)) {
+	if((*basin_flooded_cells)(center_coords)) {
 		cell_number++;
-		delete center_coords;
+		//delete center_coords;
 		return true;
 	} else if (center_cell_height_type == connection_height &&
-	           (*connected_cells)(center_coords)){
+	           (*basin_connected_cells)(center_coords)){
 		q.push(new basin_cell((*raw_orography)(center_coords),
 					 							  flood_height,center_coords));
 		return true;
@@ -308,9 +321,13 @@ void basin_evaluation_algorithm::process_center_cell() {
 			center_cell_volume_threshold;
 		set_previous_cells_flood_next_cell_index();
 	} else throw runtime_error("Cell type not recognized");
-	if (center_cell_height_type == connection_height) (*connected_cells)(center_coords) = true;
+	if (center_cell_height_type == connection_height) {
+		(*connected_cells)(center_coords) = true;
+		(*basin_connected_cells)(center_coords) = true;
+	}
 	else if (center_cell_height_type == flood_height) {
 		(*flooded_cells)(center_coords) = true;
+		(*basin_flooded_cells)(center_coords) = true;
 		cell_number++;
 	} else throw runtime_error("Cell type not recognized");
 }
@@ -356,42 +373,141 @@ void basin_evaluation_algorithm::set_primary_merge(){
 void basin_evaluation_algorithm::set_merge_type(basic_merge_types current_merge_type) {
 	merge_types prior_merge_type = (*merge_points)(previous_filled_cell_coords);
 	merge_types new_merge_type;
-	if (prior_merge_type == no_merge) {
-		if (previous_filled_cell_height_type == flood_height) {
-			if (current_merge_type == merge_as_primary)
-				new_merge_type = connection_merge_not_set_flood_merge_as_primary;
-			else if (current_merge_type == merge_as_secondary){
-				new_merge_type = connection_merge_not_set_flood_merge_as_secondary;
-			} else throw runtime_error("Merge type not recognized");
-		} else if (previous_filled_cell_height_type == connection_height) {
-			if (current_merge_type == merge_as_primary)
-				new_merge_type = connection_merge_as_primary_flood_merge_not_set;
-			else if (current_merge_type == merge_as_secondary){
-				new_merge_type = connection_merge_as_secondary_flood_merge_not_set;
-			} else throw runtime_error("Merge type not recognized");
-		} else throw runtime_error("Cell type not recognized");
-	} else if (prior_merge_type == connection_merge_as_primary_flood_merge_not_set) {
-		if (previous_filled_cell_height_type == flood_height) {
-			if (current_merge_type == merge_as_primary)
-				new_merge_type = connection_merge_as_primary_flood_merge_as_primary;
-			else if (current_merge_type == merge_as_secondary){
-				new_merge_type = connection_merge_as_primary_flood_merge_as_secondary;
-			} else throw runtime_error("Merge type not recognized");
-		} else if (previous_filled_cell_height_type == connection_height) {
-			throw runtime_error("Trying to overwrite connection merge type");
-		} else throw runtime_error("Cell type not recognized");
-	} else if (prior_merge_type == connection_merge_as_secondary_flood_merge_not_set) {
-		if (previous_filled_cell_height_type == flood_height) {
-			if (current_merge_type == merge_as_primary)
-				new_merge_type = connection_merge_as_secondary_flood_merge_as_primary;
-			else if (current_merge_type == merge_as_secondary){
-				new_merge_type = connection_merge_as_secondary_flood_merge_as_secondary;
-			} else throw runtime_error("Merge type not recognized");
-		} else if (previous_filled_cell_height_type == connection_height) {
-			throw runtime_error("Trying to overwrite connection merge type");
-		} else throw runtime_error("Cell type not recognized");
-	} else throw runtime_error("Merge type not recognized");
+	switch (prior_merge_type) {
+		case no_merge:
+			if (previous_filled_cell_height_type == flood_height) {
+				if (current_merge_type == merge_as_primary)
+					new_merge_type = connection_merge_not_set_flood_merge_as_primary;
+				else if (current_merge_type == merge_as_secondary){
+					new_merge_type = connection_merge_not_set_flood_merge_as_secondary;
+				} else throw runtime_error("Merge type not recognized");
+			} else if (previous_filled_cell_height_type == connection_height) {
+				if (current_merge_type == merge_as_primary)
+					new_merge_type = connection_merge_as_primary_flood_merge_not_set;
+				else if (current_merge_type == merge_as_secondary){
+					new_merge_type = connection_merge_as_secondary_flood_merge_not_set;
+				} else throw runtime_error("Merge type not recognized");
+			} else throw runtime_error("Cell type not recognized");
+			break;
+		case connection_merge_as_primary_flood_merge_not_set:
+			if (previous_filled_cell_height_type == flood_height) {
+				if (current_merge_type == merge_as_primary)
+					new_merge_type = connection_merge_as_primary_flood_merge_as_primary;
+				else if (current_merge_type == merge_as_secondary){
+					new_merge_type = connection_merge_as_primary_flood_merge_as_secondary;
+				} else throw runtime_error("Merge type not recognized");
+			} else if (previous_filled_cell_height_type == connection_height) {
+				throw runtime_error("Trying to overwrite connection merge type");
+			} else throw runtime_error("Cell type not recognized");
+			break;
+		case connection_merge_as_secondary_flood_merge_not_set:
+			if (previous_filled_cell_height_type == flood_height) {
+				if (current_merge_type == merge_as_primary)
+					new_merge_type = connection_merge_as_secondary_flood_merge_as_primary;
+				else if (current_merge_type == merge_as_secondary){
+					new_merge_type = connection_merge_as_secondary_flood_merge_as_secondary;
+				} else throw runtime_error("Merge type not recognized");
+			} else if (previous_filled_cell_height_type == connection_height) {
+				throw runtime_error("Trying to overwrite connection merge type");
+			} else throw runtime_error("Cell type not recognized");
+			break;
+		default:
+		throw runtime_error("Merge type not recognized");
+	}
 	(*merge_points)(previous_filled_cell_coords) = new_merge_type;
+}
+
+basic_merge_types basin_evaluation_algorithm::get_merge_type(height_types height_type_in,coords* coords_in) {
+	merge_types current_merge_type = (*merge_points)(coords_in);
+	if (height_type_in == connection_height) {
+		switch (current_merge_type) {
+			case no_merge :
+			case connection_merge_not_set_flood_merge_as_primary :
+      case connection_merge_not_set_flood_merge_as_secondary :
+      	return basic_no_merge;
+			case connection_merge_as_primary_flood_merge_as_primary :
+      case connection_merge_as_primary_flood_merge_as_secondary :
+      case connection_merge_as_primary_flood_merge_not_set :
+      	return merge_as_primary;
+			case connection_merge_as_secondary_flood_merge_as_primary :
+			case connection_merge_as_secondary_flood_merge_as_secondary :
+			case connection_merge_as_secondary_flood_merge_not_set :
+				return merge_as_secondary;
+			case null_mtype:
+				throw runtime_error("No merge type defined for these coordinates");
+			default:
+				throw runtime_error("Merge type not recognized");
+		}
+	} else if(height_type_in == flood_height) {
+		switch (current_merge_type) {
+			case no_merge :
+			case connection_merge_as_primary_flood_merge_not_set :
+			case connection_merge_as_secondary_flood_merge_not_set :
+      	return basic_no_merge;
+			case connection_merge_as_primary_flood_merge_as_primary :
+			case connection_merge_as_secondary_flood_merge_as_primary :
+			case connection_merge_not_set_flood_merge_as_primary :
+      	return merge_as_primary;
+      case connection_merge_as_primary_flood_merge_as_secondary :
+			case connection_merge_as_secondary_flood_merge_as_secondary :
+      case connection_merge_not_set_flood_merge_as_secondary :
+      	return merge_as_secondary;
+			case null_mtype:
+				throw runtime_error("No merge type defined for these coordinates");
+			default:
+				throw runtime_error("Merge type not recognized");
+		}
+	} else throw runtime_error("Merge type not recognized");
+}
+
+void basin_evaluation_algorithm::rebuild_secondary_basin(coords* initial_coords){
+	int secondary_basin_catchment_number = (*basin_catchment_numbers)(initial_coords);
+	coords* current_coords = basin_catchment_centers[secondary_basin_catchment_number - 1];
+	height_types current_height_type =  (*raw_orography)(current_coords) <= (*corrected_orography)(current_coords) ?
+		 flood_height : connection_height;
+	while(true){
+		if(current_height_type == flood_height)
+			(*basin_flooded_cells)(current_coords) = true;
+		else if (current_height_type == connection_height)
+			(*basin_connected_cells)(current_coords) = true;
+		else throw runtime_error("Height type not recognized");
+		basic_merge_types current_coords_basic_merge_type =
+			get_merge_type(current_height_type,current_coords);
+		if (current_coords_basic_merge_type == merge_as_primary){
+			coords* new_initial_coords =
+				get_cells_next_force_merge_index_as_coords(current_coords,
+                                                   current_height_type);
+			if((current_height_type == flood_height &&
+			    ! (*basin_flooded_cells)(new_initial_coords)) ||
+			   (current_height_type == connection_height &&
+			    ! (*basin_connected_cells)(new_initial_coords))) {
+				rebuild_secondary_basin(new_initial_coords);
+			}
+		} else if(current_coords_basic_merge_type == merge_as_secondary) {
+			//this isn't the cells actual redirect index; the redirect index array is simply being
+			//used as temporary storage
+			coords* next_cell_coords = get_cells_redirect_index_as_coords(current_coords,
+                                                      	 	 	 				current_height_type);
+			if ((*basin_catchment_numbers)(next_cell_coords) == basin_catchment_number ||
+			    ((*basin_flooded_cells)(next_cell_coords) &&
+			     ((*basin_connected_cells)(next_cell_coords) ||
+			      (*raw_orography)(next_cell_coords) <= (*corrected_orography)(next_cell_coords)))) {
+				//delete next_cell_coords;
+				return;
+			}
+			else if ((*basin_catchment_numbers)(next_cell_coords) == 0)
+				return;
+			else {
+				//delete current_coords;
+				rebuild_secondary_basin(next_cell_coords);
+			}
+		}
+		current_coords = get_cells_next_cell_index_as_coords(current_coords,
+                                                      	 current_height_type);
+		if ((*raw_orography)(current_coords) <= (*corrected_orography)(current_coords) ||
+		    (*basin_connected_cells)(current_coords)) current_height_type = flood_height;
+		else  current_height_type = connection_height;
+	}
 }
 
 void basin_evaluation_algorithm::set_secondary_redirect(){
@@ -560,11 +676,12 @@ void basin_evaluation_algorithm::set_remaining_redirects() {
 	});
 }
 
-priority_cell_queue basin_evaluation_algorithm::test_add_minima_to_queue(double* raw_orography_in,
-                                                                         double* corrected_orography_in,
-                                                                         bool* minima_in,
-                                                                         grid_params* grid_params_in,
-                                                                         grid_params* coarse_grid_params_in){
+reverse_priority_cell_queue basin_evaluation_algorithm::
+														test_add_minima_to_queue(double* raw_orography_in,
+                                                   	 double* corrected_orography_in,
+                                                     bool* minima_in,
+                                                     grid_params* grid_params_in,
+                                                     grid_params* coarse_grid_params_in){
 	_grid_params = grid_params_in;
 	_coarse_grid_params =  coarse_grid_params_in;
 	_grid = grid_factory(_grid_params);
@@ -651,6 +768,10 @@ priority_cell_queue latlon_basin_evaluation_algorithm::test_process_center_cell(
 	flooded_cells->set_all(false);
 	connected_cells = new field<bool>(connected_cells_in,grid_params_in);
 	connected_cells->set_all(false);
+	basin_flooded_cells = new field<bool>(grid_params_in);
+	basin_flooded_cells->set_all(false);
+	basin_connected_cells = new field<bool>(grid_params_in);
+	basin_connected_cells->set_all(false);
 	center_cell_volume_threshold = center_cell_volume_threshold_in;
 	cell_number = cell_number_in;
 	basin_catchment_number = basin_catchment_number_in;
@@ -866,5 +987,17 @@ coords* latlon_basin_evaluation_algorithm::get_cells_redirect_index_as_coords(co
 	else if (height_type_in == connection_height)
 		return new latlon_coords((*connect_redirect_lat_index)(latlon_coords_in),
 	                         	 (*connect_redirect_lon_index)(latlon_coords_in));
+	else throw runtime_error("Height type not recognized");
+}
+
+coords* latlon_basin_evaluation_algorithm::get_cells_next_force_merge_index_as_coords(coords* coords_in,
+                                                                              				height_types height_type_in){
+	latlon_coords* latlon_coords_in = static_cast<latlon_coords*>(coords_in);
+	if (height_type_in == flood_height)
+		return new latlon_coords((*flood_force_merge_lat_index)(latlon_coords_in),
+	                         	 (*flood_force_merge_lon_index)(latlon_coords_in));
+	else if (height_type_in == connection_height)
+		return new latlon_coords((*connect_force_merge_lat_index)(latlon_coords_in),
+	                         	 (*connect_force_merge_lon_index)(latlon_coords_in));
 	else throw runtime_error("Height type not recognized");
 }

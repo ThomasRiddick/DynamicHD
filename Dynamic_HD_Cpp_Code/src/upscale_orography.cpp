@@ -56,7 +56,6 @@ void latlon_upscale_orography(double* orography_in, int nlat_fine, int nlon_fine
 			<< tarasov_include_corners_in_same_edge_criteria_in << endl;
 	cout << "Separation Threshold for Return to Same Edge: "
 			<<  tarasov_separation_threshold_for_returning_to_same_edge_in << endl;
-	const bool debug = false;
 	const bool tarasov_mod = true;
 	const bool set_ls_as_no_data_flag = false;
 	const bool index_based_rdirs_only_in = false;
@@ -76,7 +75,7 @@ void latlon_upscale_orography(double* orography_in, int nlat_fine, int nlon_fine
 					}
 					auto alg1 = sink_filling_algorithm_1_latlon();
 					if (all_sea_points) return sink_filling_algorithm::get_no_data_value();
-					alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,debug,add_slope_in,epsilon_in,
+					alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in,
 							  	  	 tarasov_separation_threshold_for_returning_to_same_edge_in,
 									 tarasov_min_path_length_in,
 									 tarasov_include_corners_in_same_edge_criteria_in);
@@ -107,7 +106,7 @@ void latlon_upscale_orography(double* orography_in, int nlat_fine, int nlon_fine
 					auto next_cell_lon_index_in = new int[scale_factor_lat*scale_factor_lon];
 					auto rdirs_in				= new short[scale_factor_lat*scale_factor_lon];
 					auto catchment_nums_in   	= new int[scale_factor_lat*scale_factor_lon];
-					alg4.setup_flags(set_ls_as_no_data_flag,prefer_non_diagonal_initial_dirs,tarasov_mod,debug,
+					alg4.setup_flags(set_ls_as_no_data_flag,prefer_non_diagonal_initial_dirs,tarasov_mod,
 									 index_based_rdirs_only_in,
 									 tarasov_separation_threshold_for_returning_to_same_edge_in,
 									 tarasov_min_path_length_in,

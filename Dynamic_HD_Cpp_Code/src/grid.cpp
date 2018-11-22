@@ -8,6 +8,9 @@
 
 #include <cmath>
 #include "grid.hpp"
+#if USE_NETCDFCPP
+#include <netcdfcpp.h>
+#endif
 
 /* IMPORTANT!
  * Note that a description of each functions purpose is provided with the function declaration in
@@ -201,7 +204,7 @@ coords* latlon_grid::convert_fine_coords(coords* fine_coords,grid_params* fine_g
 		return new latlon_coords(coarse_lat,coarse_lon);
 	return new latlon_coords(1,1);
 }
-    
+
 icon_single_index_grid::icon_single_index_grid(grid_params* params){
 	grid_type = grid_types::icon_single_index;
 	if(icon_single_index_grid_params* params_local = dynamic_cast<icon_single_index_grid_params*>(params)){
@@ -224,7 +227,7 @@ void icon_single_index_grid::for_diagonal_nbrs(coords* coords_in,function<void(c
 	if (use_secondary_neighbors) {
 		for (auto i = 0; i < 9; i++) {
 			int neighbor_index = get_cell_secondary_neighbors_index(generic_1d_coords_in,i);
-			func(new generic_1d_coords(neighbor_index));
+			if (neighbor_index != no_neighbor) func(new generic_1d_coords(neighbor_index));
 		}
 	}
 }
@@ -244,7 +247,7 @@ void icon_single_index_grid::for_all_nbrs(coords* coords_in,function<void(coords
 
 void icon_single_index_grid::for_all(function<void(coords*)> func) {
 	for (auto i = 0; i < ncells; i++) {
-		func(new generic_1d_coords(i));
+		func(new generic_1d_coords(i + array_offset));
 	}
 }
 
@@ -268,13 +271,13 @@ bool icon_single_index_grid::icon_single_index_non_diagonal(generic_1d_coords* s
 
 bool icon_single_index_grid::is_corner_cell(coords* coords_in){
 	generic_1d_coords* generic_1d_coords_in = static_cast<generic_1d_coords*>(coords_in);
-	int edge_num = edge_nums[generic_1d_coords_in->get_index()];
+	int edge_num = edge_nums[generic_1d_coords_in->get_index()-array_offset];
 	return (edge_num > 3 && edge_num <= 6);
 }
 
 bool icon_single_index_grid::check_if_cell_is_on_given_edge_number(coords* coords_in,int edge_number) {
 	generic_1d_coords* generic_1d_coords_in = static_cast<generic_1d_coords*>(coords_in);
-	int cell_edge_number = edge_nums[generic_1d_coords_in->get_index()];
+	int cell_edge_number = edge_nums[generic_1d_coords_in->get_index() - array_offset];
 	if (cell_edge_number == edge_number) return true;
 	//deal with corner cells that are assigned horizontal edge edge numbers but should
 	//also be considered to be a vertical edge
@@ -289,12 +292,12 @@ bool icon_single_index_grid::check_if_cell_is_on_given_edge_number(coords* coord
 
 bool icon_single_index_grid::is_edge(coords* coords_in) {
 	generic_1d_coords* generic_1d_coords_in = static_cast<generic_1d_coords*>(coords_in);
-	return ( edge_nums[generic_1d_coords_in->get_index()] != no_edge );
+	return ( edge_nums[generic_1d_coords_in->get_index() - array_offset] != no_edge );
 }
 
 int icon_single_index_grid::get_edge_number(coords* coords_in) {
 	generic_1d_coords* generic_1d_coords_in = static_cast<generic_1d_coords*>(coords_in);
-	int edge_num = edge_nums[generic_1d_coords_in->get_index()];
+	int edge_num = edge_nums[generic_1d_coords_in->get_index() - array_offset];
 	if(edge_num < 1 || edge_num > 6) {
 		throw runtime_error("Internal logic broken - trying to get edge number of non-edge cell");
 	}
@@ -304,19 +307,121 @@ int icon_single_index_grid::get_edge_number(coords* coords_in) {
 
 int icon_single_index_grid::get_separation_from_initial_edge(coords* coords_in,int edge_number) {
 	generic_1d_coords* generic_1d_coords_in = static_cast<generic_1d_coords*>(coords_in);
-	int edge_num = edge_nums[generic_1d_coords_in->get_index()];
+	int edge_num = edge_nums[generic_1d_coords_in->get_index() - array_offset];
 	if(edge_num < 1 || edge_num > 6) {
 		runtime_error("Internal logic broken - invalid initial edge number used as input to "
 						     	"get_separation_from_initial_edge");
 	}
 	if(edge_num > 3) edge_num -= 3;
 	// Offset of -1 as edge numbers go from 1 to 3
-	return edge_separations[generic_1d_coords_in->get_index()*3 + edge_num - 1];
+	return edge_separations[(generic_1d_coords_in->get_index() - array_offset)*3 + edge_num - 1];
+}
+
+coords* icon_single_index_grid::convert_fine_coords(coords* fine_coords,grid_params* fine_grid_params){
+	throw runtime_error("Convert fine coords not yet implemented for Icon grid");
+}
+
+coords* icon_single_index_grid::
+	calculate_downstream_coords_from_dir_based_rdir(coords* initial_coords,double rdir){
+	throw runtime_error("Direction based river directions not compatible with Icon grid");
+	}
+
+#if USE_NETCDFCPP
+void icon_single_index_grid_params::icon_single_index_grid_read_params_file(){
+	NcFile grid_params_file(icon_grid_params_filepath.c_str(), NcFile::ReadOnly);
+	if ( ! grid_params_file.is_valid()) throw runtime_error("Invalid grid parameters file");
+	ncells = int(grid_params_file.get_dim("ncells")->size());
+	NcVar *neighboring_cell_indices_var = grid_params_file.get_var("neighbor_cell_index");
+	neighboring_cell_indices = new int[3*ncells];
+	int neighboring_cell_indices_swapped_dims[3*ncells];
+	neighboring_cell_indices_var->get(&neighboring_cell_indices_swapped_dims[0],3,ncells);
+	for (int i = 0; i < ncells; i++){
+		neighboring_cell_indices[3*i]   = neighboring_cell_indices_swapped_dims[i];
+		neighboring_cell_indices[3*i+1] = neighboring_cell_indices_swapped_dims[ncells+i];
+		neighboring_cell_indices[3*i+2] = neighboring_cell_indices_swapped_dims[2*ncells+i];
+	}
+	if (use_secondary_neighbors) icon_single_index_grid_calculate_secondary_neighbors();
+}
+#endif
+
+void icon_single_index_grid_params::icon_single_index_grid_calculate_secondary_neighbors(){
+	//Within this function work with c array indices rather than native icon indices so apply offset to
+	//indices read from arrays
+	secondary_neighboring_cell_indices = new int[9*ncells];
+	for(int index_over_grid=0;index_over_grid<ncells;index_over_grid++){
+		//Six secondary neighbors are neighbors of primary neighbors
+		for(int index_over_primary_nbrs=0; index_over_primary_nbrs < 3; index_over_primary_nbrs++){
+			int primary_neighbor_index =
+				neighboring_cell_indices[3*index_over_grid+index_over_primary_nbrs] - array_offset;
+			int valid_secondary_nbr_count = 0;
+			for(int index_over_secondary_nbrs=0; index_over_secondary_nbrs < 3; index_over_secondary_nbrs++){
+				//2 rather than 3 times primary neighbor index as we miss out 1 secondary neighbor for each
+				//primary neighbor
+				int secondary_neighbor_index =
+					neighboring_cell_indices[3*primary_neighbor_index+index_over_secondary_nbrs] - array_offset;
+				if (secondary_neighbor_index != index_over_grid) {
+					//Note this leaves gaps for the remaining three secondary neighbors
+					secondary_neighboring_cell_indices[9*index_over_grid+3*index_over_primary_nbrs+
+					                                   valid_secondary_nbr_count] =
+																							secondary_neighbor_index + array_offset;
+					valid_secondary_nbr_count++;
+				}
+			}
+		}
+	//Three secondary neighbors are common neighbors of the existing secondary neighbors
+	int gap_index = 2;
+	//Last secondary neighbor is as yet unfilled so loop only up to an index of
+	for(int index_over_secondary_nbrs=0; index_over_secondary_nbrs < 8;
+	    index_over_secondary_nbrs++){
+		//skip as yet unfilled entries in the secondary neighbors array
+		if ((index_over_secondary_nbrs+1)%3 == 0) index_over_secondary_nbrs++;
+		int first_secondary_neighbor_index =
+			secondary_neighboring_cell_indices[9*index_over_grid+
+		                                     index_over_secondary_nbrs] - array_offset;
+	  //Last secondary neighbor is as yet unfilled so loop only up to an index of 7
+		for(int second_index_over_secondary_nbrs=index_over_secondary_nbrs+2;
+		    second_index_over_secondary_nbrs < 8;
+	    second_index_over_secondary_nbrs++){
+			if ((second_index_over_secondary_nbrs+1)%3 == 0) second_index_over_secondary_nbrs++;
+			int second_secondary_neighbor_index =
+				secondary_neighboring_cell_indices[9*index_over_grid + second_index_over_secondary_nbrs]
+					- array_offset;
+
+				//Some tertiary neighbors are also secondary neighbors
+				for(int index_over_tertiary_nbrs=0; index_over_tertiary_nbrs < 3; index_over_tertiary_nbrs++){
+					int tertiary_neighbor_index =
+						neighboring_cell_indices[first_secondary_neighbor_index*3 +
+					                           index_over_tertiary_nbrs] - array_offset;
+					//Test to see if this one of the twelve 5-point vertices in the grid
+					if(second_secondary_neighbor_index == tertiary_neighbor_index) {
+						secondary_neighboring_cell_indices[9*index_over_grid+
+		                                         gap_index] = no_neighbor;
+						gap_index += 3;
+						continue;
+					}
+					for(int second_index_over_tertiary_nbrs=0; second_index_over_tertiary_nbrs < 3;
+			    second_index_over_tertiary_nbrs++){
+						int second_tertiary_neighbor_index =
+							neighboring_cell_indices[second_secondary_neighbor_index*3 +
+					                             second_index_over_tertiary_nbrs] - array_offset;
+						if(second_tertiary_neighbor_index == tertiary_neighbor_index){
+							secondary_neighboring_cell_indices[9*index_over_grid+
+		                                             gap_index] = tertiary_neighbor_index + array_offset;
+							gap_index += 3;
+						}
+					}
+			  }
+			}
+		}
+	}
 }
 
 grid* grid_factory(grid_params* grid_params_in){
 	if(latlon_grid_params* latlon_params = dynamic_cast<latlon_grid_params*>(grid_params_in)){
 		return new latlon_grid(latlon_params);
+	} else if(icon_single_index_grid_params* icon_single_index_params =
+	          dynamic_cast<icon_single_index_grid_params*>(grid_params_in)){
+		return new icon_single_index_grid(icon_single_index_params);
 	} else {
 		throw runtime_error("Grid type not known to field class, if it should be please add appropriate code to constructor");
 	}

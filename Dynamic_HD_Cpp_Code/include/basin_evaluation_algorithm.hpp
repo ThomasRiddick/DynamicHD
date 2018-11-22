@@ -12,6 +12,21 @@
 #include "enums.hpp"
 #include "priority_cell_queue.hpp"
 
+class additional_primary_redirect {
+  coords* position;
+  height_types height_type;
+  bool local_redirect;
+};
+
+class latlon_additional_primary_redirect : public additional_primary_redirect {
+  int next_cell_lat_index;
+  int next_cell_lon_index;
+  int force_merge_lat_index;
+  int force_merge_lon_index;
+  int redirect_lat_index;
+  int redirect_lon_index;
+};
+
 class basin_evaluation_algorithm {
 public:
 	virtual ~basin_evaluation_algorithm();
@@ -28,11 +43,11 @@ public:
                     grid_params* grid_params_in,
                     grid_params* coarse_grid_params_in);
 	void evaluate_basins();
-	priority_cell_queue test_add_minima_to_queue(double* raw_orography_in,
-                                               double* corrected_orography_in,
-                                               bool* minima_in,
-                                               grid_params* grid_params_in,
-                                               grid_params* coarse_grid_params_in);
+	reverse_priority_cell_queue test_add_minima_to_queue(double* raw_orography_in,
+                                                       double* corrected_orography_in,
+                                                       bool* minima_in,
+                                                       grid_params* grid_params_in,
+                                                       grid_params* coarse_grid_params_in);
 	priority_cell_queue test_process_neighbors(coords* center_coords_in,
                                              bool*   completed_cells_in,
                                              double* raw_orography_in,
@@ -53,6 +68,8 @@ protected:
                                                       height_types height_type_in) = 0;
   virtual coords* get_cells_redirect_index_as_coords(coords* coords_in,
                                                      height_types height_type_in) = 0;
+  virtual coords* get_cells_next_force_merge_index_as_coords(coords* coords_in,
+                                                      height_types height_type_in) = 0;
 	virtual bool check_for_sinks(coords* coords_in) = 0;
   bool skip_center_cell();
 	void evaluate_basin();
@@ -65,6 +82,8 @@ protected:
   void update_previous_filled_cell_variables();
   bool possible_merge_point_reached();
   void set_merge_type(basic_merge_types current_merge_type);
+  basic_merge_types get_merge_type(height_types height_type_in,coords* coords_in);
+  void rebuild_secondary_basin(coords* initial_coords);
   void set_primary_merge();
 	void set_remaining_redirects();
 	void set_secondary_redirect();
@@ -81,7 +100,7 @@ protected:
 	                                                     			coords* current_center_coords,
 	                                                     			coords* catchment_center_coords,
                                                             height_types initial_center_height_type);
-	priority_cell_queue minima_q;
+	reverse_priority_cell_queue minima_q;
 	priority_cell_queue q;
 	queue<landsea_cell*> search_q;
 	grid_params* _grid_params = nullptr;
@@ -92,11 +111,15 @@ protected:
 	field<bool>* completed_cells = nullptr;
   field<bool>* flooded_cells = nullptr;
   field<bool>* connected_cells = nullptr;
+  field<bool>* basin_flooded_cells = nullptr;
+  field<bool>* basin_connected_cells = nullptr;
 	field<bool>* search_completed_cells = nullptr;
 	field<bool>* requires_flood_redirect_indices = nullptr;
   field<bool>* requires_connect_redirect_indices = nullptr;
   field<bool>* flood_local_redirect = nullptr;
   field<bool>* connect_local_redirect = nullptr;
+  field<bool>* additional_flood_local_redirect = nullptr;
+  field<bool>* additional_connect_local_redirect = nullptr;
 	field<double>* raw_orography = nullptr;
 	field<double>* corrected_orography = nullptr;
 	field<double>* connection_volume_thresholds = nullptr;
@@ -244,6 +267,8 @@ private:
                                               height_types height_type_in);
   coords* get_cells_redirect_index_as_coords(coords* coords_in,
                                              height_types height_type_in);
+  coords* get_cells_next_force_merge_index_as_coords(coords* coords_in,
+                                                     height_types height_type_in);
 	field<double>* prior_fine_rdirs = nullptr;
 	field<int>* flood_next_cell_lat_index = nullptr;
 	field<int>* flood_next_cell_lon_index = nullptr;
@@ -257,4 +282,9 @@ private:
 	field<int>* flood_redirect_lon_index = nullptr;
 	field<int>* connect_redirect_lat_index = nullptr;
 	field<int>* connect_redirect_lon_index = nullptr;
+  field<int>* additional_flood_redirect_lat_index = nullptr;
+  field<int>* additional_flood_redirect_lon_index = nullptr;
+  field<int>* additional_connect_redirect_lat_index = nullptr;
+  field<int>* additional_connect_redirect_lon_index = nullptr;
+  queue<latlon_additional_primary_redirect*> additional_primary_redirects;
 };
