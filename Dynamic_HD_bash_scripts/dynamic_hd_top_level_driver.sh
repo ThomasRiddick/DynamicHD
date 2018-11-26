@@ -10,7 +10,7 @@ module_name=$1
 if [[ $(hostname -d) == "hpc.dkrz.de" ]]; then
 	module load ${module_name}
 else
-	eval "eval `/usr/bin/tclsh /sw/share/Modules/modulecmd.tcl bash load ${module_name}`"
+	eval "eval `/usr/bin/tclsh /sw/share/Modules-4.2.1/libexec/modulecmd.tcl bash load ${module_name}`"
 fi
 }
 
