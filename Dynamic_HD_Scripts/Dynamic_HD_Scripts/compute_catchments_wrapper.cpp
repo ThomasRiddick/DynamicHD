@@ -9,6 +9,7 @@
             "/Users/thomasriddick/Documents/workspace/Dynamic_HD_Code/Dynamic_HD_Cpp_Code/src/compute_catchments.cpp"
         ], 
         "extra_compile_args": [
+            "-DPROCESSED_CELL_COUNTER", 
             "-std=gnu++11", 
             "-stdlib=libc++", 
             "-mmacosx-version-min=10.7"
@@ -309,6 +310,11 @@ static CYTHON_INLINE float __PYX_NAN() {
 #include "stdlib.h"
 #include "numpy/arrayobject.h"
 #include "numpy/ufuncobject.h"
+#include <string>
+#include "ios"
+#include "new"
+#include "stdexcept"
+#include "typeinfo"
 #include "compute_catchments.cpp"
 #ifdef _OPENMP
 #include <omp.h>
@@ -926,6 +932,13 @@ static void __Pyx_BufFmt_Init(__Pyx_BufFmt_Context* ctx,
                               __Pyx_BufFmt_StackElem* stack,
                               __Pyx_TypeInfo* type); // PROTO
 
+/* PyObjectCall.proto */
+#if CYTHON_COMPILING_IN_CPYTHON
+static CYTHON_INLINE PyObject* __Pyx_PyObject_Call(PyObject *func, PyObject *arg, PyObject *kw);
+#else
+#define __Pyx_PyObject_Call(func, arg, kw) PyObject_Call(func, arg, kw)
+#endif
+
 /* BufferIndexError.proto */
 static void __Pyx_RaiseBufferIndexError(int axis);
 
@@ -972,13 +985,6 @@ static CYTHON_INLINE PyObject* __Pyx_PyObject_GetAttrStr(PyObject* obj, PyObject
 
 /* GetBuiltinName.proto */
 static PyObject *__Pyx_GetBuiltinName(PyObject *name);
-
-/* PyObjectCall.proto */
-#if CYTHON_COMPILING_IN_CPYTHON
-static CYTHON_INLINE PyObject* __Pyx_PyObject_Call(PyObject *func, PyObject *arg, PyObject *kw);
-#else
-#define __Pyx_PyObject_Call(func, arg, kw) PyObject_Call(func, arg, kw)
-#endif
 
 /* RaiseException.proto */
 static void __Pyx_Raise(PyObject *type, PyObject *value, PyObject *tb, PyObject *cause);
@@ -1064,6 +1070,46 @@ typedef struct {
 /* None.proto */
 static Py_ssize_t __Pyx_zeros[] = {0, 0, 0, 0, 0, 0, 0, 0};
 static Py_ssize_t __Pyx_minusones[] = {-1, -1, -1, -1, -1, -1, -1, -1};
+
+/* CppExceptionConversion.proto */
+#ifndef __Pyx_CppExn2PyErr
+#include <new>
+#include <typeinfo>
+#include <stdexcept>
+#include <ios>
+static void __Pyx_CppExn2PyErr() {
+  try {
+    if (PyErr_Occurred())
+      ; // let the latest Python exn pass through and ignore the current one
+    else
+      throw;
+  } catch (const std::bad_alloc& exn) {
+    PyErr_SetString(PyExc_MemoryError, exn.what());
+  } catch (const std::bad_cast& exn) {
+    PyErr_SetString(PyExc_TypeError, exn.what());
+  } catch (const std::domain_error& exn) {
+    PyErr_SetString(PyExc_ValueError, exn.what());
+  } catch (const std::invalid_argument& exn) {
+    PyErr_SetString(PyExc_ValueError, exn.what());
+  } catch (const std::ios_base::failure& exn) {
+    PyErr_SetString(PyExc_IOError, exn.what());
+  } catch (const std::out_of_range& exn) {
+    PyErr_SetString(PyExc_IndexError, exn.what());
+  } catch (const std::overflow_error& exn) {
+    PyErr_SetString(PyExc_OverflowError, exn.what());
+  } catch (const std::range_error& exn) {
+    PyErr_SetString(PyExc_ArithmeticError, exn.what());
+  } catch (const std::underflow_error& exn) {
+    PyErr_SetString(PyExc_ArithmeticError, exn.what());
+  } catch (const std::exception& exn) {
+    PyErr_SetString(PyExc_RuntimeError, exn.what());
+  }
+  catch (...)
+  {
+    PyErr_SetString(PyExc_RuntimeError, "Unknown exception");
+  }
+}
+#endif
 
 /* None.proto */
 #if CYTHON_CCOMPLEX
@@ -1236,6 +1282,8 @@ static PyTypeObject *__pyx_ptype_5numpy_ndarray = 0;
 static PyTypeObject *__pyx_ptype_5numpy_ufunc = 0;
 static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *, char *, char *, int *); /*proto*/
 
+/* Module declarations from 'libcpp.string' */
+
 /* Module declarations from 'Dynamic_HD_Scripts.compute_catchments_wrapper' */
 static __Pyx_TypeInfo __Pyx_TypeInfo_int = { "int", NULL, sizeof(int), { 0 }, 0, IS_UNSIGNED(int) ? 'U' : 'I', IS_UNSIGNED(int), 0 };
 static __Pyx_TypeInfo __Pyx_TypeInfo_double = { "double", NULL, sizeof(double), { 0 }, 0, 'R', 0, 0 };
@@ -1257,8 +1305,10 @@ static const char __pyx_k_nlon_in[] = "nlon_in";
 static const char __pyx_k_rdirs_in[] = "rdirs_in";
 static const char __pyx_k_ValueError[] = "ValueError";
 static const char __pyx_k_RuntimeError[] = "RuntimeError";
-static const char __pyx_k_compute_catchments[] = "compute_catchments";
+static const char __pyx_k_loop_log_filepath[] = "loop_log_filepath";
+static const char __pyx_k_loop_log_filepath_c[] = "loop_log_filepath_c";
 static const char __pyx_k_catchment_numbers_in[] = "catchment_numbers_in";
+static const char __pyx_k_compute_catchments_cpp[] = "compute_catchments_cpp";
 static const char __pyx_k_ndarray_is_not_C_contiguous[] = "ndarray is not C contiguous";
 static const char __pyx_k_Users_thomasriddick_Documents_w[] = "/Users/thomasriddick/Documents/workspace/Dynamic_HD_Code/Dynamic_HD_Scripts/Dynamic_HD_Scripts/compute_catchments_wrapper.pyx";
 static const char __pyx_k_unknown_dtype_code_in_numpy_pxd[] = "unknown dtype code in numpy.pxd (%d)";
@@ -1276,8 +1326,10 @@ static PyObject *__pyx_n_s_RuntimeError;
 static PyObject *__pyx_kp_s_Users_thomasriddick_Documents_w;
 static PyObject *__pyx_n_s_ValueError;
 static PyObject *__pyx_n_s_catchment_numbers_in;
-static PyObject *__pyx_n_s_compute_catchments;
+static PyObject *__pyx_n_s_compute_catchments_cpp;
 static PyObject *__pyx_n_s_import;
+static PyObject *__pyx_n_s_loop_log_filepath;
+static PyObject *__pyx_n_s_loop_log_filepath_c;
 static PyObject *__pyx_n_s_main;
 static PyObject *__pyx_kp_u_ndarray_is_not_C_contiguous;
 static PyObject *__pyx_kp_u_ndarray_is_not_Fortran_contiguou;
@@ -1289,7 +1341,7 @@ static PyObject *__pyx_n_s_range;
 static PyObject *__pyx_n_s_rdirs_in;
 static PyObject *__pyx_n_s_test;
 static PyObject *__pyx_kp_u_unknown_dtype_code_in_numpy_pxd;
-static PyObject *__pyx_pf_18Dynamic_HD_Scripts_26compute_catchments_wrapper_compute_catchments(CYTHON_UNUSED PyObject *__pyx_self, PyArrayObject *__pyx_v_catchment_numbers_in, PyArrayObject *__pyx_v_rdirs_in); /* proto */
+static PyObject *__pyx_pf_18Dynamic_HD_Scripts_26compute_catchments_wrapper_compute_catchments_cpp(CYTHON_UNUSED PyObject *__pyx_self, PyArrayObject *__pyx_v_catchment_numbers_in, PyArrayObject *__pyx_v_rdirs_in, PyObject *__pyx_v_loop_log_filepath); /* proto */
 static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, Py_buffer *__pyx_v_info, int __pyx_v_flags); /* proto */
 static void __pyx_pf_5numpy_7ndarray_2__releasebuffer__(PyArrayObject *__pyx_v_self, Py_buffer *__pyx_v_info); /* proto */
 static PyObject *__pyx_tuple_;
@@ -1301,31 +1353,33 @@ static PyObject *__pyx_tuple__6;
 static PyObject *__pyx_tuple__7;
 static PyObject *__pyx_codeobj__8;
 
-/* "Dynamic_HD_Scripts/compute_catchments_wrapper.pyx":10
+/* "Dynamic_HD_Scripts/compute_catchments_wrapper.pyx":12
  *                                    int nlat_in,int nlon_in)
  * 
- * def compute_catchments(np.ndarray[int,ndim=2,mode='c'] catchment_numbers_in,             # <<<<<<<<<<<<<<
- *                        np.ndarray[double,ndim=2,mode='c'] rdirs_in):
- *     """Call the C++ cython interface function from cython with appropriate arguments.
+ * def compute_catchments_cpp(np.ndarray[int,ndim=2,mode='c'] catchment_numbers_in,             # <<<<<<<<<<<<<<
+ *                            np.ndarray[double,ndim=2,mode='c'] rdirs_in,
+ *                            str loop_log_filepath):
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_18Dynamic_HD_Scripts_26compute_catchments_wrapper_1compute_catchments(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static char __pyx_doc_18Dynamic_HD_Scripts_26compute_catchments_wrapper_compute_catchments[] = "Call the C++ cython interface function from cython with appropriate arguments.\n\n    Also find the required number of latitude and longitude points to pass in\n    ";
-static PyMethodDef __pyx_mdef_18Dynamic_HD_Scripts_26compute_catchments_wrapper_1compute_catchments = {"compute_catchments", (PyCFunction)__pyx_pw_18Dynamic_HD_Scripts_26compute_catchments_wrapper_1compute_catchments, METH_VARARGS|METH_KEYWORDS, __pyx_doc_18Dynamic_HD_Scripts_26compute_catchments_wrapper_compute_catchments};
-static PyObject *__pyx_pw_18Dynamic_HD_Scripts_26compute_catchments_wrapper_1compute_catchments(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+static PyObject *__pyx_pw_18Dynamic_HD_Scripts_26compute_catchments_wrapper_1compute_catchments_cpp(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static char __pyx_doc_18Dynamic_HD_Scripts_26compute_catchments_wrapper_compute_catchments_cpp[] = "Call the C++ cython interface function from cython with appropriate arguments.\n\n    Also find the required number of latitude and longitude points to pass in\n    ";
+static PyMethodDef __pyx_mdef_18Dynamic_HD_Scripts_26compute_catchments_wrapper_1compute_catchments_cpp = {"compute_catchments_cpp", (PyCFunction)__pyx_pw_18Dynamic_HD_Scripts_26compute_catchments_wrapper_1compute_catchments_cpp, METH_VARARGS|METH_KEYWORDS, __pyx_doc_18Dynamic_HD_Scripts_26compute_catchments_wrapper_compute_catchments_cpp};
+static PyObject *__pyx_pw_18Dynamic_HD_Scripts_26compute_catchments_wrapper_1compute_catchments_cpp(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   PyArrayObject *__pyx_v_catchment_numbers_in = 0;
   PyArrayObject *__pyx_v_rdirs_in = 0;
+  PyObject *__pyx_v_loop_log_filepath = 0;
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("compute_catchments (wrapper)", 0);
+  __Pyx_RefNannySetupContext("compute_catchments_cpp (wrapper)", 0);
   {
-    static PyObject **__pyx_pyargnames[] = {&__pyx_n_s_catchment_numbers_in,&__pyx_n_s_rdirs_in,0};
-    PyObject* values[2] = {0,0};
+    static PyObject **__pyx_pyargnames[] = {&__pyx_n_s_catchment_numbers_in,&__pyx_n_s_rdirs_in,&__pyx_n_s_loop_log_filepath,0};
+    PyObject* values[3] = {0,0,0};
     if (unlikely(__pyx_kwds)) {
       Py_ssize_t kw_args;
       const Py_ssize_t pos_args = PyTuple_GET_SIZE(__pyx_args);
       switch (pos_args) {
+        case  3: values[2] = PyTuple_GET_ITEM(__pyx_args, 2);
         case  2: values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
         case  1: values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
         case  0: break;
@@ -1339,32 +1393,40 @@ static PyObject *__pyx_pw_18Dynamic_HD_Scripts_26compute_catchments_wrapper_1com
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_rdirs_in)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("compute_catchments", 1, 2, 2, 1); __PYX_ERR(0, 10, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("compute_catchments_cpp", 1, 3, 3, 1); __PYX_ERR(0, 12, __pyx_L3_error)
+        }
+        case  2:
+        if (likely((values[2] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_loop_log_filepath)) != 0)) kw_args--;
+        else {
+          __Pyx_RaiseArgtupleInvalid("compute_catchments_cpp", 1, 3, 3, 2); __PYX_ERR(0, 12, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "compute_catchments") < 0)) __PYX_ERR(0, 10, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "compute_catchments_cpp") < 0)) __PYX_ERR(0, 12, __pyx_L3_error)
       }
-    } else if (PyTuple_GET_SIZE(__pyx_args) != 2) {
+    } else if (PyTuple_GET_SIZE(__pyx_args) != 3) {
       goto __pyx_L5_argtuple_error;
     } else {
       values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
       values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
+      values[2] = PyTuple_GET_ITEM(__pyx_args, 2);
     }
     __pyx_v_catchment_numbers_in = ((PyArrayObject *)values[0]);
     __pyx_v_rdirs_in = ((PyArrayObject *)values[1]);
+    __pyx_v_loop_log_filepath = ((PyObject*)values[2]);
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("compute_catchments", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 10, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("compute_catchments_cpp", 1, 3, 3, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 12, __pyx_L3_error)
   __pyx_L3_error:;
-  __Pyx_AddTraceback("Dynamic_HD_Scripts.compute_catchments_wrapper.compute_catchments", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("Dynamic_HD_Scripts.compute_catchments_wrapper.compute_catchments_cpp", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_catchment_numbers_in), __pyx_ptype_5numpy_ndarray, 1, "catchment_numbers_in", 0))) __PYX_ERR(0, 10, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_rdirs_in), __pyx_ptype_5numpy_ndarray, 1, "rdirs_in", 0))) __PYX_ERR(0, 11, __pyx_L1_error)
-  __pyx_r = __pyx_pf_18Dynamic_HD_Scripts_26compute_catchments_wrapper_compute_catchments(__pyx_self, __pyx_v_catchment_numbers_in, __pyx_v_rdirs_in);
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_catchment_numbers_in), __pyx_ptype_5numpy_ndarray, 1, "catchment_numbers_in", 0))) __PYX_ERR(0, 12, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_rdirs_in), __pyx_ptype_5numpy_ndarray, 1, "rdirs_in", 0))) __PYX_ERR(0, 13, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_loop_log_filepath), (&PyString_Type), 1, "loop_log_filepath", 1))) __PYX_ERR(0, 14, __pyx_L1_error)
+  __pyx_r = __pyx_pf_18Dynamic_HD_Scripts_26compute_catchments_wrapper_compute_catchments_cpp(__pyx_self, __pyx_v_catchment_numbers_in, __pyx_v_rdirs_in, __pyx_v_loop_log_filepath);
 
   /* function exit code */
   goto __pyx_L0;
@@ -1375,9 +1437,10 @@ static PyObject *__pyx_pw_18Dynamic_HD_Scripts_26compute_catchments_wrapper_1com
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_18Dynamic_HD_Scripts_26compute_catchments_wrapper_compute_catchments(CYTHON_UNUSED PyObject *__pyx_self, PyArrayObject *__pyx_v_catchment_numbers_in, PyArrayObject *__pyx_v_rdirs_in) {
+static PyObject *__pyx_pf_18Dynamic_HD_Scripts_26compute_catchments_wrapper_compute_catchments_cpp(CYTHON_UNUSED PyObject *__pyx_self, PyArrayObject *__pyx_v_catchment_numbers_in, PyArrayObject *__pyx_v_rdirs_in, PyObject *__pyx_v_loop_log_filepath) {
   int __pyx_v_nlat_in;
   int __pyx_v_nlon_in;
+  std::string __pyx_v_loop_log_filepath_c;
   __Pyx_LocalBuf_ND __pyx_pybuffernd_catchment_numbers_in;
   __Pyx_Buffer __pyx_pybuffer_catchment_numbers_in;
   __Pyx_LocalBuf_ND __pyx_pybuffernd_rdirs_in;
@@ -1386,12 +1449,16 @@ static PyObject *__pyx_pf_18Dynamic_HD_Scripts_26compute_catchments_wrapper_comp
   __Pyx_RefNannyDeclarations
   npy_intp __pyx_t_1;
   npy_intp __pyx_t_2;
-  Py_ssize_t __pyx_t_3;
-  Py_ssize_t __pyx_t_4;
-  int __pyx_t_5;
-  Py_ssize_t __pyx_t_6;
+  PyObject *__pyx_t_3 = NULL;
+  PyObject *__pyx_t_4 = NULL;
+  char *__pyx_t_5;
+  std::string __pyx_t_6;
   Py_ssize_t __pyx_t_7;
-  __Pyx_RefNannySetupContext("compute_catchments", 0);
+  Py_ssize_t __pyx_t_8;
+  int __pyx_t_9;
+  Py_ssize_t __pyx_t_10;
+  Py_ssize_t __pyx_t_11;
+  __Pyx_RefNannySetupContext("compute_catchments_cpp", 0);
   __pyx_pybuffer_catchment_numbers_in.pybuffer.buf = NULL;
   __pyx_pybuffer_catchment_numbers_in.refcount = 0;
   __pyx_pybuffernd_catchment_numbers_in.data = NULL;
@@ -1402,93 +1469,121 @@ static PyObject *__pyx_pf_18Dynamic_HD_Scripts_26compute_catchments_wrapper_comp
   __pyx_pybuffernd_rdirs_in.rcbuffer = &__pyx_pybuffer_rdirs_in;
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_catchment_numbers_in.rcbuffer->pybuffer, (PyObject*)__pyx_v_catchment_numbers_in, &__Pyx_TypeInfo_int, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 2, 0, __pyx_stack) == -1)) __PYX_ERR(0, 10, __pyx_L1_error)
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_catchment_numbers_in.rcbuffer->pybuffer, (PyObject*)__pyx_v_catchment_numbers_in, &__Pyx_TypeInfo_int, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 2, 0, __pyx_stack) == -1)) __PYX_ERR(0, 12, __pyx_L1_error)
   }
   __pyx_pybuffernd_catchment_numbers_in.diminfo[0].strides = __pyx_pybuffernd_catchment_numbers_in.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_catchment_numbers_in.diminfo[0].shape = __pyx_pybuffernd_catchment_numbers_in.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_catchment_numbers_in.diminfo[1].strides = __pyx_pybuffernd_catchment_numbers_in.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_catchment_numbers_in.diminfo[1].shape = __pyx_pybuffernd_catchment_numbers_in.rcbuffer->pybuffer.shape[1];
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_rdirs_in.rcbuffer->pybuffer, (PyObject*)__pyx_v_rdirs_in, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 2, 0, __pyx_stack) == -1)) __PYX_ERR(0, 10, __pyx_L1_error)
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_rdirs_in.rcbuffer->pybuffer, (PyObject*)__pyx_v_rdirs_in, &__Pyx_TypeInfo_double, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 2, 0, __pyx_stack) == -1)) __PYX_ERR(0, 12, __pyx_L1_error)
   }
   __pyx_pybuffernd_rdirs_in.diminfo[0].strides = __pyx_pybuffernd_rdirs_in.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_rdirs_in.diminfo[0].shape = __pyx_pybuffernd_rdirs_in.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_rdirs_in.diminfo[1].strides = __pyx_pybuffernd_rdirs_in.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_rdirs_in.diminfo[1].shape = __pyx_pybuffernd_rdirs_in.rcbuffer->pybuffer.shape[1];
 
-  /* "Dynamic_HD_Scripts/compute_catchments_wrapper.pyx":18
+  /* "Dynamic_HD_Scripts/compute_catchments_wrapper.pyx":21
  * 
  *     cdef int nlat_in,nlon_in
  *     nlat_in, nlon_in = catchment_numbers_in.shape[0],catchment_numbers_in.shape[1]             # <<<<<<<<<<<<<<
+ *     cdef string loop_log_filepath_c = string(bytes(loop_log_filepath))
  *     latlon_compute_catchments(&catchment_numbers_in[0,0],
- *                               &rdirs_in[0,0],
  */
   __pyx_t_1 = (__pyx_v_catchment_numbers_in->dimensions[0]);
   __pyx_t_2 = (__pyx_v_catchment_numbers_in->dimensions[1]);
   __pyx_v_nlat_in = __pyx_t_1;
   __pyx_v_nlon_in = __pyx_t_2;
 
-  /* "Dynamic_HD_Scripts/compute_catchments_wrapper.pyx":19
+  /* "Dynamic_HD_Scripts/compute_catchments_wrapper.pyx":22
  *     cdef int nlat_in,nlon_in
  *     nlat_in, nlon_in = catchment_numbers_in.shape[0],catchment_numbers_in.shape[1]
+ *     cdef string loop_log_filepath_c = string(bytes(loop_log_filepath))             # <<<<<<<<<<<<<<
+ *     latlon_compute_catchments(&catchment_numbers_in[0,0],
+ *                               &rdirs_in[0,0],
+ */
+  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 22, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_INCREF(__pyx_v_loop_log_filepath);
+  __Pyx_GIVEREF(__pyx_v_loop_log_filepath);
+  PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_v_loop_log_filepath);
+  __pyx_t_4 = __Pyx_PyObject_Call(((PyObject *)(&PyBytes_Type)), __pyx_t_3, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 22, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_t_5 = __Pyx_PyObject_AsString(__pyx_t_4); if (unlikely((!__pyx_t_5) && PyErr_Occurred())) __PYX_ERR(0, 22, __pyx_L1_error)
+  try {
+    __pyx_t_6 = std::string(__pyx_t_5);
+  } catch(...) {
+    __Pyx_CppExn2PyErr();
+    __PYX_ERR(0, 22, __pyx_L1_error)
+  }
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __pyx_v_loop_log_filepath_c = __pyx_t_6;
+
+  /* "Dynamic_HD_Scripts/compute_catchments_wrapper.pyx":23
+ *     nlat_in, nlon_in = catchment_numbers_in.shape[0],catchment_numbers_in.shape[1]
+ *     cdef string loop_log_filepath_c = string(bytes(loop_log_filepath))
  *     latlon_compute_catchments(&catchment_numbers_in[0,0],             # <<<<<<<<<<<<<<
  *                               &rdirs_in[0,0],
- *                               nlat_in,nlon_in)
+ *                               loop_log_filepath_c,
  */
-  __pyx_t_3 = 0;
-  __pyx_t_4 = 0;
-  __pyx_t_5 = -1;
-  if (__pyx_t_3 < 0) {
-    __pyx_t_3 += __pyx_pybuffernd_catchment_numbers_in.diminfo[0].shape;
-    if (unlikely(__pyx_t_3 < 0)) __pyx_t_5 = 0;
-  } else if (unlikely(__pyx_t_3 >= __pyx_pybuffernd_catchment_numbers_in.diminfo[0].shape)) __pyx_t_5 = 0;
-  if (__pyx_t_4 < 0) {
-    __pyx_t_4 += __pyx_pybuffernd_catchment_numbers_in.diminfo[1].shape;
-    if (unlikely(__pyx_t_4 < 0)) __pyx_t_5 = 1;
-  } else if (unlikely(__pyx_t_4 >= __pyx_pybuffernd_catchment_numbers_in.diminfo[1].shape)) __pyx_t_5 = 1;
-  if (unlikely(__pyx_t_5 != -1)) {
-    __Pyx_RaiseBufferIndexError(__pyx_t_5);
-    __PYX_ERR(0, 19, __pyx_L1_error)
+  __pyx_t_7 = 0;
+  __pyx_t_8 = 0;
+  __pyx_t_9 = -1;
+  if (__pyx_t_7 < 0) {
+    __pyx_t_7 += __pyx_pybuffernd_catchment_numbers_in.diminfo[0].shape;
+    if (unlikely(__pyx_t_7 < 0)) __pyx_t_9 = 0;
+  } else if (unlikely(__pyx_t_7 >= __pyx_pybuffernd_catchment_numbers_in.diminfo[0].shape)) __pyx_t_9 = 0;
+  if (__pyx_t_8 < 0) {
+    __pyx_t_8 += __pyx_pybuffernd_catchment_numbers_in.diminfo[1].shape;
+    if (unlikely(__pyx_t_8 < 0)) __pyx_t_9 = 1;
+  } else if (unlikely(__pyx_t_8 >= __pyx_pybuffernd_catchment_numbers_in.diminfo[1].shape)) __pyx_t_9 = 1;
+  if (unlikely(__pyx_t_9 != -1)) {
+    __Pyx_RaiseBufferIndexError(__pyx_t_9);
+    __PYX_ERR(0, 23, __pyx_L1_error)
   }
 
-  /* "Dynamic_HD_Scripts/compute_catchments_wrapper.pyx":20
- *     nlat_in, nlon_in = catchment_numbers_in.shape[0],catchment_numbers_in.shape[1]
+  /* "Dynamic_HD_Scripts/compute_catchments_wrapper.pyx":24
+ *     cdef string loop_log_filepath_c = string(bytes(loop_log_filepath))
  *     latlon_compute_catchments(&catchment_numbers_in[0,0],
  *                               &rdirs_in[0,0],             # <<<<<<<<<<<<<<
+ *                               loop_log_filepath_c,
  *                               nlat_in,nlon_in)
  */
-  __pyx_t_6 = 0;
-  __pyx_t_7 = 0;
-  __pyx_t_5 = -1;
-  if (__pyx_t_6 < 0) {
-    __pyx_t_6 += __pyx_pybuffernd_rdirs_in.diminfo[0].shape;
-    if (unlikely(__pyx_t_6 < 0)) __pyx_t_5 = 0;
-  } else if (unlikely(__pyx_t_6 >= __pyx_pybuffernd_rdirs_in.diminfo[0].shape)) __pyx_t_5 = 0;
-  if (__pyx_t_7 < 0) {
-    __pyx_t_7 += __pyx_pybuffernd_rdirs_in.diminfo[1].shape;
-    if (unlikely(__pyx_t_7 < 0)) __pyx_t_5 = 1;
-  } else if (unlikely(__pyx_t_7 >= __pyx_pybuffernd_rdirs_in.diminfo[1].shape)) __pyx_t_5 = 1;
-  if (unlikely(__pyx_t_5 != -1)) {
-    __Pyx_RaiseBufferIndexError(__pyx_t_5);
-    __PYX_ERR(0, 20, __pyx_L1_error)
+  __pyx_t_10 = 0;
+  __pyx_t_11 = 0;
+  __pyx_t_9 = -1;
+  if (__pyx_t_10 < 0) {
+    __pyx_t_10 += __pyx_pybuffernd_rdirs_in.diminfo[0].shape;
+    if (unlikely(__pyx_t_10 < 0)) __pyx_t_9 = 0;
+  } else if (unlikely(__pyx_t_10 >= __pyx_pybuffernd_rdirs_in.diminfo[0].shape)) __pyx_t_9 = 0;
+  if (__pyx_t_11 < 0) {
+    __pyx_t_11 += __pyx_pybuffernd_rdirs_in.diminfo[1].shape;
+    if (unlikely(__pyx_t_11 < 0)) __pyx_t_9 = 1;
+  } else if (unlikely(__pyx_t_11 >= __pyx_pybuffernd_rdirs_in.diminfo[1].shape)) __pyx_t_9 = 1;
+  if (unlikely(__pyx_t_9 != -1)) {
+    __Pyx_RaiseBufferIndexError(__pyx_t_9);
+    __PYX_ERR(0, 24, __pyx_L1_error)
   }
 
-  /* "Dynamic_HD_Scripts/compute_catchments_wrapper.pyx":19
- *     cdef int nlat_in,nlon_in
+  /* "Dynamic_HD_Scripts/compute_catchments_wrapper.pyx":23
  *     nlat_in, nlon_in = catchment_numbers_in.shape[0],catchment_numbers_in.shape[1]
+ *     cdef string loop_log_filepath_c = string(bytes(loop_log_filepath))
  *     latlon_compute_catchments(&catchment_numbers_in[0,0],             # <<<<<<<<<<<<<<
  *                               &rdirs_in[0,0],
- *                               nlat_in,nlon_in)
+ *                               loop_log_filepath_c,
  */
-  latlon_compute_catchments((&(*__Pyx_BufPtrCContig2d(int *, __pyx_pybuffernd_catchment_numbers_in.rcbuffer->pybuffer.buf, __pyx_t_3, __pyx_pybuffernd_catchment_numbers_in.diminfo[0].strides, __pyx_t_4, __pyx_pybuffernd_catchment_numbers_in.diminfo[1].strides))), (&(*__Pyx_BufPtrCContig2d(double *, __pyx_pybuffernd_rdirs_in.rcbuffer->pybuffer.buf, __pyx_t_6, __pyx_pybuffernd_rdirs_in.diminfo[0].strides, __pyx_t_7, __pyx_pybuffernd_rdirs_in.diminfo[1].strides))), __pyx_v_nlat_in, __pyx_v_nlon_in);
+  latlon_compute_catchments((&(*__Pyx_BufPtrCContig2d(int *, __pyx_pybuffernd_catchment_numbers_in.rcbuffer->pybuffer.buf, __pyx_t_7, __pyx_pybuffernd_catchment_numbers_in.diminfo[0].strides, __pyx_t_8, __pyx_pybuffernd_catchment_numbers_in.diminfo[1].strides))), (&(*__Pyx_BufPtrCContig2d(double *, __pyx_pybuffernd_rdirs_in.rcbuffer->pybuffer.buf, __pyx_t_10, __pyx_pybuffernd_rdirs_in.diminfo[0].strides, __pyx_t_11, __pyx_pybuffernd_rdirs_in.diminfo[1].strides))), __pyx_v_loop_log_filepath_c, __pyx_v_nlat_in, __pyx_v_nlon_in);
 
-  /* "Dynamic_HD_Scripts/compute_catchments_wrapper.pyx":10
+  /* "Dynamic_HD_Scripts/compute_catchments_wrapper.pyx":12
  *                                    int nlat_in,int nlon_in)
  * 
- * def compute_catchments(np.ndarray[int,ndim=2,mode='c'] catchment_numbers_in,             # <<<<<<<<<<<<<<
- *                        np.ndarray[double,ndim=2,mode='c'] rdirs_in):
- *     """Call the C++ cython interface function from cython with appropriate arguments.
+ * def compute_catchments_cpp(np.ndarray[int,ndim=2,mode='c'] catchment_numbers_in,             # <<<<<<<<<<<<<<
+ *                            np.ndarray[double,ndim=2,mode='c'] rdirs_in,
+ *                            str loop_log_filepath):
  */
 
   /* function exit code */
   __pyx_r = Py_None; __Pyx_INCREF(Py_None);
   goto __pyx_L0;
   __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_3);
+  __Pyx_XDECREF(__pyx_t_4);
   { PyObject *__pyx_type, *__pyx_value, *__pyx_tb;
     __Pyx_PyThreadState_declare
     __Pyx_PyThreadState_assign
@@ -1496,7 +1591,7 @@ static PyObject *__pyx_pf_18Dynamic_HD_Scripts_26compute_catchments_wrapper_comp
     __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_catchment_numbers_in.rcbuffer->pybuffer);
     __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_rdirs_in.rcbuffer->pybuffer);
   __Pyx_ErrRestore(__pyx_type, __pyx_value, __pyx_tb);}
-  __Pyx_AddTraceback("Dynamic_HD_Scripts.compute_catchments_wrapper.compute_catchments", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("Dynamic_HD_Scripts.compute_catchments_wrapper.compute_catchments_cpp", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   goto __pyx_L2;
   __pyx_L0:;
@@ -3661,8 +3756,10 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_kp_s_Users_thomasriddick_Documents_w, __pyx_k_Users_thomasriddick_Documents_w, sizeof(__pyx_k_Users_thomasriddick_Documents_w), 0, 0, 1, 0},
   {&__pyx_n_s_ValueError, __pyx_k_ValueError, sizeof(__pyx_k_ValueError), 0, 0, 1, 1},
   {&__pyx_n_s_catchment_numbers_in, __pyx_k_catchment_numbers_in, sizeof(__pyx_k_catchment_numbers_in), 0, 0, 1, 1},
-  {&__pyx_n_s_compute_catchments, __pyx_k_compute_catchments, sizeof(__pyx_k_compute_catchments), 0, 0, 1, 1},
+  {&__pyx_n_s_compute_catchments_cpp, __pyx_k_compute_catchments_cpp, sizeof(__pyx_k_compute_catchments_cpp), 0, 0, 1, 1},
   {&__pyx_n_s_import, __pyx_k_import, sizeof(__pyx_k_import), 0, 0, 1, 1},
+  {&__pyx_n_s_loop_log_filepath, __pyx_k_loop_log_filepath, sizeof(__pyx_k_loop_log_filepath), 0, 0, 1, 1},
+  {&__pyx_n_s_loop_log_filepath_c, __pyx_k_loop_log_filepath_c, sizeof(__pyx_k_loop_log_filepath_c), 0, 0, 1, 1},
   {&__pyx_n_s_main, __pyx_k_main, sizeof(__pyx_k_main), 0, 0, 1, 1},
   {&__pyx_kp_u_ndarray_is_not_C_contiguous, __pyx_k_ndarray_is_not_C_contiguous, sizeof(__pyx_k_ndarray_is_not_C_contiguous), 0, 1, 0, 0},
   {&__pyx_kp_u_ndarray_is_not_Fortran_contiguou, __pyx_k_ndarray_is_not_Fortran_contiguou, sizeof(__pyx_k_ndarray_is_not_Fortran_contiguou), 0, 1, 0, 0},
@@ -3755,17 +3852,17 @@ static int __Pyx_InitCachedConstants(void) {
   __Pyx_GOTREF(__pyx_tuple__6);
   __Pyx_GIVEREF(__pyx_tuple__6);
 
-  /* "Dynamic_HD_Scripts/compute_catchments_wrapper.pyx":10
+  /* "Dynamic_HD_Scripts/compute_catchments_wrapper.pyx":12
  *                                    int nlat_in,int nlon_in)
  * 
- * def compute_catchments(np.ndarray[int,ndim=2,mode='c'] catchment_numbers_in,             # <<<<<<<<<<<<<<
- *                        np.ndarray[double,ndim=2,mode='c'] rdirs_in):
- *     """Call the C++ cython interface function from cython with appropriate arguments.
+ * def compute_catchments_cpp(np.ndarray[int,ndim=2,mode='c'] catchment_numbers_in,             # <<<<<<<<<<<<<<
+ *                            np.ndarray[double,ndim=2,mode='c'] rdirs_in,
+ *                            str loop_log_filepath):
  */
-  __pyx_tuple__7 = PyTuple_Pack(4, __pyx_n_s_catchment_numbers_in, __pyx_n_s_rdirs_in, __pyx_n_s_nlat_in, __pyx_n_s_nlon_in); if (unlikely(!__pyx_tuple__7)) __PYX_ERR(0, 10, __pyx_L1_error)
+  __pyx_tuple__7 = PyTuple_Pack(6, __pyx_n_s_catchment_numbers_in, __pyx_n_s_rdirs_in, __pyx_n_s_loop_log_filepath, __pyx_n_s_nlat_in, __pyx_n_s_nlon_in, __pyx_n_s_loop_log_filepath_c); if (unlikely(!__pyx_tuple__7)) __PYX_ERR(0, 12, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__7);
   __Pyx_GIVEREF(__pyx_tuple__7);
-  __pyx_codeobj__8 = (PyObject*)__Pyx_PyCode_New(2, 0, 4, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__7, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_Users_thomasriddick_Documents_w, __pyx_n_s_compute_catchments, 10, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__8)) __PYX_ERR(0, 10, __pyx_L1_error)
+  __pyx_codeobj__8 = (PyObject*)__Pyx_PyCode_New(3, 0, 6, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__7, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_Users_thomasriddick_Documents_w, __pyx_n_s_compute_catchments_cpp, 12, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__8)) __PYX_ERR(0, 12, __pyx_L1_error)
   __Pyx_RefNannyFinishContext();
   return 0;
   __pyx_L1_error:;
@@ -3884,28 +3981,28 @@ PyMODINIT_FUNC PyInit_compute_catchments_wrapper(void)
   if (__Pyx_patch_abc() < 0) __PYX_ERR(0, 1, __pyx_L1_error)
   #endif
 
-  /* "Dynamic_HD_Scripts/compute_catchments_wrapper.pyx":4
- * import cython
+  /* "Dynamic_HD_Scripts/compute_catchments_wrapper.pyx":5
  * cimport numpy as np
+ * from libcpp.string cimport string
  * import numpy as np             # <<<<<<<<<<<<<<
  * 
  * cdef extern from 'compute_catchments.cpp':
  */
-  __pyx_t_1 = __Pyx_Import(__pyx_n_s_numpy, 0, -1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 4, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_Import(__pyx_n_s_numpy, 0, -1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 5, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_np, __pyx_t_1) < 0) __PYX_ERR(0, 4, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_np, __pyx_t_1) < 0) __PYX_ERR(0, 5, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "Dynamic_HD_Scripts/compute_catchments_wrapper.pyx":10
+  /* "Dynamic_HD_Scripts/compute_catchments_wrapper.pyx":12
  *                                    int nlat_in,int nlon_in)
  * 
- * def compute_catchments(np.ndarray[int,ndim=2,mode='c'] catchment_numbers_in,             # <<<<<<<<<<<<<<
- *                        np.ndarray[double,ndim=2,mode='c'] rdirs_in):
- *     """Call the C++ cython interface function from cython with appropriate arguments.
+ * def compute_catchments_cpp(np.ndarray[int,ndim=2,mode='c'] catchment_numbers_in,             # <<<<<<<<<<<<<<
+ *                            np.ndarray[double,ndim=2,mode='c'] rdirs_in,
+ *                            str loop_log_filepath):
  */
-  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_18Dynamic_HD_Scripts_26compute_catchments_wrapper_1compute_catchments, NULL, __pyx_n_s_Dynamic_HD_Scripts_compute_catch); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 10, __pyx_L1_error)
+  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_18Dynamic_HD_Scripts_26compute_catchments_wrapper_1compute_catchments_cpp, NULL, __pyx_n_s_Dynamic_HD_Scripts_compute_catch); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 12, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_compute_catchments, __pyx_t_1) < 0) __PYX_ERR(0, 10, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_compute_catchments_cpp, __pyx_t_1) < 0) __PYX_ERR(0, 12, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
   /* "Dynamic_HD_Scripts/compute_catchments_wrapper.pyx":1
@@ -4685,6 +4782,26 @@ static CYTHON_INLINE void __Pyx_SafeReleaseBuffer(Py_buffer* info) {
   __Pyx_ReleaseBuffer(info);
 }
 
+/* PyObjectCall */
+  #if CYTHON_COMPILING_IN_CPYTHON
+static CYTHON_INLINE PyObject* __Pyx_PyObject_Call(PyObject *func, PyObject *arg, PyObject *kw) {
+    PyObject *result;
+    ternaryfunc call = func->ob_type->tp_call;
+    if (unlikely(!call))
+        return PyObject_Call(func, arg, kw);
+    if (unlikely(Py_EnterRecursiveCall((char*)" while calling a Python object")))
+        return NULL;
+    result = (*call)(func, arg, kw);
+    Py_LeaveRecursiveCall();
+    if (unlikely(!result) && unlikely(!PyErr_Occurred())) {
+        PyErr_SetString(
+            PyExc_SystemError,
+            "NULL result without error in PyObject_Call");
+    }
+    return result;
+}
+#endif
+
 /* BufferIndexError */
   static void __Pyx_RaiseBufferIndexError(int axis) {
   PyErr_Format(PyExc_IndexError,
@@ -4728,26 +4845,6 @@ static CYTHON_INLINE void __Pyx_ErrFetchInState(PyThreadState *tstate, PyObject 
     }
     return result;
 }
-
-/* PyObjectCall */
-  #if CYTHON_COMPILING_IN_CPYTHON
-static CYTHON_INLINE PyObject* __Pyx_PyObject_Call(PyObject *func, PyObject *arg, PyObject *kw) {
-    PyObject *result;
-    ternaryfunc call = func->ob_type->tp_call;
-    if (unlikely(!call))
-        return PyObject_Call(func, arg, kw);
-    if (unlikely(Py_EnterRecursiveCall((char*)" while calling a Python object")))
-        return NULL;
-    result = (*call)(func, arg, kw);
-    Py_LeaveRecursiveCall();
-    if (unlikely(!result) && unlikely(!PyErr_Occurred())) {
-        PyErr_SetString(
-            PyExc_SystemError,
-            "NULL result without error in PyObject_Call");
-    }
-    return result;
-}
-#endif
 
 /* RaiseException */
   #if PY_MAJOR_VERSION < 3

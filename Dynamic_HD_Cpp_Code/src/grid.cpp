@@ -187,8 +187,18 @@ coords* latlon_grid::calculate_downstream_coords_from_dir_based_rdir(coords* ini
 		if (rdir <= 0 || rdir == 5) return initial_coords->clone();
 		int lat_offset = -int(ceil(rdir/3.0))+2;
 		int lon_offset = rdir + 3*lat_offset - 5;
-		return new latlon_coords(latlon_initial_coords->get_lat()+lat_offset,
-														 latlon_initial_coords->get_lon()+lon_offset);
+		if (nowrap) {
+			return new latlon_coords(latlon_initial_coords->get_lat()+lat_offset,
+														 	 latlon_initial_coords->get_lon()+lon_offset);
+		} else {
+			coords* unwrapped_downstream_coords =
+				new latlon_coords(latlon_initial_coords->get_lat()+lat_offset,
+													latlon_initial_coords->get_lon()+lon_offset);
+			coords* downstream_coords = wrapped_coords(unwrapped_downstream_coords);
+			if(downstream_coords != unwrapped_downstream_coords)
+				delete unwrapped_downstream_coords;
+			return downstream_coords;
+		}
 }
 
 coords* latlon_grid::convert_fine_coords(coords* fine_coords,grid_params* fine_grid_params){

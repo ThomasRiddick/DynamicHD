@@ -94,6 +94,16 @@ class compute_catchments(unittest.TestCase):
                                              [3,2,1,3,2,1,2,3,6],
                                              [1,5,6,6,5,4,2,6,-1]]),0,1)
 
+    rivdir_test_data_cpp = np.swapaxes(np.array([[7,2,6,6,5,8,0,1,1],
+                                                 [4,3,6,9,8,9,8,4,1],
+                                                 [2,6,2,9,8,9,8,2,1],
+                                                 [5,6,2,9,8,7,8,2,2],
+                                                 [7,4,2,2,8,9,2,3,2],
+                                                 [8,2,3,2,3,1,3,8,2],
+                                                 [3,2,1,2,2,2,1,2,1],
+                                                 [3,2,1,3,2,1,2,3,6],
+                                                 [1,5,6,6,5,4,2,6,0]]),0,1)
+
     expected_catchment_output = np.swapaxes(np.array([[1,6,7,7,7,8,9,9,9],
                                                       [2,6,7,7,7,9,9,9,2],
                                                       [3,6,6,7,7,9,9,2,2],
@@ -104,8 +114,19 @@ class compute_catchments(unittest.TestCase):
                                                       [4,4,4,6,6,6,10,2,4],
                                                       [5,4,6,6,6,6,10,2,2]]),0,1)
 
+    expected_catchment_output_cpp = np.swapaxes(np.array([[7,5,1,1,1,8,2,2,2],
+                                                          [6,5,1,1,1,2,2,2,6],
+                                                          [3,5,5,1,1,2,2,6,6],
+                                                          [3,5,5,1,1,1,2,6,6],
+                                                          [6,6,5,5,1,2,6,6,6],
+                                                          [6,4,5,5,5,5,6,6,6],
+                                                          [4,4,4,5,5,5,5,6,6],
+                                                          [4,4,4,5,5,5,9,6,4],
+                                                          [10,4,5,5,5,5,9,6,6]]),0,1)
+
     expected_sink_type_count_output = np.array([1,1,4,0,4,0])
     loop_logfile = os.path.join(data_dir,"temp/loop_log.txt")
+    loop_logfile_cpp = os.path.join(data_dir,"temp/loop_log_cpp.txt")
 
     def setUp(self):
         """Unit test setUp function"""
@@ -135,6 +156,14 @@ class compute_catchments(unittest.TestCase):
                                       "Sink types found count doesn't match expectation")
         np.testing.assert_array_equal(catchments_field,
                                       np.swapaxes(self.expected_catchment_output,0,1),
+                                      "Catchments calculated for tests data don't match expectation")
+
+    def testHypotheticalCatchmentUsingPythonWrapperCppVersion(self):
+        """Test the calculating these catchment with the c++ code"""
+        catchments_field = cc.compute_catchments_cpp(np.swapaxes(self.rivdir_test_data_cpp,0,1),
+                                                     self.loop_logfile_cpp)
+        np.testing.assert_array_equal(catchments_field,
+                                      np.swapaxes(self.expected_catchment_output_cpp,0,1),
                                       "Catchments calculated for tests data don't match expectation")
 
 class follow_river(unittest.TestCase):

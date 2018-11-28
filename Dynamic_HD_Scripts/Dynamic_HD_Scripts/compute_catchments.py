@@ -14,7 +14,31 @@ import field
 import warnings
 import os.path as path
 import iodriver
+import libs.compute_catchments_wrapper as cc_ccp_wrap
 from context import fortran_source_path
+
+def compute_catchments_cpp(field,loop_logfile):
+    """Compute the unordered catchments on all grid points using c++ code
+
+    Input:
+    field: numpy-like; field of river flow directions
+    loop_logfile: string; the path to a file in which to store any loops found
+    Output:
+    A numpy array containing the unordered catchments calculated
+
+    Use a c++ module to calculate the unordered catchements (labelling them by
+    order of discovery) on all the grid points in the supplied array of river flow
+    direction. Store any loops found in the named logfile. (The axis swap is required
+    to ensure the data is processed in the correct orientation). The algorithm used
+    is based on a queue structure
+    """
+
+    print "Writing circular flow log file to {0}".format(loop_logfile)
+    catchments = np.empty(shape=field.shape,dtype=np.int32)
+    cc_ccp_wrap.compute_catchments_cpp(catchments,
+                                       np.ascontiguousarray(field,dtype=np.float64),
+                                       loop_logfile)
+    return catchments
 
 def compute_catchments(field,loop_logfile,circ_flow_check_period=1000):
     """Compute the unordered catchments on all grid points
@@ -121,25 +145,30 @@ def renumber_catchments_by_size(catchments,loop_logfile=None):
     return catchments
 
 def advanced_main(filename,fieldname,output_filename,output_fieldname,
-                  loop_logfile):
+                  loop_logfile,use_cpp_alg=True):
     rdirs = iodriver.advanced_field_loader(filename,
                                            field_type='Generic',
                                            fieldname=fieldname)
     nlat,nlon = rdirs.get_grid_dimensions()
-    catchment_types, catchments = compute_catchments(rdirs.get_data(),loop_logfile)
-    check_catchment_types(catchment_types,logfile=path.splitext(output_filename)[0]+".log")
+    if use_cpp_code:
+        catchments = compute_catchments_cpp(rdirs.get_data(),
+                                            loop_logfile)
+    else:
+        catchment_types, catchments = compute_catchments(rdirs.get_data(),loop_logfile)
+        check_catchment_types(catchment_types,logfile=path.splitext(output_filename)[0]+".log")
     numbered_catchments = field.Field(renumber_catchments_by_size(catchments,loop_logfile),
                                       grid='LatLong',nlat=nlat,nlong=nlon)
     iodriver.advanced_field_writer(target_filename=output_filename,field=numbered_catchments,
                                    fieldname=output_fieldname)
 
-def main(filename,output_filename,loop_logfile,grid_type,**grid_kwargs):
+def main(filename,output_filename,loop_logfile,use_cpp_code=True,grid_type='HD',**grid_kwargs):
     """Generates a file with numbered catchments from a given river flow direction file
 
     Inputs:
     filename: string; the input file of river directions
     output_filename: string; the target file for the output numbered catchments
     loop_logfile: string; an input file of catchments with loop to be updated
+    use_cpp_alg: bool; use the Cpp code if True otherwise use the Fortran code
     grid_type: string; a keyword giving the type of grid being used
     **grid_kwargs(optional): keyword dictionary; the parameter of the grid to
     be used (if required)
@@ -154,8 +183,12 @@ def main(filename,output_filename,loop_logfile,grid_type,**grid_kwargs):
     rdirs = dynamic_hd.load_field(filename,
                                   file_type=dynamic_hd.get_file_extension(filename),
                                   field_type='Generic',grid_type=grid_type,**grid_kwargs)
-    catchment_types, catchments = compute_catchments(rdirs.get_data(),loop_logfile)
-    check_catchment_types(catchment_types,logfile=path.splitext(output_filename)[0]+".log")
+    if use_cpp_code:
+        catchments = compute_catchments_cpp(rdirs.get_data(),
+                                            loop_logfile)
+    else:
+        catchment_types, catchments = compute_catchments(rdirs.get_data(),loop_logfile)
+        check_catchment_types(catchment_types,logfile=path.splitext(output_filename)[0]+".log")
     numbered_catchments = field.Field(renumber_catchments_by_size(catchments,loop_logfile),
                                       grid=grid_type,
                                       **grid_kwargs)

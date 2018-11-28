@@ -12,8 +12,11 @@ void catchment_computation_algorithm::setup_fields(int* catchment_numbers_in,
 	_grid_params = grid_params_in;
 	_grid = grid_factory(_grid_params);
 	catchment_numbers = new field<int>(catchment_numbers_in,_grid_params);
+	catchment_numbers->set_all(0);
 	completed_cells = new field<bool>(_grid_params);
 	completed_cells->set_all(false);
+  searched_cells = new field<bool>(_grid_params);
+  searched_cells->set_all(false);
 }
 
 void catchment_computation_algorithm::compute_catchments() {
@@ -27,12 +30,59 @@ void catchment_computation_algorithm::compute_catchments() {
 	}
 }
 
+vector<int>* catchment_computation_algorithm::identify_loops(){
+	vector<int>* catchments_with_loops = new vector<int>;
+	completed_cells->set_all(false);
+	add_loop_cells_to_queue();
+	//Reuse outflow to hold a loop cell
+	while (! outflow_q.empty()) {
+		outflow = outflow_q.front();
+		outflow_q.pop();
+		center_coords = outflow->get_cell_coords();
+		if ((*completed_cells)(center_coords)) {
+			delete outflow;
+			continue;
+		}
+    find_loop_in_catchment();
+		compute_catchment();
+		catchments_with_loops->push_back(catchment_number);
+		catchment_number++;
+	}
+	return catchments_with_loops;
+}
+
 void catchment_computation_algorithm::add_outflows_to_queue() {
 	_grid->for_all([&](coords* coords_in){
 		if (check_for_outflow(coords_in)) {
 			outflow_q.push(new landsea_cell(coords_in));
 		} else delete coords_in;
 	});
+}
+
+void catchment_computation_algorithm::add_loop_cells_to_queue() {
+	_grid->for_all([&](coords* coords_in){
+		if (check_for_loops(coords_in)) {
+			outflow_q.push(new landsea_cell(coords_in));
+		} else delete coords_in;
+	});
+}
+
+void catchment_computation_algorithm::find_loop_in_catchment() {
+  coords* old_coords = nullptr;
+  coords* new_coords = center_coords->clone();
+  do {
+    old_coords = new_coords;
+    new_coords = calculate_downstream_coords(old_coords);
+    (*searched_cells)(old_coords) = true;
+    if(_grid->outside_limits(new_coords)) {
+    	delete new_coords;
+    	new_coords = old_coords;
+    	break;
+    }
+    delete old_coords;
+  } while (! (*searched_cells)(new_coords));
+  delete outflow;
+  outflow = new landsea_cell(new_coords);
 }
 
 void catchment_computation_algorithm::compute_catchment() {
@@ -80,7 +130,12 @@ void catchment_computation_algorithm_latlon::setup_fields(int* catchment_numbers
 }
 
 bool catchment_computation_algorithm_latlon::check_for_outflow(coords* cell_coords) {
-	return ((*rdirs)(cell_coords) == 0.0);
+	return ((*rdirs)(cell_coords) == 0.0 || (*rdirs)(cell_coords) == 5.0);
+}
+
+bool catchment_computation_algorithm_latlon::check_for_loops(coords* cell_coords) {
+	return ((*catchment_numbers)(cell_coords) == 0 &&
+	        ((*rdirs)(cell_coords) > 0.0 && (*rdirs)(cell_coords) != 5.0));
 }
 
 bool catchment_computation_algorithm_latlon::check_if_neighbor_is_upstream() {
@@ -95,4 +150,10 @@ bool catchment_computation_algorithm_latlon::check_if_neighbor_is_upstream() {
 		delete downstream_coords;
 		return false;
 	}
+}
+
+coords* catchment_computation_algorithm_latlon::
+        calculate_downstream_coords(coords* initial_coords){
+  return _grid->calculate_downstream_coords_from_dir_based_rdir(initial_coords,
+                                                               (*rdirs)(initial_coords));
 }

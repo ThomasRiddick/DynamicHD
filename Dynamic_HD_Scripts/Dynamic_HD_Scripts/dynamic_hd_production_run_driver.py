@@ -436,10 +436,8 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                                                     nlat=nlat30,
                                                                                     nlong=nlong30),
                                                                                     grid='HD')
-        catchment_types_30min, catchments_30min = comp_catchs.compute_catchments(rdirs_30min.get_data(),
-                                                                                 loops_log_filename)
-        comp_catchs.check_catchment_types(catchment_types_30min,
-                                          logfile=catchments_log_filename)
+        catchments_30min = comp_catchs.compute_catchments_cpp(rdirs_30min.get_data(),
+                                                              loops_log_filename)
         catchments_30min = field.Field(comp_catchs.renumber_catchments_by_size(catchments_30min,
                                                                                loops_log_filename),
                                        grid="HD")
@@ -587,10 +585,8 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                                                     nlat=nlat30,
                                                                                     nlong=nlong30),
                                                                                     grid='HD')
-        catchment_types_30min, catchments_30min = comp_catchs.compute_catchments(rdirs_30min.get_data(),
-                                                                                 loops_log_filename)
-        comp_catchs.check_catchment_types(catchment_types_30min,
-                                          logfile=catchments_log_filename)
+        catchments_30min = comp_catchs.compute_catchments_cpp(rdirs_30min.get_data(),
+                                                              loops_log_filename)
         catchments_30min = field.Field(comp_catchs.renumber_catchments_by_size(catchments_30min,
                                                                                loops_log_filename),
                                        grid="HD")
