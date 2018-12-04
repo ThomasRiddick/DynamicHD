@@ -13,6 +13,9 @@
 #include "gtest/gtest.h"
 #include "cell.hpp"
 #include "context.hpp"
+#include <string>
+
+using namespace std;
 
 namespace {
 
@@ -140,11 +143,16 @@ TEST_F(CatchmentComputationTest, CatchmentComputationGeneralWithComplexLoop) {
     if(expected_catchments_number_out[i] != catchment_numbers[i]) count++;
   }
   ifstream logfile;
-  int loop_catchment_out_one;
-  int loop_catchment_out_two;
+  string output_line_one;
+  string output_line_two;
+  string output_line_three;
   logfile.open(log_file_path);
-  logfile >> loop_catchment_out_one;
-  logfile >> loop_catchment_out_two;
+  getline(logfile,output_line_one);
+  logfile >> output_line_two;
+  logfile >> output_line_three;
+  cout << output_line_one << endl;
+  int loop_catchment_out_one = stoi(output_line_two);
+  int loop_catchment_out_two = stoi(output_line_three);
   logfile.close();
   EXPECT_EQ(loop_catchment_out_one,29);
   EXPECT_EQ(loop_catchment_out_two,30);
@@ -178,9 +186,12 @@ TEST_F(CatchmentComputationTest, CatchmentComputationLoopFindingTestOne) {
     if(expected_catchments_number_out[i] != catchment_numbers[i]) count++;
   }
   ifstream logfile;
-  int loop_catchment_out;
+  string output_line_one;
+  string output_line_two;
   logfile.open(log_file_path);
-  logfile >> loop_catchment_out;
+  getline(logfile,output_line_one);
+  logfile >> output_line_two;
+  int loop_catchment_out = stoi(output_line_two);
   logfile.close();
   EXPECT_EQ(loop_catchment_out,2);
   delete[] expected_catchments_number_out;
