@@ -7,6 +7,7 @@
 
 #include "compute_catchments.hpp"
 #include "catchment_computation_algorithm.hpp"
+#include <string>
 using namespace std;
 
 void latlon_compute_catchments(int* catchment_numbers_in, double* rdirs_in,
@@ -23,7 +24,7 @@ void latlon_compute_catchments(int* catchment_numbers_in, double* rdirs_in,
   loop_log_file.open(loop_log_filepath);
   loop_log_file << "Loops found in catchments:" << endl;
   for (auto i = loop_numbers->begin(); i != loop_numbers->end(); ++i)
-    loop_log_file << *i << endl;
+    loop_log_file << to_string(*i) << endl;
   loop_log_file.close();
   delete loop_numbers;
 	delete grid_params_in;

@@ -7,6 +7,8 @@
 
 #include "catchment_computation_algorithm.hpp"
 
+using namespace std;
+
 void catchment_computation_algorithm::setup_fields(int* catchment_numbers_in,
 												   grid_params* grid_params_in) {
 	_grid_params = grid_params_in;
