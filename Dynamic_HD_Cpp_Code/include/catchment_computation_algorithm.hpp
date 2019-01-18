@@ -58,3 +58,19 @@ protected:
 	coords* calculate_downstream_coords(coords* initial_coords);
 	field<double>* rdirs = nullptr;
 };
+
+class catchment_computation_algorithm_icon_single_index :
+	public catchment_computation_algorithm {
+public:
+	virtual ~catchment_computation_algorithm_icon_single_index() {delete next_cell_index;};
+	void setup_fields(int* catchment_numbers_in,int* next_cell_index_in,
+		  	  	  	  	grid_params* grid_params_in);
+	bool check_for_outflow(coords* cell_coords);
+	bool check_for_loops(coords* cell_coords);
+	bool check_if_neighbor_is_upstream();
+	coords* calculate_downstream_coords(coords* initial_coords);
+	field<int>* next_cell_index = nullptr;
+	const int true_sink_value = -5;
+	const int outflow_value = -1;
+	const int ocean_value   = -2;
+};

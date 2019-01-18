@@ -31,7 +31,8 @@
 		{
 			"Darwin":
 			{
-				"PYTHONPATH": "$PYTHONPATH:/Users/thomasriddick/Documents/workspace/Dynamic_HD_Code/Dynamic_HD_Scripts"
+				"PYTHONPATH": "/Users/thomasriddick/Documents/workspace/Dynamic_HD_Code/Dynamic_HD_Scripts",
+				"JULIA_LOAD_PATH": "/Users/thomasriddick/Documents/workspace/Dynamic_HD_Code/Dynamic_HD_Julia_Code/:"
 			}
 		}
 	}

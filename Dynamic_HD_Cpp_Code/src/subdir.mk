@@ -22,7 +22,8 @@ CPP_SRCS += \
 ../src/basin_evaluation_algorithm.cpp \
 ../src/evaluate_basins.cpp \
 ../src/sink_filling_icon_simple_interface.cpp \
-../src/test_grid.cpp
+../src/test_grid.cpp \
+../src/river_direction_determination_algorithm.cpp
 
 USER_OBJS += \
 ./src/cell.o \
@@ -41,7 +42,8 @@ USER_OBJS += \
 ./src/compute_catchments.o \
 ./src/catchment_computation_algorithm.o \
 ./src/basin_evaluation_algorithm.o \
-./src/evaluate_basins.o
+./src/evaluate_basins.o \
+./src/river_direction_determination_algorithm.o
 
 SI_OBJS += \
 ./src/sink_filling_icon_simple_interface.o
@@ -76,7 +78,8 @@ CPP_DEPS += \
 ./src/basin_evaluation_algorithm.d \
 ./src/evaluate_basins.d \
 ./src/sink_filling_icon_simple_interface.d \
-./src/test_grid.d
+./src/test_grid.d \
+./src/river_direction_determination_algorithm.d \
 
 # Each subdirectory must supply rules for building sources it contributes
 src/%.o: ../src/%.cpp

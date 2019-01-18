@@ -37,7 +37,7 @@ public:
 	///Process the neighbors of a particular cell
 	void process_neighbors();
 	///Process a particular neighbor of a cell
-	void process_neighbor();
+	void process_neighbor(coords* nbrs_coords);
 	///Make a deep copy of the list of completed cells to the output
 	///land-sea array
 	void deep_copy_completed_cells_to_landsea();
@@ -52,9 +52,7 @@ private:
 	grid_params* _grid_params = nullptr;
 	///The grid created from the input grid parameters
 	grid* _grid = nullptr;
-	///The coordinates of the neighboring cell current being processed
-	vector<coords*>* neighbors_coords = nullptr;
-	///A field containing first the original landsea mask which is then
+	//A field containing first the original landsea mask which is then
 	///replaced by the new landsea mask at the end of the algorithm
 	field<bool>* landsea = nullptr;
 	///A field containing the cells that have already been processed,
@@ -67,9 +65,6 @@ private:
 	///connected to a cell or not
 	bool use_diagonals = true;
 
-	///Number of a diagonal neighbor has (which will be 4 for an ordinary
-	///latitude-longitude grid but not necessarily so for other grid)
-	int diagonal_neighbors = 0;
 };
 
 #endif /* INCLUDE_CONNECTED_LSMASK_GENERATION_ALGORITHM_HPP_ */

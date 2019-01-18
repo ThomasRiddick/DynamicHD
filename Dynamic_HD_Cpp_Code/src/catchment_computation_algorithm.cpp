@@ -159,3 +159,47 @@ coords* catchment_computation_algorithm_latlon::
   return _grid->calculate_downstream_coords_from_dir_based_rdir(initial_coords,
                                                                (*rdirs)(initial_coords));
 }
+
+void catchment_computation_algorithm_icon_single_index::
+		 setup_fields(int* catchment_numbers_in,int* next_cell_index_in,
+		  	  	  	  grid_params* grid_params_in) {
+	catchment_computation_algorithm::setup_fields(catchment_numbers_in,grid_params_in);
+	next_cell_index = new field<int>(next_cell_index_in,grid_params_in);
+}
+
+bool catchment_computation_algorithm_icon_single_index::check_for_outflow(coords* cell_coords) {
+	int next_cell_index_local = (*next_cell_index)(cell_coords);
+	return (next_cell_index_local == outflow_value ||
+	        next_cell_index_local == true_sink_value);
+}
+
+bool catchment_computation_algorithm_icon_single_index::check_for_loops(coords* cell_coords) {
+	int next_cell_index_local = (*next_cell_index)(cell_coords);
+	return ((*catchment_numbers)(cell_coords) == 0 &&
+	        next_cell_index_local != outflow_value &&
+	        next_cell_index_local != ocean_value &&
+	        next_cell_index_local != true_sink_value);
+}
+
+bool catchment_computation_algorithm_icon_single_index::check_if_neighbor_is_upstream() {
+	icon_single_index_grid* _icon_single_index_grid =
+		static_cast<icon_single_index_grid*>(_grid);
+	coords* downstream_coords =
+		_icon_single_index_grid->convert_index_to_coords((*next_cell_index)(nbr_coords));
+	if (*downstream_coords == *center_coords) {
+		delete downstream_coords;
+		return true;
+	}
+	else {
+		delete downstream_coords;
+		return false;
+	}
+}
+
+coords* catchment_computation_algorithm_icon_single_index::
+        calculate_downstream_coords(coords* initial_coords){
+  icon_single_index_grid* _icon_single_index_grid =
+		static_cast<icon_single_index_grid*>(_grid);
+  return _icon_single_index_grid->
+  	convert_index_to_coords((*next_cell_index)(nbr_coords));
+}

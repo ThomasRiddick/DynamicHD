@@ -68,24 +68,18 @@ void create_connected_landsea_mask::add_ls_seed_points_to_q()
 //the non-diagonal neighbors come first in the returned vector
 void create_connected_landsea_mask::process_neighbors()
 {
-	neighbors_coords = landsea->get_neighbors_coords(center_coords,4);
-	diagonal_neighbors = floor(neighbors_coords->size()/2.0);
-	while (!neighbors_coords->empty()){
-		process_neighbor();
-	}
-	delete neighbors_coords;
+	if(use_diagonals) _grid->for_all_nbrs(center_coords,[&](coords* coords_in)
+	                                      {process_neighbor(coords_in);});
+	else _grid->for_non_diagonal_nbrs(center_coords,[&](coords* coords_in)
+	                                  {process_neighbor(coords_in);});
 }
 
-inline void create_connected_landsea_mask::process_neighbor()
+inline void create_connected_landsea_mask::process_neighbor(coords* nbr_coords)
 {
-	auto nbr_coords = neighbors_coords->back();
-	if (use_diagonals || neighbors_coords->size() > diagonal_neighbors) {
-		if ((*landsea)(nbr_coords) && !((*completed_cells)(nbr_coords))) {
-			q.push(new landsea_cell(nbr_coords));
-			(*completed_cells)(nbr_coords) = true;
-		}
-	}
-	neighbors_coords->pop_back();
+	if ((*landsea)(nbr_coords) && !((*completed_cells)(nbr_coords))) {
+		q.push(new landsea_cell(nbr_coords));
+		(*completed_cells)(nbr_coords) = true;
+	} else delete nbr_coords;
 }
 
 void create_connected_landsea_mask::deep_copy_completed_cells_to_landsea()

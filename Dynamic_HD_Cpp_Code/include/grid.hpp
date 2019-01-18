@@ -52,7 +52,9 @@ public:
 	enum grid_types {latlon,icon_single_index};
 	///Getter
 	int get_total_size() {return total_size;}
-	///Getter
+	///Getter. This return the index with any offset associated with using c++
+	// and thus will likely differ from the offset free number recorded for
+	// use with Fortran
 	int get_index(coords*);
 	///Getter
 	virtual int get_edge_number(coords*) = 0;
@@ -283,6 +285,8 @@ public:
 	coords* convert_fine_coords(coords* fine_coords,grid_params* fine_grid_params);
 	//Not implemeted for icon grid; return a runtime error
 	coords* calculate_downstream_coords_from_dir_based_rdir(coords* initial_coords,double rdir);
+	generic_1d_coords* convert_index_to_coords(int index)
+		{ return new generic_1d_coords(index + array_offset); }
 };
 
 /**
