@@ -14,6 +14,7 @@ import dynamic_hd
 import field
 import ConfigParser
 import shutil
+from timeit import default_timer as timer
 import libs.fill_sinks_wrapper as fill_sinks_wrapper
 import dynamic_hd_driver as dyn_hd_dr
 import compute_catchments as comp_catchs
@@ -254,6 +255,8 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
             config.add_section("general_options")
         if not config.has_option("general_options","generate_flow_parameters"):
             config.set("general_options","generate_flow_parameters","True")
+        if not config.has_option("general_options","print_timing_information"):
+            config.set("general_options","print_timing_information","False")
         return config
 
     def no_intermediaries_ten_minute_data_ALG4_no_true_sinks_plus_upscale_rdirs_driver(self):
@@ -264,6 +267,9 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         """
 
         config = self._read_and_validate_config()
+        print_timing_info = config.getboolean("general_options","print_timing_information")
+        if print_timing_info:
+            start_time = timer()
         base_hd_restart_file = path.join(self.ancillary_data_path,"hd_restart_from_hd_file_ten_minute_data_from_virna_"
                                         "0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_20170113_"
                                         "135934_after_one_year_running.nc")
@@ -358,6 +364,8 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                    orography_10min,
                                    file_type=".nc")
         #Fill sinks
+        if print_timing_info:
+            time_before_river_carving = timer()
         grid_dims_10min=orography_10min.get_grid().get_grid_dimensions()
         rdirs_10min = RiverDirections(np.zeros(grid_dims_10min,dtype=np.float64,order='C'),grid='LatLong10min')
         truesinks = Field(np.empty((1,1),dtype=np.int32),grid='HD')
@@ -392,6 +400,8 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                    catchment_10min,
                                    file_type=".nc")
         #Run post processing
+        if print_timing_info:
+            time_before_10min_post_processing = timer()
         nlat10,nlong10 = grid_dims_10min
         flowtocell_10min = field.CumulativeFlow(create_hypothetical_river_paths_map(riv_dirs=rdirs_10min.get_data(),
                                                                                     lsmask=ls_mask_10min.get_data(),
@@ -417,6 +427,8 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                    flowtorivermouths_10min,
                                    file_type=".nc")
         #Run Upscaling
+        if print_timing_info:
+            time_before_upscaling = timer()
         loops_log_filename = path.join(self.working_directory_path,"loops.log")
         catchments_log_filename= path.join(self.working_directory_path,"catchments.log")
         cotat_plus_parameters_filename = path.join(self.ancillary_data_path,'cotat_plus_standard_params.nl')
@@ -428,6 +440,8 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                    rdirs_30min,
                                    file_type=".nc")
         #Post processing
+        if print_timing_info:
+            time_before_30min_post_processing_one = timer()
         nlat30,nlong30 = rdirs_30min.get_grid().get_grid_dimensions()
         flowtocell_30min = field.CumulativeFlow(create_hypothetical_river_paths_map(riv_dirs=rdirs_30min.get_data(),
                                                                                     lsmask=None,
@@ -462,6 +476,8 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                    catchments_30min,
                                    file_type=".nc")
         #Run Loop Breaker
+        if print_timing_info:
+            time_before_loop_breaker = timer()
         loop_nums_list = []
         first_line_pattern = re.compile(r"^Loops found in catchments:$")
         with open(loops_log_filename,'r') as f:
@@ -491,6 +507,8 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         #Extract HD ls mask from river directions
         ls_mask_30min = field.RiverDirections(rdirs_30min.get_lsmask(),grid='HD')
         #Fill HD orography for parameter generation
+        if print_timing_info:
+            time_before_sink_filling = timer()
         truesinks = Field(np.empty((1,1),dtype=np.int32),grid='HD')
         fill_sinks_wrapper.fill_sinks_cpp_func(orography_array=np.ascontiguousarray(orography_30min.get_data(), #@UndefinedVariable
                                                                                     dtype=np.float64),
@@ -510,6 +528,8 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                    orography_30min,
                                    file_type=".nc")
         #Transform any necessary field into the necessary format and save ready for parameter generation
+        if print_timing_info:
+            time_before_parameter_generation = timer()
         transformed_course_rdirs_filename = path.join(self.working_directory_path,"30minute_river_dirs_temp.nc")
         transformed_HD_filled_orography_filename = path.join(self.working_directory_path,"30minute_filled_orog_temp.nc")
         transformed_HD_ls_mask_filename = path.join(self.working_directory_path,"30minute_ls_mask_temp.nc")
@@ -578,6 +598,8 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                     res_num_ref_rotate180lr=False,
                                                     res_num_ref_flipud=False, grid_type='HD')
         #Post processing
+        if print_timing_info:
+            time_before_30min_post_processing_two = timer()
         flowtocell_30min = field.CumulativeFlow(create_hypothetical_river_paths_map(riv_dirs=rdirs_30min.get_data(),
                                                                                     lsmask=None,
                                                                                     use_f2py_func=True,
@@ -610,6 +632,31 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                              "30min_catchments.nc"),
                                    catchments_30min,
                                    file_type=".nc")
+        if print_timing_info:
+            end_time = timer()
+            print "---- Timing info ----"
+            print "Initial setup:        {: 6.2f}s".\
+                format(time_before_river_carving - start_time)
+            print "River Carving:        {: 6.2f}s".\
+                format(time_before_10min_post_processing - time_before_river_carving)
+            print "Post Processing:      {: 6.2f}s".\
+                format(time_before_upscaling - time_before_10min_post_processing)
+            print "Upscaling:            {: 6.2f}s".\
+                format(time_before_30min_post_processing_one - time_before_upscaling)
+            print "Post Processing:      {: 6.2f}s".\
+                format(time_before_loop_breaker -
+                        time_before_30min_post_processing_one)
+            print "Loop Breaker:         {: 6.2f}s".\
+                format(time_before_sink_filling - time_before_loop_breaker)
+            print "Sink Filling:         {: 6.2f}s".\
+                format(time_before_parameter_generation - time_before_sink_filling)
+            print "Parameter Generation: {: 6.2f}s".\
+                format(time_before_30min_post_processing_two -
+                        time_before_parameter_generation)
+            print "Post Processing:      {: 6.2f}s".\
+                format(end_time - time_before_30min_post_processing_two)
+            print "Total:                {: 6.2f}s".\
+                format(end_time-start_time)
 
 def setup_and_run_dynamic_hd_para_gen_from_command_line_arguments(args):
     """Setup and run a dynamic hd production run from the command line arguments passed in by main"""
