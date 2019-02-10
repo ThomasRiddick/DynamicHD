@@ -27,7 +27,6 @@ contains
         allocate(coarse_river_direction_lat_index_expected_result(5,5))
         allocate(coarse_river_direction_lon_index_expected_result(5,5))
         MUFP = 1.5
-        area_threshold = 9
         run_check_for_sinks = .True.
         yamazaki_max_range = 9
         yamazaki_wrap = .True.
@@ -95,9 +94,9 @@ contains
                                                                         (/5,5/)))
         coarse_river_direction_lon_index_expected_result = transpose(reshape((/ &
                                                                         3,3,3,3,4, &
-                                                                        2,3,2,4,1, &
+                                                                        2,3,2,5,1, &
                                                                         1,1,4,5,1, &
-                                                                        1,2,4,5,1, &
+                                                                        1,2,4,5,5, &
                                                                         1,2,4,5,1 /), &
                                                                         (/5,5/)))
         call flow_latlon(input_fine_river_directions,input_fine_total_cumulative_flow, &

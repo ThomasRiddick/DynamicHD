@@ -10,7 +10,7 @@ IMPLICIT NONE
 CONTAINS
 
 FUNCTION iterate_paths_map(river_directions,paths_map,nlat,nlong) RESULT(unfinished)
-                 
+
 !Performs 1 iteration of the process of calculating a map of how many cells flow
 !to each point
 
@@ -27,12 +27,12 @@ INTEGER, INTENT(IN) :: nlat,nlong
 !River directions input using keypad notation (1-9)
 INTEGER, INTENT(IN), DIMENSION(:,:) :: river_directions
 
-!Accumulated flow so far to each cell 
+!Accumulated flow so far to each cell
 INTEGER, INTENT(INOUT), DIMENSION(:,:) :: paths_map
 !Result
 LOGICAL :: unfinished
 
-!Local Variables 
+!Local Variables
 INTEGER :: i,j                !loop counters (for lat and long)
 !Temporary arrays to store wrapped sections in
 INTEGER, DIMENSION(3,3) :: river_directions_section_temp
@@ -45,11 +45,11 @@ INTEGER, DIMENSION(3,3) :: paths_map_section_temp
     !level routine
     DO i=1,nlat+2
         DO j=1,nlong
-            !Note difference in indices from python (e.g. first row has index 1 
+            !Note difference in indices from python (e.g. first row has index 1
             !not zero)
             IF(i == 1 .OR. i == nlat+2 ) THEN
             !Deal with first and last columns and rows individually
-                paths_map(i,j) = 1 
+                paths_map(i,j) = 1
             ELSE IF (j == 1) THEN
                 river_directions_section_temp(1:3,2:3) = river_directions(i-1:i+1,j:j+1)
                 river_directions_section_temp(1:3,1:1) = river_directions(i-1:i+1,nlong:nlong)
@@ -66,16 +66,16 @@ INTEGER, DIMENSION(3,3) :: paths_map_section_temp
                                                           paths_map_section_temp)
             ELSE
             !Pass a 3 by 3 section around this cell to counting function
-            !Note the difference in the indexing from that used in python 
+            !Note the difference in the indexing from that used in python
             !(+1 instead of +2)
                 paths_map(i,j) = count_accumulated_inflow(                                &
                                     river_directions(i-1:i+1,j-1:j+1),                    &
                                     paths_map(i-1:i+1,j-1:j+1))
             END IF
-        END DO 
+        END DO
     END DO
  ELSE
-    !If there are no points to be calculated then return appropriate flag  
+    !If there are no points to be calculated then return appropriate flag
     unfinished = .FALSE.
  END IF
 
@@ -196,11 +196,11 @@ IMPLICIT NONE
 !Variables with intent IN
 
 !River directions input using keypad notation (1-9)
-INTEGER, INTENT(IN), DIMENSION(:,:) :: river_directions_section 
+INTEGER, INTENT(IN), DIMENSION(:,:) :: river_directions_section
 
 !Variables with intent INOUT
 
-!Accumulated flow so far to each cell 
+!Accumulated flow so far to each cell
 INTEGER, INTENT(IN), DIMENSION(:,:) :: paths_map_section
 
 !RESULT
@@ -210,12 +210,12 @@ INTEGER :: flow_to_cell       !number of points count as flowing into cell from
 !Local variables
 LOGICAL :: uncalculated_inflow !flag that a neighbouring cell that flow to this
                                !one has not had its inflow calculated yet
-!The value of flow direction that surrounding cell need to have to flow to this 
-!cell. This is the value directly across the numeric keypad from the flow 
+!The value of flow direction that surrounding cell need to have to flow to this
+!cell. This is the value directly across the numeric keypad from the flow
 !direction
 INTEGER, PARAMETER, DIMENSION(1:9) :: values_for_inflow_flat = (/3,6,9, 2,5,8,&
                                                                  1,4,7/)
-!Values as 3 by 3 array 
+!Values as 3 by 3 array
 INTEGER, DIMENSION(1:3,1:3) :: values_for_inflow
 INTEGER :: i,j                !loop counters
 
@@ -228,13 +228,13 @@ INTEGER :: i,j                !loop counters
  DO i=1,3
     DO j=1,3
         IF ( i == 2 .AND. j == 2) THEN
-            !flow to self 
+            !flow to self
             flow_to_cell = flow_to_cell + 1
             !with this we have counted flow to self so don't run the rest of
             !the code in the loop by using ELSE IF
         ELSE IF ( values_for_inflow(i,j) == river_directions_section(i,j) ) THEN
-            !inflow from a neighbour. First check if neighbour has been 
-            !calculated yet; if so add it to inflow 
+            !inflow from a neighbour. First check if neighbour has been
+            !calculated yet; if so add it to inflow
             IF ( paths_map_section(i,j) /= 0) THEN
                 flow_to_cell = flow_to_cell + paths_map_section(i,j)
             ELSE

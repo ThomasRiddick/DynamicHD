@@ -18,14 +18,35 @@ contains
     procedure :: set_real_value
     !> Wrapper to a set a logical value at given set of coordinates
     procedure :: set_logical_value
+    !> Wrapper to a set a coords value at given set of coordinates
+    procedure :: set_coords_value
     !> Generic type bound procedure to set a given value at a given coordinate
     !! this then calls one of the type specific wrappers for setting values
-    generic :: set_value => set_integer_value, set_real_value, set_logical_value
+    generic :: set_value => set_integer_value, set_real_value, set_logical_value, &
+                            set_coords_value
+    !> Wrapper to a set an integer value for the entire field
+    procedure :: set_all_integer
+    !> Wrapper to a set a real value for the entire field
+    procedure :: set_all_real
+    !> Wrapper to a set a logical value for the entire field
+    procedure :: set_all_logical
+    !> Generic type bound procedure to set a given value for the entire field
+    !! this then calls one of the type specific wrappers for setting values
+    generic :: set_all => set_all_integer, set_all_real, set_all_logical
     !> Given a pointer to an unlimited polymorphic variable set it at the given
     !! coordinates
     procedure(set_generic_value), deferred :: set_generic_value
     !> Get an unlimited polymorphic pointer to a value at the given coordinates
     procedure(get_value), deferred :: get_value
+    !> Process all cells of field
+    procedure(for_all), deferred :: for_all
+    !> Iterate over all the cells along the edges of this subfield
+    procedure(for_all_edge_cells), deferred :: for_all_edge_cells
+    !> Given a pointer to an unlimited polymorphic variable set the entire field
+    !! to that value
+    procedure(set_all_generic), deferred :: set_all_generic
+    !> Check if given coordinates are outside this subfield
+    procedure(coords_outside_subfield), deferred :: coords_outside_subfield
 end type subfield
 
 abstract interface
@@ -52,6 +73,52 @@ abstract interface
         implicit none
         class(subfield) :: this
     end subroutine
+
+    subroutine for_all(this,subroutine_in,calling_object)
+        import subfield
+        implicit none
+        class(subfield) :: this
+        interface
+            subroutine subroutine_interface(calling_object,coords_in)
+                use coords_mod
+                class(*) :: calling_object
+                class(coords),intent(in) :: coords_in
+            end subroutine subroutine_interface
+        end interface
+        procedure(subroutine_interface) :: subroutine_in
+        class(*) :: calling_object
+    end subroutine for_all
+
+    subroutine for_all_edge_cells(this,subroutine_in,calling_object)
+        import subfield
+        implicit none
+        class(subfield) :: this
+        interface
+            subroutine subroutine_interface(calling_object,coords_in)
+                use coords_mod
+                class(*) :: calling_object
+                class(coords), intent(in) :: coords_in
+            end subroutine subroutine_interface
+        end interface
+        procedure(subroutine_interface) :: subroutine_in
+        class(*) :: calling_object
+    end subroutine for_all_edge_cells
+
+    subroutine set_all_generic(this,value)
+        import subfield
+        implicit none
+        class(subfield) :: this
+        class(*), pointer :: value
+    end subroutine set_all_generic
+
+    function coords_outside_subfield(this,coords_in) result (is_true)
+        import subfield
+        import coords
+        implicit none
+        class(subfield) :: this
+        class(coords), pointer :: coords_in
+        logical :: is_true
+    end function coords_outside_subfield
 end interface
 
 !> A concrete subclass of subfield for a latitude longitude grid
@@ -65,6 +132,14 @@ type, extends(subfield), public :: latlon_subfield
     !> Longitude offset to remove from input coordinates on the full grid to
     !! get coordinates within the grid of the subfield
     integer :: lon_offset
+    !> Minimum latitude in this subfield
+    integer :: lat_min
+    !> Minimum longitude in this subfield
+    integer :: lon_min
+    !> Maximum latitude in this subfield
+    integer :: lat_max
+    !> Maximum longitude in this subfield
+    integer :: lon_max
 contains
     !> Initialize a latitude longitude subfield; takes a pointer to an array of
     !! data that fits the subfield and a section coordinates object that specifies
@@ -88,9 +163,18 @@ contains
     !! The third argument is a value; this must be of the same type as this
     !! classes data member variable
     procedure, private :: set_data_array_element => latlon_set_data_array_element
+    !> Iterate over all the cells in this subfield
+    procedure :: for_all => latlon_for_all
+    !> Iterate over all the cells along the edges of this subfield
+    procedure :: for_all_edge_cells => latlon_for_all_edge_cells
     !> Returns a pointer to a copy of the array of data (this copy is created by
     !! this function using sourced allocation)
     procedure :: latlon_get_data
+    !> Given a pointer to an unlimited polymorphic variable set the entire field
+    !! to that value
+    procedure :: set_all_generic => latlon_set_all_generic
+    !> Check if given coordinates are outside this subfield
+    procedure :: coords_outside_subfield => latlon_coords_outside_subfield
 end type latlon_subfield
 
 interface latlon_subfield
@@ -138,7 +222,7 @@ contains
             allocate(pointer_to_value,source=value)
             call this%set_generic_value(coords_in,pointer_to_value)
     end subroutine
-    
+
     subroutine set_real_value(this,coords_in,value)
         class(subfield),intent(in) :: this
         class(coords) :: coords_in
@@ -157,6 +241,39 @@ contains
             call this%set_generic_value(coords_in,pointer_to_value)
     end subroutine
 
+    subroutine set_coords_value(this,coords_in,value)
+        class(subfield), intent(in) :: this
+        class(coords) :: coords_in
+        class(coords), intent(in) :: value
+        class(*), pointer :: pointer_to_value
+            allocate(pointer_to_value,source=value)
+            call this%set_generic_value(coords_in,pointer_to_value)
+    end subroutine
+
+    subroutine set_all_integer(this,value)
+        class(subfield),intent(in) :: this
+        integer, intent(in) :: value
+        class(*), pointer :: pointer_to_value
+            allocate(pointer_to_value,source=value)
+            call this%set_all_generic(pointer_to_value)
+    end subroutine
+
+    subroutine set_all_real(this,value)
+        class(subfield),intent(in) :: this
+        real, intent(in) :: value
+        class(*), pointer :: pointer_to_value
+            allocate(pointer_to_value,source=value)
+            call this%set_all_generic(pointer_to_value)
+    end subroutine
+
+    subroutine set_all_logical(this,value)
+        class(subfield), intent(in) :: this
+        logical, intent(in) :: value
+        class(*), pointer :: pointer_to_value
+            allocate(pointer_to_value,source=value)
+            call this%set_all_generic(pointer_to_value)
+    end subroutine
+
     function latlon_subfield_constructor(input_data,subfield_section_coords) &
             result(constructor)
         type(latlon_subfield), pointer :: constructor
@@ -173,6 +290,12 @@ contains
             this%data => input_data
             this%lat_offset = subfield_section_coords%section_min_lat - 1
             this%lon_offset = subfield_section_coords%section_min_lon - 1
+            this%lat_min    = subfield_section_coords%section_min_lat
+            this%lat_max    = subfield_section_coords%section_width_lat + &
+                              this%lat_offset
+            this%lon_min    = subfield_section_coords%section_min_lon
+            this%lon_max    = subfield_section_coords%section_width_lon + &
+                              this%lon_offset
     end subroutine init_latlon_subfield
 
     pure function latlon_get_value(this,coords_in) result(value)
@@ -208,5 +331,74 @@ contains
         class(*), dimension(:,:), pointer :: data
             allocate(data(size(this%data,1),size(this%data,2)),source=this%data)
     end function latlon_get_data
+
+    subroutine latlon_for_all(this,subroutine_in,calling_object)
+        implicit none
+        class(latlon_subfield) :: this
+        class(*) :: calling_object
+        integer :: i,j
+        interface
+            subroutine subroutine_interface(calling_object,coords_in)
+                use coords_mod
+                class(*) :: calling_object
+                class(coords), intent(in) :: coords_in
+            end subroutine subroutine_interface
+        end interface
+        procedure(subroutine_interface) :: subroutine_in
+        do j = this%lon_min,this%lon_max
+            do i = this%lat_min,this%lat_max
+                call subroutine_in(calling_object,latlon_coords(i,j))
+            end do
+        end do
+    end subroutine latlon_for_all
+
+    subroutine latlon_for_all_edge_cells(this,subroutine_in,calling_object)
+        implicit none
+        class(latlon_subfield) :: this
+        class(*) :: calling_object
+        integer :: i,j
+        interface
+            subroutine subroutine_interface(calling_object,coords_in)
+                use coords_mod
+                class(*) :: calling_object
+                class(coords),intent(in) :: coords_in
+            end subroutine subroutine_interface
+        end interface
+        procedure(subroutine_interface) :: subroutine_in
+        do j = this%lon_min,this%lon_max
+                call subroutine_in(calling_object,latlon_coords(this%lat_min,j))
+                call subroutine_in(calling_object,latlon_coords(this%lat_max,j))
+        end do
+        do i = this%lat_min+1,this%lat_max-1
+                call subroutine_in(calling_object,latlon_coords(i,this%lon_min))
+                call subroutine_in(calling_object,latlon_coords(i,this%lon_max))
+        end do
+    end subroutine latlon_for_all_edge_cells
+
+    subroutine latlon_set_all_generic(this,value)
+        class(latlon_subfield) :: this
+        class(*), pointer :: value
+        integer :: i,j
+        do j = this%lon_min,this%lon_max
+            do i = this%lat_min,this%lat_max
+                call this%set_generic_value(latlon_coords(i,j),value)
+            end do
+        end do
+    end subroutine latlon_set_all_generic
+
+
+    function latlon_coords_outside_subfield(this,coords_in) result(is_true)
+        implicit none
+        class(latlon_subfield) :: this
+        class(coords), pointer :: coords_in
+        logical :: is_true
+            select type (coords_in)
+            type is (latlon_coords)
+                is_true = ( coords_in%lat < this%lat_min .or. &
+                            coords_in%lat > this%lat_max .or. &
+                            coords_in%lon < this%lon_min .or. &
+                            coords_in%lon > this%lon_max )
+            end select
+    end function latlon_coords_outside_subfield
 
 end module subfield_mod

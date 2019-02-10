@@ -23,7 +23,8 @@ $(FRUIT_LOC)/fruit.f90 \
 ../src/loop_breaker_mod.f90 \
 ../src/loop_breaker_test_mod.f90 \
 ../src/manual_fruit_basket.f90 \
-../src/manual_fruit_basket_driver.f90
+../src/manual_fruit_basket_driver.f90 \
+../src/flow_accumulation_algorithm_mod.f90
 
 OBJS += \
 ./src/precision_mod.o \
@@ -39,7 +40,8 @@ OBJS += \
 ./src/cotat_plus.o \
 ./src/cotat_plus_driver_mod.o \
 ./src/flow.o \
-./src/loop_breaker_mod.o
+./src/loop_breaker_mod.o \
+./src/flow_accumulation_algorithm_mod.o
 
 TEST_OBJS += \
 ./src/fruit.o \
@@ -78,7 +80,8 @@ MODS += \
 ./loop_breaker_mod.mod \
 ./loop_breaker_test_mod.mod \
 ./manual_fruit_basket.mod \
-./manual_fruit_basket_driver.mod
+./manual_fruit_basket_driver.mod \
+./src/flow_accumulation_algorithm_mod.mod
 
 # Each subdirectory must supply rules for building sources it contributes
 src/fruit.o: $(FRUIT_LOC)/fruit.f90
@@ -142,5 +145,8 @@ src/precision_mod.o: ../src/precision_mod.f90
 src/subfield_mod.o: ../src/subfield_mod.f90 src/coords_mod.o
 
 src/subfield_test_mod.o: ../src/subfield_test_mod.f90 src/coords_mod.o src/fruit.o src/subfield_mod.o
+
+src/flow_accumulation_algorithm_mod.o: ../src/flow_accumulation_algorithm_mod.f90 ../src/subfield_mod.f90 src/coords_mod.o
+
 
 

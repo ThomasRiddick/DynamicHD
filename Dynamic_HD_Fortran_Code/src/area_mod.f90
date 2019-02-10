@@ -494,10 +494,13 @@ abstract interface
         class(cell), intent(inout) :: this
     end subroutine mark_ocean_and_river_mouth_points
 
-    subroutine yamazaki_calculate_river_directions_as_indices(this,coarse_river_direction_indices)
+    subroutine yamazaki_calculate_river_directions_as_indices(this,coarse_river_direction_indices, &
+                                                              required_coarse_section_coords)
         import cell
+        import section_coords
         class(cell), intent(inout) :: this
         integer, dimension(:,:,:), intent(inout) :: coarse_river_direction_indices
+        class(section_coords), intent(in), optional :: required_coarse_section_coords
     end subroutine yamazaki_calculate_river_directions_as_indices
 end interface
 
@@ -840,7 +843,7 @@ contains
                     end if
                 end if
             end do
-            deallocate(LCDA_pixel_coords)
+            if (use_LCDA_criterion) deallocate(LCDA_pixel_coords)
     end function find_outlet_pixel
 
     subroutine check_for_sinks_and_rmouth_outflows(this,outlet_pixel_coords,no_remaining_outlets, &
@@ -946,7 +949,7 @@ contains
                 else if (mark_outflow) then
                     outlet_type = this%yamazaki_rmouth_outlet
                 else
-                    if (no_remaining_outlets .or. outlet_is_LCDA) then
+                    if ( .not. (no_remaining_outlets .or. outlet_is_LCDA) ) then
                         outlet_type = this%yamazaki_normal_outlet
                     else
                         outlet_type = this%yamazaki_source_cell_outlet
@@ -1509,7 +1512,7 @@ contains
 
     subroutine latlon_print_area(this)
     class(area), intent(in) :: this
-    character(len=80) :: line
+    character(len=160) :: line
     class(*), pointer :: value
     integer :: i,j
         write(*,*) 'Area Information'
@@ -1606,13 +1609,26 @@ contains
                      total_cumulative_flow,yamazaki_outlet_pixels,yamazaki_section_coords))
     end subroutine yamazaki_init_dir_based_rdirs_latlon_cell
 
-    subroutine yamazaki_latlon_calculate_river_directions_as_indices(this,coarse_river_direction_indices)
+    subroutine yamazaki_latlon_calculate_river_directions_as_indices(this,coarse_river_direction_indices, &
+                                                                     required_coarse_section_coords)
         class(latlon_cell), intent(inout) :: this
         integer, dimension(:,:,:), intent(inout) :: coarse_river_direction_indices
+        class(section_coords), intent(in), optional :: required_coarse_section_coords
         class(coords), pointer :: destination_cell_coords
         class(coords), pointer :: initial_outlet_pixel
         class(coords), pointer :: initial_cell_coords
         integer :: outlet_pixel_type
+        integer :: lat_offset, lon_offset
+            if (present(required_coarse_section_coords)) then
+                select type (required_coarse_section_coords)
+                    type is (latlon_section_coords)
+                        lat_offset = required_coarse_section_coords%section_min_lat - 1
+                        lon_offset = required_coarse_section_coords%section_min_lon - 1
+                end select
+            else
+                lat_offset = 0
+                lon_offset = 0
+            end if
             initial_outlet_pixel => this%yamazaki_retrieve_initial_outlet_pixel(outlet_pixel_type)
             initial_cell_coords => this%cell_neighborhood%yamazaki_get_cell_coords(initial_outlet_pixel)
             if (outlet_pixel_type == this%yamazaki_sink_outlet .or. outlet_pixel_type == this%yamazaki_rmouth_outlet) then
@@ -1631,9 +1647,9 @@ contains
                 select type (destination_cell_coords)
                 type is (latlon_coords)
                     coarse_river_direction_indices(initial_cell_coords%lat,initial_cell_coords%lon,1) = &
-                        destination_cell_coords%lat
+                        destination_cell_coords%lat - lat_offset
                     coarse_river_direction_indices(initial_cell_coords%lat,initial_cell_coords%lon,2) = &
-                        destination_cell_coords%lon
+                        destination_cell_coords%lon - lon_offset
                 end select
             end select
     end subroutine yamazaki_latlon_calculate_river_directions_as_indices
