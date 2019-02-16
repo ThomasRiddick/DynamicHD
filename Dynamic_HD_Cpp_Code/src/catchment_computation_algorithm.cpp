@@ -201,5 +201,5 @@ coords* catchment_computation_algorithm_icon_single_index::
   icon_single_index_grid* _icon_single_index_grid =
 		static_cast<icon_single_index_grid*>(_grid);
   return _icon_single_index_grid->
-  	convert_index_to_coords((*next_cell_index)(nbr_coords));
+  	convert_index_to_coords((*next_cell_index)(initial_coords));
 }

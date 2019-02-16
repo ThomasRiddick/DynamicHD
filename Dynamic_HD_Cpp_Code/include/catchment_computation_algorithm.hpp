@@ -13,7 +13,8 @@
 class catchment_computation_algorithm {
 public:
 	virtual ~catchment_computation_algorithm()
-		{delete completed_cells; delete catchment_numbers; delete _grid; };
+		{delete completed_cells; delete catchment_numbers; delete _grid;
+		 delete searched_cells; };
 	void setup_fields(int* catchment_numbers_in,
 					  grid_params* grid_params_in);
 	void compute_catchments();

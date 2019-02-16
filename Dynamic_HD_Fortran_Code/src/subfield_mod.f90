@@ -2,7 +2,7 @@ module subfield_mod
 use coords_mod
 implicit none
 private
-public :: latlon_subfield_constructor
+public :: latlon_subfield_constructor,icon_single_index_subfield_constructor
 
 !> A class to contain a subfield. Unlike a field section a subfield only has a data array
 !! that covers grid points within the selected section of field. Coordinates should be
@@ -180,6 +180,32 @@ end type latlon_subfield
 interface latlon_subfield
     procedure latlon_subfield_constructor
 end interface latlon_subfield
+
+!> A concrete subclass of subfield for a latitude longitude grid
+type, extends(subfield), public :: icon_single_index_subfield
+    private
+    !> A 1D array to hold the subfield data
+    class (*), dimension(:), pointer :: data => null()
+    logical, dimension(:), allocatable :: cell_neighbors
+    logical, dimension(:), allocatable :: cell_secondary_neighbors
+    type(generic_1d_coords) :: outside_subfield_coords
+    integer :: num_points
+contains
+    procedure, private :: init_icon_single_index_subfield
+    procedure :: get_value => icon_single_index_get_value
+    procedure :: set_generic_value => icon_single_index_set_generic_value
+    procedure :: destructor => icon_single_index_subfield_destructor
+    procedure, private :: set_data_array_element => icon_single_index_set_data_array_element
+    procedure :: for_all => icon_single_index_for_all
+    procedure :: for_all_edge_cells => icon_single_index_for_all_edge_cells
+    procedure :: icon_single_index_get_data
+    procedure :: set_all_generic => icon_single_index_set_all_generic
+    procedure :: coords_outside_subfield => icon_single_index_coords_outside_subfield
+end type icon_single_index_subfield
+
+interface icon_single_index_subfield
+    procedure icon_single_index_subfield_constructor
+end interface icon_single_index_subfield
 
 contains
 
@@ -386,7 +412,6 @@ contains
         end do
     end subroutine latlon_set_all_generic
 
-
     function latlon_coords_outside_subfield(this,coords_in) result(is_true)
         implicit none
         class(latlon_subfield) :: this
@@ -400,5 +425,150 @@ contains
                             coords_in%lon > this%lon_max )
             end select
     end function latlon_coords_outside_subfield
+
+    subroutine icon_single_index_set_data_array_element(this,index,value)
+        class(icon_single_index_subfield) :: this
+        class(*), pointer :: value
+        integer :: index
+        select type (value)
+        type is (integer)
+            select type (data => this%data)
+                type is (integer)
+                    data(index) = value
+                class default
+                    stop 'trying to set array element with value of incorrect type'
+            end select
+        type is (logical)
+            select type (data => this%data)
+                type is (logical)
+                    data(index) = value
+                class default
+                    stop 'trying to set array element with value of incorrect type'
+            end select
+        type is (real)
+            select type (data => this%data)
+                type is (real)
+                    data(index) = value
+                class default
+                    stop 'trying to set array element with value of incorrect type'
+            end select
+        type is (generic_1d_coords)
+            select type (data=> this%data)
+                type is (generic_1d_coords)
+                    data(index) = value
+                class default
+                    stop 'trying to set array element with value of incorrect type'
+            end select
+
+        class default
+            stop 'trying to set array element with value of a unknown type'
+        end select
+    end subroutine icon_single_index_set_data_array_element
+
+    function icon_single_index_subfield_constructor(input_data,subfield_section_coords) &
+            result(constructor)
+        type(icon_single_index_subfield), pointer :: constructor
+        class(*), dimension(:), pointer :: input_data
+        class(icon_single_index_section_coords) :: subfield_section_coords
+            allocate(constructor)
+            call constructor%init_icon_single_index_subfield(input_data,subfield_section_coords)
+    end function icon_single_index_subfield_constructor
+
+    subroutine init_icon_single_index_subfield(this,input_data,subfield_section_coords)
+        class(icon_single_index_subfield) :: this
+        class(*), dimension(:), pointer :: input_data
+        type(icon_single_index_section_coords) :: subfield_section_coords
+            this%data => input_data
+            this%cell_neighbors => subfield_section_coords%get_cell_neighbors()
+            this%cell_secondary_neighbors => &
+                subfield_section_coords%get_cell_secondary_neighbors()
+    end subroutine init_icon_single_index_subfield
+
+    pure function icon_single_index_get_value(this,coords_in) result(value)
+        class(icon_single_index_subfield), intent(in) :: this
+        class(coords), intent(in) :: coords_in
+        class(*), pointer :: value
+            select type (coords_in)
+            type is (generic_1d_coords)
+                allocate(value,source=this%data(coords_in%index))
+            end select
+    end function icon_single_index_get_value
+
+    subroutine icon_single_index_set_generic_value(this,coords_in,value)
+        class(icon_single_index_subfield) :: this
+        class(coords), intent(in) :: coords_in
+        class(*), pointer :: value
+            select type (coords_in)
+            type is (generic_1d_coords)
+                call this%set_data_array_element(coords_in%index,value)
+            end select
+            deallocate(value)
+    end subroutine icon_single_index_set_generic_value
+
+    subroutine icon_single_index_subfield_destructor(this)
+        class(icon_single_index_subfield) :: this
+            if (associated(this%data)) deallocate(this%data)
+    end subroutine
+
+    pure function icon_single_index_get_data(this) result(data)
+        class(icon_single_index_subfield), intent(in) :: this
+        class(*), dimension(:), pointer :: data
+            allocate(data(size(this%data)),source=this%data)
+    end function icon_single_index_get_data
+
+    subroutine icon_single_index_for_all(this,subroutine_in,calling_object)
+        implicit none
+        class(icon_single_index_subfield) :: this
+        class(*) :: calling_object
+        integer :: i
+        interface
+            subroutine subroutine_interface(calling_object,coords_in)
+                use coords_mod
+                class(*) :: calling_object
+                class(coords), intent(in) :: coords_in
+            end subroutine subroutine_interface
+        end interface
+        procedure(subroutine_interface) :: subroutine_in
+            do i = 1,this%num_points
+                call subroutine_in(calling_object,generic_1d_coords(i))
+            end do
+    end subroutine icon_single_index_for_all
+
+    subroutine icon_single_index_for_all_edge_cells(this,subroutine_in,calling_object)
+        implicit none
+        class(icon_single_index_subfield) :: this
+        class(*) :: calling_object
+        integer :: i
+        interface
+            subroutine subroutine_interface(calling_object,coords_in)
+                use coords_mod
+                class(*) :: calling_object
+                class(coords),intent(in) :: coords_in
+            end subroutine subroutine_interface
+        end interface
+        procedure(subroutine_interface) :: subroutine_in
+        CODE THIS UP
+    end subroutine icon_single_index_for_all_edge_cells
+
+    subroutine icon_single_index_set_all_generic(this,value)
+        class(icon_single_index_subfield) :: this
+        class(*), pointer :: value
+        integer :: i
+            do i = 1,this%num_points
+                call this%set_generic_value(generic_1d_coords(i),value)
+            end do
+    end subroutine icon_single_index_set_all_generic
+
+
+    function icon_single_index_coords_outside_subfield(this,coords_in) result(is_true)
+        implicit none
+        class(icon_single_index_subfield) :: this
+        class(coords), pointer :: coords_in
+        logical :: is_true
+            select type (coords_in)
+            type is (generic_1d_coords)
+                is_true = (coords_in%are_equal_to(this%outside_subfield_coords))
+            end select
+    end function icon_single_index_coords_outside_subfield
 
 end module subfield_mod

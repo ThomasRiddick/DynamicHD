@@ -358,6 +358,7 @@ void icon_single_index_grid_params::icon_single_index_grid_calculate_secondary_n
 	//Within this function work with c array indices rather than native icon indices so apply offset to
 	//indices read from arrays
 	secondary_neighboring_cell_indices = new int[9*ncells];
+	calculated_secondary_neighboring_cell_indices = true;
 	for(int index_over_grid=0;index_over_grid<ncells;index_over_grid++){
 		//Six secondary neighbors are neighbors of primary neighbors
 		for(int index_over_primary_nbrs=0; index_over_primary_nbrs < 3; index_over_primary_nbrs++){

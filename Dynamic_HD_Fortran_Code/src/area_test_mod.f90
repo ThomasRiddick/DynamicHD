@@ -2516,11 +2516,14 @@ contains
                 input_fine_river_directions, input_fine_total_cumulative_flow, &
                 input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
             result=>dir_based_rdirs_cell%yamazaki_test_find_downstream_cell(initial_outlet_pixel)
+            call dir_based_rdirs_cell%destructor()
             select type (result)
             type is (latlon_coords)
                 call assert_equals(result%lat,1)
                 call assert_equals(result%lon,1)
             end select
+            deallocate(result)
+            deallocate(initial_outlet_pixel)
     end subroutine testYamazakiFindDownstreamCellOne
 
     subroutine testYamazakiFindDownstreamCellTwo
@@ -2575,11 +2578,14 @@ contains
                 input_fine_river_directions, input_fine_total_cumulative_flow, &
                 input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
             result=>dir_based_rdirs_cell%yamazaki_test_find_downstream_cell(initial_outlet_pixel)
+            call dir_based_rdirs_cell%destructor()
             select type (result)
             type is (latlon_coords)
                 call assert_equals(result%lat,1)
                 call assert_equals(result%lon,2)
             end select
+            deallocate(result)
+            deallocate(initial_outlet_pixel)
     end subroutine testYamazakiFindDownstreamCellTwo
 
     subroutine testYamazakiFindDownstreamCellThree
@@ -2634,11 +2640,14 @@ contains
                 input_fine_river_directions, input_fine_total_cumulative_flow, &
                 input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
             result=>dir_based_rdirs_cell%yamazaki_test_find_downstream_cell(initial_outlet_pixel)
+            call dir_based_rdirs_cell%destructor()
             select type (result)
             type is (latlon_coords)
                 call assert_equals(result%lat,1)
                 call assert_equals(result%lon,3)
             end select
+            deallocate(result)
+            deallocate(initial_outlet_pixel)
     end subroutine testYamazakiFindDownstreamCellThree
 
     subroutine testYamazakiFindDownstreamCellFour
@@ -2693,11 +2702,14 @@ contains
                 input_fine_river_directions, input_fine_total_cumulative_flow, &
                 input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
             result=>dir_based_rdirs_cell%yamazaki_test_find_downstream_cell(initial_outlet_pixel)
+            call dir_based_rdirs_cell%destructor()
             select type (result)
             type is (latlon_coords)
                 call assert_equals(result%lat,3)
                 call assert_equals(result%lon,2)
             end select
+            deallocate(result)
+            deallocate(initial_outlet_pixel)
     end subroutine testYamazakiFindDownstreamCellFour
 
     subroutine testYamazakiFindDownstreamCellFive
@@ -2752,11 +2764,14 @@ contains
                 input_fine_river_directions, input_fine_total_cumulative_flow, &
                 input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
             result=>dir_based_rdirs_cell%yamazaki_test_find_downstream_cell(initial_outlet_pixel)
+            call dir_based_rdirs_cell%destructor()
             select type (result)
             type is (latlon_coords)
                 call assert_equals(result%lat,3)
                 call assert_equals(result%lon,1)
             end select
+            deallocate(result)
+            deallocate(initial_outlet_pixel)
     end subroutine testYamazakiFindDownstreamCellFive
 
     subroutine testYamazakiFindDownstreamCellSix
@@ -2811,11 +2826,14 @@ contains
                 input_fine_river_directions, input_fine_total_cumulative_flow, &
                 input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
             result=>dir_based_rdirs_cell%yamazaki_test_find_downstream_cell(initial_outlet_pixel)
+            call dir_based_rdirs_cell%destructor()
             select type (result)
             type is (latlon_coords)
                 call assert_equals(result%lat,3)
                 call assert_equals(result%lon,3)
             end select
+            deallocate(result)
+            deallocate(initial_outlet_pixel)
     end subroutine testYamazakiFindDownstreamCellSix
 
     subroutine testYamazakiFindDownstreamCellSeven
@@ -2870,11 +2888,14 @@ contains
                 input_fine_river_directions, input_fine_total_cumulative_flow, &
                 input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
             result=>dir_based_rdirs_cell%yamazaki_test_find_downstream_cell(initial_outlet_pixel)
+            call dir_based_rdirs_cell%destructor()
             select type (result)
             type is (latlon_coords)
                 call assert_equals(result%lat,2)
                 call assert_equals(result%lon,3)
             end select
+            deallocate(result)
+            deallocate(initial_outlet_pixel)
     end subroutine testYamazakiFindDownstreamCellSeven
 
     subroutine testYamazakiFindDownstreamCellEight
@@ -2930,11 +2951,14 @@ contains
                 input_fine_river_directions, input_fine_total_cumulative_flow, &
                 input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
             result=>dir_based_rdirs_cell%yamazaki_test_find_downstream_cell(initial_outlet_pixel)
+            call dir_based_rdirs_cell%destructor()
             select type (result)
             type is (latlon_coords)
                 call assert_equals(result%lat,1)
                 call assert_equals(result%lon,3)
             end select
+            deallocate(result)
+            deallocate(initial_outlet_pixel)
     end subroutine testYamazakiFindDownstreamCellEight
 
     subroutine testYamazakiFindDownstreamCellNine
@@ -2990,11 +3014,14 @@ contains
                 input_fine_river_directions, input_fine_total_cumulative_flow, &
                 input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
             result=>dir_based_rdirs_cell%yamazaki_test_find_downstream_cell(initial_outlet_pixel)
+            call dir_based_rdirs_cell%destructor()
             select type (result)
             type is (latlon_coords)
                 call assert_equals(result%lat,2)
                 call assert_equals(result%lon,3)
             end select
+            deallocate(result)
+            deallocate(initial_outlet_pixel)
     end subroutine testYamazakiFindDownstreamCellNine
 
     subroutine testYamazakiFindDownstreamCellTen
@@ -3050,11 +3077,14 @@ contains
                 input_fine_river_directions, input_fine_total_cumulative_flow, &
                 input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
             result=>dir_based_rdirs_cell%yamazaki_test_find_downstream_cell(initial_outlet_pixel)
+            call dir_based_rdirs_cell%destructor()
             select type (result)
             type is (latlon_coords)
                 call assert_equals(result%lat,1)
                 call assert_equals(result%lon,3)
             end select
+            deallocate(result)
+            deallocate(initial_outlet_pixel)
    end subroutine testYamazakiFindDownstreamCellTen
 
    subroutine testYamazakiFindDownstreamCellEleven
@@ -3110,11 +3140,14 @@ contains
                 input_fine_river_directions, input_fine_total_cumulative_flow, &
                 input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
             result=>dir_based_rdirs_cell%yamazaki_test_find_downstream_cell(initial_outlet_pixel)
+            call dir_based_rdirs_cell%destructor()
             select type (result)
             type is (latlon_coords)
                 call assert_equals(result%lat,2)
                 call assert_equals(result%lon,3)
             end select
+            deallocate(result)
+            deallocate(initial_outlet_pixel)
     end subroutine testYamazakiFindDownstreamCellEleven
 
     subroutine testYamazakiFindDownstreamCellTwelve
@@ -3170,11 +3203,14 @@ contains
                 input_fine_river_directions, input_fine_total_cumulative_flow, &
                 input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
             result=>dir_based_rdirs_cell%yamazaki_test_find_downstream_cell(initial_outlet_pixel)
+            call dir_based_rdirs_cell%destructor()
             select type (result)
             type is (latlon_coords)
                 call assert_equals(result%lat,2)
                 call assert_equals(result%lon,1)
             end select
+            deallocate(result)
+            deallocate(initial_outlet_pixel)
     end subroutine testYamazakiFindDownstreamCellTwelve
 
     subroutine testYamazakiFindDownstreamCellThirteen
@@ -3275,11 +3311,14 @@ contains
                 input_fine_river_directions, input_fine_total_cumulative_flow, &
                 input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
             result=>dir_based_rdirs_cell%yamazaki_test_find_downstream_cell(initial_outlet_pixel)
+            call dir_based_rdirs_cell%destructor()
             select type (result)
             type is (latlon_coords)
                 call assert_equals(result%lat,6)
                 call assert_equals(result%lon,5)
             end select
+            deallocate(result)
+            deallocate(initial_outlet_pixel)
     end subroutine testYamazakiFindDownstreamCellThirteen
 
     subroutine testYamazakiFindDownstreamCellFourteen
@@ -3380,11 +3419,14 @@ contains
                 input_fine_river_directions, input_fine_total_cumulative_flow, &
                 input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
             result=>dir_based_rdirs_cell%yamazaki_test_find_downstream_cell(initial_outlet_pixel)
+            call dir_based_rdirs_cell%destructor()
             select type (result)
             type is (latlon_coords)
                 call assert_equals(result%lat,5)
                 call assert_equals(result%lon,3)
             end select
+            deallocate(result)
+            deallocate(initial_outlet_pixel)
     end subroutine testYamazakiFindDownstreamCellFourteen
 
     subroutine testYamazakiFindDownstreamCellFifteen
@@ -3485,11 +3527,14 @@ contains
                 input_fine_river_directions, input_fine_total_cumulative_flow, &
                 input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
             result=>dir_based_rdirs_cell%yamazaki_test_find_downstream_cell(initial_outlet_pixel)
+            call dir_based_rdirs_cell%destructor()
             select type (result)
             type is (latlon_coords)
                 call assert_equals(result%lat,5)
                 call assert_equals(result%lon,3)
             end select
+            deallocate(result)
+            deallocate(initial_outlet_pixel)
     end subroutine testYamazakiFindDownstreamCellFifteen
 
     subroutine testYamazakiFindDownstreamCellSixteen
@@ -3508,8 +3553,8 @@ contains
             allocate(input_fine_river_directions(18,18))
             allocate(input_fine_total_cumulative_flow(18,18))
             allocate(input_yamazaki_outlet_pixels(18,18))
-            allocate(initial_outlet_pixel,source=latlon_coords(11,7))
-            cell_section_coords = latlon_section_coords(10,7,3,3)
+            allocate(initial_outlet_pixel,source=latlon_coords(5,9))
+            cell_section_coords = latlon_section_coords(4,7,3,3)
             input_yamazaki_section_coords = latlon_section_coords(1,1,18,18)
             input_fine_river_directions = transpose(reshape((/ 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
                                                                5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
@@ -3566,11 +3611,11 @@ contains
                                                                 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
 
                                                                 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
-                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,1, 0,0,0, 0,0,0, 0,0,0, &
                                                                 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
 
                                                                 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
-                                                                0,0,0, 0,0,0, 1,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
                                                                 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
 
                                                                 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
@@ -3590,11 +3635,14 @@ contains
                 input_fine_river_directions, input_fine_total_cumulative_flow, &
                 input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
             result=>dir_based_rdirs_cell%yamazaki_test_find_downstream_cell(initial_outlet_pixel)
+            call dir_based_rdirs_cell%destructor()
             select type (result)
             type is (latlon_coords)
                 call assert_equals(result%lat,5)
-                call assert_equals(result%lon,3)
+                call assert_equals(result%lon,2)
             end select
+            deallocate(result)
+            deallocate(initial_outlet_pixel)
     end subroutine testYamazakiFindDownstreamCellSixteen
 
     subroutine testYamazakiFindDownstreamCellSeventeen
@@ -3614,8 +3662,8 @@ contains
             allocate(input_fine_river_directions(18,18))
             allocate(input_fine_total_cumulative_flow(18,18))
             allocate(input_yamazaki_outlet_pixels(18,18))
-            allocate(initial_outlet_pixel,source=latlon_coords(11,7))
-            cell_section_coords = latlon_section_coords(10,7,3,3)
+            allocate(initial_outlet_pixel,source=latlon_coords(5,9))
+            cell_section_coords = latlon_section_coords(4,7,3,3)
             input_yamazaki_section_coords = latlon_section_coords(1,1,18,18)
             input_fine_river_directions = transpose(reshape((/ 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
                                                                5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, 5,5,5, &
@@ -3672,11 +3720,11 @@ contains
                                                                 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
 
                                                                 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
-                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,1, 0,0,0, 0,0,0, 0,0,0, &
                                                                 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
 
                                                                 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
-                                                                0,0,0, 0,0,0, 1,0,0, 0,0,0, 0,0,0, 0,0,0, &
+                                                                0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
                                                                 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
 
                                                                 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, &
@@ -3696,11 +3744,14 @@ contains
                 input_fine_river_directions, input_fine_total_cumulative_flow, &
                 input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
             result=>dir_based_rdirs_cell%yamazaki_test_find_downstream_cell(initial_outlet_pixel)
+            call dir_based_rdirs_cell%destructor()
             select type (result)
             type is (latlon_coords)
-                call assert_equals(result%lat,3)
-                call assert_equals(result%lon,5)
+                call assert_equals(result%lat,2)
+                call assert_equals(result%lon,4)
             end select
+            deallocate(result)
+            deallocate(initial_outlet_pixel)
     end subroutine testYamazakiFindDownstreamCellSeventeen
 
     subroutine testYamazakiFindDownstreamCellEighteen
@@ -3802,11 +3853,14 @@ contains
                 input_fine_river_directions, input_fine_total_cumulative_flow, &
                 input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
             result=>dir_based_rdirs_cell%yamazaki_test_find_downstream_cell(initial_outlet_pixel)
+            call dir_based_rdirs_cell%destructor()
             select type (result)
             type is (latlon_coords)
                 call assert_equals(result%lat,5)
                 call assert_equals(result%lon,2)
             end select
+            deallocate(result)
+            deallocate(initial_outlet_pixel)
     end subroutine testYamazakiFindDownstreamCellEighteen
 
     subroutine testYamazakiFindDownstreamCellNineteen
@@ -3907,11 +3961,14 @@ contains
                 input_fine_river_directions, input_fine_total_cumulative_flow, &
                 input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
             result=>dir_based_rdirs_cell%yamazaki_test_find_downstream_cell(initial_outlet_pixel)
+            call dir_based_rdirs_cell%destructor()
             select type (result)
             type is (latlon_coords)
                 call assert_equals(result%lat,5)
                 call assert_equals(result%lon,6)
             end select
+            deallocate(result)
+            deallocate(initial_outlet_pixel)
     end subroutine testYamazakiFindDownstreamCellNineteen
 
     subroutine testYamazakiFindDownstreamCellTwenty
@@ -4012,11 +4069,14 @@ contains
                 input_fine_river_directions, input_fine_total_cumulative_flow, &
                 input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
             result=>dir_based_rdirs_cell%yamazaki_test_find_downstream_cell(initial_outlet_pixel)
+            call dir_based_rdirs_cell%destructor()
             select type (result)
             type is (latlon_coords)
                 call assert_equals(result%lat,5)
                 call assert_equals(result%lon,5)
             end select
+            deallocate(result)
+            deallocate(initial_outlet_pixel)
     end subroutine testYamazakiFindDownstreamCellTwenty
 
     subroutine testYamazakiFindDownstreamCellTwentyOne
@@ -4118,11 +4178,14 @@ contains
                 input_fine_river_directions, input_fine_total_cumulative_flow, &
                 input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
             result=>dir_based_rdirs_cell%yamazaki_test_find_downstream_cell(initial_outlet_pixel)
+            call dir_based_rdirs_cell%destructor()
             select type (result)
             type is (latlon_coords)
                 call assert_equals(result%lat,1)
                 call assert_equals(result%lon,6)
             end select
+            deallocate(result)
+            deallocate(initial_outlet_pixel)
     end subroutine testYamazakiFindDownstreamCellTwentyOne
 
     subroutine testYamazakiFindDownstreamCellTwentyTwo
@@ -4223,11 +4286,14 @@ contains
                 input_fine_river_directions, input_fine_total_cumulative_flow, &
                 input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
             result=>dir_based_rdirs_cell%yamazaki_test_find_downstream_cell(initial_outlet_pixel)
+            call dir_based_rdirs_cell%destructor()
             select type (result)
             type is (latlon_coords)
                 call assert_equals(result%lat,5)
                 call assert_equals(result%lon,2)
             end select
+            deallocate(result)
+            deallocate(initial_outlet_pixel)
     end subroutine testYamazakiFindDownstreamCellTwentyTwo
 
     subroutine testYamazakiFindDownstreamCellTwentyThree
@@ -4328,11 +4394,14 @@ contains
                 input_fine_river_directions, input_fine_total_cumulative_flow, &
                 input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
             result=>dir_based_rdirs_cell%yamazaki_test_find_downstream_cell(initial_outlet_pixel)
+            call dir_based_rdirs_cell%destructor()
             select type (result)
             type is (latlon_coords)
                 call assert_equals(result%lat,6)
                 call assert_equals(result%lon,6)
             end select
+            deallocate(result)
+            deallocate(initial_outlet_pixel)
     end subroutine testYamazakiFindDownstreamCellTwentyThree
 
     subroutine testYamazakiLatLonCalculateRiverDirectionsAsIndicesOne
@@ -4455,6 +4524,7 @@ contains
                 input_fine_river_directions, input_fine_total_cumulative_flow, &
                 input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
             call dir_based_rdirs_cell%yamazaki_calculate_river_directions_as_indices(coarse_river_direction_indices)
+            call dir_based_rdirs_cell%destructor()
             call assert_true(all(coarse_river_direction_indices .eq. coarse_river_direction_indices_expected_result))
     end subroutine testYamazakiLatLonCalculateRiverDirectionsAsIndicesOne
 
@@ -4578,6 +4648,7 @@ contains
                 input_fine_river_directions, input_fine_total_cumulative_flow, &
                 input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
             call dir_based_rdirs_cell%yamazaki_calculate_river_directions_as_indices(coarse_river_direction_indices)
+            call dir_based_rdirs_cell%destructor()
             call assert_true(all(coarse_river_direction_indices .eq. coarse_river_direction_indices_expected_result))
     end subroutine testYamazakiLatLonCalculateRiverDirectionsAsIndicesTwo
 
@@ -4701,6 +4772,7 @@ contains
                 input_fine_river_directions, input_fine_total_cumulative_flow, &
                 input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
             call dir_based_rdirs_cell%yamazaki_calculate_river_directions_as_indices(coarse_river_direction_indices)
+            call dir_based_rdirs_cell%destructor()
             call assert_true(all(coarse_river_direction_indices .eq. coarse_river_direction_indices_expected_result))
     end subroutine testYamazakiLatLonCalculateRiverDirectionsAsIndicesThree
 
@@ -4824,6 +4896,7 @@ contains
                 input_fine_river_directions, input_fine_total_cumulative_flow, &
                 input_yamazaki_outlet_pixels,input_yamazaki_section_coords)
             call dir_based_rdirs_cell%yamazaki_calculate_river_directions_as_indices(coarse_river_direction_indices)
+            call dir_based_rdirs_cell%destructor()
             call assert_true(all(coarse_river_direction_indices .eq. coarse_river_direction_indices_expected_result))
     end subroutine testYamazakiLatLonCalculateRiverDirectionsAsIndicesFour
 

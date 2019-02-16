@@ -285,8 +285,9 @@ public:
 	coords* convert_fine_coords(coords* fine_coords,grid_params* fine_grid_params);
 	//Not implemeted for icon grid; return a runtime error
 	coords* calculate_downstream_coords_from_dir_based_rdir(coords* initial_coords,double rdir);
+	//Convert an index to coordinates. This is for EXTERNAL INDICES and does not include the array offset
 	generic_1d_coords* convert_index_to_coords(int index)
-		{ return new generic_1d_coords(index + array_offset); }
+		{ return new generic_1d_coords(index); }
 };
 
 /**
@@ -332,6 +333,9 @@ class icon_single_index_grid_params : public grid_params {
 	int* secondary_neighboring_cell_indices = nullptr;
 	//If no wrap is set this can use to specify a subsection of the gri
 	bool* subgrid_mask = nullptr;
+	//Flag to show if this class calculated secondary neighbors and thus
+	//needs to delete them
+	bool calculated_secondary_neighboring_cell_indices = false;
 	#if USE_NETCDFCPP
 	//ICON grid parameter file path
 	string icon_grid_params_filepath = "";
@@ -343,7 +347,9 @@ class icon_single_index_grid_params : public grid_params {
 	//neighbors is thus blank - use this value to signify that
 	const int no_neighbor = -1;
 public:
-	virtual ~icon_single_index_grid_params() {};
+	virtual ~icon_single_index_grid_params()
+	{if (calculated_secondary_neighboring_cell_indices)
+		delete[] secondary_neighboring_cell_indices;};
 	///Class constructor
 	icon_single_index_grid_params(int ncells_in,int* neighboring_cell_indices_in,
 			bool use_secondary_neighbors_in,int* secondary_neighboring_cell_indices_in)

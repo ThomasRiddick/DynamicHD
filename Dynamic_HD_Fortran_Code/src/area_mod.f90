@@ -475,17 +475,21 @@ abstract interface
         class(direction_indicator), pointer :: flow_direction_for_ocean_point
     end function get_flow_direction_for_ocean_point
 
-    function get_sink_combined_cumulative_flow(this) &
+    function get_sink_combined_cumulative_flow(this,main_sink_coords) &
         result(combined_cumulative_flow_to_sinks)
         import cell
+        import coords
         class(cell), intent(in) :: this
+        class(coords), pointer, optional,intent(out) :: main_sink_coords
         integer :: combined_cumulative_flow_to_sinks
     end function get_sink_combined_cumulative_flow
 
-    function get_rmouth_outflow_combined_cumulative_flow(this) &
+    function get_rmouth_outflow_combined_cumulative_flow(this,main_outflow_coords) &
         result(combined_cumulative_rmouth_outflow)
         import cell
+        import coords
         class(cell), intent(in) :: this
+        class(coords), pointer, optional,intent(out) :: main_outflow_coords
         integer :: combined_cumulative_rmouth_outflow
     end function get_rmouth_outflow_combined_cumulative_flow
 
@@ -854,6 +858,8 @@ contains
         logical, intent(out) :: mark_sink
         logical, intent(out) :: mark_outflow
         class(*), pointer :: outlet_pixel_cumulative_flow_value
+        class(coords), pointer :: main_sink_coords
+        class(coords), pointer :: main_river_mouth_coords
         integer :: outlet_pixel_cumulative_flow
         integer :: cumulative_sink_outflow
         integer :: cumulative_rmouth_outflow
@@ -871,20 +877,31 @@ contains
                 deallocate(outlet_pixel_cumulative_flow_value)
             end if
             if (run_check_for_sinks) then
-                cumulative_sink_outflow = this%get_sink_combined_cumulative_flow()
+                cumulative_sink_outflow = &
+                    this%get_sink_combined_cumulative_flow(main_sink_coords)
             else
                 cumulative_sink_outflow = 0
             end if
             if (this%contains_river_mouths) then
-                cumulative_rmouth_outflow = this%get_rmouth_outflow_combined_cumulative_flow()
+                cumulative_rmouth_outflow = &
+                    this%get_rmouth_outflow_combined_cumulative_flow(main_river_mouth_coords)
             else
                 cumulative_rmouth_outflow = -1
             end if
             if ( cumulative_sink_outflow > cumulative_rmouth_outflow .and. &
                  cumulative_sink_outflow > outlet_pixel_cumulative_flow ) then
                  mark_sink = .True.
+                 deallocate(outlet_pixel_coords)
+                 if (this%contains_river_mouths) deallocate(main_river_mouth_coords)
+                 outlet_pixel_coords =>  main_sink_coords
             else if (  cumulative_rmouth_outflow > outlet_pixel_cumulative_flow) then
                  mark_outflow = .True.
+                 deallocate(outlet_pixel_coords)
+                 if (run_check_for_sinks) deallocate(main_sink_coords)
+                 outlet_pixel_coords =>  main_river_mouth_coords
+            else
+                if (this%contains_river_mouths) deallocate(main_river_mouth_coords)
+                if (run_check_for_sinks) deallocate(main_sink_coords)
             end if
     end subroutine check_for_sinks_and_rmouth_outflows
 
@@ -984,6 +1001,7 @@ contains
             if (associated(this%river_directions)) deallocate(this%river_directions)
             if (associated(this%total_cumulative_flow)) deallocate(this%total_cumulative_flow)
             if (allocated(this%cell_neighborhood)) call this%cell_neighborhood%destructor()
+            if (associated(this%yamazaki_outlet_pixels)) deallocate(this%yamazaki_outlet_pixels)
     end subroutine cell_destructor
 
     function yamazaki_retrieve_initial_outlet_pixel(this,outlet_pixel_type) result(initial_outlet_pixel)
@@ -991,26 +1009,67 @@ contains
         integer, intent(out) :: outlet_pixel_type
         class(coords), pointer  :: initial_outlet_pixel
         class(coords), pointer :: working_pixel
+        class(*), pointer :: working_pixel_ptr
         class(coords), pointer :: edge_pixel_coords_list(:)
+        class(doubly_linked_list), pointer :: pixels_to_process
         class(*), pointer :: working_pixel_value
+        logical :: pixel_found
         integer :: i
+            pixel_found = .false.
             edge_pixel_coords_list => this%find_edge_pixels()
             do i = 1,size(edge_pixel_coords_list)
                 working_pixel => edge_pixel_coords_list(i)
-                working_pixel_value => this%yamazaki_outlet_pixels%get_value(working_pixel)
-                select type(working_pixel_value)
-                type is (integer)
-                    if (working_pixel_value == this%yamazaki_source_cell_outlet .or. &
-                        working_pixel_value == this%yamazaki_normal_outlet .or. &
-                        working_pixel_value == this%yamazaki_sink_outlet .or. &
-                        working_pixel_value == this%yamazaki_rmouth_outlet) then
-                        outlet_pixel_type = working_pixel_value
-                        allocate(initial_outlet_pixel,source=working_pixel)
-                        exit
-                    end if
-                end select
+                if ( .not. pixel_found) then
+                    working_pixel_value => this%yamazaki_outlet_pixels%get_value(working_pixel)
+                    select type(working_pixel_value)
+                    type is (integer)
+                        if (working_pixel_value == this%yamazaki_source_cell_outlet .or. &
+                            working_pixel_value == this%yamazaki_normal_outlet .or. &
+                            working_pixel_value == this%yamazaki_sink_outlet .or. &
+                            working_pixel_value == this%yamazaki_rmouth_outlet) then
+                            outlet_pixel_type = working_pixel_value
+                            allocate(initial_outlet_pixel,source=working_pixel)
+                            pixel_found = .true.
+                        end if
+                    end select
+                    deallocate(working_pixel_value)
+                end if
             end do
             deallocate(edge_pixel_coords_list)
+            if ( .not. pixel_found) then
+                pixels_to_process => this%generate_list_of_pixels_in_cell()
+                do
+                    !Combine iteration and check to see if we have reached the end
+                    !of the list
+                    if (pixels_to_process%iterate_forward()) then
+                        if (pixel_found) then
+                            exit
+                        else
+                            stop 'no outlet pixel could be retrieved for cell'
+                        end if
+                    end if
+                    working_pixel_ptr => pixels_to_process%get_value_at_iterator_position()
+                    select type(working_pixel_ptr)
+                        class is (coords)
+                            working_pixel => working_pixel_ptr
+                    end select
+                    if ( .not. pixel_found) then
+                        working_pixel_value => this%yamazaki_outlet_pixels%get_value(working_pixel)
+                        select type(working_pixel_value)
+                        type is (integer)
+                            if (working_pixel_value == this%yamazaki_sink_outlet .or. &
+                                working_pixel_value == this%yamazaki_rmouth_outlet) then
+                                outlet_pixel_type = working_pixel_value
+                                allocate(initial_outlet_pixel,source=working_pixel)
+                                pixel_found = .true.
+                            end if
+                        end select
+                        deallocate(working_pixel_value)
+                    end if
+                    call pixels_to_process%remove_element_at_iterator_position()
+                end do
+            deallocate(pixels_to_process)
+            end if
     end function yamazaki_retrieve_initial_outlet_pixel
 
     function find_pixel_with_LUDA(this,no_remaining_outlets) result(LUDA_pixel_coords)
@@ -1454,15 +1513,21 @@ contains
             end do
     end function
 
-    function latlon_get_sink_combined_cumulative_flow(this) &
+    function latlon_get_sink_combined_cumulative_flow(this,main_sink_coords) &
         result(combined_cumulative_flow_to_sinks)
         class(latlon_cell), intent(in) :: this
+        class(coords), pointer, optional,intent(out) :: main_sink_coords
         integer :: combined_cumulative_flow_to_sinks
+        integer :: greatest_flow_to_single_sink
         class(*), pointer :: current_pixel_total_cumulative_flow
         class(*), pointer :: current_pixel_flow_direction
         class(direction_indicator), pointer :: flow_direction_for_sink
+        integer :: highest_outflow_sink_lat,highest_outflow_sink_lon
         integer :: i,j
+            highest_outflow_sink_lat = 0
+            highest_outflow_sink_lon = 0
             combined_cumulative_flow_to_sinks = 0
+            greatest_flow_to_single_sink = 0
             flow_direction_for_sink => this%get_flow_direction_for_sink()
             do j = this%section_min_lon, this%section_min_lon + this%section_width_lon - 1
                 do i = this%section_min_lat, this%section_min_lat + this%section_width_lat - 1
@@ -1473,6 +1538,15 @@ contains
                         if (flow_direction_for_sink%is_equal_to(current_pixel_flow_direction)) then
                             combined_cumulative_flow_to_sinks = current_pixel_total_cumulative_flow + &
                                 combined_cumulative_flow_to_sinks
+                            if (present(main_sink_coords)) then
+                                if (greatest_flow_to_single_sink < &
+                                    current_pixel_total_cumulative_flow) then
+                                    current_pixel_total_cumulative_flow = &
+                                        greatest_flow_to_single_sink
+                                    highest_outflow_sink_lat = i
+                                    highest_outflow_sink_lon = j
+                                end if
+                            end if
                         end if
                         deallocate(current_pixel_flow_direction)
                     end select
@@ -1480,17 +1554,27 @@ contains
                 end do
             end do
             deallocate(flow_direction_for_sink)
+            if(present(main_sink_coords)) then
+                allocate(main_sink_coords,source=latlon_coords(highest_outflow_sink_lat,&
+                                                               highest_outflow_sink_lon))
+            end if
     end function latlon_get_sink_combined_cumulative_flow
 
-    function latlon_get_rmouth_outflow_combined_cumulative_flow(this) &
+    function latlon_get_rmouth_outflow_combined_cumulative_flow(this,main_outflow_coords) &
         result(combined_cumulative_rmouth_outflow)
         class(latlon_cell), intent(in) :: this
+        class(coords), pointer, optional,intent(out) :: main_outflow_coords
         class(*), pointer :: current_pixel_total_cumulative_flow
         class(*), pointer :: current_pixel_flow_direction
         class(direction_indicator), pointer :: flow_direction_for_outflow
+        integer :: greatest_flow_to_single_outflow
         integer :: combined_cumulative_rmouth_outflow
+        integer :: highest_outflow_rmouth_lat,highest_outflow_rmouth_lon
         integer :: i,j
+            highest_outflow_rmouth_lat = 0
+            highest_outflow_rmouth_lon = 0
             combined_cumulative_rmouth_outflow = 0
+            greatest_flow_to_single_outflow = 0
             flow_direction_for_outflow => this%get_flow_direction_for_outflow()
             do j = this%section_min_lon, this%section_min_lon + this%section_width_lon - 1
                 do i = this%section_min_lat, this%section_min_lat + this%section_width_lat - 1
@@ -1501,6 +1585,15 @@ contains
                         if (flow_direction_for_outflow%is_equal_to(current_pixel_flow_direction)) then
                             combined_cumulative_rmouth_outflow = current_pixel_total_cumulative_flow + &
                                 combined_cumulative_rmouth_outflow
+                            if (present(main_outflow_coords)) then
+                                if (greatest_flow_to_single_outflow < &
+                                    current_pixel_total_cumulative_flow) then
+                                    current_pixel_total_cumulative_flow = &
+                                        greatest_flow_to_single_outflow
+                                    highest_outflow_rmouth_lat = i
+                                    highest_outflow_rmouth_lon = j
+                                end if
+                            end if
                         end if
                     end select
                     deallocate(current_pixel_total_cumulative_flow)
@@ -1508,6 +1601,10 @@ contains
                 end do
             end do
             deallocate(flow_direction_for_outflow)
+            if(present(main_outflow_coords)) then
+                allocate(main_outflow_coords,source=latlon_coords(highest_outflow_rmouth_lat,&
+                                                                  highest_outflow_rmouth_lon))
+            end if
     end function latlon_get_rmouth_outflow_combined_cumulative_flow
 
     subroutine latlon_print_area(this)
@@ -1639,6 +1736,8 @@ contains
                     coarse_river_direction_indices(initial_cell_coords%lat,initial_cell_coords%lon,2) = &
                         -abs(outlet_pixel_type)
                 end select
+                deallocate(initial_cell_coords)
+                deallocate(initial_outlet_pixel)
                 return
             end if
             destination_cell_coords => this%cell_neighborhood%yamazaki_find_downstream_cell(initial_outlet_pixel)
@@ -1652,6 +1751,9 @@ contains
                         destination_cell_coords%lon - lon_offset
                 end select
             end select
+            deallocate(initial_cell_coords)
+            deallocate(destination_cell_coords)
+            deallocate(initial_outlet_pixel)
     end subroutine yamazaki_latlon_calculate_river_directions_as_indices
 
     ! Note must explicit pass this function the object this as it has the nopass attribute
@@ -1754,6 +1856,7 @@ contains
         class(neighborhood), intent(inout) :: this
             if (associated(this%river_directions)) deallocate(this%river_directions)
             if (associated(this%total_cumulative_flow)) deallocate(this%total_cumulative_flow)
+            if (associated(this%yamazaki_outlet_pixels)) deallocate(this%yamazaki_outlet_pixels)
     end subroutine neighborhood_destructor
 
     function find_downstream_cell(this,initial_outlet_pixel) result(downstream_cell)
@@ -1798,13 +1901,16 @@ contains
         class(neighborhood), intent(in) :: this
         class(coords), intent(in), pointer :: initial_outlet_pixel
         class(coords), pointer :: cell_coords
+        class(coords), pointer :: new_cell_coords
         class(coords), pointer :: working_pixel
         class(*), pointer :: yamazaki_outlet_pixel_type
         logical :: coords_not_in_neighborhood
         logical :: outflow_pixel_reached
+        logical :: downstream_cell_found
         real(double_precision) :: downstream_path_length
         integer :: count_of_cells_passed_through
-            working_pixel => initial_outlet_pixel
+            downstream_cell_found = .false.
+            allocate(working_pixel,source=initial_outlet_pixel)
             cell_coords => this%yamazaki_get_cell_coords(initial_outlet_pixel)
             downstream_path_length = 0.0
             count_of_cells_passed_through = 0
@@ -1812,23 +1918,30 @@ contains
                 call this%find_next_pixel_downstream(this,working_pixel,coords_not_in_neighborhood,outflow_pixel_reached)
                 downstream_path_length = downstream_path_length + this%calculate_length_through_pixel(this,working_pixel)
                 if (coords_not_in_neighborhood) call this%yamazaki_wrap_coordinates(working_pixel)
-                if ( .not. cell_coords%are_equal_to(this%yamazaki_get_cell_coords(working_pixel))) then
+                new_cell_coords => this%yamazaki_get_cell_coords(working_pixel)
+                if ( .not. cell_coords%are_equal_to(new_cell_coords)) then
                     deallocate(cell_coords)
-                    cell_coords => this%yamazaki_get_cell_coords(working_pixel)
+                    allocate(cell_coords,source=new_cell_coords)
                     count_of_cells_passed_through = count_of_cells_passed_through + 1
                 end if
+                deallocate(new_cell_coords)
                 yamazaki_outlet_pixel_type => this%yamazaki_outlet_pixels%get_value(working_pixel)
                 select type (yamazaki_outlet_pixel_type)
                 type is (integer)
-                    if (yamazaki_outlet_pixel_type == this%yamazaki_normal_outlet .and. downstream_path_length > MUFP) exit
+                    if (yamazaki_outlet_pixel_type == this%yamazaki_normal_outlet .and. &
+                        downstream_path_length > MUFP) downstream_cell_found = .true.
                     if (yamazaki_outlet_pixel_type == this%yamazaki_rmouth_outlet .or. &
-                        yamazaki_outlet_pixel_type == this%yamazaki_sink_outlet) exit
+                        yamazaki_outlet_pixel_type == this%yamazaki_sink_outlet) &
+                        downstream_cell_found = .true.
                 end select
                 deallocate(yamazaki_outlet_pixel_type)
+                if (downstream_cell_found) exit
                 if (count_of_cells_passed_through > yamazaki_max_range) then
-                    working_pixel => initial_outlet_pixel
+                    deallocate(working_pixel)
+                    allocate(working_pixel,source=initial_outlet_pixel)
                     call this%find_next_pixel_downstream(this,working_pixel,coords_not_in_neighborhood,outflow_pixel_reached)
                     if (coords_not_in_neighborhood) call this%yamazaki_wrap_coordinates(working_pixel)
+                    deallocate(cell_coords)
                     cell_coords => this%yamazaki_get_cell_coords(working_pixel)
                     exit
                 end if

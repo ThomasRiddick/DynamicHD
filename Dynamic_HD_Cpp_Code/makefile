@@ -2,7 +2,7 @@ RM := rm -rf
 ifeq ($(shell uname -s),Darwin)
 GPLUSPLUS := /usr/bin/g++
 STDLIB_OPT := -stdlib=libc++
-FLAGS := -DPROCESSED_CELL_COUNTER -DUSE_NETCDFCPP
+FLAGS := -DPROCESSED_CELL_COUNTER -DUSE_NETCDFCPP -DDARWIN
 NCDIR := /usr/local/Cellar/netcdf/4.6.1_2
 else ifeq ($(shell hostname -d),hpc.dkrz.de)
 GPLUSPLUS := /sw/rhel6-x64/gcc/gcc-6.2.0/bin/g++

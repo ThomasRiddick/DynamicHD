@@ -286,7 +286,8 @@ TEST_F(GridParamsTest,TestSecondaryNeighborGeneration){
   for (auto i =0; i < 80*9; i++){
     EXPECT_EQ(secondary_neighbors[i],secondary_neighbors_expected_out[i]);
   }
-  cout << endl;
+  delete[] cell_neighbors;
+  delete[] secondary_neighbors_expected_out;
 }
 
 } // namespacek

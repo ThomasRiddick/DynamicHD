@@ -61,7 +61,8 @@ protected:
 };
 
 class river_direction_determination_algorithm_latlon :
-  public river_direction_determination_algorithm {
+public river_direction_determination_algorithm {
+public:
   virtual ~river_direction_determination_algorithm_latlon()
     {delete rdirs;};
   //Setup the necessary fields to run a the lat-lon version of

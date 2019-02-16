@@ -37,6 +37,21 @@ interface latlon_coords
     procedure latlon_coords_constructor
 end interface latlon_coords
 
+!> A concrete subclass of coords implementing generic 1d coordinates
+type, extends(coords) ::  generic_1d_coords
+    !> Single index
+    integer :: index
+    contains
+        !> A function to check if this coords object is the same coordinates
+        !! object passed into it; if this is the case return TRUE else return
+        !! FALSE
+        procedure :: are_equal_to => generic_1d_are_equal_to
+end type generic_1d_coords
+
+interface generic_1d_coords
+    procedure generic_1d_constructor
+end interface generic_1d_coords
+
 !> An abstract class for holding the coordinates of a subsection of a generic
 !! grid
 type, abstract :: section_coords
@@ -134,6 +149,22 @@ contains
                             (this%lon == rhs_coords%lon)
             end select
     end function latlon_are_equal_to
+
+    pure function generic_1d_constructor(index) result(constructor)
+        type(generic_1d_coords) :: constructor
+        integer, intent(in) :: index
+            constructor%index = index
+    end function generic_1d_constructor
+
+    pure function generic_1d_are_equal_to(this,rhs_coords) result(are_equal)
+        class(generic_1d_coords), intent(in) :: this
+        class(coords), intent(in) :: rhs_coords
+        logical ::are_equal
+            select type (rhs_coords)
+            type is (generic_1d_coords)
+                are_equal = (this%index == rhs_coords%index)
+            end select
+    end function generic_1d_are_equal_to
 
     function latlat_section_coords_constructor(section_min_lat,section_min_lon,&
                                                section_width_lat,section_width_lon) &

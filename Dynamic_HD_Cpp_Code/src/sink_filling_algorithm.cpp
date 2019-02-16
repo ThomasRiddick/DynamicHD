@@ -881,6 +881,11 @@ inline void sink_filling_algorithm_4::process_center_cell()
 		//This may of not been set if this is an edge cell
 		(*completed_cells)(center_coords) = true;
 	}
+	if (queue_minima){
+		if ((*minima)(center_coords)) {
+			minima_q->push(center_coords->clone());
+		}
+	}
 }
 
 inline void sink_filling_algorithm::tarasov_get_center_cell_values(){
@@ -1081,6 +1086,16 @@ inline void sink_filling_algorithm_4::push_neighbor()
 						tarasov_neighbor_path_length,
 						tarasov_center_cell_path_initial_height));
 	} else q.push(new cell(nbr_orog,nbr_coords->clone(),center_catchment_num,nbr_rim_height));
+}
+
+void sink_filling_algorithm_4::setup_minima_q(field<bool>* minima_in){
+	minima = minima_in;
+	queue_minima = true;
+	minima_q = new queue<coords*>;
+}
+
+queue<coords*>* sink_filling_algorithm_4::get_minima_q(){
+	return minima_q;
 }
 
 void sink_filling_algorithm_1::tarasov_set_area_height() {

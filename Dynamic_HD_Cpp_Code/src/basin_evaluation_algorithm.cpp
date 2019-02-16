@@ -18,6 +18,7 @@ basin_evaluation_algorithm::~basin_evaluation_algorithm() {
 	delete connected_cells; delete completed_cells;
 	delete search_completed_cells; delete merge_points;
 	delete flood_local_redirect; delete connect_local_redirect;
+	delete basin_flooded_cells; delete basin_connected_cells;
 }
 
 latlon_basin_evaluation_algorithm::~latlon_basin_evaluation_algorithm(){
@@ -147,25 +148,24 @@ void basin_evaluation_algorithm::evaluate_basins(){
 }
 
 void basin_evaluation_algorithm::add_minima_to_queue() {
-	_grid->for_all([&](coords* coords_in){
-		if ((*minima)(coords_in)) {
-			coords* coarse_minimum_coords =
-				_coarse_grid->convert_fine_coords(coords_in,_grid_params);
-			double height = 0.0;
-			height_types height_type;
-	 		double raw_height = (*raw_orography)(coords_in);
-			double corrected_height = (*corrected_orography)(coords_in);
-			if(raw_height <= corrected_height) {
-				height = raw_height;
-				height_type = flood_height;
-			} else {
-				height = corrected_height;
-				height_type = connection_height;
-			}
-			minima_q.push(new basin_cell(height,height_type,coords_in));
-			delete coarse_minimum_coords;
-		} else delete coords_in;
-	});
+	queue<coords*>* minima_coords_q = sink_filling_alg.get_get_minima_q();
+	while (! minima_coords_q->empty()){
+		coords* minima_coords = minima_coords_q->front();
+		minima_coords_q->pop();
+		double height = 0.0;
+		height_types height_type;
+ 		double raw_height = (*raw_orography)(minima_coords);
+		double corrected_height = (*corrected_orography)(minima_coords);
+		if(raw_height <= corrected_height) {
+			height = raw_height;
+			height_type = flood_height;
+		} else {
+			height = corrected_height;
+			height_type = connection_height;
+		}
+		minima_q.push(new basin_cell(height,height_type,minima_coords));
+	}
+	delete minima_coords_q;
 }
 
 void basin_evaluation_algorithm::evaluate_basin(){
@@ -507,6 +507,7 @@ void basin_evaluation_algorithm::rebuild_secondary_basin(coords* initial_coords)
 		if ((*raw_orography)(current_coords) <= (*corrected_orography)(current_coords) ||
 		    (*basin_connected_cells)(current_coords)) current_height_type = flood_height;
 		else  current_height_type = connection_height;
+		delete current_coords;
 	}
 }
 

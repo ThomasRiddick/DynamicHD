@@ -392,6 +392,10 @@ protected:
 	void setup_fields(double*, bool*, bool*, grid_params*, int*);
 	///Setup required parameter and flags
 	void setup_flags(bool, bool = false, bool = false, int = 1, double = 1.1, bool = false);
+	// Activate minima queueing for basin filling code
+	void setup_minima_q(field<bool>*);
+	// Return q of minima for basin filling code
+	queue<coords*>* get_minima_q();
 	///Implement virtual function of base class only used by Tarasov code
 	void tarasov_set_area_height();
 	///Set the flow direction of a cell to no data
@@ -411,6 +415,12 @@ protected:
 	///Only produced index based river direction and don't produce direction
 	///based river directions
 	bool index_based_rdirs_only = true;
+	//Queue of minima for basin filling code
+	queue<coords*>* minima_q;
+	//Fill use of minima for basin filling code
+	bool queue_minima = false;
+	//Minima location for queueing minima for basin filling code
+	field<bool>* minima = nullptr;
 };
 
 

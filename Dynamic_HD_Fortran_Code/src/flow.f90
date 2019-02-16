@@ -33,10 +33,6 @@ contains
         integer :: scale_factor
         integer :: i,j
         logical :: use_lcda_criterion = .True.
-        !debug only
-        character(LEN=72) :: line
-        !debug only
-        integer :: value
             if (present(cotat_parameters_filepath)) then
                 call read_cotat_parameters_namelist(cotat_parameters_filepath)
             end if

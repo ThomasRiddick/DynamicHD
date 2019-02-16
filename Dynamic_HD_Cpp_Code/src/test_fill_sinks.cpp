@@ -6037,6 +6037,10 @@ TEST_F(IconGridTest,TestAlgorithmOneOnIconGrid){
   alg1.fill_sinks();
   EXPECT_TRUE(field<double>(cell_heights,grid_params_in) == field<double>(cell_heights_expected_out,
                                                                        		grid_params_in));
+  delete[] landsea_in; delete[] true_sinks_in; delete[] cell_neighbors;
+  delete[] secondary_neighboring_cell_indices_in; delete[] cell_heights;
+  delete[] cell_heights_expected_out;
+  delete grid_params_in;
 }
 
 TEST_F(IconGridTest,TestAlgorithmOneOnIconGridTwo){
@@ -6547,6 +6551,10 @@ TEST_F(IconGridTest,TestAlgorithmOneOnIconGridTwo){
   alg1.fill_sinks();
   EXPECT_TRUE(field<double>(cell_heights,grid_params_in) == field<double>(cell_heights_expected_out,
                                                                        		grid_params_in));
+  delete[] landsea_in; delete[] true_sinks_in; delete[] cell_neighbors;
+  delete[] secondary_neighboring_cell_indices_in; delete[] cell_heights;
+  delete[] cell_heights_expected_out;
+  delete grid_params_in;
 }
 
 TEST_F(IconGridTest,TestAlgorithmOneOnIconGridThree){
@@ -7057,6 +7065,10 @@ TEST_F(IconGridTest,TestAlgorithmOneOnIconGridThree){
   alg1.fill_sinks();
   EXPECT_TRUE(field<double>(cell_heights,grid_params_in) == field<double>(cell_heights_expected_out,
                                                                        		grid_params_in));
+  delete[] landsea_in; delete[] true_sinks_in; delete[] cell_neighbors;
+  delete[] secondary_neighboring_cell_indices_in; delete[] cell_heights;
+  delete[] cell_heights_expected_out;
+  delete grid_params_in;
 }
 
 TEST_F(IconGridTest,TestAlgorithmOneOnIconGridFour){
@@ -7567,6 +7579,10 @@ TEST_F(IconGridTest,TestAlgorithmOneOnIconGridFour){
   alg1.fill_sinks();
   EXPECT_TRUE(field<double>(cell_heights,grid_params_in) == field<double>(cell_heights_expected_out,
                                                                        		grid_params_in));
+  delete[] landsea_in; delete[] true_sinks_in; delete[] cell_neighbors;
+  delete[] secondary_neighboring_cell_indices_in; delete[] cell_heights;
+  delete[] cell_heights_expected_out;
+  delete grid_params_in;
 }
 
 TEST_F(IconGridTest,TestAlgorithmOneOnIconGridFive){
@@ -8077,6 +8093,10 @@ TEST_F(IconGridTest,TestAlgorithmOneOnIconGridFive){
   alg1.fill_sinks();
   EXPECT_TRUE(field<double>(cell_heights,grid_params_in) == field<double>(cell_heights_expected_out,
                                                                        		grid_params_in));
+ 	delete[] landsea_in; delete[] true_sinks_in; delete[] cell_neighbors;
+  delete[] secondary_neighboring_cell_indices_in; delete[] cell_heights;
+  delete[] cell_heights_expected_out;
+  delete grid_params_in;
 }
 
 
@@ -8588,6 +8608,10 @@ TEST_F(IconGridTest,TestAlgorithmOneOnIconGridSix){
   alg1.fill_sinks();
   EXPECT_TRUE(field<double>(cell_heights,grid_params_in) == field<double>(cell_heights_expected_out,
                                                                        		grid_params_in));
+  delete[] landsea_in; delete[] true_sinks_in; delete[] cell_neighbors;
+  delete[] secondary_neighboring_cell_indices_in; delete[] cell_heights;
+  delete[] cell_heights_expected_out;
+  delete grid_params_in;
 }
 
 
@@ -9100,6 +9124,10 @@ TEST_F(IconGridTest,TestAlgorithmOneOnIconGridSeven){
   alg1.fill_sinks();
   EXPECT_TRUE(field<double>(cell_heights,grid_params_in) == field<double>(cell_heights_expected_out,
                                                                        		grid_params_in));
+  delete[] landsea_in; delete[] true_sinks_in; delete[] cell_neighbors;
+  delete[] secondary_neighboring_cell_indices_in; delete[] cell_heights;
+  delete[] cell_heights_expected_out;
+  delete grid_params_in;
 }
 
 
@@ -9612,6 +9640,10 @@ TEST_F(IconGridTest,TestAlgorithmOneOnIconGridEight){
   alg1.fill_sinks();
   EXPECT_TRUE(field<double>(cell_heights,grid_params_in) == field<double>(cell_heights_expected_out,
                                                                        		grid_params_in));
+  delete[] landsea_in; delete[] true_sinks_in; delete[] cell_neighbors;
+  delete[] secondary_neighboring_cell_indices_in; delete[] cell_heights;
+  delete[] cell_heights_expected_out;
+  delete grid_params_in;
 }
 
 
@@ -10123,6 +10155,10 @@ TEST_F(IconGridTest,TestAlgorithmOneOnIconGridNine){
   alg1.fill_sinks();
   EXPECT_TRUE(field<double>(cell_heights,grid_params_in) == field<double>(cell_heights_expected_out,
                                                                        		grid_params_in));
+  delete[] landsea_in; delete[] true_sinks_in; delete[] cell_neighbors;
+  delete[] secondary_neighboring_cell_indices_in; delete[] cell_heights;
+  delete[] cell_heights_expected_out;
+  delete grid_params_in;
 }
 
 TEST_F(IconGridTest,TestAlgorithmOneOnIconGridTen){
@@ -10633,6 +10669,10 @@ TEST_F(IconGridTest,TestAlgorithmOneOnIconGridTen){
   alg1.fill_sinks();
   EXPECT_TRUE(field<double>(cell_heights,grid_params_in) == field<double>(cell_heights_expected_out,
                                                                        		grid_params_in));
+  delete[] landsea_in; delete[] true_sinks_in; delete[] cell_neighbors;
+  delete[] secondary_neighboring_cell_indices_in; delete[] cell_heights;
+  delete[] cell_heights_expected_out;
+  delete grid_params_in;
 }
 
 
@@ -11145,6 +11185,10 @@ TEST_F(IconGridTest,TestAlgorithmOneOnIconGridEleven){
   alg1.fill_sinks();
   EXPECT_TRUE(field<double>(cell_heights,grid_params_in) == field<double>(cell_heights_expected_out,
                                                                        		grid_params_in));
+  delete[] landsea_in; delete[] true_sinks_in; delete[] cell_neighbors;
+  delete[] secondary_neighboring_cell_indices_in; delete[] cell_heights;
+  delete[] cell_heights_expected_out;
+  delete grid_params_in;
 }
 
 
@@ -11657,6 +11701,10 @@ TEST_F(IconGridTest,TestAlgorithmOneOnIconGridTwelve){
   alg1.fill_sinks();
   EXPECT_TRUE(field<double>(cell_heights,grid_params_in) == field<double>(cell_heights_expected_out,
                                                                        		grid_params_in));
+  delete[] landsea_in; delete[] true_sinks_in; delete[] cell_neighbors;
+  delete[] secondary_neighboring_cell_indices_in; delete[] cell_heights;
+  delete[] cell_heights_expected_out;
+  delete grid_params_in;
 }
 
 
@@ -12169,6 +12217,10 @@ TEST_F(IconGridTest,TestAlgorithmOneOnIconGridThirteen){
   alg1.fill_sinks();
   EXPECT_TRUE(field<double>(cell_heights,grid_params_in) == field<double>(cell_heights_expected_out,
                                                                        		grid_params_in));
+  delete[] landsea_in; delete[] true_sinks_in; delete[] cell_neighbors;
+  delete[] secondary_neighboring_cell_indices_in; delete[] cell_heights;
+  delete[] cell_heights_expected_out;
+  delete grid_params_in;
 }
 
 
@@ -12681,6 +12733,10 @@ TEST_F(IconGridTest,TestAlgorithmOneOnIconGridFourteen){
   alg1.fill_sinks();
   EXPECT_TRUE(field<double>(cell_heights,grid_params_in) == field<double>(cell_heights_expected_out,
                                                                        		grid_params_in));
+  delete[] landsea_in; delete[] true_sinks_in; delete[] cell_neighbors;
+  delete[] secondary_neighboring_cell_indices_in; delete[] cell_heights;
+  delete[] cell_heights_expected_out;
+  delete grid_params_in;
 }
 
 } // close namespace
