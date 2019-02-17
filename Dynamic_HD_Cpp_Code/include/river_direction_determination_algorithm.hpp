@@ -6,12 +6,13 @@
  */
 #include "grid.hpp"
 #include "field.hpp"
+#include "priority_cell_queue.hpp"
 
 class river_direction_determination_algorithm {
 public:
   //destructor
   virtual ~river_direction_determination_algorithm()
-    {delete land_sea; delete true_sinks; delete orography; };
+    {delete land_sea; delete true_sinks; delete orography; delete completed_cells;};
   //setup logical options
   void setup_flags(bool always_flow_to_sea_in,
                    bool use_diagonal_nbrs_in,
@@ -28,6 +29,8 @@ protected:
   void find_river_direction(coords* coords_in);
   // check if (sea) cell has other cells flowing to it
   bool point_has_inflows(coords* coords_in);
+  // use queued cells to resolve the river directions in flat areas
+  void resolve_flat_areas();
   // mark the river direction between the initial coords and the destination
   // coordinates
   virtual void mark_river_direction(coords* initial_coords,
@@ -51,6 +54,10 @@ protected:
   field<bool>* true_sinks;
   //The DEM being used
   field<double>* orography;
+  //Cells with river direction already assigned
+  field<bool>* completed_cells;
+  //A queue of potential exit points from flat areas
+  priority_cell_queue_type potential_exit_points;
   //River always flow to a neighboring sea point even if another point is lower
   bool always_flow_to_sea = true;
   //Consider diagonal neighbors when iterating over neighbors

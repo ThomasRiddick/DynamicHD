@@ -11,21 +11,7 @@
 #include "field.hpp"
 #include "enums.hpp"
 #include "priority_cell_queue.hpp"
-
-class additional_primary_redirect {
-  coords* position;
-  height_types height_type;
-  bool local_redirect;
-};
-
-class latlon_additional_primary_redirect : public additional_primary_redirect {
-  int next_cell_lat_index;
-  int next_cell_lon_index;
-  int force_merge_lat_index;
-  int force_merge_lon_index;
-  int redirect_lat_index;
-  int redirect_lon_index;
-};
+#include "sink_filling_algorithm.hpp"
 
 class basin_evaluation_algorithm {
 public:
@@ -46,6 +32,8 @@ public:
 	reverse_priority_cell_queue test_add_minima_to_queue(double* raw_orography_in,
                                                        double* corrected_orography_in,
                                                        bool* minima_in,
+                                                       sink_filling_algorithm_4*
+                                                       sinking_filling_alg,
                                                        grid_params* grid_params_in,
                                                        grid_params* coarse_grid_params_in);
 	priority_cell_queue test_process_neighbors(coords* center_coords_in,
@@ -100,6 +88,8 @@ protected:
 	                                                     			coords* current_center_coords,
 	                                                     			coords* catchment_center_coords,
                                                             height_types initial_center_height_type);
+  // Setup a sink filling algorithm to use to determine the order to process basins in
+  void setup_sink_filling_algorithm(sink_filling_algorithm_4* sink_filling_alg_in);
 	reverse_priority_cell_queue minima_q;
 	priority_cell_queue q;
 	queue<landsea_cell*> search_q;
@@ -140,6 +130,7 @@ protected:
   height_types new_center_cell_height_type;
   height_types center_cell_height_type;
   height_types previous_filled_cell_height_type;
+  sink_filling_algorithm_4* sink_filling_alg;
 	int cell_number;
 	int basin_catchment_number;
   bool skipped_previous_center_cell;
@@ -286,5 +277,4 @@ private:
   field<int>* additional_flood_redirect_lon_index = nullptr;
   field<int>* additional_connect_redirect_lat_index = nullptr;
   field<int>* additional_connect_redirect_lon_index = nullptr;
-  queue<latlon_additional_primary_redirect*> additional_primary_redirects;
 };

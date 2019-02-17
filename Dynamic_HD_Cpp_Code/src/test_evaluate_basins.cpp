@@ -77,10 +77,12 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueOne) {
      null_htype,null_htype,null_htype, null_htype,null_htype,null_htype, null_htype,flood_height,null_htype,
      null_htype,null_htype,null_htype, null_htype,null_htype,null_htype, null_htype,null_htype,null_htype };
   reverse_priority_cell_queue q;
+  auto alg4 = new sink_filling_algorithm_4_latlon();
   auto basin_eval = latlon_basin_evaluation_algorithm();
   q = basin_eval.test_add_minima_to_queue(raw_orography_in,
                                           corrected_orography_in,
                                           minima_in,
+                                          alg4,
                                           grid_params_in,
                                           coarse_grid_params_in);
   auto count = 0;
@@ -98,6 +100,7 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueOne) {
   delete[] raw_orography_in; delete[] corrected_orography_in; delete[] minima_in;
   delete[] expected_cells_in_queue;
   delete grid_params_in; delete coarse_grid_params_in;
+  delete alg4;
 }
 
 TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueTwo) {
@@ -149,10 +152,12 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueTwo) {
      null_htype,null_htype,null_htype, null_htype,null_htype,null_htype, null_htype,flood_height,null_htype,
      null_htype,null_htype,null_htype, null_htype,null_htype,null_htype, null_htype,null_htype,null_htype };
   reverse_priority_cell_queue q;
+  auto alg4 = new sink_filling_algorithm_4_latlon();
   auto basin_eval = latlon_basin_evaluation_algorithm();
   q = basin_eval.test_add_minima_to_queue(raw_orography_in,
                                           corrected_orography_in,
                                           minima_in,
+                                          alg4,
                                           grid_params_in,
                                           coarse_grid_params_in);
   auto count = 0;
@@ -170,6 +175,7 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueTwo) {
   delete[] raw_orography_in; delete[] corrected_orography_in; delete[] minima_in;
   delete[] expected_cells_in_queue;
   delete grid_params_in; delete coarse_grid_params_in;
+  delete alg4;
 }
 
 TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueThree) {
@@ -221,10 +227,12 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueThree) {
      null_htype,flood_height,null_htype, null_htype,null_htype,null_htype, null_htype,flood_height,null_htype,
      null_htype,null_htype,null_htype, null_htype,null_htype,null_htype, null_htype,null_htype,null_htype };
   reverse_priority_cell_queue q;
+  auto alg4 = new sink_filling_algorithm_4_latlon();
   auto basin_eval = latlon_basin_evaluation_algorithm();
   q = basin_eval.test_add_minima_to_queue(raw_orography_in,
                                           corrected_orography_in,
                                           minima_in,
+                                          alg4,
                                           grid_params_in,
                                           coarse_grid_params_in);
   auto count = 0;
@@ -242,6 +250,7 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueThree) {
   delete[] raw_orography_in; delete[] corrected_orography_in; delete[] minima_in;
   delete[] expected_cells_in_queue;
   delete grid_params_in; delete coarse_grid_params_in;
+  delete alg4;
 }
 
 TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueFour) {
@@ -293,10 +302,12 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueFour) {
      flood_height,null_htype,null_htype, null_htype,null_htype,null_htype, null_htype,null_htype,null_htype,
      null_htype,null_htype,null_htype, null_htype,null_htype,null_htype, flood_height,null_htype,null_htype };
   reverse_priority_cell_queue q;
+  auto alg4 = new sink_filling_algorithm_4_latlon();
   auto basin_eval = latlon_basin_evaluation_algorithm();
   q = basin_eval.test_add_minima_to_queue(raw_orography_in,
                                           corrected_orography_in,
                                           minima_in,
+                                          alg4,
                                           grid_params_in,
                                           coarse_grid_params_in);
   auto count = 0;
@@ -312,6 +323,7 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueFour) {
   }
   EXPECT_TRUE(cells_in_queue == field<height_types>(expected_cells_in_queue,grid_params_in));
   delete grid_params_in; delete coarse_grid_params_in;
+  delete alg4;
   delete[] expected_cells_in_queue;
   delete[] raw_orography_in; delete[] corrected_orography_in; delete[] minima_in;
 }
@@ -365,10 +377,12 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueFive) {
      null_htype,null_htype,null_htype, null_htype,null_htype,null_htype, null_htype,null_htype,null_htype,
      null_htype,null_htype,null_htype, null_htype,null_htype,null_htype, null_htype,null_htype,null_htype };
   reverse_priority_cell_queue q;
+  auto alg4 = new sink_filling_algorithm_4_latlon();
   auto basin_eval = latlon_basin_evaluation_algorithm();
   q = basin_eval.test_add_minima_to_queue(raw_orography_in,
                                           corrected_orography_in,
                                           minima_in,
+                                          alg4,
                                           grid_params_in,
                                           coarse_grid_params_in);
   auto count = 0;
@@ -384,6 +398,7 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueFive) {
   }
   EXPECT_TRUE(cells_in_queue == field<height_types>(expected_cells_in_queue,grid_params_in));
   delete grid_params_in; delete coarse_grid_params_in;
+  delete alg4;
   delete[] expected_cells_in_queue;
   delete[] raw_orography_in; delete[] corrected_orography_in; delete[] minima_in;
 }
@@ -437,10 +452,12 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueSix) {
      null_htype,flood_height,null_htype, null_htype,null_htype,null_htype, null_htype,null_htype,null_htype,
      null_htype,null_htype,null_htype, null_htype,null_htype,null_htype, null_htype,null_htype,null_htype };
   reverse_priority_cell_queue q;
+  auto alg4 = new sink_filling_algorithm_4_latlon();
   auto basin_eval = latlon_basin_evaluation_algorithm();
   q = basin_eval.test_add_minima_to_queue(raw_orography_in,
                                           corrected_orography_in,
                                           minima_in,
+                                          alg4,
                                           grid_params_in,
                                           coarse_grid_params_in);
   auto count = 0;
@@ -457,6 +474,7 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueSix) {
   EXPECT_TRUE(cells_in_queue == field<height_types>(expected_cells_in_queue,grid_params_in));
   EXPECT_EQ(4,count);
   delete grid_params_in; delete coarse_grid_params_in;
+  delete alg4;
   delete[] expected_cells_in_queue;
   delete[] raw_orography_in; delete[] corrected_orography_in; delete[] minima_in;
 }

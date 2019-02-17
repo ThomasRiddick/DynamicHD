@@ -371,6 +371,10 @@ public:
 	virtual ~sink_filling_algorithm_4() { if (not tarasov_mod) delete catchment_nums; }
 	///Getter
 	int get_method() {return method;}
+	// Activate minima queueing for basin filling code
+	void setup_minima_q(field<bool>*);
+	// Return q of minima for basin filling code
+	queue<coords*>* get_minima_q();
 protected:
 	///Label which method is being used
 	const int method = 4;
@@ -392,10 +396,6 @@ protected:
 	void setup_fields(double*, bool*, bool*, grid_params*, int*);
 	///Setup required parameter and flags
 	void setup_flags(bool, bool = false, bool = false, int = 1, double = 1.1, bool = false);
-	// Activate minima queueing for basin filling code
-	void setup_minima_q(field<bool>*);
-	// Return q of minima for basin filling code
-	queue<coords*>* get_minima_q();
 	///Implement virtual function of base class only used by Tarasov code
 	void tarasov_set_area_height();
 	///Set the flow direction of a cell to no data

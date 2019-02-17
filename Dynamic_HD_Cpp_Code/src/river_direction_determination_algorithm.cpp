@@ -35,6 +35,8 @@ void river_direction_determination_algorithm::setup_fields(double* orography_in,
   orography = new field<double>(orography_in,_grid_params);
   land_sea = new field<bool>(land_sea_in,_grid_params);
   true_sinks = new field<bool>(true_sinks_in,_grid_params);
+  completed_cells = new field<bool>(_grid_params);
+  completed_cells->set_all(false);
 }
 
 void river_direction_determination_algorithm::determine_river_directions() {
@@ -44,6 +46,7 @@ void river_direction_determination_algorithm::determine_river_directions() {
   else if(! (*land_sea)(coords_in)) find_river_direction(coords_in);
   delete coords_in;
   });
+  resolve_flat_areas();
   //Need the river directions first before marking ocean points with inflows
   _grid->for_all([&](coords* coords_in){
     if( (*land_sea)(coords_in)){
@@ -58,27 +61,41 @@ void river_direction_determination_algorithm::find_river_direction(coords* coord
   double minimum_height = numeric_limits<double>::max();
   coords* minimum_height_nbr_coords = nullptr;
   bool sea_only = false;
+  bool potential_exit_point = false;
+  double cell_height = (*orography)(coords_in);
   void (grid::*func)(coords*,function<void(coords*)>) = use_diagonal_nbrs ?
     &grid::for_all_nbrs : &grid::for_non_diagonal_nbrs;
   (_grid->*func)(coords_in,[&](coords* nbr_coords){
     bool is_sea = (*land_sea)(nbr_coords);
     double nbr_height = (*orography)(nbr_coords);
-    if (sea_only && ! is_sea) {
-    } else if(always_flow_to_sea && is_sea && ! sea_only){
-      sea_only = true;
-      minimum_height_nbr_coords = nbr_coords->clone();
-      minimum_height = nbr_height;
-    } else {
-      minimum_height_nbr_coords = nbr_height < minimum_height ?
-        nbr_coords->clone() : minimum_height_nbr_coords;
-      minimum_height = min(minimum_height,nbr_height);
+    if (! sea_only || is_sea) {
+      if(always_flow_to_sea && is_sea && ! sea_only){
+        sea_only = true;
+        minimum_height_nbr_coords = nbr_coords->clone();
+        minimum_height = nbr_height;
+      } else {
+        minimum_height_nbr_coords = nbr_height < minimum_height ?
+          nbr_coords->clone() : minimum_height_nbr_coords;
+        minimum_height = min(minimum_height,nbr_height);
+        if (nbr_height == cell_height) {
+          if (!(*completed_cells)(nbr_coords) ) potential_exit_point = true;
+        }
+      }
     }
     delete nbr_coords;
   });
-  if (minimum_height > (*orography)(coords_in)) {
-    if (mark_pits_as_true_sinks) mark_as_sink_point(coords_in);
-    else throw runtime_error("Possible false sink found");
-  } else mark_river_direction(coords_in,minimum_height_nbr_coords);
+  if (minimum_height > cell_height) {
+    if (mark_pits_as_true_sinks) {
+      mark_as_sink_point(coords_in);
+      (*completed_cells)(coords_in) = true;
+    } else throw runtime_error("Possible false sink found");
+  } else if (minimum_height < cell_height) {
+    mark_river_direction(coords_in,minimum_height_nbr_coords);
+    (*completed_cells)(coords_in) = true;
+    if (potential_exit_point) {
+      potential_exit_points.push(new cell(cell_height,coords_in));
+    }
+  }
 }
 
 bool river_direction_determination_algorithm::point_has_inflows(coords* coords_in){
@@ -91,6 +108,32 @@ bool river_direction_determination_algorithm::point_has_inflows(coords* coords_i
     delete nbr_coords;
   });
   return inflow_found;
+}
+
+void river_direction_determination_algorithm::resolve_flat_areas(){
+  queue<coords*> q;
+  while (! potential_exit_points.empty()){
+    cell* potential_exit_cell = potential_exit_points.top();
+    potential_exit_points.pop();
+    q.push(potential_exit_cell->get_cell_coords()->clone());
+    double flat_height = potential_exit_cell->get_orography();
+    while (! q.empty()){
+      coords* center_coords = q.front();
+      q.pop();
+      void (grid::*func)(coords*,function<void(coords*)>) = use_diagonal_nbrs ?
+                         &grid::for_all_nbrs : &grid::for_non_diagonal_nbrs;
+      (_grid->*func)(center_coords,[&](coords* nbr_coords){
+        if((*orography)(nbr_coords) == flat_height &&
+           ! (*completed_cells)(nbr_coords)){
+          (*completed_cells)(nbr_coords) = true;
+          mark_river_direction(nbr_coords,center_coords);
+          q.push(nbr_coords);
+        } else delete nbr_coords;
+      });
+      delete center_coords;
+    }
+    delete potential_exit_cell;
+  }
 }
 
 void river_direction_determination_algorithm_latlon::setup_fields(double* rdirs_in,

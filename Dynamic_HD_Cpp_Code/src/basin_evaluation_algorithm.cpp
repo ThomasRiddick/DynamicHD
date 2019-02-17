@@ -129,6 +129,12 @@ void latlon_basin_evaluation_algorithm::setup_fields(bool* minima_in,
 	connect_redirect_lon_index = new field<int>(connect_redirect_lon_index_in,grid_params_in);
 }
 
+void basin_evaluation_algorithm::
+		 setup_sink_filling_algorithm(sink_filling_algorithm_4* sink_filling_alg_in){
+			sink_filling_alg = sink_filling_alg_in;
+			sink_filling_alg->setup_minima_q(minima);
+}
+
 void basin_evaluation_algorithm::evaluate_basins(){
 	add_minima_to_queue();
 	basin_catchment_number = 1;
@@ -148,7 +154,8 @@ void basin_evaluation_algorithm::evaluate_basins(){
 }
 
 void basin_evaluation_algorithm::add_minima_to_queue() {
-	queue<coords*>* minima_coords_q = sink_filling_alg.get_get_minima_q();
+	sink_filling_alg->fill_sinks();
+	queue<coords*>* minima_coords_q = sink_filling_alg->get_minima_q();
 	while (! minima_coords_q->empty()){
 		coords* minima_coords = minima_coords_q->front();
 		minima_coords_q->pop();
@@ -681,6 +688,8 @@ reverse_priority_cell_queue basin_evaluation_algorithm::
 														test_add_minima_to_queue(double* raw_orography_in,
                                                    	 double* corrected_orography_in,
                                                      bool* minima_in,
+                                                     sink_filling_algorithm_4*
+                                                     sinking_filling_alg,
                                                      grid_params* grid_params_in,
                                                      grid_params* coarse_grid_params_in){
 	_grid_params = grid_params_in;
