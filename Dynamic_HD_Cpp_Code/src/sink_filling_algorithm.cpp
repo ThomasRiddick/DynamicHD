@@ -1091,10 +1091,10 @@ inline void sink_filling_algorithm_4::push_neighbor()
 void sink_filling_algorithm_4::setup_minima_q(field<bool>* minima_in){
 	minima = minima_in;
 	queue_minima = true;
-	minima_q = new queue<coords*>;
+	minima_q = new stack<coords*>;
 }
 
-queue<coords*>* sink_filling_algorithm_4::get_minima_q(){
+stack<coords*>* sink_filling_algorithm_4::get_minima_q(){
 	return minima_q;
 }
 

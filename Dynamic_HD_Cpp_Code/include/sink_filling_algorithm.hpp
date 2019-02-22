@@ -43,6 +43,7 @@
  */
 
 #include <queue>
+#include <stack>
 #include <limits>
 #include <cmath>
 #include "grid.hpp"
@@ -374,7 +375,7 @@ public:
 	// Activate minima queueing for basin filling code
 	void setup_minima_q(field<bool>*);
 	// Return q of minima for basin filling code
-	queue<coords*>* get_minima_q();
+	stack<coords*>* get_minima_q();
 protected:
 	///Label which method is being used
 	const int method = 4;
@@ -415,8 +416,8 @@ protected:
 	///Only produced index based river direction and don't produce direction
 	///based river directions
 	bool index_based_rdirs_only = true;
-	//Queue of minima for basin filling code
-	queue<coords*>* minima_q;
+	//Queue (or technically a LIFO stack) of minima for basin filling code
+	stack<coords*>* minima_q;
 	//Fill use of minima for basin filling code
 	bool queue_minima = false;
 	//Minima location for queueing minima for basin filling code

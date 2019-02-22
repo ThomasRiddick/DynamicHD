@@ -12,7 +12,8 @@ class river_direction_determination_algorithm {
 public:
   //destructor
   virtual ~river_direction_determination_algorithm()
-    {delete land_sea; delete true_sinks; delete orography; delete completed_cells;};
+    {delete land_sea; delete true_sinks; delete orography; delete completed_cells;
+     delete _grid;};
   //setup logical options
   void setup_flags(bool always_flow_to_sea_in,
                    bool use_diagonal_nbrs_in,

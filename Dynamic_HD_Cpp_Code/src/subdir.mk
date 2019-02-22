@@ -84,7 +84,8 @@ CPP_DEPS += \
 ./src/sink_filling_icon_simple_interface.d \
 ./src/test_grid.d \
 ./src/river_direction_determination_algorithm.d \
-./src/determine_river_directions.d
+./src/determine_river_directions.d \
+./src/test_determine_river_directions.d
 
 # Each subdirectory must supply rules for building sources it contributes
 src/%.o: ../src/%.cpp

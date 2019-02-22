@@ -629,8 +629,12 @@ def main():
     #lake_drivers.prepare_orography_ICE5G_0k_uncorrected()
     #lake_drivers.prepare_orography_ICE5G_0k_corrected()
     #lake_drivers.prepare_orography_ICE6G_21k_corrected()
-    #lake_drivers.evaluate_ICE6G_lgm_basins()
-    lake_drivers.prepare_basins_from_glac1D()
+    import time
+    start = time.time()
+    lake_drivers.evaluate_ICE6G_lgm_basins()
+    end = time.time()
+    print(end - start)
+    #lake_drivers.prepare_basins_from_glac1D()
 
 if __name__ == '__main__':
     main()

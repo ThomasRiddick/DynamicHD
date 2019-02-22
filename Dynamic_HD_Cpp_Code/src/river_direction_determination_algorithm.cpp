@@ -71,11 +71,14 @@ void river_direction_determination_algorithm::find_river_direction(coords* coord
     if (! sea_only || is_sea) {
       if(always_flow_to_sea && is_sea && ! sea_only){
         sea_only = true;
+        if(minimum_height_nbr_coords) delete minimum_height_nbr_coords;
         minimum_height_nbr_coords = nbr_coords->clone();
         minimum_height = nbr_height;
       } else {
-        minimum_height_nbr_coords = nbr_height < minimum_height ?
-          nbr_coords->clone() : minimum_height_nbr_coords;
+        if(nbr_height < minimum_height){
+          if( minimum_height_nbr_coords) delete  minimum_height_nbr_coords;
+          minimum_height_nbr_coords = nbr_coords->clone();
+        }
         minimum_height = min(minimum_height,nbr_height);
         if (nbr_height == cell_height) {
           if (!(*completed_cells)(nbr_coords) ) potential_exit_point = true;
@@ -93,9 +96,10 @@ void river_direction_determination_algorithm::find_river_direction(coords* coord
     mark_river_direction(coords_in,minimum_height_nbr_coords);
     (*completed_cells)(coords_in) = true;
     if (potential_exit_point) {
-      potential_exit_points.push(new cell(cell_height,coords_in));
+      potential_exit_points.push(new cell(cell_height,coords_in->clone()));
     }
   }
+  delete minimum_height_nbr_coords;
 }
 
 bool river_direction_determination_algorithm::point_has_inflows(coords* coords_in){
@@ -105,7 +109,7 @@ bool river_direction_determination_algorithm::point_has_inflows(coords* coords_i
   (_grid->*func)(coords_in,[&](coords* nbr_coords){
     coords* cell_downstream_from_nbr = get_downstream_cell_coords(nbr_coords);
     if ((*cell_downstream_from_nbr) == (*coords_in)) inflow_found = true;
-    delete nbr_coords;
+    delete nbr_coords; delete cell_downstream_from_nbr;
   });
   return inflow_found;
 }
@@ -115,8 +119,8 @@ void river_direction_determination_algorithm::resolve_flat_areas(){
   while (! potential_exit_points.empty()){
     cell* potential_exit_cell = potential_exit_points.top();
     potential_exit_points.pop();
-    q.push(potential_exit_cell->get_cell_coords()->clone());
     double flat_height = potential_exit_cell->get_orography();
+    q.push(potential_exit_cell->get_cell_coords()->clone());
     while (! q.empty()){
       coords* center_coords = q.front();
       q.pop();

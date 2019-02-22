@@ -88,6 +88,7 @@ extensions=[Extension("libs.fill_sinks_wrapper",[path.join(module_dir,"fill_sink
                                                                 "evaluate_basins_wrapper.pyx"),
                                                       path.join(src,"grid.cpp"),
                                                       path.join(src,"cell.cpp"),
+                                                      path.join(src,"sink_filling_algorithm.cpp"),
                                                       path.join(src,
                                                                 "basin_evaluation_algorithm.cpp")],
                       include_dirs=[src,include,np.get_include()],

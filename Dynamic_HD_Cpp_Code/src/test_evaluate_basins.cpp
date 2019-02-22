@@ -42,7 +42,7 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueOne) {
                                               2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
                                               2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
                                               2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0};
-  double* corrected_orography_in = new double[9*9] {2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
+  double* corrected_orography_in = new double[9*9] {0.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
                                                     2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
                                                     2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
 //
@@ -76,8 +76,26 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueOne) {
      null_htype,null_htype,null_htype, null_htype,null_htype,null_htype, null_htype,null_htype,null_htype,
      null_htype,null_htype,null_htype, null_htype,null_htype,null_htype, null_htype,flood_height,null_htype,
      null_htype,null_htype,null_htype, null_htype,null_htype,null_htype, null_htype,null_htype,null_htype };
-  reverse_priority_cell_queue q;
+  bool* landsea_in = new bool[9*9];
+  fill_n(landsea_in,9*9,false);
+  landsea_in[0] = true;
+  bool* true_sinks_in = new bool[9*9];
+  fill_n(true_sinks_in,9*9,false);
+  int* next_cell_lat_index_in = new int[9*9];
+  int* next_cell_lon_index_in = new int[9*9];
+  short* rdirs_in = new short[9*9];
+  int* catchment_nums_in = new int[9*9];
+  queue<cell*> q;
   auto alg4 = new sink_filling_algorithm_4_latlon();
+  alg4->setup_flags(false,true,false,false);
+  alg4->setup_fields(corrected_orography_in,
+                     landsea_in,
+                     true_sinks_in,
+                     next_cell_lat_index_in,
+                     next_cell_lon_index_in,
+                     grid_params_in,
+                     rdirs_in,
+                     catchment_nums_in);
   auto basin_eval = latlon_basin_evaluation_algorithm();
   q = basin_eval.test_add_minima_to_queue(raw_orography_in,
                                           corrected_orography_in,
@@ -89,7 +107,7 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueOne) {
   field<height_types> cells_in_queue(grid_params_in);
   cells_in_queue.set_all(null_htype);
   while (! q.empty()) {
-    auto cell = static_cast<basin_cell*>(q.top());
+    auto cell = static_cast<basin_cell*>(q.front());
     auto coords = cell->get_cell_coords();
     cells_in_queue(coords) = cell->get_height_type();
     count++;
@@ -101,6 +119,9 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueOne) {
   delete[] expected_cells_in_queue;
   delete grid_params_in; delete coarse_grid_params_in;
   delete alg4;
+  delete[] landsea_in; delete[] true_sinks_in;
+  delete[] next_cell_lat_index_in; delete[] next_cell_lon_index_in;
+  delete[] rdirs_in; delete[] catchment_nums_in;
 }
 
 TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueTwo) {
@@ -151,8 +172,26 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueTwo) {
      null_htype,null_htype,null_htype, null_htype,null_htype,null_htype, null_htype,null_htype,null_htype,
      null_htype,null_htype,null_htype, null_htype,null_htype,null_htype, null_htype,flood_height,null_htype,
      null_htype,null_htype,null_htype, null_htype,null_htype,null_htype, null_htype,null_htype,null_htype };
-  reverse_priority_cell_queue q;
+  bool* landsea_in = new bool[9*9];
+  fill_n(landsea_in,9*9,false);
+  landsea_in[0] = true;
+  bool* true_sinks_in = new bool[9*9];
+  fill_n(true_sinks_in,9*9,false);
+  int* next_cell_lat_index_in = new int[9*9];
+  int* next_cell_lon_index_in = new int[9*9];
+  short* rdirs_in = new short[9*9];
+  int* catchment_nums_in = new int[9*9];
+  queue<cell*> q;
   auto alg4 = new sink_filling_algorithm_4_latlon();
+  alg4->setup_flags(false,true,false,false);
+  alg4->setup_fields(corrected_orography_in,
+                     landsea_in,
+                     true_sinks_in,
+                     next_cell_lat_index_in,
+                     next_cell_lon_index_in,
+                     grid_params_in,
+                     rdirs_in,
+                     catchment_nums_in);
   auto basin_eval = latlon_basin_evaluation_algorithm();
   q = basin_eval.test_add_minima_to_queue(raw_orography_in,
                                           corrected_orography_in,
@@ -164,7 +203,7 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueTwo) {
   field<height_types> cells_in_queue(grid_params_in);
   cells_in_queue.set_all(null_htype);
   while (! q.empty()) {
-    auto cell = static_cast<basin_cell*>(q.top());
+    auto cell = static_cast<basin_cell*>(q.front());
     auto coords = cell->get_cell_coords();
     cells_in_queue(coords) = cell->get_height_type();
     count++;
@@ -176,6 +215,9 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueTwo) {
   delete[] expected_cells_in_queue;
   delete grid_params_in; delete coarse_grid_params_in;
   delete alg4;
+  delete[] landsea_in; delete[] true_sinks_in;
+  delete[] next_cell_lat_index_in; delete[] next_cell_lon_index_in;
+  delete[] rdirs_in; delete[] catchment_nums_in;
 }
 
 TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueThree) {
@@ -226,8 +268,26 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueThree) {
      flood_height,null_htype,null_htype, null_htype,null_htype,null_htype, null_htype,null_htype,null_htype,
      null_htype,flood_height,null_htype, null_htype,null_htype,null_htype, null_htype,flood_height,null_htype,
      null_htype,null_htype,null_htype, null_htype,null_htype,null_htype, null_htype,null_htype,null_htype };
-  reverse_priority_cell_queue q;
+  bool* landsea_in = new bool[9*9];
+  fill_n(landsea_in,9*9,false);
+  landsea_in[0] = true;
+  bool* true_sinks_in = new bool[9*9];
+  fill_n(true_sinks_in,9*9,false);
+  int* next_cell_lat_index_in = new int[9*9];
+  int* next_cell_lon_index_in = new int[9*9];
+  short* rdirs_in = new short[9*9];
+  int* catchment_nums_in = new int[9*9];
+  queue<cell*> q;
   auto alg4 = new sink_filling_algorithm_4_latlon();
+  alg4->setup_flags(false,true,false,false);
+  alg4->setup_fields(corrected_orography_in,
+                     landsea_in,
+                     true_sinks_in,
+                     next_cell_lat_index_in,
+                     next_cell_lon_index_in,
+                     grid_params_in,
+                     rdirs_in,
+                     catchment_nums_in);
   auto basin_eval = latlon_basin_evaluation_algorithm();
   q = basin_eval.test_add_minima_to_queue(raw_orography_in,
                                           corrected_orography_in,
@@ -239,7 +299,7 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueThree) {
   field<height_types> cells_in_queue(grid_params_in);
   cells_in_queue.set_all(null_htype);
   while (! q.empty()) {
-    auto cell = static_cast<basin_cell*>(q.top());
+    auto cell = static_cast<basin_cell*>(q.front());
     auto coords = cell->get_cell_coords();
     cells_in_queue(coords) = cell->get_height_type();
     count++;
@@ -251,6 +311,9 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueThree) {
   delete[] expected_cells_in_queue;
   delete grid_params_in; delete coarse_grid_params_in;
   delete alg4;
+  delete[] landsea_in; delete[] true_sinks_in;
+  delete[] next_cell_lat_index_in; delete[] next_cell_lon_index_in;
+  delete[] rdirs_in; delete[] catchment_nums_in;
 }
 
 TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueFour) {
@@ -301,8 +364,26 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueFour) {
      null_htype,null_htype,null_htype, null_htype,null_htype,null_htype, null_htype,null_htype,null_htype,
      flood_height,null_htype,null_htype, null_htype,null_htype,null_htype, null_htype,null_htype,null_htype,
      null_htype,null_htype,null_htype, null_htype,null_htype,null_htype, flood_height,null_htype,null_htype };
-  reverse_priority_cell_queue q;
+  bool* landsea_in = new bool[9*9];
+  fill_n(landsea_in,9*9,false);
+  landsea_in[9*9-1] = true;
+  bool* true_sinks_in = new bool[9*9];
+  fill_n(true_sinks_in,9*9,false);
+  int* next_cell_lat_index_in = new int[9*9];
+  int* next_cell_lon_index_in = new int[9*9];
+  short* rdirs_in = new short[9*9];
+  int* catchment_nums_in = new int[9*9];
+  queue<cell*> q;
   auto alg4 = new sink_filling_algorithm_4_latlon();
+  alg4->setup_flags(false,true,false,false);
+  alg4->setup_fields(corrected_orography_in,
+                     landsea_in,
+                     true_sinks_in,
+                     next_cell_lat_index_in,
+                     next_cell_lon_index_in,
+                     grid_params_in,
+                     rdirs_in,
+                     catchment_nums_in);
   auto basin_eval = latlon_basin_evaluation_algorithm();
   q = basin_eval.test_add_minima_to_queue(raw_orography_in,
                                           corrected_orography_in,
@@ -314,7 +395,7 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueFour) {
   field<height_types> cells_in_queue(grid_params_in);
   cells_in_queue.set_all(null_htype);
   while (! q.empty()) {
-    auto cell = static_cast<basin_cell*>(q.top());
+    auto cell = static_cast<basin_cell*>(q.front());
     auto coords = cell->get_cell_coords();
     cells_in_queue(coords) = cell->get_height_type();
     count++;
@@ -326,6 +407,9 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueFour) {
   delete alg4;
   delete[] expected_cells_in_queue;
   delete[] raw_orography_in; delete[] corrected_orography_in; delete[] minima_in;
+  delete[] landsea_in; delete[] true_sinks_in;
+  delete[] next_cell_lat_index_in; delete[] next_cell_lon_index_in;
+  delete[] rdirs_in; delete[] catchment_nums_in;
 }
 
 TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueFive) {
@@ -376,8 +460,26 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueFive) {
      null_htype,null_htype,flood_height, null_htype,null_htype,null_htype, null_htype,flood_height,null_htype,
      null_htype,null_htype,null_htype, null_htype,null_htype,null_htype, null_htype,null_htype,null_htype,
      null_htype,null_htype,null_htype, null_htype,null_htype,null_htype, null_htype,null_htype,null_htype };
-  reverse_priority_cell_queue q;
+  bool* landsea_in = new bool[9*9];
+  fill_n(landsea_in,9*9,false);
+  landsea_in[0] = true;
+  bool* true_sinks_in = new bool[9*9];
+  fill_n(true_sinks_in,9*9,false);
+  int* next_cell_lat_index_in = new int[9*9];
+  int* next_cell_lon_index_in = new int[9*9];
+  short* rdirs_in = new short[9*9];
+  int* catchment_nums_in = new int[9*9];
+  queue<cell*> q;
   auto alg4 = new sink_filling_algorithm_4_latlon();
+  alg4->setup_flags(false,true,false,false);
+  alg4->setup_fields(corrected_orography_in,
+                     landsea_in,
+                     true_sinks_in,
+                     next_cell_lat_index_in,
+                     next_cell_lon_index_in,
+                     grid_params_in,
+                     rdirs_in,
+                     catchment_nums_in);
   auto basin_eval = latlon_basin_evaluation_algorithm();
   q = basin_eval.test_add_minima_to_queue(raw_orography_in,
                                           corrected_orography_in,
@@ -389,7 +491,7 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueFive) {
   field<height_types> cells_in_queue(grid_params_in);
   cells_in_queue.set_all(null_htype);
   while (! q.empty()) {
-    auto cell = static_cast<basin_cell*>(q.top());
+    auto cell = static_cast<basin_cell*>(q.front());
     auto coords = cell->get_cell_coords();
     cells_in_queue(coords) = cell->get_height_type();
     count++;
@@ -401,6 +503,9 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueFive) {
   delete alg4;
   delete[] expected_cells_in_queue;
   delete[] raw_orography_in; delete[] corrected_orography_in; delete[] minima_in;
+  delete[] landsea_in; delete[] true_sinks_in;
+  delete[] next_cell_lat_index_in; delete[] next_cell_lon_index_in;
+  delete[] rdirs_in; delete[] catchment_nums_in;
 }
 
 TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueSix) {
@@ -451,8 +556,26 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueSix) {
      null_htype,null_htype,null_htype, null_htype,null_htype,null_htype, null_htype,flood_height,null_htype,
      null_htype,flood_height,null_htype, null_htype,null_htype,null_htype, null_htype,null_htype,null_htype,
      null_htype,null_htype,null_htype, null_htype,null_htype,null_htype, null_htype,null_htype,null_htype };
-  reverse_priority_cell_queue q;
+  bool* landsea_in = new bool[9*9];
+  fill_n(landsea_in,9*9,false);
+  landsea_in[0] = true;
+  bool* true_sinks_in = new bool[9*9];
+  fill_n(true_sinks_in,9*9,false);
+  int* next_cell_lat_index_in = new int[9*9];
+  int* next_cell_lon_index_in = new int[9*9];
+  short* rdirs_in = new short[9*9];
+  int* catchment_nums_in = new int[9*9];
+  queue<cell*> q;
   auto alg4 = new sink_filling_algorithm_4_latlon();
+  alg4->setup_flags(false,true,false,false);
+  alg4->setup_fields(corrected_orography_in,
+                     landsea_in,
+                     true_sinks_in,
+                     next_cell_lat_index_in,
+                     next_cell_lon_index_in,
+                     grid_params_in,
+                     rdirs_in,
+                     catchment_nums_in);
   auto basin_eval = latlon_basin_evaluation_algorithm();
   q = basin_eval.test_add_minima_to_queue(raw_orography_in,
                                           corrected_orography_in,
@@ -464,7 +587,7 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueSix) {
   field<height_types> cells_in_queue(grid_params_in);
   cells_in_queue.set_all(null_htype);
   while (! q.empty()) {
-    auto cell = static_cast<basin_cell*>(q.top());
+    auto cell = static_cast<basin_cell*>(q.front());
     auto coords = cell->get_cell_coords();
     cells_in_queue(coords) = cell->get_height_type();
     count++;
@@ -477,6 +600,9 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueSix) {
   delete alg4;
   delete[] expected_cells_in_queue;
   delete[] raw_orography_in; delete[] corrected_orography_in; delete[] minima_in;
+  delete[] landsea_in; delete[] true_sinks_in;
+  delete[] next_cell_lat_index_in; delete[] next_cell_lon_index_in;
+  delete[] rdirs_in; delete[] catchment_nums_in;
 }
 
 TEST_F(BasinEvaluationTest, TestingProcessingNeighbors) {
@@ -11234,7 +11360,105 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsOne) {
                           merge_points_in,
                           grid_params_in,
                           coarse_grid_params_in);
+  bool* landsea_in = new bool[20*20] {
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false, false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false, false,false,
+    false,false,false,false,
+   false,false,false,false,false,false, false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false, false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false, false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false, true,false,false,false,false,false,false,false,false,false,false,false, true,
+    false,false,false,false};
+  bool* true_sinks_in = new bool[20*20];
+  fill_n(true_sinks_in,20*20,false);
+  int* next_cell_lat_index_in = new int[20*20];
+  int* next_cell_lon_index_in = new int[20*20];
+  short* sinkless_rdirs_out = new short[20*20];
+  int* catchment_nums_in = new int[20*20];
+  reverse_priority_cell_queue q;
+  auto alg4 = new sink_filling_algorithm_4_latlon();
+  alg4->setup_flags(false,true,false,false);
+  alg4->setup_fields(corrected_orography_in,
+                     landsea_in,
+                     true_sinks_in,
+                     next_cell_lat_index_in,
+                     next_cell_lon_index_in,
+                     grid_params_in,
+                     sinkless_rdirs_out,
+                     catchment_nums_in);
+  basin_eval.setup_sink_filling_algorithm(alg4);
   basin_eval.evaluate_basins();
+  int nlat = 20; int nlon = 20;
+  for (int i = 0; i < nlat; i++){
+    for (int j = 0; j < nlon; j++){
+      double diff = merge_points_in[nlat*i+j] -
+                       merge_points_expected_out[nlat*i+j];
+      if (diff != 0.0) diff = merge_points_in[nlat*i+j];
+      cout << setw(3) <<  diff << " ";
+    }
+    cout << endl;
+  }
+  for (int i = 0; i < nlat; i++){
+    for (int j = 0; j < nlon; j++){
+      double diff = merge_points_in[nlat*i+j] -
+                       merge_points_expected_out[nlat*i+j];
+      if (diff != 0.0) diff = merge_points_in[nlat*i+j];
+      cout << setw(3) <<  diff << " ";
+    }
+    cout << endl;
+  }
+  cout << endl;
+  for (int i = 0; i < nlat; i++){
+    for (int j = 0; j < nlon; j++){
+      double diff = flood_next_cell_lon_index_in[nlat*i+j] -
+                       flood_next_cell_lon_index_expected_out[nlat*i+j];
+      if (diff != 0.0) diff = flood_next_cell_lon_index_in[nlat*i+j];
+      cout << setw(3) <<  diff << " ";
+    }
+    cout << endl;
+  }
+  cout << endl;
+  for (int i = 0; i < nlat; i++){
+    for (int j = 0; j < nlon; j++){
+      double diff = flood_volume_thresholds_in[nlat*i+j] -
+                       flood_volume_thresholds_expected_out[nlat*i+j];
+      if (diff != 0.0) diff =flood_volume_thresholds_in[nlat*i+j];
+      cout << setw(3) <<  diff << " ";
+    }
+    cout << endl;
+  }
   EXPECT_TRUE(field<double>(flood_volume_thresholds_in,grid_params_in)
               == field<double>(flood_volume_thresholds_expected_out,grid_params_in));
   EXPECT_TRUE(field<double>(connection_volume_thresholds_in,grid_params_in)
@@ -11269,7 +11493,7 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsOne) {
               == field<int>(connect_force_merge_lat_index_expected_out,grid_params_in));
   EXPECT_TRUE(field<int>(connect_force_merge_lon_index_in,grid_params_in)
               == field<int>(connect_force_merge_lon_index_expected_out,grid_params_in));
-  delete grid_params_in; delete coarse_grid_params_in;
+  delete grid_params_in; delete coarse_grid_params_in; delete alg4;
   delete[] coarse_catchment_nums_in; delete[] corrected_orography_in;
   delete[] raw_orography_in; delete[] minima_in;
   delete[] prior_fine_rdirs_in; delete[] prior_fine_catchments_in;
@@ -11298,6 +11522,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsOne) {
   delete[] flood_force_merge_lon_index_expected_out;
   delete[] connect_force_merge_lat_index_expected_out;
   delete[] connect_force_merge_lon_index_expected_out;
+  delete[] landsea_in;
+  delete[] true_sinks_in;
+  delete[] next_cell_lat_index_in;
+  delete[] next_cell_lon_index_in;
+  delete[] sinkless_rdirs_out;
+  delete[] catchment_nums_in;
+
 }
 
 } //namespace

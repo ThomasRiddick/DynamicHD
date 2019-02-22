@@ -94,6 +94,11 @@ TEST_F(DetermineRiverDirectionsTest,DetermineRiverDirectionsTestOne) {
     }
     cout << endl;
   }
+  delete[] rdirs;
+  delete[] expected_rdirs_out;
+  delete[] truesinks;
+  delete[] lsmask;
+  delete[] orography;
   ASSERT_TRUE(false);
 };
 
