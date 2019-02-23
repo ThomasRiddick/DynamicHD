@@ -30,6 +30,10 @@ public:
 	bool operator== (const coords& rhs){
 		return this->equals(rhs);
 	};
+	///Overload not equals
+	bool operator!= (const coords& rhs){
+		return ! (*this==rhs);
+	};
 	friend ostream& operator<< (ostream& out, coords& field_object) {
 		field_object.print(out);
 		return out;
@@ -63,7 +67,6 @@ public:
 	///Overload equals operator
 	bool operator== (const latlon_coords& rhs) const
 			{ return (lat == rhs.get_lat() && lon == rhs.get_lon()); };
-
 	///Overload ostream operator
 	friend ostream& operator<< (ostream& out, latlon_coords& field_object) {
 		field_object.print(out);

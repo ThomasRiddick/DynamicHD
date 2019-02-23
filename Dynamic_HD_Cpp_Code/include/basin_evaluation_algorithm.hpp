@@ -133,9 +133,11 @@ protected:
   coords* new_center_coords = nullptr;
 	coords* search_coords = nullptr;
   coords* level_coords = nullptr;
+  coords* null_coords = nullptr;
 	vector<coords*>* neighbors_coords = nullptr;
 	vector<coords*>* search_neighbors_coords = nullptr;
 	vector<coords*> basin_catchment_centers;
+  vector<coords*>* basin_sink_points;
   height_types new_center_cell_height_type;
   height_types center_cell_height_type;
   height_types previous_filled_cell_height_type;

@@ -37,7 +37,7 @@ private:
 	bool use_diagonals = true;
 	bool check_for_false_minima = false;
 	bool delete_initial_point = false;
-	int diagonal_neighbors = 0;
+	unsigned int diagonal_neighbors = 0;
 };
 
 #endif /* INCLUDE_REDUCE_CONNECTED_AREAS_TO_POINTS_ALGORITHM_HPP_ */
