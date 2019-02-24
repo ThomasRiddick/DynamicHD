@@ -62,7 +62,7 @@ protected:
                                                      bool use_additional_fields) = 0;
   virtual coords* get_cells_next_force_merge_index_as_coords(coords* coords_in,
                                                       height_types height_type_in) = 0;
-	virtual bool check_for_sinks(coords* coords_in) = 0;
+	virtual bool check_for_sinks_and_set_downstream_coords(coords* coords_in) = 0;
   bool skip_center_cell();
 	void evaluate_basin();
 	void add_minima_to_queue();
@@ -134,6 +134,7 @@ protected:
 	coords* search_coords = nullptr;
   coords* level_coords = nullptr;
   coords* null_coords = nullptr;
+  coords* downstream_coords = nullptr;
 	vector<coords*>* neighbors_coords = nullptr;
 	vector<coords*>* search_neighbors_coords = nullptr;
 	vector<coords*> basin_catchment_centers;
@@ -270,7 +271,7 @@ private:
                                          coords* target_coords,
                                          height_types height_type,
                                          bool use_additional_fields=false);
-	bool check_for_sinks(coords* coords_in);
+	bool check_for_sinks_and_set_downstream_coords(coords* coords_in);
 	coords* get_cells_next_cell_index_as_coords(coords* coords_in,
                                               height_types height_type_in);
   coords* get_cells_redirect_index_as_coords(coords* coords_in,

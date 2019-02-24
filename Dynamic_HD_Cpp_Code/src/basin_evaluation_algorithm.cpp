@@ -837,7 +837,6 @@ void basin_evaluation_algorithm::set_remaining_redirects() {
 			coords* first_cell_beyond_rim_coords = get_cells_redirect_index_as_coords(coords_in,
                                            												      	      redirect_height_type,
                                            												      	      is_double_merge);
-			if(counter% 100 == 0) cout << counter << endl;
 			if((*basin_catchment_numbers)(first_cell_beyond_rim_coords) != null_catchment){
 				 coords* basin_catchment_center_coords =
 				 	basin_catchment_centers[(*basin_catchment_numbers)(first_cell_beyond_rim_coords) - 1];
@@ -864,17 +863,18 @@ void basin_evaluation_algorithm::set_remaining_redirects() {
 					if ((*catchment_outlet_coarse_coords)==(*null_coords)) {
 						delete catchment_outlet_coarse_coords;
 						catchment_outlet_coarse_coords = nullptr;
-						_grid->for_all([&](coords* coords_in_two){
-							if((*prior_fine_catchments)(coords_in_two)
-							   	== prior_fine_catchment_num) {
-								if (check_for_sinks(coords_in_two)) {
+						coords* current_coords = first_cell_beyond_rim_coords->clone();
+						while(true) {
+								if (check_for_sinks_and_set_downstream_coords(current_coords)) {
 									catchment_outlet_coarse_coords =
-										_coarse_grid->convert_fine_coords(coords_in_two,
+										_coarse_grid->convert_fine_coords(current_coords,
 										                           _grid_params);
+									delete current_coords;
+									break;
 								}
-							}
-							delete coords_in_two;
-						});
+								delete current_coords;
+								current_coords = downstream_coords;
+						}
 						if ( ! catchment_outlet_coarse_coords)
 							throw runtime_error("Sink point for non local secondary redirect not found");
 						(*basin_sink_points)[prior_fine_catchment_num - 1] = catchment_outlet_coarse_coords;
@@ -1147,11 +1147,10 @@ void latlon_basin_evaluation_algorithm::test_set_remaining_redirects(vector<coor
 	set_remaining_redirects();
 }
 
-bool latlon_basin_evaluation_algorithm::check_for_sinks(coords* coords_in){
+bool latlon_basin_evaluation_algorithm::check_for_sinks_and_set_downstream_coords(coords* coords_in){
 	double rdir = (*prior_fine_rdirs)(coords_in);
-	coords* next_coords = _grid->calculate_downstream_coords_from_dir_based_rdir(coords_in,rdir);
-	double next_rdir = (*prior_fine_rdirs)(next_coords);
-	delete next_coords;
+	downstream_coords = _grid->calculate_downstream_coords_from_dir_based_rdir(coords_in,rdir);
+	double next_rdir = (*prior_fine_rdirs)(downstream_coords);
 	return (rdir == 5 || next_rdir == 0);
 }
 

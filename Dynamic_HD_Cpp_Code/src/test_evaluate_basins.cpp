@@ -9517,18 +9517,18 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirects) {
   double*  prior_fine_rdirs_in = new double[12*12]
                                     {-1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0,
                                      -1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0,
-                                     -1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0,
+                                     -1.0,-1.0,-1.0,  1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0,-1.0, 2.0,
 //
-                                     -1.0, 8.0,-1.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0,
-                                     -1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0,
-                                     -1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0,
+                                     -1.0, 8.0, 2.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0,-1.0, 2.0,
+                                      2.0, 4.0, 2.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0,-1.0, 1.0,
+                                      2.0, 8.0, 4.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0, 3.0,-1.0,
 //
-                                     -1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0,
-                                     -1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0,
-                                     -1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0,
+                                      2.0, 6.0, 2.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0,  3.0, 4.0, 2.0,
+                                      2.0, 8.0, 2.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0, 3.0, 7.0,
+                                      9.0,-1.0, 2.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0,-1.0, 2.0,
 //
-                                     -1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0,
-                                     -1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0,
+                                     -1.0,-1.0, 2.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0,-1.0, 1.0,
+                                     -1.0,-1.0, 2.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0, 1.0,-1.0,
                                      -1.0,-1.0, 0.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0,  5.0,-1.0,-1.0};
   bool* requires_flood_redirect_indices_in = new bool[12*12]
                                     {false,false,false, false,false,false, false,false,false, false,false,false,
@@ -11420,45 +11420,6 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsOne) {
                      catchment_nums_in);
   basin_eval.setup_sink_filling_algorithm(alg4);
   basin_eval.evaluate_basins();
-  int nlat = 20; int nlon = 20;
-  for (int i = 0; i < nlat; i++){
-    for (int j = 0; j < nlon; j++){
-      double diff = merge_points_in[nlat*i+j] -
-                       merge_points_expected_out[nlat*i+j];
-      if (diff != 0.0) diff = merge_points_in[nlat*i+j];
-      cout << setw(3) <<  diff << " ";
-    }
-    cout << endl;
-  }
-  for (int i = 0; i < nlat; i++){
-    for (int j = 0; j < nlon; j++){
-      double diff = merge_points_in[nlat*i+j] -
-                       merge_points_expected_out[nlat*i+j];
-      if (diff != 0.0) diff = merge_points_in[nlat*i+j];
-      cout << setw(3) <<  diff << " ";
-    }
-    cout << endl;
-  }
-  cout << endl;
-  for (int i = 0; i < nlat; i++){
-    for (int j = 0; j < nlon; j++){
-      double diff = flood_next_cell_lon_index_in[nlat*i+j] -
-                       flood_next_cell_lon_index_expected_out[nlat*i+j];
-      if (diff != 0.0) diff = flood_next_cell_lon_index_in[nlat*i+j];
-      cout << setw(3) <<  diff << " ";
-    }
-    cout << endl;
-  }
-  cout << endl;
-  for (int i = 0; i < nlat; i++){
-    for (int j = 0; j < nlon; j++){
-      double diff = flood_volume_thresholds_in[nlat*i+j] -
-                       flood_volume_thresholds_expected_out[nlat*i+j];
-      if (diff != 0.0) diff =flood_volume_thresholds_in[nlat*i+j];
-      cout << setw(3) <<  diff << " ";
-    }
-    cout << endl;
-  }
   EXPECT_TRUE(field<double>(flood_volume_thresholds_in,grid_params_in)
               == field<double>(flood_volume_thresholds_expected_out,grid_params_in));
   EXPECT_TRUE(field<double>(connection_volume_thresholds_in,grid_params_in)
