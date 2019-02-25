@@ -252,7 +252,6 @@ coords* latlon_grid::convert_fine_coords(coords* fine_coords,grid_params* fine_g
 		int coarse_lat = floor(double(latlon_fine_coords->get_lat())/fine_cells_per_coarse_cell_lat);
 		int coarse_lon = floor(double(latlon_fine_coords->get_lon())/fine_cells_per_coarse_cell_lon);
 		return new latlon_coords(coarse_lat,coarse_lon);
-	return new latlon_coords(1,1);
 }
 
 icon_single_index_grid::icon_single_index_grid(grid_params* params){

@@ -22,7 +22,7 @@ basin_evaluation_algorithm::~basin_evaluation_algorithm() {
 	delete basin_flooded_cells; delete basin_connected_cells;
 	delete additional_flood_local_redirect;
   delete additional_connect_local_redirect;
-  delete basin_sink_points;
+  delete basin_sink_points; delete null_coords;
 }
 
 latlon_basin_evaluation_algorithm::~latlon_basin_evaluation_algorithm(){
@@ -871,11 +871,11 @@ void basin_evaluation_algorithm::set_remaining_redirects() {
 						catchment_outlet_coarse_coords = nullptr;
 						coords* current_coords = first_cell_beyond_rim_coords->clone();
 						while(true) {
-								delete downstream_coords;
 								if (check_for_sinks_and_set_downstream_coords(current_coords)) {
 									catchment_outlet_coarse_coords =
 										_coarse_grid->convert_fine_coords(current_coords,
 										                           _grid_params);
+									delete downstream_coords;
 									delete current_coords;
 									break;
 								}
@@ -1152,6 +1152,11 @@ void latlon_basin_evaluation_algorithm::test_set_remaining_redirects(vector<coor
 		basin_sink_points->push_back(null_coords->clone());
 	}
 	set_remaining_redirects();
+	while ( ! basin_sink_points->empty()){
+		coords* basin_sink_point = basin_sink_points->back();
+		basin_sink_points->pop_back();
+		delete basin_sink_point;
+	}
 }
 
 bool latlon_basin_evaluation_algorithm::check_for_sinks_and_set_downstream_coords(coords* coords_in){
