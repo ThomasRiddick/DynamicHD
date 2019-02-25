@@ -173,6 +173,11 @@ void basin_evaluation_algorithm::evaluate_basins(){
 		basin_catchment_centers.pop_back();
 		delete catchment_center;
 	}
+	while ( ! basin_sink_points->empty()){
+		coords* basin_sink_point = basin_sink_points->back();
+		basin_sink_points->pop_back();
+		delete basin_sink_point;
+	}
 }
 
 void basin_evaluation_algorithm::add_minima_to_queue() {
