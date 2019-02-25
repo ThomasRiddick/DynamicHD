@@ -44,7 +44,7 @@ void latlon_determine_river_directions(double* rdirs_in,
                                        bool mark_pits_as_true_sinks_in) {
   cout << "Entering River Determination C++ Code" << endl;
   auto alg = river_direction_determination_algorithm_latlon();
-  auto grid_params_in = new latlon_grid_params(nlat_in,nlon_in);
+  auto grid_params_in = new latlon_grid_params(nlat_in,nlon_in,false);
   alg.setup_flags(always_flow_to_sea_in,use_diagonal_nbrs_in,
                   mark_pits_as_true_sinks_in);
   alg.setup_fields(rdirs_in,orography_in,land_sea_in,true_sinks_in,

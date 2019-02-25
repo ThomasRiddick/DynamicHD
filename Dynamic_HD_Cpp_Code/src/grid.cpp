@@ -80,6 +80,46 @@ void latlon_grid::for_all_nbrs(coords* coords_in,function<void(coords*)> func){
 	}
 };
 
+void latlon_grid::for_all_nbrs_wrapped(coords* coords_in,function<void(coords*)> func){
+	latlon_coords* latlon_coords_in = static_cast<latlon_coords*>(coords_in);
+	for (auto i = latlon_coords_in->get_lat()-1; i <= latlon_coords_in->get_lat()+1;i++){
+		for (auto j = latlon_coords_in->get_lon()-1; j <=latlon_coords_in->get_lon()+1; j++){
+			if (i == latlon_coords_in->get_lat() && j == latlon_coords_in->get_lon()) continue;
+			latlon_coords* nbr_coords = new latlon_coords(i,j);
+			if (outside_limits(nbr_coords)) delete nbr_coords;
+			else {
+				coords* wrapped_coords = latlon_wrapped_coords(nbr_coords);
+				if (wrapped_coords != nbr_coords) {
+					delete nbr_coords;
+				}
+				func(wrapped_coords);
+			}
+		}
+	}
+}
+
+void latlon_grid::for_non_diagonal_nbrs_wrapped(coords* coords_in,function<void(coords*)> func){
+	latlon_coords* latlon_coords_in = static_cast<latlon_coords*>(coords_in);
+	for (auto i = latlon_coords_in->get_lat()-1;i<=latlon_coords_in->get_lat()+1;i=i+2){
+					latlon_coords* nbr_coords = new latlon_coords(i,latlon_coords_in->get_lon());
+			if (outside_limits(nbr_coords)) delete nbr_coords;
+			else {
+				coords* wrapped_coords = latlon_wrapped_coords(nbr_coords);
+				if (wrapped_coords != nbr_coords) delete nbr_coords;
+				func(wrapped_coords);
+			 }
+	}
+	for (auto j = latlon_coords_in->get_lon()-1; j<=latlon_coords_in->get_lon()+1;j=j+2){
+			latlon_coords* nbr_coords = new latlon_coords(latlon_coords_in->get_lat(),j);
+			if (outside_limits(nbr_coords)) delete nbr_coords;
+			else {
+				coords* wrapped_coords = latlon_wrapped_coords(nbr_coords);
+				if (wrapped_coords != nbr_coords) delete nbr_coords;
+				func(wrapped_coords);
+			}
+	}
+};
+
 void latlon_grid::for_all(function<void(coords*)> func){
 	for (auto i = 0; i < nlat; i++){
 		for (auto j = 0; j < nlon; j++){
@@ -252,6 +292,15 @@ void icon_single_index_grid::for_non_diagonal_nbrs(coords* coords_in,function<vo
 
 void icon_single_index_grid::for_all_nbrs(coords* coords_in,function<void(coords*)> func) {
 	for_diagonal_nbrs(coords_in,func);
+	for_non_diagonal_nbrs(coords_in,func);
+}
+
+void icon_single_index_grid::for_all_nbrs_wrapped(coords* coords_in,function<void(coords*)> func){
+	for_all_nbrs(coords_in,func);
+}
+
+void icon_single_index_grid::
+		 for_non_diagonal_nbrs_wrapped(coords* coords_in,function<void(coords*)> func){
 	for_non_diagonal_nbrs(coords_in,func);
 }
 

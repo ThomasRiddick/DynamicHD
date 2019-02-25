@@ -7,6 +7,7 @@
 
 #include "basin_evaluation_algorithm.hpp"
 #include <queue>
+#include <algorithm>
 
 basin_evaluation_algorithm::~basin_evaluation_algorithm() {
 	delete minima; delete raw_orography; delete corrected_orography;
@@ -1138,8 +1139,8 @@ void latlon_basin_evaluation_algorithm::test_set_remaining_redirects(vector<coor
 	_grid = grid_factory(_grid_params);
 	_coarse_grid = grid_factory(_coarse_grid_params);
 	null_coords = new latlon_coords(-1,-1);
-	int highest_catchment_num = *max_element(prior_fine_catchments_in,
-	                                    		 prior_fine_catchments_in+_grid->get_total_size());
+	int highest_catchment_num = *std::max_element(prior_fine_catchments_in,
+	                                    		 			prior_fine_catchments_in+_grid->get_total_size());
 	basin_sink_points = new vector<coords*>();
 	for (int i = 0; i < highest_catchment_num; i++){
 		basin_sink_points->push_back(null_coords->clone());

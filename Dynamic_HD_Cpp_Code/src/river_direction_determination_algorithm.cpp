@@ -64,7 +64,7 @@ void river_direction_determination_algorithm::find_river_direction(coords* coord
   bool potential_exit_point = false;
   double cell_height = (*orography)(coords_in);
   void (grid::*func)(coords*,function<void(coords*)>) = use_diagonal_nbrs ?
-    &grid::for_all_nbrs : &grid::for_non_diagonal_nbrs;
+    &grid::for_all_nbrs_wrapped : &grid::for_non_diagonal_nbrs_wrapped;
   (_grid->*func)(coords_in,[&](coords* nbr_coords){
     bool is_sea = (*land_sea)(nbr_coords);
     double nbr_height = (*orography)(nbr_coords);
@@ -105,7 +105,7 @@ void river_direction_determination_algorithm::find_river_direction(coords* coord
 bool river_direction_determination_algorithm::point_has_inflows(coords* coords_in){
   bool inflow_found = false;
   void (grid::*func)(coords*,function<void(coords*)>) = use_diagonal_nbrs ?
-    &grid::for_all_nbrs : &grid::for_non_diagonal_nbrs;
+    &grid::for_all_nbrs_wrapped : &grid::for_non_diagonal_nbrs_wrapped;
   (_grid->*func)(coords_in,[&](coords* nbr_coords){
     coords* cell_downstream_from_nbr = get_downstream_cell_coords(nbr_coords);
     if ((*cell_downstream_from_nbr) == (*coords_in)) inflow_found = true;
@@ -125,7 +125,8 @@ void river_direction_determination_algorithm::resolve_flat_areas(){
       coords* center_coords = q.front();
       q.pop();
       void (grid::*func)(coords*,function<void(coords*)>) = use_diagonal_nbrs ?
-                         &grid::for_all_nbrs : &grid::for_non_diagonal_nbrs;
+                         &grid::for_all_nbrs_wrapped :
+                         &grid::for_non_diagonal_nbrs_wrapped;
       (_grid->*func)(center_coords,[&](coords* nbr_coords){
         if((*orography)(nbr_coords) == flat_height &&
            ! (*completed_cells)(nbr_coords)){
