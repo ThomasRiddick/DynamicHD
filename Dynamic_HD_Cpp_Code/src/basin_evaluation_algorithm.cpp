@@ -871,6 +871,7 @@ void basin_evaluation_algorithm::set_remaining_redirects() {
 						catchment_outlet_coarse_coords = nullptr;
 						coords* current_coords = first_cell_beyond_rim_coords->clone();
 						while(true) {
+								delete downstream_coords;
 								if (check_for_sinks_and_set_downstream_coords(current_coords)) {
 									catchment_outlet_coarse_coords =
 										_coarse_grid->convert_fine_coords(current_coords,
