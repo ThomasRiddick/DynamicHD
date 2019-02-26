@@ -109,24 +109,40 @@ void latlon_evaluate_basins(bool* minima_in,
   double* raw_orography_in_ext = new double[(nlat_fine+2*scale_factor)*nlon_fine];
   double* corrected_orography_in_ext = new double[(nlat_fine+2*scale_factor)*nlon_fine];
   double* connection_volume_thresholds_in_ext = new double[(nlat_fine+2*scale_factor)*nlon_fine];
+  fill_n(connection_volume_thresholds_in_ext,(nlat_fine+2*scale_factor)*nlon_fine,0.0);
   double* flood_volume_thresholds_in_ext = new double[(nlat_fine+2*scale_factor)*nlon_fine];
+  fill_n(flood_volume_thresholds_in_ext,(nlat_fine+2*scale_factor)*nlon_fine,0.0);
   double* prior_fine_rdirs_in_ext = new double[(nlat_fine+2*scale_factor)*nlon_fine];
   int* prior_fine_catchments_in_ext = new int[(nlat_fine+2*scale_factor)*nlon_fine];
   int* coarse_catchment_nums_in_ext = new int[(nlat_fine+2*scale_factor)*nlon_fine];
   int* flood_next_cell_lat_index_in_ext = new int[(nlat_fine+2*scale_factor)*nlon_fine];
+  fill_n(flood_next_cell_lat_index_in_ext,(nlat_fine+2*scale_factor)*nlon_fine,-1);
   int* flood_next_cell_lon_index_in_ext = new int[(nlat_fine+2*scale_factor)*nlon_fine];
+  fill_n(flood_next_cell_lon_index_in_ext,(nlat_fine+2*scale_factor)*nlon_fine,-1);
   int* connect_next_cell_lat_index_in_ext = new int[(nlat_fine+2*scale_factor)*nlon_fine];
+  fill_n(connect_next_cell_lat_index_in_ext,(nlat_fine+2*scale_factor)*nlon_fine,-1);
   int* connect_next_cell_lon_index_in_ext = new int[(nlat_fine+2*scale_factor)*nlon_fine];
+  fill_n(connect_next_cell_lon_index_in_ext,(nlat_fine+2*scale_factor)*nlon_fine,-1);
   int* flood_force_merge_lat_index_in_ext  = new int[(nlat_fine+2*scale_factor)*nlon_fine];
+  fill_n(flood_force_merge_lat_index_in_ext,(nlat_fine+2*scale_factor)*nlon_fine,-1);
   int* flood_force_merge_lon_index_in_ext  = new int[(nlat_fine+2*scale_factor)*nlon_fine];
+  fill_n(flood_force_merge_lon_index_in_ext,(nlat_fine+2*scale_factor)*nlon_fine,-1);
   int* connect_force_merge_lat_index_in_ext  = new int[(nlat_fine+2*scale_factor)*nlon_fine];
+  fill_n(connect_force_merge_lat_index_in_ext,(nlat_fine+2*scale_factor)*nlon_fine,-1);
   int* connect_force_merge_lon_index_in_ext  = new int[(nlat_fine+2*scale_factor)*nlon_fine];
+  fill_n(connect_force_merge_lon_index_in_ext,(nlat_fine+2*scale_factor)*nlon_fine,-1);
   int* flood_redirect_lat_index_in_ext  = new int[(nlat_fine+2*scale_factor)*nlon_fine];
+  fill_n(flood_redirect_lat_index_in_ext,(nlat_fine+2*scale_factor)*nlon_fine,-1);
   int* flood_redirect_lon_index_in_ext  = new int[(nlat_fine+2*scale_factor)*nlon_fine];
+  fill_n(flood_redirect_lon_index_in_ext,(nlat_fine+2*scale_factor)*nlon_fine,-1);
   int* connect_redirect_lat_index_in_ext  = new int[(nlat_fine+2*scale_factor)*nlon_fine];
+  fill_n(connect_redirect_lat_index_in_ext,(nlat_fine+2*scale_factor)*nlon_fine,-1);
   int* connect_redirect_lon_index_in_ext  = new int[(nlat_fine+2*scale_factor)*nlon_fine];
+  fill_n(connect_redirect_lon_index_in_ext,(nlat_fine+2*scale_factor)*nlon_fine,-1);
   bool* flood_local_redirect_in_ext  = new bool[(nlat_fine+2*scale_factor)*nlon_fine];
+  fill_n(flood_local_redirect_in_ext,(nlat_fine+2*scale_factor)*nlon_fine,-1);
   bool* connect_local_redirect_in_ext  = new bool[(nlat_fine+2*scale_factor)*nlon_fine];
+  fill_n(connect_local_redirect_in_ext,(nlat_fine+2*scale_factor)*nlon_fine,-1);
   auto sink_filling_alg_4 = new sink_filling_algorithm_4_latlon();
   int* next_cell_lat_index_dummy_in = new int[(nlat_fine+2*scale_factor)*nlon_fine];
   int* next_cell_lon_index_dummy_in = new int[(nlat_fine+2*scale_factor)*nlon_fine];
@@ -145,24 +161,8 @@ void latlon_evaluate_basins(bool* minima_in,
       minima_in_ext[i*nlon_fine+j] = false;
       raw_orography_in_ext[i*nlon_fine+j] = lowest_double;
       corrected_orography_in_ext[i*nlon_fine+j] = lowest_double;
-      connection_volume_thresholds_in_ext[i*nlon_fine+j] = 0.0;
-      flood_volume_thresholds_in_ext[i*nlon_fine+j] = 0.0;
       prior_fine_rdirs_in_ext[i*nlon_fine+j] = -1.0;
       prior_fine_catchments_in_ext[i*nlon_fine+j] = 0;
-      flood_next_cell_lat_index_in_ext[i*nlon_fine+j] = 0;
-      flood_next_cell_lon_index_in_ext[i*nlon_fine+j] = 0;
-      connect_next_cell_lat_index_in_ext[i*nlon_fine+j] = 0;
-      connect_next_cell_lon_index_in_ext[i*nlon_fine+j] = 0;
-      flood_force_merge_lat_index_in_ext[i*nlon_fine+j] = 0;
-      flood_force_merge_lon_index_in_ext[i*nlon_fine+j] = 0;
-      connect_force_merge_lat_index_in_ext[i*nlon_fine+j] = 0;
-      connect_force_merge_lon_index_in_ext[i*nlon_fine+j] = 0;
-      flood_redirect_lat_index_in_ext[i*nlon_fine+j] = 0;
-      flood_redirect_lon_index_in_ext[i*nlon_fine+j] = 0;
-      connect_redirect_lat_index_in_ext[i*nlon_fine+j] = 0;
-      connect_redirect_lon_index_in_ext[i*nlon_fine+j] = 0;
-      flood_local_redirect_in_ext[i*nlon_fine+j] = false;
-      connect_local_redirect_in_ext[i*nlon_fine+j] = false;
     }
   }
   for (int i = 1; i < nlat_coarse+1; i++) {
@@ -179,42 +179,10 @@ void latlon_evaluate_basins(bool* minima_in,
       raw_orography_in_ext[i*nlon_fine+j] = raw_orography_in[i*nlon_fine+j-scale_factor*nlon_fine];
       corrected_orography_in_ext[i*nlon_fine+j] =
         corrected_orography_in[i*nlon_fine+j-scale_factor*nlon_fine];
-      connection_volume_thresholds_in_ext[i*nlon_fine+j] =
-        connection_volume_thresholds_in[i*nlon_fine+j-scale_factor*nlon_fine];
-      flood_volume_thresholds_in_ext[i*nlon_fine+j] =
-        flood_volume_thresholds_in[i*nlon_fine+j-scale_factor*nlon_fine];
       prior_fine_rdirs_in_ext[i*nlon_fine+j] =
         prior_fine_rdirs_in[i*nlon_fine+j-scale_factor*nlon_fine];
       prior_fine_catchments_in_ext[i*nlon_fine+j] =
         prior_fine_catchments_in[i*nlon_fine+j-scale_factor*nlon_fine];
-      flood_next_cell_lat_index_in_ext[i*nlon_fine+j] =
-        flood_next_cell_lat_index_in[i*nlon_fine+j-scale_factor*nlon_fine];
-      flood_next_cell_lon_index_in_ext[i*nlon_fine+j] =
-        flood_next_cell_lon_index_in[i*nlon_fine+j-scale_factor*nlon_fine];
-      connect_next_cell_lat_index_in_ext[i*nlon_fine+j] =
-        connect_next_cell_lat_index_in[i*nlon_fine+j-scale_factor*nlon_fine];
-      connect_next_cell_lon_index_in_ext[i*nlon_fine+j] =
-        connect_next_cell_lon_index_in[i*nlon_fine+j-scale_factor*nlon_fine];
-      flood_force_merge_lat_index_in_ext[i*nlon_fine+j] =
-        flood_force_merge_lat_index_in[i*nlon_fine+j-scale_factor*nlon_fine];
-      flood_force_merge_lon_index_in_ext[i*nlon_fine+j] =
-       flood_force_merge_lon_index_in[i*nlon_fine+j-scale_factor*nlon_fine];
-      connect_force_merge_lat_index_in_ext[i*nlon_fine+j] =
-        connect_force_merge_lat_index_in[i*nlon_fine+j-scale_factor*nlon_fine];
-      connect_force_merge_lon_index_in_ext[i*nlon_fine+j] =
-        connect_force_merge_lon_index_in[i*nlon_fine+j-scale_factor*nlon_fine];
-      flood_redirect_lat_index_in_ext[i*nlon_fine+j] =
-        flood_redirect_lat_index_in[i*nlon_fine+j-scale_factor*nlon_fine];
-      flood_redirect_lon_index_in_ext[i*nlon_fine+j] =
-        flood_redirect_lon_index_in[i*nlon_fine+j-scale_factor*nlon_fine];
-      connect_redirect_lat_index_in_ext[i*nlon_fine+j] =
-        connect_redirect_lat_index_in[i*nlon_fine+j-scale_factor*nlon_fine];
-      connect_redirect_lon_index_in_ext[i*nlon_fine+j] =
-        connect_redirect_lon_index_in[i*nlon_fine+j-scale_factor*nlon_fine];
-      flood_local_redirect_in_ext[i*nlon_fine+j] =
-        flood_local_redirect_in[i*nlon_fine+j-scale_factor*nlon_fine];
-      connect_local_redirect_in_ext[i*nlon_fine+j] =
-        connect_local_redirect_in[i*nlon_fine+j-scale_factor*nlon_fine];
     }
   }
   for (int j = 0; j < nlon_coarse; j++)
@@ -226,25 +194,9 @@ void latlon_evaluate_basins(bool* minima_in,
       minima_in_ext[i*nlon_fine+j] = false;
       raw_orography_in_ext[i*nlon_fine+j] = maximum_double;
       corrected_orography_in_ext[i*nlon_fine+j] = maximum_double;
-      connection_volume_thresholds_in_ext[i*nlon_fine+j] = 0.0;
-      flood_volume_thresholds_in_ext[i*nlon_fine+j] = 0.0;
+
       prior_fine_rdirs_in_ext[i*nlon_fine+j] = 5.0;
       prior_fine_catchments_in_ext[i*nlon_fine+j] = 0;
-      coarse_catchment_nums_in_ext[i*nlon_fine+j] = 0;
-      flood_next_cell_lat_index_in_ext[i*nlon_fine+j] = 0;
-      flood_next_cell_lon_index_in_ext[i*nlon_fine+j] = 0;
-      connect_next_cell_lat_index_in_ext[i*nlon_fine+j] = 0;
-      connect_next_cell_lon_index_in_ext[i*nlon_fine+j] = 0;
-      flood_force_merge_lat_index_in_ext[i*nlon_fine+j] = 0;
-      flood_force_merge_lon_index_in_ext[i*nlon_fine+j] = 0;
-      connect_force_merge_lat_index_in_ext[i*nlon_fine+j] = 0;
-      connect_force_merge_lon_index_in_ext[i*nlon_fine+j] = 0;
-      flood_redirect_lat_index_in_ext[i*nlon_fine+j] = 0;
-      flood_redirect_lon_index_in_ext[i*nlon_fine+j] = 0;
-      connect_redirect_lat_index_in_ext[i*nlon_fine+j] = 0;
-      connect_redirect_lon_index_in_ext[i*nlon_fine+j] = 0;
-      flood_local_redirect_in_ext[i*nlon_fine+j] = false;
-      connect_local_redirect_in_ext[i*nlon_fine+j] = false;
     }
   }
   sink_filling_alg_4->setup_flags(false,true,false,false);
@@ -283,8 +235,24 @@ void latlon_evaluate_basins(bool* minima_in,
                    coarse_grid_params_in);
   alg.setup_sink_filling_algorithm(sink_filling_alg_4);
   alg.evaluate_basins();
-  for (int i = scale_factor; i < (nlat_fine+scale_factor)*nlon_fine; i++) {
-    merge_points_out_int[i] = int(merge_points_in[i]);
+  for (int i = scale_factor*nlon_fine; i < (nlat_fine+scale_factor)*nlon_fine; i++) {
+    merge_points_out_int[i-scale_factor*nlon_fine] = int(merge_points_in[i]);
+    connection_volume_thresholds_in[i-scale_factor*nlon_fine] = connection_volume_thresholds_in_ext[i];
+    flood_volume_thresholds_in[i-scale_factor*nlon_fine] = flood_volume_thresholds_in_ext[i];
+    flood_next_cell_lat_index_in[i-scale_factor*nlon_fine]  = flood_next_cell_lat_index_in_ext[i];
+    flood_next_cell_lon_index_in[i-scale_factor*nlon_fine]  = flood_next_cell_lon_index_in_ext[i];
+    connect_next_cell_lat_index_in[i-scale_factor*nlon_fine] = connect_next_cell_lat_index_in_ext[i];
+    connect_next_cell_lon_index_in[i-scale_factor*nlon_fine] = connect_next_cell_lon_index_in_ext[i];
+    flood_force_merge_lat_index_in[i-scale_factor*nlon_fine] = flood_force_merge_lat_index_in_ext[i];
+    flood_force_merge_lon_index_in[i-scale_factor*nlon_fine] = flood_force_merge_lon_index_in_ext[i];
+    connect_force_merge_lat_index_in[i-scale_factor*nlon_fine] = connect_force_merge_lat_index_in_ext[i];
+    connect_force_merge_lon_index_in[i-scale_factor*nlon_fine] = connect_force_merge_lon_index_in_ext[i];
+    flood_redirect_lat_index_in[i-scale_factor*nlon_fine] = flood_redirect_lat_index_in_ext[i];
+    flood_redirect_lon_index_in[i-scale_factor*nlon_fine] = flood_redirect_lon_index_in_ext[i];
+    connect_redirect_lat_index_in[i-scale_factor*nlon_fine] = connect_redirect_lat_index_in_ext[i];
+    connect_redirect_lon_index_in[i-scale_factor*nlon_fine] = connect_redirect_lon_index_in_ext[i];
+    flood_local_redirect_in[i-scale_factor*nlon_fine] = flood_local_redirect_in_ext[i];
+    connect_local_redirect_in[i-scale_factor*nlon_fine] =connect_local_redirect_in_ext[i];
   }
   delete grid_params_in;
   delete coarse_grid_params_in;

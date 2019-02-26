@@ -70,6 +70,7 @@ class Dynamic_HD_Drivers(object):
         paragen_code_copies_path_extension = 'paragencopies'
         minima_path_extension = 'minima'
         lakemask_path_extension= 'lakemasks'
+        lake_parameter_file_extension = 'lakeparafiles'
         cotat_plus_parameters_path_extension = path.join(parameter_path_extension,'cotat_plus')
         orography_upscaling_parameters_path_extension = path.join(parameter_path_extension,
                                                                   'orography_upscaling')
@@ -153,6 +154,8 @@ class Dynamic_HD_Drivers(object):
         self.minima_filepath = path.join(data_dir,minima_path_extension)
         self.generated_minima_filepath = path.join(self.minima_filepath,'minima_')
         self.lakemask_filepath = path.join(data_dir,lakemask_path_extension)
+        self.lake_parameter_file_path = path.join(data_dir,
+                                                  lake_parameter_file_extension)
         self.hd_grid_filepath = path.join(self.grids_path,"hdmodel2d_griddes")
         self.half_degree_grid_filepath = path.join(self.grids_path,"grid_0_5.txt")
         self.ten_minute_grid_filepath = path.join(self.grids_path,"grid_10min.txt")
