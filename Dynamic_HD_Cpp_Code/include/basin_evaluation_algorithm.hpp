@@ -25,6 +25,8 @@ public:
                     int* coarse_catchment_nums_in,
                     bool* flood_local_redirect_in,
                     bool* connect_local_redirect_in,
+                    bool* additional_flood_local_redirect_in,
+                    bool* additional_connect_local_redirect_in,
                     merge_types* merge_points_in,
                     grid_params* grid_params_in,
                     grid_params* coarse_grid_params_in);
@@ -181,8 +183,14 @@ public:
                     int* flood_redirect_lon_index_in,
                     int* connect_redirect_lat_index_in,
                     int* connect_redirect_lon_index_in,
+                    int* additional_flood_redirect_lat_index_in,
+                    int* additional_flood_redirect_lon_index_in,
+                    int* additional_connect_redirect_lat_index_in,
+                    int* additional_connect_redirect_lon_index_in,
                     bool* flood_local_redirect_in,
                     bool* connect_local_redirect_in,
+                    bool* additional_flood_local_redirect_in,
+                    bool* additional_connect_local_redirect_in,
                     merge_types* merge_points_in,
                     grid_params* grid_params_in,
                     grid_params* coarse_grid_params_in);

@@ -23,7 +23,7 @@ endif
 -include ../src/subdir.mk
 -include ../subdir.mk
 
-EXECUTABLES += Dynamic_HD_Cpp_Exec Fill_Sinks_Icon_SI_Exec
+EXECUTABLES += Dynamic_HD_Cpp_Exec Fill_Sinks_Icon_SI_Exec Compute_Catchments_SI_Exec Determine_River_Directions_SI_Exec
 
 ifneq ($(MAKECMDGOALS),clean)
 ifneq ($(strip $(CC_DEPS)),)
@@ -49,7 +49,7 @@ endif
 # Add inputs and outputs from these tool invocations to the build variables
 
 # All Target
-all: Dynamic_HD_Cpp_Code Fill_Sinks_Icon_SI_Exec
+all: Dynamic_HD_Cpp_Code Fill_Sinks_Icon_SI_Exec Compute_Catchments_SI_Exec Determine_River_Directions_SI_Exec
 
 # Tool invocations
 compile_only: $(USER_OBJS)
@@ -60,15 +60,27 @@ Dynamic_HD_Cpp_Code: $(OBJS) $(USER_OBJS) $(TEST_OBJS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
-Fill_Sinks_Icon_SI_Exec: $(USER_OBJS) $(SI_OBJS)
+Fill_Sinks_Icon_SI_Exec: $(USER_OBJS) $(FS_ICON_SI_OBJS)
 	@echo 'Building target: $@'
-	$(GPLUSPLUS)  -o "Fill_Sinks_Icon_SI_Exec" $(USER_OBJS) $(SI_OBJS) $(FLAGS) $(LIBS)
+	$(GPLUSPLUS)  -o "Fill_Sinks_Icon_SI_Exec" $(USER_OBJS) $(FS_ICON_SI_OBJS) $(FLAGS) $(LIBS)
+	@echo 'Finished building target: $@'
+	@echo ' '
+
+Compute_Catchments_SI_Exec: $(USER_OBJS) $(CC_ICON_SI_OBJS)
+	@echo 'Building target: $@'
+	$(GPLUSPLUS)  -o "Compute_Catchments_SI_Exec" $(USER_OBJS) $(CC_ICON_SI_OBJS) $(FLAGS) $(LIBS)
+	@echo 'Finished building target: $@'
+	@echo ' '
+
+Determine_River_Directions_SI_Exec: $(USER_OBJS) $(DRD_ICON_SI_OBJS)
+	@echo 'Building target: $@'
+	$(GPLUSPLUS)  -o "Compute_Catchments_SI_Exec" $(USER_OBJS) $(DRD_ICON_SI_OBJS) $(FLAGS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) $(CC_DEPS)$(C++_DEPS)$(EXECUTABLES)$(OBJS)$(USER_OBJS)$(TEST_OBJS)$(SI_OBJS)$(C_UPPER_DEPS)$(CXX_DEPS)$(CPP_DEPS)$(C_DEPS)
+	-$(RM) $(CC_DEPS)$(C++_DEPS)$(EXECUTABLES)$(OBJS)$(USER_OBJS)$(TEST_OBJS)$(FS_ICON_SI_OBJS)$(CC_ICON_SI_OBJS)$(DRD_ICON_SI_OBJS)$(C_UPPER_DEPS)$(CXX_DEPS)$(CPP_DEPS)$(C_DEPS)
 	-@echo ' '
 
 .PHONY: all clean dependents

@@ -22,7 +22,7 @@ NcToken LONGITUDE = "longitude";
 NcToken CENTER_LONGITUDE = "center longitude";
 
 int main(int argc, char *argv[]){
-  if(argc<8) throw runtime_error("Not enough arguments");
+  if(argc<9) throw runtime_error("Not enough arguments");
   if(argc>11) throw runtime_error("Too many arguments");
   string orography_in_filepath(argv[1]);
   string landsea_in_filepath(argv[2]);
@@ -41,7 +41,7 @@ int main(int argc, char *argv[]){
     string fractional_landsea_mask_string(argv[10]);
     fractional_landsea_mask_in = bool(stoi(fractional_landsea_mask_string));
     }
-  } else use_secondary_neighbors_in = false;
+  } else use_secondary_neighbors_in = true;
   ifstream ofile(orography_out_filepath.c_str());
   if (ofile) {
     cout << "Outfile already exists - please delete or specify a different name" << endl;

@@ -112,6 +112,8 @@ end
                                                              -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 ])
   flood_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,false)
   connect_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,false)
+  additional_flood_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,false)
+  additional_connect_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,false)
   merge_points::Field{MergeTypes} = LatLonField{MergeTypes}(lake_grid,
     MergeTypes[ no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_secondary #=
     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
@@ -251,6 +253,10 @@ end
                                                            0 0 0 0 0 0 0 0 0
                                                            0 0 0 0 0 0 0 0 0
                                                            0 0 0 0 0 0 0 0 0 ])
+  additional_flood_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  additional_flood_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  additional_connect_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  additional_connect_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
   grid_specific_lake_parameters::GridSpecificLakeParameters =
     LatLonLakeParameters(flood_next_cell_lat_index,
                          flood_next_cell_lon_index,
@@ -263,12 +269,18 @@ end
                          flood_redirect_lat_index,
                          flood_redirect_lon_index,
                          connect_redirect_lat_index,
-                         connect_redirect_lon_index)
+                         connect_redirect_lon_index,
+                         additional_flood_redirect_lat_index,
+                         additional_flood_redirect_lon_index,
+                         additional_connect_redirect_lat_index,
+                         additional_connect_redirect_lon_index)
   lake_parameters = LakeParameters(lake_centers,
                                    connection_volume_thresholds,
                                    flood_volume_threshold,
                                    flood_local_redirect,
                                    connect_local_redirect,
+                                   additional_flood_local_redirect,
+                                   additional_connect_local_redirect,
                                    merge_points,
                                    lake_grid,
                                    grid,
@@ -278,8 +290,8 @@ end
                                                                                  1.0 1.0 0.0 ])
   drainages::Array{Field{Float64},1} = repeat(drainage,1000)
   runoffs::Array{Field{Float64},1} = deepcopy(drainages)
-  #drive_hd_and_lake_model(river_parameters,lake_parameters,
-  #                        drainages,runoffs,1000,print_timestep_results=true)
+  drive_hd_and_lake_model(river_parameters,lake_parameters,
+                          drainages,runoffs,1000,print_timestep_results=true)
 end
 
 @testset "Lake model tests 2" begin
@@ -480,6 +492,8 @@ end
       =#  false false false false
           false false false false false false false false false false false false false false false false #=
       =#  false false false false ])
+  additional_flood_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,false)
+  additional_connect_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,false)
   merge_points::Field{MergeTypes} = LatLonField{MergeTypes}(lake_grid,
     MergeTypes[ no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
@@ -825,6 +839,10 @@ end
   add_offset(flood_redirect_lon_index,1,Int64[-1])
   add_offset(connect_redirect_lat_index,1,Int64[-1])
   add_offset(connect_redirect_lon_index,1,Int64[-1])
+  additional_flood_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  additional_flood_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  additional_connect_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  additional_connect_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
   grid_specific_lake_parameters::GridSpecificLakeParameters =
     LatLonLakeParameters(flood_next_cell_lat_index,
                          flood_next_cell_lon_index,
@@ -837,12 +855,18 @@ end
                          flood_redirect_lat_index,
                          flood_redirect_lon_index,
                          connect_redirect_lat_index,
-                         connect_redirect_lon_index)
+                         connect_redirect_lon_index,
+                         additional_flood_redirect_lat_index,
+                         additional_flood_redirect_lon_index,
+                         additional_connect_redirect_lat_index,
+                         additional_connect_redirect_lon_index)
   lake_parameters = LakeParameters(lake_centers,
                                    connection_volume_thresholds,
                                    flood_volume_threshold,
                                    flood_local_redirect,
                                    connect_local_redirect,
+                                   additional_flood_local_redirect,
+                                   additional_connect_local_redirect,
                                    merge_points,
                                    lake_grid,
                                    grid,

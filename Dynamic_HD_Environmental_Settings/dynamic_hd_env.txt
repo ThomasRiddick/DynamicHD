@@ -9,7 +9,7 @@ cdo=1.9.4=h1d09544_1
 cftime=1.0.0=py27h7eb728f_1
 click=6.7=py_1
 cloudpickle=0.5.3=py_0
-cur=7.45.0=0
+curl=7.45.0=0
 cycler=0.10.0=py27_0
 cyordereddict=1.0.0=py27h470a237_2
 cython=0.24=py27_0

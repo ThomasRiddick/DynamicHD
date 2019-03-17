@@ -100,6 +100,7 @@ protected:
 
 class river_direction_determination_algorithm_icon_single_index :
   public river_direction_determination_algorithm {
+public:
   virtual ~river_direction_determination_algorithm_icon_single_index()
     {delete next_cell_index;};
   void setup_fields(int* next_cell_index_in,

@@ -40,6 +40,8 @@ struct LakeParameters
   flood_only::Field{Bool}
   flood_local_redirect::Field{Bool}
   connect_local_redirect::Field{Bool}
+  additional_flood_local_redirect::Field{Bool}
+  additional_connect_local_redirect::Field{Bool}
   merge_points::Field{MergeTypes}
   basin_numbers::Field{Int64}
   basins::Vector{Vector{Coords}}
@@ -52,6 +54,8 @@ struct LakeParameters
                           flood_volume_thresholds::Field{Float64},
                           flood_local_redirect::Field{Bool},
                           connect_local_redirect::Field{Bool},
+                          additional_flood_local_redirect::Field{Bool},
+                          additional_connect_local_redirect::Field{Bool},
                           merge_points::Field{MergeTypes},
                           grid::Grid,
                           hd_grid::Grid,
@@ -86,6 +90,8 @@ struct LakeParameters
                flood_only,
                flood_local_redirect,
                connect_local_redirect,
+               additional_flood_local_redirect,
+               additional_connect_local_redirect,
                merge_points,
                basin_numbers,
                basins,grid,hd_grid,
@@ -107,6 +113,10 @@ struct LatLonLakeParameters <: GridSpecificLakeParameters
   flood_redirect_lon_index::Field{Int64}
   connect_redirect_lat_index::Field{Int64}
   connect_redirect_lon_index::Field{Int64}
+  additional_flood_redirect_lat_index::Field{Int64}
+  additional_flood_redirect_lon_index::Field{Int64}
+  additional_connect_redirect_lat_index::Field{Int64}
+  additional_connect_redirect_lon_index::Field{Int64}
 end
 
 struct LakeFields
@@ -173,6 +183,7 @@ end
 
 mutable struct FillingLakeVariables
   primary_merge_completed::Bool
+  use_additional_fields::Bool
 end
 
 struct FillingLake <: Lake
@@ -188,7 +199,7 @@ FillingLake(lake_parameters::LakeParameters,
   FillingLake(lake_parameters,
               lake_variables,
               lake_fields,
-              FillingLakeVariables(false))
+              FillingLakeVariables(false,false))
 
 mutable struct OverflowingLakeVariables
   excess_water::Float64
@@ -296,6 +307,10 @@ function handle_event(lake::FillingLake,add_water::AddWater)
       if merge_type != no_merge
         if ! (merge_type == primary_merge &&
               lake.filling_lake_variables.primary_merge_completed)
+          if (merge_type == double_merge &&
+              lake.filling_lake_variables.primary_merge_completed)
+            merge_type = secondary_merge
+          end
           if (check_if_merge_is_possible(lake,merge_type))
             if merge_type == secondary_merge
               subsumed_lake::Lake = perform_secondary_merge(lake)
@@ -304,6 +319,10 @@ function handle_event(lake::FillingLake,add_water::AddWater)
               return subsumed_lake
             else
               perform_primary_merge(lake)
+              if merge_type == double_merge
+                merge_type = secondary_merge
+                lake.filling_lake_variables.use_additional_fields = true
+              end
             end
           else
             overflowing_lake::Lake = change_to_overflowing_lake(lake)
@@ -488,10 +507,12 @@ end
 function change_to_filling_lake(lake::OverflowingLake)
   lake.lake_variables.unprocessed_water +=
     lake.overflowing_lake_variables.excess_water
+  use_additional_fields = get_merge_type(lake) == double_merge
   filling_lake::FillingLake = FillingLake(lake.lake_parameters,
                                           lake.lake_variables,
                                           lake.lake_fields,
-                                          FillingLakeVariables(true))
+                                          FillingLakeVariables(true,
+                                                               use_additional_fields))
   return filling_lake
 end
 
@@ -534,19 +555,28 @@ function get_secondary_merge_coords(lake::Lake)
                                     lake_parameters.flood_only(current_cell))
 end
 
-function get_outflow_redirect_coords(lake::Lake)
+function get_outflow_redirect_coords(lake::FillingLake)
   lake_parameters::LakeParameters = get_lake_parameters(lake)
   lake_variables::LakeVariables = get_lake_variables(lake)
   lake_fields::LakeFields = get_lake_fields(lake)
   current_cell::Coords = lake_variables.current_cell_to_fill
   completed_lake_cell::Bool = lake_fields.completed_lake_cells(current_cell) ||
                               lake_parameters.flood_only(current_cell)
-  local_redirect::Bool = completed_lake_cell ?
-    lake_parameters.flood_local_redirect(current_cell) :
-    lake_parameters.connect_local_redirect(current_cell)
+  use_additional_fields = lake.filling_lake_variables.use_additional_fields
+  local local_redirect::Bool
+  if use_additional_fields
+    local_redirect = completed_lake_cell ?
+      lake_parameters.additional_flood_local_redirect(current_cell) :
+      lake_parameters.additional_connect_local_redirect(current_cell)
+  else
+    local_redirect = completed_lake_cell ?
+      lake_parameters.flood_local_redirect(current_cell) :
+      lake_parameters.connect_local_redirect(current_cell)
+  end
   return get_outflow_redirect_coords(lake_parameters,
                                      current_cell,
-                                     completed_lake_cell),local_redirect
+                                     completed_lake_cell,
+                                     use_additional_fields),local_redirect
 end
 
 function find_true_primary_lake(lake::Lake)
@@ -621,14 +651,27 @@ end
 
 function get_outflow_redirect_coords(lake_parameters::LakeParameters,
                                      initial_coords::LatLonCoords,
-                                     use_flood_redirect::Bool)
-  lat::Int64 = use_flood_redirect ?
-    lake_parameters.grid_specific_lake_parameters.flood_redirect_lat_index(initial_coords) :
-    lake_parameters.grid_specific_lake_parameters.connect_redirect_lat_index(initial_coords)
+                                     use_flood_redirect::Bool,
+                                     use_additional_fields::Bool)
+  local lat::Int64
+  local lon::Int64
+  if use_additional_fields
+    lat = use_flood_redirect ?
+      lake_parameters.grid_specific_lake_parameters.additional_flood_redirect_lat_index(initial_coords) :
+      lake_parameters.grid_specific_lake_parameters.additional_connect_redirect_lat_index(initial_coords)
 
-  lon::Int64 = use_flood_redirect ?
-    lake_parameters.grid_specific_lake_parameters.flood_redirect_lon_index(initial_coords) :
-    lake_parameters.grid_specific_lake_parameters.connect_redirect_lon_index(initial_coords)
+    lon = use_flood_redirect ?
+      lake_parameters.grid_specific_lake_parameters.additional_flood_redirect_lon_index(initial_coords) :
+      lake_parameters.grid_specific_lake_parameters.additional_connect_redirect_lon_index(initial_coords)
+  else
+    lat = use_flood_redirect ?
+      lake_parameters.grid_specific_lake_parameters.flood_redirect_lat_index(initial_coords) :
+      lake_parameters.grid_specific_lake_parameters.connect_redirect_lat_index(initial_coords)
+
+    lon = use_flood_redirect ?
+      lake_parameters.grid_specific_lake_parameters.flood_redirect_lon_index(initial_coords) :
+      lake_parameters.grid_specific_lake_parameters.connect_redirect_lon_index(initial_coords)
+  end
   return LatLonCoords(lat,lon)
 end
 

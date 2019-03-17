@@ -1,12 +1,13 @@
 module HDModule
 
 using HierarchicalStateMachineModule: Event,State
-using FieldModule: Field,DirectionIndicators,maximum,set!,fill!,+,invert,repeat
+using FieldModule: Field,DirectionIndicators,maximum,set!,fill!,+,invert,repeat,get
 using CoordsModule: Coords, DirectionIndicator,
       is_ocean, is_outflow, is_truesink, is_lake
 using GridModule: Grid, for_all,find_downstream_coords
 using UserExceptionModule: UserError
 import HierarchicalStateMachineModule: handle_event
+using InteractiveUtils
 
 struct RunHD <: Event end
 
@@ -118,7 +119,7 @@ function handle_event(prognostic_fields::PrognosticFields,
       cell_lake_water_input::Float64 = lake_water_input(coords)
       if river_parameters.cascade_flag(coords)
         set!(river_fields.river_inflow,coords,
-             river_fields.river_inflow(coords)+cell_lake_water_input)
+             get(river_fields.river_inflow,coords)+cell_lake_water_input)
       else
         set!(river_diagnostic_fields.river_outflow,
              coords,cell_lake_water_input)
@@ -155,18 +156,18 @@ function handle_event(prognostic_fields::PrognosticFields,
   fill!(river_diagnostic_fields.drainage_to_rivers,0.0)
   for_all(river_parameters.grid) do coords::Coords
             flow_direction::DirectionIndicator =
-              river_parameters.flow_directions(coords)
+              get(river_parameters.flow_directions,coords)
             if is_ocean(flow_direction) || is_outflow(flow_direction) ||
                is_truesink(flow_direction)
                 set!(river_fields.water_to_ocean,coords,
-                      river_fields.river_inflow(coords) +
-                      river_fields.runoff(coords) +
-                      river_fields.drainage(coords))
+                      get(river_fields.river_inflow,coords) +
+                      get(river_fields.runoff,coords) +
+                      get(river_fields.drainage,coords))
             elseif using_lakes && is_lake(flow_direction)
                 water_to_lakes(prognostic_fields,coords,
-                               river_fields.river_inflow(coords) +
-                               river_fields.runoff(coords) +
-                               river_fields.drainage(coords))
+                               get(river_fields.river_inflow,coords) +
+                               get(river_fields.runoff,coords) +
+                               get(river_fields.drainage,coords))
             end
           end
   fill!(river_fields.runoff,0.0)
@@ -189,17 +190,86 @@ function cascade(reservoirs::Array{Field{Float64},1},
                  reservoir_nums::Field{Int64},
                  cascade_flag::Field{Bool},grid::Grid)
   for_all(grid) do coords::Coords
-    if cascade_flag(coords)
-      flow::Float64 = inflow(coords)
-      for i = 1:(reservoir_nums(coords)::Int64)
-        new_reservoir_value::Float64 = reservoirs[i](coords) + flow
-        flow = new_reservoir_value*retention_coefficients(coords)
-        set!(reservoirs[i],coords,new_reservoir_value - flow)
-      end
-      set!(outflow,coords,flow)
+    if get(cascade_flag,coords)
+      cascade_kernel(coords,
+                    reservoirs,
+                    inflow,
+                    outflow,
+                    retention_coefficients,
+                    reservoir_nums)
     end
+    return
   end
 end
+
+function cascade(reservoirs::Array{Array{Field{Float64},1},1},
+                 inflow::Array{Field{Float64},1},
+                 outflow::Array{Field{Float64},1},
+                 retention_coefficients::Array{Field{Float64},1},
+                 reservoir_nums::Array{Field{Int64},1},
+                 cascade_flag::Field{Bool},grid::Grid,
+                 cascade_num::Int64)
+  for_all(grid) do coords::Coords
+    if get(cascade_flag,coords)
+      for i = 1:cascade_num
+        reservoirs_i::Array{Field{Float64},1} = reservoirs[i]
+        inflow_i::Field{Float64} = inflow[i]
+        outflow_i::Field{Float64} = outflow[i]
+        retention_coefficients_i::Field{Float64} = retention_coefficients[i]
+        reservoir_nums_i::Field{Int64} = reservoir_nums[i]
+        cascade_kernel(coords,
+                       reservoirs_i,
+                       inflow_i,
+                       outflow_i,
+                       retention_coefficients_i,
+                       reservoir_nums_i)
+      end
+    end
+    return
+  end
+end
+
+function cascade_kernel(coords::Coords,
+                        reservoirs::Array{Field{Float64},1},
+                        inflow::Field{Float64},
+                        outflow::Field{Float64},
+                        retention_coefficients::Field{Float64},
+                        reservoir_nums::Field{Int64})
+  flow::Float64 = get(inflow,coords)
+  for i = 1:(get(reservoir_nums,coords))
+    reservoir::Field{Float64} = reservoirs[i]
+    new_reservoir_value::Float64 = get(reservoir,coords) + flow
+    flow = new_reservoir_value*get(retention_coefficients,coords)
+    set!(reservoir,coords,new_reservoir_value - flow)
+  end
+  set!(outflow,coords,flow)
+  return
+end
+
+# macro fuse_cascades(exprs...)
+#   cascade_num = 0
+#   for expr in exprs
+#     if expr[1] == :call && expr[1] == :cascade
+#       cascade_num += 1
+#       # figure out what to put in arrays
+#     end
+#   end
+#   return quote
+#             reservoirs_macro = Array{Field{Float64},1}[]
+#             inflow_macro = Field{Float64}[]
+#             outflow_macro = Field{Float64}[]
+#             retention_coefficients_macro = Field{Float64}[]
+#             reservoir_nums_macro = Field{Int64}[]
+#             cascade_num_macro = $cascade_num
+#             cascade(reservoirs_macro,
+#                     inflow_macro,
+#                     outflow_macro,
+#                     retention_coefficients_macro,
+#                     reservoir_nums_macro,
+#                     cascade_flag,grid
+#                     cascade_num_macro)
+#          end
+# end
 
 function route(flow_directions::DirectionIndicators,
                flow_in::Field{Float64},
@@ -209,20 +279,21 @@ function route(flow_directions::DirectionIndicators,
     flow_in_local::Float64 = flow_in(coords)
     if flow_in_local != 0.0
       flow_direction::DirectionIndicator =
-        flow_directions(coords)
+        get(flow_directions,coords)
       if is_truesink(flow_direction) || is_lake(flow_direction) ||
          is_ocean(flow_direction) || is_outflow(flow_direction)
-        flow_in_local += flow_out(coords)
+        flow_in_local += get(flow_out,coords)
         set!(flow_out,coords,flow_in_local)
       else
         new_coords::Coords =
           find_downstream_coords(grid,
                                 flow_direction,
                                 coords)
-        flow_in_local += flow_out(new_coords)
+        flow_in_local += get(flow_out,new_coords)
         set!(flow_out,new_coords,flow_in_local)
       end
     end
+    return
   end
 end
 

@@ -48,6 +48,8 @@ void basin_evaluation_algorithm::setup_fields(bool* minima_in,
 		  	  	  	  	  	  	  	  	  				int* coarse_catchment_nums_in,
 		  	  	  	  	  	  	  	  	  				bool* flood_local_redirect_in,
 		  	  	  	  	  	  	  	  	  				bool* connect_local_redirect_in,
+		  	  	  	  	  	  	  	  	  				bool* additional_flood_local_redirect_in,
+		  	  	  	  	  	  	  	  	  				bool* additional_connect_local_redirect_in,
 		  	  	  	  	  	  	  	  	  				merge_types* merge_points_in,
 										  												grid_params* grid_params_in,
 										  												grid_params* coarse_grid_params_in) {
@@ -66,6 +68,10 @@ void basin_evaluation_algorithm::setup_fields(bool* minima_in,
 	prior_fine_catchments = new field<int>(prior_fine_catchments_in,_grid_params);
 	flood_local_redirect = new field<bool>(flood_local_redirect_in,_grid_params);
 	connect_local_redirect = new field<bool>(connect_local_redirect_in,_grid_params);
+	additional_flood_local_redirect = new field<bool>(additional_flood_local_redirect_in,
+	                                                  _grid_params);
+  additional_connect_local_redirect = new field<bool>(additional_connect_local_redirect_in,
+                                                      _grid_params);
 	merge_points = new field<merge_types>(merge_points_in,_grid_params);
 	merge_points->set_all(no_merge);
 	coarse_catchment_nums = new field<int>(coarse_catchment_nums_in,_coarse_grid_params);
@@ -84,8 +90,6 @@ void basin_evaluation_algorithm::setup_fields(bool* minima_in,
 	connected_cells->set_all(false);
 	basin_flooded_cells = new field<bool>(_grid_params);
 	basin_connected_cells = new field<bool>(_grid_params);
-	additional_flood_local_redirect = new field<bool>(_grid_params);
-  additional_connect_local_redirect = new field<bool>(_grid_params);
   basin_sink_points = new vector<coords*>();
 }
 
@@ -109,8 +113,14 @@ void latlon_basin_evaluation_algorithm::setup_fields(bool* minima_in,
 		  	  	  	  	  	  	  	  	  							 int* flood_redirect_lon_index_in,
 		  	  	  	  	  	  	  	  	  							 int* connect_redirect_lat_index_in,
 		  	  	  	  	  	  	  	  	  							 int* connect_redirect_lon_index_in,
+		  	  	  	  	  	  	  	  	  							 int* additional_flood_redirect_lat_index_in,
+		  	  	  	  	  	  	  	  	  							 int* additional_flood_redirect_lon_index_in,
+		  	  	  	  	  	  	  	  	  							 int* additional_connect_redirect_lat_index_in,
+		  	  	  	  	  	  	  	  	  							 int* additional_connect_redirect_lon_index_in,
 		  	  	  	  	  	  	  	  	  							 bool* flood_local_redirect_in,
 		  	  	  	  	  	  	  	  	  							 bool* connect_local_redirect_in,
+		  	  	  	  	  	  	  	  	  							 bool* additional_flood_local_redirect_in,
+		  	  	  	  	  	  	  	  	  							 bool* additional_connect_local_redirect_in,
 		  	  	  	  	  	  	  	  	  							 merge_types* merge_points_in,
 										  															 grid_params* grid_params_in,
 										  															 grid_params* coarse_grid_params_in)
@@ -123,6 +133,8 @@ void latlon_basin_evaluation_algorithm::setup_fields(bool* minima_in,
 		  	  	   														 coarse_catchment_nums_in,
 		  	  	   														 flood_local_redirect_in,
 		  	  	  	  	  	  	  	  	  		 connect_local_redirect_in,
+		  	  	  	  	  	  	  	  	  		 additional_flood_local_redirect_in,
+		  	  	  	  	  	  	  	  	  		 additional_connect_local_redirect_in,
 		  	  	  	  	  	  	  	  	  		 merge_points_in,
 		  	  	  	  	  	  	  	  	  		 grid_params_in,
 		  	  	  	  	  	  	  	  	  		 coarse_grid_params_in);
@@ -139,10 +151,14 @@ void latlon_basin_evaluation_algorithm::setup_fields(bool* minima_in,
 	flood_redirect_lon_index = new field<int>(flood_redirect_lon_index_in,grid_params_in);
 	connect_redirect_lat_index = new field<int>(connect_redirect_lat_index_in,grid_params_in);
 	connect_redirect_lon_index = new field<int>(connect_redirect_lon_index_in,grid_params_in);
-	additional_flood_redirect_lat_index = new field<int>(grid_params_in);
-  additional_flood_redirect_lon_index = new field<int>(grid_params_in);
-  additional_connect_redirect_lat_index = new field<int>(grid_params_in);
-  additional_connect_redirect_lon_index = new field<int>(grid_params_in);
+	additional_flood_redirect_lat_index = new field<int>(additional_flood_redirect_lat_index_in,
+	                                                     grid_params_in);
+  additional_flood_redirect_lon_index = new field<int>(additional_flood_redirect_lon_index_in,
+                                                       grid_params_in);
+  additional_connect_redirect_lat_index = new field<int>(additional_connect_redirect_lat_index_in,
+                                                         grid_params_in);
+  additional_connect_redirect_lon_index = new field<int>(additional_connect_redirect_lon_index_in,
+                                                         grid_params_in);
   null_coords = new latlon_coords(-1,-1);
 	for (int i = 0; i < _grid->get_total_size(); i++){
 		basin_sink_points->push_back(null_coords->clone());

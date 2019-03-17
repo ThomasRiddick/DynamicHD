@@ -585,6 +585,9 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
                                ls_mask_0k_fieldname="field_value",
                                ls_mask_timestep_0k=timestep_for_0k)
 
+    def prepare_river_directions_with_depressions(working_orography_filepath):
+        file_label = self._generate_file_label()
+
 
     def evaluate_ICE6G_lgm_basins(self):
         file_label = self._generate_file_label()

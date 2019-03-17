@@ -6,12 +6,20 @@ using CoordsModule: Coords,LatLonCoords,DirectionIndicator
 using GridModule: Grid,LatLonGrid, for_all, wrap_coords, coords_in_grid,for_all_with_line_breaks
 using InteractiveUtils: subtypes
 using SpecialDirectionCodesModule
+using MergeTypesModule
 import Base.maximum
 import Base.+
 import Base.fill!
 import Base.show
+import Base.round
+import Base.convert
+using InteractiveUtils
 
 abstract type Field{T} end
+
+function get(field::Field{T},coords::Coords) where {T}
+  throw(UserError())
+end
 
 function set!(field::Field,coords::Coords)
   throw(UserError())
@@ -37,6 +45,10 @@ function add_offset(field::Field,offset::T,skip_offset_on_values::Vector{T}) whe
     throw(UserError())
 end
 
+function round!(type::DataType,field::Field{T}) where {T}
+  throw(UserError())
+end
+
 function add_offset(field::T2,offset::T,skip_offset_on_values::Vector{T}) where {T,T2<:Field{T}}
   for_all(get_grid(field)) do coords::Coords
     if ! (field(coords) in skip_offset_on_values)
@@ -57,13 +69,17 @@ function repeat(field::Field{T}, count::Integer) where {T}
 end
 
 
-
 struct LatLonField{T} <: Field{T}
-  data::AbstractArray{T,2}
+  data::Array{T,2}
   grid::LatLonGrid
   function LatLonField{T}(grid::LatLonGrid,value::T) where {T}
     data::Array{T,2} = value == zero(T) ? zeros(T,grid.nlat,grid.nlon) :
                                           ones(T,grid.nlat,grid.nlon)*value
+    return new(data,grid)
+  end
+  function LatLonField{MergeTypes}(grid::LatLonGrid,value::MergeTypes)
+    data::Array{MergeTypes,2} =  zeros(MergeTypes,grid.nlat,grid.nlon)
+    fill!(data,value)
     return new(data,grid)
   end
   function LatLonField{T}(grid::LatLonGrid,values::AbstractArray{T,2}) where {T}
@@ -73,6 +89,16 @@ struct LatLonField{T} <: Field{T}
     end
     return new(values,grid)
   end
+  function LatLonField{MergeTypes}(grid::LatLonGrid,
+                                   integer_field::LatLonField{T}) where {T<:Signed}
+    grid = get_grid(integer_field)
+    merge_type_field = LatLonField{MergeTypes}(grid,null_mtype)
+    for_all(grid) do coords::Coords
+      element::MergeTypes = MergeTypes(get(integer_field,coords))
+      set!(merge_type_field,coords,element)
+    end
+    return new(merge_type_field.data,grid)
+  end
 end
 
 LatLonField{T}(grid::LatLonGrid) where {T} = LatLonField{T}(grid,zeros(T,grid.nlat,grid.nlon))
@@ -80,8 +106,21 @@ LatLonField{T}(grid::LatLonGrid) where {T} = LatLonField{T}(grid,zeros(T,grid.nl
 Field{T}(grid::LatLonGrid,value::T) where {T} = LatLonField{T}(grid::LatLonGrid,value::T)
 Field{T}(grid::LatLonGrid) where {T} = LatLonField{T}(grid::LatLonGrid)
 
-function (latlon_field::LatLonField)(coords::LatLonCoords)
-    return latlon_field.data[coords.lat,coords.lon]
+Field{T}(grid::LatLonGrid,values::AbstractArray{T,2}) where {T} =
+  LatLonField{T}(grid::LatLonGrid,values::AbstractArray{T,2})
+
+Field{MergeTypes}(grid::LatLonGrid,integer_field::LatLonField{T}) where {T<:Signed} =
+  LatLonField{MergeTypes}(grid,integer_field)
+
+convert(::Type{Field{MergeTypes}},x::T2) where {T<:Signed,T2<:Field{T}} = Field{MergeTypes}(get_grid(x),x)
+
+
+function (latlon_field::LatLonField{T})(coords::LatLonCoords) where {T}
+    return latlon_field.data[coords.lat,coords.lon]::T
+end
+
+function get(latlon_field::LatLonField{T},coords::LatLonCoords) where {T}
+    return latlon_field(coords)::T
 end
 
 function set!(latlon_field::LatLonField{T},coords::LatLonCoords,value::T) where {T}
@@ -95,6 +134,11 @@ end
 function invert(field::LatLonField{T}) where {T}
   return LatLonField{T}(field.grid,.!field.data)
 end
+
+function round(type::DataType,field::LatLonField{T}) where {T}
+  return LatLonField{type}(field.grid,round.(type,field.data))
+end
+
 
 function show(io::IO,field::LatLonField{T}) where {T <: Number}
   for_all_with_line_breaks(field.grid) do coords::Coords
@@ -111,6 +155,10 @@ end
 
 abstract type DirectionIndicators end
 
+function get(field::DirectionIndicators,coords::Coords)
+  throw(UserError())
+end
+
 function set!(field::DirectionIndicators,coords::Coords)
   throw(UserError())
 end
@@ -120,7 +168,7 @@ function maximum(field::LatLonField)
 end
 
 struct LatLonDirectionIndicators <: DirectionIndicators
-  next_cell_coords::Array{Field{Int64},1}
+  next_cell_coords::Array{LatLonField{Int64},1}
   function LatLonDirectionIndicators(dir_based_rdirs::LatLonField{Int64})
     grid = dir_based_rdirs.grid
     nlat = dir_based_rdirs.grid.nlat
@@ -160,13 +208,17 @@ struct LatLonDirectionIndicators <: DirectionIndicators
         error("Invalid direction based direction indicator")
       end
     end
-    new(Field{Int64}[lat_indices,lon_indices])
+    new(LatLonField{Int64}[lat_indices,lon_indices])
   end
 end
 
 function (latlon_direction_indicators::LatLonDirectionIndicators)(coords::LatLonCoords)
   return DirectionIndicator(LatLonCoords(latlon_direction_indicators.next_cell_coords[1](coords),
                                          latlon_direction_indicators.next_cell_coords[2](coords)))
+end
+
+function get(latlon_direction_indicators::LatLonDirectionIndicators,coords::LatLonCoords)
+  return latlon_direction_indicators(coords)
 end
 
 

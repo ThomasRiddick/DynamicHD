@@ -2,6 +2,7 @@ module GridModule
 
 using UserExceptionModule: UserError
 using CoordsModule: Coords,DirectionIndicator,LatLonCoords,get_next_cell_coords
+using InteractiveUtils
 
 abstract type Grid end
 
@@ -30,18 +31,27 @@ function wrap_coords!(grid::Grid,coords::Coords)
   throw(UserError())
 end
 
+get_number_of_dimensions(obj::T) where {T <: Grid} =
+  obj.number_of_dimensions::Int64
+
 struct LatLonGrid <: Grid
   nlat::Int64
   nlon::Int64
   wrap_east_west::Bool
+  number_of_dimensions::Int64
+  function LatLonGrid(nlat::Int64,
+                      nlon::Int64,
+                      wrap_east_west::Bool)
+    return new(nlat,nlon,wrap_east_west,2)
+  end
 end
 
 function for_all(function_on_point::Function,
                  grid::LatLonGrid)
   for j = 1:grid.nlon
     for i = 1:grid.nlat
-      function_on_point(LatLonCoords(i,j))
-    end
+        function_on_point(LatLonCoords(i,j))
+      end
   end
 end
 

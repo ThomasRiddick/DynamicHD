@@ -10877,6 +10877,18 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsOne) {
   std::fill_n(flood_local_redirect_in,20*20,false);
   bool* connect_local_redirect_in = new bool[20*20];
   std::fill_n(connect_local_redirect_in,20*20,false);
+  int* additional_flood_redirect_lat_index_in = new int[20*20];
+  std::fill_n(additional_flood_redirect_lat_index_in,20*20,-1);
+  int* additional_flood_redirect_lon_index_in = new int[20*20];
+  std::fill_n(additional_flood_redirect_lon_index_in,20*20,-1);
+  int* additional_connect_redirect_lat_index_in = new int[20*20];
+  std::fill_n(additional_connect_redirect_lat_index_in,20*20,-1);
+  int* additional_connect_redirect_lon_index_in = new int[20*20];
+  std::fill_n(additional_connect_redirect_lon_index_in,20*20,-1);
+  bool* additional_flood_local_redirect_in = new bool[20*20];
+  std::fill_n(additional_flood_local_redirect_in,20*20,false);
+  bool* additional_connect_local_redirect_in = new bool[20*20];
+  std::fill_n(additional_connect_local_redirect_in,20*20,false);
   merge_types* merge_points_in = new merge_types[20*20];
   std::fill_n(merge_points_in,20*20,no_merge);
   double* flood_volume_thresholds_expected_out = new double[20*20] {
@@ -11355,8 +11367,14 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsOne) {
                           flood_redirect_lon_index_in,
                           connect_redirect_lat_index_in,
                           connect_redirect_lon_index_in,
+                          additional_flood_redirect_lat_index_in,
+                          additional_flood_redirect_lon_index_in,
+                          additional_connect_redirect_lat_index_in,
+                          additional_connect_redirect_lon_index_in,
                           flood_local_redirect_in,
                           connect_local_redirect_in,
+                          additional_flood_local_redirect_in,
+                          additional_connect_local_redirect_in,
                           merge_points_in,
                           grid_params_in,
                           coarse_grid_params_in);
@@ -11466,6 +11484,12 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsOne) {
   delete[] flood_redirect_lat_index_in; delete[] flood_redirect_lon_index_in;
   delete[] connect_redirect_lat_index_in; delete[] connect_redirect_lon_index_in;
   delete[] flood_local_redirect_in; delete[] connect_local_redirect_in;
+  delete[] additional_flood_redirect_lat_index_in;
+  delete[] additional_flood_redirect_lon_index_in;
+  delete[] additional_connect_redirect_lat_index_in;
+  delete[] additional_connect_redirect_lon_index_in;
+  delete[] additional_flood_local_redirect_in;
+  delete[] additional_connect_local_redirect_in;
   delete[] merge_points_in; delete[] flood_volume_thresholds_expected_out;
   delete[] connection_volume_thresholds_expected_out;
   delete[] flood_next_cell_lat_index_expected_out;

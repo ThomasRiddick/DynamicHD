@@ -21,6 +21,8 @@ CPP_SRCS += \
 ../src/test_evaluate_basins.cpp \
 ../src/basin_evaluation_algorithm.cpp \
 ../src/evaluate_basins.cpp \
+../src/determine_river_directions_icon_simple_interface.cpp \
+../src/compute_catchments_icon_simple_interface.cpp \
 ../src/sink_filling_icon_simple_interface.cpp \
 ../src/test_grid.cpp \
 ../src/river_direction_determination_algorithm.cpp \
@@ -48,8 +50,14 @@ USER_OBJS += \
 ./src/river_direction_determination_algorithm.o \
 ./src/determine_river_directions.o
 
-SI_OBJS += \
+FS_ICON_SI_OBJS += \
 ./src/sink_filling_icon_simple_interface.o
+
+CC_ICON_SI_OBJS += \
+./src/compute_catchments_icon_simple_interface.o
+
+DRD_ICON_SI_OBJS += \
+./src/determine_river_directions_icon_simple_interface.o
 
 TEST_OBJS += \
 ./src/test_fill_sinks.o \
@@ -82,6 +90,8 @@ CPP_DEPS += \
 ./src/basin_evaluation_algorithm.d \
 ./src/evaluate_basins.d \
 ./src/sink_filling_icon_simple_interface.d \
+./src/compute_catchments_icon_simple_interface.d \
+./src/determine_river_directions_icon_simple_interface.d \
 ./src/test_grid.d \
 ./src/river_direction_determination_algorithm.d \
 ./src/determine_river_directions.d \
