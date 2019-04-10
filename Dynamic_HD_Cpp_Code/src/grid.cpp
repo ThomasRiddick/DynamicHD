@@ -388,7 +388,13 @@ coords* icon_single_index_grid::
 void icon_single_index_grid_params::icon_single_index_grid_read_params_file(){
 	NcFile grid_params_file(icon_grid_params_filepath.c_str(), NcFile::ReadOnly);
 	if ( ! grid_params_file.is_valid()) throw runtime_error("Invalid grid parameters file");
-	ncells = int(grid_params_file.get_dim("ncells")->size());
+	NcDim* dim;
+	for (int i = 0; i < grid_params_file.num_dims();i++){
+		dim = grid_params_file.get_dim(i);
+		string dim_name = string(dim->name());
+		if (dim_name == "ncells" || dim_name == "cell") break;
+	}
+	ncells = int(dim->size());
 	NcVar *neighboring_cell_indices_var = grid_params_file.get_var("neighbor_cell_index");
 	neighboring_cell_indices = new int[3*ncells];
 	int neighboring_cell_indices_swapped_dims[3*ncells];

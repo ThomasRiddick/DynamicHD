@@ -654,6 +654,25 @@ class Dynamic_HD_Drivers(object):
                                             course_grid_type=course_grid_type,
                                             **course_grid_kwargs)
 
+    def _run_advanced_cotat_plus_upscaling(self,input_fine_rdirs_filename,
+                                           input_fine_cumulative_flow_filename,
+                                           output_course_rdirs_filename,
+                                           input_fine_rdirs_fieldname,
+                                           input_fine_cumulative_flow_fieldname,
+                                           output_course_rdirs_fieldname,
+                                           cotat_plus_parameters_filename,
+                                           output_file_label,
+                                           scaling_factor):
+      shutil.copy2(cotat_plus_parameters_filename,self.copied_cotat_plus_parameters_path
+                   + output_file_label + '.nl')
+      cotat_plus_driver.advanced_cotat_plus_driver(input_fine_rdirs_filename,
+                                                   input_fine_cumulative_flow_filename,
+                                                   output_course_rdirs_filename,
+                                                   input_fine_rdirs_fieldname,
+                                                   input_fine_cumulative_flow_fieldname,
+                                                   output_course_rdirs_fieldname,
+                                                   cotat_plus_parameters_filename,scaling_factor)
+
     def _apply_transforms_to_field(self,input_filename,output_filename,flip_ud=False,
                                    rotate180lr=False,invert_data=False,
                                    timeslice=None,griddescfile=None,

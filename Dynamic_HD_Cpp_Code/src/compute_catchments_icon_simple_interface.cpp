@@ -22,14 +22,15 @@ NcToken LONGITUDE = "longitude";
 NcToken CENTER_LONGITUDE = "center longitude";
 
 int main(int argc, char *argv[]){
-  if(argc<4) throw runtime_error("Not enough arguments");
-  if(argc>5) throw runtime_error("Too many arguments");
+  if(argc<5) throw runtime_error("Not enough arguments");
+  if(argc>6) throw runtime_error("Too many arguments");
   string next_cell_index_filepath(argv[1]);
   string catchment_numbers_out_filepath(argv[2]);
   string grid_params_filepath(argv[3]);
+  string next_cell_index_fieldname(argv[4]);
   bool use_secondary_neighbors_in;
-  if (argc == 5) {
-    string use_secondary_neighbors_string(argv[4]);
+  if (argc == 6) {
+    string use_secondary_neighbors_string(argv[5]);
     use_secondary_neighbors_in = bool(stoi(use_secondary_neighbors_string));
   } else use_secondary_neighbors_in = true;
   ifstream ofile(catchment_numbers_out_filepath.c_str());
@@ -37,12 +38,16 @@ int main(int argc, char *argv[]){
     cout << "Outfile already exists - please delete or specify a different name" << endl;
     exit(1);
   }
+  cout << "Loading grid parameters from:" << endl;
+  cout << grid_params_filepath << endl;
   auto grid_params_in =
     new icon_single_index_grid_params(grid_params_filepath,use_secondary_neighbors_in);
   int ncells = grid_params_in->get_ncells();
+  cout << "Loading next cell indices from:" << endl;
+  cout << next_cell_index_filepath << endl;
   NcFile next_cell_index_file(next_cell_index_filepath.c_str(), NcFile::ReadOnly);
   if ( ! next_cell_index_file.is_valid()) throw runtime_error("Invalid river directions file");
-  NcVar *next_cell_index_var = next_cell_index_file.get_var("next_cell_index");
+  NcVar *next_cell_index_var = next_cell_index_file.get_var(next_cell_index_fieldname.c_str());
   auto next_cell_index_in = new int[ncells];
   next_cell_index_var->get(next_cell_index_in,ncells);
   NcVar *clat = next_cell_index_file.get_var("clat");
@@ -66,7 +71,7 @@ int main(int argc, char *argv[]){
   if ( ! output_catchment_numbers_file.is_valid()) throw runtime_error("Can't write to output catchment_numbers file");
   NcDim* index = output_catchment_numbers_file.add_dim("ncells",ncells);
   NcDim* vertices = output_catchment_numbers_file.add_dim("vertices",3);
-  NcVar* catchment_numbers_out_var = output_catchment_numbers_file.add_var("cell_elevation",ncInt,index);
+  NcVar* catchment_numbers_out_var = output_catchment_numbers_file.add_var("catchment",ncInt,index);
   catchment_numbers_out_var->add_att(LONG_NAME,"elevation at the cell centers");
   catchment_numbers_out_var->add_att(UNITS,METRES);
   catchment_numbers_out_var->add_att(GRID_TYPE,UNSTRUCTURED);

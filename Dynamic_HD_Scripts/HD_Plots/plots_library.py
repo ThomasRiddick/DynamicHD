@@ -14,6 +14,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import Dynamic_HD_Scripts.iohelper as iohlpr
+import Dynamic_HD_Scripts.iodriver as iodriver
 import textwrap
 import os.path
 import math
@@ -28,6 +29,7 @@ from matplotlib import gridspec
 import river_comparison_plotting_routines as rc_pts
 import flowmap_plotting_routines as fmp_pts #@UnresolvedImport
 from interactive_plotting_routines import Interactive_Plots
+import matplotlib.gridspec as gridspec
 
 global interactive_plots
 
@@ -3486,6 +3488,71 @@ class Ice5GComparisonPlots(OrographyPlots):
             #plt.savefig('something')
         print "Combined plot created"
 
+class LakePlots(Plots):
+
+  def plotLakeDepth(self,ax,timeslice):
+    timestamps = {1850:"20190211_131542",
+                  1800:"20190211_131517",
+                  1750:"20190211_131429",
+                  1700:"20190211_131345",
+                  1650:"20190211_131301",
+                  1600:"20190211_131212",
+                  1550:"20190211_131126",
+                  1500:"20190211_131041",
+                  1450:"20190211_130957",
+                  1400:"20190211_130918"}
+    times = {1850:7500,
+             1800:8000,
+             1750:8500,
+             1700:9000,
+             1650:9500,
+             1600:10000,
+             1550:10500,
+             1500:11000,
+             1450:11500,
+             1400:12000}
+    depth = \
+      iodriver.advanced_field_loader(filename=
+                                     "/Users/thomasriddick/Downloads/updated_orog_{}_lake_"
+                                     "basins_prepare_orography_{}.nc".format(timeslice,timestamps[timeslice]),
+                                     time_slice=None,
+                                     fieldname="depth",
+                                     adjust_orientation=True)
+    lsmask = field.Field(iohlpr.NetCDF4FileIOHelper.
+                         load_field("/Users/thomasriddick/Documents/data/HDdata/lsmasks/10min_lsmask_pmu0178_merged.nc",
+                                    grid_type='LatLong10min',
+                                    timeslice=timeslice),grid='LatLong10min')
+    lsmask.rotate_field_by_a_hundred_and_eighty_degrees()
+    lsmask.flip_data_ud()
+    depth.flip_data_ud()
+    depth_masked = np.ma.MaskedArray(data=depth.get_data(),
+                                     mask=lsmask.get_data())
+    ax.set_title("{} BP".format(times[timeslice]))
+    cs = ax.contourf(depth_masked[800:-170,450:650],
+                levels=np.linspace(0,700,25),
+                cmap="Blues")
+    ax.set_xticks(np.array([90]))
+    ax.set_xticklabels(["90$^{\circ}$ E"])
+    ax.set_yticks(np.array([10]))
+    ax.set_yticklabels(["45$^{\circ}$ N"])
+    return cs
+
+  def plotLakeDepths(self):
+    fig = plt.figure(figsize=(18, 6))
+    gs = gridspec.GridSpec(3, 2,height_ratios=[4,4, 1])
+    ax1 = plt.subplot(gs[0, 0])
+    ax2 = plt.subplot(gs[0, 1])
+    ax3 = plt.subplot(gs[1, 0])
+    ax4 = plt.subplot(gs[1, 1])
+    ax_cb = plt.subplot(gs[2, :])
+    self.plotLakeDepth(ax1,1450)
+    self.plotLakeDepth(ax2,1550)
+    self.plotLakeDepth(ax3,1650)
+    cs = self.plotLakeDepth(ax4,1750)
+    fig.colorbar(cs,cax=ax_cb,orientation="horizontal")
+    adddaf_cb.set_xlabel("Potential Lake Depth (m)")
+    fig.tight_layout()
+
 def main():
     """Top level function; define some overarching options and which plots to create"""
     save = False
@@ -3523,7 +3590,7 @@ def main():
     #flowmapplot.Upscaled_Rdirs_vs_Directly_Upscaled_fields_ICE5G_data_ALG4_corr_orog_downscaled_ls_mask_0k_FlowMap_comparison()
     #flowmapplot.Ten_Minute_Data_from_Virna_data_ALG4_corr_orog_downscaled_lsmask_no_sinks_21k_vs_0k_FlowMap_comparison()
     #flowmapplot.Upscaled_Rdirs_vs_Corrected_HD_Rdirs_ICE5G_data_ALG4_corr_orog_downscaled_ls_mask_0k_FlowMap_comparison()
-    flowmapplotwithcatchment = FlowMapPlotsWithCatchments(save)
+    #flowmapplotwithcatchment = FlowMapPlotsWithCatchments(save)
     #flowmapplotwithcatchment.Upscaled_Rdirs_vs_Corrected_HD_Rdirs_ICE5G_data_ALG4_corr_orog_downscaled_ls_mask_0k_FlowMap_comparison()
     #flowmapplotwithcatchment.compare_present_day_and_lgm_river_directions_with_catchments_virna_data_plus_tarasov_style_orog_corrs_for_both()
     #flowmapplotwithcatchment.compare_present_day_river_directions_with_catchments_virna_data_with_vs_without_tarasov_style_orog_corrs()
@@ -3537,7 +3604,7 @@ def main():
     #flowmapplotwithcatchment.\
     #Upscaled_Rdirs_vs_Corrected_HD_Rdirs_tarasov_upscaled_north_america_only_data_ALG4_corr_orog_glcc_olson_lsmask_0k_FlowMap_comparison()
     #flowmapplotwithcatchment.compare_present_day_and_lgm_river_directions_with_catchments_ICE5G_plus_tarasov_style_orog_corrs_for_both()
-    flowmapplotwithcatchment.compare_present_day_and_lgm_river_directions_with_catchments_ICE6G_plus_tarasov_style_orog_corrs_for_both()
+    #flowmapplotwithcatchment.compare_present_day_and_lgm_river_directions_with_catchments_ICE6G_plus_tarasov_style_orog_corrs_for_both()
     #flowmapplotwithcatchment.compare_ICE5G_and_ICE6G_with_catchments_tarasov_style_orog_corrs_for_both()
     #outflowplots = OutflowPlots(save)
     #outflowplots.Compare_Upscaled_Rdirs_vs_Directly_Upscaled_fields_ICE5G_data_ALG4_corr_orog_downscaled_ls_mask_0k()
@@ -3561,6 +3628,8 @@ def main():
     #coupledrunoutputplots.ocean_grid_extended_present_day_rdirs_vs_ice6g_rdirs_lgm_run_discharge_plot()
     #coupledrunoutputplots.extended_present_day_rdirs_vs_ice6g_rdirs_lgm_echam()
     #coupledrunoutputplots.extended_present_day_rdirs_vs_ice6g_rdirs_lgm_mpiom_pem()
+    lake_plots = LakePlots()
+    lake_plots.plotLakeDepths()
     if show:
         plt.show()
 

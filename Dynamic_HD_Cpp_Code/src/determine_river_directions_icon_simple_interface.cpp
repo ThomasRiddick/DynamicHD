@@ -22,40 +22,47 @@ NcToken LONGITUDE = "longitude";
 NcToken CENTER_LONGITUDE = "center longitude";
 
 int main(int argc, char *argv[]){
-  if(argc<5) throw runtime_error("Not enough arguments");
-  if(argc>8) throw runtime_error("Too many arguments");
+  if(argc<9) throw runtime_error("Not enough arguments");
+  if(argc>13) throw runtime_error("Too many arguments");
   string next_cell_index_out_filepath(argv[1]);
   string orography_filepath(argv[2]);
   string landsea_filepath(argv[3]);
   string true_sinks_filepath(argv[4]);
   string grid_params_filepath(argv[5]);
+  string orography_fieldname(argv[6]);
+  string landsea_fieldname(argv[7]);
+  string true_sinks_fieldname(argv[8]);
   bool fractional_landsea_mask_in = false;
   bool always_flow_to_sea_in = true;
   bool use_secondary_neighbors_in  = true;
   bool mark_pits_as_true_sinks_in = false;
-  if (argc >= 7){
-      string fractional_landsea_mask_string(argv[6]);
+  if (argc >= 10){
+      string fractional_landsea_mask_string(argv[9]);
       fractional_landsea_mask_in = bool(stoi(fractional_landsea_mask_string));
-    if (argc >= 8){
-        string always_flow_to_sea_string(argv[7]);
+    if (argc >= 11){
+        string always_flow_to_sea_string(argv[10]);
         always_flow_to_sea_in = bool(stoi(always_flow_to_sea_string));
-      if (argc >= 9){
-        string use_secondary_neighbors_string(argv[8]);
+      if (argc >= 12){
+        string use_secondary_neighbors_string(argv[11]);
         use_secondary_neighbors_in = bool(stoi(use_secondary_neighbors_string));
-        if (argc >= 10){
-          string mark_pits_as_true_sinks_string(argv[9]);
+        if (argc >= 13){
+          string mark_pits_as_true_sinks_string(argv[12]);
           mark_pits_as_true_sinks_in = bool(stoi(mark_pits_as_true_sinks_string));
         }
       }
     }
   }
   auto alg = river_direction_determination_algorithm_icon_single_index();
+  cout << "Loading grid parameters from:" << endl;
+  cout << grid_params_filepath << endl;
   auto grid_params_in =
     new icon_single_index_grid_params(grid_params_filepath,use_secondary_neighbors_in);
   int ncells = grid_params_in->get_ncells();
+  cout << "Loading orography from:" << endl;
+  cout << orography_filepath << endl;
   NcFile orography_file(orography_filepath.c_str(), NcFile::ReadOnly);
   if ( ! orography_file.is_valid()) throw runtime_error("Invalid orography file");
-  NcVar *orography_var = orography_file.get_var("cell_elevation");
+  NcVar *orography_var = orography_file.get_var(orography_fieldname.c_str());
   auto orography_in = new double[ncells];
   orography_var->get(orography_in,ncells);
   NcVar *clat = orography_file.get_var("clat");
@@ -70,9 +77,11 @@ int main(int argc, char *argv[]){
   clat_bnds->get(&clat_bnds_local[0],ncells,3);
   double clon_bnds_local[ncells*3];
   clon_bnds->get(&clon_bnds_local[0],ncells,3);
+  cout << "Loading landsea mask from:" << endl;
+  cout << landsea_filepath << endl;
   NcFile landsea_file(landsea_filepath.c_str(), NcFile::ReadOnly);
   if ( ! landsea_file.is_valid()) throw runtime_error("Invalid land-sea file");
-  NcVar *landsea_var = landsea_file.get_var("lsf");
+  NcVar *landsea_var = landsea_file.get_var(landsea_fieldname.c_str());
   double* landsea_in_double;
   int* landsea_in_int;
   if (fractional_landsea_mask_in) {
@@ -90,9 +99,11 @@ int main(int argc, char *argv[]){
       landsea_in[i] = ! bool(landsea_in_double[i]);
     } else landsea_in[i] = ! bool(landsea_in_int[i]);
   }
+  cout << "Loading true sinks from:" << endl;
+  cout << true_sinks_filepath << endl;
   NcFile true_sinks_file(true_sinks_filepath.c_str(), NcFile::ReadOnly);
   if ( ! true_sinks_file.is_valid()) throw runtime_error("Invalid true sinks file");
-  NcVar *true_sinks_var = true_sinks_file.get_var("lsf");
+  NcVar *true_sinks_var = true_sinks_file.get_var(true_sinks_fieldname.c_str());
   auto true_sinks_in_int = new int[ncells];
   true_sinks_var->get(true_sinks_in_int,ncells);
   auto true_sinks_in = new bool[ncells];

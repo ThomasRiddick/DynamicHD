@@ -3,6 +3,7 @@ Created on Dec 4, 2017
 
 @author: thomasriddick
 '''
+import determine_river_directions
 import dynamic_hd_driver
 import dynamic_lake_operators
 import fill_sinks_driver
@@ -10,6 +11,8 @@ import iodriver
 import field
 import numpy as np
 import utilities
+import compute_catchments as cc
+import flow_to_grid_cell as ftgc
 from os.path import join
 
 class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
@@ -585,9 +588,115 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
                                ls_mask_0k_fieldname="field_value",
                                ls_mask_timestep_0k=timestep_for_0k)
 
-    def prepare_river_directions_with_depressions(working_orography_filepath):
-        file_label = self._generate_file_label()
+    def prepare_river_directions_with_depressions(self,
+                                                  working_orography_filename,
+                                                  lsmask_filename,
+                                                  orography_fieldname,
+                                                  lsmask_fieldname):
+      file_label = self._generate_file_label()
+      rdirs_filename_10min = \
+        self.generated_rdir_filepath + file_label + "_10min_with_depressions.nc"
+      rdirs_filename_30min = \
+        self.generated_rdir_filepath + file_label + "_30min_with_depressions.nc"
+      determine_river_directions.\
+        advanced_river_direction_determination_driver(rdirs_filename_10min,
+                                                      working_orography_filename,
+                                                      lsmask_filename,
+                                                      truesinks_filename=None,
+                                                      rdirs_fieldname="FDIR",
+                                                      orography_fieldname=orography_fieldname,
+                                                      lsmask_fieldname=lsmask_fieldname,
+                                                      truesinks_fieldname=None,
+                                                      always_flow_to_sea=True,
+                                                      use_diagonal_nbrs=True,
+                                                      mark_pits_as_true_sinks=True)
+      fine_cumulative_flow_filename = (self.generated_flowmaps_filepath + file_label
+                                       + '_10mins.nc')
+      fine_catchments_filename = (self.generated_catchments_path + file_label
+                                  + '_10mins.nc')
+      cc.advanced_main(rdirs_filename_10min,"FDIR",
+                       fine_catchments_filename,"catchments",
+                       loop_logfile='/Users/thomasriddick/Documents/data/temp/loop_log.nc',
+                       use_cpp_alg=True)
+      ftgc.advanced_main(rdirs_filename=rdirs_filename_10min,
+                         output_filename=fine_cumulative_flow_filename,
+                         rdirs_fieldname='FDIR',
+                         output_fieldname='cflow')
+      cotat_plus_parameters_filename = join(self.cotat_plus_parameters_path,'cotat_plus_standard_params.nl')
+      self._run_advanced_cotat_plus_upscaling(input_fine_rdirs_filename=
+                                              rdirs_filename_10min,
+                                              input_fine_cumulative_flow_filename=
+                                              fine_cumulative_flow_filename,
+                                              output_course_rdirs_filename=
+                                              rdirs_filename_30min,
+                                              input_fine_rdirs_fieldname="FDIR",
+                                              input_fine_cumulative_flow_fieldname="cflow",
+                                              output_course_rdirs_fieldname="FDIR",
+                                              cotat_plus_parameters_filename=
+                                              cotat_plus_parameters_filename,
+                                              output_file_label=file_label,
+                                              scaling_factor=3)
+      coarse_cumulative_flow_filename = (self.generated_flowmaps_filepath + file_label
+                                       + '_30mins.nc')
+      coarse_catchments_filename = (self.generated_catchments_path + file_label
+                                  + '_30mins.nc')
+      cc.advanced_main(rdirs_filename_30min,"FDIR",
+                       coarse_catchments_filename,"catchments",
+                       loop_logfile='/Users/thomasriddick/Documents/data/temp/loop_log.nc',
+                       use_cpp_alg=True)
+      ftgc.advanced_main(rdirs_filename=rdirs_filename_30min,
+                         output_filename=coarse_cumulative_flow_filename,
+                         rdirs_fieldname='FDIR',
+                         output_fieldname='cflow')
 
+    def prepare_river_directions_with_depressions_from_glac1D(self):
+      working_orography_filename = "/Users/thomasriddick/Documents/data/HDdata/orographys/generated/updated_orog_1900_ice6g_lake_prepare_orography_20190211_131605.nc"
+      lsmask_filename = "/Users/thomasriddick/Documents/data/HDdata/lsmasks/generated/ls_mask_prepare_orography_20190211_131605_grid.nc"
+      orography_fieldname = "Topo"
+      lsmask_fieldname = "lsmask"
+      self.prepare_river_directions_with_depressions(working_orography_filename,
+                                                     lsmask_filename,
+                                                     orography_fieldname,
+                                                     lsmask_fieldname)
+
+    def evaluate_glac1D_ts1900_basins(self):
+        file_label = self._generate_file_label()
+        dynamic_lake_operators.\
+          advanced_basin_evaluation_driver(input_minima_file=
+                                           "/Users/thomasriddick/Documents/data/HDdata/minima/"
+                                           "minima_prepare_orography_20190401_115141_reduced"
+                                           "_1900_landonly_from_rdirs.nc",
+                                           input_minima_fieldname="minima",
+                                           input_raw_orography_file=
+                                           "/Users/thomasriddick/Documents/data/HDdata/orographys/"
+                                           "generated/updated_orog_1900_ice6g_lake_prepare_orography"
+                                           "_20190211_131605.nc",
+                                           input_raw_orography_fieldname="Topo",
+                                           input_corrected_orography_file=
+                                           "/Users/thomasriddick/Documents/data/HDdata/orographys/"
+                                           "generated/updated_orog_1900_ice6g_lake_prepare_orography"
+                                           "_20190211_131605.nc",
+                                           input_corrected_orography_fieldname="Topo",
+                                           input_prior_fine_rdirs_file=
+                                           "/Users/thomasriddick/Documents/data/HDdata/rdirs/generated/"
+                                           "updated_RFDs_prepare_river_directions_with_depressions_"
+                                           "20190401_115141_10min_with_depressions.nc",
+                                           input_prior_fine_rdirs_fieldname="FDIR",
+                                           input_prior_fine_catchments_file=
+                                           "/Users/thomasriddick/Documents/data/HDdata/catchmentmaps/"
+                                           "catchmentmap_prepare_river_directions_with_depressions_"
+                                           "20190401_115141_10mins.nc",
+                                           input_prior_fine_catchments_fieldname="catchments",
+                                           input_coarse_catchment_nums_file=
+                                           "/Users/thomasriddick/Documents/data/HDdata/catchmentmaps/"
+                                           "catchmentmap_prepare_river_directions_with_depressions_"
+                                           "20190401_115141_30mins.nc",
+                                           input_coarse_catchment_nums_fieldname="catchments",
+                                           combined_output_filename=
+                                            join(self.lake_parameter_file_path,
+                                                 "lakeparas" + file_label + ".nc"),
+                                           output_filepath=self.lake_parameter_file_path,
+                                           output_filelabel=file_label)
 
     def evaluate_ICE6G_lgm_basins(self):
         file_label = self._generate_file_label()
@@ -638,11 +747,13 @@ def main():
     #lake_drivers.prepare_orography_ICE5G_0k_uncorrected()
     #lake_drivers.prepare_orography_ICE5G_0k_corrected()
     #lake_drivers.prepare_orography_ICE6G_21k_corrected()
-    import time
-    start = time.time()
-    lake_drivers.evaluate_ICE6G_lgm_basins()
-    end = time.time()
-    print(end - start)
+    #lake_drivers.prepare_river_directions_with_depressions_from_glac1D()
+    lake_drivers.evaluate_glac1D_ts1900_basins()
+    #import time
+    # start = time.time()
+    #lake_drivers.evaluate_ICE6G_lgm_basins()
+    # end = time.time()
+    # print(end - start)
     #lake_drivers.prepare_basins_from_glac1D()
 
 if __name__ == '__main__':

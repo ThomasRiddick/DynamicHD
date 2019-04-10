@@ -42,8 +42,10 @@ void river_direction_determination_algorithm::setup_fields(double* orography_in,
 void river_direction_determination_algorithm::determine_river_directions() {
   _grid->for_all([&](coords* coords_in){
   if ((*true_sinks)(coords_in) &&
-      ! (*land_sea)(coords_in)) mark_as_sink_point(coords_in);
-  else if(! (*land_sea)(coords_in)) find_river_direction(coords_in);
+      ! (*land_sea)(coords_in)) {
+    mark_as_sink_point(coords_in);
+    (*completed_cells)(coords_in) = true;
+  } else if(! (*land_sea)(coords_in)) find_river_direction(coords_in);
   delete coords_in;
   });
   resolve_flat_areas();
@@ -52,6 +54,19 @@ void river_direction_determination_algorithm::determine_river_directions() {
     if( (*land_sea)(coords_in)){
       if(point_has_inflows(coords_in)) mark_as_outflow_point(coords_in);
       else mark_as_ocean_point(coords_in);
+    } else if( !(*completed_cells)(coords_in)){
+      if (mark_pits_as_true_sinks) {
+        mark_as_sink_point(coords_in);
+        q.push(coords_in->clone());
+        double flat_height = (*orography)(coords_in);
+        (*completed_cells)(coords_in) = true;
+        while (! q.empty()){
+          coords* center_coords = q.front();
+          q.pop();
+          process_neighbors(center_coords,flat_height);
+          delete center_coords;
+        }
+      } else throw runtime_error("Possible false sink found");
     }
     delete coords_in;
   });
@@ -84,15 +99,21 @@ void river_direction_determination_algorithm::find_river_direction(coords* coord
           if (!(*completed_cells)(nbr_coords) ) potential_exit_point = true;
         }
       }
+    } else if (! is_sea) {
+      if (nbr_height == cell_height) {
+        if (!(*completed_cells)(nbr_coords) ) potential_exit_point = true;
+      }
     }
     delete nbr_coords;
   });
-  if (minimum_height > cell_height) {
+  if (minimum_height > cell_height &&
+      ! (sea_only && always_flow_to_sea)) {
     if (mark_pits_as_true_sinks) {
       mark_as_sink_point(coords_in);
       (*completed_cells)(coords_in) = true;
     } else throw runtime_error("Possible false sink found");
-  } else if (minimum_height < cell_height) {
+  } else if (minimum_height < cell_height ||
+             (sea_only && always_flow_to_sea)) {
     mark_river_direction(coords_in,minimum_height_nbr_coords);
     (*completed_cells)(coords_in) = true;
     if (potential_exit_point) {
@@ -115,7 +136,6 @@ bool river_direction_determination_algorithm::point_has_inflows(coords* coords_i
 }
 
 void river_direction_determination_algorithm::resolve_flat_areas(){
-  queue<coords*> q;
   while (! potential_exit_points.empty()){
     cell* potential_exit_cell = potential_exit_points.top();
     potential_exit_points.pop();
@@ -124,21 +144,26 @@ void river_direction_determination_algorithm::resolve_flat_areas(){
     while (! q.empty()){
       coords* center_coords = q.front();
       q.pop();
-      void (grid::*func)(coords*,function<void(coords*)>) = use_diagonal_nbrs ?
-                         &grid::for_all_nbrs_wrapped :
-                         &grid::for_non_diagonal_nbrs_wrapped;
-      (_grid->*func)(center_coords,[&](coords* nbr_coords){
-        if((*orography)(nbr_coords) == flat_height &&
-           ! (*completed_cells)(nbr_coords)){
-          (*completed_cells)(nbr_coords) = true;
-          mark_river_direction(nbr_coords,center_coords);
-          q.push(nbr_coords);
-        } else delete nbr_coords;
-      });
+      process_neighbors(center_coords,flat_height);
       delete center_coords;
     }
     delete potential_exit_cell;
   }
+}
+
+void river_direction_determination_algorithm::process_neighbors(coords* center_coords,
+                                                                double flat_height){
+  void (grid::*func)(coords*,function<void(coords*)>) = use_diagonal_nbrs ?
+                     &grid::for_all_nbrs_wrapped :
+                     &grid::for_non_diagonal_nbrs_wrapped;
+  (_grid->*func)(center_coords,[&](coords* nbr_coords){
+    if((*orography)(nbr_coords) == flat_height &&
+       ! (*completed_cells)(nbr_coords)){
+      (*completed_cells)(nbr_coords) = true;
+      mark_river_direction(nbr_coords,center_coords);
+      q.push(nbr_coords);
+    } else delete nbr_coords;
+  });
 }
 
 void river_direction_determination_algorithm_latlon::setup_fields(double* rdirs_in,

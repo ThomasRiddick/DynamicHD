@@ -46,6 +46,9 @@ protected:
   //using the river direction generated
   virtual coords* get_downstream_cell_coords(coords* coords_in) = 0;
   //A input grid_parameter object to specify what kind of grid is required
+  void process_neighbors(coords* center_coords,
+                         double flat_height);
+  queue<coords*> q;
   grid_params* _grid_params = nullptr;
   ///The grid created from the input grid parameters
   grid* _grid = nullptr;

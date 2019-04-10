@@ -651,7 +651,9 @@ def makeEmptyField(field_type,dtype,grid_type,**kwargs):
     Arguments same as makeField except that this function has
     no raw field argument
     """
-
-    grid = gd.makeGrid(grid_type=grid_type,**kwargs)
+    if type(grid_type) is str:
+        grid = gd.makeGrid(grid_type=grid_type,**kwargs)
+    else:
+        grid = grid_type
     raw_field = grid.create_empty_field(dtype)
     return makeField(raw_field, field_type, grid_type,**kwargs)

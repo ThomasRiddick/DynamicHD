@@ -150,14 +150,14 @@ def advanced_main(filename,fieldname,output_filename,output_fieldname,
                                            field_type='Generic',
                                            fieldname=fieldname)
     nlat,nlon = rdirs.get_grid_dimensions()
-    if use_cpp_code:
+    if use_cpp_alg:
         catchments = compute_catchments_cpp(rdirs.get_data(),
                                             loop_logfile)
     else:
         catchment_types, catchments = compute_catchments(rdirs.get_data(),loop_logfile)
         check_catchment_types(catchment_types,logfile=path.splitext(output_filename)[0]+".log")
     numbered_catchments = field.Field(renumber_catchments_by_size(catchments,loop_logfile),
-                                      grid='LatLong',nlat=nlat,nlong=nlon)
+                                      grid=rdirs.get_grid())
     iodriver.advanced_field_writer(target_filename=output_filename,field=numbered_catchments,
                                    fieldname=output_fieldname)
 

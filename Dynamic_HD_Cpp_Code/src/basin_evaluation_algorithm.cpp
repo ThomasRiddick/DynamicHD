@@ -176,6 +176,7 @@ void basin_evaluation_algorithm::
 void basin_evaluation_algorithm::evaluate_basins(){
 	add_minima_to_queue();
 	basin_catchment_number = 1;
+	cout << "Starting to evaluate basins" << endl;
 	while (! minima_q.empty()) {
 		minimum = static_cast<basin_cell*>(minima_q.front());
 		minima_q.pop();
@@ -183,6 +184,7 @@ void basin_evaluation_algorithm::evaluate_basins(){
 		basin_catchment_number++;
 		delete minimum;
 	}
+	cout << "Setting remaining redirects" << endl;
 	set_remaining_redirects();
 	while ( ! basin_catchment_centers.empty()){
 		coords* catchment_center = basin_catchment_centers.back();
@@ -601,7 +603,7 @@ void basin_evaluation_algorithm::set_merge_type(basic_merge_types current_merge_
 			} else throw runtime_error("Cell type not recognized");
 			break;
 		default:
-		throw runtime_error("Merge type not recognized");
+			throw runtime_error("Merge type not recognized");
 	}
 	(*merge_points)(previous_filled_cell_coords) = new_merge_type;
 }
@@ -839,14 +841,12 @@ void basin_evaluation_algorithm::search_process_neighbor() {
 }
 
 void basin_evaluation_algorithm::set_remaining_redirects() {
-	int counter = 0;
 	_grid->for_all([&](coords* coords_in){
 		bool cell_requires_flood_redirect_indices =
 			(*requires_flood_redirect_indices)(coords_in);
 		bool cell_requires_connect_redirect_indices =
 			(*requires_connect_redirect_indices)(coords_in);
 		while(cell_requires_flood_redirect_indices || cell_requires_connect_redirect_indices){
-			counter++;
 			height_types redirect_height_type;
 			if (cell_requires_flood_redirect_indices) {
 				redirect_height_type = flood_height;

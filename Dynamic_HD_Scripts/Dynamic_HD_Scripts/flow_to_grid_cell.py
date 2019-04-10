@@ -11,6 +11,7 @@ import f2py_manager as f2py_mg
 import numpy as np
 import dynamic_hd
 import field
+import iodriver
 import os.path as path
 from context import fortran_source_path
 
@@ -18,41 +19,41 @@ def create_hypothetical_river_paths_map(riv_dirs,lsmask=None,use_f2py_func=True,
                                         use_f2py_sparse_iterator=False,nlat=360,nlong=720,
                                         sparse_fraction=0.5):
     """Create map of cumulative flow to cell from a field of river directions
-    
+
     Inputs:
     riv_dirs: numpy array; an array of river flow directions
     lsmask(optional): numpy array; a landsea mask (with sea points masked)
-    use_f2py_func (optional): boolean; Whether to use an iterator written in 
+    use_f2py_func (optional): boolean; Whether to use an iterator written in
         Fortran (True) or in python (False)
-    use_f2py_sparse_iterator (optional): boolean; Whether to use a sparse iterator 
-        (that works on a vector containing the remaining points to process 
-        rather than the whole river direction array) written in Fortran. 
+    use_f2py_sparse_iterator (optional): boolean; Whether to use a sparse iterator
+        (that works on a vector containing the remaining points to process
+        rather than the whole river direction array) written in Fortran.
         Independent of use_f2py_func.
-    nlat: integer; number of latitude points in the input arrays 
+    nlat: integer; number of latitude points in the input arrays
     nlong:integer; number of longitude points in the input arrays
-    sparse_fraction (optional): float; threshold (as a fraction of the 
-        points in the array remaining to be processed) for switching 
+    sparse_fraction (optional): float; threshold (as a fraction of the
+        points in the array remaining to be processed) for switching
         to the sparse iterator (if that option is selected)
     Returns: Generated flow to cell path map as a numpy array
-        
+
     Perform a certain amount of preperation of the input arrays (adding a
-    one cell border across the top and bottom of the edge of the river 
-    direction array and the land sea mask and also applying the landsea 
-    mask if that option is selected). Then select an iterator and iterate 
-    over the initially empty flow map till it is completely filled; switching 
-    to the the sparse iterator when the given threshold is reached if that 
-    option is selected. 
+    one cell border across the top and bottom of the edge of the river
+    direction array and the land sea mask and also applying the landsea
+    mask if that option is selected). Then select an iterator and iterate
+    over the initially empty flow map till it is completely filled; switching
+    to the the sparse iterator when the given threshold is reached if that
+    option is selected.
     """
 
     riv_dirs = np.insert(riv_dirs,obj=0,values=np.zeros(nlong), axis=0)
     #nlat+1 because the array is now already nlat+1 elements wide so you want to place
     #the new row after the last row
-    riv_dirs = np.insert(riv_dirs,obj=nlat+1,values=np.zeros(nlong), axis=0)    
+    riv_dirs = np.insert(riv_dirs,obj=nlat+1,values=np.zeros(nlong), axis=0)
     if lsmask is not None:
         lsmask = np.insert(lsmask,obj=0,values=np.ones(nlong,dtype=bool), axis=0)
         #nlat+1 because the array is now already nlat+1 elements wide so you want to place
         #the new row after the last row
-        lsmask = np.insert(lsmask,obj=nlat+1,values=np.ones(nlong,dtype=bool), axis=0)    
+        lsmask = np.insert(lsmask,obj=nlat+1,values=np.ones(nlong,dtype=bool), axis=0)
         riv_dirs = np.ma.array(riv_dirs,mask=lsmask,copy=True,dtype=int).filled(0)
     else:
         riv_dirs = np.array(riv_dirs,copy=True,dtype=int)
@@ -77,20 +78,20 @@ def create_hypothetical_river_paths_map(riv_dirs,lsmask=None,use_f2py_func=True,
 
 def iterate_paths_map(riv_dirs,paths_map,nlat=360,nlong=720):
     """Iterate the process of calculating the flow to cell
-    
+
     Input:
     riv_dirs: numpy array; array of river flow directions
     paths_map: numpy array; array of values of flow to cell
-    
+
     Returns: Boolean; return True if there are no more points to
     calculate; otherwise return False. The input paths_map array
-    is also changed as result of this function 
-    
+    is also changed as result of this function
+
     Test if there are still cells to be calculated in the input
-    flow to cell (paths_map). If so then iterates across the points 
-    input river directions fields and passes them to a function to 
+    flow to cell (paths_map). If so then iterates across the points
+    input river directions fields and passes them to a function to
     calculate the inflow to a given cell if necessary. Treat edge
-    cases seperately; the input river direction array should have 
+    cases seperately; the input river direction array should have
     an extra 1 cell border of zeros across its top and bottom edge
     and will wrap around the side edges
     """
@@ -103,39 +104,39 @@ def iterate_paths_map(riv_dirs,paths_map,nlat=360,nlong=720):
                 paths_map[i,j] = 1
             elif j == 0:
                 paths_map[i,j] = count_accumulated_inflow(np.append(riv_dirs[i-1:i+2,nlong-1:nlong],riv_dirs[i-1:i+2,j:j+2],axis=1),
-                                                          np.append(paths_map[i-1:i+2,nlong-1:nlong],paths_map[i-1:i+2,j:j+2],axis=1))   
+                                                          np.append(paths_map[i-1:i+2,nlong-1:nlong],paths_map[i-1:i+2,j:j+2],axis=1))
             elif j == nlong-1:
                 paths_map[i,j] = count_accumulated_inflow(np.append(riv_dirs[i-1:i+2,j-1:j+1],riv_dirs[i-1:i+2,0:1],axis=1),
-                                                          np.append(paths_map[i-1:i+2,j-1:j+1],paths_map[i-1:i+2,0:1],axis=1)) 
-            else: 
+                                                          np.append(paths_map[i-1:i+2,j-1:j+1],paths_map[i-1:i+2,0:1],axis=1))
+            else:
                 paths_map[i,j] = count_accumulated_inflow(riv_dirs[i-1:i+2,j-1:j+2],
-                                                          paths_map[i-1:i+2,j-1:j+2])        
+                                                          paths_map[i-1:i+2,j-1:j+2])
     return True
 
 def count_accumulated_inflow(riv_dirs_section,paths_map_section):
     """Count the accumulated inflow to a cell if possible
-    
-    Input: 
+
+    Input:
     riv_dirs_section: numpy array; 3 by 3 section of river direction data
     centered on the cell in question
     paths_map_section: numpy array; 3 by 3 section of partial complete paths
         maps (i.e. flow to cell) data centered on the cell in question
-    Returns: the flow to the central cell if it can be calculated or zero 
+    Returns: the flow to the central cell if it can be calculated or zero
         if it cannot
-        
+
     Find if any of the surrounding cell flow into this cell and if so
-    there flow to cell has already been defined already. If the flow 
-    to cell of all the neighbours flowing to this cell has been 
-    calculated already then calculate the flow to cell for this 
+    there flow to cell has already been defined already. If the flow
+    to cell of all the neighbours flowing to this cell has been
+    calculated already then calculate the flow to cell for this
     cell (including one to account for this cell itself) return it
-    otherwise return zero. Note if this has no neighbours flowing 
+    otherwise return zero. Note if this has no neighbours flowing
     to it it is assigned a value of one.
     """
-    
+
     flow_to_cell = 0
     #Exact opposite across the keypad of the direction values
     inflow_values = np.array([[3, 2, 1],
-                             [6, 5, 4], 
+                             [6, 5, 4],
                              [9, 8, 7]])
     for i in range(3):
         for j in range(3):
@@ -151,14 +152,29 @@ def count_accumulated_inflow(riv_dirs_section,paths_map_section):
     if flow_to_cell < 1:
         raise RuntimeError('In flow less than 1')
     return flow_to_cell
-    
+
+def advanced_main(rdirs_filename,output_filename,rdirs_fieldname,output_fieldname):
+    rdirs = iodriver.advanced_field_loader(rdirs_filename,
+                                           field_type="Generic",
+                                           fieldname=rdirs_fieldname)
+    nlat,nlong = rdirs.get_grid().get_grid_dimensions()
+    paths_map = field.Field(create_hypothetical_river_paths_map(riv_dirs=rdirs.get_data(),
+                                                                lsmask=None,
+                                                                use_f2py_func=True,
+                                                                use_f2py_sparse_iterator=True,
+                                                                nlat=nlat,
+                                                                nlong=nlong),
+                            grid=rdirs.get_grid())
+    iodriver.advanced_field_writer(target_filename=output_filename,field=paths_map,
+                                   fieldname=output_fieldname)
+
 def main(rdirs_filename,output_filename,grid_type,**grid_kwargs):
     """Top level function for cumulative flow to cell flow map generation
-    
+
     Inputs:
-    rdir_filename: string; full path to the file contain the input river 
+    rdir_filename: string; full path to the file contain the input river
         direction field
-    output_filename: string; full path of the target file to write the 
+    output_filename: string; full path of the target file to write the
         generated cumulative flow to cell field to
     grid_type: string; a keyword specifying the grid type of the input
         and output fields
@@ -167,11 +183,11 @@ def main(rdirs_filename,output_filename,grid_type,**grid_kwargs):
     Returns: Nothing
     """
 
-    rdirs = dynamic_hd.load_field(rdirs_filename, 
-                                  dynamic_hd.get_file_extension(rdirs_filename), 
+    rdirs = dynamic_hd.load_field(rdirs_filename,
+                                  dynamic_hd.get_file_extension(rdirs_filename),
                                   "Generic", grid_type=grid_type,**grid_kwargs)
     nlat,nlong = rdirs.get_grid().get_grid_dimensions()
-    paths_map = field.Field(create_hypothetical_river_paths_map(riv_dirs=rdirs.get_data(), 
+    paths_map = field.Field(create_hypothetical_river_paths_map(riv_dirs=rdirs.get_data(),
                                                                 lsmask=None,
                                                                 use_f2py_func=True,
                                                                 use_f2py_sparse_iterator=True,

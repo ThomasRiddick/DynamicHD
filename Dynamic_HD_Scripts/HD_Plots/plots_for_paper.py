@@ -1014,7 +1014,7 @@ class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
           plt.savefig(path.join(self.save_path,"four_timeslice_catchment_and_flowmap_plot.pdf"),dpi=300)
 
 def main():
-    plots_for_GMD_paper =  PlotsForGMDPaper(True)
+    plots_for_GMD_paper =  PlotsForGMDPaper(False)
     #plots_for_GMD_paper.danube_catchment_correction_plots()
     #plots_for_GMD_paper.comparison_of_manually_corrected_HD_rdirs_vs_automatically_generated_10min_rdirs()
     #plots_for_GMD_paper.comparison_of_modern_river_directions_10_minute_original_vs_HD_upscaled()

@@ -70,11 +70,11 @@ TEST_F(DetermineRiverDirectionsTest,DetermineRiverDirectionsTestOne) {
        6,   3,   2,   3,    2,   1,   1,   6,
        3,   2,   1,   6,    0,   4,   4,   1,
        3,   2,   1,   9,    8,   7,   7,   4,
-       3,   2,   1,   6,    6,   9,   8,   7,
+       3,   2,   1,   6,    9,   9,   8,   7,
        6,   3,   3,   3,    3,   9,   8,   7,
        9,   6,   6,   6,    6,   9,   8,   7,
-       4,   9,   9,   9,    9,   8,   7,   1,
-       7,   6,   6,   6,    9,   8,   7,   4
+       6,   9,   9,   9,    9,   8,   7,   6,
+       9,   8,   7,   4,    4,   6,   9,   9
   };
 
   double* rdirs = new double[8*8];
@@ -207,11 +207,11 @@ TEST_F(DetermineRiverDirectionsTest,DetermineRiverDirectionsTestThree) {
        2,   1,   1,   6,    6,   3,   2,   3,
        0,   4,   4,   1,    3,   2,   1,   6,
        8,   7,   7,   4,    3,   2,   1,   9,
-       1,   9,   8,   7,    3,   2,   1,   2,
+       4,   9,   8,   7,    3,   2,   1,   7,
        3,   9,   8,   7,    6,   3,   3,   3,
        6,   9,   8,   7,    9,   6,   6,   6,
-       9,   8,   7,   6,    3,   9,   9,   9,
-       4,   4,   9,   9,    6,   9,   8,   7
+       9,   8,   7,   1,    3,   9,   9,   9,
+       8,   7,   4,   4,    6,   6,   6,   9
   };
 
   double* rdirs = new double[8*8];
@@ -929,7 +929,7 @@ TEST_F(DetermineRiverDirectionsTest, DetermineRiverDirectionsICONTestOne) {
     //32
     30,
     //33
-    32,
+    14,
     //34
     55,
     //35
@@ -967,7 +967,7 @@ TEST_F(DetermineRiverDirectionsTest, DetermineRiverDirectionsICONTestOne) {
     //51
     30,
     //52
-    32,
+    33,
     //53
     55,
     //54
@@ -979,11 +979,11 @@ TEST_F(DetermineRiverDirectionsTest, DetermineRiverDirectionsICONTestOne) {
     //57
     55,
     //58
-    57,
+    60,
     //59
-    57,
+    22,
     //60
-    59,
+    22,
     //61
     43,
     //62
@@ -1013,7 +1013,7 @@ TEST_F(DetermineRiverDirectionsTest, DetermineRiverDirectionsICONTestOne) {
     //74
     79,
     //75
-    59,
+    60,
     //76
     79,
     //77
@@ -1700,9 +1700,9 @@ TEST_F(DetermineRiverDirectionsTest, DetermineRiverDirectionsICONTestTwo) {
     //78
       65,
     //79
-      77,
+      78,
     //80
-      77
+      78
   };
   bool* true_sinks_in = new bool[80];
   fill_n(true_sinks_in,80,false);
@@ -1722,7 +1722,6 @@ TEST_F(DetermineRiverDirectionsTest, DetermineRiverDirectionsICONTestTwo) {
   for (auto i =0; i < 80; i++){
     EXPECT_EQ(next_cell_index_out[i],next_cell_index_expected_out[i]);
   }
-  cout << endl;
   delete[] true_sinks_in;
   delete[] next_cell_index_out;
   delete[] next_cell_index_expected_out;
@@ -4437,7 +4436,6 @@ TEST_F(DetermineRiverDirectionsTest, DetermineRiverDirectionsICONTestSix) {
                    grid_params_in);
   alg.determine_river_directions();
   for (auto i =0; i < 80; i++){
-    if(next_cell_index_out[i] != next_cell_index_expected_out[i]) cout << i << endl;
     EXPECT_EQ(next_cell_index_out[i],next_cell_index_expected_out[i]);
   }
   delete[] true_sinks_in;

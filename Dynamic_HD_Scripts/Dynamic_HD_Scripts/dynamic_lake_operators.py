@@ -125,8 +125,6 @@ def advanced_basin_evaluation_driver(input_minima_file,
                                                             fieldname=input_prior_fine_rdirs_fieldname,
                                                             grid_desc_file="/Users/thomasriddick/Documents/data/HDdata/grids/grid_10min.txt")
     print "watch for the nasty hack"
-    input_prior_fine_rdirs.rotate_field_by_a_hundred_and_eighty_degrees()
-    print "watch for the nasty hack"
     input_prior_fine_catchments = iodriver.advanced_field_loader(input_prior_fine_catchments_file,
                                                                  field_type='Generic',
                                                                  fieldname=input_prior_fine_catchments_fieldname,

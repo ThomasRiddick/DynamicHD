@@ -193,7 +193,7 @@ void latlon_evaluate_basins(bool* minima_in,
   for (int j = 0; j < nlon_coarse; j++) coarse_catchment_nums_in_ext[j] = 0;
   for (int i = 0; i < scale_factor; i++) {
     for (int j = 0; j < nlon_fine; j++){
-      landsea_in[i*nlon_fine+j] = false;
+      landsea_in[i*nlon_fine+j] = true;
       minima_in_ext[i*nlon_fine+j] = false;
       raw_orography_in_ext[i*nlon_fine+j] = lowest_double;
       corrected_orography_in_ext[i*nlon_fine+j] = lowest_double;
@@ -226,11 +226,10 @@ void latlon_evaluate_basins(bool* minima_in,
   for (int i = nlat_fine+scale_factor;
        i < nlat_fine+2*scale_factor; i++) {
     for (int j = 0; j < nlon_fine; j++){
-      landsea_in[i*nlon_fine+j] = true;
+      landsea_in[i*nlon_fine+j] = false;
       minima_in_ext[i*nlon_fine+j] = false;
       raw_orography_in_ext[i*nlon_fine+j] = maximum_double;
       corrected_orography_in_ext[i*nlon_fine+j] = maximum_double;
-
       prior_fine_rdirs_in_ext[i*nlon_fine+j] = 5.0;
       prior_fine_catchments_in_ext[i*nlon_fine+j] = 0;
     }

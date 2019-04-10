@@ -72,6 +72,6 @@ end
 
 empty!(ARGS)
 push!(ARGS,"-p/Users/thomasriddick/Documents/data/HDdata/hdfiles/hdpara_file_from_current_model.nc")
-push!(ARGS,"-l/Users/thomasriddick/Documents/data/HDdata/lakeparafiles/lakeparasevaluate_ICE6G_lgm_basins_20190311_123507.nc")
+push!(ARGS,"-l/Users/thomasriddick/Documents/data/HDdata/lakeparafiles/lakeparasevaluate_glac1D_ts1900_basins_20190401_202323.nc")
 push!(ARGS,"-t5")
 main()

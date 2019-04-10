@@ -74,7 +74,7 @@ Compute_Catchments_SI_Exec: $(USER_OBJS) $(CC_ICON_SI_OBJS)
 
 Determine_River_Directions_SI_Exec: $(USER_OBJS) $(DRD_ICON_SI_OBJS)
 	@echo 'Building target: $@'
-	$(GPLUSPLUS)  -o "Compute_Catchments_SI_Exec" $(USER_OBJS) $(DRD_ICON_SI_OBJS) $(FLAGS) $(LIBS)
+	$(GPLUSPLUS)  -o "Determine_River_Directions_SI_Exec" $(USER_OBJS) $(DRD_ICON_SI_OBJS) $(FLAGS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
