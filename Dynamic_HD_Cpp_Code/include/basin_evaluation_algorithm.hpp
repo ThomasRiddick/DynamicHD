@@ -33,6 +33,7 @@ public:
   // Setup a sink filling algorithm to use to determine the order to process basins in
   void setup_sink_filling_algorithm(sink_filling_algorithm_4* sink_filling_alg_in);
 	void evaluate_basins();
+  int* retrieve_lake_numbers();
 	queue<cell*> test_add_minima_to_queue(double* raw_orography_in,
                                         double* corrected_orography_in,
                                         bool* minima_in,
@@ -49,8 +50,8 @@ public:
 	                                                   bool* search_completed_cells_in,
 	                              										 grid_params* grid_params_in);
 protected:
-	virtual void set_previous_cells_flood_next_cell_index() = 0;
-  virtual void set_previous_cells_connect_next_cell_index() = 0;
+	virtual void set_previous_cells_flood_next_cell_index(coords* coords_in) = 0;
+  virtual void set_previous_cells_connect_next_cell_index(coords* coords_in) = 0;
 	virtual void set_previous_cells_flood_force_merge_index() = 0;
   virtual void set_previous_cells_connect_force_merge_index() = 0;
   virtual void set_previous_cells_redirect_index(coords* initial_fine_coords,
@@ -271,8 +272,8 @@ public:
                                     grid_params* grid_params_in,
                                     grid_params* coarse_grid_params_in);
 private:
-	void set_previous_cells_flood_next_cell_index();
-  void set_previous_cells_connect_next_cell_index();
+	void set_previous_cells_flood_next_cell_index(coords* coords_in);
+  void set_previous_cells_connect_next_cell_index(coords* coords_in);
 	void set_previous_cells_flood_force_merge_index();
   void set_previous_cells_connect_force_merge_index();
 	void set_previous_cells_redirect_index(coords* initial_fine_coords,

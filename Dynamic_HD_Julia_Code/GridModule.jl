@@ -2,6 +2,7 @@ module GridModule
 
 using UserExceptionModule: UserError
 using CoordsModule: Coords,DirectionIndicator,LatLonCoords,get_next_cell_coords
+using CoordsModule: LatLonSectionCoords
 using InteractiveUtils
 
 abstract type Grid end
@@ -59,6 +60,16 @@ function for_all_with_line_breaks(function_on_point::Function,
                  grid::LatLonGrid)
   for i = 1:grid.nlat
     for j = 1:grid.nlon
+      function_on_point(LatLonCoords(i,j))
+    end
+    println("")
+  end
+end
+
+function for_section_with_line_breaks(function_on_point::Function,
+                 grid::LatLonGrid,section_coords::LatLonSectionCoords)
+  for i = section_coords.min_lat:section_coords.max_lat
+    for j = section_coords.min_lon:section_coords.max_lon
       function_on_point(LatLonCoords(i,j))
     end
     println("")

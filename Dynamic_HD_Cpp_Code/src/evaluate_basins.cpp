@@ -39,7 +39,8 @@ void latlon_evaluate_basins_cython_wrapper(int* minima_in_int,
                                            int* additional_connect_local_redirect_out_int,
                                            int* merge_points_out_int,
                                            int nlat_fine, int nlon_fine,
-                                           int nlat_coarse,int nlon_coarse){
+                                           int nlat_coarse,int nlon_coarse,
+                                           int* basin_catchment_numbers_in){
   auto minima_in = new bool[nlat_fine*nlon_fine];
   for (int i = 0; i < nlat_fine*nlon_fine; i++) {
     minima_in[i] = bool(minima_in_int[i]);
@@ -82,7 +83,8 @@ void latlon_evaluate_basins_cython_wrapper(int* minima_in_int,
                          additional_connect_local_redirect_in,
                          merge_points_out_int,
                          nlat_fine, nlon_fine,
-                         nlat_coarse,nlon_coarse);
+                         nlat_coarse,nlon_coarse,
+                         basin_catchment_numbers_in);
   for (int i = 0; i < nlat_fine*nlon_fine; i++) {
     flood_local_redirect_out_int[i] = int(flood_local_redirect_in[i]);
     connect_local_redirect_out_int[i] = int(connect_local_redirect_in[i]);
@@ -121,7 +123,8 @@ void latlon_evaluate_basins(bool* minima_in,
                             bool* additional_connect_local_redirect_in,
                             int* merge_points_out_int,
                             int nlat_fine, int nlon_fine,
-                            int nlat_coarse,int nlon_coarse){
+                            int nlat_coarse,int nlon_coarse,
+                            int* basin_catchment_numbers_in){
   cout << "Entering Basin Evaluation C++ Code" << endl;
   auto alg = latlon_basin_evaluation_algorithm();
   int scale_factor = nlat_fine/nlat_coarse;
@@ -179,6 +182,11 @@ void latlon_evaluate_basins(bool* minima_in,
   fill_n(additional_flood_local_redirect_in_ext,(nlat_fine+2*scale_factor)*nlon_fine,-1);
   bool* additional_connect_local_redirect_in_ext  = new bool[(nlat_fine+2*scale_factor)*nlon_fine];
   fill_n(additional_connect_local_redirect_in_ext,(nlat_fine+2*scale_factor)*nlon_fine,-1);
+  int* basin_catchment_numbers_in_ext = nullptr;
+  if (basin_catchment_numbers_in){
+      basin_catchment_numbers_in_ext  = new int[(nlat_fine+2*scale_factor)*nlon_fine];
+      fill_n(basin_catchment_numbers_in_ext,(nlat_fine+2*scale_factor)*nlon_fine,-1);
+  }
   auto sink_filling_alg_4 = new sink_filling_algorithm_4_latlon();
   int* next_cell_lat_index_dummy_in = new int[(nlat_fine+2*scale_factor)*nlon_fine];
   int* next_cell_lon_index_dummy_in = new int[(nlat_fine+2*scale_factor)*nlon_fine];
@@ -276,28 +284,39 @@ void latlon_evaluate_basins(bool* minima_in,
                    coarse_grid_params_in);
   alg.setup_sink_filling_algorithm(sink_filling_alg_4);
   alg.evaluate_basins();
+  if(basin_catchment_numbers_in){
+    basin_catchment_numbers_in_ext = alg.retrieve_lake_numbers();
+  }
   for (int i = scale_factor*nlon_fine; i < (nlat_fine+scale_factor)*nlon_fine; i++) {
     merge_points_out_int[i-scale_factor*nlon_fine] = int(merge_points_in[i]);
     connection_volume_thresholds_in[i-scale_factor*nlon_fine] = connection_volume_thresholds_in_ext[i];
     flood_volume_thresholds_in[i-scale_factor*nlon_fine] = flood_volume_thresholds_in_ext[i];
-    flood_next_cell_lat_index_in[i-scale_factor*nlon_fine]  = flood_next_cell_lat_index_in_ext[i];
+    flood_next_cell_lat_index_in[i-scale_factor*nlon_fine]  =
+      max(flood_next_cell_lat_index_in_ext[i] - scale_factor,-1);
     flood_next_cell_lon_index_in[i-scale_factor*nlon_fine]  = flood_next_cell_lon_index_in_ext[i];
-    connect_next_cell_lat_index_in[i-scale_factor*nlon_fine] = connect_next_cell_lat_index_in_ext[i];
+    connect_next_cell_lat_index_in[i-scale_factor*nlon_fine] =
+      max(connect_next_cell_lat_index_in_ext[i] - scale_factor,-1);
     connect_next_cell_lon_index_in[i-scale_factor*nlon_fine] = connect_next_cell_lon_index_in_ext[i];
-    flood_force_merge_lat_index_in[i-scale_factor*nlon_fine] = flood_force_merge_lat_index_in_ext[i];
+    flood_force_merge_lat_index_in[i-scale_factor*nlon_fine] =
+      max(flood_force_merge_lat_index_in_ext[i] - scale_factor,-1);
     flood_force_merge_lon_index_in[i-scale_factor*nlon_fine] = flood_force_merge_lon_index_in_ext[i];
-    connect_force_merge_lat_index_in[i-scale_factor*nlon_fine] = connect_force_merge_lat_index_in_ext[i];
+    connect_force_merge_lat_index_in[i-scale_factor*nlon_fine] =
+      max(connect_force_merge_lat_index_in_ext[i] - scale_factor,-1);
     connect_force_merge_lon_index_in[i-scale_factor*nlon_fine] = connect_force_merge_lon_index_in_ext[i];
-    flood_redirect_lat_index_in[i-scale_factor*nlon_fine] = flood_redirect_lat_index_in_ext[i];
+    flood_redirect_lat_index_in[i-scale_factor*nlon_fine] =
+      max(flood_redirect_lat_index_in_ext[i] - (flood_local_redirect_in_ext[i] ? scale_factor : 1),-1);
     flood_redirect_lon_index_in[i-scale_factor*nlon_fine] = flood_redirect_lon_index_in_ext[i];
-    connect_redirect_lat_index_in[i-scale_factor*nlon_fine] = connect_redirect_lat_index_in_ext[i];
+    connect_redirect_lat_index_in[i-scale_factor*nlon_fine] =
+      max(connect_redirect_lat_index_in_ext[i] - (connect_local_redirect_in_ext[i] ? scale_factor : 1),-1);
     connect_redirect_lon_index_in[i-scale_factor*nlon_fine] = connect_redirect_lon_index_in_ext[i];
     additional_flood_redirect_lat_index_in[i-scale_factor*nlon_fine] =
-      additional_flood_redirect_lat_index_in_ext[i];
+      max(additional_flood_redirect_lat_index_in_ext[i]  -
+          (additional_flood_local_redirect_in_ext[i] ? scale_factor : 1),-1);
     additional_flood_redirect_lon_index_in[i-scale_factor*nlon_fine] =
       additional_flood_redirect_lon_index_in_ext[i];
     additional_connect_redirect_lat_index_in[i-scale_factor*nlon_fine] =
-      additional_connect_redirect_lat_index_in_ext[i];
+      max(additional_connect_redirect_lat_index_in_ext[i] -
+          (additional_connect_local_redirect_in_ext[i] ? scale_factor : 1),-1);
     additional_connect_redirect_lon_index_in[i-scale_factor*nlon_fine] =
       additional_connect_redirect_lon_index_in_ext[i];
     flood_local_redirect_in[i-scale_factor*nlon_fine] = flood_local_redirect_in_ext[i];
@@ -306,6 +325,10 @@ void latlon_evaluate_basins(bool* minima_in,
       additional_flood_local_redirect_in_ext[i];
     additional_connect_local_redirect_in[i-scale_factor*nlon_fine] =
       additional_connect_local_redirect_in_ext[i];
+    if(basin_catchment_numbers_in){
+      basin_catchment_numbers_in[i-scale_factor*nlon_fine] =
+        basin_catchment_numbers_in_ext[i];
+    }
   }
   delete grid_params_in;
   delete coarse_grid_params_in;

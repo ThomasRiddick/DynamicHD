@@ -91,7 +91,7 @@ subroutine icon_single_index_init_flow_accumulation_algorithm(this)
     allocate(this%external_data_value,source=generic_1d_coords(-2))
     allocate(this%flow_terminates_value,source=generic_1d_coords(-3))
     allocate(this%no_data_value,source=generic_1d_coords(-4))
-    allocate(this%no_flow_value,source=generic_1d_coords(-5)
+    allocate(this%no_flow_value,source=generic_1d_coords(-5))
 end subroutine icon_single_index_init_flow_accumulation_algorithm
 
 subroutine generate_cumulative_flow(this,set_links)

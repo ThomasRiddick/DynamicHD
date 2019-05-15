@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <unistd.h>
 #include <netcdfcpp.h>
 #include "grid.hpp"
 #include "sink_filling_algorithm.hpp"
@@ -21,9 +22,73 @@ NcToken CENTER_LATITUDE = "center latitude";
 NcToken LONGITUDE = "longitude";
 NcToken CENTER_LONGITUDE = "center longitude";
 
+void print_usage(){
+    cout <<
+    "Usage: " << endl;
+    cout <<
+    "./Fill_Sinks_Icon_SI_Exec [input orography file path] [landsea file path]" << endl;
+    cout <<
+    " [true sinks file path] [output orography file path] [grid parameters file path]" << endl;
+    cout <<
+    " [input orography field name] [input landsea mask fieldname]" << endl;
+    cout <<
+    " [input true sinks field name] [set land sea as no data flag] [add slope flag]" << endl;
+    cout <<
+    "[epsilon] [use secondary neighbors flag] [fractional landsea mask flag]" << endl;
+}
+
+void print_help(){
+    print_usage();
+    cout << "Fill the sinks in an orography using an accelerated" << endl;
+    cout << "priority flood technique on a ICON icosohedral grid" << endl;
+    cout << "Arguments:" << endl;
+    cout << "input orography file path - full path to input orography file" << endl;
+    cout << "landsea file path - full path to land-sea input file" << endl;
+    cout << "true sinks file path - full path to true sink input file" << endl;
+    cout << "output orography file path - full path to target output orography file" << endl;
+    cout << "grid parameters file path - full path to file containing ICON grid parameters"
+         << endl << " for resolution being used" << endl;
+    cout << "input orography field name - name of input orography field within"
+         << " specified file" << endl;
+    cout << "input landsea mask field name - name of landsea mask field within"
+         << " specified file" << endl;
+    cout << "input true sinks field name - name of true sinks field within"
+         << " specified file" << endl;
+    cout << "set land sea as no data flag - flag to turn on and off setting"
+         << " all landsea points to no data" << endl;
+    cout << "add slope flag - flag to turn on and off adding a slight slope"
+         << " when filling sinks" << endl;
+    cout << "epsilon - additional height added to each progressive cell when"
+         << " adding a slight slope" << endl;
+    cout << "use secondary neighbors flag - Use the 9 additional neighbors which"
+         << "share vertices"
+         << endl << "but not edges with a cell (default: true)" << endl;
+    cout << "fractional landsea mask - land sea mask expresses fraction of land"
+         << "as a floating point number" << endl
+         << "which requires conversion to a binary mask" << endl;
+}
+
 int main(int argc, char *argv[]){
-  if(argc<12) throw runtime_error("Not enough arguments");
-  if(argc>14) throw runtime_error("Too many arguments");
+  cout << "ICON sink filling tool" << endl;
+  int opts;
+  while ((opts = getopt(argc,argv,"h")) != -1){
+    if (opts == 'h'){
+      print_help();
+      exit(EXIT_FAILURE);
+    }
+  }
+  if(argc<12) {
+    cout << "Not enough arguments" << endl;
+    print_usage();
+    cout << "Run with option -h for help" << endl;
+    exit(EXIT_FAILURE);
+  }
+  if(argc>14) {
+    cout << "Too many arguments" << endl;
+    print_usage();
+    cout << "Run with option -h for help" << endl;
+    exit(EXIT_FAILURE);
+  }
   string orography_in_filepath(argv[1]);
   string landsea_in_filepath(argv[2]);
   string true_sinks_in_filepath(argv[3]);
@@ -109,7 +174,7 @@ int main(int argc, char *argv[]){
   }
   auto true_sinks_in = new bool[ncells];
   for (auto i = 0; i < ncells;i++){
-    true_sinks_in[i] = false; //bool(true_sinks_in_int[i]);
+    true_sinks_in[i] = bool(true_sinks_in_int[i]);
   }
   auto alg1 = sink_filling_algorithm_1_icon_single_index();
   alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in);

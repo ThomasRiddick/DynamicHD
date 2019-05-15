@@ -71,4 +71,13 @@ function is_lake(flow_direction::DirectionIndicator)
   return is_lake(flow_direction.coords)
 end
 
+abstract type SectionCoords end
+
+struct LatLonSectionCoords <: SectionCoords
+  min_lat::Int64
+  max_lat::Int64
+  min_lon::Int64
+  max_lon::Int64
+end
+
 end

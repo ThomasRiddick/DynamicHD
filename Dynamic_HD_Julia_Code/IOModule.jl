@@ -3,10 +3,13 @@ module IOModule
 using NetCDF
 using NetCDF: NcFile,NcVar
 using GridModule: Grid, LatLonGrid, get_number_of_dimensions
-using FieldModule: Field, LatLonDirectionIndicators,round,convert
+using FieldModule: Field, LatLonDirectionIndicators,round,convert,add_offset,get_data
 using HDModule: RiverParameters
-using LakeModule: LakeParameters,LatLonLakeParameters, GridSpecificLakeParameters
+using LakeModule: LakeParameters,LatLonLakeParameters, GridSpecificLakeParameters,LakeFields
 using MergeTypesModule
+using NetCDF
+using NetCDF: NcFile,NcVar
+import LakeModule: write_lake_numbers_field
 
 function load_field(file_handle::NcFile,grid::Grid,variable_name::AbstractString,
                     field_type::DataType,;timestep::Int64=-1)
@@ -14,6 +17,16 @@ function load_field(file_handle::NcFile,grid::Grid,variable_name::AbstractString
   values::Array{field_type,get_number_of_dimensions(grid)} = NetCDF.readvar(variable)
   values = permutedims(values, [2,1])
   return Field{field_type}(grid,values)
+end
+
+function write_field(grid::LatLonGrid,variable_name::AbstractString,
+                     field::Field,;timestep::Int64=-1)
+  lat = NcDim("Lat",grid.nlat)
+  lon = NcDim("Lon",grid.nlon)
+  variable::NcVar = NcVar(variable_name,[ lat; lon ])
+  filepath::String = timestep == -1 ? "/Users/thomasriddick/Documents/data/temp/lake_model_out.nc" : "/Users/thomasriddick/Documents/data/temp/lake_model_out_$(timestep).nc"
+  NetCDF.create(filepath,variable)
+  NetCDF.putvar(variable,get_data(field))
 end
 
 function load_river_parameters(hd_para_filepath::AbstractString,grid::Grid)
@@ -119,6 +132,22 @@ function load_grid_specific_lake_parameters(file_handle::NcFile,grid::LatLonGrid
       load_field(file_handle,grid,"additional_connect_redirect_lat_index",Int64)
   additional_connect_redirect_lon_index::Field{Int64} =
       load_field(file_handle,grid,"additional_connect_redirect_lon_index",Int64)
+  add_offset(flood_next_cell_lat_index,1,Int64[-1])
+  add_offset(flood_next_cell_lon_index,1,Int64[-1])
+  add_offset(connect_next_cell_lat_index,1,Int64[-1])
+  add_offset(connect_next_cell_lon_index,1,Int64[-1])
+  add_offset(flood_force_merge_lat_index,1,Int64[-1])
+  add_offset(flood_force_merge_lon_index,1,Int64[-1])
+  add_offset(connect_force_merge_lat_index,1,Int64[-1])
+  add_offset(connect_force_merge_lon_index,1,Int64[-1])
+  add_offset(flood_redirect_lat_index,1,Int64[-1])
+  add_offset(flood_redirect_lon_index,1,Int64[-1])
+  add_offset(connect_redirect_lat_index,1,Int64[-1])
+  add_offset(connect_redirect_lon_index,1,Int64[-1])
+  add_offset(additional_flood_redirect_lat_index,1,Int64[-1])
+  add_offset(additional_flood_redirect_lon_index,1,Int64[-1])
+  add_offset(additional_connect_redirect_lat_index,1,Int64[-1])
+  add_offset(additional_connect_redirect_lon_index,1,Int64[-1])
   return LatLonLakeParameters(flood_next_cell_lat_index,
                               flood_next_cell_lon_index,
                               connect_next_cell_lat_index,
@@ -135,6 +164,13 @@ function load_grid_specific_lake_parameters(file_handle::NcFile,grid::LatLonGrid
                               additional_flood_redirect_lon_index,
                               additional_connect_redirect_lat_index,
                               additional_connect_redirect_lon_index)
+end
+
+function write_lake_numbers_field(lake_parameters::LakeParameters,lake_fields::LakeFields;
+                                  timestep::Int64=-1)
+  variable_name::String = "lake_field"
+  write_field(lake_parameters.grid,variable_name,
+              lake_fields.lake_numbers,timestep=timestep)
 end
 
 end

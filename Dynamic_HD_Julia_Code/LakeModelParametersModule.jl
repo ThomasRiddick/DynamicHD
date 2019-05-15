@@ -5,7 +5,7 @@ struct LakeModelParameters
   lake_retention_constant::Float64
   function LakeModelParameters()
     instant_throughflow::Bool = true
-    lake_retention_constant::Float64 = 0.01
+    lake_retention_constant::Float64 = 0.1
     return new(instant_throughflow,lake_retention_constant)
   end
 end

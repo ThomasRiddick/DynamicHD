@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <unistd.h>
 #include <netcdfcpp.h>
 #include "grid.hpp"
 #include "river_direction_determination_algorithm.hpp"
@@ -21,9 +22,73 @@ NcToken CENTER_LATITUDE = "center latitude";
 NcToken LONGITUDE = "longitude";
 NcToken CENTER_LONGITUDE = "center longitude";
 
+void print_usage(){
+    cout <<
+    "Usage: " << endl;
+    cout <<
+    "./Determine_River_Directions_SI_Exec [next cell index out file path]" <<
+    "[orography file path]" << endl;
+    cout <<
+    " [landsea file path] [true sinks filepath] [grid params file path]" << endl;
+    cout <<
+    " [orography field name] [landsea field name] [true sinks field name]" << endl;
+    cout <<
+    " [fractional landsea mask flag] [always flow to sea flag]" << endl;
+    cout <<
+    " [use secondary neighbors flag] [mark pits as true sinks flag]" << endl;
+}
+
+void print_help(){
+  print_usage();
+  cout << "Determine river directions on a ICON icosahedral grid using a down slope" << endl
+       << "routing. Includes the resolution of flat areas and the possibility of marking" << endl
+       << "depressions as true sink points (terminal lakes of endorheic basins." << endl;
+  cout << "Arguments:" << endl;
+  cout << "next cell index out file path - Full path to target output file for the next" << endl
+       << " cell index values; these are the ICON equivalent of river directions." << endl;
+  cout << "orography file path - Full path to the input orography file" << endl;
+  cout << "landsea file path - Full path to input landsea mask file" << endl;
+  cout << "true sinks filepath - Full path to input true sinks file" << endl;
+  cout << "grid params file path - Full path to the grid description file for the ICON" << endl
+       << " grid being used" << endl;
+  cout << "orography field name - Name of orography field within the orography file" << endl;
+  cout << "landsea field name - Name of the landsea mask field within the landsea"
+       << " mask file" << endl;
+  cout << "true sinks field name - Name of the true sinks field within the true sinks"
+       << " file" << endl;
+  cout << "fractional landsea mask flag - land sea mask expresses fraction of land"
+       << "as a floating point number (default false)" << endl;
+  cout << "always flow to sea flag - alway mark flow direction towards a neighboring" << endl
+       << " ocean point even when a neighboring land point has a lower elevation"
+       << " (default true)" << endl;
+  cout << "use secondary neighbors flag - Use the 9 additional neighbors which"
+         << "share vertices"
+         << endl << "but not edges with a cell (default: true)" << endl;
+  cout << "mark pits as true sinks flag - mark any depression found as a true sink point"
+       << " (default true)" << endl;
+}
+
 int main(int argc, char *argv[]){
-  if(argc<9) throw runtime_error("Not enough arguments");
-  if(argc>13) throw runtime_error("Too many arguments");
+    cout << "ICON river direction determination tool" << endl;
+  int opts;
+  while ((opts = getopt(argc,argv,"h")) != -1){
+    if (opts == 'h'){
+      print_help();
+      exit(EXIT_FAILURE);
+    }
+  }
+  if(argc<9) {
+    cout << "Not enough arguments" << endl;
+    print_usage();
+    cout << "Run with option -h for help" << endl;
+    exit(EXIT_FAILURE);
+  }
+  if(argc>13) {
+    cout << "Too many arguments" << endl;
+    print_usage();
+    cout << "Run with option -h for help" << endl;
+    exit(EXIT_FAILURE);
+  }
   string next_cell_index_out_filepath(argv[1]);
   string orography_filepath(argv[2]);
   string landsea_filepath(argv[3]);
@@ -108,7 +173,7 @@ int main(int argc, char *argv[]){
   true_sinks_var->get(true_sinks_in_int,ncells);
   auto true_sinks_in = new bool[ncells];
   for (auto i = 0; i < ncells;i++){
-    true_sinks_in[i] = false; //bool(true_sinks_in_int[i]);
+    true_sinks_in[i] = bool(true_sinks_in_int[i]);
   }
   auto next_cell_index_out = new int[ncells];
   alg.setup_flags(always_flow_to_sea_in,use_secondary_neighbors_in,

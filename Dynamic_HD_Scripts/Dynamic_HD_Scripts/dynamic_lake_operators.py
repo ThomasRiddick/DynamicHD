@@ -110,7 +110,8 @@ def advanced_basin_evaluation_driver(input_minima_file,
                                      input_coarse_catchment_nums_fieldname,
                                      combined_output_filename,
                                      output_filepath,
-                                     output_filelabel):
+                                     output_filelabel,
+                                     output_basin_catchment_nums_filepath=None):
     input_minima    = iodriver.advanced_field_loader(input_minima_file,
                                                      field_type='Generic',
                                                      fieldname=input_minima_fieldname)
@@ -158,6 +159,10 @@ def advanced_basin_evaluation_driver(input_minima_file,
     additional_flood_local_redirect = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
     additional_connect_local_redirect = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
     merge_points = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
+    if output_basin_catchment_nums_filepath is not None:
+        basin_catchment_numbers = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
+    else:
+        basin_catchment_numbers = None
     evaluate_basins_wrapper.evaluate_basins(minima_in_int=
                                             np.ascontiguousarray(input_minima.get_data(),dtype=np.int32),
                                             raw_orography_in=
@@ -220,7 +225,9 @@ def advanced_basin_evaluation_driver(input_minima_file,
                                             additional_connect_local_redirect_out_int=
                                             additional_connect_local_redirect.get_data(),
                                             merge_points_out_int=
-                                            merge_points.get_data())
+                                            merge_points.get_data(),
+                                            basin_catchment_numbers_in=
+                                            basin_catchment_numbers.get_data())
     connection_volume_thresholds_filename = path.join(output_filepath,
                                                       "connect_vts_" +
                                                       output_filelabel + ".nc")
@@ -394,3 +401,7 @@ def advanced_basin_evaluation_driver(input_minima_file,
                    output=combined_output_filename)
     for individual_field_filename in individual_field_filenames:
       os.remove(individual_field_filename)
+    if output_basin_catchment_nums_filepath is not None:
+        iodriver.advanced_field_writer(output_basin_catchment_nums_filepath,
+                                       basin_catchment_numbers,
+                                       fieldname="basin_catchment_numbers")

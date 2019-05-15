@@ -78,6 +78,8 @@ type, extends(field_section), public :: latlon_field_section
     integer                  :: section_max_lat
     !> Maximum longitude of the section of field that is of interest
     integer                  :: section_max_lon
+    !> Wrap the field east west or not
+    logical                  :: wrap
     contains
         private
         !> Initialize this latitude longitude field section. Arguments are a pointer to
@@ -117,6 +119,43 @@ end type latlon_field_section
 interface latlon_field_section
     procedure latlon_field_section_constructor
 end interface latlon_field_section
+
+!> A concrete subclass of field section for an  icon single index grid
+type, extends(field_section), public :: icon_single_index_field_section
+    !> A pointer to 2D array to hold the icon single index field section data;
+    !! in fact a pointer to the entire field both point in and outside the section
+    class(*), dimension (:), pointer :: data
+    !> A mask with false outside the section and true inside
+    logical, dimension(:), pointer :: mask
+    !> Number of points in the field
+    integer                  :: num_points
+    integer, dimension(:,:), pointer :: cell_neighbors
+    integer, dimension(:,:), pointer :: cell_secondary_neighbors
+    contains
+        private
+        !> Initialize this latitude longitude field section. Arguments are a pointer to
+        !! the input data array and the section coords of the section of the field that
+        !! is of interest
+        procedure :: init_icon_single_index_field_section
+        !> Set the data field to a given polymorphic value at a given latitude and longitude
+        !! with no consideration for wrapping
+        procedure :: set_data_array_element => icon_single_index_set_data_array_element
+        procedure, public :: get_mask
+        !> Given a pointer to an unlimited polymorphic variable set it at the given
+        !!  coordinates
+        procedure, public :: set_generic_value => icon_single_index_set_generic_value
+        !> Return an unlimited polymorphic pointer to a value at the given
+        !! coordinates
+        procedure, public :: get_value => icon_single_index_get_value
+        !> Print the entire  data field
+        procedure, public :: print_field_section => icon_single_index_print_field_section
+        !> Deallocate the data array
+        procedure, public :: deallocate_data => icon_single_index_deallocate_data
+end type icon_single_index_field_section
+
+interface icon_single_index_field_section
+    procedure icon_single_index_field_section_constructor
+end interface icon_single_index_field_section
 
 contains
 
@@ -189,10 +228,17 @@ contains
             call constructor%init_latlon_field_section(data,section_coords)
     end function latlon_field_section_constructor
 
-    subroutine init_latlon_field_section(this,data,section_coords)
+    subroutine init_latlon_field_section(this,data,section_coords,wrap_in)
         class(latlon_field_section) :: this
         class(*), dimension(:,:), pointer :: data
         class(latlon_section_coords) section_coords
+        logical, optional :: wrap_in
+        logical           :: wrap
+            if(present(wrap_in)) then
+                wrap = wrap_in
+            else
+                wrap = .true.
+            end if
             this%data => data
             this%nlat = SIZE(data,1)
             this%nlon = SIZE(data,2)
@@ -200,6 +246,7 @@ contains
             this%section_min_lon = section_coords%section_min_lon
             this%section_max_lat = section_coords%section_min_lat + section_coords%section_width_lat - 1
             this%section_max_lon = section_coords%section_min_lon + section_coords%section_width_lon - 1
+            this%wrap = wrap
     end subroutine init_latlon_field_section
 
     pure function latlon_get_value(this,coords_in) result(value)
@@ -214,14 +261,22 @@ contains
                 else if (this%nlat < coords_in%lat) then
                     lat = this%nlat
                 else
-                    lat = 0
+                    lat = 1
                 end if
                 if ( this%nlon >= coords_in%lon .and. coords_in%lon > 0) then
                     lon = coords_in%lon
                 else if (this%nlon < coords_in%lon) then
-                    lon = coords_in%lon - this%nlon
+                    if (.not. this%wrap) then
+                        lon = this%nlon
+                    else
+                        lon = coords_in%lon - this%nlon
+                    end if
                 else
-                    lon = this%nlon + coords_in%lon
+                    if (.not. this%wrap) then
+                        lon = 1
+                    else
+                        lon = this%nlon + coords_in%lon
+                    end if
                 end if
             end select
             allocate(value,source=this%data(lat,lon))
@@ -236,9 +291,17 @@ contains
                 if ( this%nlon >= coords_in%lon .and. coords_in%lon > 0) then
                     call this%set_data_array_element(coords_in%lat,coords_in%lon,value)
                 else if (this%nlon < coords_in%lon) then
-                    call this%set_data_array_element(coords_in%lat,coords_in%lon - this%nlon,value)
+                    if (.not. this%wrap) then
+                        stop 'Trying to write element outside of field boundries'
+                    else
+                        call this%set_data_array_element(coords_in%lat,coords_in%lon - this%nlon,value)
+                    end if
                 else
-                    call this%set_data_array_element(coords_in%lat,this%nlon + coords_in%lon,value)
+                    if (.not. this%wrap) then
+                        stop 'Trying to write element outside of field boundries'
+                    else
+                        call this%set_data_array_element(coords_in%lat,this%nlon + coords_in%lon,value)
+                    end if
                 end if
             end select
     end subroutine latlon_set_generic_value
@@ -304,5 +367,104 @@ contains
         class(latlon_field_section) :: this
             deallocate(this%data)
     end subroutine latlon_deallocate_data
+
+    function icon_single_index_field_section_constructor(data,section_coords) result(constructor)
+        type(icon_single_index_field_section), pointer :: constructor
+        class (*), dimension(:), pointer :: data
+        class(generic_1d_section_coords) section_coords
+            allocate(constructor)
+            call constructor%init_icon_single_index_field_section(data,section_coords)
+    end function icon_single_index_field_section_constructor
+
+    subroutine init_icon_single_index_field_section(this,input_data,section_coords)
+        class(icon_single_index_field_section) :: this
+        class(*), dimension(:), pointer :: input_data
+        type(generic_1d_section_coords) :: section_coords
+            this%data => input_data
+            this%cell_neighbors => section_coords%get_cell_neighbors()
+            this%cell_secondary_neighbors => &
+                section_coords%get_cell_secondary_neighbors()
+    end subroutine init_icon_single_index_field_section
+
+    subroutine icon_single_index_set_data_array_element(this,index,value)
+        class(icon_single_index_field_section) :: this
+        class(*), pointer :: value
+        integer :: index
+        select type (value)
+        type is (integer)
+            select type (data => this%data)
+                type is (integer)
+                    data(index) = value
+                class default
+                    stop 'trying to set array element with value of incorrect type'
+            end select
+        type is (logical)
+            select type (data => this%data)
+                type is (logical)
+                    data(index) = value
+                class default
+                    stop 'trying to set array element with value of incorrect type'
+            end select
+        type is (real)
+            select type (data => this%data)
+                type is (real)
+                    data(index) = value
+                class default
+                    stop 'trying to set array element with value of incorrect type'
+            end select
+        type is (generic_1d_coords)
+            select type (data=> this%data)
+                type is (generic_1d_coords)
+                    data(index) = value
+                class default
+                    stop 'trying to set array element with value of incorrect type'
+            end select
+
+        class default
+            stop 'trying to set array element with value of a unknown type'
+        end select
+    end subroutine icon_single_index_set_data_array_element
+
+    pure function icon_single_index_get_value(this,coords_in) result(value)
+        class(icon_single_index_field_section), intent(in) :: this
+        class(coords), intent(in) :: coords_in
+        class(*), pointer :: value
+            select type (coords_in)
+            type is (generic_1d_coords)
+                allocate(value,source=this%data(coords_in%index))
+            end select
+    end function icon_single_index_get_value
+
+    subroutine icon_single_index_set_generic_value(this,coords_in,value)
+        class(icon_single_index_field_section) :: this
+        class(coords), intent(in) :: coords_in
+        class(*), pointer, intent(in) :: value
+            select type (coords_in)
+            type is (generic_1d_coords)
+                call this%set_data_array_element(coords_in%index,value)
+            end select
+    end subroutine icon_single_index_set_generic_value
+
+    subroutine icon_single_index_print_field_section(this)
+        class(icon_single_index_field_section) :: this
+        integer :: i
+            select type(data => this%data)
+            type is (integer)
+                    write (*,*) (data(i),i=1,size(data))
+            type is (logical)
+                    write (*,*) (data(i),i=1,size(data))
+            end select
+    end subroutine icon_single_index_print_field_section
+
+    function get_mask(this) result(mask)
+        class(icon_single_index_field_section) :: this
+        logical, dimension(:), pointer :: mask
+        mask => this%mask
+    end function get_mask
+
+    subroutine icon_single_index_deallocate_data(this)
+        class(icon_single_index_field_section) :: this
+            deallocate(this%data)
+    end subroutine icon_single_index_deallocate_data
 
 end module field_section_mod

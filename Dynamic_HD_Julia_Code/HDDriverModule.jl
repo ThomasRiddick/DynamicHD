@@ -2,11 +2,11 @@ module HDDriverModule
 
 using Profile
 using HierarchicalStateMachineModule: HierarchicalStateMachine
-using HDModule: RiverParameters,RiverPrognosticFields,RiverPrognosticFieldsOnly,RunHD,handle_event,SetDrainage,SetRunoff,
-                PrintResults,PrognosticFields,water_to_lakes,water_from_lakes
+using HDModule: RiverParameters,RiverPrognosticFields,RiverPrognosticFieldsOnly,RunHD,handle_event
+using HDModule: SetDrainage,SetRunoff,PrintResults,PrognosticFields,water_to_lakes,water_from_lakes
 using FieldModule: Field
 using LakeModule: LakeParameters,LakePrognostics,LakeFields,RiverAndLakePrognosticFields,RunLakes
-using LakeModule: water_to_lakes,handle_event,water_from_lakes
+using LakeModule: PrintSection,WriteLakeNumbers,water_to_lakes,handle_event,water_from_lakes
 
 function drive_hd_model_with_or_without_lakes(prognostic_fields::PrognosticFields,
                                               drainages::Array{Field{Float64},1},
@@ -28,10 +28,16 @@ function drive_hd_model_with_or_without_lakes(prognostic_fields::PrognosticField
       handle_event(hsm,run_lakes)
     end
     if print_timestep_results
-      if i%100 == 0
-        print_results::PrintResults = PrintResults(i)
-        handle_event(hsm,print_results)
+      if i%10 == 0
+        # print_results::PrintResults = PrintResults(i)
+        # handle_event(hsm,print_results)
+        print_section::PrintSection = PrintSection()
+        handle_event(hsm,print_section)
       end
+    end
+    if i%100 == 0
+      write_lake_numbers::WriteLakeNumbers = WriteLakeNumbers(i)
+      handle_event(hsm,write_lake_numbers)
     end
   end
 end

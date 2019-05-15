@@ -1,4 +1,5 @@
 module coords_mod
+use unstructured_grid_mod
 implicit none
 
 !> An abstract class for holding coordinates on a generic grid
@@ -41,6 +42,7 @@ end interface latlon_coords
 type, extends(coords) ::  generic_1d_coords
     !> Single index
     integer :: index
+    logical :: use_internal_index
     contains
         !> A function to check if this coords object is the same coordinates
         !! object passed into it; if this is the case return TRUE else return
@@ -73,6 +75,22 @@ end type latlon_section_coords
 interface latlon_section_coords
     procedure latlat_section_coords_constructor
 end interface latlon_section_coords
+
+type, extends(section_coords) :: generic_1d_section_coords
+    integer, dimension(:,:), pointer :: cell_neighbors
+    integer, dimension(:,:), pointer :: cell_secondary_neighbors
+    integer, dimension(:), pointer :: edge_cells
+    integer, dimension(:), pointer :: subfield_indices
+    integer, dimension(:), pointer :: full_field_indices
+    logical, dimension(:), pointer :: mask
+    class(unstructured_grid), pointer :: grid
+    contains
+        procedure :: get_cell_neighbors
+        procedure :: get_cell_secondary_neighbors
+        procedure :: get_edge_cells
+        procedure :: get_subfield_indices
+        procedure :: get_full_field_indices
+end type generic_1d_section_coords
 
 !> An abstract class holding a generic indicator of cell that
 !! a given cell flows to; this could be implemented as a direction
@@ -150,10 +168,18 @@ contains
             end select
     end function latlon_are_equal_to
 
-    pure function generic_1d_constructor(index) result(constructor)
+    pure function generic_1d_constructor(index,use_internal_index_in) result(constructor)
         type(generic_1d_coords) :: constructor
         integer, intent(in) :: index
+        logical, intent(in), optional :: use_internal_index_in
+        logical :: use_internal_index
+            if (present(use_internal_index_in)) then
+                use_internal_index = use_internal_index_in
+            else
+                use_internal_index = .false.
+            end if
             constructor%index = index
+            constructor%use_internal_index = use_internal_index
     end function generic_1d_constructor
 
     pure function generic_1d_are_equal_to(this,rhs_coords) result(are_equal)
@@ -162,7 +188,9 @@ contains
         logical ::are_equal
             select type (rhs_coords)
             type is (generic_1d_coords)
-                are_equal = (this%index == rhs_coords%index)
+                are_equal = (this%index == rhs_coords%index .and. &
+                             this%use_internal_index .eqv. &
+                             rhs_coords%use_internal_index)
             end select
     end function generic_1d_are_equal_to
 
@@ -179,6 +207,68 @@ contains
         constructor%section_width_lat = section_width_lat
         constructor%section_width_lon = section_width_lon
     end function latlat_section_coords_constructor
+
+
+    function get_cell_neighbors(this) result(cell_neighbors)
+        class(generic_1d_section_coords), intent(inout) :: this
+        integer, dimension(:,:), pointer :: cell_neighbors
+            if (associated(this%cell_neighbors)) then
+                cell_neighbors=>this%cell_neighbors
+            else
+                cell_neighbors => &
+                    this%grid%generate_cell_neighbors(this%mask, &
+                                                      this%get_subfield_indices(), &
+                                                      this%get_full_field_indices())
+            end if
+    end function get_cell_neighbors
+
+    function get_cell_secondary_neighbors(this) result(cell_secondary_neighbors)
+        class(generic_1d_section_coords), intent(inout) :: this
+        integer, dimension(:,:), pointer :: cell_secondary_neighbors
+            if (associated(this%cell_secondary_neighbors)) then
+                cell_secondary_neighbors => this%cell_secondary_neighbors
+            else
+                cell_secondary_neighbors => &
+                    this%grid%generate_cell_secondary_neighbors(this%get_subfield_indices(), &
+                                                                this%get_full_field_indices(), &
+                                                                this%get_cell_neighbors())
+            end if
+    end function get_cell_secondary_neighbors
+
+    function get_edge_cells(this) result(edge_cells)
+        class(generic_1d_section_coords), intent(inout) :: this
+        integer, dimension(:), pointer :: edge_cells
+            if (associated(this%edge_cells)) then
+                edge_cells => this%edge_cells
+            else
+                edge_cells => &
+                    this%grid%generate_edge_cells(this%get_cell_neighbors(), &
+                                                  this%get_cell_secondary_neighbors())
+            end if
+    end function get_edge_cells
+
+    function get_subfield_indices(this) result(subfield_indices)
+        class(generic_1d_section_coords), intent(inout) :: this
+        integer, dimension(:), pointer :: subfield_indices
+            if (associated(this%subfield_indices)) then
+                subfield_indices => this%subfield_indices
+            else
+                subfield_indices => &
+                    this%grid%generate_subfield_indices(this%mask)
+            end if
+    end function get_subfield_indices
+
+    function get_full_field_indices(this) result(full_field_indices)
+        class(generic_1d_section_coords), intent(inout) :: this
+        integer, dimension(:), pointer :: full_field_indices
+            if (associated(this%subfield_indices)) then
+                full_field_indices => this%full_field_indices
+            else
+                full_field_indices => &
+                    this%grid%generate_full_field_indices(this%mask,&
+                                                          this%get_subfield_indices())
+            end if
+    end function get_full_field_indices
 
     pure function dir_based_direction_indicator_constructor(direction) result(constructor)
         type(dir_based_direction_indicator) :: constructor

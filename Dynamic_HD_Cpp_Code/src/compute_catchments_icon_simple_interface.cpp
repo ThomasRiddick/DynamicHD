@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <unistd.h>
 #include <netcdfcpp.h>
 #include "grid.hpp"
 #include "catchment_computation_algorithm.hpp"
@@ -21,9 +22,51 @@ NcToken CENTER_LATITUDE = "center latitude";
 NcToken LONGITUDE = "longitude";
 NcToken CENTER_LONGITUDE = "center longitude";
 
+void print_usage(){
+    cout <<
+    "Usage: " << endl;
+    cout <<
+    "./Compute_Catchments_SI_Exec [next cell index filepath] [catchment numbers out filepath]"
+    << endl <<
+    "                             [grid params filepath] [next cell index fieldname]" << endl;
+}
+
+void print_help(){
+  print_usage();
+  cout << "Generate the catchments of a set of river direction on the ICON icosahedral grid."
+       << endl;
+  cout << "Arguments:" << endl;
+  cout << "next cell index file path - Full path to the next cell index file path; the " << endl
+       << "next cell index values are the ICON equivalent of river directions" << endl;
+  cout << "catchment numbers out file path - Full path to the target output catchment"
+       << " numbers" << endl;
+  cout << "grid params file path - Full path to the grid description file for the ICON" << endl
+       << " grid being used" << endl;
+  cout << "next cell index field name - Field name of the next cell index values in the"
+       << " specified file." << endl;
+}
+
 int main(int argc, char *argv[]){
-  if(argc<5) throw runtime_error("Not enough arguments");
-  if(argc>6) throw runtime_error("Too many arguments");
+  cout << "ICON catchment computation tool" << endl;
+  int opts;
+  while ((opts = getopt(argc,argv,"h")) != -1){
+    if (opts == 'h'){
+      print_help();
+      exit(EXIT_FAILURE);
+    }
+  }
+  if(argc<5) {
+    cout << "Not enough arguments" << endl;
+    print_usage();
+    cout << "Run with option -h for help" << endl;
+    exit(EXIT_FAILURE);
+  }
+  if(argc>6) {
+    cout << "Too many arguments" << endl;
+    print_usage();
+    cout << "Run with option -h for help" << endl;
+    exit(EXIT_FAILURE);
+  }
   string next_cell_index_filepath(argv[1]);
   string catchment_numbers_out_filepath(argv[2]);
   string grid_params_filepath(argv[3]);

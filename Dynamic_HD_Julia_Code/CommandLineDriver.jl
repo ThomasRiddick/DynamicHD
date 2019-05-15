@@ -38,14 +38,26 @@ function main()
   grid = LatLonGrid(360,720,true)
   lake_grid = LatLonGrid(1080,2160,true)
   river_parameters = load_river_parameters(args["hd-para-file"],grid)
-  drainage::Field{Float64} = LatLonField{Float64}(river_parameters.grid,0.1)
+  drainage::Field{Float64} = LatLonField{Float64}(river_parameters.grid,1.5)
   drainages::Array{Field{Float64},1} = repeat(drainage,500)
   runoffs::Array{Field{Float64},1} = deepcopy(drainages)
   if args["lake-para-file"] != nothing
     lake_parameters = load_lake_parameters(args["lake-para-file"],lake_grid,grid)
     drive_hd_and_lake_model(river_parameters,lake_parameters,
                             drainages,runoffs,
-                            timesteps;print_timestep_results=false)
+                            timesteps;print_timestep_results=true)
+    drainages = repeat(drainage,500)
+    runoffs = deepcopy(drainages)
+    Profile.clear()
+    Profile.init(delay=0.01)
+    # @profile drive_hd_and_lake_model(river_parameters,lake_parameters,
+    #                               drainages,runoffs,
+    #                               timesteps;print_timestep_results=false)
+    Profile.print()
+    r = Profile.retrieve();
+    f = open("/Users/thomasriddick/Downloads/profile.bin", "w")
+    Serialization.serialize(f, r)
+    close(f)
   else
     if args["hd-init-file"] != nothing
       # drive_hd_model(river_parameters,river_fields,
@@ -71,7 +83,8 @@ function main()
 end
 
 empty!(ARGS)
-push!(ARGS,"-p/Users/thomasriddick/Documents/data/HDdata/hdfiles/hdpara_file_from_current_model.nc")
-push!(ARGS,"-l/Users/thomasriddick/Documents/data/HDdata/lakeparafiles/lakeparasevaluate_glac1D_ts1900_basins_20190401_202323.nc")
-push!(ARGS,"-t5")
+#push!(ARGS,"-p/Users/thomasriddick/Documents/data/HDdata/hdfiles/hdpara_file_from_current_model.nc")
+push!(ARGS,"-p/Users/thomasriddick/Documents/data/HDdata/hdfiles/generated/hd_file_prepare_river_directions_with_depressions_20190503_170551.nc")
+push!(ARGS,"-l/Users/thomasriddick/Documents/data/HDdata/lakeparafiles/lakeparasevaluate_glac1D_ts1900_basins_20190509_101249.nc")
+push!(ARGS,"-t500")
 main()

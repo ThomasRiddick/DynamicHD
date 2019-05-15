@@ -71,6 +71,7 @@ class Dynamic_HD_Drivers(object):
         minima_path_extension = 'minima'
         lakemask_path_extension= 'lakemasks'
         lake_parameter_file_extension = 'lakeparafiles'
+        basin_catchment_numbers_file_extension = 'basin_catchment_numbers'
         cotat_plus_parameters_path_extension = path.join(parameter_path_extension,'cotat_plus')
         orography_upscaling_parameters_path_extension = path.join(parameter_path_extension,
                                                                   'orography_upscaling')
@@ -156,6 +157,8 @@ class Dynamic_HD_Drivers(object):
         self.lakemask_filepath = path.join(data_dir,lakemask_path_extension)
         self.lake_parameter_file_path = path.join(data_dir,
                                                   lake_parameter_file_extension)
+        self.basin_catchment_numbers_path = path.join(data_dir,
+                                                      basin_catchment_numbers_file_extension)
         self.hd_grid_filepath = path.join(self.grids_path,"hdmodel2d_griddes")
         self.half_degree_grid_filepath = path.join(self.grids_path,"grid_0_5.txt")
         self.ten_minute_grid_filepath = path.join(self.grids_path,"grid_10min.txt")
@@ -254,7 +257,7 @@ class Dynamic_HD_Drivers(object):
                                                      "generate_output_file.sh"),
                                            path.join(bash_scripts_path,
                                                      "bin"),
-                                           path.join(bash_scripts_path,
+                                           path.join(private_bash_scripts_path,
                                                      "fortran"),
                                            path.splitext(rdir_file)[0] + ".dat",
                                            path.splitext(lsmask_file)[0] + ".dat",
@@ -296,7 +299,7 @@ class Dynamic_HD_Drivers(object):
 
         parameter_generation_grid = grid.makeGrid(grid_type,**grid_kwargs)
         nlat,nlon = parameter_generation_grid.get_grid_dimensions()
-        original_paragen_source_filepath = path.join(bash_scripts_path,"fortran",
+        original_paragen_source_filepath = path.join(private_bash_scripts_path,"fortran",
                                                      "paragen.f")
         if (nlat != 360 or nlon != 720):
             paragen_source_filepath = self.generated_paragen_code_copies_path  + paragen_source_label
@@ -329,7 +332,7 @@ class Dynamic_HD_Drivers(object):
                                                      "parameter_generation_driver.sh"),
                                            path.join(bash_scripts_path,
                                                      "bin"),
-                                           path.join(bash_scripts_path,
+                                           path.join(private_bash_scripts_path,
                                                      "fortran"),
                                            path.splitext(rdir_file)[0] + ".dat",
                                            path.splitext(topography_file)[0] + ".dat",

@@ -60,6 +60,9 @@ end
 get_grid(obj::T) where {T <: Field} =
   obj.grid::Grid
 
+get_data(obj::T) where {T <: Field} =
+  obj.data::Array
+
 function repeat(field::Field{T}, count::Integer) where {T}
   array::Array{Field{T},1} = Array{Field{T},1}(undef,count)
   for i in 1:count

@@ -2,6 +2,7 @@
 F90_SRCS += \
 $(FRUIT_LOC)/fruit.f90 \
 ../src/precision_mod.f90 \
+../src/unstructured_grid_mod.f90 \
 ../src/coords_mod.f90 \
 ../src/doubly_linked_list_link_mod.f90 \
 ../src/doubly_linked_list_mod.f90 \
@@ -28,6 +29,7 @@ $(FRUIT_LOC)/fruit.f90 \
 
 OBJS += \
 ./src/precision_mod.o \
+./src/unstructured_grid_mod.o \
 ./src/coords_mod.o \
 ./src/doubly_linked_list_link_mod.o \
 ./src/doubly_linked_list_mod.o \
@@ -58,6 +60,7 @@ TEST_OBJS += \
 MODS += \
 ./fruit.mod \
 ./fruit_util.mod \
+./unstructured_grid_mod.mod \
 ./precision_mod.mod \
 ./coords_mod.mod \
 ./doubly_linked_list_link_mod.mod \
@@ -108,7 +111,7 @@ src/break_loops_mod.o: ../src/break_loops_mod.f90 src/loop_breaker_mod.o
 
 src/break_loops_driver_mod.o: ../src/break_loops_driver_mod.f90 src/break_loops_mod.o
 
-src/coords_mod.o: ../src/coords_mod.f90
+src/coords_mod.o: ../src/coords_mod.f90 src/unstructured_grid_mod.o
 
 src/cotat_parameters_mod.o: ../src/cotat_parameters_mod.f90
 
@@ -147,6 +150,8 @@ src/subfield_mod.o: ../src/subfield_mod.f90 src/coords_mod.o
 src/subfield_test_mod.o: ../src/subfield_test_mod.f90 src/coords_mod.o src/fruit.o src/subfield_mod.o
 
 src/flow_accumulation_algorithm_mod.o: ../src/flow_accumulation_algorithm_mod.f90 ../src/subfield_mod.f90 src/coords_mod.o
+
+src/unstructured_grid_mod.o: ../src/unstructured_grid_mod.f90
 
 
 

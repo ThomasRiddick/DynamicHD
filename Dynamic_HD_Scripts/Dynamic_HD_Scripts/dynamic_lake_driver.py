@@ -14,6 +14,7 @@ import utilities
 import compute_catchments as cc
 import flow_to_grid_cell as ftgc
 from os.path import join
+import os.path as path
 
 class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
     '''
@@ -562,8 +563,9 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
                                        fieldname="depth",clobber=True)
 
     def prepare_basins_from_glac1D(self):
-      timesteps_to_use = [1200,1250,1300,1350,1400,1425,1450,1475,1500,1525,1550,
-                          1575,1600,1625,1650,1675,1700,1725,1750,1775,1800,1850,1900]
+      # timesteps_to_use = [1200,1250,1300,1350,1400,1425,1450,1475,1500,1525,1550,
+      #                     1575,1600,1625,1650,1675,1700,1725,1750,1775,1800,1850,1900]
+      timesteps_to_use = [1900]
       timestep_for_0k = 2600
       glac_1d_topo_filename = join(self.orography_path,
                                    "GLAC1D_Top01_surf.nc")
@@ -648,6 +650,46 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
                          output_filename=coarse_cumulative_flow_filename,
                          rdirs_fieldname='FDIR',
                          output_fieldname='cflow')
+      coarse_orography_filename = (self.generated_orography_filepath + file_label + "with_depressions"
+                                   + '_30mins.nc')
+      coarse_lsmask_filename = (self.generated_ls_mask_filepath + file_label + "_30mins.nc")
+      utilities.upscale_field_driver(input_filename=working_orography_filename,
+                                     output_filename=coarse_orography_filename,
+                                     input_grid_type='LatLong10min',
+                                     output_grid_type='HD',
+                                     method='Sum', timeslice=None,
+                                     scalenumbers=True)
+      utilities.upscale_field_driver(input_filename=lsmask_filename,
+                                     output_filename=coarse_lsmask_filename,
+                                     input_grid_type='LatLong10min',
+                                     output_grid_type='HD',
+                                     method='Mode', timeslice=None,
+                                     scalenumbers=True)
+      transformed_course_rdirs_filename = path.splitext(rdirs_filename_30min)[0] + '_transf' +\
+                                          path.splitext(rdirs_filename_30min)[1]
+      transformed_HD_filled_orography_filename = path.splitext(coarse_orography_filename)[0] + '_transf' +\
+                                        path.splitext(coarse_orography_filename)[1]
+      transformed_HD_ls_mask_filename = path.splitext(coarse_lsmask_filename)[0] + '_transf' +\
+                                          path.splitext(coarse_lsmask_filename)[1]
+      self._apply_transforms_to_field(input_filename=rdirs_filename_30min,
+                                      output_filename=transformed_course_rdirs_filename,
+                                      flip_ud=False, rotate180lr=True, invert_data=False,
+                                      timeslice=None, griddescfile=self.half_degree_grid_filepath,
+                                      grid_type='HD')
+      self._apply_transforms_to_field(input_filename=coarse_orography_filename,
+                                      output_filename=transformed_HD_filled_orography_filename,
+                                      flip_ud=True, rotate180lr=True, invert_data=False,
+                                      timeslice=None, griddescfile=self.half_degree_grid_filepath,
+                                      grid_type='HD')
+      self._apply_transforms_to_field(input_filename=coarse_lsmask_filename,
+                                      output_filename=transformed_HD_ls_mask_filename,
+                                      flip_ud=False, rotate180lr=False, invert_data=True,
+                                      timeslice=None, griddescfile=self.half_degree_grid_filepath,
+                                      grid_type='HD')
+      self.prepare_flow_parameters_from_rdirs(rdirs_filepath=rdirs_filename_30min,
+                                              orography_filepath=transformed_HD_filled_orography_filename,
+                                              lsmask_filepath=transformed_HD_ls_mask_filename,
+                                              file_label=file_label)
 
     def prepare_river_directions_with_depressions_from_glac1D(self):
       working_orography_filename = "/Users/thomasriddick/Documents/data/HDdata/orographys/generated/updated_orog_1900_ice6g_lake_prepare_orography_20190211_131605.nc"
@@ -658,6 +700,36 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
                                                      lsmask_filename,
                                                      orography_fieldname,
                                                      lsmask_fieldname)
+
+    def prepare_flow_parameters_from_rdirs(self,rdirs_filepath,orography_filepath,lsmask_filepath,
+                                           file_label):
+      self._generate_flow_parameters(rdir_file=rdirs_filepath,
+                                     topography_file=orography_filepath,
+                                     inner_slope_file=\
+                                     path.join(self.orography_path,'bin_innerslope.dat'),
+                                     lsmask_file=lsmask_filepath,
+                                     null_file=\
+                                     path.join(self.null_fields_filepath,'null.dat'),
+                                     area_spacing_file=\
+                                     path.join(self.grid_areas_and_spacings_filepath,
+                                               'fl_dp_dl.dat'),
+                                     orography_variance_file=\
+                                     path.join(self.orography_path,'bin_toposig.dat'),
+                                     output_dir=path.join(self.flow_params_dirs_path,
+                                                         'hd_flow_params' + file_label),
+                                     paragen_source_label=None,production_run=False,
+                                     grid_type="HD")
+      self._generate_hd_file(rdir_file=path.splitext(rdirs_filepath)[0] + ".dat",
+                             lsmask_file=lsmask_filepath,
+                             null_file=\
+                             path.join(self.null_fields_filepath,'null.dat'),
+                             area_spacing_file=\
+                             path.join(self.grid_areas_and_spacings_filepath,
+                                       'fl_dp_dl.dat'),
+                             hd_grid_specs_file=self.half_degree_grid_filepath,
+                             output_file=self.generated_hd_file_path + file_label + '.nc',
+                             paras_dir=path.join(self.flow_params_dirs_path,
+                                                 'hd_flow_params' + file_label))
 
     def evaluate_glac1D_ts1900_basins(self):
         file_label = self._generate_file_label()
@@ -696,7 +768,10 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
                                             join(self.lake_parameter_file_path,
                                                  "lakeparas" + file_label + ".nc"),
                                            output_filepath=self.lake_parameter_file_path,
-                                           output_filelabel=file_label)
+                                           output_filelabel=file_label,
+                                           output_basin_catchment_nums_filepath=
+                                           join(self.basin_catchment_numbers_path,
+                                                "basin_catchment_numbers" + file_label + ".nc"))
 
     def evaluate_ICE6G_lgm_basins(self):
         file_label = self._generate_file_label()

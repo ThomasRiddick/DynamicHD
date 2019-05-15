@@ -80,6 +80,8 @@ public:
 	bool operator== (const field<field_type>&) const;
 	///check if two field are almost equal to within a tolerance
 	bool almost_equal(const field<field_type>&, double = 1.0e-12) const;
+	//Turn off deleting the data in destruction
+	void switch_data_deletion_off() {data_passed_in=false;}
 	///Overload the output stream operator to print out the values of all the entries in the field
 	///and the values of nlat and nlon.
 	template <typename friends_field_type>

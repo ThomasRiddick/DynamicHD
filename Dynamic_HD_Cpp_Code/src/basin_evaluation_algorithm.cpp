@@ -449,11 +449,11 @@ void basin_evaluation_algorithm::process_center_cell() {
 			center_cell_volume_threshold;
 		q.push(new basin_cell((*raw_orography)(previous_filled_cell_coords),
 		                      flood_height,previous_filled_cell_coords));
-		set_previous_cells_connect_next_cell_index();
+		set_previous_cells_connect_next_cell_index(center_coords);
 	} else if (previous_filled_cell_height_type == flood_height) {
 		(*flood_volume_thresholds)(previous_filled_cell_coords) =
 			center_cell_volume_threshold;
-		set_previous_cells_flood_next_cell_index();
+		set_previous_cells_flood_next_cell_index(center_coords);
 	} else throw runtime_error("Cell type not recognized");
 	if (center_cell_height_type == connection_height) {
 		(*connected_cells)(center_coords) = true;
@@ -733,10 +733,10 @@ void basin_evaluation_algorithm::rebuild_secondary_basin(coords* initial_coords)
 
 void basin_evaluation_algorithm::set_secondary_redirect(){
 	if (previous_filled_cell_height_type == flood_height) {
-		set_previous_cells_flood_next_cell_index();
+		set_previous_cells_flood_next_cell_index(new_center_coords);
 		(*requires_flood_redirect_indices)(previous_filled_cell_coords) = true;
 	} else if (previous_filled_cell_height_type == connection_height){
-		set_previous_cells_connect_next_cell_index();
+		set_previous_cells_connect_next_cell_index(new_center_coords);
 		(*requires_connect_redirect_indices)(previous_filled_cell_coords) = true;
 	} else throw runtime_error("Cell type not recognized");
 	//Store information on the next downstream cell in the redirect index for
@@ -914,6 +914,10 @@ void basin_evaluation_algorithm::set_remaining_redirects() {
 		}
 		delete coords_in;
 	});
+}
+
+int* basin_evaluation_algorithm::retrieve_lake_numbers(){
+	return basin_catchment_numbers->get_array();
 }
 
 queue<cell*> basin_evaluation_algorithm::
@@ -1183,17 +1187,17 @@ bool latlon_basin_evaluation_algorithm::check_for_sinks_and_set_downstream_coord
 }
 
 void latlon_basin_evaluation_algorithm::
-	set_previous_cells_flood_next_cell_index(){
-	latlon_coords* latlon_center_coords = static_cast<latlon_coords*>(center_coords);
-	(*flood_next_cell_lat_index)(previous_filled_cell_coords) = latlon_center_coords->get_lat();
-	(*flood_next_cell_lon_index)(previous_filled_cell_coords) = latlon_center_coords->get_lon();
+	set_previous_cells_flood_next_cell_index(coords* coords_in){
+	latlon_coords* latlon_coords_in = static_cast<latlon_coords*>(coords_in);
+	(*flood_next_cell_lat_index)(previous_filled_cell_coords) = latlon_coords_in->get_lat();
+	(*flood_next_cell_lon_index)(previous_filled_cell_coords) = latlon_coords_in->get_lon();
 }
 
 void latlon_basin_evaluation_algorithm::
-	set_previous_cells_connect_next_cell_index(){
-	latlon_coords* latlon_center_coords = static_cast<latlon_coords*>(center_coords);
-	(*connect_next_cell_lat_index)(previous_filled_cell_coords) = latlon_center_coords->get_lat();
-	(*connect_next_cell_lon_index)(previous_filled_cell_coords) = latlon_center_coords->get_lon();
+	set_previous_cells_connect_next_cell_index(coords* coords_in){
+	latlon_coords* latlon_coords_in = static_cast<latlon_coords*>(coords_in);
+	(*connect_next_cell_lat_index)(previous_filled_cell_coords) = latlon_coords_in->get_lat();
+	(*connect_next_cell_lon_index)(previous_filled_cell_coords) = latlon_coords_in->get_lon();
 }
 
 void latlon_basin_evaluation_algorithm::

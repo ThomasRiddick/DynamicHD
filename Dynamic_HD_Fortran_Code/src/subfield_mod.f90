@@ -181,15 +181,19 @@ interface latlon_subfield
     procedure latlon_subfield_constructor
 end interface latlon_subfield
 
-!> A concrete subclass of subfield for a latitude longitude grid
+!> A concrete subclass of subfield for an icon single index grid
 type, extends(subfield), public :: icon_single_index_subfield
     private
     !> A 1D array to hold the subfield data
     class (*), dimension(:), pointer :: data => null()
-    logical, dimension(:), allocatable :: cell_neighbors
-    logical, dimension(:), allocatable :: cell_secondary_neighbors
+    integer, dimension(:,:), pointer :: cell_neighbors
+    integer, dimension(:,:), pointer :: cell_secondary_neighbors
+    integer, dimension(:), pointer :: edge_cells
+    integer, dimension(:), pointer :: subfield_indices
+    logical, dimension(:), pointer :: mask
     type(generic_1d_coords) :: outside_subfield_coords
     integer :: num_points
+    integer :: num_edge_cells
 contains
     procedure, private :: init_icon_single_index_subfield
     procedure :: get_value => icon_single_index_get_value
@@ -469,7 +473,7 @@ contains
             result(constructor)
         type(icon_single_index_subfield), pointer :: constructor
         class(*), dimension(:), pointer :: input_data
-        class(icon_single_index_section_coords) :: subfield_section_coords
+        class(generic_1d_section_coords) :: subfield_section_coords
             allocate(constructor)
             call constructor%init_icon_single_index_subfield(input_data,subfield_section_coords)
     end function icon_single_index_subfield_constructor
@@ -477,7 +481,7 @@ contains
     subroutine init_icon_single_index_subfield(this,input_data,subfield_section_coords)
         class(icon_single_index_subfield) :: this
         class(*), dimension(:), pointer :: input_data
-        type(icon_single_index_section_coords) :: subfield_section_coords
+        type(generic_1d_section_coords) :: subfield_section_coords
             this%data => input_data
             this%cell_neighbors => subfield_section_coords%get_cell_neighbors()
             this%cell_secondary_neighbors => &
@@ -488,9 +492,15 @@ contains
         class(icon_single_index_subfield), intent(in) :: this
         class(coords), intent(in) :: coords_in
         class(*), pointer :: value
+        integer :: converted_index
             select type (coords_in)
             type is (generic_1d_coords)
-                allocate(value,source=this%data(coords_in%index))
+                if(coords_in%use_internal_index) then
+                    allocate(value,source=this%data(coords_in%index))
+                else
+                    converted_index = this%subfield_indices(coords_in%index)
+                    allocate(value,source=this%data(converted_index))
+                end if
             end select
     end function icon_single_index_get_value
 
@@ -498,9 +508,15 @@ contains
         class(icon_single_index_subfield) :: this
         class(coords), intent(in) :: coords_in
         class(*), pointer :: value
+        integer :: converted_index
             select type (coords_in)
             type is (generic_1d_coords)
-                call this%set_data_array_element(coords_in%index,value)
+                if(coords_in%use_internal_index) then
+                    call this%set_data_array_element(coords_in%index,value)
+                else
+                    converted_index = this%subfield_indices(coords_in%index)
+                    call this%set_data_array_element(converted_index,value)
+                end if
             end select
             deallocate(value)
     end subroutine icon_single_index_set_generic_value
@@ -530,7 +546,7 @@ contains
         end interface
         procedure(subroutine_interface) :: subroutine_in
             do i = 1,this%num_points
-                call subroutine_in(calling_object,generic_1d_coords(i))
+                call subroutine_in(calling_object,generic_1d_coords(i,.true.))
             end do
     end subroutine icon_single_index_for_all
 
@@ -547,7 +563,9 @@ contains
             end subroutine subroutine_interface
         end interface
         procedure(subroutine_interface) :: subroutine_in
-        CODE THIS UP
+        do i = 1,this%num_edge_cells
+                call subroutine_in(calling_object,generic_1d_coords(this%edge_cells(i),.true.))
+            end do
     end subroutine icon_single_index_for_all_edge_cells
 
     subroutine icon_single_index_set_all_generic(this,value)
@@ -555,7 +573,7 @@ contains
         class(*), pointer :: value
         integer :: i
             do i = 1,this%num_points
-                call this%set_generic_value(generic_1d_coords(i),value)
+                call this%set_generic_value(generic_1d_coords(i,.true.),value)
             end do
     end subroutine icon_single_index_set_all_generic
 
@@ -565,9 +583,15 @@ contains
         class(icon_single_index_subfield) :: this
         class(coords), pointer :: coords_in
         logical :: is_true
+        integer :: converted_index
             select type (coords_in)
             type is (generic_1d_coords)
-                is_true = (coords_in%are_equal_to(this%outside_subfield_coords))
+                if(coords_in%use_internal_index) then
+                    is_true = (coords_in%are_equal_to(this%outside_subfield_coords))
+                else
+                    converted_index = this%subfield_indices(coords_in%index)
+                    is_true = (this%outside_subfield_coords%index == converted_index)
+                end if
             end select
     end function icon_single_index_coords_outside_subfield
 

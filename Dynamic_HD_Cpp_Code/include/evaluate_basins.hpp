@@ -38,7 +38,8 @@ void latlon_evaluate_basins_cython_wrapper(int* minima_in_int,
                                            int* additional_connect_local_redirect_out_int,
                                            int* merge_points_out_int,
                                            int nlat_fine, int nlon_fine,
-                                           int nlat_coarse,int nlon_coarse);
+                                           int nlat_coarse,int nlon_coarse,
+                                           int* basin_catchment_numbers_in=nullptr);
 
 void latlon_evaluate_basins(bool* minima_in,
                             double* raw_orography_in,
@@ -70,6 +71,7 @@ void latlon_evaluate_basins(bool* minima_in,
                             bool* additional_connect_local_redirect_in,
                             int* merge_points_out_int,
                             int nlat_fine, int nlon_fine,
-                            int nlat_coarse,int nlon_coarse);
+                            int nlat_coarse,int nlon_coarse,
+                            int* basin_catchment_numbers_in=nullptr);
 
 #endif /* EVALUATE_BASINS_HPP_ */
