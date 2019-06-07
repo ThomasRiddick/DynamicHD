@@ -15,6 +15,7 @@
 #include <utility>
 #include <iostream>
 #include <iomanip>
+#include <algorithm>
 #include "grid.hpp"
 
 using namespace std;
