@@ -44,11 +44,11 @@ class TestRiverDirectionDeterminationDriver(unittest.TestCase):
         expected_rdirs_out = np.array([[6,   3,   2,   3,    2,   1,   1,   6],
                                        [3,   2,   1,   6,    0,   4,   4,   1],
                                        [3,   2,   1,   9,    8,   7,   7,   4],
-                                       [3,   2,   1,   6,    6,   9,   8,   7],
+                                       [3,   2,   1,   6,    9,   9,   8,   7],
                                        [6,   3,   3,   3,    3,   9,   8,   7],
                                        [9,   6,   6,   6,    6,   9,   8,   7],
-                                       [4,   9,   9,   9,    9,   8,   7,   1],
-                                       [7,   6,   6,   6,    9,   8,   7,   4]],
+                                       [6,   9,   9,   9,    9,   8,   7,   6],
+                                       [9,   8,   7,   4,    4,   6,   9,   9]],
                                        dtype=np.float64)
         rdirs = np.zeros((8,8),dtype=np.float64)
         always_flow_to_sea_in = True
@@ -148,11 +148,11 @@ class TestRiverDirectionDeterminationDriver(unittest.TestCase):
         expected_rdirs_out = np.array([[2,   1,   1,   6,    6,   3,   2,   3],
                                        [0,   4,   4,   1,    3,   2,   1,   6],
                                        [8,   7,   7,   4,    3,   2,   1,   9],
-                                       [1,   9,   8,   7,    3,   2,   1,   2],
+                                       [4,   9,   8,   7,    3,   2,   1,   7],
                                        [3,   9,   8,   7,    6,   3,   3,   3],
                                        [6,   9,   8,   7,    9,   6,   6,   6],
-                                       [9,   8,   7,   6,    3,   9,   9,   9],
-                                       [4,   4,   9,   9,    6,   9,   8,   7]],
+                                       [9,   8,   7,   1,    3,   9,   9,   9],
+                                       [8,   7,   4,   4,    6,   6,   6,   9]],
                                        dtype=np.float64)
         rdirs = np.zeros((8,8),dtype=np.float64)
         always_flow_to_sea_in = True

@@ -22,15 +22,17 @@ public:
 	virtual ~carved_river_direction_burning_algorithm();
 	void setup_fields(double* orography_in,bool* minima_in,bool* lakemask_in,
 					  grid_params* grid_params_in);
-	void setup_flags(bool add_slope_in=false,int max_exploration_range_in=0,
-	                 double minimum_height_change_threshold_in = 0.0);
+	void setup_flags(bool add_slope_in = false,int max_exploration_range_in = 0,
+	                 double regular_minimum_height_change_threshold_in = 0.0,
+	                 int short_path_threshold_in = 0,
+	                 double short_minimum_height_change_threshold_in = 0.0);
 	void burn_carved_river_directions();
 protected:
 	void add_minima_to_q();
 	void reprocess_path();
 	virtual coords* get_next_cell_downstream(coords* initial_coords) = 0;
 	priority_cell_queue q;
-	stack<coords*> reprocessing_q;
+	queue<coords*> reprocessing_q;
 	grid_params* _grid_params = nullptr;
 	grid* _grid = nullptr;
 	field<double>* orography = nullptr;
@@ -40,7 +42,9 @@ protected:
 	double minima_height;
 	bool add_slope = false;
 	int max_exploration_range = 0;
-	double minimum_height_change_threshold = 0.0;
+	double regular_minimum_height_change_threshold = 0.0;
+	int short_path_threshold = 0;
+	double short_minimum_height_change_threshold = 0.0;
 };
 
 class carved_river_direction_burning_algorithm_latlon : public carved_river_direction_burning_algorithm {

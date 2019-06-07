@@ -13,11 +13,14 @@ from Cython.Build import cythonize
 from context import module_dir
 import os.path as path
 import os
+import socket
 from sys import platform
 
 if platform == "linux" or platform == "linux2":
     extra_compile_args = ['-std=gnu++11']
-    extra_links_args = ['-static-libstdc++']
+    extra_links_args = ['-static-libstdc++',"-shared"]
+    if "mistral" in socket.gethostname():
+      os.environ["LDSHARED"] = "/sw/rhel6-x64/gcc/binutils-2.26-gccsys/bin/ld"
 elif platform == "darwin":
     #specify gcc as the compiler (which is despite the name actually a version of clang on mac)
     os.environ["CC"] = "/usr/bin/gcc"
@@ -69,7 +72,8 @@ extensions=[Extension("libs.fill_sinks_wrapper",[path.join(module_dir,"fill_sink
                                                      path.join(src,"cell.cpp"),
                                                      path.join(src,"lake_filling_algorithm.cpp"),
                                                      path.join(src,"reduce_connected_areas_to_points_algorithm.cpp"),
-                                                     path.join(src,"carved_river_direction_burning_algorithm.cpp")],
+                                                     path.join(src,"carved_river_direction_burning_algorithm.cpp"),
+                                                     path.join(src,"water_redistribution_algorithm.cpp")],
                       include_dirs=[src,include,np.get_include()],
                       language="c++",
                       extra_compile_args=extra_compile_args,

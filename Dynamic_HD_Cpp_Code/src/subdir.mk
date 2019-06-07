@@ -27,7 +27,9 @@ CPP_SRCS += \
 ../src/test_grid.cpp \
 ../src/river_direction_determination_algorithm.cpp \
 ../src/determine_river_directions.cpp \
-../src/test_determine_river_directions.cpp
+../src/test_determine_river_directions.cpp \
+../src/water_redistribution_algorithm.cpp \
+../src/redistribute_water.cpp
 
 USER_OBJS += \
 ./src/cell.o \
@@ -48,7 +50,9 @@ USER_OBJS += \
 ./src/basin_evaluation_algorithm.o \
 ./src/evaluate_basins.o \
 ./src/river_direction_determination_algorithm.o \
-./src/determine_river_directions.o
+./src/determine_river_directions.o \
+./src/water_redistribution_algorithm.o \
+./src/redistribute_water.o
 
 FS_ICON_SI_OBJS += \
 ./src/sink_filling_icon_simple_interface.o
@@ -95,7 +99,9 @@ CPP_DEPS += \
 ./src/test_grid.d \
 ./src/river_direction_determination_algorithm.d \
 ./src/determine_river_directions.d \
-./src/test_determine_river_directions.d
+./src/test_determine_river_directions.d \
+./src/water_redistribution_algorithm.d \
+./src/redistribute_water.d
 
 # Each subdirectory must supply rules for building sources it contributes
 src/%.o: ../src/%.cpp

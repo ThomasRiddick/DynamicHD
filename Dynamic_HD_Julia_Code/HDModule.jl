@@ -2,12 +2,13 @@ module HDModule
 
 using HierarchicalStateMachineModule: Event,State
 using FieldModule: Field,DirectionIndicators,maximum,set!,fill!,+,invert,repeat,get
-using CoordsModule: Coords, DirectionIndicator,
+using CoordsModule: Coords, DirectionIndicator,LatLonSectionCoords,
       is_ocean, is_outflow, is_truesink, is_lake
-using GridModule: Grid, for_all,find_downstream_coords
+using GridModule: Grid, for_all,find_downstream_coords,for_section_with_line_breaks
 using UserExceptionModule: UserError
 import HierarchicalStateMachineModule: handle_event
 using InteractiveUtils
+using Printf: @printf
 
 struct RunHD <: Event end
 
@@ -50,16 +51,16 @@ mutable struct RiverPrognosticFields
   river_flow_reservoirs::Array{Field{Float64},1}
   water_to_ocean::Field{Float64}
   function RiverPrognosticFields(river_parameters::RiverParameters)
-    runoff = Field{Float64}(river_parameters.grid)
-    drainage = Field{Float64}(river_parameters.grid)
-    river_inflow = Field{Float64}(river_parameters.grid)
-    base_flow_reservoirs =      repeat(Field{Float64}(river_parameters.grid),
+    runoff = Field{Float64}(river_parameters.grid,0.0)
+    drainage = Field{Float64}(river_parameters.grid,0.0)
+    river_inflow = Field{Float64}(river_parameters.grid,0.0)
+    base_flow_reservoirs =      repeat(Field{Float64}(river_parameters.grid,0.0),
                                        maximum(river_parameters.base_reservoir_nums))
-    overland_flow_reservoirs =  repeat(Field{Float64}(river_parameters.grid),
+    overland_flow_reservoirs =  repeat(Field{Float64}(river_parameters.grid,0.0),
                                        maximum(river_parameters.overland_reservoir_nums))
-    river_flow_reservoirs =     repeat(Field{Float64}(river_parameters.grid),
+    river_flow_reservoirs =     repeat(Field{Float64}(river_parameters.grid,0.0),
                                        maximum(river_parameters.river_reservoir_nums))
-    water_to_ocean = Field{Float64}(river_parameters.grid)
+    water_to_ocean = Field{Float64}(river_parameters.grid,0.0)
     return new(runoff,drainage,river_inflow,base_flow_reservoirs,
                overland_flow_reservoirs,river_flow_reservoirs,
                water_to_ocean)
@@ -239,7 +240,7 @@ function cascade_kernel(coords::Coords,
   for i = 1:(get(reservoir_nums,coords))
     reservoir::Field{Float64} = reservoirs[i]
     new_reservoir_value::Float64 = get(reservoir,coords) + flow
-    flow = new_reservoir_value*get(retention_coefficients,coords)
+    flow = new_reservoir_value/(get(retention_coefficients,coords)+1.0)
     set!(reservoir,coords,new_reservoir_value - flow)
   end
   set!(outflow,coords,flow)
@@ -323,6 +324,8 @@ struct PrintResults <: Event
   timestep::Int64
 end
 
+struct PrintSection <: Event end
+
 function handle_event(prognostic_fields::PrognosticFields,
                       print_results::PrintResults)
   println("Timestep: $(print_results.timestep)")
@@ -338,6 +341,40 @@ function print_river_results(prognostic_fields::PrognosticFields)
   println("")
   println("Water to Ocean")
   println(river_fields.water_to_ocean)
+end
+
+function handle_event(prognostic_fields::PrognosticFields,
+                      print_results::PrintSection)
+   print_river_results_section(prognostic_fields)
+  return prognostic_fields
+end
+
+function print_river_results_section(prognostic_fields::PrognosticFields)
+  section_coords::LatLonSectionCoords = LatLonSectionCoords(65,75,125,165)
+  river_fields::RiverPrognosticFields = get_river_fields(prognostic_fields)
+  river_parameters::RiverParameters = get_river_parameters(prognostic_fields)
+  for_section_with_line_breaks(river_parameters.grid,section_coords) do coords::Coords
+    @printf("%.2f ",river_fields.river_inflow(coords))
+    flush(stdout)
+  end
+  println()
+end
+
+struct WriteRiverInitialValues <: Event end
+
+function handle_event(prognostic_fields::PrognosticFields,
+                      print_results::WriteRiverInitialValues)
+  river_fields::RiverPrognosticFields = get_river_fields(prognostic_fields)
+  river_parameters::RiverParameters = get_river_parameters(prognostic_fields)
+  hd_start_filepath::AbstractString = "/Users/thomasriddick/Documents/data/temp/river_model_out.nc"
+  write_river_initial_values(hd_start_filepath,river_parameters,river_fields)
+  return prognostic_fields
+end
+
+function write_river_initial_values(hd_start_filepath::AbstractString,
+                                    river_parameters::RiverParameters,
+                                    river_prognostic_fields::RiverPrognosticFields)
+  throw(UserError())
 end
 
 end

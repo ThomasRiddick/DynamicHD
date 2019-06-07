@@ -14,10 +14,14 @@ carved_river_direction_burning_algorithm::~carved_river_direction_burning_algori
 }
 
 void carved_river_direction_burning_algorithm::setup_flags(bool add_slope_in,int max_exploration_range_in,
-	                 																				 double minimum_height_change_threshold_in){
+	                 																				 double regular_minimum_height_change_threshold_in,
+	                 																				 int short_path_threshold_in,
+	                 																				 double short_minimum_height_change_threshold_in){
 	add_slope = add_slope_in;
 	max_exploration_range = max_exploration_range_in;
-	minimum_height_change_threshold = minimum_height_change_threshold_in;
+	regular_minimum_height_change_threshold = regular_minimum_height_change_threshold_in;
+	short_path_threshold = short_path_threshold_in;
+	short_minimum_height_change_threshold = short_minimum_height_change_threshold_in;
 }
 
 void carved_river_direction_burning_algorithm::setup_fields(double* orography_in,bool* minima_in,
@@ -59,13 +63,12 @@ void carved_river_direction_burning_algorithm::burn_carved_river_directions() {
 			if ( working_cell_height > minima_height && ! (*lakemask)(working_cell_coords)){
 				(*orography)(working_cell_coords) = minima_height;
 			}
-			else if (working_cell_height == minima_height) continue;
-			else if ((*lakemask)(working_cell_coords)) continue;
-			else break;
+			else if ( working_cell_height != minima_height &&
+			         ! (*lakemask)(working_cell_coords)) break;
 			if (add_slope) reprocessing_q.push(working_cell_coords->clone());
 		}
 		if (add_slope) reprocess_path();
-		delete working_cell_coords;
+		else delete working_cell_coords;
 	}
 };
 
@@ -78,11 +81,13 @@ void carved_river_direction_burning_algorithm::add_minima_to_q() {
 }
 
 void carved_river_direction_burning_algorithm::reprocess_path(){
+	if (reprocessing_q.empty()) return;
+	double minimum_height_change_threshold = reprocessing_q.size() > short_path_threshold ? regular_minimum_height_change_threshold : short_minimum_height_change_threshold;
 	double exit_height = (*orography)(working_cell_coords);
 	double change_in_height = minima_height - exit_height;
 	if (change_in_height <= 0) {
 		while (!reprocessing_q.empty()) {
-			coords* working_cell_coords = reprocessing_q.top();
+			coords* working_cell_coords = reprocessing_q.front();
 			reprocessing_q.pop();
 			delete working_cell_coords;
 		}
@@ -100,18 +105,17 @@ void carved_river_direction_burning_algorithm::reprocess_path(){
 				delete new_working_cell_coords;
 				break;
 			}
-			reprocessing_q.push(working_cell_coords->clone());
-			delete working_cell_coords;
+			reprocessing_q.push(working_cell_coords);
 			working_cell_coords = new_working_cell_coords;
+			exit_height = (*orography)(working_cell_coords);
+			change_in_height = minima_height - exit_height;
 			if (change_in_height >= minimum_height_change_threshold) break;
 		}
-		exit_height = (*orography)(working_cell_coords);
-		change_in_height = minima_height - exit_height;
 		delete working_cell_coords;
 	}
 	double change_in_height_per_cell = change_in_height/(double(reprocessing_q.size())+1.0);
 	for(double i = 1.0; !reprocessing_q.empty();i++){
-		coords* working_cell_coords = reprocessing_q.top();
+		coords* working_cell_coords = reprocessing_q.front();
 		reprocessing_q.pop();
 		if(!(*lakemask)(working_cell_coords)) (*orography)(working_cell_coords) =
 																							minima_height - i*change_in_height_per_cell;

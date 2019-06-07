@@ -43,9 +43,18 @@ function main()
   runoffs::Array{Field{Float64},1} = deepcopy(drainages)
   if args["lake-para-file"] != nothing
     lake_parameters = load_lake_parameters(args["lake-para-file"],lake_grid,grid)
-    drive_hd_and_lake_model(river_parameters,lake_parameters,
-                            drainages,runoffs,
-                            timesteps;print_timestep_results=true)
+    if args["lake-init-file"] != nothing
+      initial_water_to_lake_centers::LatLonField{Float64},
+      initial_spillover_to_rivers::LatLonField{Float64} =
+        load_lake_initial_values(args["lake-init-file"],lake_grid,grid)
+      drive_hd_and_lake_model(river_parameters,lake_parameters,drainages,runoffs,
+                              timesteps,true,initial_water_to_lake_centers,
+                              initial_spillover_to_rivers;print_timestep_results=true)
+    else
+      drive_hd_and_lake_model(river_parameters,lake_parameters,
+                              drainages,runoffs,
+                              timesteps;print_timestep_results=true)
+    end
     drainages = repeat(drainage,500)
     runoffs = deepcopy(drainages)
     Profile.clear()
@@ -65,13 +74,13 @@ function main()
       #                print_timestep_results=false)
     else
       drive_hd_model(river_parameters,drainages,
-                     runoffs,timesteps;print_timestep_results=false)
+                     runoffs,timesteps;print_timestep_results=true)
       drainages = repeat(drainage,500)
       runoffs = deepcopy(drainages)
       Profile.clear()
       Profile.init(delay=0.0001)
-      @time drive_hd_model(river_parameters,drainages,
-                           runoffs,timesteps;print_timestep_results=false)
+      # @time drive_hd_model(river_parameters,drainages,
+      #                      runoffs,timesteps;print_timestep_results=false)
 
       Profile.print()
       r = Profile.retrieve();
@@ -83,7 +92,7 @@ function main()
 end
 
 empty!(ARGS)
-#push!(ARGS,"-p/Users/thomasriddick/Documents/data/HDdata/hdfiles/hdpara_file_from_current_model.nc")
+# push!(ARGS,"-p/Users/thomasriddick/Documents/data/HDdata/hdfiles/hdpara_file_from_current_model.nc")
 push!(ARGS,"-p/Users/thomasriddick/Documents/data/HDdata/hdfiles/generated/hd_file_prepare_river_directions_with_depressions_20190503_170551.nc")
 push!(ARGS,"-l/Users/thomasriddick/Documents/data/HDdata/lakeparafiles/lakeparasevaluate_glac1D_ts1900_basins_20190509_101249.nc")
 push!(ARGS,"-t500")

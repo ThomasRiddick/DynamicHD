@@ -8,7 +8,12 @@ from libcpp cimport bool
 cdef extern from 'burn_carved_rivers.cpp':
     void latlon_burn_carved_rivers_cython_wrapper(double* orography_in,double* rdirs_in,
                                                   int* minima_in_int, int* lakemask_in_int,
-                                                  int nlat_in,int nlon_in)
+                                                  int nlat_in,int nlon_in,
+                                                  int add_slope_in,
+                                                  int max_exploration_range_in,
+                                                  double minimum_height_change_threshold_in,
+                                                  int short_path_threshold_in,
+                                                  double short_minimum_height_change_threshold_in)
 cdef extern from 'fill_lakes.cpp':
     void latlon_fill_lakes_cython_wrapper(int* lake_minima_in_int,int* lake_mask_in_int,
                                           double* orography_in,int nlat_in, int nlon_in,
@@ -21,10 +26,24 @@ cdef extern from 'reduce_connected_areas_to_points.cpp':
     void latlon_reduce_connected_areas_to_points_cython_wrapper(int* areas_in_int,int nlat_in,int nlon_in,
                                                                 bint use_diagonals_in_int)
 
+cdef extern from 'redistribute_water.cpp':
+    void latlon_redistribute_water_cython_wrapper(int* lake_numbers_in,
+                                                  int* lake_centers_in_int,
+                                                  double* water_to_redistribute_in,
+                                                  double* water_redistributed_to_lakes_in,
+                                                  double* water_redistributed_to_rivers_in,
+                                                  int nlat_in, int nlon_in,
+                                                  int coarse_nlat_in, int coarse_nlon_in)
+
 def burn_carved_rivers(np.ndarray[double,ndim=2,mode='c'] orography_in,
                        np.ndarray[double,ndim=2,mode='c'] rdirs_in,
                        np.ndarray[int,ndim=2,mode='c'] minima_in_int,
-                       np.ndarray[int,ndim=2,mode='c'] lakemask_in_int):
+                       np.ndarray[int,ndim=2,mode='c'] lakemask_in_int,
+                       bint add_slope_in = False,
+                       int max_exploration_range_in = 0,
+                       double minimum_height_change_threshold_in = 0.0,
+                       int short_path_threshold_in = 0,
+                       double short_minimum_height_change_threshold_in = 0.0):
     """Call the C++ cython interface function from cython with appropriate arguments.
 
     Also find the required number of latitude and longitude points to pass in
@@ -36,7 +55,12 @@ def burn_carved_rivers(np.ndarray[double,ndim=2,mode='c'] orography_in,
                                              &rdirs_in[0,0],
                                              &minima_in_int[0,0],
                                              &lakemask_in_int[0,0],
-                                             nlat_in,nlon_in)
+                                             nlat_in,nlon_in,
+                                             add_slope_in,
+                                             max_exploration_range_in,
+                                             minimum_height_change_threshold_in,
+                                             short_path_threshold_in,
+                                             short_minimum_height_change_threshold_in)
 
 def fill_lakes(np.ndarray[int,ndim=2,mode='c'] lake_minima_in_int,
                np.ndarray[int,ndim=2,mode='c'] lake_mask_in_int,
@@ -74,3 +98,20 @@ def reduce_connected_areas_to_points(np.ndarray[int,ndim=2,mode='c'] areas_in_in
                                                              use_diagonals_in_int,
                                                              &orography_in[0,0],
                                                              check_for_false_minima_in)
+
+def redistribute_water(np.ndarray[int,ndim=2,mode='c'] lake_numbers_in,
+                       np.ndarray[int,ndim=2,mode='c'] lake_centers_in_int,
+                       np.ndarray[double,ndim=2,mode='c'] water_to_redistribute_in,
+                       np.ndarray[double,ndim=2,mode='c'] water_redistributed_to_lakes_in,
+                       np.ndarray[double,ndim=2,mode='c'] water_redistributed_to_rivers_in):
+  cdef int nlat_in,nlon_in
+  nlat_in, nlon_in = lake_numbers_in.shape[0],lake_numbers_in.shape[1]
+  cdef int coarse_nlat_in,coarse_nlon_in
+  coarse_nlat_in, coarse_nlon_in = (water_redistributed_to_rivers_in.shape[0],
+                                    water_redistributed_to_rivers_in.shape[1])
+  latlon_redistribute_water_cython_wrapper(&lake_numbers_in[0,0],
+                                           &lake_centers_in_int[0,0],
+                                           &water_to_redistribute_in[0,0],
+                                           &water_redistributed_to_lakes_in[0,0],
+                                           &water_redistributed_to_rivers_in[0,0],
+                                           nlat_in, nlon_in,coarse_nlat_in,coarse_nlon_in)
