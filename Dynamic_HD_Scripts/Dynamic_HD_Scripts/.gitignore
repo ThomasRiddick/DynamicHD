@@ -21,3 +21,8 @@
 /dynamic_hd_driver.pyc
 /dynamic_hd_production_run_driver.pyc
 /libs/
+/determine_river_directions_wrapper.cpp
+/evaluate_basins_wrapper.cpp
+/iodriver.pyc
+/lake_operators_wrapper.cpp
+/upscale_orography_wrapper.cpp
