@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "Running Version 2.5 of the HD Command Line Operator Code"
+echo "Running Version 3.5 of the HD Command Line Operator Code"
 
 #Define module loading function
 function load_module
