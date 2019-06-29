@@ -4,6 +4,7 @@ using NetCDF
 using NetCDF: NcFile,NcVar
 using GridModule: Grid, LatLonGrid, get_number_of_dimensions
 using FieldModule: Field, LatLonDirectionIndicators,round,convert,invert,add_offset,get_data
+using FieldModule: maximum
 using HDModule: RiverParameters,RiverPrognosticFields
 using LakeModule: LakeParameters,LatLonLakeParameters, GridSpecificLakeParameters,LakeFields
 using MergeTypesModule
@@ -16,14 +17,18 @@ function load_field(file_handle::NcFile,grid::Grid,variable_name::AbstractString
                     field_type::DataType,;timestep::Int64=-1)
   variable::NcVar = file_handle[variable_name]
   values::Array{field_type,get_number_of_dimensions(grid)} = NetCDF.readvar(variable)
-  values = permutedims(values, [2,1])
+  if timestep == -1
+    values = permutedims(values, [2,1])
+  else
+    values = permutedims(values, [2,1])[timestep]
+  end
   return Field{field_type}(grid,values)
 end
 
 function load_array_of_fields(file_handle::NcFile,grid::Grid,variable_base_name::AbstractString,
                               field_type::DataType,number_of_fields::Int64)
   if number_of_fields == 1
-    return load_field(file_handle,grid,variable_base_name,field_type)
+    return Field{field_type}[load_field(file_handle,grid,variable_base_name,field_type)]
   else
     array_of_fields::Array{Field{field_type},1} = Array{Field{field_type}}(undef,number_of_fields)
     for i = 1:number_of_fields
@@ -51,14 +56,14 @@ end
 function prep_dims(grid::LatLonGrid)
   lat = NcDim("Lat",grid.nlat)
   lon = NcDim("Lon",grid.nlon)
-  dims::Array{NcDim} = NcDim[ lat; lon ]
+  dims::Array{NcDim} = NcDim[ lon; lat ]
   return dims
 end
 
 function prep_field(dims::Array{NcDim},variable_name::AbstractString,
                     field::Field,fields_to_write::Vector{Pair})
   variable::NcVar = NcVar(variable_name,dims)
-  push!(fields_to_write,Pair(variable,get_data(field)))
+  push!(fields_to_write,Pair(variable,permutedims(get_data(field), [2,1])))
 end
 
 function write_fields(fields_to_write::Vector{Pair},filepath::AbstractString)
@@ -73,9 +78,9 @@ function write_field(grid::LatLonGrid,variable_name::AbstractString,
                      field::Field,filepath::AbstractString)
   lat = NcDim("Lat",grid.nlat)
   lon = NcDim("Lon",grid.nlon)
-  variable::NcVar = NcVar(variable_name,[ lat; lon ])
+  variable::NcVar = NcVar(variable_name,[ lon; lat ])
   NetCDF.create(filepath,variable)
-  NetCDF.putvar(variable,get_data(field))
+  NetCDF.putvar(variable,permutedims(get_data(field), [2,1]))
 end
 
 function load_river_parameters(hd_para_filepath::AbstractString,grid::Grid)
@@ -124,13 +129,13 @@ function load_river_initial_values(hd_start_filepath::AbstractString,
       load_field(file_handle,river_parameters.grid,"FINFL",Float64)
     river_prognostic_fields.base_flow_reservoirs =
       load_array_of_fields(file_handle,river_parameters.grid,"FGMEM",Float64,
-                           river_prognostic_fields.base_reservoir_nums)
+                            maximum(river_parameters.base_reservoir_nums))
     river_prognostic_fields.overland_flow_reservoirs =
       load_array_of_fields(file_handle,river_parameters.grid,"FLFMEM",Float64,
-                           river_prognostic_fields.overland_reservoir_nums)
+                            maximum(river_parameters.overland_reservoir_nums))
     river_prognostic_fields.river_flow_reservoirs =
       load_array_of_fields(file_handle,river_parameters.grid,"FRFMEM",Float64,
-                           river_prognostic_fields.river_reservoir_nums)
+                            maximum(river_parameters.river_reservoir_nums))
   finally
     NetCDF.close(file_handle)
   end
@@ -260,13 +265,16 @@ function load_grid_specific_lake_parameters(file_handle::NcFile,grid::LatLonGrid
                               additional_connect_redirect_lon_index)
 end
 
-function load_lake_initial_values(file_handle::NcFile,grid::LatLonGrid,hd_grid::Grid)
+function load_lake_initial_values(lake_para_filepath::AbstractString,
+                                  grid::LatLonGrid,hd_grid::LatLonGrid)
+  local initial_water_to_lake_centers::Field{Float64}
+  local initial_spillover_to_rivers::Field{Float64}
   println("Loading: " * lake_para_filepath)
   file_handle::NcFile = NetCDF.open(lake_para_filepath)
   try
-    initial_water_to_lake_centers::Field{Float64} =
+    initial_water_to_lake_centers =
       load_field(file_handle,grid,"water_redistributed_to_lakes",Float64)
-    initial_spillover_to_rivers::Field{Float64} =
+    initial_spillover_to_rivers =
       load_field(file_handle,hd_grid,"water_redistributed_to_rivers",Float64)
   finally
     NetCDF.close(file_handle)
@@ -286,6 +294,38 @@ function write_lake_volumes_field(lake_parameters::LakeParameters,lake_volumes::
   variable_name::String = "lake_field"
   filepath::String = "/Users/thomasriddick/Documents/data/temp/lake_model_out.nc"
   write_field(lake_parameters.grid,variable_name,lake_volumes,filepath)
+end
+
+function load_drainage_fields(drainages_filename::AbstractString,grid::LatLonGrid;
+                              first_timestep::Int64=1,last_timestep::Int64=1)
+  println("Loading: " * drainages_filename)
+  file_handle::NcFile = NetCDF.open(drainages_filename)
+  drainages::Array{Field{Float64},1} = Field{Float64}[]
+  try
+    for i::Int64 = first_timestep:last_timestep
+      drainages[i] =  load_field(file_handle,grid,"drainages",
+                                 Float64;timestep=i)
+    end
+  finally
+    NetCDF.close(file_handle)
+  end
+  return drainages
+end
+
+function load_runoff_fields(runoffs_filename::AbstractString,grid::LatLonGrid;
+                            first_timestep::Int64=1,last_timestep::Int64=1)
+  println("Loading: " * runoffs_filename)
+  file_handle::NcFile = NetCDF.open(runoffs_filename)
+  runoffs::Array{Field{Float64},1} = Field{Float64}[]
+  try
+    for i::Int64 = first_timestep:last_timestep
+      runoffs[i] = load_field(file_handle,grid,"runoffs",
+                              Float64;timestep=i)
+    end
+  finally
+    NetCDF.close(file_handle)
+  end
+  return runoffs
 end
 
 end

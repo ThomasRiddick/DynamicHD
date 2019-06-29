@@ -353,8 +353,8 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
                           glacier_mask_filename,glacier_mask_fieldname,
                           glacier_mask_timestep,
                           ls_mask_filename,ls_mask_fieldname,ls_mask_timestep,
-                          ls_mask_0k_filename,ls_mask_0k_fieldname,ls_mask_timestep_0k):
-        file_label = self._generate_file_label()
+                          ls_mask_0k_filename,ls_mask_0k_fieldname,ls_mask_timestep_0k,
+                          file_label):
         flip_ls_mask_0k   = False
         invert_ls_mask    = True
         rotate_lsmask_180_lr = True
@@ -493,7 +493,12 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
                                                                   output_orography_file=
                                                                   output_0k_ice5g_orog_filename,
                                                                   output_orography_fieldname=
-                                                                  "Topo")
+                                                                  "Topo",
+                                                                  add_slope = True,
+                                                                  max_exploration_range = 10,
+                                                                  minimum_height_change_threshold = 5.0,
+                                                                  short_path_threshold = 6,
+                                                                  short_minimum_height_change_threshold = 0.25)
         utilities.advanced_rebase_orography_driver(orography_filename=
                                                    working_orog_filename,
                                                    present_day_base_orography_filename=
@@ -563,9 +568,9 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
                                        fieldname="depth",clobber=True)
 
     def prepare_basins_from_glac1D(self):
-      # timesteps_to_use = [1200,1250,1300,1350,1400,1425,1450,1475,1500,1525,1550,
-      #                     1575,1600,1625,1650,1675,1700,1725,1750,1775,1800,1850,1900]
-      timesteps_to_use = [1900]
+      overarching_file_label = self._generate_file_label()
+      timesteps_to_use = [1200,1250,1300,1350,1400,1450,1500,1550,
+                          1600,1650,1700,1750,1800]
       timestep_for_0k = 2600
       glac_1d_topo_filename = join(self.orography_path,
                                    "GLAC1D_Top01_surf.nc")
@@ -573,7 +578,10 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
                              "10min_lsmask_pmu0178_merged.nc")
       glacier_mask_filename = join(self.orography_path,
                                    "GLAC1D_ICEM_10min.nc")
+      cell_areas_filename_10min = join(self.grid_areas_and_spacings_filepath,
+                                       "10min_grid_area_default_R.nc")
       for timestep in timesteps_to_use:
+        file_label = self._generate_file_label() + "_" + str(timestep)
         self.prepare_orography(orography_filename=glac_1d_topo_filename,
                                orography_fieldname="HDCB",
                                timestep=timestep,
@@ -588,14 +596,79 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
                                ls_mask_timestep=timestep,
                                ls_mask_0k_filename=ls_mask_filename,
                                ls_mask_0k_fieldname="field_value",
-                               ls_mask_timestep_0k=timestep_for_0k)
+                               ls_mask_timestep_0k=timestep_for_0k,
+                               file_label=file_label)
+        working_orography_filename = "/Users/thomasriddick/Documents/data/HDdata/orographys/generated/updated_orog_" + str(timestep) + \
+                                     "_ice6g_lake_" + file_label + ".nc"
+        lsmask_filename = "/Users/thomasriddick/Documents/data/HDdata/lsmasks/generated/ls_mask_" + file_label + "_grid.nc"
+        self.prepare_river_directions_with_depressions(working_orography_filename=
+                                                       working_orography_filename,
+                                                       lsmask_filename=
+                                                       lsmask_filename,
+                                                       orography_fieldname="Topo",
+                                                       lsmask_fieldname="lsmask",
+                                                       file_label=file_label)
+        minima_from_rdirs_filename = ("/Users/thomasriddick/Documents/data/HDdata/minima/"
+                                      "minima_" + file_label + "_reduced"
+                                      "_" + str(timestep) + "_landonly_from_rdirs.nc")
+        utilities.advanced_extract_true_sinks_from_rdirs(rdirs_filename=
+                                                         "/Users/thomasriddick/Documents/data/HDdata/rdirs/generated/"
+                                                         "updated_RFDs_" + file_label + "_10min_with_depressions.nc",
+                                                         truesinks_filename=
+                                                         minima_from_rdirs_filename,
+                                                         rdirs_fieldname="FDIR",
+                                                         truesinks_fieldname="minima")
+        dynamic_lake_operators.\
+          advanced_basin_evaluation_driver(input_minima_file=
+                                           minima_from_rdirs_filename,
+                                           input_minima_fieldname="minima",
+                                           input_raw_orography_file=
+                                           "/Users/thomasriddick/Documents/data/HDdata/orographys/"
+                                           "generated/updated_orog_" + str(timestep) +
+                                           "_ice6g_lake_" + file_label + ".nc",
+                                           input_raw_orography_fieldname="Topo",
+                                           input_corrected_orography_file=
+                                           "/Users/thomasriddick/Documents/data/HDdata/orographys/"
+                                           "generated/updated_orog_" + str(timestep) +
+                                           "_ice6g_lake_" + file_label + ".nc",
+                                           input_corrected_orography_fieldname="Topo",
+                                           input_cell_areas_file= cell_areas_filename_10min,
+                                           input_cell_areas_fieldname="cell_area",
+                                           input_prior_fine_rdirs_file=
+                                           "/Users/thomasriddick/Documents/data/HDdata/rdirs/generated/"
+                                           "updated_RFDs_" + file_label + "_10min_with_depressions.nc",
+                                           input_prior_fine_rdirs_fieldname="FDIR",
+                                           input_prior_fine_catchments_file=
+                                           "/Users/thomasriddick/Documents/data/HDdata/catchmentmaps/"
+                                           "catchmentmap_" + file_label + "_10mins.nc",
+                                           input_prior_fine_catchments_fieldname="catchments",
+                                           input_coarse_catchment_nums_file=
+                                           "/Users/thomasriddick/Documents/data/HDdata/catchmentmaps/"
+                                           "catchmentmap_" + file_label + "_30mins.nc",
+                                           input_coarse_catchment_nums_fieldname="catchments",
+                                           combined_output_filename=
+                                            join(self.lake_parameter_file_path,
+                                                 "lakeparas_" + file_label + ".nc"),
+                                           output_filepath=self.lake_parameter_file_path,
+                                           output_filelabel=file_label,
+                                           output_basin_catchment_nums_filepath=
+                                           join(self.basin_catchment_numbers_path,
+                                                "basin_catchment_numbers_" + file_label + ".nc"))
+        with open(self.generated_lake_and_hd_params_log_path +
+                  overarching_file_label + ".log",'a') as f:
+          f.write("Timestep=" + str(timestep) + '\n')
+          f.write(self.generated_hd_file_path + file_label + ".nc\n")
+          f.write(join(self.lake_parameter_file_path,
+                       "lakeparas_" + file_label + ".nc\n"))
+          f.write(join(self.basin_catchment_numbers_path,
+                       "basin_catchment_numbers_" + file_label + ".nc\n"))
 
     def prepare_river_directions_with_depressions(self,
                                                   working_orography_filename,
                                                   lsmask_filename,
                                                   orography_fieldname,
-                                                  lsmask_fieldname):
-      file_label = self._generate_file_label()
+                                                  lsmask_fieldname,
+                                                  file_label):
       rdirs_filename_10min = \
         self.generated_rdir_filepath + file_label + "_10min_with_depressions.nc"
       rdirs_filename_30min = \
@@ -696,10 +769,12 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
       lsmask_filename = "/Users/thomasriddick/Documents/data/HDdata/lsmasks/generated/ls_mask_prepare_orography_20190211_131605_grid.nc"
       orography_fieldname = "Topo"
       lsmask_fieldname = "lsmask"
+      file_label = self._generate_file_label()
       self.prepare_river_directions_with_depressions(working_orography_filename,
                                                      lsmask_filename,
                                                      orography_fieldname,
-                                                     lsmask_fieldname)
+                                                     lsmask_fieldname,
+                                                     file_label)
 
     def prepare_flow_parameters_from_rdirs(self,rdirs_filepath,orography_filepath,lsmask_filepath,
                                            file_label):
@@ -749,6 +824,9 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
                                            "generated/updated_orog_1900_ice6g_lake_prepare_orography"
                                            "_20190211_131605.nc",
                                            input_corrected_orography_fieldname="Topo",
+                                           input_cell_areas_file="/Users/thomasriddick/Documents/"
+                                           "data/HDdata/10min_grid_area_default_R.nc",
+                                           input_cell_areas_fieldname="cell_area",
                                            input_prior_fine_rdirs_file=
                                            "/Users/thomasriddick/Documents/data/HDdata/rdirs/generated/"
                                            "updated_RFDs_prepare_river_directions_with_depressions_"
@@ -791,6 +869,9 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
                                            "generated/updated_orog_21k_ice6g_lake_prepare_orography"
                                            "_ICE6G_21k_corrected_20180921_155937.nc",
                                            input_corrected_orography_fieldname="Topo",
+                                           input_cell_areas_file="/Users/thomasriddick/Documents/"
+                                           "data/HDdata/10min_grid_area_default_R.nc",
+                                           input_cell_areas_fieldname="cell_area",
                                            input_prior_fine_rdirs_file=
                                            "/Users/thomasriddick/Documents/data/HDdata/rdirs/generated/"
                                            "updated_RFDs_ICE6g_lgm_ALG4_sinkless_no_true_sinks_oceans_"
@@ -823,13 +904,13 @@ def main():
     #lake_drivers.prepare_orography_ICE5G_0k_corrected()
     #lake_drivers.prepare_orography_ICE6G_21k_corrected()
     #lake_drivers.prepare_river_directions_with_depressions_from_glac1D()
-    lake_drivers.evaluate_glac1D_ts1900_basins()
+    #lake_drivers.evaluate_glac1D_ts1900_basins()
     #import time
     # start = time.time()
     #lake_drivers.evaluate_ICE6G_lgm_basins()
     # end = time.time()
     # print(end - start)
-    #lake_drivers.prepare_basins_from_glac1D()
+    lake_drivers.prepare_basins_from_glac1D()
 
 if __name__ == '__main__':
     main()

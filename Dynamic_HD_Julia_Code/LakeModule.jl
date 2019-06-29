@@ -243,6 +243,7 @@ struct OverflowingLake <: Lake
   outflow_redirect_coords::Coords
   local_redirect::Bool
   lake_retention_coefficient::Float64
+  next_merge_target_coords::Coords
   overflowing_lake_variables::OverflowingLakeVariables
 end
 
@@ -300,15 +301,19 @@ end
 function handle_event(prognostic_fields::RiverAndLakePrognosticFields,setup_lakes::SetupLakes)
   lake_fields::LakeFields = get_lake_fields(prognostic_fields)
   lake_prognostics::LakePrognostics = get_lake_prognostics(prognostic_fields)
-  for coords::Coords in lake_fields.cell_with_lakes
-    inital_water_to_lake_center::Float64 = setup_lakes.initial_water_to_lake_centers(coords)
-    if  inital_water_to_lake_center > 0.0
-      add_water::AddWater = AddWater(inital_water_to_lake_center)
-      lake_index::Int64 = lake_fields.lake_numbers(coords)
-      lake::Lake = lake_prognostics.lakes[lake_index]
-      lake_prognostics.lakes[lake_index] = handle_event(lake,add_water)
+  lake_parameters::LakeParameters = get_lake_parameters(prognostic_fields)
+  for_all(lake_parameters.grid) do coords::Coords
+    if lake_parameters.lake_centers(coords)
+      initial_water_to_lake_center::Float64 = setup_lakes.initial_water_to_lake_centers(coords)
+      if  initial_water_to_lake_center > 0.0
+        add_water::AddWater = AddWater(initial_water_to_lake_center)
+        lake_index::Int64 = lake_fields.lake_numbers(coords)
+        lake::Lake = lake_prognostics.lakes[lake_index]
+        lake_prognostics.lakes[lake_index] = handle_event(lake,add_water)
+      end
     end
   end
+  return prognostic_fields
 end
 
 function handle_event(prognostic_fields::RiverAndLakePrognosticFields,
@@ -321,6 +326,7 @@ function handle_event(prognostic_fields::RiverAndLakePrognosticFields,
       set!(lake_fields.water_to_hd,coords,lake_fields.water_to_hd(coords) + initial_spillover)
     end
   end
+  return prognostic_fields
 end
 
 function handle_event(prognostic_fields::RiverAndLakePrognosticFields,run_lake::RunLakes)
@@ -345,7 +351,8 @@ function handle_event(prognostic_fields::RiverAndLakePrognosticFields,run_lake::
     end
   end
   for lake::Lake in lake_prognostics.lakes
-    if ! lake_parameters.lake_model_parameters.instant_throughflow
+    lake_variables::LakeVariables = get_lake_variables(lake)
+    if lake_variables.unprocessed_water > 0
       lake_index::Int64 = lake_variables.lake_number
       lake_prognostics.lakes[lake_index] = handle_event(lake,AddWater(0.0))
     end
@@ -387,7 +394,7 @@ function handle_event(lake::FillingLake,add_water::AddWater)
               end
             end
           elseif ! already_merged
-            overflowing_lake::Lake = change_to_overflowing_lake(lake)
+            overflowing_lake::Lake = change_to_overflowing_lake(lake,merge_type)
             overflowing_lake = handle_event(overflowing_lake,StoreWater(inflow))
             return overflowing_lake
           end
@@ -455,18 +462,25 @@ function handle_event(lake::Lake,accept_merge::AcceptMerge)
   return subsumed_lake
 end
 
-function change_to_overflowing_lake(lake::FillingLake)
+function change_to_overflowing_lake(lake::FillingLake,merge_type::SimpleMergeTypes)
   lake_fields::LakeFields = get_lake_fields(lake)
   lake_variables::LakeVariables = get_lake_variables(lake)
   set!(lake_fields.completed_lake_cells,lake_variables.current_cell_to_fill,true)
   outflow_redirect_coords,local_redirect =
     get_outflow_redirect_coords(lake)
+  local next_merge_target_coords::Coords
+  if merge_type == secondary_merge
+    next_merge_target_coords = get_secondary_merge_coords(lake)
+  else
+    next_merge_target_coords = get_primary_merge_coords(lake)
+  end
   return OverflowingLake(lake.lake_parameters,
                          lake_variables,
                          lake_fields,
                          outflow_redirect_coords,
                          local_redirect,
                          lake.lake_parameters.lake_model_parameters.lake_retention_constant,
+                         next_merge_target_coords,
                          OverflowingLakeVariables())
 end
 
@@ -525,10 +539,10 @@ function check_if_merge_is_possible(lake::Lake,merge_type::SimpleMergeTypes)
   lake_variables::LakeVariables = get_lake_variables(lake)
   lake_fields::LakeFields = get_lake_fields(lake)
   local target_cell::Coords
-  if merge_type == primary_merge
-    target_cell = get_primary_merge_coords(lake)
-  else
+  if merge_type == secondary_merge
     target_cell = get_secondary_merge_coords(lake)
+  else
+    target_cell = get_primary_merge_coords(lake)
   end
   if ! lake_fields.completed_lake_cells(target_cell)
     return false,false
@@ -538,7 +552,22 @@ function check_if_merge_is_possible(lake::Lake,merge_type::SimpleMergeTypes)
   if (get_lake_variables(other_lake)::LakeVariables).lake_number == lake_variables.lake_number
     return false,true
   elseif isa(other_lake,OverflowingLake)
-    return true,false
+    if merge_type == primary_merge
+      return true,false
+    else
+      other_lake_target_lake_number::Int64 = lake_fields.lake_numbers(other_lake.next_merge_target_coords)
+      if other_lake_target_lake_number == 0
+        return false,false
+      end
+      other_lake_target_lake::Lake = lake_variables.other_lakes[other_lake_target_lake_number]
+      other_lake_target_lake = find_true_primary_lake(other_lake_target_lake)
+      if (get_lake_variables(other_lake_target_lake)::LakeVariables).lake_number ==
+          lake_variables.lake_number
+        return true,false
+      else
+        return false,false
+      end
+    end
   else
     return false,false
   end
@@ -775,20 +804,20 @@ end
 function print_lake_type(coords::Coords,lake_prognostics::LakePrognostics,
                          lake_fields::LakeFields)
   lake_number::Int64 = lake_fields.lake_numbers(coords)
-    if lake_number == 0
-      print("- ")
+  if lake_number == 0
+    print("- ")
+  else
+    lake::Lake = lake_prognostics.lakes[lake_number]
+    if isa(lake,FillingLake)
+      print("F ")
+    elseif isa(lake,OverflowingLake)
+      print("O ")
+    elseif isa(lake,SubsumedLake)
+      print("S ")
     else
-      lake::Lake = lake_prognostics.lakes[lake_number]
-      if isa(lake,FillingLake)
-        print("F ")
-      elseif isa(lake,OverflowingLake)
-        print("O ")
-      elseif isa(lake,SubsumedLake)
-        print("S ")
-      else
-        print("U ")
-      end
+      print("U ")
     end
+  end
 end
 
 function handle_event(prognostic_fields::RiverAndLakePrognosticFields,
@@ -803,7 +832,7 @@ end
 
 function print_lake_types_section(grid::LatLonGrid,lake_prognostics::LakePrognostics,
                                   lake_fields::LakeFields)
-  section_coords::LatLonSectionCoords = LatLonSectionCoords(185,200,460,470)
+  section_coords::LatLonSectionCoords = LatLonSectionCoords(225,295,530,580)
   for_section_with_line_breaks(grid,section_coords) do coords::Coords
     print_lake_type(coords,lake_prognostics,lake_fields)
   end

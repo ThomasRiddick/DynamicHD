@@ -7,7 +7,7 @@ using HDModule: SetDrainage,SetRunoff,PrintResults,PrognosticFields,WriteRiverIn
 using HDModule: water_to_lakes,water_from_lakes
 using FieldModule: Field
 using LakeModule: LakeParameters,LakePrognostics,LakeFields,RiverAndLakePrognosticFields,RunLakes
-using LakeModule: PrintSection,WriteLakeNumbers,WriteLakeVolumes
+using LakeModule: PrintSection,WriteLakeNumbers,WriteLakeVolumes,SetupLakes,DistributeSpillover
 using LakeModule: water_to_lakes,handle_event,water_from_lakes
 
 FloatFieldOrNothing = Union{Field{Float64},Nothing}
@@ -27,8 +27,9 @@ function drive_hd_model_with_or_without_lakes(prognostic_fields::PrognosticField
   if run_lakes_flag
     run_lakes::RunLakes = RunLakes()
     if process_initial_lake_water
-      setup_lakes::SetupLakes(initial_water_to_lake_centers)
-      distribute_spillover::DistributeSpillOver(initial_spillover_to_rivers)
+      setup_lakes::SetupLakes = SetupLakes(initial_water_to_lake_centers)
+      distribute_spillover::DistributeSpillover =
+        DistributeSpillover(initial_spillover_to_rivers)
       handle_event(hsm,setup_lakes)
       # Run lakes once to cascade water from any overflowing lakes
       # and process through flow if not using instant through flow
@@ -48,16 +49,18 @@ function drive_hd_model_with_or_without_lakes(prognostic_fields::PrognosticField
       handle_event(hsm,run_lakes)
     end
     if print_timestep_results
-      if i%10 == 0
+      if i%100 == 0
         # print_results::PrintResults = PrintResults(i)
         # handle_event(hsm,print_results)
         print_section::PrintSection = PrintSection()
         handle_event(hsm,print_section)
       end
     end
-    if i%100 == 0
-      write_lake_numbers::WriteLakeNumbers = WriteLakeNumbers(i)
-      handle_event(hsm,write_lake_numbers)
+    if run_lakes_flag
+      if i%100 == 0
+        write_lake_numbers::WriteLakeNumbers = WriteLakeNumbers(i)
+        handle_event(hsm,write_lake_numbers)
+      end
     end
   end
   if run_lakes_flag
@@ -88,13 +91,53 @@ end
 function drive_hd_and_lake_model(river_parameters::RiverParameters,river_fields::RiverPrognosticFields,
                                  lake_parameters::LakeParameters,lake_prognostics::LakePrognostics,
                                  lake_fields::LakeFields,drainages::Array{Field{Float64},1},
-                                 runoffs::Array{Field{Float64},1},timesteps::Int64;
+                                 runoffs::Array{Field{Float64},1},timesteps::Int64,
+                                 process_initial_lake_water::Bool=false,
+                                 initial_water_to_lake_centers::FloatFieldOrNothing=nothing,
+                                 initial_spillover_to_rivers::FloatFieldOrNothing=nothing;
                                  print_timestep_results::Bool=false)
   prognostic_fields::PrognosticFields = RiverAndLakePrognosticFields(river_parameters,river_fields,
                                                                      lake_parameters,lake_prognostics,
                                                                      lake_fields)
   drive_hd_model_with_or_without_lakes(prognostic_fields,drainages,runoffs,timesteps,
-                                       true,print_timestep_results=print_timestep_results)
+                                       true,process_initial_lake_water,
+                                       initial_water_to_lake_centers,
+                                       initial_spillover_to_rivers,
+                                       print_timestep_results=print_timestep_results)
+end
+
+function drive_hd_and_lake_model(river_parameters::RiverParameters,
+                                 river_fields::RiverPrognosticFields,
+                                 lake_parameters::LakeParameters,
+                                 drainages::Array{Field{Float64},1},
+                                 runoffs::Array{Field{Float64},1},timesteps::Int64,
+                                 process_initial_lake_water::Bool=false,
+                                 initial_water_to_lake_centers::FloatFieldOrNothing=nothing,
+                                 initial_spillover_to_rivers::FloatFieldOrNothing=nothing;
+                                 print_timestep_results::Bool=false)
+  lake_fields::LakeFields = LakeFields(lake_parameters)
+  lake_prognostics::LakePrognostics = LakePrognostics(lake_parameters,lake_fields)
+  drive_hd_and_lake_model(river_parameters,river_fields,lake_parameters,lake_prognostics,
+                          lake_fields,drainages,runoffs,timesteps,
+                          process_initial_lake_water,initial_water_to_lake_centers,
+                          initial_spillover_to_rivers,
+                          print_timestep_results=print_timestep_results)
+end
+
+function drive_hd_and_lake_model(river_parameters::RiverParameters,lake_parameters::LakeParameters,
+                                 lake_prognostics::LakePrognostics,lake_fields::LakeFields,
+                                 drainages::Array{Field{Float64},1},
+                                 runoffs::Array{Field{Float64},1},timesteps::Int64,
+                                 process_initial_lake_water::Bool=false,
+                                 initial_water_to_lake_centers::FloatFieldOrNothing=nothing,
+                                 initial_spillover_to_rivers::FloatFieldOrNothing=nothing;
+                                 print_timestep_results::Bool=false)
+  river_fields::RiverPrognosticFields = RiverPrognosticFields(river_parameters)
+  drive_hd_and_lake_model(river_parameters,river_fields,lake_parameters,lake_prognostics,
+                          lake_fields,drainages,runoffs,timesteps,
+                          process_initial_lake_water,initial_water_to_lake_centers,
+                          initial_spillover_to_rivers,
+                          print_timestep_results=print_timestep_results)
 end
 
 function drive_hd_and_lake_model(river_parameters::RiverParameters,lake_parameters::LakeParameters,
@@ -108,8 +151,9 @@ function drive_hd_and_lake_model(river_parameters::RiverParameters,lake_paramete
   lake_fields::LakeFields = LakeFields(lake_parameters)
   lake_prognostics::LakePrognostics = LakePrognostics(lake_parameters,lake_fields)
   drive_hd_and_lake_model(river_parameters,river_fields,lake_parameters,lake_prognostics,
-                          lake_fields,drainages,runoffs,timesteps,process_initial_lake_water,
-                          initial_water_to_lake_centers,initial_spillover_to_rivers,
+                          lake_fields,drainages,runoffs,timesteps,
+                          process_initial_lake_water,initial_water_to_lake_centers,
+                          initial_spillover_to_rivers,
                           print_timestep_results=print_timestep_results)
 end
 

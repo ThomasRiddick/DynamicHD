@@ -23,6 +23,7 @@ basin_evaluation_algorithm::~basin_evaluation_algorithm() {
 	delete additional_flood_local_redirect;
   delete additional_connect_local_redirect;
   delete basin_sink_points; delete null_coords;
+  delete cell_areas;
 }
 
 latlon_basin_evaluation_algorithm::~latlon_basin_evaluation_algorithm(){
@@ -42,6 +43,7 @@ latlon_basin_evaluation_algorithm::~latlon_basin_evaluation_algorithm(){
 void basin_evaluation_algorithm::setup_fields(bool* minima_in,
 		  	  	  	  	  	  	  	  	  				double* raw_orography_in,
 		  	  	  	  	  	  	  	  	  				double* corrected_orography_in,
+		  	  	  	  	  	  	  	  	  				double* cell_areas_in,
 		  	  	  	  	  	  	  	  	  				double* connection_volume_thresholds_in,
 		  	  	  	  	  	  	  	  	  				double* flood_volume_thresholds_in,
 		  	  	  	  	  	  	  	  	  				int* prior_fine_catchments_in,
@@ -61,6 +63,7 @@ void basin_evaluation_algorithm::setup_fields(bool* minima_in,
 	raw_orography = new field<double>(raw_orography_in,_grid_params);
 	corrected_orography =
 		new field<double>(corrected_orography_in,_grid_params);
+	cell_areas = new field<double>(cell_areas_in,_grid_params);
 	connection_volume_thresholds = new field<double>(connection_volume_thresholds_in,_grid_params);
 	connection_volume_thresholds->set_all(-1.0);
 	flood_volume_thresholds = new field<double>(flood_volume_thresholds_in,_grid_params);
@@ -96,6 +99,7 @@ void basin_evaluation_algorithm::setup_fields(bool* minima_in,
 void latlon_basin_evaluation_algorithm::setup_fields(bool* minima_in,
 		  	  	  	  	  	  	  	  	  							 double* raw_orography_in,
 		  	  	  	  	  	  	  	  	  							 double* corrected_orography_in,
+		  	  	  	  	  	  	  	  	  							 double* cell_areas_in,
 		  	  	  	  	  	  	  	  	  							 double* connection_volume_thresholds_in,
 		  	  	  	  	  	  	  	  	  							 double* flood_volume_thresholds_in,
 		  	  	  	  	  	  	  	  	  							 double* prior_fine_rdirs_in,
@@ -127,6 +131,7 @@ void latlon_basin_evaluation_algorithm::setup_fields(bool* minima_in,
 {
 	basin_evaluation_algorithm::setup_fields(minima_in,raw_orography_in,
 	                                         corrected_orography_in,
+	                                         cell_areas_in,
 	                                         connection_volume_thresholds_in,
 	                                         flood_volume_thresholds_in,
 		  	  	   														 prior_fine_catchments_in,
@@ -240,11 +245,11 @@ void basin_evaluation_algorithm::evaluate_basin(){
 	if (center_cell_height_type == connection_height) {
 		(*connected_cells)(center_coords) = true;
 		(*basin_connected_cells)(center_coords) = true;
-		cell_number = 0;
+		lake_area = 0.0;
 	} else if (center_cell_height_type == flood_height) {
 		(*flooded_cells)(center_coords) = true;
 		(*basin_flooded_cells)(center_coords) = true;
-		cell_number = 1;
+		lake_area = (*cell_areas)(center_coords);
 	} else throw runtime_error("Cell type not recognized");
 	(*completed_cells)(center_coords) = true;
 	//Make partial first iteration
@@ -425,7 +430,7 @@ bool basin_evaluation_algorithm::skip_center_cell() {
 	// here the variable center cell height type is actually
 	// new center cell height type
 	if((*basin_flooded_cells)(center_coords)) {
-		cell_number++;
+		lake_area += (*cell_areas)(center_coords);
 		return true;
 	} else if (center_cell_height_type == connection_height &&
 	           (*basin_connected_cells)(center_coords)){
@@ -441,9 +446,8 @@ bool basin_evaluation_algorithm::skip_center_cell() {
 //connection cells that are not yet filled
 void basin_evaluation_algorithm::process_center_cell() {
 	set_previous_filled_cell_basin_catchment_number();
-	center_cell_volume_threshold =
-		center_cell_volume_threshold +
-			cell_number*(center_cell_height-previous_filled_cell_height);
+	center_cell_volume_threshold +=
+			lake_area*(center_cell_height-previous_filled_cell_height);
 	if (previous_filled_cell_height_type == connection_height) {
 		(*connection_volume_thresholds)(previous_filled_cell_coords) =
 			center_cell_volume_threshold;
@@ -462,7 +466,7 @@ void basin_evaluation_algorithm::process_center_cell() {
 	else if (center_cell_height_type == flood_height) {
 		(*flooded_cells)(center_coords) = true;
 		(*basin_flooded_cells)(center_coords) = true;
-		cell_number++;
+		lake_area += (*cell_areas)(center_coords);
 	} else throw runtime_error("Cell type not recognized");
 }
 
@@ -987,6 +991,7 @@ priority_cell_queue latlon_basin_evaluation_algorithm::test_process_center_cell(
                                                													 				double* flood_volume_thresholds_in,
                                                													 				double* connection_volume_thresholds_in,
                                                													 				double* raw_orography_in,
+                                               													 				double* cell_areas_in,
                                                													 				int* flood_next_cell_lat_index_in,
                                                													 				int* flood_next_cell_lon_index_in,
                                                													 				int* connect_next_cell_lat_index_in,
@@ -995,7 +1000,7 @@ priority_cell_queue latlon_basin_evaluation_algorithm::test_process_center_cell(
                                                													 				bool* flooded_cells_in,
                                                													 				bool* connected_cells_in,
                                                													 				double& center_cell_volume_threshold_in,
-                                               													 				int& cell_number_in,
+                                               													 				double& lake_area_in,
                                                													 				int basin_catchment_number_in,
                                                													 				double center_cell_height_in,
                                                													 				double& previous_filled_cell_height_in,
@@ -1007,6 +1012,7 @@ priority_cell_queue latlon_basin_evaluation_algorithm::test_process_center_cell(
 	flood_volume_thresholds = new field<double>(flood_volume_thresholds_in,grid_params_in);
 	connection_volume_thresholds = new field<double>(connection_volume_thresholds_in,grid_params_in);
 	raw_orography = new field<double>(raw_orography_in,grid_params_in);
+	cell_areas = new field<double>(cell_areas_in,grid_params_in);
 	flood_next_cell_lat_index = new field<int>(flood_next_cell_lat_index_in,grid_params_in);
 	flood_next_cell_lon_index = new field<int>(flood_next_cell_lon_index_in,grid_params_in);
 	connect_next_cell_lat_index = new field<int>(connect_next_cell_lat_index_in,grid_params_in);
@@ -1021,7 +1027,7 @@ priority_cell_queue latlon_basin_evaluation_algorithm::test_process_center_cell(
 	basin_connected_cells = new field<bool>(grid_params_in);
 	basin_connected_cells->set_all(false);
 	center_cell_volume_threshold = center_cell_volume_threshold_in;
-	cell_number = cell_number_in;
+	lake_area = lake_area_in;
 	basin_catchment_number = basin_catchment_number_in;
   center_cell_height = center_cell_height_in;
   previous_filled_cell_height = previous_filled_cell_height_in;
@@ -1029,7 +1035,7 @@ priority_cell_queue latlon_basin_evaluation_algorithm::test_process_center_cell(
 	previous_filled_cell_height_type = previous_filled_cell_height_type_in;
   process_center_cell();
 	center_cell_volume_threshold_in = center_cell_volume_threshold;
-	cell_number_in = cell_number;
+	lake_area_in = lake_area;
 	previous_filled_cell_height_in = previous_filled_cell_height;
 	previous_filled_cell_height_type_in = previous_filled_cell_height_type;
 	return q;

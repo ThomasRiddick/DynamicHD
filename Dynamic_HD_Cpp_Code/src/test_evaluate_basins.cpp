@@ -1079,6 +1079,8 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCell) {
                                               2.3,2.4,1.8, 1.5,1.8,2.9, 2.5,1.9,1.6,
                                               2.5,1.4,1.5, 1.4,2.2,2.9, 1.4,1.2,1.1,
                                               1.5,1.3,1.1, 1.1,2.4,2.2, 1.9,1.8,1.2};
+  double* cell_areas_in = new double[9*9];
+  std::fill_n(cell_areas_in,9*9,1.0);
   int* flood_next_cell_lat_index_in = new int[9*9];
   std::fill_n(flood_next_cell_lat_index_in,9*9,-1);
   int* flood_next_cell_lon_index_in = new int[9*9];
@@ -1207,7 +1209,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCell) {
                                       false,false, true, false,false,false, false,false,false,
                                       false,false,false, false,false,false, false,false,false};
   int basin_catchment_number_in = 67;
-  int cell_number_in = 6;
+  double lake_area_in = 6.0;
   double center_cell_height_in = 1.5;
   double center_cell_volume_threshold_in = 8.5;
   double previous_filled_cell_height_in = 1.4;
@@ -1223,6 +1225,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCell) {
                                           flood_volume_thresholds_in,
                                           connection_volume_thresholds_in,
                                           raw_orography_in,
+                                          cell_areas_in,
                                           flood_next_cell_lat_index_in,
                                           flood_next_cell_lon_index_in,
                                           connect_next_cell_lat_index_in,
@@ -1231,7 +1234,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCell) {
                                           flooded_cells_in,
                                           connected_cells_in,
                                           center_cell_volume_threshold_in,
-                                          cell_number_in,
+                                          lake_area_in,
                                           basin_catchment_number_in,
                                           center_cell_height_in,
                                           previous_filled_cell_height_in,
@@ -1254,7 +1257,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCell) {
   EXPECT_TRUE(field<double>(connection_volume_thresholds_in,grid_params_in).almost_equal(field<double>(connection_volume_thresholds_expected_out,grid_params_in),1E-7));
   EXPECT_TRUE(field<double>(flood_volume_thresholds_in,grid_params_in).almost_equal(field<double>(flood_volume_thresholds_expected_out,grid_params_in),1E-7));
   EXPECT_TRUE(fabs(center_cell_volume_threshold_in - 9.1)<1E-7);
-  EXPECT_EQ(cell_number_in,6);
+  EXPECT_EQ(lake_area_in,6.0);
   EXPECT_EQ(previous_filled_cell_height_in,1.4);
   EXPECT_TRUE(field<bool>(flooded_cells_in,grid_params_in) == field<bool>(flooded_cells_expected_out,grid_params_in));
   EXPECT_TRUE(field<bool>(connected_cells_in,grid_params_in) == field<bool>(connected_cells_expected_out,grid_params_in));
@@ -1268,6 +1271,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCell) {
   delete[] connection_volume_thresholds_expected_out; delete[] flood_volume_thresholds_expected_out;
   delete[] basin_catchment_numbers_expected_out; delete[] flooded_cells_expected_out;
   delete[] connected_cells_expected_out;
+  delete[] cell_areas_in;
   delete center_cell_in;
 }
 
@@ -1288,6 +1292,8 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellTwo) {
                                               2.3,2.4,1.8, 1.5,1.8,2.9, 2.5,1.9,1.6,
                                               2.5,1.4,1.5, 1.4,2.2,2.9, 1.4,1.2,1.1,
                                               1.5,1.3,1.1, 1.1,2.4,2.2, 1.9,1.8,1.2};
+  double* cell_areas_in = new double[9*9];
+  std::fill_n(cell_areas_in,9*9,1.0);
   int* flood_next_cell_lat_index_in = new int[9*9];
   std::fill_n(flood_next_cell_lat_index_in,9*9,-1);
   int* flood_next_cell_lon_index_in = new int[9*9];
@@ -1416,7 +1422,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellTwo) {
                                       false,false,false, false,false,false, false,false,false,
                                       false,false,false, false,false,false, false,false,false};
   int basin_catchment_number_in = 67;
-  int cell_number_in = 6;
+  double lake_area_in = 6.0;
   double center_cell_height_in = 1.5;
   double center_cell_volume_threshold_in = 8.5;
   double previous_filled_cell_height_in = 1.4;
@@ -1432,6 +1438,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellTwo) {
                                           flood_volume_thresholds_in,
                                           connection_volume_thresholds_in,
                                           raw_orography_in,
+                                          cell_areas_in,
                                           flood_next_cell_lat_index_in,
                                           flood_next_cell_lon_index_in,
                                           connect_next_cell_lat_index_in,
@@ -1440,7 +1447,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellTwo) {
                                           flooded_cells_in,
                                           connected_cells_in,
                                           center_cell_volume_threshold_in,
-                                          cell_number_in,
+                                          lake_area_in,
                                           basin_catchment_number_in,
                                           center_cell_height_in,
                                           previous_filled_cell_height_in,
@@ -1458,7 +1465,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellTwo) {
   EXPECT_TRUE(field<double>(connection_volume_thresholds_in,grid_params_in).almost_equal(field<double>(connection_volume_thresholds_expected_out,grid_params_in),1E-7));
   EXPECT_TRUE(field<double>(flood_volume_thresholds_in,grid_params_in).almost_equal(field<double>(flood_volume_thresholds_expected_out,grid_params_in),1E-7));
   EXPECT_TRUE(fabs(center_cell_volume_threshold_in - 9.1)<1E-7);
-  EXPECT_EQ(cell_number_in,7);
+  EXPECT_EQ(lake_area_in,7.0);
   EXPECT_EQ(previous_filled_cell_height_in,1.4);
   EXPECT_TRUE(field<bool>(flooded_cells_in,grid_params_in) == field<bool>(flooded_cells_expected_out,grid_params_in));
   EXPECT_TRUE(field<bool>(connected_cells_in,grid_params_in) == field<bool>(connected_cells_expected_out,grid_params_in));
@@ -1472,6 +1479,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellTwo) {
   delete[] connection_volume_thresholds_expected_out; delete[] flood_volume_thresholds_expected_out;
   delete[] basin_catchment_numbers_expected_out; delete[] flooded_cells_expected_out;
   delete[] connected_cells_expected_out;
+  delete[] cell_areas_in;
   delete previous_filled_cell_coords_in; delete center_cell_in;
 }
 
@@ -1492,6 +1500,8 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellThree) {
                                               2.3,2.4,1.8, 1.5,1.8,2.9, 2.5,1.9,1.6,
                                               2.5,1.4,1.5, 1.4,2.2,2.9, 1.4,1.2,1.1,
                                               1.5,1.3,1.1, 1.1,2.4,2.2, 1.9,1.8,1.2};
+  double* cell_areas_in = new double[9*9];
+  std::fill_n(cell_areas_in,9*9,1.0);
   int* flood_next_cell_lat_index_in = new int[9*9];
   std::fill_n(flood_next_cell_lat_index_in,9*9,-1);
   int* flood_next_cell_lon_index_in = new int[9*9];
@@ -1620,7 +1630,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellThree) {
                                       false,false,false, false,false,false, false,false,false,
                                       false,false,false, false,false,false, false,false,false};
   int basin_catchment_number_in = 67;
-  int cell_number_in = 6;
+  double lake_area_in = 6.0;
   double center_cell_height_in = 1.5;
   double center_cell_volume_threshold_in = 8.5;
   double previous_filled_cell_height_in = 1.4;
@@ -1636,6 +1646,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellThree) {
                                           flood_volume_thresholds_in,
                                           connection_volume_thresholds_in,
                                           raw_orography_in,
+                                          cell_areas_in,
                                           flood_next_cell_lat_index_in,
                                           flood_next_cell_lon_index_in,
                                           connect_next_cell_lat_index_in,
@@ -1644,7 +1655,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellThree) {
                                           flooded_cells_in,
                                           connected_cells_in,
                                           center_cell_volume_threshold_in,
-                                          cell_number_in,
+                                          lake_area_in,
                                           basin_catchment_number_in,
                                           center_cell_height_in,
                                           previous_filled_cell_height_in,
@@ -1662,7 +1673,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellThree) {
   EXPECT_TRUE(field<double>(connection_volume_thresholds_in,grid_params_in).almost_equal(field<double>(connection_volume_thresholds_expected_out,grid_params_in),1E-7));
   EXPECT_TRUE(field<double>(flood_volume_thresholds_in,grid_params_in).almost_equal(field<double>(flood_volume_thresholds_expected_out,grid_params_in),1E-7));
   EXPECT_TRUE(fabs(center_cell_volume_threshold_in - 9.1)<1E-7);
-  EXPECT_EQ(cell_number_in,7);
+  EXPECT_EQ(lake_area_in,7.0);
   EXPECT_EQ(previous_filled_cell_height_in,1.4);
   EXPECT_TRUE(field<bool>(flooded_cells_in,grid_params_in) == field<bool>(flooded_cells_expected_out,grid_params_in));
   EXPECT_TRUE(field<bool>(connected_cells_in,grid_params_in) == field<bool>(connected_cells_expected_out,grid_params_in));
@@ -1676,6 +1687,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellThree) {
   delete[] connection_volume_thresholds_expected_out; delete[] flood_volume_thresholds_expected_out;
   delete[] basin_catchment_numbers_expected_out; delete[] flooded_cells_expected_out;
   delete[] connected_cells_expected_out;
+  delete[] cell_areas_in;
   delete previous_filled_cell_coords_in; delete center_cell_in;
 }
 
@@ -1696,6 +1708,8 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellFour) {
                                               2.3,2.4,1.8, 1.5,1.8,2.9, 2.5,1.9,1.6,
                                               2.5,1.4,1.5, 1.4,2.2,2.9, 1.4,1.2,1.1,
                                               1.5,1.3,1.1, 1.1,2.4,2.2, 1.9,1.8,1.2};
+  double* cell_areas_in = new double[9*9];
+  std::fill_n(cell_areas_in,9*9,1.0);
   int* flood_next_cell_lat_index_in = new int[9*9];
   std::fill_n(flood_next_cell_lat_index_in,9*9,-1);
   int* flood_next_cell_lon_index_in = new int[9*9];
@@ -1824,7 +1838,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellFour) {
                                       false,false,false, false,false,false, false,false,false,
                                       false,false,false, false,false,false, false,false,false};
   int basin_catchment_number_in = 31;
-  int cell_number_in = 2;
+  double lake_area_in = 2.0;
   double center_cell_height_in = 2.1;
   double center_cell_volume_threshold_in = 1.5;
   double previous_filled_cell_height_in = 1.8;
@@ -1840,6 +1854,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellFour) {
                                           flood_volume_thresholds_in,
                                           connection_volume_thresholds_in,
                                           raw_orography_in,
+                                          cell_areas_in,
                                           flood_next_cell_lat_index_in,
                                           flood_next_cell_lon_index_in,
                                           connect_next_cell_lat_index_in,
@@ -1848,7 +1863,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellFour) {
                                           flooded_cells_in,
                                           connected_cells_in,
                                           center_cell_volume_threshold_in,
-                                          cell_number_in,
+                                          lake_area_in,
                                           basin_catchment_number_in,
                                           center_cell_height_in,
                                           previous_filled_cell_height_in,
@@ -1871,7 +1886,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellFour) {
   EXPECT_TRUE(field<double>(connection_volume_thresholds_in,grid_params_in).almost_equal(field<double>(connection_volume_thresholds_expected_out,grid_params_in),1E-7));
   EXPECT_TRUE(field<double>(flood_volume_thresholds_in,grid_params_in).almost_equal(field<double>(flood_volume_thresholds_expected_out,grid_params_in),1E-7));
   EXPECT_TRUE(fabs(center_cell_volume_threshold_in - 2.1)<1E-7);
-  EXPECT_EQ(cell_number_in,2);
+  EXPECT_EQ(lake_area_in,2.0);
   EXPECT_EQ(previous_filled_cell_height_in,1.8);
   EXPECT_TRUE(field<bool>(flooded_cells_in,grid_params_in) == field<bool>(flooded_cells_expected_out,grid_params_in));
   EXPECT_TRUE(field<bool>(connected_cells_in,grid_params_in) == field<bool>(connected_cells_expected_out,grid_params_in));
@@ -1885,6 +1900,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellFour) {
   delete[] connection_volume_thresholds_expected_out; delete[] flood_volume_thresholds_expected_out;
   delete[] basin_catchment_numbers_expected_out; delete[] flooded_cells_expected_out;
   delete[] connected_cells_expected_out;
+  delete[] cell_areas_in;
   delete center_cell_in;
 }
 
@@ -1905,6 +1921,8 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellFive) {
                                               2.3,2.4,1.8, 1.5,1.8,2.9, 2.5,1.9,1.6,
                                               2.5,1.4,1.5, 1.4,2.2,2.9, 1.4,1.2,1.1,
                                               1.5,1.3,1.1, 1.1,2.4,2.2, 1.9,1.8,1.2};
+  double* cell_areas_in = new double[9*9];
+  std::fill_n(cell_areas_in,9*9,1.0);
   int* flood_next_cell_lat_index_in = new int[9*9];
   std::fill_n(flood_next_cell_lat_index_in,9*9,-1);
   int* flood_next_cell_lon_index_in = new int[9*9];
@@ -2034,7 +2052,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellFive) {
                                       false,false,false, false,false,false, false,false,false,
                                       false,false,false, false,false,false, false,false,false};
   int basin_catchment_number_in = 31;
-  int cell_number_in = 2;
+  double lake_area_in = 2.0;
   double center_cell_height_in = 2.1;
   double center_cell_volume_threshold_in = 1.5;
   double previous_filled_cell_height_in = 1.8;
@@ -2050,6 +2068,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellFive) {
                                           flood_volume_thresholds_in,
                                           connection_volume_thresholds_in,
                                           raw_orography_in,
+                                          cell_areas_in,
                                           flood_next_cell_lat_index_in,
                                           flood_next_cell_lon_index_in,
                                           connect_next_cell_lat_index_in,
@@ -2058,7 +2077,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellFive) {
                                           flooded_cells_in,
                                           connected_cells_in,
                                           center_cell_volume_threshold_in,
-                                          cell_number_in,
+                                          lake_area_in,
                                           basin_catchment_number_in,
                                           center_cell_height_in,
                                           previous_filled_cell_height_in,
@@ -2076,7 +2095,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellFive) {
   EXPECT_TRUE(field<double>(connection_volume_thresholds_in,grid_params_in).almost_equal(field<double>(connection_volume_thresholds_expected_out,grid_params_in),1E-7));
   EXPECT_TRUE(field<double>(flood_volume_thresholds_in,grid_params_in).almost_equal(field<double>(flood_volume_thresholds_expected_out,grid_params_in),1E-7));
   EXPECT_TRUE(fabs(center_cell_volume_threshold_in - 2.1)<1E-7);
-  EXPECT_EQ(cell_number_in,3);
+  EXPECT_EQ(lake_area_in,3.0);
   EXPECT_EQ(previous_filled_cell_height_in,1.8);
   EXPECT_TRUE(field<bool>(flooded_cells_in,grid_params_in) == field<bool>(flooded_cells_expected_out,grid_params_in));
   EXPECT_TRUE(field<bool>(connected_cells_in,grid_params_in) == field<bool>(connected_cells_expected_out,grid_params_in));
@@ -2090,6 +2109,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellFive) {
   delete[] connection_volume_thresholds_expected_out; delete[] flood_volume_thresholds_expected_out;
   delete[] basin_catchment_numbers_expected_out; delete[] flooded_cells_expected_out;
   delete[] connected_cells_expected_out;
+  delete[] cell_areas_in;
   delete previous_filled_cell_coords_in; delete center_cell_in;
 }
 
@@ -2110,6 +2130,8 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellSix) {
                                               2.3,2.4,1.8, 1.5,1.8,2.9, 2.5,1.9,1.6,
                                               2.5,1.4,1.5, 1.4,2.2,2.9, 1.4,1.2,1.1,
                                               1.5,1.3,1.1, 1.1,2.4,2.2, 1.9,1.8,1.2};
+  double* cell_areas_in = new double[9*9];
+  std::fill_n(cell_areas_in,9*9,1.0);
   int* flood_next_cell_lat_index_in = new int[9*9];
   std::fill_n(flood_next_cell_lat_index_in,9*9,-1);
   int* flood_next_cell_lon_index_in = new int[9*9];
@@ -2238,7 +2260,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellSix) {
                                       false,false,false, false,false,false, false,false,false,
                                       false,false,false, false,false,false, false,false,false};
   int basin_catchment_number_in = 31;
-  int cell_number_in = 2;
+  double lake_area_in = 2.0;
   double center_cell_height_in = 2.1;
   double center_cell_volume_threshold_in = 1.5;
   double previous_filled_cell_height_in = 1.8;
@@ -2254,6 +2276,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellSix) {
                                           flood_volume_thresholds_in,
                                           connection_volume_thresholds_in,
                                           raw_orography_in,
+                                          cell_areas_in,
                                           flood_next_cell_lat_index_in,
                                           flood_next_cell_lon_index_in,
                                           connect_next_cell_lat_index_in,
@@ -2262,7 +2285,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellSix) {
                                           flooded_cells_in,
                                           connected_cells_in,
                                           center_cell_volume_threshold_in,
-                                          cell_number_in,
+                                          lake_area_in,
                                           basin_catchment_number_in,
                                           center_cell_height_in,
                                           previous_filled_cell_height_in,
@@ -2280,7 +2303,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellSix) {
   EXPECT_TRUE(field<double>(connection_volume_thresholds_in,grid_params_in).almost_equal(field<double>(connection_volume_thresholds_expected_out,grid_params_in),1E-7));
   EXPECT_TRUE(field<double>(flood_volume_thresholds_in,grid_params_in).almost_equal(field<double>(flood_volume_thresholds_expected_out,grid_params_in),1E-7));
   EXPECT_TRUE(fabs(center_cell_volume_threshold_in - 2.1)<1E-7);
-  EXPECT_EQ(cell_number_in,3);
+  EXPECT_EQ(lake_area_in,3.0);
   EXPECT_EQ(previous_filled_cell_height_in,1.8);
   EXPECT_TRUE(field<bool>(flooded_cells_in,grid_params_in) == field<bool>(flooded_cells_expected_out,grid_params_in));
   EXPECT_TRUE(field<bool>(connected_cells_in,grid_params_in) == field<bool>(connected_cells_expected_out,grid_params_in));
@@ -2294,6 +2317,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellSix) {
   delete[] connection_volume_thresholds_expected_out; delete[] flood_volume_thresholds_expected_out;
   delete[] basin_catchment_numbers_expected_out; delete[] flooded_cells_expected_out;
   delete[] connected_cells_expected_out;
+  delete[] cell_areas_in;
   delete previous_filled_cell_coords_in; delete center_cell_in;
 }
 
@@ -2337,6 +2361,8 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellSeven) {
                                                   0,0,0, 0,0,0, 0,0,0,
                                                   0,0,0, 0,0,0, 0,0,0,
                                                   0,0,0, 0,0,0, 0,0,0};
+  double* cell_areas_in = new double[9*9];
+  std::fill_n(cell_areas_in,9*9,1.0);
   int* flood_next_cell_lat_index_expected_out = new int[9*9] {-1,-1,-1, -1,-1,-1, -1,-1,-1,
                                                         -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                                         -1,-1,-1, -1,-1,-1, -1,-1,-1,
@@ -2442,7 +2468,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellSeven) {
                                       false,false,false, false,false,false, false,false,false,
                                       false,false, true, false,false,false, false,false,false};
   int basin_catchment_number_in = 67;
-  int cell_number_in = 0;
+  double lake_area_in = 0.0;
   double center_cell_height_in = 1.1;
   double center_cell_volume_threshold_in = 0.0;
   double previous_filled_cell_height_in = 0.0;
@@ -2458,6 +2484,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellSeven) {
                                           flood_volume_thresholds_in,
                                           connection_volume_thresholds_in,
                                           raw_orography_in,
+                                          cell_areas_in,
                                           flood_next_cell_lat_index_in,
                                           flood_next_cell_lon_index_in,
                                           connect_next_cell_lat_index_in,
@@ -2466,7 +2493,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellSeven) {
                                           flooded_cells_in,
                                           connected_cells_in,
                                           center_cell_volume_threshold_in,
-                                          cell_number_in,
+                                          lake_area_in,
                                           basin_catchment_number_in,
                                           center_cell_height_in,
                                           previous_filled_cell_height_in,
@@ -2489,7 +2516,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellSeven) {
   EXPECT_TRUE(field<double>(connection_volume_thresholds_in,grid_params_in).almost_equal(field<double>(connection_volume_thresholds_expected_out,grid_params_in),1E-7));
   EXPECT_TRUE(field<double>(flood_volume_thresholds_in,grid_params_in).almost_equal(field<double>(flood_volume_thresholds_expected_out,grid_params_in),1E-7));
   EXPECT_TRUE(fabs(center_cell_volume_threshold_in - 0.0)<1E-7);
-  EXPECT_EQ(cell_number_in,0);
+  EXPECT_EQ(lake_area_in,0.0);
   EXPECT_EQ(previous_filled_cell_height_in,0.0);
   EXPECT_TRUE(field<bool>(flooded_cells_in,grid_params_in) == field<bool>(flooded_cells_expected_out,grid_params_in));
   EXPECT_TRUE(field<bool>(connected_cells_in,grid_params_in) == field<bool>(connected_cells_expected_out,grid_params_in));
@@ -2503,6 +2530,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellSeven) {
   delete[] connection_volume_thresholds_expected_out; delete[] flood_volume_thresholds_expected_out;
   delete[] basin_catchment_numbers_expected_out; delete[] flooded_cells_expected_out;
   delete[] connected_cells_expected_out;
+  delete[] cell_areas_in;
   delete center_cell_in;
 }
 
@@ -2523,6 +2551,8 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellEight) {
                                               2.3,2.4,1.8, 1.5,1.8,2.9, 2.5,1.9,1.6,
                                               2.5,1.4,1.5, 1.4,2.2,2.9, 1.4,1.2,1.1,
                                               1.5,1.3,1.1, 1.1,2.4,2.2, 1.9,1.8,1.2};
+  double* cell_areas_in = new double[9*9];
+  std::fill_n(cell_areas_in,9*9,1.0);
   int* flood_next_cell_lat_index_in = new int[9*9];
   std::fill_n(flood_next_cell_lat_index_in,9*9,-1);
   int* flood_next_cell_lon_index_in = new int[9*9];
@@ -2651,7 +2681,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellEight) {
                                       false,false,false, false,false,false, false,false,false,
                                       false,false,false, false,false,false, false,false,false};
   int basin_catchment_number_in = 67;
-  int cell_number_in = 0;
+  double lake_area_in = 0.0;
   double center_cell_height_in = 1.3;
   double center_cell_volume_threshold_in = 0.0;
   double previous_filled_cell_height_in = 1.1;
@@ -2667,6 +2697,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellEight) {
                                           flood_volume_thresholds_in,
                                           connection_volume_thresholds_in,
                                           raw_orography_in,
+                                          cell_areas_in,
                                           flood_next_cell_lat_index_in,
                                           flood_next_cell_lon_index_in,
                                           connect_next_cell_lat_index_in,
@@ -2675,7 +2706,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellEight) {
                                           flooded_cells_in,
                                           connected_cells_in,
                                           center_cell_volume_threshold_in,
-                                          cell_number_in,
+                                          lake_area_in,
                                           basin_catchment_number_in,
                                           center_cell_height_in,
                                           previous_filled_cell_height_in,
@@ -2693,7 +2724,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellEight) {
   EXPECT_TRUE(field<double>(connection_volume_thresholds_in,grid_params_in).almost_equal(field<double>(connection_volume_thresholds_expected_out,grid_params_in),1E-7));
   EXPECT_TRUE(field<double>(flood_volume_thresholds_in,grid_params_in).almost_equal(field<double>(flood_volume_thresholds_expected_out,grid_params_in),1E-7));
   EXPECT_TRUE(fabs(center_cell_volume_threshold_in - 0.0)<1E-7);
-  EXPECT_EQ(cell_number_in,1);
+  EXPECT_EQ(lake_area_in,1.0);
   EXPECT_EQ(previous_filled_cell_height_in,1.1);
   EXPECT_TRUE(field<bool>(flooded_cells_in,grid_params_in) == field<bool>(flooded_cells_expected_out,grid_params_in));
   EXPECT_TRUE(field<bool>(connected_cells_in,grid_params_in) == field<bool>(connected_cells_expected_out,grid_params_in));
@@ -2707,6 +2738,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellEight) {
   delete[] connection_volume_thresholds_expected_out; delete[] flood_volume_thresholds_expected_out;
   delete[] basin_catchment_numbers_expected_out; delete[] flooded_cells_expected_out;
   delete[] connected_cells_expected_out;
+  delete[] cell_areas_in;
   delete previous_filled_cell_coords_in; delete center_cell_in;
 }
 
@@ -2727,6 +2759,8 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellNine) {
                                               2.3,2.4,1.8, 1.5,1.8,2.9, 2.5,1.9,1.6,
                                               2.5,1.4,1.5, 1.4,2.2,2.9, 1.4,1.2,1.1,
                                               1.5,1.3,1.1, 1.1,2.4,2.2, 1.9,1.8,1.2};
+  double* cell_areas_in = new double[9*9];
+  std::fill_n(cell_areas_in,9*9,1.0);
   int* flood_next_cell_lat_index_in = new int[9*9];
   std::fill_n(flood_next_cell_lat_index_in,9*9,-1);
   int* flood_next_cell_lon_index_in = new int[9*9];
@@ -2855,7 +2889,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellNine) {
                                       false,false,false, false,false,false, false,false,false,
                                       false,false,false, false,false,false, false,false,false};
   int basin_catchment_number_in = 67;
-  int cell_number_in = 1;
+  double lake_area_in = 1.0;
   double center_cell_height_in = 1.3;
   double center_cell_volume_threshold_in = 0.0;
   double previous_filled_cell_height_in = 1.1;
@@ -2871,6 +2905,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellNine) {
                                           flood_volume_thresholds_in,
                                           connection_volume_thresholds_in,
                                           raw_orography_in,
+                                          cell_areas_in,
                                           flood_next_cell_lat_index_in,
                                           flood_next_cell_lon_index_in,
                                           connect_next_cell_lat_index_in,
@@ -2879,7 +2914,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellNine) {
                                           flooded_cells_in,
                                           connected_cells_in,
                                           center_cell_volume_threshold_in,
-                                          cell_number_in,
+                                          lake_area_in,
                                           basin_catchment_number_in,
                                           center_cell_height_in,
                                           previous_filled_cell_height_in,
@@ -2897,7 +2932,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellNine) {
   EXPECT_TRUE(field<double>(connection_volume_thresholds_in,grid_params_in).almost_equal(field<double>(connection_volume_thresholds_expected_out,grid_params_in),1E-7));
   EXPECT_TRUE(field<double>(flood_volume_thresholds_in,grid_params_in).almost_equal(field<double>(flood_volume_thresholds_expected_out,grid_params_in),1E-7));
   EXPECT_TRUE(fabs(center_cell_volume_threshold_in - 0.2)<1E-7);
-  EXPECT_EQ(cell_number_in,2);
+  EXPECT_EQ(lake_area_in,2.0);
   EXPECT_EQ(previous_filled_cell_height_in,1.1);
   EXPECT_TRUE(field<bool>(flooded_cells_in,grid_params_in) == field<bool>(flooded_cells_expected_out,grid_params_in));
   EXPECT_TRUE(field<bool>(connected_cells_in,grid_params_in) == field<bool>(connected_cells_expected_out,grid_params_in));
@@ -2911,6 +2946,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellNine) {
   delete[] connection_volume_thresholds_expected_out; delete[] flood_volume_thresholds_expected_out;
   delete[] basin_catchment_numbers_expected_out; delete[] flooded_cells_expected_out;
   delete[] connected_cells_expected_out;
+  delete[] cell_areas_in;
   delete previous_filled_cell_coords_in; delete center_cell_in;
 }
 
@@ -2931,6 +2967,8 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellTen) {
                                               2.3,2.4,1.8, 1.5,1.8,2.9, 2.5,1.9,1.6,
                                               2.5,1.4,1.5, 1.4,2.2,2.9, 1.4,1.2,1.1,
                                               1.5,1.3,1.1, 1.1,2.4,2.2, 1.9,1.8,1.2};
+  double* cell_areas_in = new double[9*9];
+  std::fill_n(cell_areas_in,9*9,1.0);
   int* flood_next_cell_lat_index_in = new int[9*9];
   std::fill_n(flood_next_cell_lat_index_in,9*9,-1);
   int* flood_next_cell_lon_index_in = new int[9*9];
@@ -3060,7 +3098,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellTen) {
                                       false,false,false, false,false,false, false,false,false,
                                       false, true,false, false,false,false, false,false,false};
   int basin_catchment_number_in = 67;
-  int cell_number_in = 1;
+  double lake_area_in = 1.0;
   double center_cell_height_in = 1.3;
   double center_cell_volume_threshold_in = 0.0;
   double previous_filled_cell_height_in = 1.1;
@@ -3076,6 +3114,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellTen) {
                                           flood_volume_thresholds_in,
                                           connection_volume_thresholds_in,
                                           raw_orography_in,
+                                          cell_areas_in,
                                           flood_next_cell_lat_index_in,
                                           flood_next_cell_lon_index_in,
                                           connect_next_cell_lat_index_in,
@@ -3084,7 +3123,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellTen) {
                                           flooded_cells_in,
                                           connected_cells_in,
                                           center_cell_volume_threshold_in,
-                                          cell_number_in,
+                                          lake_area_in,
                                           basin_catchment_number_in,
                                           center_cell_height_in,
                                           previous_filled_cell_height_in,
@@ -3107,7 +3146,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellTen) {
   EXPECT_TRUE(field<double>(connection_volume_thresholds_in,grid_params_in).almost_equal(field<double>(connection_volume_thresholds_expected_out,grid_params_in),1E-7));
   EXPECT_TRUE(field<double>(flood_volume_thresholds_in,grid_params_in).almost_equal(field<double>(flood_volume_thresholds_expected_out,grid_params_in),1E-7));
   EXPECT_TRUE(fabs(center_cell_volume_threshold_in - 0.2)<1E-7);
-  EXPECT_EQ(cell_number_in,1);
+  EXPECT_EQ(lake_area_in,1.0);
   EXPECT_EQ(previous_filled_cell_height_in,1.1);
   EXPECT_TRUE(field<bool>(flooded_cells_in,grid_params_in) == field<bool>(flooded_cells_expected_out,grid_params_in));
   EXPECT_TRUE(field<bool>(connected_cells_in,grid_params_in) == field<bool>(connected_cells_expected_out,grid_params_in));
@@ -3121,6 +3160,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellTen) {
   delete[] connection_volume_thresholds_expected_out; delete[] flood_volume_thresholds_expected_out;
   delete[] basin_catchment_numbers_expected_out; delete[] flooded_cells_expected_out;
   delete[] connected_cells_expected_out;
+  delete[] cell_areas_in;
   delete center_cell_in;
 }
 
@@ -3151,6 +3191,8 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellEleven) {
                                               2.3,2.4,1.8, 1.5,1.8,2.9, 2.5,1.9,1.6,
                                               2.5,1.4,1.5, 1.4,2.2,2.9, 1.4,1.2,1.1,
                                               1.5,1.3,1.1, 1.1,2.4,2.2, 1.9,1.8,1.2};
+  double* cell_areas_in = new double[9*9];
+  std::fill_n(cell_areas_in,9*9,1.0);
   int* flood_next_cell_lat_index_in = new int[9*9];
   std::fill_n(flood_next_cell_lat_index_in,9*9,-1);
   int* flood_next_cell_lon_index_in = new int[9*9];
@@ -3280,7 +3322,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellEleven) {
                                       false,false,false, false,false,false, false,false,false,
                                       false, true,false, false,false,false, false,false,false};
   int basin_catchment_number_in = 67;
-  int cell_number_in = 1;
+  double lake_area_in = 1.0;
   double center_cell_height_in = 1.3;
   double center_cell_volume_threshold_in = 0.0;
   double previous_filled_cell_height_in = 1.1;
@@ -3296,6 +3338,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellEleven) {
                                           flood_volume_thresholds_in,
                                           connection_volume_thresholds_in,
                                           raw_orography_in,
+                                          cell_areas_in,
                                           flood_next_cell_lat_index_in,
                                           flood_next_cell_lon_index_in,
                                           connect_next_cell_lat_index_in,
@@ -3304,7 +3347,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellEleven) {
                                           flooded_cells_in,
                                           connected_cells_in,
                                           center_cell_volume_threshold_in,
-                                          cell_number_in,
+                                          lake_area_in,
                                           basin_catchment_number_in,
                                           center_cell_height_in,
                                           previous_filled_cell_height_in,
@@ -3328,7 +3371,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellEleven) {
   EXPECT_TRUE(field<double>(connection_volume_thresholds_in,grid_params_in).almost_equal(field<double>(connection_volume_thresholds_expected_out,grid_params_in),1E-7));
   EXPECT_TRUE(field<double>(flood_volume_thresholds_in,grid_params_in).almost_equal(field<double>(flood_volume_thresholds_expected_out,grid_params_in),1E-7));
   EXPECT_TRUE(fabs(center_cell_volume_threshold_in - 0.2)<1E-7);
-  EXPECT_EQ(cell_number_in,1);
+  EXPECT_EQ(lake_area_in,1.0);
   EXPECT_EQ(previous_filled_cell_height_in,1.1);
   EXPECT_TRUE(field<bool>(flooded_cells_in,grid_params_in) == field<bool>(flooded_cells_expected_out,grid_params_in));
   EXPECT_TRUE(field<bool>(connected_cells_in,grid_params_in) == field<bool>(connected_cells_expected_out,grid_params_in));
@@ -3342,6 +3385,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellEleven) {
   delete[] connection_volume_thresholds_expected_out; delete[] flood_volume_thresholds_expected_out;
   delete[] basin_catchment_numbers_expected_out; delete[] flooded_cells_expected_out;
   delete[] connected_cells_expected_out;
+  delete[] cell_areas_in;
   delete center_cell_in;
 }
 
@@ -3372,6 +3416,8 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellTwelve) {
                                               2.3,2.4,1.8, 1.5,1.8,2.9, 2.5,1.9,1.6,
                                               2.5,1.4,1.5, 1.4,2.2,2.9, 1.4,1.2,1.1,
                                               1.5,1.3,1.1, 1.1,2.4,2.2, 1.9,1.8,1.2};
+  double* cell_areas_in = new double[9*9];
+  std::fill_n(cell_areas_in,9*9,1.0);
   int* flood_next_cell_lat_index_in = new int[9*9];
   std::fill_n(flood_next_cell_lat_index_in,9*9,-1);
   int* flood_next_cell_lon_index_in = new int[9*9];
@@ -3501,7 +3547,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellTwelve) {
                                       false,false,false, false,false,false, false,false,false,
                                       false,false,false, false,false,false, false,false,false};
   int basin_catchment_number_in = 67;
-  int cell_number_in = 1;
+  double lake_area_in = 1.0;
   double center_cell_height_in = 1.3;
   double center_cell_volume_threshold_in = 0.0;
   double previous_filled_cell_height_in = 1.1;
@@ -3517,6 +3563,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellTwelve) {
                                           flood_volume_thresholds_in,
                                           connection_volume_thresholds_in,
                                           raw_orography_in,
+                                          cell_areas_in,
                                           flood_next_cell_lat_index_in,
                                           flood_next_cell_lon_index_in,
                                           connect_next_cell_lat_index_in,
@@ -3525,7 +3572,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellTwelve) {
                                           flooded_cells_in,
                                           connected_cells_in,
                                           center_cell_volume_threshold_in,
-                                          cell_number_in,
+                                          lake_area_in,
                                           basin_catchment_number_in,
                                           center_cell_height_in,
                                           previous_filled_cell_height_in,
@@ -3543,7 +3590,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellTwelve) {
   EXPECT_TRUE(field<double>(connection_volume_thresholds_in,grid_params_in).almost_equal(field<double>(connection_volume_thresholds_expected_out,grid_params_in),1E-7));
   EXPECT_TRUE(field<double>(flood_volume_thresholds_in,grid_params_in).almost_equal(field<double>(flood_volume_thresholds_expected_out,grid_params_in),1E-7));
   EXPECT_TRUE(fabs(center_cell_volume_threshold_in - 0.2)<1E-7);
-  EXPECT_EQ(cell_number_in,2);
+  EXPECT_EQ(lake_area_in,2.0);
   EXPECT_EQ(previous_filled_cell_height_in,1.1);
   EXPECT_TRUE(field<bool>(flooded_cells_in,grid_params_in) == field<bool>(flooded_cells_expected_out,grid_params_in));
   EXPECT_TRUE(field<bool>(connected_cells_in,grid_params_in) == field<bool>(connected_cells_expected_out,grid_params_in));
@@ -3557,6 +3604,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellTwelve) {
   delete[] connection_volume_thresholds_expected_out; delete[] flood_volume_thresholds_expected_out;
   delete[] basin_catchment_numbers_expected_out; delete[] flooded_cells_expected_out;
   delete[] connected_cells_expected_out;
+  delete[] cell_areas_in;
   delete previous_filled_cell_coords_in; delete center_cell_in;
 }
 
@@ -3587,6 +3635,8 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellThirteen) {
                                               2.3,2.4,1.8, 1.5,1.8,2.9, 2.5,1.9,1.6,
                                               2.5,1.4,1.5, 1.4,2.2,2.9, 1.4,1.2,1.1,
                                               1.5,1.3,1.1, 1.1,2.4,2.2, 1.9,1.8,1.2};
+  double* cell_areas_in = new double[9*9];
+  std::fill_n(cell_areas_in,9*9,1.0);
   int* flood_next_cell_lat_index_in = new int[9*9];
   std::fill_n(flood_next_cell_lat_index_in,9*9,-1);
   int* flood_next_cell_lon_index_in = new int[9*9];
@@ -3716,7 +3766,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellThirteen) {
                                       false,false,false, false,false,false, false,false,false,
                                       false, true,false, false,false,false, false,false,false};
   int basin_catchment_number_in = 67;
-  int cell_number_in = 1;
+  double lake_area_in = 1.0;
   double center_cell_height_in = 1.3;
   double center_cell_volume_threshold_in = 0.0;
   double previous_filled_cell_height_in = 1.1;
@@ -3732,6 +3782,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellThirteen) {
                                           flood_volume_thresholds_in,
                                           connection_volume_thresholds_in,
                                           raw_orography_in,
+                                          cell_areas_in,
                                           flood_next_cell_lat_index_in,
                                           flood_next_cell_lon_index_in,
                                           connect_next_cell_lat_index_in,
@@ -3740,7 +3791,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellThirteen) {
                                           flooded_cells_in,
                                           connected_cells_in,
                                           center_cell_volume_threshold_in,
-                                          cell_number_in,
+                                          lake_area_in,
                                           basin_catchment_number_in,
                                           center_cell_height_in,
                                           previous_filled_cell_height_in,
@@ -3763,7 +3814,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellThirteen) {
   EXPECT_TRUE(field<double>(connection_volume_thresholds_in,grid_params_in).almost_equal(field<double>(connection_volume_thresholds_expected_out,grid_params_in),1E-7));
   EXPECT_TRUE(field<double>(flood_volume_thresholds_in,grid_params_in).almost_equal(field<double>(flood_volume_thresholds_expected_out,grid_params_in),1E-7));
   EXPECT_TRUE(fabs(center_cell_volume_threshold_in - 0.2)<1E-7);
-  EXPECT_EQ(cell_number_in,1);
+  EXPECT_EQ(lake_area_in,1.0);
   EXPECT_EQ(previous_filled_cell_height_in,1.1);
   EXPECT_TRUE(field<bool>(flooded_cells_in,grid_params_in) == field<bool>(flooded_cells_expected_out,grid_params_in));
   EXPECT_TRUE(field<bool>(connected_cells_in,grid_params_in) == field<bool>(connected_cells_expected_out,grid_params_in));
@@ -3777,6 +3828,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellThirteen) {
   delete[] connection_volume_thresholds_expected_out; delete[] flood_volume_thresholds_expected_out;
   delete[] basin_catchment_numbers_expected_out; delete[] flooded_cells_expected_out;
   delete[] connected_cells_expected_out;
+  delete[] cell_areas_in;
   delete center_cell_in;
 }
 
@@ -3830,6 +3882,8 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellFourteen) {
                                                   0,0,0, 0,0,0, 0,0,0,
                                                   0,0,0, 0,0,0, 0,0,0,
                                                   0,0,0, 0,0,0, 0,0,0};
+  double* cell_areas_in = new double[9*9];
+  std::fill_n(cell_areas_in,9*9,1.0);
   int* flood_next_cell_lat_index_expected_out = new int[9*9] {-1,-1,-1, -1,-1,-1, -1,-1,-1,
                                                         -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                                         -1,-1,-1, -1,-1,-1, -1,-1,-1,
@@ -3936,7 +3990,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellFourteen) {
                                       false,false,false, false,false,false, false,false,false,
                                       false,false,false, false,false,false, false,false,false};
   int basin_catchment_number_in = 67;
-  int cell_number_in = 1;
+  double lake_area_in = 1.0;
   double center_cell_height_in = 1.3;
   double center_cell_volume_threshold_in = 0.0;
   double previous_filled_cell_height_in = 1.1;
@@ -3952,6 +4006,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellFourteen) {
                                           flood_volume_thresholds_in,
                                           connection_volume_thresholds_in,
                                           raw_orography_in,
+                                          cell_areas_in,
                                           flood_next_cell_lat_index_in,
                                           flood_next_cell_lon_index_in,
                                           connect_next_cell_lat_index_in,
@@ -3960,7 +4015,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellFourteen) {
                                           flooded_cells_in,
                                           connected_cells_in,
                                           center_cell_volume_threshold_in,
-                                          cell_number_in,
+                                          lake_area_in,
                                           basin_catchment_number_in,
                                           center_cell_height_in,
                                           previous_filled_cell_height_in,
@@ -3978,7 +4033,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellFourteen) {
   EXPECT_TRUE(field<double>(connection_volume_thresholds_in,grid_params_in).almost_equal(field<double>(connection_volume_thresholds_expected_out,grid_params_in),1E-7));
   EXPECT_TRUE(field<double>(flood_volume_thresholds_in,grid_params_in).almost_equal(field<double>(flood_volume_thresholds_expected_out,grid_params_in),1E-7));
   EXPECT_TRUE(fabs(center_cell_volume_threshold_in - 0.2)<1E-7);
-  EXPECT_EQ(cell_number_in,2);
+  EXPECT_EQ(lake_area_in,2.0);
   EXPECT_EQ(previous_filled_cell_height_in,1.1);
   EXPECT_TRUE(field<bool>(flooded_cells_in,grid_params_in) == field<bool>(flooded_cells_expected_out,grid_params_in));
   EXPECT_TRUE(field<bool>(connected_cells_in,grid_params_in) == field<bool>(connected_cells_expected_out,grid_params_in));
@@ -3992,6 +4047,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellFourteen) {
   delete[] connection_volume_thresholds_expected_out; delete[] flood_volume_thresholds_expected_out;
   delete[] basin_catchment_numbers_expected_out; delete[] flooded_cells_expected_out;
   delete[] connected_cells_expected_out;
+  delete[] cell_areas_in;
   delete previous_filled_cell_coords_in; delete center_cell_in;
 }
 
@@ -4022,6 +4078,8 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellFifteen) {
                                               2.3,2.4,1.8, 1.5,1.8,2.9, 2.5,1.9,1.6,
                                               2.5,1.4,1.5, 1.4,2.2,2.9, 1.4,1.2,1.1,
                                               1.5,1.3,1.1, 1.1,2.4,2.2, 1.9,1.8,1.2};
+  double* cell_areas_in = new double[9*9];
+  std::fill_n(cell_areas_in,9*9,1.0);
   int* flood_next_cell_lat_index_in = new int[9*9];
   std::fill_n(flood_next_cell_lat_index_in,9*9,-1);
   int* flood_next_cell_lon_index_in = new int[9*9];
@@ -4151,7 +4209,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellFifteen) {
                                       false,false,false, false,false,false, false,false,false,
                                       false, true,false, false,false,false, false,false,false};
   int basin_catchment_number_in = 67;
-  int cell_number_in = 1;
+  double lake_area_in = 1.0;
   double center_cell_height_in = 1.3;
   double center_cell_volume_threshold_in = 0.0;
   double previous_filled_cell_height_in = 1.1;
@@ -4167,6 +4225,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellFifteen) {
                                           flood_volume_thresholds_in,
                                           connection_volume_thresholds_in,
                                           raw_orography_in,
+                                          cell_areas_in,
                                           flood_next_cell_lat_index_in,
                                           flood_next_cell_lon_index_in,
                                           connect_next_cell_lat_index_in,
@@ -4175,7 +4234,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellFifteen) {
                                           flooded_cells_in,
                                           connected_cells_in,
                                           center_cell_volume_threshold_in,
-                                          cell_number_in,
+                                          lake_area_in,
                                           basin_catchment_number_in,
                                           center_cell_height_in,
                                           previous_filled_cell_height_in,
@@ -4198,7 +4257,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellFifteen) {
   EXPECT_TRUE(field<double>(connection_volume_thresholds_in,grid_params_in).almost_equal(field<double>(connection_volume_thresholds_expected_out,grid_params_in),1E-7));
   EXPECT_TRUE(field<double>(flood_volume_thresholds_in,grid_params_in).almost_equal(field<double>(flood_volume_thresholds_expected_out,grid_params_in),1E-7));
   EXPECT_TRUE(fabs(center_cell_volume_threshold_in - 0.2)<1E-7);
-  EXPECT_EQ(cell_number_in,1);
+  EXPECT_EQ(lake_area_in,1.0);
   EXPECT_EQ(previous_filled_cell_height_in,1.1);
   EXPECT_TRUE(field<bool>(flooded_cells_in,grid_params_in) == field<bool>(flooded_cells_expected_out,grid_params_in));
   EXPECT_TRUE(field<bool>(connected_cells_in,grid_params_in) == field<bool>(connected_cells_expected_out,grid_params_in));
@@ -4212,6 +4271,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellFifteen) {
   delete[] connection_volume_thresholds_expected_out; delete[] flood_volume_thresholds_expected_out;
   delete[] basin_catchment_numbers_expected_out; delete[] flooded_cells_expected_out;
   delete[] connected_cells_expected_out;
+  delete[] cell_areas_in;
   delete center_cell_in;
 }
 
@@ -4242,6 +4302,8 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellSixteen) {
                                               2.3,2.4,1.8, 1.5,1.8,2.9, 2.5,1.9,1.6,
                                               2.5,1.4,1.5, 1.4,2.2,2.9, 1.4,1.2,1.1,
                                               1.5,1.3,1.1, 1.1,2.4,2.2, 1.9,1.8,1.2};
+  double* cell_areas_in = new double[9*9];
+  std::fill_n(cell_areas_in,9*9,1.0);
   int* flood_next_cell_lat_index_in = new int[9*9];
   std::fill_n(flood_next_cell_lat_index_in,9*9,-1);
   int* flood_next_cell_lon_index_in = new int[9*9];
@@ -4371,7 +4433,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellSixteen) {
                                       false,false,false, false,false,false, false,false,false,
                                       false,false,false, false,false,false, false,false,false};
   int basin_catchment_number_in = 67;
-  int cell_number_in = 1;
+  double lake_area_in = 1.0;
   double center_cell_height_in = 1.3;
   double center_cell_volume_threshold_in = 0.0;
   double previous_filled_cell_height_in = 1.1;
@@ -4387,6 +4449,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellSixteen) {
                                           flood_volume_thresholds_in,
                                           connection_volume_thresholds_in,
                                           raw_orography_in,
+                                          cell_areas_in,
                                           flood_next_cell_lat_index_in,
                                           flood_next_cell_lon_index_in,
                                           connect_next_cell_lat_index_in,
@@ -4395,7 +4458,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellSixteen) {
                                           flooded_cells_in,
                                           connected_cells_in,
                                           center_cell_volume_threshold_in,
-                                          cell_number_in,
+                                          lake_area_in,
                                           basin_catchment_number_in,
                                           center_cell_height_in,
                                           previous_filled_cell_height_in,
@@ -4413,7 +4476,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellSixteen) {
   EXPECT_TRUE(field<double>(connection_volume_thresholds_in,grid_params_in).almost_equal(field<double>(connection_volume_thresholds_expected_out,grid_params_in),1E-7));
   EXPECT_TRUE(field<double>(flood_volume_thresholds_in,grid_params_in).almost_equal(field<double>(flood_volume_thresholds_expected_out,grid_params_in),1E-7));
   EXPECT_TRUE(fabs(center_cell_volume_threshold_in - 0.2)<1E-7);
-  EXPECT_EQ(cell_number_in,2);
+  EXPECT_EQ(lake_area_in,2.0);
   EXPECT_EQ(previous_filled_cell_height_in,1.1);
   EXPECT_TRUE(field<bool>(flooded_cells_in,grid_params_in) == field<bool>(flooded_cells_expected_out,grid_params_in));
   EXPECT_TRUE(field<bool>(connected_cells_in,grid_params_in) == field<bool>(connected_cells_expected_out,grid_params_in));
@@ -4427,6 +4490,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellSixteen) {
   delete[] connection_volume_thresholds_expected_out; delete[] flood_volume_thresholds_expected_out;
   delete[] basin_catchment_numbers_expected_out; delete[] flooded_cells_expected_out;
   delete[] connected_cells_expected_out;
+  delete[] cell_areas_in;
   delete previous_filled_cell_coords_in; delete center_cell_in;
 }
 
@@ -4447,6 +4511,8 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellSeventeen) {
                                               2.3,2.4,1.8, 1.5,1.8,2.9, 2.5,1.9,1.6,
                                               2.5,1.4,1.5, 1.4,2.2,2.9, 1.4,1.2,1.1,
                                               1.5,1.3,1.1, 1.1,2.4,2.2, 1.9,1.8,1.2};
+  double* cell_areas_in = new double[9*9];
+  std::fill_n(cell_areas_in,9*9,1.0);
   int* flood_next_cell_lat_index_in = new int[9*9];
   std::fill_n(flood_next_cell_lat_index_in,9*9,-1);
   int* flood_next_cell_lon_index_in = new int[9*9];
@@ -4575,7 +4641,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellSeventeen) {
                                       false,false,false, false,false,false, false,false,false,
                                       false, true,false, false,false,false, false,false,false};
   int basin_catchment_number_in = 67;
-  int cell_number_in = 1;
+  double lake_area_in = 1.0;
   double center_cell_height_in = 1.3;
   double center_cell_volume_threshold_in = 0.0;
   double previous_filled_cell_height_in = 1.1;
@@ -4591,6 +4657,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellSeventeen) {
                                           flood_volume_thresholds_in,
                                           connection_volume_thresholds_in,
                                           raw_orography_in,
+                                          cell_areas_in,
                                           flood_next_cell_lat_index_in,
                                           flood_next_cell_lon_index_in,
                                           connect_next_cell_lat_index_in,
@@ -4599,7 +4666,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellSeventeen) {
                                           flooded_cells_in,
                                           connected_cells_in,
                                           center_cell_volume_threshold_in,
-                                          cell_number_in,
+                                          lake_area_in,
                                           basin_catchment_number_in,
                                           center_cell_height_in,
                                           previous_filled_cell_height_in,
@@ -4617,7 +4684,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellSeventeen) {
   EXPECT_TRUE(field<double>(connection_volume_thresholds_in,grid_params_in).almost_equal(field<double>(connection_volume_thresholds_expected_out,grid_params_in),1E-7));
   EXPECT_TRUE(field<double>(flood_volume_thresholds_in,grid_params_in).almost_equal(field<double>(flood_volume_thresholds_expected_out,grid_params_in),1E-7));
   EXPECT_TRUE(fabs(center_cell_volume_threshold_in - 0.2)<1E-7);
-  EXPECT_EQ(cell_number_in,1);
+  EXPECT_EQ(lake_area_in,1.0);
   EXPECT_EQ(previous_filled_cell_height_in,1.1);
   EXPECT_TRUE(field<bool>(flooded_cells_in,grid_params_in) == field<bool>(flooded_cells_expected_out,grid_params_in));
   EXPECT_TRUE(field<bool>(connected_cells_in,grid_params_in) == field<bool>(connected_cells_expected_out,grid_params_in));
@@ -4631,6 +4698,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellSeventeen) {
   delete[] connection_volume_thresholds_expected_out; delete[] flood_volume_thresholds_expected_out;
   delete[] basin_catchment_numbers_expected_out; delete[] flooded_cells_expected_out;
   delete[] connected_cells_expected_out;
+  delete[] cell_areas_in;
   delete previous_filled_cell_coords_in; delete center_cell_in;
 }
 
@@ -4661,6 +4729,8 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellEighteen) {
                                               2.3,2.4,1.8, 1.5,1.8,2.9, 2.5,1.9,1.6,
                                               2.5,1.4,1.5, 1.4,2.2,2.9, 1.4,1.2,1.1,
                                               1.5,1.3,1.1, 1.1,2.4,2.2, 1.9,1.8,1.2};
+  double* cell_areas_in = new double[9*9];
+  std::fill_n(cell_areas_in,9*9,1.0);
   int* flood_next_cell_lat_index_in = new int[9*9];
   std::fill_n(flood_next_cell_lat_index_in,9*9,-1);
   int* flood_next_cell_lon_index_in = new int[9*9];
@@ -4790,7 +4860,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellEighteen) {
                                       false,false,false, false,false,false, false,false,false,
                                       false,false,false, false,false,false, false,false,false};
   int basin_catchment_number_in = 67;
-  int cell_number_in = 1;
+  double lake_area_in = 1.0;
   double center_cell_height_in = 1.3;
   double center_cell_volume_threshold_in = 0.0;
   double previous_filled_cell_height_in = 1.1;
@@ -4806,6 +4876,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellEighteen) {
                                           flood_volume_thresholds_in,
                                           connection_volume_thresholds_in,
                                           raw_orography_in,
+                                          cell_areas_in,
                                           flood_next_cell_lat_index_in,
                                           flood_next_cell_lon_index_in,
                                           connect_next_cell_lat_index_in,
@@ -4814,7 +4885,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellEighteen) {
                                           flooded_cells_in,
                                           connected_cells_in,
                                           center_cell_volume_threshold_in,
-                                          cell_number_in,
+                                          lake_area_in,
                                           basin_catchment_number_in,
                                           center_cell_height_in,
                                           previous_filled_cell_height_in,
@@ -4837,7 +4908,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellEighteen) {
   EXPECT_TRUE(field<double>(connection_volume_thresholds_in,grid_params_in).almost_equal(field<double>(connection_volume_thresholds_expected_out,grid_params_in),1E-7));
   EXPECT_TRUE(field<double>(flood_volume_thresholds_in,grid_params_in).almost_equal(field<double>(flood_volume_thresholds_expected_out,grid_params_in),1E-7));
   EXPECT_TRUE(fabs(center_cell_volume_threshold_in - 0.2)<1E-7);
-  EXPECT_EQ(cell_number_in,2);
+  EXPECT_EQ(lake_area_in,2.0);
   EXPECT_EQ(previous_filled_cell_height_in,1.1);
   EXPECT_TRUE(field<bool>(flooded_cells_in,grid_params_in) == field<bool>(flooded_cells_expected_out,grid_params_in));
   EXPECT_TRUE(field<bool>(connected_cells_in,grid_params_in) == field<bool>(connected_cells_expected_out,grid_params_in));
@@ -4851,6 +4922,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellEighteen) {
   delete[] connection_volume_thresholds_expected_out; delete[] flood_volume_thresholds_expected_out;
   delete[] basin_catchment_numbers_expected_out; delete[] flooded_cells_expected_out;
   delete[] connected_cells_expected_out;
+  delete[] cell_areas_in;
   delete center_cell_in;
 }
 
@@ -10845,6 +10917,8 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsOne) {
    2, 5, 4, 4, 4, 4, 4, 4, 4, 4, 7, 7, 7,10, 9, 9, 9, 8, 6,15,
    2, 2, 5, 4, 3, 1, 4, 4, 4, 4, 7, 7, 7, 7,10, 9, 8, 6, 6, 2,
    2, 2, 2, 0, 1, 1, 1, 4, 4, 4, 7, 7, 7, 7, 7, 0, 6, 6, 6, 2 };
+  double* cell_areas_in = new double[20*20];
+  std::fill_n(cell_areas_in,20*20,1.0);
   double* connection_volume_thresholds_in = new double[20*20];
   std::fill_n(connection_volume_thresholds_in,20*20,0.0);
   double* flood_volume_thresholds_in = new double[20*20];
@@ -11350,6 +11424,7 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsOne) {
   basin_eval.setup_fields(minima_in,
                           raw_orography_in,
                           corrected_orography_in,
+                          cell_areas_in,
                           connection_volume_thresholds_in,
                           flood_volume_thresholds_in,
                           prior_fine_rdirs_in,
@@ -11513,7 +11588,1580 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsOne) {
   delete[] next_cell_lon_index_in;
   delete[] sinkless_rdirs_out;
   delete[] catchment_nums_in;
+  delete[] cell_areas_in;
 
+}
+
+
+TEST_F(BasinEvaluationTest, TestEvaluateBasinsTwo) {
+  auto grid_params_in = new latlon_grid_params(20,20,false);
+  auto coarse_grid_params_in = new latlon_grid_params(4,4,false);
+  int* coarse_catchment_nums_in = new int[4*4] {3,3,2,2,
+                                                3,3,2,2,
+                                                1,1,1,2,
+                                                1,1,1,1};
+  double* corrected_orography_in = new double[20*20]
+  {20.0,20.0,20.0,20.0,20.0, 20.0,20.0,20.0,20.0,20.0, 20.0,20.0,20.0,20.0,20.0, 20.0,20.0,20.0,20.0,20.0,
+   20.0, 1.0,10.0,20.0, 9.0, 20.0,20.0,20.0, 1.0,16.0, 20.0,20.0, 1.0,20.0,20.0, 20.0,20.0,20.0,20.0,20.0,
+   20.0, 2.0,11.0,20.0, 8.0, 20.0,20.0,20.0, 2.0,15.0, 20.0,20.0, 2.0,20.0,20.0, 20.0,20.0,20.0,20.0,20.0,
+   18.0, 3.0,12.0,20.0, 7.0, 20.0,20.0,20.0, 3.0,14.0, 20.0,20.0, 3.0,18.0, 0.9,  0.8, 0.0, 0.7, 0.8, 0.9,
+   20.0, 4.0,13.0, 6.0, 5.0, 20.0,20.0,20.0, 4.0,13.0,  5.0, 5.0, 4.0,20.0,20.0, 20.0,20.0,20.0,20.0,20.0,
+//
+   20.0, 5.0,14.0,20.0, 4.0, 20.0,20.0,20.0, 5.0,12.0, 20.0,20.0, 6.0,20.0,20.0, 20.0,20.0,20.0,20.0,20.0,
+   20.0, 6.0,15.0,20.0, 3.0, 20.0,20.0,20.0, 6.0,11.0, 20.0,20.0, 7.0,20.0,20.0, 20.0,20.0,20.0,20.0,20.0,
+   20.0, 8.0,16.0,20.0, 2.0, 20.0,20.0,20.0, 7.0,10.0, 20.0,20.0, 8.0,20.0,20.0, 20.0,20.0, 5.0,20.0,20.0,
+   20.0, 9.0,17.0,20.0, 1.0, 20.0,20.0,20.0, 8.0, 9.0, 20.0,20.0, 9.0,20.0,20.0, 20.0, 4.0, 6.0,20.0,20.0,
+   20.0,20.0,20.0,20.0,20.0, 20.0,20.0,20.0,20.0,20.0, 20.0,20.0,20.0,20.0,20.0,  3.0, 7.0,20.0,20.0,20.0,
+//
+   20.0,20.0,20.0,20.0,20.0, 20.0,20.0,20.0,20.0,20.0, 20.0,20.0,20.0,20.0, 2.0,  8.0,20.0,20.0,20.0,20.0,
+   20.0, 1.0,16.0,20.0, 2.0, 20.0,20.0,20.0,20.0,20.0, 20.0,20.0,20.0, 1.0, 9.0, 20.0,20.0,20.0,20.0,20.0,
+   20.0, 2.0,15.0,20.0, 3.0, 20.0,20.0,20.0,20.0,20.0, 20.0,20.0,20.0,10.0,20.0, 20.0,20.0,20.0,20.0,20.0,
+   20.0, 3.0,14.0,20.0, 4.0, 20.0,20.0, 1.0,20.0, 5.0, 20.0,20.0,20.0, 0.9,20.0, 20.0,20.0,20.0,20.0,20.0,
+   20.0, 4.0,13.0, 6.0, 5.0, 20.0,20.0, 2.0, 4.0, 3.0, 20.0,20.0, 0.8,20.0,20.0, 20.0,20.0,20.0,20.0,20.0,
+//
+   20.0, 5.0,12.0,20.0, 7.0, 20.0,20.0, 3.0,20.0, 2.0, 20.0,20.0, 0.7,20.0,20.0, 20.0,20.0,20.0,20.0,20.0,
+   20.0, 6.0,11.0,20.0, 8.0, 20.0,20.0, 4.0,20.0, 1.0, 20.0,20.0, 0.6,20.0,20.0, 20.0,20.0,20.0,20.0,20.0,
+   20.0, 7.0,10.0,20.0, 9.0, 20.0,20.0, 6.0,20.0,20.0, 20.0,20.0, 0.5,20.0,20.0, 20.0,20.0,20.0,20.0,20.0,
+   20.0, 8.0, 9.0,20.0,10.0, 18.0, 0.9, 0.8,20.0,20.0, 20.0, 0.4,20.0,20.0,20.0, 20.0,20.0,20.0,20.0,20.0,
+   20.0,20.0,20.0,20.0,20.0, 20.0,20.0,20.0, 0.0, 0.2,  0.3,20.0,20.0,20.0,20.0, 20.0,20.0,20.0,20.0,20.0};
+
+  double* raw_orography_in = new double[20*20]
+  {20.0,20.0,20.0,20.0,20.0, 20.0,20.0,20.0,20.0,20.0, 20.0,20.0,20.0,20.0,20.0, 20.0,20.0,20.0,20.0,20.0,
+   20.0, 1.0,10.0,20.0, 9.0, 20.0,20.0,20.0, 1.0,16.0, 20.0,20.0, 1.0,20.0,20.0, 20.0,20.0,20.0,20.0,20.0,
+   20.0, 2.0,11.0,20.0, 8.0, 20.0,20.0,20.0, 2.0,15.0, 20.0,20.0, 2.0,20.0,20.0, 20.0,20.0,20.0,20.0,20.0,
+   18.0, 3.0,12.0,20.0, 7.0, 20.0,20.0,20.0, 3.0,14.0, 20.0,20.0, 3.0,18.0, 0.9,  0.8, 0.0, 0.7, 0.8, 0.9,
+   20.0, 4.0,13.0,20.0, 5.0, 20.0,20.0,20.0, 4.0,13.0,  5.0, 5.0, 4.0,20.0,20.0, 20.0,20.0,20.0,20.0,20.0,
+//
+   20.0, 5.0,14.0,20.0, 4.0, 20.0,20.0,20.0, 5.0,12.0, 20.0,20.0, 6.0,20.0,20.0, 20.0,20.0,20.0,20.0,20.0,
+   20.0, 6.0,15.0,20.0, 3.0, 20.0,20.0,20.0, 6.0,11.0, 20.0,20.0, 7.0,20.0,20.0, 20.0,20.0,20.0,20.0,20.0,
+   20.0, 8.0,16.0,20.0, 2.0, 20.0,20.0,20.0, 7.0,10.0, 20.0,20.0, 8.0,20.0,20.0, 20.0,20.0, 5.0,20.0,20.0,
+   20.0, 9.0,17.0,20.0, 1.0, 20.0,20.0,20.0, 8.0, 9.0, 20.0,20.0, 9.0,20.0,20.0, 20.0, 4.0, 6.0,20.0,20.0,
+   20.0,20.0,20.0,20.0,20.0, 20.0,20.0,20.0,20.0,20.0, 20.0,20.0,20.0,20.0,20.0,  3.0, 7.0,20.0,20.0,20.0,
+//
+   20.0,20.0,20.0,20.0,20.0, 20.0,20.0,20.0,20.0,20.0, 20.0,20.0,20.0,20.0, 2.0,  8.0,20.0,20.0,20.0,20.0,
+   20.0, 1.0,16.0,20.0, 2.0, 20.0,20.0,20.0,20.0,20.0, 20.0,20.0,20.0, 1.0, 9.0, 20.0,20.0,20.0,20.0,20.0,
+   20.0, 2.0,15.0,20.0, 3.0, 20.0,20.0,20.0,20.0,20.0, 20.0,20.0,20.0,10.0,20.0, 20.0,20.0,20.0,20.0,20.0,
+   20.0, 3.0,14.0,20.0, 4.0, 20.0,20.0, 1.0,20.0, 5.0, 20.0,20.0,20.0, 0.9,20.0, 20.0,20.0,20.0,20.0,20.0,
+   20.0, 4.0,13.0,20.0, 5.0, 20.0,20.0, 2.0, 4.0, 3.0, 20.0,20.0, 0.8,20.0,20.0, 20.0,20.0,20.0,20.0,20.0,
+//
+   20.0, 5.0,12.0,20.0, 7.0, 20.0,20.0, 3.0,20.0, 2.0, 20.0,20.0, 0.7,20.0,20.0, 20.0,20.0,20.0,20.0,20.0,
+   20.0, 6.0,11.0,20.0, 8.0, 20.0,20.0, 4.0,20.0, 1.0, 20.0,20.0, 0.6,20.0,20.0, 20.0,20.0,20.0,20.0,20.0,
+   20.0, 7.0,10.0,20.0, 9.0, 20.0,20.0, 6.0,20.0,20.0, 20.0,20.0, 0.5,20.0,20.0, 20.0,20.0,20.0,20.0,20.0,
+   20.0, 8.0, 9.0,20.0,10.0, 18.0, 0.9, 0.8,20.0,20.0, 20.0, 0.4,20.0,20.0,20.0, 20.0,20.0,20.0,20.0,20.0,
+   20.0,20.0,20.0,20.0,20.0, 20.0,20.0,20.0, 0.0, 0.2,  0.3,20.0,20.0,20.0,20.0, 20.0,20.0,20.0,20.0,20.0};
+
+  bool* minima_in = new bool[20*20]
+  {false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false, true,false,false,false,false,false,false, true,false,false,false, true,false,false,false,
+    false,false,false,false,
+   false, false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false, false,false,
+    false,false,false,false,
+   false,false,false,false,false,false, false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false, true,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false, true,false,false, true,false,false,false,false,false,false,false,false, true,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false, true,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false, true,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false};
+  double* prior_fine_rdirs_in = new double[20*20] {
+  1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,3.0,3.0,3.0,3.0,3.0,3.0,2.0,1.0,1.0,3.0,3.0,2.0,
+  2.0,1.0,2.0,1.0,1.0,2.0,1.0,1.0,1.0,3.0,3.0,3.0,2.0,3.0,2.0,1.0,1.0,3.0,3.0,3.0,
+  5.0,4.0,1.0,1.0,3.0,2.0,1.0,1.0,1.0,1.0,3.0,3.0,2.0,1.0,1.0,1.0,1.0,6.0,6.0,6.0,
+  8.0,7.0,4.0,4.0,3.0,2.0,1.0,1.0,2.0,1.0,6.0,3.0,2.0,1.0,1.0,1.0,1.0,1.0,9.0,9.0,
+  9.0,8.0,7.0,3.0,3.0,2.0,1.0,2.0,1.0,1.0,3.0,6.0,3.0,2.0,1.0,1.0,1.0,1.0,1.0,9.0,
+  9.0,8.0,7.0,3.0,3.0,2.0,1.0,1.0,1.0,1.0,3.0,3.0,6.0,5.0,4.0,4.0,1.0,1.0,1.0,3.0,
+  9.0,8.0,7.0,6.0,6.0,5.0,4.0,4.0,4.0,4.0,6.0,6.0,9.0,8.0,7.0,1.0,1.0,4.0,4.0,6.0,
+  9.0,9.0,8.0,9.0,9.0,8.0,7.0,7.0,7.0,7.0,9.0,9.0,8.0,7.0,5.0,4.0,4.0,7.0,7.0,9.0,
+  9.0,9.0,8.0,7.0,9.0,8.0,7.0,8.0,7.0,7.0,9.0,9.0,8.0,7.0,8.0,7.0,7.0,7.0,2.0,1.0,
+  9.0,9.0,8.0,9.0,9.0,8.0,7.0,7.0,7.0,9.0,9.0,9.0,8.0,7.0,7.0,7.0,7.0,7.0,2.0,1.0,
+  1.0,1.0,9.0,9.0,9.0,8.0,7.0,7.0,7.0,9.0,9.0,9.0,8.0,7.0,7.0,7.0,7.0,3.0,2.0,1.0,
+  1.0,3.0,3.0,2.0,1.0,1.0,1.0,1.0,9.0,9.0,9.0,9.0,8.0,3.0,3.0,2.0,1.0,3.0,2.0,1.0,
+  1.0,3.0,3.0,2.0,1.0,1.0,1.0,1.0,1.0,9.0,9.0,9.0,3.0,3.0,3.0,2.0,1.0,1.0,1.0,1.0,
+  4.0,3.0,3.0,2.0,1.0,1.0,1.0,1.0,1.0,9.0,9.0,3.0,6.0,6.0,6.0,5.0,4.0,4.0,4.0,4.0,
+  7.0,3.0,3.0,2.0,1.0,1.0,1.0,1.0,1.0,1.0,3.0,3.0,3.0,9.0,9.0,8.0,7.0,7.0,7.0,7.0,
+  7.0,3.0,6.0,5.0,4.0,1.0,1.0,1.0,1.0,1.0,3.0,3.0,3.0,3.0,9.0,8.0,7.0,7.0,7.0,7.0,
+  3.0,3.0,3.0,2.0,1.0,4.0,4.0,4.0,4.0,4.0,3.0,3.0,3.0,3.0,3.0,2.0,1.0,1.0,7.0,7.0,
+  3.0,3.0,3.0,2.0,1.0,7.0,7.0,7.0,7.0,7.0,3.0,3.0,3.0,3.0,3.0,2.0,1.0,1.0,1.0,7.0,
+  3.0,3.0,3.0,2.0,1.0,1.0,7.0,7.0,7.0,7.0,3.0,3.0,3.0,3.0,3.0,2.0,1.0,1.0,1.0,3.0,
+  6.0,6.0,6.0,0.0,4.0,4.0,4.0,7.0,7.0,7.0,6.0,6.0,6.0,6.0,6.0,0.0,4.0,4.0,4.0,6.0};
+  int* prior_fine_catchments_in = new int[20*20] {
+  11,11,11,11,11,11,13,13,12,12,12,12,12,12,12,12,12,11,11,11,
+  11,11,11,11,11,13,13,13,13,12,12,12,12,12,12,12,12,11,11,11,
+  11,11,11,11,13,13,13,13,13,13,12,12,12,12,12,12,12,11,11,11,
+  11,11,11,11,13,13,13,13,13,13,12,12,12,12,12,12,12,12,11,11,
+  11,11,11,13,13,13,13,13,13,13,12,12,12,12,12,12,12,14,14,11,
+  11,11,11,13,13,13,13,13,13,13,12,12,12,12,12,12,14,14,14,11,
+  11,11,11,13,13,13,13,13,13,13,12,12,12,12,12,14,14,14,14,11,
+  11,11,11,13,13,13,13,13,13,13,12,12,12,12,14,14,14,14,14,11,
+  11,11,11,11,13,13,13,13,13,13,12,12,12,12,14,14,14,14,15,15,
+  11,11,11,13,13,13,13,13,13,12,12,12,12,12,12,14,14,14,15,15,
+  15,15,13,13,13,13,13,13,13,12,12,12,12,12,12,12,14,15,15,15,
+  15,16,16,16,16,16,16,16,12,12,12,12,12,15,15,15,15,15,15,15,
+  15,16,16,16,16,16,16,16, 4,12,12,12,15,15,15,15,15,15,15,15,
+  15,16,16,16,16,16,16, 4, 4,12,12, 9,15,15,15,15,15,15,15,15,
+  15,16,16,16,16,16, 4, 4, 4, 4,10, 9, 9,15,15,15,15,15,15,15,
+  15, 4,16,16,16, 4, 4, 4, 4, 4, 7,10, 9, 9,15,15,15,15,15,15,
+   5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 7, 7,10, 9, 9, 9, 9, 9,15,15,
+   2, 5, 4, 4, 4, 4, 4, 4, 4, 4, 7, 7, 7,10, 9, 9, 9, 8, 6,15,
+   2, 2, 5, 4, 3, 1, 4, 4, 4, 4, 7, 7, 7, 7,10, 9, 8, 6, 6, 2,
+   2, 2, 2, 0, 1, 1, 1, 4, 4, 4, 7, 7, 7, 7, 7, 0, 6, 6, 6, 2 };
+  double* cell_areas_in = new double[20*20];
+  std::fill_n(cell_areas_in,20*20,1.0);
+  double* connection_volume_thresholds_in = new double[20*20];
+  std::fill_n(connection_volume_thresholds_in,20*20,0.0);
+  double* flood_volume_thresholds_in = new double[20*20];
+  std::fill_n(flood_volume_thresholds_in,20*20,0.0);
+  int* flood_next_cell_lat_index_in = new int[20*20];
+  std::fill_n(flood_next_cell_lat_index_in,20*20,-1);
+  int* flood_next_cell_lon_index_in = new int[20*20];
+  std::fill_n(flood_next_cell_lon_index_in,20*20,-1);
+  int* connect_next_cell_lat_index_in = new int[20*20];
+  std::fill_n(connect_next_cell_lat_index_in,20*20,-1);
+  int* connect_next_cell_lon_index_in = new int[20*20];
+  std::fill_n(connect_next_cell_lon_index_in,20*20,-1);
+  int* flood_force_merge_lat_index_in = new int[20*20];
+  std::fill_n(flood_force_merge_lat_index_in,20*20,-1);
+  int* flood_force_merge_lon_index_in = new int[20*20];
+  std::fill_n(flood_force_merge_lon_index_in,20*20,-1);
+  int* connect_force_merge_lat_index_in = new int[20*20];
+  std::fill_n(connect_force_merge_lat_index_in,20*20,-1);
+  int* connect_force_merge_lon_index_in = new int[20*20];
+  std::fill_n(connect_force_merge_lon_index_in,20*20,-1);
+  int* flood_redirect_lat_index_in = new int[20*20];
+  std::fill_n(flood_redirect_lat_index_in,20*20,-1);
+  int* flood_redirect_lon_index_in = new int[20*20];
+  std::fill_n(flood_redirect_lon_index_in,20*20,-1);
+  int* connect_redirect_lat_index_in = new int[20*20];
+  std::fill_n(connect_redirect_lat_index_in,20*20,-1);
+  int* connect_redirect_lon_index_in = new int[20*20];
+  std::fill_n(connect_redirect_lon_index_in,20*20,-1);
+  bool* flood_local_redirect_in = new bool[20*20];
+  std::fill_n(flood_local_redirect_in,20*20,false);
+  bool* connect_local_redirect_in = new bool[20*20];
+  std::fill_n(connect_local_redirect_in,20*20,false);
+  int* additional_flood_redirect_lat_index_in = new int[20*20];
+  std::fill_n(additional_flood_redirect_lat_index_in,20*20,-1);
+  int* additional_flood_redirect_lon_index_in = new int[20*20];
+  std::fill_n(additional_flood_redirect_lon_index_in,20*20,-1);
+  int* additional_connect_redirect_lat_index_in = new int[20*20];
+  std::fill_n(additional_connect_redirect_lat_index_in,20*20,-1);
+  int* additional_connect_redirect_lon_index_in = new int[20*20];
+  std::fill_n(additional_connect_redirect_lon_index_in,20*20,-1);
+  bool* additional_flood_local_redirect_in = new bool[20*20];
+  std::fill_n(additional_flood_local_redirect_in,20*20,false);
+  bool* additional_connect_local_redirect_in = new bool[20*20];
+  std::fill_n(additional_connect_local_redirect_in,20*20,false);
+  merge_types* merge_points_in = new merge_types[20*20];
+  std::fill_n(merge_points_in,20*20,no_merge);
+  double* flood_volume_thresholds_expected_out = new double[20*20] {
+   -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0,   -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0,
+   -1.0, 1.0,51.0,-1.0,57.0, -1.0,-1.0,-1.0, 1.0,216.0,   -1.0,-1.0, 1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0,
+   -1.0, 3.0,61.0,-1.0,33.0, -1.0,-1.0,-1.0, 3.0,164.0,   -1.0,-1.0, 3.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0,
+   -1.0, 6.0,80.0,-1.0,26.0, -1.0,-1.0,-1.0, 6.0,139.0,   -1.0,-1.0, 6.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0,
+   -1.0,10.0,100.0,-1.0,15.0, -1.0,-1.0,-1.0, 10.0,115.0, 16.0,10.0, 10.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0,
+//
+   -1.0,15.0,121.0,-1.0,10.0, -1.0,-1.0,-1.0, 15.0,92.0, -1.0,-1.0,23.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0,
+   -1.0,27.0,143.0,-1.0, 6.0, -1.0,-1.0,-1.0, 21.0,66.0, -1.0,-1.0,31.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0,
+   -1.0,34.0,166.0,-1.0, 3.0, -1.0,-1.0,-1.0, 28.0,55.0, -1.0,-1.0,40.0,-1.0,-1.0, -1.0,-1.0,15.0,-1.0,-1.0,
+   -1.0,42.0,190.0,-1.0, 1.0, -1.0,-1.0,-1.0, 36.0, 45.0, -1.0,-1.0,70.0,-1.0,-1.0, -1.0,10.0,21.0,-1.0,-1.0,
+   -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0,  6.0,28.0,-1.0,-1.0,-1.0,
+//
+   -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0, 3.0,  36.0,-1.0,-1.0,-1.0,-1.0,
+   -1.0, 1.0,182.0,-1.0, 1.0, -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0, 1.0,45.0, -1.0,-1.0,-1.0,-1.0,-1.0,
+   -1.0, 3.0,134.0,-1.0, 3.0, -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0,
+   -1.0, 6.0,111.0,-1.0, 6.0, -1.0,-1.0, 1.0,-1.0,23.0, -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0,
+   -1.0,10.0,89.0,-1.0,10.0, -1.0,-1.0,  3.0, 6.0, 6.0, -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0,
+//
+   -1.0,15.0,68.0,-1.0,19.0, -1.0,-1.0, 6.0,-1.0, 3.0, -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0,
+   -1.0,21.0,66.0,-1.0,25.0, -1.0,-1.0,14.0,-1.0, 1.0, -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0,
+   -1.0,28.0,55.0,-1.0,32.0, -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0,
+   -1.0,36.0,45.0,-1.0,48.0, -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0,
+   -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0 };
+  double* connection_volume_thresholds_expected_out = new double[20*20]{
+    -1, -1, -1, -1, -1,  -1,      -1,  -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1,      -1,  -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1,      -1,  -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1,      -1,  -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1,20.0,-1,  -1,      -1,  -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+//
+    -1, -1, -1, -1, -1,  -1,      -1,  -1,  -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1,      -1,  -1,  -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1,      -1,  -1,  -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1,      -1,  -1,  -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1,      -1,  -1,  -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+//
+    -1, -1, -1, -1, -1,  -1,      -1,  -1,  -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1,      -1,  -1,  -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1,      -1,  -1,  -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1,      -1,  -1,  -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1,14.0,-1,  -1,      -1,  -1,  -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+//
+    -1, -1, -1, -1, -1,  -1,      -1,  -1,  -1, -1,   -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1,      -1,  -1,  -1, -1,   -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1,      -1,  -1,  -1, -1,   -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1,      -1,  -1,  -1, -1,   -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1,      -1,  -1,  -1, -1,   -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1 };
+  int* flood_next_cell_lat_index_expected_out = new int[20*20]{
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1,  2,  2, -1,  2,  -1, -1, -1,  2,  3,  -1, -1,  2, -1, -1,  -1, -1, -1, -1, -1,
+    -1,  3,  3, -1,  1,  -1, -1, -1,  3,  1,  -1, -1,  3, -1, -1,  -1, -1, -1, -1, -1,
+    -1,  4,  4, -1,  2,  -1, -1, -1,  4,  2,  -1, -1,  4, -1, -1,  -1, -1, -1, -1, -1,
+    -1,  5,  5, -1,  4,  -1, -1, -1,  5,  3,   5,  4,  4, -1, -1,  -1, -1, -1, -1, -1,
+    //
+    -1,  6,  6, -1,  4,  -1, -1, -1,  6,  4,  -1, -1,  6, -1, -1,  -1, -1, -1, -1, -1,
+    -1,  7,  7, -1,  5,  -1, -1, -1,  7,  4,  -1, -1,  7, -1, -1,  -1, -1, -1, -1, -1,
+    -1,  8,  8, -1,  6,  -1, -1, -1,  8,  6,  -1, -1,  8, -1, -1,  -1, -1,  8, -1, -1,
+    -1,  1,  3, -1,  7,  -1, -1, -1,  8,  7,  -1, -1,  5, -1, -1,  -1,  7,  9, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,   8, 10, -1, -1, -1,
+    //
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1,  9,  11, -1, -1, -1, -1,
+    -1, 12, 18, -1, 12,  -1, -1, -1, -1, -1,  -1, -1, -1, 10, 13,  -1, -1, -1, -1, -1,
+    -1, 13, 11, -1, 13,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, 14, 12, -1, 14,  -1, -1, 14, -1, 18,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, 15, 13, -1, 14,  -1, -1, 15, 16, 13,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    //
+    -1, 16, 14, -1, 16,  -1, -1, 14, -1, 14,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, 17, 14, -1, 17,  -1, -1, 13, -1, 15,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, 18, 16, -1, 18,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, 18, 17, -1, 15,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1 };
+  int* flood_next_cell_lon_index_expected_out = new int[20*20]{
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1,  1,  2, -1,  1,  -1, -1, -1,  8, 14,  -1, -1, 12, -1, -1,  -1, -1, -1, -1, -1,
+    -1,  1,  2, -1,  4,  -1, -1, -1,  8,  9,  -1, -1, 12, -1, -1,  -1, -1, -1, -1, -1,
+    -1,  1,  2, -1,  4,  -1, -1, -1,  8,  9,  -1, -1, 12, -1, -1,  -1, -1, -1, -1, -1,
+    -1,  1,  2, -1,  3,  -1, -1, -1,  8,  9,  12, 10, 11, -1, -1,  -1, -1, -1, -1, -1,
+    //
+    -1,  1,  2, -1,  4,  -1, -1, -1,  8,  9,  -1, -1, 12, -1, -1,  -1, -1, -1, -1, -1,
+    -1,  1,  2, -1,  4,  -1, -1, -1,  8, 10,  -1, -1, 12, -1, -1,  -1, -1, -1, -1, -1,
+    -1,  1,  2, -1,  4,  -1, -1, -1,  8,  9,  -1, -1, 12, -1, -1,  -1, -1, 17, -1, -1,
+    -1,  2, 19, -1,  4,  -1, -1, -1,  9,  9,  -1, -1,  9, -1, -1,  -1, 17, 16, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  16, 15, -1, -1, -1,
+    //
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, 15,  14, -1, -1, -1, -1,
+    -1,  1,  6, -1,  4,  -1, -1, -1, -1, -1,  -1, -1, -1, 14, 13,  -1, -1, -1, -1, -1,
+    -1,  1,  2, -1,  4,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1,  1,  2, -1,  4,  -1, -1,  7, -1,  7,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1,  1,  2, -1,  3,  -1, -1,  7,  7,  7,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    //
+    -1,  1,  2, -1,  4,  -1, -1,  8, -1,  9,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1,  1,  3, -1,  4,  -1, -1,  9, -1,  9,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1,  1,  2, -1,  4,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1,  2,  2, -1,  2,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1 };
+  int* connect_next_cell_lat_index_expected_out = new int[20*20]{
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1,  3, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    //
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    //
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1,  15, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1,-1,
+    //
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1 };
+  int* connect_next_cell_lon_index_expected_out = new int[20*20]{
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1,  4, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    //
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    //
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1,  4, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    //
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1 };
+  int* flood_redirect_lat_index_expected_out = new int[20*20]{
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1,  1, -1, -1, -1, -1,  0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1,  0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1,  1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1,  1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1,  3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  2, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1,  3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, 13, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1,  2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, 11, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1,  3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+  int* flood_redirect_lon_index_expected_out = new int[20*20]{
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1,  1, -1, -1, -1, -1,  2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1,  0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, 12, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1,  0, -1, -1, -1, -1, -1, -1, -1, -1, -1,  1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1,  1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  3, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1,  1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1,  7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1,  1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1,  4, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1,  0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+  int* connect_redirect_lat_index_expected_out = new int[20*20]{
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+//
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+//
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+//
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1 };
+  int* connect_redirect_lon_index_expected_out = new int[20*20]{
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+//
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+//
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+//
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1 };
+  bool* flood_local_redirect_expected_out = new bool[20*20]{
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false,  true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false,  true, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false,  true, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false,  true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false };
+  bool* connect_local_redirect_expected_out = new bool[20*20]{
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false, false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false, false,false,
+    false,false,false,false,
+   false,false,false,false,false,false, false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false, false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false, false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false};
+  merge_types* merge_points_expected_out = new merge_types[20*20]{
+  no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,
+  no_merge,   no_merge,   no_merge,   no_merge,  connection_merge_not_set_flood_merge_as_secondary,  no_merge,   no_merge,   no_merge,   no_merge,  connection_merge_not_set_flood_merge_as_secondary,  no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,
+  no_merge,   no_merge,   connection_merge_not_set_flood_merge_as_primary,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,
+  no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,
+  no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,
+  no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,
+  no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,  connection_merge_not_set_flood_merge_as_secondary,  no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,
+  no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,
+  no_merge,   no_merge,  connection_merge_not_set_flood_merge_as_secondary,  no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   connection_merge_not_set_flood_merge_as_primary,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,
+  no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,
+  no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,
+  no_merge,   no_merge,  connection_merge_not_set_flood_merge_as_secondary,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,  connection_merge_not_set_flood_merge_as_secondary,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,
+  no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,
+  no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,  connection_merge_not_set_flood_merge_as_secondary,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,
+  no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,  connection_merge_not_set_flood_merge_as_secondary,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,
+  no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   connection_merge_not_set_flood_merge_as_primary,  no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,
+  no_merge,   no_merge,  connection_merge_not_set_flood_merge_as_secondary,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,
+  no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,
+  no_merge,   no_merge,   no_merge,   no_merge,   connection_merge_not_set_flood_merge_as_primary,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,
+  no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,  };
+
+  int* flood_force_merge_lat_index_expected_out = new int[20*20] {
+
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1,  4, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+//
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1,  4, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+//
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+//
+    -1, -1, -1, -1, -1,  -1, -1, 15, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, 14,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1 };
+  int* flood_force_merge_lon_index_expected_out = new int[20*20] {
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1,  3, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+//
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1,  8, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+//
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+//
+    -1, -1, -1, -1, -1,  -1, -1,  9, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1,  1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1 };
+  int* connect_force_merge_lat_index_expected_out = new int[20*20] {
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+//
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+//
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+//
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1 };
+  int* connect_force_merge_lon_index_expected_out = new int[20*20] {
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+//
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+//
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+//
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1 };
+  auto basin_eval = latlon_basin_evaluation_algorithm();
+  basin_eval.setup_fields(minima_in,
+                          raw_orography_in,
+                          corrected_orography_in,
+                          cell_areas_in,
+                          connection_volume_thresholds_in,
+                          flood_volume_thresholds_in,
+                          prior_fine_rdirs_in,
+                          prior_fine_catchments_in,
+                          coarse_catchment_nums_in,
+                          flood_next_cell_lat_index_in,
+                          flood_next_cell_lon_index_in,
+                          connect_next_cell_lat_index_in,
+                          connect_next_cell_lon_index_in,
+                          flood_force_merge_lat_index_in,
+                          flood_force_merge_lon_index_in,
+                          connect_force_merge_lat_index_in,
+                          connect_force_merge_lon_index_in,
+                          flood_redirect_lat_index_in,
+                          flood_redirect_lon_index_in,
+                          connect_redirect_lat_index_in,
+                          connect_redirect_lon_index_in,
+                          additional_flood_redirect_lat_index_in,
+                          additional_flood_redirect_lon_index_in,
+                          additional_connect_redirect_lat_index_in,
+                          additional_connect_redirect_lon_index_in,
+                          flood_local_redirect_in,
+                          connect_local_redirect_in,
+                          additional_flood_local_redirect_in,
+                          additional_connect_local_redirect_in,
+                          merge_points_in,
+                          grid_params_in,
+                          coarse_grid_params_in);
+  bool* landsea_in = new bool[20*20] {
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false, false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+     true,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false, false,false,
+    false,false,false,false,
+   false,false,false,false,false,false, false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false, false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false, false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false, true,false,false,false,false,false,false,false,
+    false,false,false,false};
+  bool* true_sinks_in = new bool[20*20];
+  fill_n(true_sinks_in,20*20,false);
+  int* next_cell_lat_index_in = new int[20*20];
+  int* next_cell_lon_index_in = new int[20*20];
+  short* sinkless_rdirs_out = new short[20*20];
+  int* catchment_nums_in = new int[20*20];
+  reverse_priority_cell_queue q;
+  auto alg4 = new sink_filling_algorithm_4_latlon();
+  alg4->setup_flags(false,true,false,false);
+  alg4->setup_fields(corrected_orography_in,
+                     landsea_in,
+                     true_sinks_in,
+                     next_cell_lat_index_in,
+                     next_cell_lon_index_in,
+                     grid_params_in,
+                     sinkless_rdirs_out,
+                     catchment_nums_in);
+  basin_eval.setup_sink_filling_algorithm(alg4);
+  basin_eval.evaluate_basins();
+  EXPECT_TRUE(field<double>(flood_volume_thresholds_in,grid_params_in)
+              == field<double>(flood_volume_thresholds_expected_out,grid_params_in));
+  EXPECT_TRUE(field<double>(connection_volume_thresholds_in,grid_params_in)
+              == field<double>(connection_volume_thresholds_expected_out,grid_params_in));
+  EXPECT_TRUE(field<int>(flood_next_cell_lat_index_in,grid_params_in)
+              == field<int>(flood_next_cell_lat_index_expected_out,grid_params_in));
+  EXPECT_TRUE(field<int>(flood_next_cell_lon_index_in,grid_params_in)
+              == field<int>(flood_next_cell_lon_index_expected_out,grid_params_in));
+  EXPECT_TRUE(field<int>(connect_next_cell_lat_index_in,grid_params_in)
+              == field<int>(connect_next_cell_lat_index_expected_out,grid_params_in));
+  EXPECT_TRUE(field<int>(connect_next_cell_lon_index_in,grid_params_in)
+              == field<int>(connect_next_cell_lon_index_expected_out,grid_params_in));
+  EXPECT_TRUE(field<int>(flood_redirect_lat_index_in,grid_params_in)
+              == field<int>(flood_redirect_lat_index_expected_out,grid_params_in));
+  EXPECT_TRUE(field<int>(flood_redirect_lon_index_in,grid_params_in)
+              == field<int>(flood_redirect_lon_index_expected_out,grid_params_in));
+  EXPECT_TRUE(field<int>(connect_redirect_lat_index_in,grid_params_in)
+              == field<int>(connect_redirect_lat_index_expected_out,grid_params_in));
+  EXPECT_TRUE(field<int>(connect_redirect_lon_index_in,grid_params_in)
+              == field<int>(connect_redirect_lon_index_expected_out,grid_params_in));
+  EXPECT_TRUE(field<bool>(flood_local_redirect_in,grid_params_in)
+              == field<bool>(flood_local_redirect_expected_out,grid_params_in));
+  EXPECT_TRUE(field<bool>(connect_local_redirect_in,grid_params_in)
+              == field<bool>(connect_local_redirect_expected_out,grid_params_in));
+  EXPECT_TRUE(field<merge_types>(merge_points_in,grid_params_in)
+              == field<merge_types>(merge_points_expected_out,grid_params_in));
+  EXPECT_TRUE(field<int>(flood_force_merge_lat_index_in,grid_params_in)
+              == field<int>(flood_force_merge_lat_index_expected_out,grid_params_in));
+  EXPECT_TRUE(field<int>(flood_force_merge_lon_index_in,grid_params_in)
+              == field<int>(flood_force_merge_lon_index_expected_out,grid_params_in));
+  EXPECT_TRUE(field<int>(connect_force_merge_lat_index_in,grid_params_in)
+              == field<int>(connect_force_merge_lat_index_expected_out,grid_params_in));
+  EXPECT_TRUE(field<int>(connect_force_merge_lon_index_in,grid_params_in)
+              == field<int>(connect_force_merge_lon_index_expected_out,grid_params_in));
+  delete grid_params_in; delete coarse_grid_params_in; delete alg4;
+  delete[] coarse_catchment_nums_in; delete[] corrected_orography_in;
+  delete[] raw_orography_in; delete[] minima_in;
+  delete[] prior_fine_rdirs_in; delete[] prior_fine_catchments_in;
+  delete[] connection_volume_thresholds_in; delete[] flood_volume_thresholds_in;
+  delete[] flood_next_cell_lat_index_in; delete[] flood_next_cell_lon_index_in;
+  delete[] connect_next_cell_lat_index_in; delete[] connect_next_cell_lon_index_in;
+  delete[] flood_force_merge_lat_index_in; delete[] flood_force_merge_lon_index_in;
+  delete[] connect_force_merge_lat_index_in; delete[] connect_force_merge_lon_index_in;
+  delete[] flood_redirect_lat_index_in; delete[] flood_redirect_lon_index_in;
+  delete[] connect_redirect_lat_index_in; delete[] connect_redirect_lon_index_in;
+  delete[] flood_local_redirect_in; delete[] connect_local_redirect_in;
+  delete[] additional_flood_redirect_lat_index_in;
+  delete[] additional_flood_redirect_lon_index_in;
+  delete[] additional_connect_redirect_lat_index_in;
+  delete[] additional_connect_redirect_lon_index_in;
+  delete[] additional_flood_local_redirect_in;
+  delete[] additional_connect_local_redirect_in;
+  delete[] merge_points_in; delete[] flood_volume_thresholds_expected_out;
+  delete[] connection_volume_thresholds_expected_out;
+  delete[] flood_next_cell_lat_index_expected_out;
+  delete[] flood_next_cell_lon_index_expected_out;
+  delete[] connect_next_cell_lat_index_expected_out;
+  delete[] connect_next_cell_lon_index_expected_out;
+  delete[] flood_redirect_lat_index_expected_out;
+  delete[] flood_redirect_lon_index_expected_out;
+  delete[] connect_redirect_lat_index_expected_out;
+  delete[] connect_redirect_lon_index_expected_out;
+  delete[] flood_local_redirect_expected_out;
+  delete[] connect_local_redirect_expected_out;
+  delete[] merge_points_expected_out;
+  delete[] flood_force_merge_lat_index_expected_out;
+  delete[] flood_force_merge_lon_index_expected_out;
+  delete[] connect_force_merge_lat_index_expected_out;
+  delete[] connect_force_merge_lon_index_expected_out;
+  delete[] landsea_in;
+  delete[] true_sinks_in;
+  delete[] next_cell_lat_index_in;
+  delete[] next_cell_lon_index_in;
+  delete[] sinkless_rdirs_out;
+  delete[] catchment_nums_in;
+  delete[] cell_areas_in;
+}
+
+TEST_F(BasinEvaluationTest, TestEvaluateBasinsThree) {
+  auto grid_params_in = new latlon_grid_params(20,20,false);
+  auto coarse_grid_params_in = new latlon_grid_params(4,4,false);
+  int* coarse_catchment_nums_in = new int[4*4] {3,3,2,2,
+                                                3,3,2,2,
+                                                1,1,1,2,
+                                                1,1,1,1};
+  double* corrected_orography_in = new double[20*20]
+  {20.0,20.0,20.0,20.0,20.0, 20.0,20.0,20.0,20.0,20.0, 20.0,20.0,20.0,20.0,20.0, 20.0,20.0,20.0,20.0,20.0,
+   20.0, 1.0,10.0,20.0, 9.0, 20.0,20.0,20.0, 1.0,16.0, 20.0,20.0, 1.0,20.0,20.0, 20.0,20.0,20.0,20.0,20.0,
+   20.0, 2.0,11.0,20.0, 8.0, 20.0,20.0,20.0, 2.0,15.0, 20.0,20.0, 2.0,20.0,20.0, 20.0,20.0,20.0,20.0,20.0,
+   18.0, 3.0,12.0,20.0, 7.0, 20.0,20.0,20.0, 3.0,14.0, 20.0,20.0, 3.0,18.0, 0.9,  0.8, 0.0, 0.7, 0.8, 0.9,
+   20.0, 4.0,13.0, 6.0, 5.0, 20.0,20.0,20.0, 4.0,13.0,  5.0, 5.0, 4.0,20.0,20.0, 20.0,20.0,20.0,20.0,20.0,
+//
+   20.0, 5.0,14.0,20.0, 4.0, 20.0,20.0,20.0, 5.0,12.0, 20.0,20.0, 6.0,20.0,20.0, 20.0,20.0,20.0,20.0,20.0,
+   20.0, 6.0,15.0,20.0, 3.0, 20.0,20.0,20.0, 6.0,11.0, 20.0,20.0, 7.0,20.0,20.0, 20.0,20.0,20.0,20.0,20.0,
+   20.0, 8.0,16.0,20.0, 2.0, 20.0,20.0,20.0, 7.0,10.0, 20.0,20.0, 8.0,20.0,20.0, 20.0,20.0, 5.0,20.0,20.0,
+   20.0, 9.0,17.0,20.0, 1.0, 20.0,20.0,20.0, 8.0, 9.0, 20.0,20.0, 9.0,20.0,20.0, 20.0, 4.0, 6.0,20.0,20.0,
+   20.0,20.0,20.0,20.0,20.0, 20.0,20.0,20.0,20.0,20.0, 20.0,20.0,20.0,20.0,20.0,  3.0, 7.0,20.0,20.0,20.0,
+//
+   20.0,20.0,20.0,20.0,20.0, 20.0,20.0,20.0,20.0,20.0, 20.0,20.0,20.0,20.0, 2.0,  8.0,20.0,20.0,20.0,20.0,
+   20.0, 1.0,16.0,20.0, 2.0, 20.0,20.0,20.0,20.0,20.0, 20.0,20.0,20.0, 1.0, 9.0, 20.0,20.0,20.0,20.0,20.0,
+   20.0, 2.0,15.0,20.0, 3.0, 20.0,20.0,20.0,20.0,20.0, 20.0,20.0,20.0,10.0,20.0, 20.0,20.0,20.0,20.0,20.0,
+   20.0, 3.0,14.0,20.0, 4.0, 20.0,20.0, 1.0,20.0, 5.0, 20.0,20.0,20.0, 0.9,20.0, 20.0,20.0,20.0,20.0,20.0,
+   20.0, 4.0,13.0, 6.0, 5.0, 20.0,20.0, 2.0, 4.0, 3.0, 20.0,20.0, 0.8,20.0,20.0, 20.0,20.0,20.0,20.0,20.0,
+//
+   20.0, 5.0,12.0,20.0, 7.0, 20.0,20.0, 3.0,20.0, 2.0, 20.0,20.0, 0.7,20.0,20.0, 20.0,20.0,20.0,20.0,20.0,
+   20.0, 6.0,11.0,20.0, 8.0, 20.0,20.0, 4.0,20.0, 1.0, 20.0,20.0, 0.6,20.0,20.0, 20.0,20.0,20.0,20.0,20.0,
+   20.0, 7.0,10.0,20.0, 9.0, 20.0,20.0, 6.0,20.0,20.0, 20.0,20.0, 0.5,20.0,20.0, 20.0,20.0,20.0,20.0,20.0,
+   20.0, 8.0, 9.0,20.0,10.0, 18.0, 0.9, 0.8,20.0,20.0, 20.0, 0.4,20.0,20.0,20.0, 20.0,20.0,20.0,20.0,20.0,
+   20.0,20.0,20.0,20.0,20.0, 20.0,20.0,20.0, 0.0, 0.2,  0.3,20.0,20.0,20.0,20.0, 20.0,20.0,20.0,20.0,20.0};
+
+  double* raw_orography_in = new double[20*20]
+  {20.0,20.0,20.0,20.0,20.0, 20.0,20.0,20.0,20.0,20.0, 20.0,20.0,20.0,20.0,20.0, 20.0,20.0,20.0,20.0,20.0,
+   20.0, 1.0,10.0,20.0, 9.0, 20.0,20.0,20.0, 1.0,16.0, 20.0,20.0, 1.0,20.0,20.0, 20.0,20.0,20.0,20.0,20.0,
+   20.0, 2.0,11.0,20.0, 8.0, 20.0,20.0,20.0, 2.0,15.0, 20.0,20.0, 2.0,20.0,20.0, 20.0,20.0,20.0,20.0,20.0,
+   18.0, 3.0,12.0,20.0, 7.0, 20.0,20.0,20.0, 3.0,14.0, 20.0,20.0, 3.0,18.0, 0.9,  0.8, 0.0, 0.7, 0.8, 0.9,
+   20.0, 4.0,13.0,20.0, 5.0, 20.0,20.0,20.0, 4.0,13.0,  5.0, 5.0, 4.0,20.0,20.0, 20.0,20.0,20.0,20.0,20.0,
+//
+   20.0, 5.0,14.0,20.0, 4.0, 20.0,20.0,20.0, 5.0,12.0, 20.0,20.0, 6.0,20.0,20.0, 20.0,20.0,20.0,20.0,20.0,
+   20.0, 6.0,15.0,20.0, 3.0, 20.0,20.0,20.0, 6.0,11.0, 20.0,20.0, 7.0,20.0,20.0, 20.0,20.0,20.0,20.0,20.0,
+   20.0, 8.0,16.0,20.0, 2.0, 20.0,20.0,20.0, 7.0,10.0, 20.0,20.0, 8.0,20.0,20.0, 20.0,20.0, 5.0,20.0,20.0,
+   20.0, 9.0,17.0,20.0, 1.0, 20.0,20.0,20.0, 8.0, 9.0, 20.0,20.0, 9.0,20.0,20.0, 20.0, 4.0, 6.0,20.0,20.0,
+   20.0,20.0,20.0,20.0,20.0, 20.0,20.0,20.0,20.0,20.0, 20.0,20.0,20.0,20.0,20.0,  3.0, 7.0,20.0,20.0,20.0,
+//
+   20.0,20.0,20.0,20.0,20.0, 20.0,20.0,20.0,20.0,20.0, 20.0,20.0,20.0,20.0, 2.0,  8.0,20.0,20.0,20.0,20.0,
+   20.0, 1.0,16.0,20.0, 2.0, 20.0,20.0,20.0,20.0,20.0, 20.0,20.0,20.0, 1.0, 9.0, 20.0,20.0,20.0,20.0,20.0,
+   20.0, 2.0,15.0,20.0, 3.0, 20.0,20.0,20.0,20.0,20.0, 20.0,20.0,20.0,10.0,20.0, 20.0,20.0,20.0,20.0,20.0,
+   20.0, 3.0,14.0,20.0, 4.0, 20.0,20.0, 1.0,20.0, 5.0, 20.0,20.0,20.0, 0.9,20.0, 20.0,20.0,20.0,20.0,20.0,
+   20.0, 4.0,13.0,20.0, 5.0, 20.0,20.0, 2.0, 4.0, 3.0, 20.0,20.0, 0.8,20.0,20.0, 20.0,20.0,20.0,20.0,20.0,
+//
+   20.0, 5.0,12.0,20.0, 7.0, 20.0,20.0, 3.0,20.0, 2.0, 20.0,20.0, 0.7,20.0,20.0, 20.0,20.0,20.0,20.0,20.0,
+   20.0, 6.0,11.0,20.0, 8.0, 20.0,20.0, 4.0,20.0, 1.0, 20.0,20.0, 0.6,20.0,20.0, 20.0,20.0,20.0,20.0,20.0,
+   20.0, 7.0,10.0,20.0, 9.0, 20.0,20.0, 6.0,20.0,20.0, 20.0,20.0, 0.5,20.0,20.0, 20.0,20.0,20.0,20.0,20.0,
+   20.0, 8.0, 9.0,20.0,10.0, 18.0, 0.9, 0.8,20.0,20.0, 20.0, 0.4,20.0,20.0,20.0, 20.0,20.0,20.0,20.0,20.0,
+   20.0,20.0,20.0,20.0,20.0, 20.0,20.0,20.0, 0.0, 0.2,  0.3,20.0,20.0,20.0,20.0, 20.0,20.0,20.0,20.0,20.0};
+
+  bool* minima_in = new bool[20*20]
+  {false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false, true,false,false,false,false,false,false, true,false,false,false, true,false,false,false,
+    false,false,false,false,
+   false, false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false, false,false,
+    false,false,false,false,
+   false,false,false,false,false,false, false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false, true,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false, true,false,false, true,false,false,false,false,false,false,false,false, true,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false, true,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false, true,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false};
+  double* prior_fine_rdirs_in = new double[20*20] {
+  1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,3.0,3.0,3.0,3.0,3.0,3.0,2.0,1.0,1.0,3.0,3.0,2.0,
+  2.0,1.0,2.0,1.0,1.0,2.0,1.0,1.0,1.0,3.0,3.0,3.0,2.0,3.0,2.0,1.0,1.0,3.0,3.0,3.0,
+  5.0,4.0,1.0,1.0,3.0,2.0,1.0,1.0,1.0,1.0,3.0,3.0,2.0,1.0,1.0,1.0,1.0,6.0,6.0,6.0,
+  8.0,7.0,4.0,4.0,3.0,2.0,1.0,1.0,2.0,1.0,6.0,3.0,2.0,1.0,1.0,1.0,1.0,1.0,9.0,9.0,
+  9.0,8.0,7.0,3.0,3.0,2.0,1.0,2.0,1.0,1.0,3.0,6.0,3.0,2.0,1.0,1.0,1.0,1.0,1.0,9.0,
+  9.0,8.0,7.0,3.0,3.0,2.0,1.0,1.0,1.0,1.0,3.0,3.0,6.0,5.0,4.0,4.0,1.0,1.0,1.0,3.0,
+  9.0,8.0,7.0,6.0,6.0,5.0,4.0,4.0,4.0,4.0,6.0,6.0,9.0,8.0,7.0,1.0,1.0,4.0,4.0,6.0,
+  9.0,9.0,8.0,9.0,9.0,8.0,7.0,7.0,7.0,7.0,9.0,9.0,8.0,7.0,5.0,4.0,4.0,7.0,7.0,9.0,
+  9.0,9.0,8.0,7.0,9.0,8.0,7.0,8.0,7.0,7.0,9.0,9.0,8.0,7.0,8.0,7.0,7.0,7.0,2.0,1.0,
+  9.0,9.0,8.0,9.0,9.0,8.0,7.0,7.0,7.0,9.0,9.0,9.0,8.0,7.0,7.0,7.0,7.0,7.0,2.0,1.0,
+  1.0,1.0,9.0,9.0,9.0,8.0,7.0,7.0,7.0,9.0,9.0,9.0,8.0,7.0,7.0,7.0,7.0,3.0,2.0,1.0,
+  1.0,3.0,3.0,2.0,1.0,1.0,1.0,1.0,9.0,9.0,9.0,9.0,8.0,3.0,3.0,2.0,1.0,3.0,2.0,1.0,
+  1.0,3.0,3.0,2.0,1.0,1.0,1.0,1.0,1.0,9.0,9.0,9.0,3.0,3.0,3.0,2.0,1.0,1.0,1.0,1.0,
+  4.0,3.0,3.0,2.0,1.0,1.0,1.0,1.0,1.0,9.0,9.0,3.0,6.0,6.0,6.0,5.0,4.0,4.0,4.0,4.0,
+  7.0,3.0,3.0,2.0,1.0,1.0,1.0,1.0,1.0,1.0,3.0,3.0,3.0,9.0,9.0,8.0,7.0,7.0,7.0,7.0,
+  7.0,3.0,6.0,5.0,4.0,1.0,1.0,1.0,1.0,1.0,3.0,3.0,3.0,3.0,9.0,8.0,7.0,7.0,7.0,7.0,
+  3.0,3.0,3.0,2.0,1.0,4.0,4.0,4.0,4.0,4.0,3.0,3.0,3.0,3.0,3.0,2.0,1.0,1.0,7.0,7.0,
+  3.0,3.0,3.0,2.0,1.0,7.0,7.0,7.0,7.0,7.0,3.0,3.0,3.0,3.0,3.0,2.0,1.0,1.0,1.0,7.0,
+  3.0,3.0,3.0,2.0,1.0,1.0,7.0,7.0,7.0,7.0,3.0,3.0,3.0,3.0,3.0,2.0,1.0,1.0,1.0,3.0,
+  6.0,6.0,6.0,0.0,4.0,4.0,4.0,7.0,7.0,7.0,6.0,6.0,6.0,6.0,6.0,0.0,4.0,4.0,4.0,6.0};
+  int* prior_fine_catchments_in = new int[20*20] {
+  11,11,11,11,11,11,13,13,12,12,12,12,12,12,12,12,12,11,11,11,
+  11,11,11,11,11,13,13,13,13,12,12,12,12,12,12,12,12,11,11,11,
+  11,11,11,11,13,13,13,13,13,13,12,12,12,12,12,12,12,11,11,11,
+  11,11,11,11,13,13,13,13,13,13,12,12,12,12,12,12,12,12,11,11,
+  11,11,11,13,13,13,13,13,13,13,12,12,12,12,12,12,12,14,14,11,
+  11,11,11,13,13,13,13,13,13,13,12,12,12,12,12,12,14,14,14,11,
+  11,11,11,13,13,13,13,13,13,13,12,12,12,12,12,14,14,14,14,11,
+  11,11,11,13,13,13,13,13,13,13,12,12,12,12,14,14,14,14,14,11,
+  11,11,11,11,13,13,13,13,13,13,12,12,12,12,14,14,14,14,15,15,
+  11,11,11,13,13,13,13,13,13,12,12,12,12,12,12,14,14,14,15,15,
+  15,15,13,13,13,13,13,13,13,12,12,12,12,12,12,12,14,15,15,15,
+  15,16,16,16,16,16,16,16,12,12,12,12,12,15,15,15,15,15,15,15,
+  15,16,16,16,16,16,16,16, 4,12,12,12,15,15,15,15,15,15,15,15,
+  15,16,16,16,16,16,16, 4, 4,12,12, 9,15,15,15,15,15,15,15,15,
+  15,16,16,16,16,16, 4, 4, 4, 4,10, 9, 9,15,15,15,15,15,15,15,
+  15, 4,16,16,16, 4, 4, 4, 4, 4, 7,10, 9, 9,15,15,15,15,15,15,
+   5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 7, 7,10, 9, 9, 9, 9, 9,15,15,
+   2, 5, 4, 4, 4, 4, 4, 4, 4, 4, 7, 7, 7,10, 9, 9, 9, 8, 6,15,
+   2, 2, 5, 4, 3, 1, 4, 4, 4, 4, 7, 7, 7, 7,10, 9, 8, 6, 6, 2,
+   2, 2, 2, 0, 1, 1, 1, 4, 4, 4, 7, 7, 7, 7, 7, 0, 6, 6, 6, 2 };
+  double* cell_areas_in = new double[20*20]{
+    1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+    2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
+    3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,
+    4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,
+    5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,
+    //
+    6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,
+    7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
+    8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,
+    9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,
+    10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,
+    //
+    10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,
+    9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,
+    8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,
+    7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
+    6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,
+    //
+    5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,
+    4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,
+    3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,
+    2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
+    1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+  };
+  double* connection_volume_thresholds_in = new double[20*20];
+  std::fill_n(connection_volume_thresholds_in,20*20,0.0);
+  double* flood_volume_thresholds_in = new double[20*20];
+  std::fill_n(flood_volume_thresholds_in,20*20,0.0);
+  int* flood_next_cell_lat_index_in = new int[20*20];
+  std::fill_n(flood_next_cell_lat_index_in,20*20,-1);
+  int* flood_next_cell_lon_index_in = new int[20*20];
+  std::fill_n(flood_next_cell_lon_index_in,20*20,-1);
+  int* connect_next_cell_lat_index_in = new int[20*20];
+  std::fill_n(connect_next_cell_lat_index_in,20*20,-1);
+  int* connect_next_cell_lon_index_in = new int[20*20];
+  std::fill_n(connect_next_cell_lon_index_in,20*20,-1);
+  int* flood_force_merge_lat_index_in = new int[20*20];
+  std::fill_n(flood_force_merge_lat_index_in,20*20,-1);
+  int* flood_force_merge_lon_index_in = new int[20*20];
+  std::fill_n(flood_force_merge_lon_index_in,20*20,-1);
+  int* connect_force_merge_lat_index_in = new int[20*20];
+  std::fill_n(connect_force_merge_lat_index_in,20*20,-1);
+  int* connect_force_merge_lon_index_in = new int[20*20];
+  std::fill_n(connect_force_merge_lon_index_in,20*20,-1);
+  int* flood_redirect_lat_index_in = new int[20*20];
+  std::fill_n(flood_redirect_lat_index_in,20*20,-1);
+  int* flood_redirect_lon_index_in = new int[20*20];
+  std::fill_n(flood_redirect_lon_index_in,20*20,-1);
+  int* connect_redirect_lat_index_in = new int[20*20];
+  std::fill_n(connect_redirect_lat_index_in,20*20,-1);
+  int* connect_redirect_lon_index_in = new int[20*20];
+  std::fill_n(connect_redirect_lon_index_in,20*20,-1);
+  bool* flood_local_redirect_in = new bool[20*20];
+  std::fill_n(flood_local_redirect_in,20*20,false);
+  bool* connect_local_redirect_in = new bool[20*20];
+  std::fill_n(connect_local_redirect_in,20*20,false);
+  int* additional_flood_redirect_lat_index_in = new int[20*20];
+  std::fill_n(additional_flood_redirect_lat_index_in,20*20,-1);
+  int* additional_flood_redirect_lon_index_in = new int[20*20];
+  std::fill_n(additional_flood_redirect_lon_index_in,20*20,-1);
+  int* additional_connect_redirect_lat_index_in = new int[20*20];
+  std::fill_n(additional_connect_redirect_lat_index_in,20*20,-1);
+  int* additional_connect_redirect_lon_index_in = new int[20*20];
+  std::fill_n(additional_connect_redirect_lon_index_in,20*20,-1);
+  bool* additional_flood_local_redirect_in = new bool[20*20];
+  std::fill_n(additional_flood_local_redirect_in,20*20,false);
+  bool* additional_connect_local_redirect_in = new bool[20*20];
+  std::fill_n(additional_connect_local_redirect_in,20*20,false);
+  merge_types* merge_points_in = new merge_types[20*20];
+  std::fill_n(merge_points_in,20*20,no_merge);
+  double* flood_volume_thresholds_expected_out = new double[20*20] {
+   -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0,   -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0,
+   -1.0, 2.0,229.0,-1.0,363.0, -1.0,-1.0,-1.0, 2.0,1150.0,   -1.0,-1.0, 2.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0,
+   -1.0, 7.0,278.0,-1.0,231.0, -1.0,-1.0,-1.0, 7.0,866.0,   -1.0,-1.0, 7.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0,
+   -1.0,16.0,375.0,-1.0,189.0, -1.0,-1.0,-1.0, 16.0,726.0,   -1.0,-1.0, 16.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0,
+   -1.0,30.0,477.0,-1.0,115.0, -1.0,-1.0,-1.0, 30.0,589.0, 54.0,30.0, 30.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0,
+//
+   -1.0,50.0,585.0,-1.0,80.0, -1.0,-1.0,-1.0, 50.0,456.0, -1.0,-1.0,84.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0,
+   -1.0,104.0,700.0,-1.0,50.0, -1.0,-1.0,-1.0, 77.0,338.0, -1.0,-1.0,121.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0,
+   -1.0,139.0,823.0,-1.0,26.0, -1.0,-1.0,-1.0, 112.0,270.0, -1.0,-1.0,166.0,-1.0,-1.0, -1.0,-1.0,141.0,-1.0,-1.0,
+   -1.0,183.0,955.0,-1.0, 9.0, -1.0,-1.0,-1.0, 156.0,209.0, -1.0,-1.0,328.0,-1.0,-1.0, -1.0,95.0,196.0,-1.0,-1.0,
+   -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0, 57.0, 261.0,-1.0,-1.0,-1.0,
+//
+   -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0, 28.0,  336.0,-1.0,-1.0,-1.0,-1.0,
+   -1.0, 9.0,1026.0,-1.0,9.0, -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0, 9.0,420.0, -1.0,-1.0,-1.0,-1.0,-1.0,
+   -1.0,26.0,762.0,-1.0,26.0, -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0,
+   -1.0,50.0,639.0,-1.0,50.0, -1.0,-1.0, 7.0,-1.0,131.0, -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0,
+   -1.0,80.0,524.0,-1.0,80.0, -1.0,-1.0, 20.0, 38.0,28.0, -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0,
+//
+   -1.0,115.0,416.0,-1.0,145.0, -1.0,-1.0,38.0,-1.0,13.0, -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0,
+   -1.0,154.0,388.0,-1.0,184.0, -1.0,-1.0,81.0,-1.0, 4.0, -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0,
+   -1.0,196.0,335.0,-1.0,226.0, -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0,
+   -1.0,240.0,286.0,-1.0,314.0, -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0,
+   -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0 };
+  double* connection_volume_thresholds_expected_out = new double[20*20]{
+    -1, -1, -1, -1, -1,  -1,      -1,  -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1,      -1,  -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1,      -1,  -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1,      -1,  -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1,150.0,-1,  -1,      -1,  -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+//
+    -1, -1, -1, -1, -1,  -1,      -1,  -1,  -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1,      -1,  -1,  -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1,      -1,  -1,  -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1,      -1,  -1,  -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1,      -1,  -1,  -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+//
+    -1, -1, -1, -1, -1,  -1,      -1,  -1,  -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1,      -1,  -1,  -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1,      -1,  -1,  -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1,      -1,  -1,  -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1,110.0,-1,  -1,      -1,  -1,  -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+//
+    -1, -1, -1, -1, -1,  -1,      -1,  -1,  -1, -1,   -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1,      -1,  -1,  -1, -1,   -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1,      -1,  -1,  -1, -1,   -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1,      -1,  -1,  -1, -1,   -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1,      -1,  -1,  -1, -1,   -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1 };
+  int* flood_next_cell_lat_index_expected_out = new int[20*20]{
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1,  2,  2, -1,  2,  -1, -1, -1,  2,  3,  -1, -1,  2, -1, -1,  -1, -1, -1, -1, -1,
+    -1,  3,  3, -1,  1,  -1, -1, -1,  3,  1,  -1, -1,  3, -1, -1,  -1, -1, -1, -1, -1,
+    -1,  4,  4, -1,  2,  -1, -1, -1,  4,  2,  -1, -1,  4, -1, -1,  -1, -1, -1, -1, -1,
+    -1,  5,  5, -1,  4,  -1, -1, -1,  5,  3,   5,  4,  4, -1, -1,  -1, -1, -1, -1, -1,
+    //
+    -1,  6,  6, -1,  4,  -1, -1, -1,  6,  4,  -1, -1,  6, -1, -1,  -1, -1, -1, -1, -1,
+    -1,  7,  7, -1,  5,  -1, -1, -1,  7,  4,  -1, -1,  7, -1, -1,  -1, -1, -1, -1, -1,
+    -1,  8,  8, -1,  6,  -1, -1, -1,  8,  6,  -1, -1,  8, -1, -1,  -1, -1,  8, -1, -1,
+    -1,  1,  3, -1,  7,  -1, -1, -1,  8,  7,  -1, -1,  5, -1, -1,  -1,  7,  9, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,   8, 10, -1, -1, -1,
+    //
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1,  9,  11, -1, -1, -1, -1,
+    -1, 12, 18, -1, 12,  -1, -1, -1, -1, -1,  -1, -1, -1, 10, 13,  -1, -1, -1, -1, -1,
+    -1, 13, 11, -1, 13,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, 14, 12, -1, 14,  -1, -1, 14, -1, 18,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, 15, 13, -1, 14,  -1, -1, 15, 16, 13,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    //
+    -1, 16, 14, -1, 16,  -1, -1, 14, -1, 14,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, 17, 14, -1, 17,  -1, -1, 13, -1, 15,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, 18, 16, -1, 18,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, 18, 17, -1, 15,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1 };
+  int* flood_next_cell_lon_index_expected_out = new int[20*20]{
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1,  1,  2, -1,  1,  -1, -1, -1,  8, 14,  -1, -1, 12, -1, -1,  -1, -1, -1, -1, -1,
+    -1,  1,  2, -1,  4,  -1, -1, -1,  8,  9,  -1, -1, 12, -1, -1,  -1, -1, -1, -1, -1,
+    -1,  1,  2, -1,  4,  -1, -1, -1,  8,  9,  -1, -1, 12, -1, -1,  -1, -1, -1, -1, -1,
+    -1,  1,  2, -1,  3,  -1, -1, -1,  8,  9,  12, 10, 11, -1, -1,  -1, -1, -1, -1, -1,
+    //
+    -1,  1,  2, -1,  4,  -1, -1, -1,  8,  9,  -1, -1, 12, -1, -1,  -1, -1, -1, -1, -1,
+    -1,  1,  2, -1,  4,  -1, -1, -1,  8, 10,  -1, -1, 12, -1, -1,  -1, -1, -1, -1, -1,
+    -1,  1,  2, -1,  4,  -1, -1, -1,  8,  9,  -1, -1, 12, -1, -1,  -1, -1, 17, -1, -1,
+    -1,  2, 19, -1,  4,  -1, -1, -1,  9,  9,  -1, -1,  9, -1, -1,  -1, 17, 16, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  16, 15, -1, -1, -1,
+    //
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, 15,  14, -1, -1, -1, -1,
+    -1,  1,  6, -1,  4,  -1, -1, -1, -1, -1,  -1, -1, -1, 14, 13,  -1, -1, -1, -1, -1,
+    -1,  1,  2, -1,  4,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1,  1,  2, -1,  4,  -1, -1,  7, -1,  7,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1,  1,  2, -1,  3,  -1, -1,  7,  7,  7,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    //
+    -1,  1,  2, -1,  4,  -1, -1,  8, -1,  9,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1,  1,  3, -1,  4,  -1, -1,  9, -1,  9,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1,  1,  2, -1,  4,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1,  2,  2, -1,  2,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1 };
+  int* connect_next_cell_lat_index_expected_out = new int[20*20]{
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1,  3, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    //
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    //
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1,  15, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1,-1,
+    //
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1 };
+  int* connect_next_cell_lon_index_expected_out = new int[20*20]{
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1,  4, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    //
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    //
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1,  4, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    //
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1 };
+  int* flood_redirect_lat_index_expected_out = new int[20*20]{
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1,  1, -1, -1, -1, -1,  0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1,  0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1,  1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1,  1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1,  3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  2, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1,  3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, 13, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1,  2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, 11, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1,  3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+  int* flood_redirect_lon_index_expected_out = new int[20*20]{
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1,  1, -1, -1, -1, -1,  2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1,  0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, 12, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1,  0, -1, -1, -1, -1, -1, -1, -1, -1, -1,  1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1,  1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  3, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1,  1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1,  7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1,  1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1,  4, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1,  0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+  int* connect_redirect_lat_index_expected_out = new int[20*20]{
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+//
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+//
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+//
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1 };
+  int* connect_redirect_lon_index_expected_out = new int[20*20]{
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+//
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+//
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+//
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1 };
+  bool* flood_local_redirect_expected_out = new bool[20*20]{
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false,  true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false,  true, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false,  true, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false,  true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false };
+  bool* connect_local_redirect_expected_out = new bool[20*20]{
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false, false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false, false,false,
+    false,false,false,false,
+   false,false,false,false,false,false, false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false, false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false, false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false};
+  merge_types* merge_points_expected_out = new merge_types[20*20]{
+  no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,
+  no_merge,   no_merge,   no_merge,   no_merge,  connection_merge_not_set_flood_merge_as_secondary,  no_merge,   no_merge,   no_merge,   no_merge,  connection_merge_not_set_flood_merge_as_secondary,  no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,
+  no_merge,   no_merge,   connection_merge_not_set_flood_merge_as_primary,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,
+  no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,
+  no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,
+  no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,
+  no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,  connection_merge_not_set_flood_merge_as_secondary,  no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,
+  no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,
+  no_merge,   no_merge,  connection_merge_not_set_flood_merge_as_secondary,  no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   connection_merge_not_set_flood_merge_as_primary,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,
+  no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,
+  no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,
+  no_merge,   no_merge,  connection_merge_not_set_flood_merge_as_secondary,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,  connection_merge_not_set_flood_merge_as_secondary,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,
+  no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,
+  no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,  connection_merge_not_set_flood_merge_as_secondary,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,
+  no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,  connection_merge_not_set_flood_merge_as_secondary,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,
+  no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   connection_merge_not_set_flood_merge_as_primary,  no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,
+  no_merge,   no_merge,  connection_merge_not_set_flood_merge_as_secondary,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,
+  no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,
+  no_merge,   no_merge,   no_merge,   no_merge,   connection_merge_not_set_flood_merge_as_primary,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,
+  no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,   no_merge,  };
+
+  int* flood_force_merge_lat_index_expected_out = new int[20*20] {
+
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1,  4, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+//
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1,  4, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+//
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+//
+    -1, -1, -1, -1, -1,  -1, -1, 15, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, 14,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1 };
+  int* flood_force_merge_lon_index_expected_out = new int[20*20] {
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1,  3, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+//
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1,  8, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+//
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+//
+    -1, -1, -1, -1, -1,  -1, -1,  9, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1,  1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1 };
+  int* connect_force_merge_lat_index_expected_out = new int[20*20] {
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+//
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+//
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+//
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1 };
+  int* connect_force_merge_lon_index_expected_out = new int[20*20] {
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+//
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+//
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+//
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1 };
+  auto basin_eval = latlon_basin_evaluation_algorithm();
+  basin_eval.setup_fields(minima_in,
+                          raw_orography_in,
+                          corrected_orography_in,
+                          cell_areas_in,
+                          connection_volume_thresholds_in,
+                          flood_volume_thresholds_in,
+                          prior_fine_rdirs_in,
+                          prior_fine_catchments_in,
+                          coarse_catchment_nums_in,
+                          flood_next_cell_lat_index_in,
+                          flood_next_cell_lon_index_in,
+                          connect_next_cell_lat_index_in,
+                          connect_next_cell_lon_index_in,
+                          flood_force_merge_lat_index_in,
+                          flood_force_merge_lon_index_in,
+                          connect_force_merge_lat_index_in,
+                          connect_force_merge_lon_index_in,
+                          flood_redirect_lat_index_in,
+                          flood_redirect_lon_index_in,
+                          connect_redirect_lat_index_in,
+                          connect_redirect_lon_index_in,
+                          additional_flood_redirect_lat_index_in,
+                          additional_flood_redirect_lon_index_in,
+                          additional_connect_redirect_lat_index_in,
+                          additional_connect_redirect_lon_index_in,
+                          flood_local_redirect_in,
+                          connect_local_redirect_in,
+                          additional_flood_local_redirect_in,
+                          additional_connect_local_redirect_in,
+                          merge_points_in,
+                          grid_params_in,
+                          coarse_grid_params_in);
+  bool* landsea_in = new bool[20*20] {
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false, false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+     true,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false, false,false,
+    false,false,false,false,
+   false,false,false,false,false,false, false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false, false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false, false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
+    false,false,false,false,
+   false,false,false,false,false,false,false,false, true,false,false,false,false,false,false,false,
+    false,false,false,false};
+  bool* true_sinks_in = new bool[20*20];
+  fill_n(true_sinks_in,20*20,false);
+  int* next_cell_lat_index_in = new int[20*20];
+  int* next_cell_lon_index_in = new int[20*20];
+  short* sinkless_rdirs_out = new short[20*20];
+  int* catchment_nums_in = new int[20*20];
+  reverse_priority_cell_queue q;
+  auto alg4 = new sink_filling_algorithm_4_latlon();
+  alg4->setup_flags(false,true,false,false);
+  alg4->setup_fields(corrected_orography_in,
+                     landsea_in,
+                     true_sinks_in,
+                     next_cell_lat_index_in,
+                     next_cell_lon_index_in,
+                     grid_params_in,
+                     sinkless_rdirs_out,
+                     catchment_nums_in);
+  basin_eval.setup_sink_filling_algorithm(alg4);
+  basin_eval.evaluate_basins();
+  EXPECT_TRUE(field<double>(flood_volume_thresholds_in,grid_params_in)
+              == field<double>(flood_volume_thresholds_expected_out,grid_params_in));
+  EXPECT_TRUE(field<double>(connection_volume_thresholds_in,grid_params_in)
+              == field<double>(connection_volume_thresholds_expected_out,grid_params_in));
+  EXPECT_TRUE(field<int>(flood_next_cell_lat_index_in,grid_params_in)
+              == field<int>(flood_next_cell_lat_index_expected_out,grid_params_in));
+  EXPECT_TRUE(field<int>(flood_next_cell_lon_index_in,grid_params_in)
+              == field<int>(flood_next_cell_lon_index_expected_out,grid_params_in));
+  EXPECT_TRUE(field<int>(connect_next_cell_lat_index_in,grid_params_in)
+              == field<int>(connect_next_cell_lat_index_expected_out,grid_params_in));
+  EXPECT_TRUE(field<int>(connect_next_cell_lon_index_in,grid_params_in)
+              == field<int>(connect_next_cell_lon_index_expected_out,grid_params_in));
+  EXPECT_TRUE(field<int>(flood_redirect_lat_index_in,grid_params_in)
+              == field<int>(flood_redirect_lat_index_expected_out,grid_params_in));
+  EXPECT_TRUE(field<int>(flood_redirect_lon_index_in,grid_params_in)
+              == field<int>(flood_redirect_lon_index_expected_out,grid_params_in));
+  EXPECT_TRUE(field<int>(connect_redirect_lat_index_in,grid_params_in)
+              == field<int>(connect_redirect_lat_index_expected_out,grid_params_in));
+  EXPECT_TRUE(field<int>(connect_redirect_lon_index_in,grid_params_in)
+              == field<int>(connect_redirect_lon_index_expected_out,grid_params_in));
+  EXPECT_TRUE(field<bool>(flood_local_redirect_in,grid_params_in)
+              == field<bool>(flood_local_redirect_expected_out,grid_params_in));
+  EXPECT_TRUE(field<bool>(connect_local_redirect_in,grid_params_in)
+              == field<bool>(connect_local_redirect_expected_out,grid_params_in));
+  EXPECT_TRUE(field<merge_types>(merge_points_in,grid_params_in)
+              == field<merge_types>(merge_points_expected_out,grid_params_in));
+  EXPECT_TRUE(field<int>(flood_force_merge_lat_index_in,grid_params_in)
+              == field<int>(flood_force_merge_lat_index_expected_out,grid_params_in));
+  EXPECT_TRUE(field<int>(flood_force_merge_lon_index_in,grid_params_in)
+              == field<int>(flood_force_merge_lon_index_expected_out,grid_params_in));
+  EXPECT_TRUE(field<int>(connect_force_merge_lat_index_in,grid_params_in)
+              == field<int>(connect_force_merge_lat_index_expected_out,grid_params_in));
+  EXPECT_TRUE(field<int>(connect_force_merge_lon_index_in,grid_params_in)
+              == field<int>(connect_force_merge_lon_index_expected_out,grid_params_in));
+  delete grid_params_in; delete coarse_grid_params_in; delete alg4;
+  delete[] coarse_catchment_nums_in; delete[] corrected_orography_in;
+  delete[] raw_orography_in; delete[] minima_in;
+  delete[] prior_fine_rdirs_in; delete[] prior_fine_catchments_in;
+  delete[] connection_volume_thresholds_in; delete[] flood_volume_thresholds_in;
+  delete[] flood_next_cell_lat_index_in; delete[] flood_next_cell_lon_index_in;
+  delete[] connect_next_cell_lat_index_in; delete[] connect_next_cell_lon_index_in;
+  delete[] flood_force_merge_lat_index_in; delete[] flood_force_merge_lon_index_in;
+  delete[] connect_force_merge_lat_index_in; delete[] connect_force_merge_lon_index_in;
+  delete[] flood_redirect_lat_index_in; delete[] flood_redirect_lon_index_in;
+  delete[] connect_redirect_lat_index_in; delete[] connect_redirect_lon_index_in;
+  delete[] flood_local_redirect_in; delete[] connect_local_redirect_in;
+  delete[] additional_flood_redirect_lat_index_in;
+  delete[] additional_flood_redirect_lon_index_in;
+  delete[] additional_connect_redirect_lat_index_in;
+  delete[] additional_connect_redirect_lon_index_in;
+  delete[] additional_flood_local_redirect_in;
+  delete[] additional_connect_local_redirect_in;
+  delete[] merge_points_in; delete[] flood_volume_thresholds_expected_out;
+  delete[] connection_volume_thresholds_expected_out;
+  delete[] flood_next_cell_lat_index_expected_out;
+  delete[] flood_next_cell_lon_index_expected_out;
+  delete[] connect_next_cell_lat_index_expected_out;
+  delete[] connect_next_cell_lon_index_expected_out;
+  delete[] flood_redirect_lat_index_expected_out;
+  delete[] flood_redirect_lon_index_expected_out;
+  delete[] connect_redirect_lat_index_expected_out;
+  delete[] connect_redirect_lon_index_expected_out;
+  delete[] flood_local_redirect_expected_out;
+  delete[] connect_local_redirect_expected_out;
+  delete[] merge_points_expected_out;
+  delete[] flood_force_merge_lat_index_expected_out;
+  delete[] flood_force_merge_lon_index_expected_out;
+  delete[] connect_force_merge_lat_index_expected_out;
+  delete[] connect_force_merge_lon_index_expected_out;
+  delete[] landsea_in;
+  delete[] true_sinks_in;
+  delete[] next_cell_lat_index_in;
+  delete[] next_cell_lon_index_in;
+  delete[] sinkless_rdirs_out;
+  delete[] catchment_nums_in;
+  delete[] cell_areas_in;
 }
 
 } //namespace

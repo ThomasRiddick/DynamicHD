@@ -21,6 +21,10 @@ function is_lake(coords::Coords)
   throw(UserError())
 end
 
+function are_valid(coords::Coords)
+  throw(UserError())
+end
+
 struct LatLonCoords <: Coords
   lat::Int64
   lon::Int64

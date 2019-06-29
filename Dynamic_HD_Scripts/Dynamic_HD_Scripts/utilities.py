@@ -645,6 +645,25 @@ def extract_ls_mask_from_rdirs(rdirs_filename,lsmask_filename,grid_type='HD',**g
     lsmask = field.RiverDirections(rdirs_field.get_lsmask(),grid=grid_type,**grid_kwargs)
     dynamic_hd.write_field(lsmask_filename, lsmask, file_type=dynamic_hd.get_file_extension(lsmask_filename))
 
+def advanced_extract_ls_mask_from_rdirs(rdirs_filename,lsmask_filename,
+                                        rdirs_fieldname,lsmask_fieldname):
+    """Extract an land sea mask from river directions with coast and sea cells marked
+
+    Arguments:
+    rdirs_filename: string, full path to the river directions file to extract the land-sea mask
+        from
+    lsmask_filename: string, full path to the target file to the write the extracted land-sea mask
+        to
+    rdirs_fieldname: string, name of rdirs field within file
+    lsmask_fieldname: string, name of lsmask to use in file
+    Returns: nothing
+    """
+    rdirs_field = iodriver.advanced_field_loader(rdirs_filename,field_type='RiverDirections',
+                                                 fieldname=rdirs_fieldname)
+    lsmask = field.Field(rdirs_field.get_lsmask(),grid=rdirs_field.get_grid())
+    iodriver.advanced_field_writer(lsmask_filename,lsmask,
+                                   fieldname=lsmask_fieldname)
+
 def extract_true_sinks_from_rdirs(rdirs_filename,truesinks_filename,grid_type='HD',**grid_kwargs):
     """Extract a set of true sinks from an rdirs file
 
@@ -667,6 +686,27 @@ def extract_true_sinks_from_rdirs(rdirs_filename,truesinks_filename,grid_type='H
     truesinks = field.Field(rdirs_field.extract_truesinks(),grid=grid_type,**grid_kwargs)
     dynamic_hd.write_field(truesinks_filename, truesinks,
                            file_type=dynamic_hd.get_file_extension(truesinks_filename))
+
+def advanced_extract_true_sinks_from_rdirs(rdirs_filename,truesinks_filename,
+                                           rdirs_fieldname,truesinks_fieldname):
+    """Extract a set of true sinks from an rdirs file
+
+    Arguments:
+    rdirs_filename: string; full path to river directions file containing true sink points
+    truesinks_filename: string; full path to write the field of extracted true sinks to
+    rdirs_fieldname: string, name of rdirs field within file
+    lsmask_fieldname: string, name of truesinks field to use in file
+    Returns: nothing
+
+    Extracts all points that have the code for a sink (which is 5) from the river directions
+    field
+    """
+
+    rdirs_field = iodriver.advanced_field_loader(rdirs_filename,field_type='RiverDirections',
+                                                 fieldname=rdirs_fieldname)
+    truesinks = field.Field(rdirs_field.extract_truesinks(),grid=rdirs_field.get_grid())
+    iodriver.advanced_field_writer(truesinks_filename,truesinks,
+                                   fieldname=truesinks_fieldname)
 
 def upscale_field_driver(input_filename,output_filename,input_grid_type,output_grid_type,
                   method,timeslice=None,input_grid_kwargs={},output_grid_kwargs={},scalenumbers=False):

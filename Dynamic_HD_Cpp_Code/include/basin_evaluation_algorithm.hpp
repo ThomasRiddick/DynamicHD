@@ -19,6 +19,7 @@ public:
 	void setup_fields(bool* minima_in,
                     double* raw_orography_in,
                     double* corrected_orography_in,
+                    double* cell_areas_in,
                     double* connection_volume_thresholds_in,
                     double* flood_volume_thresholds_in,
                     int* prior_fine_catchments_in,
@@ -123,6 +124,7 @@ protected:
   field<bool>* additional_connect_local_redirect = nullptr;
 	field<double>* raw_orography = nullptr;
 	field<double>* corrected_orography = nullptr;
+  field<double>* cell_areas = nullptr;
 	field<double>* connection_volume_thresholds = nullptr;
 	field<double>* flood_volume_thresholds = nullptr;
 	field<int>* basin_catchment_numbers = nullptr;
@@ -147,12 +149,12 @@ protected:
   height_types previous_filled_cell_height_type;
   sink_filling_algorithm_4* sink_filling_alg;
 
-	int cell_number;
 	int basin_catchment_number;
   bool skipped_previous_center_cell;
   bool is_double_merge;
   bool primary_merge_found;
   bool allow_secondary_merges_only;
+  double lake_area;
   double new_center_cell_height;
 	double center_cell_height;
 	double previous_filled_cell_height;
@@ -167,6 +169,7 @@ public:
   void setup_fields(bool* minima_in,
                     double* raw_orography_in,
                     double* corrected_orography_in,
+                    double* cell_areas_in,
                     double* connection_volume_thresholds_in,
                     double* flood_volume_thresholds_in,
                     double* prior_fine_rdirs_in,
@@ -201,6 +204,7 @@ public:
                                                double* flood_volume_thresholds_in,
                                                double* connection_volume_thresholds_in,
                                                double* raw_orography_in,
+                                               double* cell_areas_in,
                                                int* flood_next_cell_lat_index_in,
                                                int* flood_next_cell_lon_index_in,
                                                int* connect_next_cell_lat_index_in,
@@ -209,7 +213,7 @@ public:
                                                bool* flooded_cells_in,
                                                bool* connected_cells_in,
                                                double& center_cell_volume_threshold_in,
-                                               int& cell_number_in,
+                                               double& lake_area_in,
                                                int basin_catchment_number_in,
                                                double center_cell_height_in,
                                                double& previous_filled_cell_height_in,

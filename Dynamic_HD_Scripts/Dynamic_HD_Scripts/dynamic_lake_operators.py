@@ -60,7 +60,7 @@ def advanced_burn_carved_rivers_driver(input_orography_file,
                                                                    dtype=np.int32),
                                               np.ascontiguousarray(input_lakemask.get_data(),
                                                                    dtype=np.int32),
-                                              add_slope_in,max_exploration_range,
+                                              add_slope,max_exploration_range,
                                               minimum_height_change_threshold,
                                               short_path_threshold,
                                               short_minimum_height_change_threshold)
@@ -112,6 +112,8 @@ def advanced_basin_evaluation_driver(input_minima_file,
                                      input_raw_orography_fieldname,
                                      input_corrected_orography_file,
                                      input_corrected_orography_fieldname,
+                                     input_cell_areas_file,
+                                     input_cell_areas_fieldname,
                                      input_prior_fine_rdirs_file,
                                      input_prior_fine_rdirs_fieldname,
                                      input_prior_fine_catchments_file,
@@ -131,6 +133,9 @@ def advanced_basin_evaluation_driver(input_minima_file,
     input_corrected_orography = iodriver.advanced_field_loader(input_corrected_orography_file,
                                                                field_type='Orography',
                                                                fieldname=input_corrected_orography_fieldname)
+    input_cell_areas = iodriver.advanced_field_loader(input_cell_areas_file,
+                                                      field_type='Generic',
+                                                      fieldname=input_cell_areas_fieldname)
     input_prior_fine_rdirs = iodriver.advanced_field_loader(input_prior_fine_rdirs_file,
                                                             field_type='RiverDirections',
                                                             fieldname=input_prior_fine_rdirs_fieldname,
@@ -180,6 +185,9 @@ def advanced_basin_evaluation_driver(input_minima_file,
                                                                  dtype=np.float64),
                                             corrected_orography_in=
                                             np.ascontiguousarray(input_corrected_orography.get_data(),
+                                                                 dtype=np.float64),
+                                            cell_areas_in=
+                                            np.ascontiguousarray(input_cell_areas.get_data(),
                                                                  dtype=np.float64),
                                             connection_volume_thresholds_in=
                                             connection_volume_thresholds.get_data(),
@@ -434,23 +442,23 @@ def advanced_water_redistribution_driver(input_lake_numbers_file,
                                                 field_type='Generic',
                                                 fieldname=input_lake_centers_fieldname)
   water_to_redistribute = \
-    iodriver.advanced_field_loader(output_water_redistributed_to_lakes_file,
+    iodriver.advanced_field_loader(input_water_to_redistribute_file,
                                    field_type='Generic',
-                                   fieldname=output_water_redistributed_to_lakes_fieldname)
+                                   fieldname=input_water_to_redistribute_fieldname)
   fine_grid = lake_numbers.get_grid()
   fine_shape = lake_numbers.get_data().shape
-  coarse_grid = grid.MakeGrid(coarse_grid_type,**coarse_grid_kwargs)
+  coarse_grid = grid.makeGrid(coarse_grid_type,**coarse_grid_kwargs)
   water_redistributed_to_lakes = field.Field(np.zeros(fine_shape,dtype=np.float64,order='C'),
                                              fine_grid)
-  water_redistributed_to_rivers = field.Field(create_empty_field(np.float64),coarse_grid)
-  redistribute_water(np.ascontiguousarray(lake_numbers.get_data(),
-                                          dtype=np.int64),
-                     np.ascontiguousarray(lake_centers.get_data(),
-                                          dtype=np.int32),
-                     np.ascontiguousarray(water_to_redistribute.get_data(),
-                                          dtype=np.float64),
-                     water_redistributed_to_lakes.get_data(),
-                     water_redistributed_to_rivers.get_data())
+  water_redistributed_to_rivers = field.Field(coarse_grid.create_empty_field(np.float64),coarse_grid)
+  lake_operators_wrapper.redistribute_water(np.ascontiguousarray(lake_numbers.get_data(),
+                                            dtype=np.int32),
+                                            np.ascontiguousarray(lake_centers.get_data(),
+                                            dtype=np.int32),
+                                            np.ascontiguousarray(water_to_redistribute.get_data(),
+                                            dtype=np.float64),
+                                            water_redistributed_to_lakes.get_data(),
+                                            water_redistributed_to_rivers.get_data())
   iodriver.advanced_field_writer(output_water_redistributed_to_lakes_file,
                                  water_redistributed_to_lakes,
                                  fieldname=output_water_redistributed_to_lakes_fieldname)

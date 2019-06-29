@@ -1,5 +1,6 @@
 module coords_mod
 use unstructured_grid_mod
+use precision_mod
 implicit none
 
 !> An abstract class for holding coordinates on a generic grid
@@ -70,6 +71,8 @@ type, extends(section_coords) :: latlon_section_coords
     integer :: section_width_lat
     !> The longitudinal width of the section
     integer :: section_width_lon
+    !> The actual longitude of the zero line (i.e. vertical edge of the array)
+    real(kind=double_precision) :: zero_line
 end type latlon_section_coords
 
 interface latlon_section_coords
@@ -206,6 +209,7 @@ contains
         constructor%section_min_lon = section_min_lon
         constructor%section_width_lat = section_width_lat
         constructor%section_width_lon = section_width_lon
+        constructor%zero_line = 0.0
     end function latlat_section_coords_constructor
 
 

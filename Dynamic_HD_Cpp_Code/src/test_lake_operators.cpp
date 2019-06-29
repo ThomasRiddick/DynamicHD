@@ -5543,6 +5543,13 @@ TEST_F(WaterRedistributionTest, WaterRedistributionTestOne){
   for (auto i =0; i < coarse_nlat*coarse_nlon; i++){
     EXPECT_DOUBLE_EQ(water_redistributed_to_rivers_expected_out[i],water_redistributed_to_rivers_out[i]);
   }
+  delete[] water_redistributed_to_rivers_expected_out;
+  delete[] water_redistributed_to_lakes_expected_out;
+  delete[] water_redistributed_to_rivers_out;
+  delete[] water_redistributed_to_lakes_out;
+  delete[] water_to_redistribute_in;
+  delete[] lake_centers_in;
+  delete[] lake_numbers_in;
 }
 
 }  // namespace
