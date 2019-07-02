@@ -371,32 +371,34 @@ function handle_event(lake::FillingLake,add_water::AddWater)
     if filled
       merge_type::SimpleMergeTypes = get_merge_type(lake)
       if merge_type != no_merge
-        if ! (merge_type == primary_merge &&
-              lake.filling_lake_variables.primary_merge_completed)
-          if (merge_type == double_merge &&
-              lake.filling_lake_variables.primary_merge_completed)
-            merge_type = secondary_merge
-          end
-          local merge_possible::Bool
-          local already_merged::Bool
-          merge_possible,already_merged = check_if_merge_is_possible(lake,merge_type)
-          if merge_possible
-            if merge_type == secondary_merge
-              subsumed_lake::Lake = perform_secondary_merge(lake)
-              subsumed_lake = handle_event(subsumed_lake,
-                                           StoreWater(inflow))
-              return subsumed_lake
-            else
-              perform_primary_merge(lake)
-              if merge_type == double_merge
-                merge_type = secondary_merge
-                lake.filling_lake_variables.use_additional_fields = true
-              end
+        while true
+          if ! (merge_type == primary_merge &&
+                lake.filling_lake_variables.primary_merge_completed)
+            if (merge_type == double_merge &&
+                lake.filling_lake_variables.primary_merge_completed)
+              merge_type = secondary_merge
+              lake.filling_lake_variables.use_additional_fields = true
             end
-          elseif ! already_merged
-            overflowing_lake::Lake = change_to_overflowing_lake(lake,merge_type)
-            overflowing_lake = handle_event(overflowing_lake,StoreWater(inflow))
-            return overflowing_lake
+            local merge_possible::Bool
+            local already_merged::Bool
+            merge_possible,already_merged = check_if_merge_is_possible(lake,merge_type)
+            if merge_possible
+              if merge_type == secondary_merge
+                subsumed_lake::Lake = perform_secondary_merge(lake)
+                subsumed_lake = handle_event(subsumed_lake,
+                                             StoreWater(inflow))
+                return subsumed_lake
+              else
+                perform_primary_merge(lake)
+              end
+            elseif ! already_merged
+              overflowing_lake::Lake = change_to_overflowing_lake(lake,merge_type)
+              overflowing_lake = handle_event(overflowing_lake,StoreWater(inflow))
+              return overflowing_lake
+            end
+          end
+          if merge_type != double_merge
+            break
           end
         end
       end
@@ -552,21 +554,17 @@ function check_if_merge_is_possible(lake::Lake,merge_type::SimpleMergeTypes)
   if (get_lake_variables(other_lake)::LakeVariables).lake_number == lake_variables.lake_number
     return false,true
   elseif isa(other_lake,OverflowingLake)
-    if merge_type == primary_merge
+    other_lake_target_lake_number::Int64 = lake_fields.lake_numbers(other_lake.next_merge_target_coords)
+    if other_lake_target_lake_number == 0
+      return false,false
+    end
+    other_lake_target_lake::Lake = lake_variables.other_lakes[other_lake_target_lake_number]
+    other_lake_target_lake = find_true_primary_lake(other_lake_target_lake)
+    if (get_lake_variables(other_lake_target_lake)::LakeVariables).lake_number ==
+        lake_variables.lake_number
       return true,false
     else
-      other_lake_target_lake_number::Int64 = lake_fields.lake_numbers(other_lake.next_merge_target_coords)
-      if other_lake_target_lake_number == 0
-        return false,false
-      end
-      other_lake_target_lake::Lake = lake_variables.other_lakes[other_lake_target_lake_number]
-      other_lake_target_lake = find_true_primary_lake(other_lake_target_lake)
-      if (get_lake_variables(other_lake_target_lake)::LakeVariables).lake_number ==
-          lake_variables.lake_number
-        return true,false
-      else
-        return false,false
-      end
+      return false,false
     end
   else
     return false,false
@@ -707,7 +705,8 @@ end
 
 function get_outflow_redirect_coords(lake_parameters::LakeParameters,
                                      initial_coords::Coords,
-                                     use_flood_redirect::Bool)
+                                     use_flood_redirect::Bool,
+                                     use_additional_fields::Bool)
   throw(UserError())
 end
 

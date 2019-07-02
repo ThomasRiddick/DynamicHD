@@ -40,16 +40,16 @@ function drive_hd_model_with_or_without_lakes(prognostic_fields::PrognosticField
     end
   end
   for i in 1:timesteps
-    set_drainage = SetDrainage(drainages[i])
+    set_drainage = SetDrainage(deepcopy(drainages[convert(Int64,ceil(convert(Float64,i)/30.0))]))
     handle_event(hsm,set_drainage)
-    set_runoff = SetRunoff(runoffs[i])
+    set_runoff = SetRunoff(deepcopy(runoffs[convert(Int64,ceil(convert(Float64,i)/30.0))]))
     handle_event(hsm,set_runoff)
     handle_event(hsm,runHD)
     if run_lakes_flag
       handle_event(hsm,run_lakes)
     end
     if print_timestep_results
-      if i%100 == 0
+      if false #i%100 == 0
         # print_results::PrintResults = PrintResults(i)
         # handle_event(hsm,print_results)
         print_section::PrintSection = PrintSection()
@@ -57,7 +57,7 @@ function drive_hd_model_with_or_without_lakes(prognostic_fields::PrognosticField
       end
     end
     if run_lakes_flag
-      if i%100 == 0
+      if i%365 == 0
         write_lake_numbers::WriteLakeNumbers = WriteLakeNumbers(i)
         handle_event(hsm,write_lake_numbers)
       end

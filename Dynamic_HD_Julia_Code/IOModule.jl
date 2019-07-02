@@ -285,14 +285,14 @@ end
 function write_lake_numbers_field(lake_parameters::LakeParameters,lake_fields::LakeFields;
                                   timestep::Int64=-1)
   variable_name::String = "lake_field"
-  filepath::String = timestep == -1 ? "/Users/thomasriddick/Documents/data/temp/lake_model_out.nc" : "/Users/thomasriddick/Documents/data/temp/lake_model_out_$(timestep).nc"
+  filepath::String = timestep == -1 ? "/Users/thomasriddick/Documents/data/temp/transient_sim_1/lake_model_results.nc" : "/Users/thomasriddick/Documents/data/temp/transient_sim_1/lake_model_results_$(timestep).nc"
   write_field(lake_parameters.grid,variable_name,
               lake_fields.lake_numbers,filepath)
 end
 
 function write_lake_volumes_field(lake_parameters::LakeParameters,lake_volumes::Field{Float64})
   variable_name::String = "lake_field"
-  filepath::String = "/Users/thomasriddick/Documents/data/temp/lake_model_out.nc"
+  filepath::String = "/Users/thomasriddick/Documents/data/temp/transient_sim_1/lake_model_out.nc"
   write_field(lake_parameters.grid,variable_name,lake_volumes,filepath)
 end
 

@@ -88,18 +88,21 @@ protected:
 	void set_secondary_redirect();
 	void set_primary_redirect();
   void set_previous_cells_redirect_type(coords* initial_fine_coords,height_types height_type,
-                                        redirect_type local_redirect);
+                                        redirect_type local_redirect,
+                                        bool use_additional_fields = false);
 	void find_and_set_non_local_redirect_index_from_coarse_catchment_num(coords* initial_center_coords,
 	                                                                		 coords* current_center_coords,
                                                                        height_types initial_center_height_type,
-	                                                     								 int coarse_catchment_number);
+	                                                     								 int coarse_catchment_number,
+                                                                       bool use_additional_fields = false);
 	void search_process_neighbors();
 	void search_process_neighbor();
   void search_for_primary_merge_at_same_level();
 	void find_and_set_previous_cells_non_local_redirect_index(coords* initial_center_coords,
 	                                                     			coords* current_center_coords,
 	                                                     			coords* catchment_center_coords,
-                                                            height_types initial_center_height_type);
+                                                            height_types initial_center_height_type,
+                                                            bool use_additional_fields = false);
 	queue<cell*> minima_q;
 	priority_cell_queue q;
 	queue<landsea_cell*> search_q;

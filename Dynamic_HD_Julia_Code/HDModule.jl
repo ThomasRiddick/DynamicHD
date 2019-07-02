@@ -366,7 +366,7 @@ function handle_event(prognostic_fields::PrognosticFields,
                       print_results::WriteRiverInitialValues)
   river_fields::RiverPrognosticFields = get_river_fields(prognostic_fields)
   river_parameters::RiverParameters = get_river_parameters(prognostic_fields)
-  hd_start_filepath::AbstractString = "/Users/thomasriddick/Documents/data/temp/river_model_out.nc"
+  hd_start_filepath::AbstractString = "/Users/thomasriddick/Documents/data/temp/transient_sim_1/river_model_out.nc"
   write_river_initial_values(hd_start_filepath,river_parameters,river_fields)
   return prognostic_fields
 end
