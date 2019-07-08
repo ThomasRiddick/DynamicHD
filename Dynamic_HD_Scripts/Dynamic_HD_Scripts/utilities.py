@@ -857,7 +857,7 @@ def downscale_true_sink_points_driver(input_fine_orography_filename,input_course
     Returns: nothing
 
     Place the true sinks at the lowest point in the set of fine cells covered by the
-    course sell. Can make modifications both to the course true sinks field before
+    course cell. Can make modifications both to the course true sinks field before
     processing and the fine true sinks field after processing.
     """
 

@@ -235,9 +235,9 @@ def advanced_sinkless_flow_directions_generator(filename,output_filename,fieldna
         use_true_sinks = False;
     else:
         use_true_sinks = True;
-        truesinks = dynamic_hd.advanced_field_loader(truesinks_filename,
-                                                     field_type='Generic',
-                                                     fieldname=truesinks_fieldname)
+        truesinks = iodriver.advanced_field_loader(truesinks_filename,
+                                                   field_type='Generic',
+                                                   fieldname=truesinks_fieldname)
     if ls_mask_filename is None:
         use_ls_mask = False
         ls_mask = field.makeEmptyField(field_type='Generic',dtype=np.int32,grid_type='HD')

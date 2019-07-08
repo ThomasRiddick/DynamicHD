@@ -11,7 +11,7 @@ using MergeTypesModule
 using NetCDF
 using NetCDF: NcFile,NcVar
 import LakeModule: write_lake_numbers_field,write_lake_volumes_field
-import HDModule: write_river_initial_values
+import HDModule: write_river_initial_values,write_river_flow_field
 
 function load_field(file_handle::NcFile,grid::Grid,variable_name::AbstractString,
                     field_type::DataType,;timestep::Int64=-1)
@@ -196,6 +196,12 @@ function load_lake_parameters(lake_para_filepath::AbstractString,grid::Grid,hd_g
   finally
     NetCDF.close(file_handle)
   end
+end
+
+function write_river_flow_field(river_parameters::RiverParameters,river_flow_field::Field{Float64};timestep::Int64=-1)
+  variable_name::String = "river_flow"
+  filepath::String = timestep == -1 ? "/Users/thomasriddick/Documents/data/temp/transient_sim_1/river_model_results.nc" : "/Users/thomasriddick/Documents/data/temp/transient_sim_1/river_model_results_$(timestep).nc"
+  write_field(river_parameters.grid,variable_name,river_flow_field,filepath)
 end
 
 function load_grid_specific_lake_parameters(file_handle::NcFile,grid::LatLonGrid)

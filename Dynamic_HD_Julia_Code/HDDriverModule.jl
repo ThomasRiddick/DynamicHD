@@ -4,6 +4,7 @@ using Profile
 using HierarchicalStateMachineModule: HierarchicalStateMachine
 using HDModule: RiverParameters,RiverPrognosticFields,RiverPrognosticFieldsOnly,RunHD,handle_event
 using HDModule: SetDrainage,SetRunoff,PrintResults,PrognosticFields,WriteRiverInitialValues
+using HDModule: WriteRiverFlow,AccumulateRiverFlow,ResetCumulativeRiverFlow,WriteMeanRiverFlow
 using HDModule: water_to_lakes,water_from_lakes
 using FieldModule: Field
 using LakeModule: LakeParameters,LakePrognostics,LakeFields,RiverAndLakePrognosticFields,RunLakes
@@ -56,8 +57,15 @@ function drive_hd_model_with_or_without_lakes(prognostic_fields::PrognosticField
         handle_event(hsm,print_section)
       end
     end
-    if run_lakes_flag
-      if i%365 == 0
+    accumulate_river_flow::AccumulateRiverFlow = AccumulateRiverFlow()
+    handle_event(hsm,accumulate_river_flow)
+    output_timestep::Int64 = 365
+    if i%output_timestep == 0
+      write_mean_river_flow::WriteMeanRiverFlow = WriteMeanRiverFlow(i,output_timestep)
+      handle_event(hsm,write_mean_river_flow)
+      reset_cumulative_river_flow::ResetCumulativeRiverFlow = ResetCumulativeRiverFlow()
+      handle_event(hsm,reset_cumulative_river_flow)
+      if run_lakes_flag
         write_lake_numbers::WriteLakeNumbers = WriteLakeNumbers(i)
         handle_event(hsm,write_lake_numbers)
       end

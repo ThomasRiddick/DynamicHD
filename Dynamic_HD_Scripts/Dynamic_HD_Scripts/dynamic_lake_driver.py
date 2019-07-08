@@ -360,6 +360,10 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
         rotate_lsmask_180_lr = True
         original_orography_filename = join(self.orography_path,
                                                 "ice5g_v1_2_00_0k_10min.nc")
+        true_sinks_filename = join(self.truesinks_path,
+                                   "truesinks_ICE5G_and_tarasov_upscaled_srtm30plus_"
+                                   "north_america_only_data_ALG4_sinkless_glcc_olson"
+                                   "_lsmask_0k_20170517_003802_with_grid.nc")
         if timestep_0k is not None:
           orography_0k = iodriver.advanced_field_loader(orography_0k_filename,
                                                         time_slice=timestep_0k,
@@ -469,11 +473,15 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
                                                                       output_filename=rdirs_filename,
                                                                       ls_mask_filename=
                                                                       original_ls_mask_with_grid_filename,
+                                                                      truesinks_filename=
+                                                                      true_sinks_filename,
                                                                       fieldname="field_value",
                                                                       output_fieldname=
                                                                       "rdir",
                                                                       ls_mask_fieldname=
-                                                                      "lsmask")
+                                                                      "lsmask",
+                                                                      truesinks_fieldname=
+                                                                      "true_sinks")
         dynamic_lake_operators.advanced_burn_carved_rivers_driver(input_orography_file=
                                                                   orography_filename,
                                                                   input_orography_fieldname=
@@ -569,8 +577,8 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
 
     def prepare_basins_from_glac1D(self):
       overarching_file_label = self._generate_file_label()
-      timesteps_to_use = [1200,1250,1300,1350,1400,1450,1500,1550,
-                          1600,1650,1700,1750,1800]
+      timesteps_to_use = [ 950,1000,1050,1100,1150,1200,1250,1300,1350,
+                          1400,1450,1500,1550,1600,1650,1700,1750,1800]
       timestep_for_0k = 2600
       glac_1d_topo_filename = join(self.orography_path,
                                    "GLAC1D_Top01_surf.nc")

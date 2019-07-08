@@ -82,6 +82,15 @@ mutable struct RiverDiagnosticFields
   end
 end
 
+mutable struct RiverDiagnosticOutputFields
+  cumulative_river_flow::Field{Float64}
+  function RiverDiagnosticOutputFields(river_parameters::RiverParameters)
+    cumulative_river_flow::Field{Float64} =
+      Field{Float64}(river_parameters.grid,0.0)
+    new(cumulative_river_flow)
+  end
+end
+
 get_river_parameters(obj::T) where {T <: PrognosticFields} =
   obj.river_parameters::RiverParameters
 
@@ -91,6 +100,9 @@ get_river_fields(obj::T) where {T <: PrognosticFields} =
 get_river_diagnostic_fields(obj::T) where {T <: PrognosticFields} =
   obj.river_diagnostic_fields::RiverDiagnosticFields
 
+get_river_diagnostic_output_fields(obj::T) where {T <: PrognosticFields} =
+  obj.river_diagnostic_output_fields::RiverDiagnosticOutputFields
+
 get_using_lakes(obj::T) where {T <: PrognosticFields} =
   obj.using_lakes::Bool
 
@@ -98,11 +110,12 @@ struct RiverPrognosticFieldsOnly <: PrognosticFields
   river_parameters::RiverParameters
   river_fields::RiverPrognosticFields
   river_diagnostic_fields::RiverDiagnosticFields
+  river_diagnostic_output_fields::RiverDiagnosticOutputFields
   using_lakes::Bool
   RiverPrognosticFieldsOnly(river_parameters::RiverParameters,
                             river_fields::RiverPrognosticFields) =
     new(river_parameters,river_fields,RiverDiagnosticFields(river_parameters),
-        false)
+        RiverDiagnosticOutputFields(river_parameters),false)
 end
 
 function handle_event(prognostic_fields::PrognosticFields,
@@ -164,11 +177,13 @@ function handle_event(prognostic_fields::PrognosticFields,
                       get(river_fields.river_inflow,coords) +
                       get(river_fields.runoff,coords) +
                       get(river_fields.drainage,coords))
+                set!(river_fields.river_inflow,coords,0.0)
             elseif using_lakes && is_lake(flow_direction)
                 water_to_lakes(prognostic_fields,coords,
                                get(river_fields.river_inflow,coords) +
                                get(river_fields.runoff,coords) +
                                get(river_fields.drainage,coords))
+                set!(river_fields.river_inflow,coords,0.0)
             end
           end
   fill!(river_fields.runoff,0.0)
@@ -375,6 +390,68 @@ function write_river_initial_values(hd_start_filepath::AbstractString,
                                     river_parameters::RiverParameters,
                                     river_prognostic_fields::RiverPrognosticFields)
   throw(UserError())
+end
+
+struct WriteRiverFlow <: Event
+  timestep::Int64
+end
+
+function handle_event(prognostic_fields::PrognosticFields,
+                      write_river_flow::WriteRiverFlow)
+  river_fields::RiverPrognosticFields = get_river_fields(prognostic_fields)
+  river_parameters::RiverParameters = get_river_parameters(prognostic_fields)
+  write_river_flow_field(river_parameters,river_fields.river_inflow,
+                         timestep=write_river_flow.timestep)
+  return prognostic_fields
+end
+
+function write_river_flow_field(river_parameters::RiverParameters,
+                                river_flow_field::Field{Float64};
+                                timestep::Int64=-1)
+  throw(UserError())
+end
+
+struct AccumulateRiverFlow <: Event end
+
+function handle_event(prognostic_fields::PrognosticFields,
+                      accumulate_river_flow::AccumulateRiverFlow)
+  river_fields::RiverPrognosticFields = get_river_fields(prognostic_fields)
+  river_diagnostic_output_fields::RiverDiagnosticOutputFields =
+    get_river_diagnostic_output_fields(prognostic_fields)
+  river_diagnostic_output_fields.cumulative_river_flow += river_fields.river_inflow
+  return prognostic_fields
+end
+
+struct ResetCumulativeRiverFlow <: Event end
+
+function handle_event(prognostic_fields::PrognosticFields,
+                      reset_cumulative_river_flow::ResetCumulativeRiverFlow)
+  river_diagnostic_output_fields::RiverDiagnosticOutputFields =
+    get_river_diagnostic_output_fields(prognostic_fields)
+  fill!(river_diagnostic_output_fields.cumulative_river_flow,0.0)
+  return prognostic_fields
+end
+
+struct WriteMeanRiverFlow <: Event
+  timestep::Int64
+  number_of_timesteps::Int64
+end
+
+function handle_event(prognostic_fields::PrognosticFields,
+                      write_mean_river_flow::WriteMeanRiverFlow)
+  river_diagnostic_output_fields::RiverDiagnosticOutputFields =
+    get_river_diagnostic_output_fields(prognostic_fields)
+  river_parameters::RiverParameters = get_river_parameters(prognostic_fields)
+  mean_river_flow::Field{Float64} =
+      Field{Float64}(river_parameters.grid,0.0)
+  for_all(river_parameters.grid) do coords::Coords
+    set!(mean_river_flow,coords,
+         river_diagnostic_output_fields.cumulative_river_flow(coords)/
+         convert(Float64,write_mean_river_flow.number_of_timesteps))
+  end
+  write_river_flow_field(river_parameters,mean_river_flow,
+                         timestep=write_mean_river_flow.timestep)
+  return prognostic_fields
 end
 
 end

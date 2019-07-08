@@ -1,4 +1,4 @@
-push!(LOAD_PATH, "/Users/thomasriddick/Documents/workspace/Dynamic_HD_Code/Dynamic_HD_Julia_Code/")
+#push!(LOAD_PATH, "/Users/thomasriddick/Documents/workspace/Dynamic_HD_Code/Dynamic_HD_Julia_Code/")
 using ArgParse
 using HDDriverModule: drive_hd_model,drive_hd_and_lake_model
 using IOModule: load_river_parameters, load_lake_parameters
@@ -48,7 +48,7 @@ function main()
                                      last_timestep=timesteps)
   else
     drainage::Field{Float64} = LatLonField{Float64}(river_parameters.grid,269747790.0*2.25/1000.0)
-    drainages = repeat(drainage,12*50)
+    drainages = repeat(drainage,12*51)
   end
   if args["runoff-file"] != nothing
     runoffs = load_runoff_fields(args["runoff-file"],grid,
@@ -130,11 +130,11 @@ function main()
   end
 end
 
-#empty!(ARGS)
+empty!(ARGS)
 # push!(ARGS,"-p/Users/thomasriddick/Documents/data/HDdata/hdfiles/hdpara_file_from_current_model.nc")
-# push!(ARGS,"-p/Users/thomasriddick/Documents/data/HDdata/hdfiles/generated/hd_file_prepare_basins_from_glac1D_20190702_095240_1450.nc")
-# push!(ARGS,"-l/Users/thomasriddick/Documents/data/HDdata/lakeparafiles/lakeparas_prepare_basins_from_glac1D_20190702_095240_1450.nc")
+ push!(ARGS,"-p/Users/thomasriddick/Documents/data/HDdata/hdfiles/generated/hd_file_prepare_basins_from_glac1D_20190704_142906_1200.nc")
+ push!(ARGS,"-l/Users/thomasriddick/Documents/data/HDdata/lakeparafiles/lakeparas_prepare_basins_from_glac1D_20190704_142906_1200.nc")
 # push!(ARGS,"-n/Users/thomasriddick/Documents/data/temp/transient_sim_1/lake_model_start_1200.nc")
 # push!(ARGS,"-i/Users/thomasriddick/Documents/data/temp/transient_sim_1/initial_hdstart.nc")
-# push!(ARGS,"-t1000")
+ push!(ARGS,"-t1000")
 main()

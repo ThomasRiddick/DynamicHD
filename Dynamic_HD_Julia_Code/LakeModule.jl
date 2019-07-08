@@ -4,8 +4,9 @@ using HierarchicalStateMachineModule: State, Event
 using UserExceptionModule: UserError
 using LakeModelParametersModule: LakeModelParameters
 using MergeTypesModule
-using HDModule: RiverParameters, PrognosticFields, RiverPrognosticFields, RiverDiagnosticFields, PrintResults
-using HDModule: PrintSection, print_river_results, get_river_parameters, get_river_fields
+using HDModule: RiverParameters, PrognosticFields, RiverPrognosticFields, RiverDiagnosticFields
+using HDModule: RiverDiagnosticOutputFields, PrintResults, PrintSection
+using HDModule: print_river_results, get_river_parameters, get_river_fields
 using CoordsModule: Coords,LatLonCoords,LatLonSectionCoords,is_lake
 using GridModule: Grid, LatLonGrid, for_all, for_all_fine_cells_in_coarse_cell, for_all_with_line_breaks
 using GridModule: for_section_with_line_breaks
@@ -259,6 +260,7 @@ struct RiverAndLakePrognosticFields <: PrognosticFields
   river_parameters::RiverParameters
   river_fields::RiverPrognosticFields
   river_diagnostic_fields::RiverDiagnosticFields
+  river_diagnostic_output_fields::RiverDiagnosticOutputFields
   lake_parameters::LakeParameters
   lake_prognostics::LakePrognostics
   lake_fields::LakeFields
@@ -274,7 +276,8 @@ struct RiverAndLakePrognosticFields <: PrognosticFields
       end
     end
     new(river_parameters,river_fields,RiverDiagnosticFields(river_parameters),
-        lake_parameters,lake_prognostics,lake_fields,true)
+        RiverDiagnosticOutputFields(river_parameters),lake_parameters,
+        lake_prognostics,lake_fields,true)
   end
 end
 
