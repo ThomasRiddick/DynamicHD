@@ -1,26 +1,26 @@
 #include <iostream>
 #include <fstream>
 #include <unistd.h>
-#include <netcdfcpp.h>
+#include <netcdf>
 #include "grid.hpp"
 #include "catchment_computation_algorithm.hpp"
 
 using namespace std;
 
-NcToken UNITS = "units";
-NcToken GRID_TYPE = "grid_type";
-NcToken LONG_NAME = "long_name";
-NcToken COORDINATES = "coordinates";
-NcToken STANDARD_NAME = "standard_name";
-NcToken BOUNDS = "bounds";
+string UNITS = "units";
+string GRID_TYPE = "grid_type";
+string LONG_NAME = "long_name";
+string COORDINATES = "coordinates";
+string STANDARD_NAME = "standard_name";
+string BOUNDS = "bounds";
 
-NcToken METRES = "m";
-NcToken RADIAN = "radian";
-NcToken UNSTRUCTURED = "unstructured";
-NcToken LATITUDE = "latitude";
-NcToken CENTER_LATITUDE = "center latitude";
-NcToken LONGITUDE = "longitude";
-NcToken CENTER_LONGITUDE = "center longitude";
+string METRES = "m";
+string RADIAN = "radian";
+string UNSTRUCTURED = "unstructured";
+string LATITUDE = "latitude";
+string CENTER_LATITUDE = "center latitude";
+string LONGITUDE = "longitude";
+string CENTER_LONGITUDE = "center longitude";
 
 void print_usage(){
     cout <<
@@ -88,52 +88,52 @@ int main(int argc, char *argv[]){
   int ncells = grid_params_in->get_ncells();
   cout << "Loading next cell indices from:" << endl;
   cout << next_cell_index_filepath << endl;
-  NcFile next_cell_index_file(next_cell_index_filepath.c_str(), NcFile::ReadOnly);
-  if ( ! next_cell_index_file.is_valid()) throw runtime_error("Invalid river directions file");
-  NcVar *next_cell_index_var = next_cell_index_file.get_var(next_cell_index_fieldname.c_str());
+  NcFile next_cell_index_file(next_cell_index_filepath.c_str(), NcFile::read);
+  NcVar next_cell_index_var = next_cell_index_file.getVar(next_cell_index_fieldname.c_str());
   auto next_cell_index_in = new int[ncells];
-  next_cell_index_var->get(next_cell_index_in,ncells);
-  NcVar *clat = next_cell_index_file.get_var("clat");
-  NcVar *clon = next_cell_index_file.get_var("clon");
-  NcVar *clat_bnds = next_cell_index_file.get_var("clat_bnds");
-  NcVar *clon_bnds = next_cell_index_file.get_var("clon_bnds");
+  next_cell_index_var.getVar(next_cell_index_in);
+  NcVar clat = next_cell_index_file.getVar("clat");
+  NcVar clon = next_cell_index_file.getVar("clon");
+  NcVar clat_bnds = next_cell_index_file.getVar("clat_bnds");
+  NcVar clon_bnds = next_cell_index_file.getVar("clon_bnds");
   double clat_local[ncells];
-  clat->get(&clat_local[0],ncells);
+  clat.getVar(&clat_local);
   double clon_local[ncells];
-  clon->get(&clon_local[0],ncells);
+  clon.getVar(&clon_local);
   double clat_bnds_local[ncells*3];
-  clat_bnds->get(&clat_bnds_local[0],ncells,3);
+  clat_bnds.getVar(&clat_bnds_local);
   double clon_bnds_local[ncells*3];
-  clon_bnds->get(&clon_bnds_local[0],ncells,3);
+  clon_bnds.getVar(&clon_bnds_local);
   auto catchment_numbers_out = new int[ncells];
   auto alg = catchment_computation_algorithm_icon_single_index();
   alg.setup_fields(catchment_numbers_out,
                    next_cell_index_in,grid_params_in);
   alg.compute_catchments();
-  NcFile output_catchment_numbers_file(catchment_numbers_out_filepath.c_str(), NcFile::New);
-  if ( ! output_catchment_numbers_file.is_valid()) throw runtime_error("Can't write to output catchment_numbers file");
-  NcDim* index = output_catchment_numbers_file.add_dim("ncells",ncells);
-  NcDim* vertices = output_catchment_numbers_file.add_dim("vertices",3);
-  NcVar* catchment_numbers_out_var = output_catchment_numbers_file.add_var("catchment",ncInt,index);
-  catchment_numbers_out_var->add_att(LONG_NAME,"elevation at the cell centers");
-  catchment_numbers_out_var->add_att(UNITS,METRES);
-  catchment_numbers_out_var->add_att(GRID_TYPE,UNSTRUCTURED);
-  catchment_numbers_out_var->add_att(COORDINATES,"clat clon");
-  catchment_numbers_out_var->put(&catchment_numbers_out[0],ncells);
-  NcVar *clat_out = output_catchment_numbers_file.add_var("clat",ncDouble,index);
-  NcVar *clon_out = output_catchment_numbers_file.add_var("clon",ncDouble,index);
-  NcVar *clat_bnds_out = output_catchment_numbers_file.add_var("clat_bnds",ncDouble,index,vertices);
-  NcVar *clon_bnds_out = output_catchment_numbers_file.add_var("clon_bnds",ncDouble,index,vertices);
-  clat_out->put(clat_local,ncells);
-  clat_out->add_att(STANDARD_NAME,LATITUDE);
-  clat_out->add_att(LONG_NAME,CENTER_LATITUDE);
-  clat_out->add_att(UNITS,RADIAN);
-  clat_out->add_att(BOUNDS,"clat_bnds");
-  clon_out->put(clon_local,ncells);
-  clon_out->add_att(STANDARD_NAME,LONGITUDE);
-  clon_out->add_att(LONG_NAME,CENTER_LONGITUDE);
-  clon_out->add_att(UNITS,RADIAN);
-  clon_out->add_att(BOUNDS,"clon_bnds");
-  clat_bnds_out->put(clat_bnds_local,ncells,3);
-  clon_bnds_out->put(clon_bnds_local,ncells,3);
+  NcFile output_catchment_numbers_file(catchment_numbers_out_filepath.c_str(), NcFile::newFile);
+  NcDim index = output_catchment_numbers_file.addDim("ncells",ncells);
+  NcDim vertices = output_catchment_numbers_file.addDim("vertices",3);
+  NcVar catchment_numbers_out_var = output_catchment_numbers_file.addVar("catchment",ncInt,index);
+  catchment_numbers_out_var.putAtt(LONG_NAME,"elevation at the cell centers");
+  catchment_numbers_out_var.putAtt(UNITS,METRES);
+  catchment_numbers_out_var.putAtt(GRID_TYPE,UNSTRUCTURED);
+  catchment_numbers_out_var.putAtt(COORDINATES,"clat clon");
+  catchment_numbers_out_var.putVar(&catchment_numbers_out);
+  NcVar clat_out = output_catchment_numbers_file.addVar("clat",ncDouble,index);
+  NcVar clon_out = output_catchment_numbers_file.addVar("clon",ncDouble,index);
+  NcVar clat_bnds_out =
+    output_catchment_numbers_file.addVar("clat_bnds",ncDouble,vector<NcDim>{index,vertices});
+  NcVar clon_bnds_out =
+    output_catchment_numbers_file.addVar("clon_bnds",ncDouble,vector<NcDim>{index,vertices});
+  clat_out.putVar(clat_local);
+  clat_out.putAtt(STANDARD_NAME,LATITUDE);
+  clat_out.putAtt(LONG_NAME,CENTER_LATITUDE);
+  clat_out.putAtt(UNITS,RADIAN);
+  clat_out.putAtt(BOUNDS,"clat_bnds");
+  clon_out.putVar(clon_local);
+  clon_out.putAtt(STANDARD_NAME,LONGITUDE);
+  clon_out.putAtt(LONG_NAME,CENTER_LONGITUDE);
+  clon_out.putAtt(UNITS,RADIAN);
+  clon_out.putAtt(BOUNDS,"clon_bnds");
+  clat_bnds_out.putVar(clat_bnds_local);
+  clon_bnds_out.putVar(clon_bnds_local);
 }

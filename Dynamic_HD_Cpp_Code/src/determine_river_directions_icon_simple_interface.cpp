@@ -1,26 +1,26 @@
 #include <iostream>
 #include <fstream>
 #include <unistd.h>
-#include <netcdfcpp.h>
+#include <netcdf>
 #include "grid.hpp"
 #include "river_direction_determination_algorithm.hpp"
 
 using namespace std;
 
-NcToken UNITS = "units";
-NcToken GRID_TYPE = "grid_type";
-NcToken LONG_NAME = "long_name";
-NcToken COORDINATES = "coordinates";
-NcToken STANDARD_NAME = "standard_name";
-NcToken BOUNDS = "bounds";
+string UNITS = "units";
+string GRID_TYPE = "grid_type";
+string LONG_NAME = "long_name";
+string COORDINATES = "coordinates";
+string STANDARD_NAME = "standard_name";
+string BOUNDS = "bounds";
 
-NcToken METRES = "m";
-NcToken RADIAN = "radian";
-NcToken UNSTRUCTURED = "unstructured";
-NcToken LATITUDE = "latitude";
-NcToken CENTER_LATITUDE = "center latitude";
-NcToken LONGITUDE = "longitude";
-NcToken CENTER_LONGITUDE = "center longitude";
+string METRES = "m";
+string RADIAN = "radian";
+string UNSTRUCTURED = "unstructured";
+string LATITUDE = "latitude";
+string CENTER_LATITUDE = "center latitude";
+string LONGITUDE = "longitude";
+string CENTER_LONGITUDE = "center longitude";
 
 void print_usage(){
     cout <<
@@ -125,36 +125,34 @@ int main(int argc, char *argv[]){
   int ncells = grid_params_in->get_ncells();
   cout << "Loading orography from:" << endl;
   cout << orography_filepath << endl;
-  NcFile orography_file(orography_filepath.c_str(), NcFile::ReadOnly);
-  if ( ! orography_file.is_valid()) throw runtime_error("Invalid orography file");
-  NcVar *orography_var = orography_file.get_var(orography_fieldname.c_str());
+  NcFile orography_file(orography_filepath.c_str(), NcFile::read);
+  NcVar orography_var = orography_file.getVar(orography_fieldname.c_str());
   auto orography_in = new double[ncells];
-  orography_var->get(orography_in,ncells);
-  NcVar *clat = orography_file.get_var("clat");
-  NcVar *clon = orography_file.get_var("clon");
-  NcVar *clat_bnds = orography_file.get_var("clat_bnds");
-  NcVar *clon_bnds = orography_file.get_var("clon_bnds");
+  orography_var.getVar(orography_in);
+  NcVar clat = orography_file.getVar("clat");
+  NcVar clon = orography_file.getVar("clon");
+  NcVar clat_bnds = orography_file.getVar("clat_bnds");
+  NcVar clon_bnds = orography_file.getVar("clon_bnds");
   double clat_local[ncells];
-  clat->get(&clat_local[0],ncells);
+  clat.getVar(clat_local);
   double clon_local[ncells];
-  clon->get(&clon_local[0],ncells);
+  clon.getVar(clon_local);
   double clat_bnds_local[ncells*3];
-  clat_bnds->get(&clat_bnds_local[0],ncells,3);
+  clat_bnds.getVar(&clat_bnds_local);
   double clon_bnds_local[ncells*3];
-  clon_bnds->get(&clon_bnds_local[0],ncells,3);
+  clon_bnds.getVar(&clon_bnds_local);
   cout << "Loading landsea mask from:" << endl;
   cout << landsea_filepath << endl;
-  NcFile landsea_file(landsea_filepath.c_str(), NcFile::ReadOnly);
-  if ( ! landsea_file.is_valid()) throw runtime_error("Invalid land-sea file");
-  NcVar *landsea_var = landsea_file.get_var(landsea_fieldname.c_str());
+  NcFile landsea_file(landsea_filepath.c_str(), NcFile::read);
+  NcVar landsea_var = landsea_file.getVar(landsea_fieldname.c_str());
   double* landsea_in_double;
   int* landsea_in_int;
   if (fractional_landsea_mask_in) {
     landsea_in_double = new double[ncells];
-    landsea_var->get(landsea_in_double,ncells);
+    landsea_var.getVar(landsea_in_double);
   } else {
     landsea_in_int = new int[ncells];
-    landsea_var->get(landsea_in_int,ncells);
+    landsea_var.getVar(landsea_in_int);
   }
   auto landsea_in =  new bool[ncells];
   //invert landsea mask
@@ -166,11 +164,10 @@ int main(int argc, char *argv[]){
   }
   cout << "Loading true sinks from:" << endl;
   cout << true_sinks_filepath << endl;
-  NcFile true_sinks_file(true_sinks_filepath.c_str(), NcFile::ReadOnly);
-  if ( ! true_sinks_file.is_valid()) throw runtime_error("Invalid true sinks file");
-  NcVar *true_sinks_var = true_sinks_file.get_var(true_sinks_fieldname.c_str());
+  NcFile true_sinks_file(true_sinks_filepath.c_str(), NcFile::read);
+  NcVar true_sinks_var = true_sinks_file.getVar(true_sinks_fieldname.c_str());
   auto true_sinks_in_int = new int[ncells];
-  true_sinks_var->get(true_sinks_in_int,ncells);
+  true_sinks_var.getVar(true_sinks_in_int);
   auto true_sinks_in = new bool[ncells];
   for (auto i = 0; i < ncells;i++){
     true_sinks_in[i] = bool(true_sinks_in_int[i]);
@@ -181,31 +178,31 @@ int main(int argc, char *argv[]){
   alg.setup_fields(next_cell_index_out,orography_in,landsea_in,true_sinks_in,
                    grid_params_in);
   alg.determine_river_directions();
-  NcFile output_next_cell_index_file(next_cell_index_out_filepath.c_str(), NcFile::New);
-  if ( ! output_next_cell_index_file.is_valid())
-    throw runtime_error("Can't write to output next cell index file");
-  NcDim* index = output_next_cell_index_file.add_dim("ncells",ncells);
-  NcDim* vertices = output_next_cell_index_file.add_dim("vertices",3);
-  NcVar* next_cell_index_out_var = output_next_cell_index_file.add_var("next_cell_index",ncInt,index);
-  next_cell_index_out_var->add_att(LONG_NAME,"next cell index");
-  next_cell_index_out_var->add_att(UNITS,METRES);
-  next_cell_index_out_var->add_att(GRID_TYPE,UNSTRUCTURED);
-  next_cell_index_out_var->add_att(COORDINATES,"clat clon");
-  next_cell_index_out_var->put(&next_cell_index_out[0],ncells);
-  NcVar *clat_out = output_next_cell_index_file.add_var("clat",ncDouble,index);
-  NcVar *clon_out = output_next_cell_index_file.add_var("clon",ncDouble,index);
-  NcVar *clat_bnds_out = output_next_cell_index_file.add_var("clat_bnds",ncDouble,index,vertices);
-  NcVar *clon_bnds_out = output_next_cell_index_file.add_var("clon_bnds",ncDouble,index,vertices);
-  clat_out->put(clat_local,ncells);
-  clat_out->add_att(STANDARD_NAME,LATITUDE);
-  clat_out->add_att(LONG_NAME,CENTER_LATITUDE);
-  clat_out->add_att(UNITS,RADIAN);
-  clat_out->add_att(BOUNDS,"clat_bnds");
-  clon_out->put(clon_local,ncells);
-  clon_out->add_att(STANDARD_NAME,LONGITUDE);
-  clon_out->add_att(LONG_NAME,CENTER_LONGITUDE);
-  clon_out->add_att(UNITS,RADIAN);
-  clon_out->add_att(BOUNDS,"clon_bnds");
-  clat_bnds_out->put(clat_bnds_local,ncells,3);
-  clon_bnds_out->put(clon_bnds_local,ncells,3);
+  NcFile output_next_cell_index_file(next_cell_index_out_filepath.c_str(), NcFile::newFile);
+  NcDim index = output_next_cell_index_file.addDim("ncells",ncells);
+  NcDim vertices = output_next_cell_index_file.addDim("vertices",3);
+  NcVar next_cell_index_out_var = output_next_cell_index_file.addVar("next_cell_index",ncInt,index);
+  next_cell_index_out_var.putAtt(LONG_NAME,"next cell index");
+  next_cell_index_out_var.putAtt(UNITS,METRES);
+  next_cell_index_out_var.putAtt(GRID_TYPE,UNSTRUCTURED);
+  next_cell_index_out_var.putAtt(COORDINATES,"clat clon");
+  next_cell_index_out_var.putVar(next_cell_index_out);
+  NcVar clat_out = output_next_cell_index_file.addVar("clat",ncDouble,index);
+  NcVar clon_out = output_next_cell_index_file.addVar("clon",ncDouble,index);
+  NcVar clat_bnds_out =
+    output_next_cell_index_file.addVar("clat_bnds",ncDouble,vector<NcDim>{index,vertices});
+  NcVar clon_bnds_out =
+    output_next_cell_index_file.addVar("clon_bnds",ncDouble,vector<NcDim>{index,vertices});
+  clat_out.putVar(clat_local);
+  clat_out.putAtt(STANDARD_NAME,LATITUDE);
+  clat_out.putAtt(LONG_NAME,CENTER_LATITUDE);
+  clat_out.putAtt(UNITS,RADIAN);
+  clat_out.putAtt(BOUNDS,"clat_bnds");
+  clon_out.putVar(clon_local);
+  clon_out.putAtt(STANDARD_NAME,LONGITUDE);
+  clon_out.putAtt(LONG_NAME,CENTER_LONGITUDE);
+  clon_out.putAtt(UNITS,RADIAN);
+  clon_out.putAtt(BOUNDS,"clon_bnds");
+  clat_bnds_out.putVar(clat_bnds_local);
+  clon_bnds_out.putVar(clon_bnds_local);
 }

@@ -8,7 +8,9 @@ DRD_ICON_SI_OBJS :=
 
 
 ifeq ($(shell uname -s),Darwin)
-LIBS :=  -lnetcdf_c++
+LIBS :=  -L"$(NETCDFCXX)/lib" -lnetcdf-cxx4
+else ifeq ($(shell uname -s),Linux)
+LIBS := -L"$(NETCDFCXX)/lib" -lnetcdf_c++4
 else
 LIBS :=
 endif

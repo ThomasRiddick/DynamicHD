@@ -7,10 +7,9 @@
  */
 
 #include <cmath>
+#include <netcdf>
 #include "grid.hpp"
-#if USE_NETCDFCPP
-#include <netcdfcpp.h>
-#endif
+
 
 /* IMPORTANT!
  * Note that a description of each functions purpose is provided with the function declaration in
@@ -386,19 +385,17 @@ coords* icon_single_index_grid::
 
 #if USE_NETCDFCPP
 void icon_single_index_grid_params::icon_single_index_grid_read_params_file(){
-	NcFile grid_params_file(icon_grid_params_filepath.c_str(), NcFile::ReadOnly);
-	if ( ! grid_params_file.is_valid()) throw runtime_error("Invalid grid parameters file");
-	NcDim* dim;
-	for (int i = 0; i < grid_params_file.num_dims();i++){
-		dim = grid_params_file.get_dim(i);
-		string dim_name = string(dim->name());
-		if (dim_name == "ncells" || dim_name == "cell") break;
-	}
-	ncells = int(dim->size());
-	NcVar *neighboring_cell_indices_var = grid_params_file.get_var("neighbor_cell_index");
+	NcFile grid_params_file(icon_grid_params_filepath.c_str(), NcFile::read);
+	NcDim dim;
+	dim = grid_params_file.getDim("ncells");
+	if (dim.isNull()) dim = grid_params_file.getDim("cells");
+	ncells = int(dim.getSize());
+	NcVar neighboring_cell_indices_var = grid_params_file.getVar("neighbor_cell_index");
+	if (neighboring_cell_indices_var.isNull())
+		throw runtime_error("Invalid data in specified grid file");
 	neighboring_cell_indices = new int[3*ncells];
 	int neighboring_cell_indices_swapped_dims[3*ncells];
-	neighboring_cell_indices_var->get(&neighboring_cell_indices_swapped_dims[0],3,ncells);
+	neighboring_cell_indices_var.getVar(&neighboring_cell_indices_swapped_dims[0]);
 	for (int i = 0; i < ncells; i++){
 		neighboring_cell_indices[3*i]   = neighboring_cell_indices_swapped_dims[i];
 		neighboring_cell_indices[3*i+1] = neighboring_cell_indices_swapped_dims[ncells+i];

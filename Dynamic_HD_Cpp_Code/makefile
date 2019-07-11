@@ -3,7 +3,8 @@ ifeq ($(shell uname -s),Darwin)
 GPLUSPLUS := /usr/bin/g++
 STDLIB_OPT := -stdlib=libc++
 FLAGS := -DPROCESSED_CELL_COUNTER -DUSE_NETCDFCPP -DDARWIN
-NCDIR := /usr/local/Cellar/netcdf/4.6.1_2
+NETCDFCXX := /Users/thomasriddick/anaconda3/pkgs/netcdf-cxx4-4.3.0-h703b707_9
+INCLUDE := -I"$(NETCDFCXX)/include"
 else ifeq ($(shell hostname -d),hpc.dkrz.de)
 GPLUSPLUS := /sw/rhel6-x64/gcc/gcc-6.2.0/bin/g++
 STDLIB_OPT :=
@@ -11,7 +12,10 @@ FLAGS :=-pthread
 else ifeq ($(shell uname -s),Linux)
 GPLUSPLUS := $(shell which g++)
 STDLIB_OPT :=
-FLAGS :=-pthread
+FLAGS :=-pthread -DUSE_NETCDFCPP
+NETCDFC := /sw/stretch-x64/netcdf/netcdf_c-4.6.1
+NETCDFCXX := /sw/stretch-x64/netcdf/netcdf_cxx-4.3.0-gccsys
+INCLUDE := -isystem"$(NETCDFCXX)/include" -isystem"$(NETCDFC)/include"
 else
 $(error OS $(uname -s) not recognised)
 endif
@@ -62,19 +66,19 @@ Dynamic_HD_Cpp_Code: $(OBJS) $(USER_OBJS) $(TEST_OBJS)
 
 Fill_Sinks_Icon_SI_Exec: $(USER_OBJS) $(FS_ICON_SI_OBJS)
 	@echo 'Building target: $@'
-	$(GPLUSPLUS)  -o "Fill_Sinks_Icon_SI_Exec" $(USER_OBJS) $(FS_ICON_SI_OBJS) $(FLAGS) $(LIBS)
+	$(GPLUSPLUS)  -o "Fill_Sinks_Icon_SI_Exec" $(USER_OBJS) $(FS_ICON_SI_OBJS) $(FLAGS) $(LIBS) $(INCLUDE)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
 Compute_Catchments_SI_Exec: $(USER_OBJS) $(CC_ICON_SI_OBJS)
 	@echo 'Building target: $@'
-	$(GPLUSPLUS)  -o "Compute_Catchments_SI_Exec" $(USER_OBJS) $(CC_ICON_SI_OBJS) $(FLAGS) $(LIBS)
+	$(GPLUSPLUS)  -o "Compute_Catchments_SI_Exec" $(USER_OBJS) $(CC_ICON_SI_OBJS) $(FLAGS) $(LIBS) $(INCLUDE)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
 Determine_River_Directions_SI_Exec: $(USER_OBJS) $(DRD_ICON_SI_OBJS)
 	@echo 'Building target: $@'
-	$(GPLUSPLUS)  -o "Determine_River_Directions_SI_Exec" $(USER_OBJS) $(DRD_ICON_SI_OBJS) $(FLAGS) $(LIBS)
+	$(GPLUSPLUS)  -o "Determine_River_Directions_SI_Exec" $(USER_OBJS) $(DRD_ICON_SI_OBJS) $(FLAGS) $(LIBS) $(INCLUDE)
 	@echo 'Finished building target: $@'
 	@echo ' '
 

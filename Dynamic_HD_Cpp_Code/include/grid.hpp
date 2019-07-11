@@ -10,11 +10,10 @@
 
 #include <sstream>
 #include <functional>
-#if USE_NETCDFCPP
-#include <netcdfcpp.h>
-#endif
+#include <netcdf>
 #include "coords.hpp"
 using namespace std;
+using namespace netCDF;
 
 /**
  * Abstract generic class for holding parameters of a grid. Real subclasses
