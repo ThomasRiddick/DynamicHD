@@ -395,7 +395,7 @@ void icon_single_index_grid_params::icon_single_index_grid_read_params_file(){
 		throw runtime_error("Invalid data in specified grid file");
 	neighboring_cell_indices = new int[3*ncells];
 	int neighboring_cell_indices_swapped_dims[3*ncells];
-	neighboring_cell_indices_var.getVar(&neighboring_cell_indices_swapped_dims[0]);
+	neighboring_cell_indices_var.getVar(&neighboring_cell_indices_swapped_dims);
 	for (int i = 0; i < ncells; i++){
 		neighboring_cell_indices[3*i]   = neighboring_cell_indices_swapped_dims[i];
 		neighboring_cell_indices[3*i+1] = neighboring_cell_indices_swapped_dims[ncells+i];

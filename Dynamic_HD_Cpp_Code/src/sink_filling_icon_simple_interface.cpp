@@ -149,12 +149,21 @@ int main(int argc, char *argv[]){
   NcVar landsea_var = landsea_file.getVar(landsea_in_fieldname.c_str());
   double* landsea_in_double;
   int* landsea_in_int;
+  auto landsea_in =  new bool[ncells];
   if (fractional_landsea_mask_in) {
     landsea_in_double = new double[ncells];
     landsea_var.getVar(landsea_in_double);
+    //invert landsea mask
+    for (auto i = 0; i <ncells;i++){
+      if (landsea_in_double[i] < 0.5) landsea_in_double[i] = 0.0;
+      landsea_in[i] = ! bool(landsea_in_double[i]);
+    }
   } else {
     landsea_in_int = new int[ncells];
     landsea_var.getVar(landsea_in_int);
+    for (auto i = 0; i <ncells;i++){
+      landsea_in[i] = ! bool(landsea_in_int[i]);
+    }
   }
   cout << "Loading true sinks from:" << endl;
   cout << true_sinks_in_filepath << endl;
@@ -162,14 +171,7 @@ int main(int argc, char *argv[]){
   NcVar true_sinks_var = true_sinks_file.getVar(true_sinks_in_fieldname.c_str());
   auto true_sinks_in_int = new int[ncells];
   true_sinks_var.getVar(true_sinks_in_int);
-  auto landsea_in =  new bool[ncells];
-  //invert landsea mask
-  for (auto i = 0; i <ncells;i++){
-    if (fractional_landsea_mask_in) {
-      if (landsea_in_double[i] < 0.5) landsea_in_double[i] = 0.0;
-      landsea_in[i] = ! bool(landsea_in_double[i]);
-    } else landsea_in[i] = ! bool(landsea_in_int[i]);
-  }
+
   auto true_sinks_in = new bool[ncells];
   for (auto i = 0; i < ncells;i++){
     true_sinks_in[i] = bool(true_sinks_in_int[i]);
