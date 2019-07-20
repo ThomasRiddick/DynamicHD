@@ -577,8 +577,9 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
 
     def prepare_basins_from_glac1D(self):
       overarching_file_label = self._generate_file_label()
-      timesteps_to_use = [ 950,1000,1050,1100,1150,1200,1250,1300,1350,
-                          1400,1450,1500,1550,1600,1650,1700,1750,1800]
+      # timesteps_to_use = [ 950,1000,1050,1100,1150,1200,1250,1300,1350,
+      #                     1400,1450,1500,1550,1600,1650,1700,1750,1800]
+      timesteps_to_use = [ 1150 ]
       timestep_for_0k = 2600
       glac_1d_topo_filename = join(self.orography_path,
                                    "GLAC1D_Top01_surf.nc")
@@ -699,7 +700,7 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
                                   + '_10mins.nc')
       cc.advanced_main(rdirs_filename_10min,"FDIR",
                        fine_catchments_filename,"catchments",
-                       loop_logfile='/Users/thomasriddick/Documents/data/temp/loop_log.nc',
+                       loop_logfile='/Users/thomasriddick/Documents/data/temp/loop_log.txt',
                        use_cpp_alg=True)
       ftgc.advanced_main(rdirs_filename=rdirs_filename_10min,
                          output_filename=fine_cumulative_flow_filename,
@@ -725,7 +726,7 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
                                   + '_30mins.nc')
       cc.advanced_main(rdirs_filename_30min,"FDIR",
                        coarse_catchments_filename,"catchments",
-                       loop_logfile='/Users/thomasriddick/Documents/data/temp/loop_log.nc',
+                       loop_logfile='/Users/thomasriddick/Documents/data/temp/loop_log.txt',
                        use_cpp_alg=True)
       ftgc.advanced_main(rdirs_filename=rdirs_filename_30min,
                          output_filename=coarse_cumulative_flow_filename,

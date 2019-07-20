@@ -129,8 +129,8 @@ def renumber_catchments_by_size(catchments,loop_logfile=None):
     catchments_sizes['new_catch_nums'] = np.arange(len(catchments_sizes['catch_nums']),
                                                        0,-1)
     catchments = np.asfortranarray(catchments,np.int32)
-    old_to_new_label_map = np.copy(np.sort(catchments_sizes,
-                                           order='catch_nums'))['new_catch_nums']
+    old_to_new_label_map = np.asfortranarray(np.copy(np.sort(catchments_sizes,
+                                             order='catch_nums'))['new_catch_nums'],np.int32)
     f2py_mngr.run_current_function_or_subroutine(catchments,
                                                  old_to_new_label_map)
     if loop_logfile is not None:

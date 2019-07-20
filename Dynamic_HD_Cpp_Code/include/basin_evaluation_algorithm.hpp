@@ -69,6 +69,7 @@ protected:
 	virtual bool check_for_sinks_and_set_downstream_coords(coords* coords_in) = 0;
   bool skip_center_cell();
 	void evaluate_basin();
+  void initialize_basin();
 	void add_minima_to_queue();
 	void process_center_cell();
 	void process_neighbors();
@@ -83,6 +84,7 @@ protected:
   void set_merge_type(basic_merge_types current_merge_type);
   basic_merge_types get_merge_type(height_types height_type_in,coords* coords_in);
   void rebuild_secondary_basin(coords* initial_coords);
+  void process_secondary_merge();
   void set_primary_merge();
 	void set_remaining_redirects();
 	void set_secondary_redirect();
@@ -97,7 +99,7 @@ protected:
                                                                        bool use_additional_fields = false);
 	void search_process_neighbors();
 	void search_process_neighbor();
-  void search_for_primary_merge_at_same_level();
+  void search_for_second_merge_at_same_level(bool look_for_primary_merge);
 	void find_and_set_previous_cells_non_local_redirect_index(coords* initial_center_coords,
 	                                                     			coords* current_center_coords,
 	                                                     			coords* catchment_center_coords,
@@ -107,6 +109,7 @@ protected:
 	priority_cell_queue q;
 	queue<landsea_cell*> search_q;
   queue<basin_cell*> level_q;
+  queue<basin_cell*> level_nbr_q;
 	grid_params* _grid_params = nullptr;
 	grid_params* _coarse_grid_params = nullptr;
 	grid* _grid = nullptr;
@@ -156,6 +159,7 @@ protected:
   bool skipped_previous_center_cell;
   bool is_double_merge;
   bool primary_merge_found;
+  bool secondary_merge_found;
   bool allow_secondary_merges_only;
   double lake_area;
   double new_center_cell_height;
@@ -295,6 +299,8 @@ private:
                                              bool use_additional_fields);
   coords* get_cells_next_force_merge_index_as_coords(coords* coords_in,
                                                      height_types height_type_in);
+  void output_diagnostics_for_grid_section(int min_lat,int max_lat,
+                                           int min_lon,int max_lon);
 	field<double>* prior_fine_rdirs = nullptr;
 	field<int>* flood_next_cell_lat_index = nullptr;
 	field<int>* flood_next_cell_lon_index = nullptr;

@@ -8,6 +8,7 @@
 #include "basin_evaluation_algorithm.hpp"
 #include <queue>
 #include <algorithm>
+#include <string>
 
 basin_evaluation_algorithm::~basin_evaluation_algorithm() {
 	delete minima; delete raw_orography; delete corrected_orography;
@@ -226,36 +227,7 @@ void basin_evaluation_algorithm::add_minima_to_queue() {
 }
 
 void basin_evaluation_algorithm::evaluate_basin(){
-	center_cell = minimum->clone();
-	completed_cells->set_all(false);
-	basin_flooded_cells->set_all(false);
-	basin_connected_cells->set_all(false);
-	center_cell_volume_threshold = 0.0;
-	center_coords = center_cell->get_cell_coords()->clone();
-	center_cell_height_type = center_cell->get_height_type();
-	center_cell_height = center_cell->get_orography();
-	surface_height = center_cell_height;
-	previous_filled_cell_coords = center_coords->clone();
-	previous_filled_cell_height_type = center_cell_height_type;
-	previous_filled_cell_height = center_cell_height;
-	is_double_merge = false;
-  allow_secondary_merges_only = false;
-  primary_merge_found = false;
-	read_new_center_cell_variables();
-	if (center_cell_height_type == connection_height) {
-		(*connected_cells)(center_coords) = true;
-		(*basin_connected_cells)(center_coords) = true;
-		lake_area = 0.0;
-	} else if (center_cell_height_type == flood_height) {
-		(*flooded_cells)(center_coords) = true;
-		(*basin_flooded_cells)(center_coords) = true;
-		lake_area = (*cell_areas)(center_coords);
-	} else throw runtime_error("Cell type not recognized");
-	(*completed_cells)(center_coords) = true;
-	//Make partial first iteration
-	process_neighbors();
-	delete new_center_coords;
-	delete center_cell;
+	initialize_basin();
 	while( ! q.empty()){
 		center_cell = static_cast<basin_cell*>(q.top());
 		q.pop();
@@ -269,7 +241,7 @@ void basin_evaluation_algorithm::evaluate_basin(){
 			    center_cell_height_type == connection_height) {
 				if((*basin_catchment_numbers)(new_center_coords) == null_catchment) {
 					if (! primary_merge_found){
-						search_for_primary_merge_at_same_level();
+						search_for_second_merge_at_same_level(true);
 						if (primary_merge_found){
 							set_primary_merge();
 							set_primary_redirect();
@@ -279,23 +251,22 @@ void basin_evaluation_algorithm::evaluate_basin(){
 						delete new_center_coords;
 						read_new_center_cell_variables();
 					}
-					set_previous_filled_cell_basin_catchment_number();
-					if (center_cell_height_type == connection_height) (*connected_cells)(center_coords) = false;
-					else (*flooded_cells)(center_coords) = false;
-					set_merge_type(merge_as_secondary);
-					set_secondary_redirect();
-					basin_catchment_centers.push_back(minimum->get_cell_coords()->clone());
-					delete center_cell; delete new_center_coords;
-					delete center_coords; delete previous_filled_cell_coords;
+					process_secondary_merge();
 					break;
 				} else {
 					if (! allow_secondary_merges_only)
 						set_merge_type(merge_as_primary);
+					rebuild_secondary_basin(new_center_coords);
 					if (! allow_secondary_merges_only){
 						set_primary_merge();
 						set_primary_redirect();
-						rebuild_secondary_basin(new_center_coords);
 						primary_merge_found = true;
+						search_for_second_merge_at_same_level(false);
+						if (secondary_merge_found){
+							process_secondary_merge();
+							secondary_merge_found = false;
+							break;
+						}
 					} else {
 						delete new_center_coords;
 						delete center_cell;
@@ -325,16 +296,67 @@ void basin_evaluation_algorithm::evaluate_basin(){
 	}
 }
 
-inline void basin_evaluation_algorithm::search_for_primary_merge_at_same_level(){
+void basin_evaluation_algorithm::initialize_basin(){
+	center_cell = minimum->clone();
+	completed_cells->set_all(false);
+	basin_flooded_cells->set_all(false);
+	basin_connected_cells->set_all(false);
+	center_cell_volume_threshold = 0.0;
+	center_coords = center_cell->get_cell_coords()->clone();
+	center_cell_height_type = center_cell->get_height_type();
+	center_cell_height = center_cell->get_orography();
+	surface_height = center_cell_height;
+	previous_filled_cell_coords = center_coords->clone();
+	previous_filled_cell_height_type = center_cell_height_type;
+	previous_filled_cell_height = center_cell_height;
+	is_double_merge = false;
+  allow_secondary_merges_only = false;
+  primary_merge_found = false;
+  secondary_merge_found = false;
+	read_new_center_cell_variables();
+	if (center_cell_height_type == connection_height) {
+		(*connected_cells)(center_coords) = true;
+		(*basin_connected_cells)(center_coords) = true;
+		lake_area = 0.0;
+	} else if (center_cell_height_type == flood_height) {
+		(*flooded_cells)(center_coords) = true;
+		(*basin_flooded_cells)(center_coords) = true;
+		lake_area = (*cell_areas)(center_coords);
+	} else throw runtime_error("Cell type not recognized");
+	(*completed_cells)(center_coords) = true;
+	//Make partial first and second iteration
+	process_neighbors();
+	delete center_cell;
+	delete new_center_coords;
+	center_cell = static_cast<basin_cell*>(q.top());
+	q.pop();
+	read_new_center_cell_variables();
+	process_neighbors();
+	update_center_cell_variables();
+	process_center_cell();
+	delete center_cell;
+}
+
+inline void basin_evaluation_algorithm::
+	search_for_second_merge_at_same_level(bool look_for_primary_merge){
 	level_q.push(new basin_cell(center_cell_height,center_cell_height_type,
 	                            center_coords->clone()));
 	level_completed_cells->set_all(false);
 	new_center_cell_height = surface_height;
 	double level_cell_height;
 	height_types level_cell_height_type;
-	while (! level_q.empty()) {
-			basin_cell* level_cell = level_q.front();
-			level_q.pop();
+	basin_cell* level_cell;
+	bool process_nbrs = false;
+	while (! (level_q.empty() && level_nbr_q.empty())) {
+			if (! level_q.empty()) {
+				level_cell = level_q.front();
+				level_q.pop();
+				process_nbrs = true;
+			} else {
+				level_cell = level_nbr_q.front();
+				level_nbr_q.pop();
+				process_nbrs = false;
+			}
 			level_coords = level_cell->get_cell_coords();
 			level_cell_height = level_cell->get_orography();
 			level_cell_height_type = level_cell->get_height_type();
@@ -342,15 +364,21 @@ inline void basin_evaluation_algorithm::search_for_primary_merge_at_same_level()
 		       											level_cell_height_type == flood_height) ||
 		     												((*basin_connected_cells)(level_coords) &&
 		        										level_cell_height_type == connection_height);
-			if ((level_cell_height < new_center_cell_height) &&
-			    (*basin_catchment_numbers)(level_coords)  != 0 &&
-			    ! already_in_basin){
-				primary_merge_found = true;
-				new_center_coords = level_coords->clone();
-				new_center_cell_height = level_cell_height;
-				new_center_cell_height_type = level_cell_height_type;
+			if (! already_in_basin){
+				if ((*basin_catchment_numbers)(level_coords)  != 0 && look_for_primary_merge) {
+					primary_merge_found = true;
+					new_center_coords = level_coords->clone();
+					new_center_cell_height = level_cell_height;
+					new_center_cell_height_type = level_cell_height_type;
+				} else if((*basin_catchment_numbers)(level_coords)  == 0 &&
+				          ! look_for_primary_merge){
+					secondary_merge_found = true;
+					new_center_coords = level_coords->clone();
+					new_center_cell_height = level_cell_height;
+					new_center_cell_height_type = level_cell_height_type;
+				}
 			}
-			process_level_neighbors();
+			if (process_nbrs) process_level_neighbors();
 			delete level_cell;
 	}
 }
@@ -382,6 +410,9 @@ void basin_evaluation_algorithm::process_level_neighbor() {
 				if (nbr_height == surface_height){
 					level_q.push(new basin_cell(nbr_height,nbr_height_type,
 		                		  						nbr_coords));
+				} else if (nbr_height < surface_height){
+					level_nbr_q.push(new basin_cell(nbr_height,nbr_height_type,
+		                		  							  nbr_coords));
 				} else delete nbr_coords;
 	} else delete nbr_coords;
 }
@@ -422,7 +453,8 @@ inline bool basin_evaluation_algorithm::possible_merge_point_reached(){
 		     									((*basin_connected_cells)(new_center_coords) &&
 		        							new_center_cell_height_type == connection_height);
 	return ((new_center_cell_height < surface_height ||
-		    	 potential_catchment_edge_in_flat_area_found)
+	         (new_center_cell_height == surface_height &&
+		    	  potential_catchment_edge_in_flat_area_found))
 		    	&& ! already_in_basin);
 }
 
@@ -505,6 +537,17 @@ void basin_evaluation_algorithm::process_neighbor() {
 		                		  nbr_coords));
 		(*completed_cells)(nbr_coords) = true;
 	} else delete nbr_coords;
+}
+
+void basin_evaluation_algorithm::process_secondary_merge(){
+	set_previous_filled_cell_basin_catchment_number();
+	if (center_cell_height_type == connection_height) (*connected_cells)(center_coords) = false;
+	else (*flooded_cells)(center_coords) = false;
+	set_merge_type(merge_as_secondary);
+	set_secondary_redirect();
+	basin_catchment_centers.push_back(minimum->get_cell_coords()->clone());
+	delete center_cell; delete new_center_coords;
+	delete center_coords; delete previous_filled_cell_coords;
 }
 
 void basin_evaluation_algorithm::set_primary_merge(){
@@ -1306,4 +1349,45 @@ coords* latlon_basin_evaluation_algorithm::get_cells_next_force_merge_index_as_c
 		return new latlon_coords((*connect_force_merge_lat_index)(latlon_coords_in),
 	                         	 (*connect_force_merge_lon_index)(latlon_coords_in));
 	else throw runtime_error("Height type not recognized");
+}
+
+void latlon_basin_evaluation_algorithm::output_diagnostics_for_grid_section(int min_lat,int max_lat,
+                                                                        	  int min_lon,int max_lon){
+	cout << "Raw Orography" << endl;
+	for (int i = min_lat; i <= max_lat; i++){
+	  for (int j = min_lon; j <= max_lon; j++){
+	    cout << setw(3) << (*raw_orography)(new latlon_coords(i,j)) << ", ";
+	  }
+	  cout << endl;
+	}
+	cout << "Corrected Orography" << endl;
+	for (int i = min_lat; i <= max_lat; i++){
+	  for (int j = min_lon; j <= max_lon; j++){
+	    cout << setw(3) << (*corrected_orography)(new latlon_coords(i,j)) << ", ";
+	  }
+	  cout << endl;
+	}
+	cout << "Minima" << endl;
+	string boolean_value;
+	for (int i = min_lat; i <= max_lat; i++){
+	  for (int j = min_lon; j <= max_lon; j++){
+	  	boolean_value = (*minima)(new latlon_coords(i,j)) ? "true, " : "false, ";
+	    cout << boolean_value;
+	  }
+	  cout << endl;
+	}
+	cout << "Fine Catchments" << endl;
+	for (int i = min_lat; i <= max_lat; i++){
+	  for (int j = min_lon; j <= max_lon; j++){
+	    cout << setw(3) << (*prior_fine_catchments)(new latlon_coords(i,j)) << ", ";
+	  }
+	  cout << endl;
+	}
+	cout << "Fine River Directions" << endl;
+	for (int i = min_lat; i <= max_lat; i++){
+	  for (int j = min_lon; j <= max_lon; j++){
+	    cout << setw(3) << (*prior_fine_rdirs)(new latlon_coords(i,j)) << ", ";
+	  }
+	  cout << endl;
+	}
 }

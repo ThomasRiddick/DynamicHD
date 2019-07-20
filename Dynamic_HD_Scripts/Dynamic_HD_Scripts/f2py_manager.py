@@ -95,7 +95,7 @@ class f2py_manager(object):
             owd = os.getcwd()
             os.chdir(path_to_build_dir)
             if sys.platform == "darwin":
-                extra_link_args=['-Wl,-rpath,/usr/local/Cellar/gcc@6/6.5.0/lib/gcc/6/']
+                extra_link_args=['-Wl,-rpath,/usr/local/Cellar/gcc@6/6.5.0_2/lib/gcc/6/']
             else:
                 extra_link_args=[]
             ext = npdistutils_core.Extension(name=params.module_name,

@@ -360,7 +360,9 @@ INTEGER :: i,j !counters
  !value found; which is the new label number
  DO i=1,nlong
   DO j=1,nlat
-    catchments(i,j) = old_to_new_label_map(catchments(i,j))
+    IF (catchments(i,j) /= 0) THEN
+        catchments(i,j) = old_to_new_label_map(catchments(i,j))
+    END IF
   END DO
  END DO
 
