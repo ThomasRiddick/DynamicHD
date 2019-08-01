@@ -577,9 +577,8 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
 
     def prepare_basins_from_glac1D(self):
       overarching_file_label = self._generate_file_label()
-      # timesteps_to_use = [ 950,1000,1050,1100,1150,1200,1250,1300,1350,
-      #                     1400,1450,1500,1550,1600,1650,1700,1750,1800]
-      timesteps_to_use = [ 1150 ]
+      timesteps_to_use = [ 950,1000,1050,1100,1150,1200,1250,1300,1350,
+                          1400,1450,1500,1550,1600,1650,1700,1750,1800]
       timestep_for_0k = 2600
       glac_1d_topo_filename = join(self.orography_path,
                                    "GLAC1D_Top01_surf.nc")

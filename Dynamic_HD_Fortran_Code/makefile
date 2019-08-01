@@ -1,6 +1,6 @@
 RM := rm -rf
 ifeq ($(shell uname -s),Darwin)
-GFORTRAN := /usr/local/Cellar/gcc@6/6.5.0/bin/gfortran-6
+GFORTRAN := /usr/local/Cellar/gcc@6/6.5.0_2/bin/gfortran-6
 EXT_SOURCE :=$(shell echo ${HOME} )/Documents/code/
 else ifeq ($(shell uname -s),Linux)
 GFORTRAN := $(shell which gfortran)

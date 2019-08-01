@@ -387,8 +387,12 @@ coords* icon_single_index_grid::
 void icon_single_index_grid_params::icon_single_index_grid_read_params_file(){
 	NcFile grid_params_file(icon_grid_params_filepath.c_str(), NcFile::read);
 	NcDim dim;
-	dim = grid_params_file.getDim("ncells");
-	if (dim.isNull()) dim = grid_params_file.getDim("cells");
+	const int NCELLS_NAMES = 3;
+	string potential_ncells_names[NCELLS_NAMES] = {"ncells","cells","cell"};
+	for (int i = 0; dim.isNull();i++){
+		dim = grid_params_file.getDim(potential_ncells_names[i]);
+		if (i >= NCELLS_NAMES) throw runtime_error("Invalid ncells name");
+	}
 	ncells = int(dim.getSize());
 	NcVar neighboring_cell_indices_var = grid_params_file.getVar("neighbor_cell_index");
 	if (neighboring_cell_indices_var.isNull())

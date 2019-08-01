@@ -2,6 +2,7 @@
 F90_SRCS += \
 $(FRUIT_LOC)/fruit.f90 \
 ../src/precision_mod.f90 \
+../src/pointer_mod.f90 \
 ../src/unstructured_grid_mod.f90 \
 ../src/coords_mod.f90 \
 ../src/doubly_linked_list_link_mod.f90 \
@@ -11,6 +12,7 @@ $(FRUIT_LOC)/fruit.f90 \
 ../src/subfield_test_mod.f90 \
 ../src/field_section_mod.f90 \
 ../src/field_section_test_mod.f90 \
+../src/map_non_coincident_grids_mod.f90 \
 ../src/area_mod.f90 \
 ../src/area_test_mod.f90 \
 ../src/break_loops_mod.f90 \
@@ -29,12 +31,14 @@ $(FRUIT_LOC)/fruit.f90 \
 
 OBJS += \
 ./src/precision_mod.o \
+./src/pointer_mod.o \
 ./src/unstructured_grid_mod.o \
 ./src/coords_mod.o \
 ./src/doubly_linked_list_link_mod.o \
 ./src/doubly_linked_list_mod.o \
 ./src/subfield_mod.o \
 ./src/field_section_mod.o \
+./src/map_non_coincident_grids_mod.o \
 ./src/area_mod.o \
 ./src/break_loops_mod.o \
 ./src/break_loops_driver_mod.o \
@@ -62,6 +66,7 @@ MODS += \
 ./fruit_util.mod \
 ./unstructured_grid_mod.mod \
 ./precision_mod.mod \
+./pointer_mod.mod \
 ./coords_mod.mod \
 ./doubly_linked_list_link_mod.mod \
 ./doubly_linked_list_mod.mod \
@@ -70,6 +75,7 @@ MODS += \
 ./subfield_test_mod.mod \
 ./field_section_mod.mod \
 ./field_section_test_mod.mod \
+./map_non_coincident_grids_mod.mod \
 ./area_mod.mod \
 ./area_test_mod.mod \
 ./break_loops_mod.mod \
@@ -125,6 +131,8 @@ src/flow.o: ../src/flow.f90 src/area_mod.o src/coords_mod.o src/cotat_parameters
 
 src/flow_test_mod.o: ../src/flow_test_mod.f90 src/cotat_parameters_mod.o src/flow.o src/fruit.o
 
+src/map_non_coincident_grids_mod.o: ../src/map_non_coincident_grids_mod.f90 src/precision_mod.o src/coords_mod.o src/field_section_mod.o src/subfield_mod.o src/pointer_mod.o
+
 src/doubly_linked_list_link_mod.o: ../src/doubly_linked_list_link_mod.f90
 
 src/doubly_linked_list_mod.o: ../src/doubly_linked_list_mod.f90 src/coords_mod.o src/doubly_linked_list_link_mod.o
@@ -149,9 +157,10 @@ src/subfield_mod.o: ../src/subfield_mod.f90 src/coords_mod.o
 
 src/subfield_test_mod.o: ../src/subfield_test_mod.f90 src/coords_mod.o src/fruit.o src/subfield_mod.o
 
-src/flow_accumulation_algorithm_mod.o: ../src/flow_accumulation_algorithm_mod.f90 ../src/subfield_mod.f90 src/coords_mod.o
+src/flow_accumulation_algorithm_mod.o: ../src/flow_accumulation_algorithm_mod.f90 src/subfield_mod.o src/coords_mod.o
 
 src/unstructured_grid_mod.o: ../src/unstructured_grid_mod.f90
 
+src/pointer_mod.o: ../src/pointer_mod.f90
 
 
