@@ -106,6 +106,9 @@ public:
 	bool fine_coords_in_same_cell(coords* fine_coords_set_one,
 	                              coords* fine_coords_set_two,
 	                              grid_params* fine_grid_params);
+	virtual void for_all_fine_pixels_in_coarse_cell(coords* coarse_coords,
+	                                        				grid_params* coarse_grid_params,
+	                                        				function<void(coords*)> func) = 0;
 	virtual coords* calculate_downstream_coords_from_dir_based_rdir(coords* initial_coords,double rdir) = 0;
 	virtual coords* convert_fine_coords(coords* fine_coords,grid_params* fine_grid_params) = 0;
 
@@ -189,6 +192,9 @@ public:
 	latlon_coords* latlon_wrapped_coords(latlon_coords*);
 	coords* calculate_downstream_coords_from_dir_based_rdir(coords* initial_coords,double rdir);
 	coords* convert_fine_coords(coords* fine_coords,grid_params* fine_grid_params);
+	void for_all_fine_pixels_in_coarse_cell(coords* coarse_coords,
+	                                        grid_params* coarse_grid_params,
+	                                        function<void(coords*)> func);
 };
 
 /** A real class implementing functions on a ICON-style
@@ -297,6 +303,10 @@ public:
 	//Convert an index to coordinates. This is for EXTERNAL INDICES and does not include the array offset
 	generic_1d_coords* convert_index_to_coords(int index)
 		{ return new generic_1d_coords(index); }
+	void for_all_fine_pixels_in_coarse_cell(coords* coarse_coords,
+	                                        grid_params* coarse_grid_params,
+	                                        function<void(coords*)> func)
+		{ throw runtime_error("function not yet implemented for icon grid"); }
 };
 
 /**

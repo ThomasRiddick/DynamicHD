@@ -253,6 +253,23 @@ coords* latlon_grid::convert_fine_coords(coords* fine_coords,grid_params* fine_g
 		return new latlon_coords(coarse_lat,coarse_lon);
 }
 
+void latlon_grid::for_all_fine_pixels_in_coarse_cell(coords* coarse_coords,
+	                                         					 grid_params* coarse_grid_params,
+	                                         					 function<void(coords*)> func){
+		latlon_coords* latlon_coarse_coords = static_cast<latlon_coords*>(coarse_coords);
+		latlon_grid_params* latlon_coarse_grid_params =
+			static_cast<latlon_grid_params*>(coarse_grid_params);
+		int fine_cells_per_coarse_cell_lat = nlat/latlon_coarse_grid_params->get_nlat();
+		int fine_cells_per_coarse_cell_lon = nlon/latlon_coarse_grid_params->get_nlon();
+		for(int i = latlon_coarse_coords->get_lat()-1*fine_cells_per_coarse_cell_lat;
+		    i < latlon_coarse_coords->get_lat()*fine_cells_per_coarse_cell_lat; i++){
+			for(int j = latlon_coarse_coords->get_lon()-1*fine_cells_per_coarse_cell_lon;
+		      j < latlon_coarse_coords->get_lon()*fine_cells_per_coarse_cell_lon; j++){
+				func(new latlon_coords(i,j));
+			}
+		}
+}
+
 icon_single_index_grid::icon_single_index_grid(grid_params* params){
 	grid_type = grid_types::icon_single_index;
 	if(icon_single_index_grid_params* params_local = dynamic_cast<icon_single_index_grid_params*>(params)){

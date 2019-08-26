@@ -20,6 +20,7 @@ CPP_SRCS += \
 ../src/test_catchment_computation.cpp \
 ../src/test_evaluate_basins.cpp \
 ../src/basin_evaluation_algorithm.cpp \
+../src/basin_post_processing_algorithm.cpp \
 ../src/evaluate_basins.cpp \
 ../src/determine_river_directions_icon_simple_interface.cpp \
 ../src/compute_catchments_icon_simple_interface.cpp \
@@ -48,6 +49,7 @@ USER_OBJS += \
 ./src/compute_catchments.o \
 ./src/catchment_computation_algorithm.o \
 ./src/basin_evaluation_algorithm.o \
+./src/basin_post_processing_algorithm.o \
 ./src/evaluate_basins.o \
 ./src/river_direction_determination_algorithm.o \
 ./src/determine_river_directions.o \
@@ -92,6 +94,7 @@ CPP_DEPS += \
 ./src/test_catchment_computation.d \
 ./src/test_evaluate_basins.d \
 ./src/basin_evaluation_algorithm.d \
+./src/basin_post_processsing_algorithm.d \
 ./src/evaluate_basins.d \
 ./src/sink_filling_icon_simple_interface.d \
 ./src/compute_catchments_icon_simple_interface.d \
