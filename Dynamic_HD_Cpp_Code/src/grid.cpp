@@ -7,7 +7,6 @@
  */
 
 #include <cmath>
-#include <netcdf>
 #include "grid.hpp"
 
 
