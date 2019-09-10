@@ -57,6 +57,12 @@ function add_offset(field::T2,offset::T,skip_offset_on_values::Vector{T}) where 
   end
 end
 
+function divide(field::T2,divisor::T) where {T,T2<:Field{T}}
+  for_all(get_grid(field)) do coords::Coords
+    set!(field,coords,field(coords)/divisor)
+  end
+end
+
 get_grid(obj::T) where {T <: Field} =
   obj.grid::Grid
 
@@ -104,7 +110,25 @@ struct LatLonField{T} <: Field{T}
   end
 end
 
+struct UnstructuredField{T} <: Field{T}
+  data::Array{T,1}
+  grid::UnstructuredGrid
+  function LatLonField{T}(grid::UnstructuredGrid,value::T) where {T}
+    data::Array{T,1} = value == zero(T) ? zeros(T,grid.ncells) :
+                                          ones(T,grid.ncells)*value
+    return new(data,grid)
+  end
+  function LatLonField{T}(grid::UnstructuredGrid,values::AbstractArray{T,1}) where {T}
+    if size(values,1) != grid.ncells ||
+       error("Values provided don't match selected grid")
+    end
+    return new(values,grid)
+  end
+end
+
 LatLonField{T}(grid::LatLonGrid) where {T} = LatLonField{T}(grid,zeros(T,grid.nlat,grid.nlon))
+
+UnstructuredField{T}(grid::UnstructuredGrid) where {T} = UnstructuredField{T}(grid,zeros(T,grid.ncells))
 
 Field{T}(grid::LatLonGrid,value::T) where {T} = LatLonField{T}(grid::LatLonGrid,value::T)
 Field{T}(grid::LatLonGrid) where {T} = LatLonField{T}(grid::LatLonGrid)
@@ -142,6 +166,9 @@ function round(type::DataType,field::LatLonField{T}) where {T}
   return LatLonField{type}(field.grid,round.(type,field.data))
 end
 
+function maximum(field::LatLonField)
+  return maximum(field.data)
+end
 
 function show(io::IO,field::LatLonField{T}) where {T <: Number}
   for_all_with_line_breaks(field.grid) do coords::Coords
@@ -156,6 +183,42 @@ function show(io::IO,field::LatLonField{T}) where {T <: Number}
   end
 end
 
+function fill!(field::LatLonField{T},value::T) where {T}
+  return fill!(field.data,value)
+end
+
+function (unstructured_field::UnstructuredField{T})(coords::Generic1DCoords) where {T}
+    return unstructured__field.data[coords.index]::T
+end
+
+function get(unstructured_field::UnstructuredField{T},coords::Generic1DCoords) where {T}
+    return unstructured_field(coords)::T
+end
+
+function set!(unstructured_field::UnstructuredField{T},coords::Generic1DCoords,value::T) where {T}
+    unstructured_field.data[coords.index] = value
+end
+
+function +(lfield::UnstructuredField{T},rfield::UnstructuredField{T}) where {T}
+  return UnstructuredField{T}(lfield.grid,lfield.data + rfield.data)
+end
+
+function invert(field::UnstructuredField{T}) where {T}
+  return UnstructuredField{T}(field.grid,.!field.data)
+end
+
+function round(type::DataType,field::UnstructuredField{T}) where {T}
+  return UnstructuredField{type}(field.grid,round.(type,field.data))
+end
+
+function maximum(field::UnstructuredField)
+  return maximum(field.data)
+end
+
+function fill!(field::UnstructuredField{T},value::T) where {T}
+  return fill!(field.data,value)
+end
+
 abstract type DirectionIndicators end
 
 function get(field::DirectionIndicators,coords::Coords)
@@ -164,10 +227,6 @@ end
 
 function set!(field::DirectionIndicators,coords::Coords)
   throw(UserError())
-end
-
-function maximum(field::LatLonField)
-  return maximum(field.data)
 end
 
 struct LatLonDirectionIndicators <: DirectionIndicators
@@ -215,6 +274,10 @@ struct LatLonDirectionIndicators <: DirectionIndicators
   end
 end
 
+struct UnstructuredFieldDirectionIndicators <: DirectionIndicators
+  next_cell_coords::UnstructuredField{Int64}
+end
+
 function (latlon_direction_indicators::LatLonDirectionIndicators)(coords::LatLonCoords)
   return DirectionIndicator(LatLonCoords(latlon_direction_indicators.next_cell_coords[1](coords),
                                          latlon_direction_indicators.next_cell_coords[2](coords)))
@@ -235,6 +298,27 @@ end
 function fill!(field::LatLonField{T},value::T) where {T}
   return fill!(field.data,value)
 end
+
+struct UnstructuredDirectionIndicators <: DirectionIndicators
+  next_cell_coords::UnstructuredField{Int64}
+end
+
+function (unstructured_direction_indicators::UnstructuredDirectionIndicators)(coords::Generic1DCoords)
+  return DirectionIndicator(Generic1DCoords(unstructured_direction_indicators.next_cell_coords(coords))
+end
+
+function get(unstructured_direction_indicators::UnstructuredDirectionIndicators,
+             coords::Generic1DCoords)
+  return unstructured_direction_indicators(coords)
+end
+
+
+function set!(unstructured_direction_indicators::UnstructuredDirectionIndicators,
+              coords::Generic1DCoords,direction::DirectionIndicator)
+  next_cell_coords =  get_next_cell_coords(direction,coords)
+  set!(unstructured_direction_indicators.next_cell_coords,coords,next_cell_coords.index)
+end
+
 
 #Cannot define functors on abstract types in Julia yet. Use this
 #workaround - needs to be at end of file as it only acts on subtypes of

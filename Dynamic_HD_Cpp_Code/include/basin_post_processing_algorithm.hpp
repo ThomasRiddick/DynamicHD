@@ -17,6 +17,19 @@ using namespace std;
 
 class basin {
 public:
+  void initialise_basin(field<int>* basin_numbers_in,
+                        field<int>* coarse_catchment_numbers_in,
+                        field<bool>* completed_cells_in,
+                        field<bool>* redirect_targets_in,
+                        field<bool>* minima_in,
+                        field<bool>* use_flood_height_only_in,
+                        field<merge_types>* merge_points_in,
+                        bool* processed_basins_in,
+                        bool* coarse_catchments_in,
+                        grid* _coarse_grid_in,
+                        grid* _fine_grid_in,
+                        grid_params* coarse_grid_params_in,
+                        grid_params* fine_grid_params_in);
   void check_basin_for_loops();
   int build_and_simplify_basin(int basin_count);
   void set_minimum_coords(coords* coords_in)
@@ -57,30 +70,59 @@ public:
   virtual basin* create_basin() = 0;
 protected:
   vector<basin*> basins;
-  field<int>* basin_numbers;
-  field<int>* coarse_catchment_numbers;
-  field<bool>* completed_cells;
-  field<bool>* redirect_targets;
-  field<bool>* minima;
-  field<bool>* use_flood_height_only;
-  field<merge_types>* merge_points;
-  coords* minimum_coords;
-  coords* redirect_coords;
-  height_types redirect_height_type;
-  bool* processed_basins;
-  bool* coarse_catchments;
-  grid* _coarse_grid;
-  grid* _fine_grid;
-  grid_params* coarse_grid_params;
-  grid_params* fine_grid_params;
-  bool local_redirect;
+  field<int>* basin_numbers = nullptr;
+  field<int>* coarse_catchment_numbers = nullptr;
+  field<bool>* completed_cells = nullptr;
+  field<bool>* redirect_targets = nullptr;
+  field<bool>* minima = nullptr;
+  field<bool>* use_flood_height_only = nullptr;
+  field<merge_types>* merge_points = nullptr;
+  coords* minimum_coords = nullptr;
+  coords* redirect_coords = nullptr;
+  bool* processed_basins = nullptr;
+  bool* coarse_catchments = nullptr;
+  grid* _coarse_grid = nullptr;
+  grid* _fine_grid = nullptr;
+  grid_params* coarse_grid_params = nullptr;
+  grid_params* fine_grid_params = nullptr;
   basin* primary_basin = nullptr;
+  height_types redirect_height_type;
+  bool local_redirect;
   int basin_number;
   int minimum_coarse_catchment_number;
 };
 
 class latlon_basin : public basin {
 public:
+  void initialise_basin(field<int>* basin_numbers_in,
+                        field<int>* coarse_catchment_numbers_in,
+                        field<bool>* completed_cells_in,
+                        field<bool>* redirect_targets_in,
+                        field<bool>* minima_in,
+                        field<bool>* use_flood_height_only_in,
+                        field<merge_types>* merge_points_in,
+                        bool* processed_basins_in,
+                        bool* coarse_catchments_in,
+                        grid* _coarse_grid_in,
+                        grid* _fine_grid_in,
+                        grid_params* coarse_grid_params_in,
+                        grid_params* fine_grid_params_in,
+                        field<int>* fine_rdirs_in,
+                        field<int>* coarse_rdirs_in,
+                        field<int>* connect_redirect_lat_index_in,
+                        field<int>* connect_redirect_lon_index_in,
+                        field<int>* flood_redirect_lat_index_in,
+                        field<int>* flood_redirect_lon_index_in,
+                        field<int>* connect_next_cell_lat_index_in,
+                        field<int>* connect_next_cell_lon_index_in,
+                        field<int>* flood_next_cell_lat_index_in,
+                        field<int>* flood_next_cell_lon_index_in,
+                        field<int>* connect_force_merge_lat_index_in,
+                        field<int>* connect_force_merge_lon_index_in,
+                        field<int>* flood_force_merge_lat_index_in,
+                        field<int>* flood_force_merge_lon_index_in,
+                        int* basin_minimum_lats_in,
+                        int* basin_minimum_lons_in);
   coords* find_target_minimum_coords(coords* coords_in);
   coords* find_next_fine_cell_downstream(coords* coords_in);
   coords* find_next_coarse_cell_downstream(coords* coords_in);
@@ -102,22 +144,22 @@ public:
     { return (((*coarse_rdirs)(coords_in)) == outflow_rdir); }
   basin* create_basin() { return new latlon_basin(); }
 private:
-  field<int>* fine_rdirs;
-  field<int>* coarse_rdirs;
-  field<int>* connect_redirect_lat_index;
-  field<int>* connect_redirect_lon_index;
-  field<int>* flood_redirect_lat_index;
-  field<int>* flood_redirect_lon_index;
-  field<int>* connect_next_cell_lat_index;
-  field<int>* connect_next_cell_lon_index;
-  field<int>* flood_next_cell_lat_index;
-  field<int>* flood_next_cell_lon_index;
-  field<int>* connect_force_merge_lat_index;
-  field<int>* connect_force_merge_lon_index;
-  field<int>* flood_force_merge_lat_index;
-  field<int>* flood_force_merge_lon_index;
-  int* basin_minimum_lats;
-  int* basin_minimum_lons;
+  field<int>* fine_rdirs = nullptr;
+  field<int>* coarse_rdirs = nullptr;
+  field<int>* connect_redirect_lat_index = nullptr;
+  field<int>* connect_redirect_lon_index = nullptr;
+  field<int>* flood_redirect_lat_index = nullptr;
+  field<int>* flood_redirect_lon_index = nullptr;
+  field<int>* connect_next_cell_lat_index = nullptr;
+  field<int>* connect_next_cell_lon_index = nullptr;
+  field<int>* flood_next_cell_lat_index = nullptr;
+  field<int>* flood_next_cell_lon_index = nullptr;
+  field<int>* connect_force_merge_lat_index = nullptr;
+  field<int>* connect_force_merge_lon_index = nullptr;
+  field<int>* flood_force_merge_lat_index = nullptr;
+  field<int>* flood_force_merge_lon_index = nullptr;
+  int* basin_minimum_lats = nullptr;
+  int* basin_minimum_lons = nullptr;
   int outflow_rdir =  0;
   int mininum_rdir = -2;
 };
@@ -127,20 +169,48 @@ public:
   void build_and_simplify_basins();
   void check_for_loops();
   virtual basin* create_basin() = 0;
-private:
-  stack<coords*> minima;
+protected:
+  stack<coords*> minima_q;
   vector<basin*> basins;
-  field<bool>* completed_cells;
-  bool* processed_basins;
-  bool* coarse_catchments;
-  basin* current_basin;
+  field<int>* basin_numbers = nullptr;
+  field<int>* coarse_catchment_numbers = nullptr;
+  field<bool>* completed_cells = nullptr;
+  field<bool>* redirect_targets = nullptr;
+  field<bool>* minima = nullptr;
+  field<bool>* use_flood_height_only = nullptr;
+  field<merge_types>* merge_points = nullptr;
+  bool* processed_basins = nullptr;
+  bool* coarse_catchments = nullptr;
+  grid* _coarse_grid = nullptr;
+  grid* _fine_grid = nullptr;
+  grid_params* coarse_grid_params = nullptr;
+  grid_params* fine_grid_params = nullptr;
+  basin* current_basin = nullptr;
   int num_basins;
   int num_catchments;
 };
 
-class latlon_basin_post_processing_algorithm {
+class latlon_basin_post_processing_algorithm :
+  public basin_post_processing_algorithm {
+private:
+  field<int>* fine_rdirs = nullptr;
+  field<int>* coarse_rdirs = nullptr;
+  field<int>* connect_redirect_lat_index = nullptr;
+  field<int>* connect_redirect_lon_index = nullptr;
+  field<int>* flood_redirect_lat_index = nullptr;
+  field<int>* flood_redirect_lon_index = nullptr;
+  field<int>* connect_next_cell_lat_index = nullptr;
+  field<int>* connect_next_cell_lon_index = nullptr;
+  field<int>* flood_next_cell_lat_index = nullptr;
+  field<int>* flood_next_cell_lon_index = nullptr;
+  field<int>* connect_force_merge_lat_index = nullptr;
+  field<int>* connect_force_merge_lon_index = nullptr;
+  field<int>* flood_force_merge_lat_index = nullptr;
+  field<int>* flood_force_merge_lon_index = nullptr;
+  int* basin_minimum_lats = nullptr;
+  int* basin_minimum_lons = nullptr;
 public:
-  basin* create_basin() { return new latlon_basin(); }
+  basin* create_basin();
 };
 
 #endif //INCLUDE_BURN_POST_PROCESSING_ALGORITHM_HPP_

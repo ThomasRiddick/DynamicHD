@@ -87,4 +87,8 @@ contains
             deallocate(expanded_input_fine_total_cumulative_flow)
     end subroutine cotat_plus_latlon
 
+    subroutine cotat_plus_icon_icosohedral_cell_latlon_pixel
+
+    end subroutine cotat_plus_icon_icosohedral_cell_latlon_pixel
+
 end module cotat_plus

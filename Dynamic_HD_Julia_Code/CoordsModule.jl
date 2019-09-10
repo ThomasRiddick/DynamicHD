@@ -30,6 +30,10 @@ struct LatLonCoords <: Coords
   lon::Int64
 end
 
+struct Generic1DCoords <: Coords
+  index::Int64
+end
+
 function is_ocean(coords::LatLonCoords)
   return coords.lat == coord_base_indicator_ocean &&
          coords.lon == coord_base_indicator_ocean
@@ -48,6 +52,22 @@ end
 function is_lake(coords::LatLonCoords)
   return coords.lat == coord_base_indicator_lake &&
          coords.lon == coord_base_indicator_lake
+end
+
+function is_ocean(coords::Generic1DCoords)
+  return coords.index == coord_base_indicator_ocean
+end
+
+function is_outflow(coords::Generic1DCoords)
+  return coords.index == coord_base_indicator_outflow
+end
+
+function is_truesink(coords::Generic1DCoords)
+  return coords.index == coord_base_indicator_truesink
+end
+
+function is_lake(coords::Generic1DCoords)
+  return coords.index == coord_base_indicator_lake
 end
 
 struct DirectionIndicator

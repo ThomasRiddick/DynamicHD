@@ -17,9 +17,15 @@ import socket
 from sys import platform
 
 if platform == "linux" or platform == "linux2":
-    extra_compile_args = ['-std=gnu++11']
-    extra_links_args = ['-static-libstdc++',"-shared"]
-    if "mistral" in socket.gethostname():
+    netcdfc = "/sw/stretch-x64/netcdf/netcdf_c-4.6.1"
+    netcdfcxx = "/sw/stretch-x64/netcdf/netcdf_cxx-4.3.0-gccsys"
+    extra_compile_args = ['-std=gnu++11',
+                          "-isystem" + netcdfcxx + "/include",
+                          "-isystem" + netcdfc +"/include"]
+    extra_links_args = ['-static-libstdc++',"-shared",
+                        "-isystem" + netcdfcxx + "/include",
+                        "-isystem" + netcdfc +"/include"]
+    if socket.getfqdn().endswith(".hpc.dkrz.de"):
       os.environ["LDSHARED"] = "/sw/rhel6-x64/gcc/binutils-2.26-gccsys/bin/ld"
 elif platform == "darwin":
     #specify gcc as the compiler (which is despite the name actually a version of clang on mac)

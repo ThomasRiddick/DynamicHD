@@ -2,13 +2,13 @@
 
 void basin_post_processing_algorithm::build_and_simplify_basins(){
   int basin_count = 1;
-  while(!minima.empty()){
-    coords* minimum = minima.top();
+  while(!minima_q.empty()){
+    coords* minimum = minima_q.top();
+    minima_q.pop();
     if(!((*completed_cells)(minimum))){
       current_basin = create_basin();
       current_basin->set_minimum_coords(minimum);
       current_basin->set_basin_number(basin_count);
-      minima.pop();
       basin_count = current_basin->build_and_simplify_basin(basin_count);
       current_basin->find_minimum_coarse_catchment_number();
       basins.push_back(current_basin);
@@ -25,6 +25,94 @@ void basin_post_processing_algorithm::check_for_loops(){
     if (processed_basins[current_basin->get_basin_number() - 1]) break;
     current_basin->check_basin_for_loops();
   }
+}
+
+void basin::initialise_basin(field<int>* basin_numbers_in,
+                             field<int>* coarse_catchment_numbers_in,
+                             field<bool>* completed_cells_in,
+                             field<bool>* redirect_targets_in,
+                             field<bool>* minima_in,
+                             field<bool>* use_flood_height_only_in,
+                             field<merge_types>* merge_points_in,
+                             bool* processed_basins_in,
+                             bool* coarse_catchments_in,
+                             grid* _coarse_grid_in,
+                             grid* _fine_grid_in,
+                             grid_params* coarse_grid_params_in,
+                             grid_params* fine_grid_params_in){
+  basin_numbers = basin_numbers_in;
+  coarse_catchment_numbers = coarse_catchment_numbers_in;
+  completed_cells = completed_cells_in;
+  redirect_targets =  redirect_targets_in;
+  minima = minima_in;
+  use_flood_height_only = use_flood_height_only_in;
+  merge_points = merge_points_in;
+  processed_basins = processed_basins_in;
+  coarse_catchments = coarse_catchments_in;
+  _coarse_grid = _coarse_grid_in;
+  _fine_grid = _fine_grid_in;
+  coarse_grid_params = coarse_grid_params_in;
+  fine_grid_params = fine_grid_params_in;
+}
+
+void latlon_basin::initialise_basin(field<int>* basin_numbers_in,
+                                    field<int>* coarse_catchment_numbers_in,
+                                    field<bool>* completed_cells_in,
+                                    field<bool>* redirect_targets_in,
+                                    field<bool>* minima_in,
+                                    field<bool>* use_flood_height_only_in,
+                                    field<merge_types>* merge_points_in,
+                                    bool* processed_basins_in,
+                                    bool* coarse_catchments_in,
+                                    grid* _coarse_grid_in,
+                                    grid* _fine_grid_in,
+                                    grid_params* coarse_grid_params_in,
+                                    grid_params* fine_grid_params_in,
+                                    field<int>* fine_rdirs_in,
+                                    field<int>* coarse_rdirs_in,
+                                    field<int>* connect_redirect_lat_index_in,
+                                    field<int>* connect_redirect_lon_index_in,
+                                    field<int>* flood_redirect_lat_index_in,
+                                    field<int>* flood_redirect_lon_index_in,
+                                    field<int>* connect_next_cell_lat_index_in,
+                                    field<int>* connect_next_cell_lon_index_in,
+                                    field<int>* flood_next_cell_lat_index_in,
+                                    field<int>* flood_next_cell_lon_index_in,
+                                    field<int>* connect_force_merge_lat_index_in,
+                                    field<int>* connect_force_merge_lon_index_in,
+                                    field<int>* flood_force_merge_lat_index_in,
+                                    field<int>* flood_force_merge_lon_index_in,
+                                    int* basin_minimum_lats_in,
+                                    int* basin_minimum_lons_in){
+  basin::initialise_basin(basin_numbers_in,
+                          coarse_catchment_numbers_in,
+                          completed_cells_in,
+                          redirect_targets_in,
+                          minima_in,
+                          use_flood_height_only_in,
+                          merge_points_in,
+                          processed_basins_in,
+                          coarse_catchments_in,
+                          _coarse_grid_in,
+                          _fine_grid_in,
+                          coarse_grid_params_in,
+                          fine_grid_params_in);
+  fine_rdirs = fine_rdirs_in;
+  coarse_rdirs = coarse_rdirs_in;
+  connect_redirect_lat_index = connect_redirect_lat_index_in;
+  connect_redirect_lon_index = connect_redirect_lon_index_in,
+  flood_redirect_lat_index = flood_redirect_lat_index_in;
+  flood_redirect_lon_index = flood_redirect_lon_index_in;
+  connect_next_cell_lat_index = connect_next_cell_lat_index_in;
+  connect_next_cell_lon_index = connect_next_cell_lon_index_in;
+  flood_next_cell_lat_index = flood_next_cell_lat_index_in;
+  flood_next_cell_lon_index = flood_next_cell_lon_index_in;
+  connect_force_merge_lat_index = connect_force_merge_lat_index_in;
+  connect_force_merge_lon_index = connect_force_merge_lon_index_in;
+  flood_force_merge_lat_index = flood_force_merge_lat_index_in;
+  flood_force_merge_lon_index = flood_force_merge_lon_index_in;
+  basin_minimum_lats = basin_minimum_lats_in;
+  basin_minimum_lons = basin_minimum_lons_in;
 }
 
 void basin::check_basin_for_loops(){
@@ -301,4 +389,38 @@ basic_merge_types basin::get_cell_merge_type(coords* coords_in,height_types heig
         throw runtime_error("Merge type not recognized");
     }
   } else throw runtime_error("Merge type not recognized");
+}
+
+basin* latlon_basin_post_processing_algorithm::create_basin(){
+  latlon_basin* new_basin = new latlon_basin();
+  new_basin->initialise_basin(basin_numbers,
+                              coarse_catchment_numbers,
+                              completed_cells,
+                              redirect_targets,
+                              minima,
+                              use_flood_height_only,
+                              merge_points,
+                              processed_basins,
+                              coarse_catchments,
+                              _coarse_grid,
+                              _fine_grid,
+                              coarse_grid_params,
+                              fine_grid_params,
+                              fine_rdirs,
+                              coarse_rdirs,
+                              connect_redirect_lat_index,
+                              connect_redirect_lon_index,
+                              flood_redirect_lat_index,
+                              flood_redirect_lon_index,
+                              connect_next_cell_lat_index,
+                              connect_next_cell_lon_index,
+                              flood_next_cell_lat_index,
+                              flood_next_cell_lon_index,
+                              connect_force_merge_lat_index,
+                              connect_force_merge_lon_index,
+                              flood_force_merge_lat_index,
+                              flood_force_merge_lon_index,
+                              basin_minimum_lats,
+                              basin_minimum_lons);
+  return new_basin;
 }

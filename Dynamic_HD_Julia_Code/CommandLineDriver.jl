@@ -5,7 +5,7 @@ using IOModule: load_river_parameters, load_lake_parameters
 using IOModule: load_drainage_fields, load_runoff_fields
 using IOModule: load_lake_initial_values,load_river_initial_values
 using GridModule: Grid, LatLonGrid
-using FieldModule: Field,LatLonField,repeat
+using FieldModule: Field,LatLonField,repeat,divide
 using Profile
 using ProfileView
 using Serialization
@@ -45,14 +45,16 @@ function main()
   local runoffs::Array{Field{Float64},1}
   if args["drainage-file"] != nothing
     drainages = load_drainage_fields(args["drainage-file"],grid,
-                                     last_timestep=timesteps)
+                                     last_timestep=12)
+    drainages = [divide(x,30.0) for x in drainages]
   else
     drainage::Field{Float64} = LatLonField{Float64}(river_parameters.grid,269747790.0*2.25/100.0)
     drainages = repeat(drainage,12*51)
   end
   if args["runoff-file"] != nothing
     runoffs = load_runoff_fields(args["runoff-file"],grid,
-                                 last_timestep=timesteps)
+                                 last_timestep=12)
+    runoffs = [divide(x,30.0) for x in runoffs]
   else
     runoffs = deepcopy(drainages)
   end

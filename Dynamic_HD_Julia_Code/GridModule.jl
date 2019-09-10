@@ -47,12 +47,29 @@ struct LatLonGrid <: Grid
   end
 end
 
+struct UnstructuredGrid <: Grid
+  ncells::Int64
+  number_of_dimensions::Int64
+  function UnstructuredGrid(ncells::Int64)
+    return new(ncells,1)
+  end
+end
+
+LatLonGridOrUnstructuredGrid = Union(LatLonGrid,UnstructuredGrid)
+
 function for_all(function_on_point::Function,
                  grid::LatLonGrid)
   for j = 1:grid.nlon
     for i = 1:grid.nlat
         function_on_point(LatLonCoords(i,j))
       end
+  end
+end
+
+function for_all(function_on_point::Function,
+                 grid::UnstructuredGrid)
+  for i 1:grid.ncells
+    function_on_point(Generic1DCoords(i))
   end
 end
 
@@ -89,9 +106,9 @@ function for_all_fine_cells_in_coarse_cell(function_on_point::Function,
   end
 end
 
-function find_downstream_coords(grid::LatLonGrid,
+function find_downstream_coords(grid::T,
                                 flow_direction::DirectionIndicator,
-                                coords::Coords)
+                                coords::Coords) where {T<:LatLonGridOrUnstructuredGrid}
   return get_next_cell_coords(flow_direction,coords)
 end
 
