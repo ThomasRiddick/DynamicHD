@@ -414,13 +414,14 @@ void icon_single_index_grid_params::icon_single_index_grid_read_params_file(){
 	if (neighboring_cell_indices_var.isNull())
 		throw runtime_error("Invalid data in specified grid file");
 	neighboring_cell_indices = new int[3*ncells];
-	int neighboring_cell_indices_swapped_dims[3*ncells];
-	neighboring_cell_indices_var.getVar(&neighboring_cell_indices_swapped_dims);
+	int* neighboring_cell_indices_swapped_dims = new int[3*ncells];
+	neighboring_cell_indices_var.getVar(neighboring_cell_indices_swapped_dims);
 	for (int i = 0; i < ncells; i++){
 		neighboring_cell_indices[3*i]   = neighboring_cell_indices_swapped_dims[i];
 		neighboring_cell_indices[3*i+1] = neighboring_cell_indices_swapped_dims[ncells+i];
 		neighboring_cell_indices[3*i+2] = neighboring_cell_indices_swapped_dims[2*ncells+i];
 	}
+	delete[] neighboring_cell_indices_swapped_dims;
 	if (use_secondary_neighbors) icon_single_index_grid_calculate_secondary_neighbors();
 }
 #endif

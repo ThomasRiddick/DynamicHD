@@ -96,14 +96,14 @@ int main(int argc, char *argv[]){
   NcVar clon = next_cell_index_file.getVar("clon");
   NcVar clat_bnds = next_cell_index_file.getVar("clat_bnds");
   NcVar clon_bnds = next_cell_index_file.getVar("clon_bnds");
-  double clat_local[ncells];
-  clat.getVar(&clat_local);
-  double clon_local[ncells];
-  clon.getVar(&clon_local);
-  double clat_bnds_local[ncells*3];
-  clat_bnds.getVar(&clat_bnds_local);
-  double clon_bnds_local[ncells*3];
-  clon_bnds.getVar(&clon_bnds_local);
+  double* clat_local = new double[ncells];
+  clat.getVar(clat_local);
+  double* clon_local = new double[ncells];
+  clon.getVar(clon_local);
+  double* clat_bnds_local = new double[ncells*3];
+  clat_bnds.getVar(clat_bnds_local);
+  double* clon_bnds_local = new double[ncells*3];
+  clon_bnds.getVar(clon_bnds_local);
   auto catchment_numbers_out = new int[ncells];
   auto alg = catchment_computation_algorithm_icon_single_index();
   alg.setup_fields(catchment_numbers_out,
@@ -117,7 +117,7 @@ int main(int argc, char *argv[]){
   catchment_numbers_out_var.putAtt(UNITS,METRES);
   catchment_numbers_out_var.putAtt(GRID_TYPE,UNSTRUCTURED);
   catchment_numbers_out_var.putAtt(COORDINATES,"clat clon");
-  catchment_numbers_out_var.putVar(&catchment_numbers_out);
+  catchment_numbers_out_var.putVar(catchment_numbers_out);
   NcVar clat_out = output_catchment_numbers_file.addVar("clat",ncDouble,index);
   NcVar clon_out = output_catchment_numbers_file.addVar("clon",ncDouble,index);
   NcVar clat_bnds_out =
@@ -136,4 +136,8 @@ int main(int argc, char *argv[]){
   clon_out.putAtt(BOUNDS,"clon_bnds");
   clat_bnds_out.putVar(clat_bnds_local);
   clon_bnds_out.putVar(clon_bnds_local);
+  delete[] clat_local;
+  delete[] clon_local;
+  delete[] clat_bnds_local;
+  delete[] clon_bnds_local;
 }

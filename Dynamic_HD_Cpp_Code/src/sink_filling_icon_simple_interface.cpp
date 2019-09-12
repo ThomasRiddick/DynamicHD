@@ -130,19 +130,19 @@ int main(int argc, char *argv[]){
   NcFile orography_file(orography_in_filepath.c_str(), NcFile::read);
   NcVar orography_var = orography_file.getVar(orography_in_fieldname.c_str());
   auto orography_in = new double[ncells];
-  orography_var.getVar(&orography_in);
+  orography_var.getVar(orography_in);
   NcVar clat = orography_file.getVar("clat");
   NcVar clon = orography_file.getVar("clon");
   NcVar clat_bnds = orography_file.getVar("clat_bnds");
   NcVar clon_bnds = orography_file.getVar("clon_bnds");
-  double clat_local[ncells];
-  clat.getVar(&clat_local);
-  double clon_local[ncells];
-  clon.getVar(&clon_local);
-  double clat_bnds_local[ncells*3];
-  clat_bnds.getVar(&clat_bnds_local);
-  double clon_bnds_local[ncells*3];
-  clon_bnds.getVar(&clon_bnds_local);
+  double* clat_local = new double[ncells];
+  clat.getVar(clat_local);
+  double* clon_local = new double[ncells];
+  clon.getVar(clon_local);
+  double* clat_bnds_local = new double[ncells*3];
+  clat_bnds.getVar(clat_bnds_local);
+  double* clon_bnds_local = new double[ncells*3];
+  clon_bnds.getVar(clon_bnds_local);
   cout << "Loading landsea mask from:" << endl;
   cout << landsea_in_filepath << endl;
   NcFile landsea_file(landsea_in_filepath.c_str(), NcFile::read);
@@ -158,12 +158,14 @@ int main(int argc, char *argv[]){
       if (landsea_in_double[i] < 0.5) landsea_in_double[i] = 0.0;
       landsea_in[i] = ! bool(landsea_in_double[i]);
     }
+    delete[] landsea_in_double;
   } else {
     landsea_in_int = new int[ncells];
     landsea_var.getVar(landsea_in_int);
     for (auto i = 0; i <ncells;i++){
       landsea_in[i] = ! bool(landsea_in_int[i]);
     }
+    delete[] landsea_in_int;
   }
   cout << "Loading true sinks from:" << endl;
   cout << true_sinks_in_filepath << endl;
@@ -176,6 +178,7 @@ int main(int argc, char *argv[]){
   for (auto i = 0; i < ncells;i++){
     true_sinks_in[i] = bool(true_sinks_in_int[i]);
   }
+  delete[] true_sinks_in_int;
   auto alg1 = sink_filling_algorithm_1_icon_single_index();
   alg1.setup_flags(set_ls_as_no_data_flag,tarasov_mod,add_slope_in,epsilon_in);
   alg1.setup_fields(orography_in,landsea_in,true_sinks_in,grid_params_in);
@@ -189,7 +192,7 @@ int main(int argc, char *argv[]){
   orography_out_var.putAtt(UNITS,METRES);
   orography_out_var.putAtt(GRID_TYPE,UNSTRUCTURED);
   orography_out_var.putAtt(COORDINATES,"clat clon");
-  orography_out_var.putVar(&orography_in);
+  orography_out_var.putVar(orography_in);
   NcVar clat_out = output_orography_file.addVar("clat",ncDouble,index);
   NcVar clon_out = output_orography_file.addVar("clon",ncDouble,index);
   NcVar clat_bnds_out = output_orography_file.addVar("clat_bnds",ncDouble,vector<NcDim>{index,vertices});
@@ -206,4 +209,12 @@ int main(int argc, char *argv[]){
   clon_out.putAtt(BOUNDS,"clon_bnds");
   clat_bnds_out.putVar(clat_bnds_local);
   clon_bnds_out.putVar(clon_bnds_local);
+  delete grid_params_in;
+  delete[] clat_local;
+  delete[] clon_local;
+  delete[] clat_bnds_local;
+  delete[] clon_bnds_local;
+  delete[] orography_in;
+  delete[] landsea_in;
+  delete[] true_sinks_in;
 }

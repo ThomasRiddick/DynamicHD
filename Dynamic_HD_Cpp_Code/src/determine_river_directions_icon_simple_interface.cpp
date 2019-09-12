@@ -133,14 +133,14 @@ int main(int argc, char *argv[]){
   NcVar clon = orography_file.getVar("clon");
   NcVar clat_bnds = orography_file.getVar("clat_bnds");
   NcVar clon_bnds = orography_file.getVar("clon_bnds");
-  double clat_local[ncells];
+  double* clat_local = new double[ncells];
   clat.getVar(clat_local);
-  double clon_local[ncells];
+  double* clon_local = new double[ncells];
   clon.getVar(clon_local);
-  double clat_bnds_local[ncells*3];
-  clat_bnds.getVar(&clat_bnds_local);
-  double clon_bnds_local[ncells*3];
-  clon_bnds.getVar(&clon_bnds_local);
+  double* clat_bnds_local = new double[ncells*3];
+  clat_bnds.getVar(clat_bnds_local);
+  double* clon_bnds_local = new double[ncells*3];
+  clon_bnds.getVar(clon_bnds_local);
   cout << "Loading landsea mask from:" << endl;
   cout << landsea_filepath << endl;
   NcFile landsea_file(landsea_filepath.c_str(), NcFile::read);
@@ -156,6 +156,7 @@ int main(int argc, char *argv[]){
       if (landsea_in_double[i] < 0.5) landsea_in_double[i] = 0.0;
       landsea_in[i] = ! bool(landsea_in_double[i]);
     }
+    delete[] landsea_in_double;
   } else {
     landsea_in_int = new int[ncells];
     landsea_var.getVar(landsea_in_int);
@@ -163,6 +164,7 @@ int main(int argc, char *argv[]){
     for (auto i = 0; i <ncells;i++){
       landsea_in[i] = ! bool(landsea_in_int[i]);
     }
+    delete[] landsea_in_int;
   }
   cout << "Loading true sinks from:" << endl;
   cout << true_sinks_filepath << endl;
@@ -174,6 +176,7 @@ int main(int argc, char *argv[]){
   for (auto i = 0; i < ncells;i++){
     true_sinks_in[i] = bool(true_sinks_in_int[i]);
   }
+  delete[] true_sinks_in_int;
   auto next_cell_index_out = new int[ncells];
   alg.setup_flags(always_flow_to_sea_in,use_secondary_neighbors_in,
                   mark_pits_as_true_sinks_in);
@@ -207,4 +210,13 @@ int main(int argc, char *argv[]){
   clon_out.putAtt(BOUNDS,"clon_bnds");
   clat_bnds_out.putVar(clat_bnds_local);
   clon_bnds_out.putVar(clon_bnds_local);
+  delete grid_params_in;
+  delete[] clat_local;
+  delete[] clon_local;
+  delete[] clat_bnds_local;
+  delete[] clon_bnds_local;
+  delete[] orography_in;
+  delete[] landsea_in;
+  delete[] true_sinks_in;
+  delete[] next_cell_index_out;
 }
