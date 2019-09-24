@@ -385,9 +385,10 @@ function handle_event(lake::FillingLake,add_water::AddWater)
             local merge_possible::Bool
             local already_merged::Bool
             merge_possible,already_merged = check_if_merge_is_possible(lake,merge_type)
+            local subsumed_lake::SubsumedLake
             if merge_possible
               if merge_type == secondary_merge
-                subsumed_lake::Lake = perform_secondary_merge(lake)
+                subsumed_lake = perform_secondary_merge(lake)
                 subsumed_lake = handle_event(subsumed_lake,
                                              StoreWater(inflow))
                 return subsumed_lake
@@ -398,6 +399,17 @@ function handle_event(lake::FillingLake,add_water::AddWater)
               overflowing_lake::Lake = change_to_overflowing_lake(lake,merge_type)
               overflowing_lake = handle_event(overflowing_lake,StoreWater(inflow))
               return overflowing_lake
+            elseif merge_type == secondary_merge
+              target_cell::Coords = get_secondary_merge_coords(lake)
+              other_lake_number::Integer = lake.lake_fields.lake_numbers(target_cell)
+              other_lake::SubsumedLake = lake.lake_variables.other_lakes[other_lake_number]
+              other_lake_as_filling_lake::FillingLake = change_to_filling_lake(other_lake)
+              lake.lake_variables.other_lakes[other_lake_number] =
+                change_to_overflowing_lake(other_lake_as_filling_lake,primary_merge)
+              subsumed_lake = perform_secondary_merge(lake)
+              subsumed_lake = handle_event(subsumed_lake,
+                                             StoreWater(inflow))
+              return subsumed_lake
             end
           end
           if merge_type != double_merge
@@ -453,6 +465,7 @@ end
 function handle_event(lake::Lake,accept_merge::AcceptMerge)
   lake_variables::LakeVariables = get_lake_variables(lake)
   lake_fields::LakeFields = get_lake_fields(lake)
+  set!(lake_fields.completed_lake_cells,lake_variables.current_cell_to_fill,true)
   subsumed_lake::SubsumedLake = SubsumedLake(get_lake_parameters(lake),
                                              lake_variables,
                                              lake_fields,
@@ -558,16 +571,25 @@ function check_if_merge_is_possible(lake::Lake,merge_type::SimpleMergeTypes)
     return false,true
   elseif isa(other_lake,OverflowingLake)
     other_lake_target_lake_number::Int64 = lake_fields.lake_numbers(other_lake.next_merge_target_coords)
-    if other_lake_target_lake_number == 0
-      return false,false
-    end
-    other_lake_target_lake::Lake = lake_variables.other_lakes[other_lake_target_lake_number]
-    other_lake_target_lake = find_true_primary_lake(other_lake_target_lake)
-    if (get_lake_variables(other_lake_target_lake)::LakeVariables).lake_number ==
-        lake_variables.lake_number
-      return true,false
-    else
-      return false,false
+    while true
+      if other_lake_target_lake_number == 0
+        return false,false
+      end
+      other_lake_target_lake::Lake = lake_variables.other_lakes[other_lake_target_lake_number]
+      if (get_lake_variables(other_lake_target_lake)::LakeVariables).lake_number == lake_variables.lake_number
+        return true,false
+      else
+        if isa(other_lake_target_lake,OverflowingLake)
+          other_lake_target_lake_number =
+            lake_fields.lake_numbers(other_lake_target_lake.next_merge_target_coords)
+        elseif isa(other_lake_target_lake,SubsumedLake)
+          other_lake_target_lake_number =
+            (get_lake_variables(find_true_primary_lake(other_lake_target_lake)::Lake)
+                                ::LakeVariables).lake_number
+        else
+          return false,false
+        end
+      end
     end
   else
     return false,false
@@ -615,6 +637,14 @@ function change_to_filling_lake(lake::OverflowingLake)
                                           FillingLakeVariables(true,
                                                                use_additional_fields))
   return filling_lake
+end
+
+function change_to_filling_lake(lake::SubsumedLake)
+  filling_lake::FillingLake = FillingLake(lake.lake_parameters,
+                                          lake.lake_variables,
+                                          lake.lake_fields,
+                                          FillingLakeVariables(false,
+                                                               false))
 end
 
 function update_filling_cell(lake::FillingLake)

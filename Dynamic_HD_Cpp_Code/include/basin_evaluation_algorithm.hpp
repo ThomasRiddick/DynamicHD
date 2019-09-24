@@ -53,8 +53,8 @@ public:
 protected:
 	virtual void set_previous_cells_flood_next_cell_index(coords* coords_in) = 0;
   virtual void set_previous_cells_connect_next_cell_index(coords* coords_in) = 0;
-	virtual void set_previous_cells_flood_force_merge_index() = 0;
-  virtual void set_previous_cells_connect_force_merge_index() = 0;
+	virtual void set_previous_cells_flood_force_merge_index(coords* coords_in) = 0;
+  virtual void set_previous_cells_connect_force_merge_index(coords* coords_in) = 0;
   virtual void set_previous_cells_redirect_index(coords* initial_fine_coords,
                                                  coords* target_coords,
                                                  height_types height_type,
@@ -67,6 +67,7 @@ protected:
   virtual coords* get_cells_next_force_merge_index_as_coords(coords* coords_in,
                                                       height_types height_type_in) = 0;
 	virtual bool check_for_sinks_and_set_downstream_coords(coords* coords_in) = 0;
+  virtual bool coarse_cell_is_sink(coords* coords_in) = 0;
   bool skip_center_cell();
 	void evaluate_basin();
   void initialize_basin();
@@ -180,6 +181,7 @@ public:
                     double* connection_volume_thresholds_in,
                     double* flood_volume_thresholds_in,
                     double* prior_fine_rdirs_in,
+                    double* prior_coarse_rdirs_in,
                     int* prior_fine_catchments_in,
                     int* coarse_catchment_nums_in,
                     int* flood_next_cell_lat_index_in,
@@ -227,6 +229,7 @@ public:
                                                height_types& previous_filled_cell_height_type_in,
                                                grid_params* grid_params_in);
 	void test_set_primary_merge_and_redirect(vector<coords*> basin_catchment_centers_in,
+                                           double* prior_coarse_rdirs_in,
                                            int* basin_catchment_numbers_in,
                                            int* coarse_catchment_nums_in,
                                            int* flood_force_merge_lat_index_in,
@@ -265,6 +268,7 @@ public:
                                    grid_params* grid_params_in);
 	void test_set_remaining_redirects(vector<coords*> basin_catchment_centers_in,
                                     double* prior_fine_rdirs_in,
+                                    double* prior_coarse_rdirs_in,
                                     bool* requires_flood_redirect_indices_in,
                                     bool* requires_connect_redirect_indices_in,
                                     int* basin_catchment_numbers_in,
@@ -285,13 +289,14 @@ public:
 private:
 	void set_previous_cells_flood_next_cell_index(coords* coords_in);
   void set_previous_cells_connect_next_cell_index(coords* coords_in);
-	void set_previous_cells_flood_force_merge_index();
-  void set_previous_cells_connect_force_merge_index();
+	void set_previous_cells_flood_force_merge_index(coords* coords_in);
+  void set_previous_cells_connect_force_merge_index(coords* coords_in);
 	void set_previous_cells_redirect_index(coords* initial_fine_coords,
                                          coords* target_coords,
                                          height_types height_type,
                                          bool use_additional_fields=false);
 	bool check_for_sinks_and_set_downstream_coords(coords* coords_in);
+  bool coarse_cell_is_sink(coords* coords_in);
 	coords* get_cells_next_cell_index_as_coords(coords* coords_in,
                                               height_types height_type_in);
   coords* get_cells_redirect_index_as_coords(coords* coords_in,
@@ -302,6 +307,7 @@ private:
   void output_diagnostics_for_grid_section(int min_lat,int max_lat,
                                            int min_lon,int max_lon);
 	field<double>* prior_fine_rdirs = nullptr;
+  field<double>* prior_coarse_rdirs = nullptr;
 	field<int>* flood_next_cell_lat_index = nullptr;
 	field<int>* flood_next_cell_lon_index = nullptr;
   field<int>* connect_next_cell_lat_index = nullptr;

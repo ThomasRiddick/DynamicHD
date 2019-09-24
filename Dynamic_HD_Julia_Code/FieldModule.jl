@@ -2,8 +2,9 @@ module FieldModule
 
 using Printf: @printf
 using UserExceptionModule: UserError
-using CoordsModule: Coords,LatLonCoords,DirectionIndicator
+using CoordsModule: Coords,LatLonCoords,DirectionIndicator,Generic1DCoords
 using GridModule: Grid,LatLonGrid, for_all, wrap_coords, coords_in_grid,for_all_with_line_breaks
+using GridModule: UnstructuredGrid
 using InteractiveUtils: subtypes
 using SpecialDirectionCodesModule
 using MergeTypesModule
@@ -113,12 +114,12 @@ end
 struct UnstructuredField{T} <: Field{T}
   data::Array{T,1}
   grid::UnstructuredGrid
-  function LatLonField{T}(grid::UnstructuredGrid,value::T) where {T}
+  function UnstructuredField{T}(grid::UnstructuredGrid,value::T) where {T}
     data::Array{T,1} = value == zero(T) ? zeros(T,grid.ncells) :
                                           ones(T,grid.ncells)*value
     return new(data,grid)
   end
-  function LatLonField{T}(grid::UnstructuredGrid,values::AbstractArray{T,1}) where {T}
+  function UnstructuredField{T}(grid::UnstructuredGrid,values::AbstractArray{T,1}) where {T}
     if size(values,1) != grid.ncells ||
        error("Values provided don't match selected grid")
     end
@@ -304,7 +305,7 @@ struct UnstructuredDirectionIndicators <: DirectionIndicators
 end
 
 function (unstructured_direction_indicators::UnstructuredDirectionIndicators)(coords::Generic1DCoords)
-  return DirectionIndicator(Generic1DCoords(unstructured_direction_indicators.next_cell_coords(coords))
+  return DirectionIndicator(Generic1DCoords(unstructured_direction_indicators.next_cell_coords(coords)))
 end
 
 function get(unstructured_direction_indicators::UnstructuredDirectionIndicators,

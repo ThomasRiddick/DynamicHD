@@ -55,7 +55,7 @@ struct UnstructuredGrid <: Grid
   end
 end
 
-LatLonGridOrUnstructuredGrid = Union(LatLonGrid,UnstructuredGrid)
+LatLonGridOrUnstructuredGrid = Union{LatLonGrid,UnstructuredGrid}
 
 function for_all(function_on_point::Function,
                  grid::LatLonGrid)
@@ -68,7 +68,7 @@ end
 
 function for_all(function_on_point::Function,
                  grid::UnstructuredGrid)
-  for i 1:grid.ncells
+  for i = 1:grid.ncells
     function_on_point(Generic1DCoords(i))
   end
 end

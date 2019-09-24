@@ -577,8 +577,9 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
 
     def prepare_basins_from_glac1D(self):
       overarching_file_label = self._generate_file_label()
-      timesteps_to_use = [ 950,1000,1050,1100,1150,1200,1250,1300,1350,
-                          1400,1450,1500,1550,1600,1650,1700,1750,1800]
+      #timesteps_to_use = [ 950,1000,1050,1100,1150,1200,1250,1300,1350,
+      #                    1400,1450,1500,1550,1600,1650,1700,1750,1800]
+      timesteps_to_use = [1400]
       timestep_for_0k = 2600
       glac_1d_topo_filename = join(self.orography_path,
                                    "GLAC1D_Top01_surf.nc")
@@ -654,6 +655,10 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
                                            "/Users/thomasriddick/Documents/data/HDdata/catchmentmaps/"
                                            "catchmentmap_" + file_label + "_30mins.nc",
                                            input_coarse_catchment_nums_fieldname="catchments",
+                                           input_coarse_rdirs_file=
+                                           "/Users/thomasriddick/Documents/data/HDdata/rdirs/generated/"
+                                           "updated_RFDs_" + file_label + "_30min_with_depressions.nc",
+                                           input_coarse_rdirs_fieldname="FDIR",
                                            combined_output_filename=
                                             join(self.lake_parameter_file_path,
                                                  "lakeparas_" + file_label + ".nc"),
@@ -850,6 +855,11 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
                                            "catchmentmap_prepare_river_directions_with_depressions_"
                                            "20190401_115141_30mins.nc",
                                            input_coarse_catchment_nums_fieldname="catchments",
+                                           input_coarse_rdirs_file=
+                                           "/Users/thomasriddick/Documents/data/HDdata/rdirs/generated/"
+                                           "updated_RFDs_prepare_river_directions_with_depressions_"
+                                           "20190401_115141_30min_with_depressions.nc",
+                                           input_coarse_rdirs_fieldname="FDIR",
                                            combined_output_filename=
                                             join(self.lake_parameter_file_path,
                                                  "lakeparas" + file_label + ".nc"),
@@ -896,6 +906,12 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
                                            "_oceans_lsmask_plus_upscale_rdirs_tarasov_orog_corrs"
                                            "_20171015_031541_upscaled_updated.nc",
                                            input_coarse_catchment_nums_fieldname="field_value",
+                                           input_coarse_rdirs_file=
+                                           "/Users/thomasriddick/Documents/data/HDdata/rdirs/generated/"
+                                           "updated_RFDs_ICE6g_lgm_ALG4_sinkless_no_true_sinks_oceans_"
+                                           "lsmask_plus_upscale_rdirs_tarasov_orog_corrs_20171015_"
+                                           "031541.nc",
+                                           input_coarse_rdirs_fieldname="FDIR",
                                            combined_output_filename=
                                             join(self.lake_parameter_file_path,
                                                  "lakeparas" + file_label + ".nc"),

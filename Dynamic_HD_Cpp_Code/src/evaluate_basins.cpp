@@ -16,6 +16,7 @@ void latlon_evaluate_basins_cython_wrapper(int* minima_in_int,
                                            double* connection_volume_thresholds_in,
                                            double* flood_volume_thresholds_in,
                                            double* prior_fine_rdirs_in,
+                                           double* prior_coarse_rdirs_in,
                                            int* prior_fine_catchments_in,
                                            int* coarse_catchment_nums_in,
                                            int* flood_next_cell_lat_index_in,
@@ -61,6 +62,7 @@ void latlon_evaluate_basins_cython_wrapper(int* minima_in_int,
                          connection_volume_thresholds_in,
                          flood_volume_thresholds_in,
                          prior_fine_rdirs_in,
+                         prior_coarse_rdirs_in,
                          prior_fine_catchments_in,
                          coarse_catchment_nums_in,
                          flood_next_cell_lat_index_in,
@@ -102,6 +104,7 @@ void latlon_evaluate_basins(bool* minima_in,
                             double* connection_volume_thresholds_in,
                             double* flood_volume_thresholds_in,
                             double* prior_fine_rdirs_in,
+                            double* prior_coarse_rdirs_in,
                             int* prior_fine_catchments_in,
                             int* coarse_catchment_nums_in,
                             int* flood_next_cell_lat_index_in,
@@ -146,6 +149,7 @@ void latlon_evaluate_basins(bool* minima_in,
   double* prior_fine_rdirs_in_ext = new double[(nlat_fine+2*scale_factor)*nlon_fine];
   int* prior_fine_catchments_in_ext = new int[(nlat_fine+2*scale_factor)*nlon_fine];
   int* coarse_catchment_nums_in_ext = new int[(nlat_coarse+2)*nlon_coarse];
+  double* prior_coarse_rdirs_in_ext = new double[(nlat_coarse+2)*nlon_coarse];
   int* flood_next_cell_lat_index_in_ext = new int[(nlat_fine+2*scale_factor)*nlon_fine];
   fill_n(flood_next_cell_lat_index_in_ext,(nlat_fine+2*scale_factor)*nlon_fine,-1);
   int* flood_next_cell_lon_index_in_ext = new int[(nlat_fine+2*scale_factor)*nlon_fine];
@@ -202,7 +206,10 @@ void latlon_evaluate_basins(bool* minima_in,
   fill_n(landsea_in,(nlat_fine+2*scale_factor)*nlon_fine,false);
   double maximum_double = std::numeric_limits<double>::max();
   double lowest_double = std::numeric_limits<double>::lowest();
-  for (int j = 0; j < nlon_coarse; j++) coarse_catchment_nums_in_ext[j] = 0;
+  for (int j = 0; j < nlon_coarse; j++) {
+    coarse_catchment_nums_in_ext[j] = 0;
+    prior_coarse_rdirs_in_ext[j] = -1.0;
+  }
   for (int i = 0; i < scale_factor; i++) {
     for (int j = 0; j < nlon_fine; j++){
       landsea_in[i*nlon_fine+j] = true;
@@ -217,7 +224,9 @@ void latlon_evaluate_basins(bool* minima_in,
   for (int i = 1; i < nlat_coarse+1; i++) {
     for (int j = 0; j < nlon_coarse; j++) {
       coarse_catchment_nums_in_ext[i*nlon_coarse+j] =
-        coarse_catchment_nums_in[i*(nlon_coarse-1)+j];
+        coarse_catchment_nums_in[nlon_coarse*(i-1)+j];
+      prior_coarse_rdirs_in_ext[i*nlon_coarse+j] =
+        prior_coarse_rdirs_in[nlon_coarse*(i-1)+j];
     }
   }
   for (int i = scale_factor; i < nlat_fine+scale_factor; i++){
@@ -235,8 +244,10 @@ void latlon_evaluate_basins(bool* minima_in,
         prior_fine_catchments_in[i*nlon_fine+j-scale_factor*nlon_fine];
     }
   }
-  for (int j = 0; j < nlon_coarse; j++)
-    coarse_catchment_nums_in_ext[(nlat_coarse+1)*nlon_coarse + j] = 5.0;
+  for (int j = 0; j < nlon_coarse; j++){
+    coarse_catchment_nums_in_ext[(nlat_coarse+1)*nlon_coarse + j] = 0;
+    prior_coarse_rdirs_in_ext[(nlat_coarse+1)*nlon_coarse + j] = 5.0;
+  }
   for (int i = nlat_fine+scale_factor;
        i < nlat_fine+2*scale_factor; i++) {
     for (int j = 0; j < nlon_fine; j++){
@@ -265,6 +276,7 @@ void latlon_evaluate_basins(bool* minima_in,
                    connection_volume_thresholds_in_ext,
                    flood_volume_thresholds_in_ext,
                    prior_fine_rdirs_in_ext,
+                   prior_coarse_rdirs_in_ext,
                    prior_fine_catchments_in_ext,
                    coarse_catchment_nums_in_ext,
                    flood_next_cell_lat_index_in_ext,

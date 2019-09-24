@@ -120,6 +120,8 @@ def advanced_basin_evaluation_driver(input_minima_file,
                                      input_prior_fine_catchments_fieldname,
                                      input_coarse_catchment_nums_file,
                                      input_coarse_catchment_nums_fieldname,
+                                     input_coarse_rdirs_file,
+                                     input_coarse_rdirs_fieldname,
                                      combined_output_filename,
                                      output_filepath,
                                      output_filelabel,
@@ -149,6 +151,10 @@ def advanced_basin_evaluation_driver(input_minima_file,
     input_coarse_catchment_nums = iodriver.advanced_field_loader(input_coarse_catchment_nums_file,
                                                                  field_type='Generic',
                                                                  fieldname=input_coarse_catchment_nums_fieldname)
+    input_coarse_rdirs =  iodriver.advanced_field_loader(input_coarse_rdirs_file,
+                                                         field_type='Generic',
+                                                         fieldname=
+                                                         input_coarse_rdirs_fieldname)
     fine_grid = input_raw_orography.get_grid()
     fine_shape = input_raw_orography.get_data().shape
     connection_volume_thresholds = field.Field(np.zeros(fine_shape,dtype=np.float64,order='C'),fine_grid)
@@ -195,6 +201,9 @@ def advanced_basin_evaluation_driver(input_minima_file,
                                             flood_volume_thresholds.get_data(),
                                             prior_fine_rdirs_in=
                                             np.ascontiguousarray(input_prior_fine_rdirs.get_data(),
+                                                                 dtype=np.float64),
+                                            prior_coarse_rdirs_in=
+                                            np.ascontiguousarray(input_coarse_rdirs.get_data(),
                                                                  dtype=np.float64),
                                             prior_fine_catchments_in=
                                             np.ascontiguousarray(input_prior_fine_catchments.get_data(),

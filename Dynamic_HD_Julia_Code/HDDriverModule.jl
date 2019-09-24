@@ -50,7 +50,7 @@ function drive_hd_model_with_or_without_lakes(prognostic_fields::PrognosticField
       handle_event(hsm,run_lakes)
     end
     if print_timestep_results
-      if false #i%100 == 0
+      if i%100 == 0
         # print_results::PrintResults = PrintResults(i)
         # handle_event(hsm,print_results)
         print_section::PrintSection = PrintSection()
