@@ -35,6 +35,10 @@ cdef extern from 'redistribute_water.cpp':
                                                   int nlat_in, int nlon_in,
                                                   int coarse_nlat_in, int coarse_nlon_in)
 
+cdef extern from 'filter_out_shallow_lakes.cpp':
+    void latlon_filter_out_shallow_lakes(double* unfilled_orography,double* filled_orography,
+                                         double minimum_depth_threshold,int nlat_in,int nlon_in)
+
 def burn_carved_rivers(np.ndarray[double,ndim=2,mode='c'] orography_in,
                        np.ndarray[double,ndim=2,mode='c'] rdirs_in,
                        np.ndarray[int,ndim=2,mode='c'] minima_in_int,
@@ -115,3 +119,13 @@ def redistribute_water(np.ndarray[int,ndim=2,mode='c'] lake_numbers_in,
                                            &water_redistributed_to_lakes_in[0,0],
                                            &water_redistributed_to_rivers_in[0,0],
                                            nlat_in, nlon_in,coarse_nlat_in,coarse_nlon_in)
+
+def filter_out_shallow_lakes(np.ndarray[double,ndim=2,mode='c'] unfilled_orography,
+                             np.ndarray[double,ndim=2,mode='c'] filled_orography,
+                             double minimum_depth_threshold):
+    cdef int nlat_in,nlon_in
+    nlat_in, nlon_in = unfilled_orography.shape[0],unfilled_orography.shape[1]
+    latlon_filter_out_shallow_lakes(&unfilled_orography[0,0],
+                                    &filled_orography[0,0],
+                                    minimum_depth_threshold,
+                                    nlat_in,nlon_in)

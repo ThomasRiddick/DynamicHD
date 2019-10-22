@@ -1,4 +1,4 @@
-#push!(LOAD_PATH, "/Users/thomasriddick/Documents/workspace/Dynamic_HD_Code/Dynamic_HD_Julia_Code/")
+push!(LOAD_PATH, "/Users/thomasriddick/Documents/workspace/Dynamic_HD_Code/Dynamic_HD_Julia_Code/")
 using ArgParse
 using HDDriverModule: drive_hd_model,drive_hd_and_lake_model
 using IOModule: load_river_parameters, load_lake_parameters
@@ -73,7 +73,7 @@ function main()
         drive_hd_and_lake_model(river_parameters,river_fields,
                                 lake_parameters,drainages,runoffs,
                                 timesteps,true,initial_water_to_lake_centers,
-                                initial_spillover_to_rivers;print_timestep_results=true)
+                                initial_spillover_to_rivers;print_timestep_results=false)
         # Profile.clear()
         # Profile.init(delay=0.01)
         # @time drive_hd_and_lake_model(river_parameters,river_fields,
@@ -132,11 +132,11 @@ function main()
   end
 end
 
-empty!(ARGS)
+# empty!(ARGS)
 #push!(ARGS,"-p/Users/thomasriddick/Documents/data/HDdata/hdfiles/hdpara_file_from_current_model.nc")
-push!(ARGS,"-p/Users/thomasriddick/Documents/data/HDdata/hdfiles/generated/hd_file_prepare_basins_from_glac1D_20190924_163006_1400.nc")
-push!(ARGS,"-l/Users/thomasriddick/Documents/data/HDdata/lakeparafiles/lakeparas_prepare_basins_from_glac1D_20190924_163006_1400.nc")
+# push!(ARGS,"-p/Users/thomasriddick/Documents/data/HDdata/hdfiles/generated/hd_file_prepare_basins_from_glac1D_20190925_225029_1400.nc")
+# push!(ARGS,"-l/Users/thomasriddick/Documents/data/HDdata/lakeparafiles/lakeparas_prepare_basins_from_glac1D_20190925_225029_1400.nc")
 #push!(ARGS,"-n/Users/thomasriddick/Documents/data/temp/transient_sim_1/results_for_1400/lake_model_start_1400.nc")
 #push!(ARGS,"-i/Users/thomasriddick/Documents/data/temp/transient_sim_1/results_for_1400/hdstart_1400.nc")
-push!(ARGS,"-t600")
+# push!(ARGS,"-t6000")
 main()

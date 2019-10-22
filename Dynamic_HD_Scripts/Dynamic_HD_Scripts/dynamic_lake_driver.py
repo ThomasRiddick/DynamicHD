@@ -15,6 +15,7 @@ import compute_catchments as cc
 import flow_to_grid_cell as ftgc
 from os.path import join
 import os.path as path
+import time
 
 class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
     '''
@@ -355,6 +356,7 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
                           ls_mask_filename,ls_mask_fieldname,ls_mask_timestep,
                           ls_mask_0k_filename,ls_mask_0k_fieldname,ls_mask_timestep_0k,
                           file_label):
+        tstart = time.time()
         flip_ls_mask_0k   = False
         invert_ls_mask    = True
         rotate_lsmask_180_lr = True
@@ -363,7 +365,7 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
         true_sinks_filename = join(self.truesinks_path,
                                    "truesinks_ICE5G_and_tarasov_upscaled_srtm30plus_"
                                    "north_america_only_data_ALG4_sinkless_glcc_olson"
-                                   "_lsmask_0k_20170517_003802_with_grid.nc")
+                                   "_lsmask_0k_20191014_173825_with_grid.nc")
         if timestep_0k is not None:
           orography_0k = iodriver.advanced_field_loader(orography_0k_filename,
                                                         time_slice=timestep_0k,
@@ -394,6 +396,9 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
         orography_filename = self.generated_orography_filepath + file_label + '.nc'
         output_0k_ice5g_orog_filename = self.generated_orography_filepath + "0k_ice5g_lake_" + file_label + '.nc'
         output_working_orog_filename = self.generated_orography_filepath + "{}_ice6g_lake_".format(timestep) + file_label + '.nc'
+        output_filtered_working_orog_filename = self.generated_orography_filepath +\
+                                                "{}_ice6g_lake_filtered_".format(timestep) +\
+                                                file_label + '.nc'
         output_working_orog_sinkless_filename = (self.generated_orography_filepath +
                                                    "{}_ice6g_lake_sinkless_".format(timestep) + file_label + '.nc')
         output_working_orog_sinkless_improved_filename = (self.generated_orography_filepath +
@@ -507,6 +512,7 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
                                                                   minimum_height_change_threshold = 5.0,
                                                                   short_path_threshold = 6,
                                                                   short_minimum_height_change_threshold = 0.25)
+        print "Time for initial setup: " + str(time.time() - tstart)
         utilities.advanced_rebase_orography_driver(orography_filename=
                                                    working_orog_filename,
                                                    present_day_base_orography_filename=
@@ -530,10 +536,22 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
                                                              truesinks_fieldname=None,
                                                              add_slight_slope_when_filling_sinks=False,
                                                              slope_param=0.1)
+
+        dynamic_lake_operators.\
+        advanced_shallow_lake_filtering_driver(input_unfilled_orography_file=
+                                               output_working_orog_filename,
+                                               input_unfilled_orography_fieldname="Topo",
+                                               input_filled_orography_file=
+                                               output_working_orog_sinkless_filename,
+                                               input_filled_orography_fieldname="Topo",
+                                               output_unfilled_orography_file=
+                                               output_filtered_working_orog_filename,
+                                               output_unfilled_orography_fieldname="Topo",
+                                               minimum_depth_threshold=5.0)
         working_orog_sinkless_field = iodriver.advanced_field_loader(output_working_orog_sinkless_filename,
                                                               fieldname="Topo",
                                                               adjust_orientation=True)
-        working_orog_field = iodriver.advanced_field_loader(output_working_orog_filename,fieldname="Topo",
+        working_orog_field = iodriver.advanced_field_loader(output_filtered_working_orog_filename,fieldname="Topo",
                                                      adjust_orientation=True)
         working_orog_icemask = iodriver.advanced_field_loader(glacier_mask_filename,
                                                          time_slice=glacier_mask_timestep,
@@ -555,7 +573,7 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
         working_orog_sinkless_field.update_field_with_partially_masked_data(working_orog_field)
         iodriver.advanced_field_writer(output_working_orog_sinkless_improved_filename,
                                        working_orog_sinkless_field,fieldname="Topo",clobber=True)
-        dynamic_lake_operators.advanced_local_minima_finding_driver(output_working_orog_filename,
+        dynamic_lake_operators.advanced_local_minima_finding_driver(output_filtered_working_orog_filename,
                                                                     "Topo",
                                                                     minima_working_orog_filename,
                                                                     minima_fieldname)
@@ -569,7 +587,7 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
         print "timestep{}_orog_filename:".format(timestep) + output_working_orog_filename
         improved_sinkless_orog = iodriver.advanced_field_loader(output_working_orog_sinkless_improved_filename,
                                                                 fieldname="Topo",adjust_orientation=True)
-        lake_orog = iodriver.advanced_field_loader(output_working_orog_filename,
+        lake_orog = iodriver.advanced_field_loader(output_filtered_working_orog_filename,
                                                    fieldname="Topo",adjust_orientation=True)
         improved_sinkless_orog.subtract(lake_orog)
         iodriver.advanced_field_writer(orog_diff_filename,improved_sinkless_orog,
@@ -579,7 +597,7 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
       overarching_file_label = self._generate_file_label()
       #timesteps_to_use = [ 950,1000,1050,1100,1150,1200,1250,1300,1350,
       #                    1400,1450,1500,1550,1600,1650,1700,1750,1800]
-      timesteps_to_use = [1400]
+      timesteps_to_use = [2550]
       timestep_for_0k = 2600
       glac_1d_topo_filename = join(self.orography_path,
                                    "GLAC1D_Top01_surf.nc")
@@ -608,7 +626,7 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
                                ls_mask_timestep_0k=timestep_for_0k,
                                file_label=file_label)
         working_orography_filename = "/Users/thomasriddick/Documents/data/HDdata/orographys/generated/updated_orog_" + str(timestep) + \
-                                     "_ice6g_lake_" + file_label + ".nc"
+                                     "_ice6g_lake_filtered_" + file_label + ".nc"
         lsmask_filename = "/Users/thomasriddick/Documents/data/HDdata/lsmasks/generated/ls_mask_" + file_label + "_grid.nc"
         self.prepare_river_directions_with_depressions(working_orography_filename=
                                                        working_orography_filename,
@@ -634,12 +652,12 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
                                            input_raw_orography_file=
                                            "/Users/thomasriddick/Documents/data/HDdata/orographys/"
                                            "generated/updated_orog_" + str(timestep) +
-                                           "_ice6g_lake_" + file_label + ".nc",
+                                           "_ice6g_lake_filtered_" + file_label + ".nc",
                                            input_raw_orography_fieldname="Topo",
                                            input_corrected_orography_file=
                                            "/Users/thomasriddick/Documents/data/HDdata/orographys/"
                                            "generated/updated_orog_" + str(timestep) +
-                                           "_ice6g_lake_" + file_label + ".nc",
+                                           "_ice6g_lake_filtered_" + file_label + ".nc",
                                            input_corrected_orography_fieldname="Topo",
                                            input_cell_areas_file= cell_areas_filename_10min,
                                            input_cell_areas_fieldname="cell_area",

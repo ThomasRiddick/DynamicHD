@@ -474,3 +474,32 @@ def advanced_water_redistribution_driver(input_lake_numbers_file,
   iodriver.advanced_field_writer(output_water_redistributed_to_rivers_file,
                                  water_redistributed_to_rivers,
                                  fieldname=output_water_redistributed_to_rivers_fieldname)
+
+def advanced_shallow_lake_filtering_driver(input_unfilled_orography_file,
+                                           input_unfilled_orography_fieldname,
+                                           input_filled_orography_file,
+                                           input_filled_orography_fieldname,
+                                           output_unfilled_orography_file,
+                                           output_unfilled_orography_fieldname,
+                                           minimum_depth_threshold):
+    input_unfilled_orography = \
+      iodriver.advanced_field_loader(input_unfilled_orography_file,
+                                     field_type='Orography',
+                                     fieldname=input_unfilled_orography_fieldname)
+    input_filled_orography = \
+      iodriver.advanced_field_loader(input_filled_orography_file,
+                                     field_type='Orography',
+                                     fieldname=input_filled_orography_fieldname)
+    output_unfilled_orography = \
+      field.Field(np.ascontiguousarray(input_unfilled_orography.get_data(),
+                                       dtype=np.float64),
+                  grid=input_unfilled_orography.get_grid())
+    lake_operators_wrapper.filter_out_shallow_lakes(output_unfilled_orography.get_data(),
+                                                    np.ascontiguousarray(input_filled_orography.\
+                                                                         get_data(),
+                                                                         dtype=np.float64),
+                                                    minimum_depth_threshold)
+    iodriver.advanced_field_writer(output_unfilled_orography_file,
+                                   output_unfilled_orography,
+                                   fieldname=output_unfilled_orography_fieldname)
+

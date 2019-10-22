@@ -563,8 +563,8 @@ contains
             end subroutine subroutine_interface
         end interface
         procedure(subroutine_interface) :: subroutine_in
-        do i = 1,this%num_edge_cells
-                call subroutine_in(calling_object,generic_1d_coords(this%edge_cells(i),.true.))
+            do i = 1,this%num_edge_cells
+                    call subroutine_in(calling_object,generic_1d_coords(this%edge_cells(i),.true.))
             end do
     end subroutine icon_single_index_for_all_edge_cells
 

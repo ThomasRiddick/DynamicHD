@@ -2169,9 +2169,11 @@ class ICE5G_Data_Drivers(Dynamic_HD_Drivers):
         unsorted_catchments_filename = self.generated_catchments_path + 'unsorted_' +\
             file_label + '.nc'
         truesinks_filename = self.generated_truesinks_path + file_label + '.nc'
+        #added lakes fezzan and ahnet 14th october 2019
         truesinks_mods_10min_filename = path.join(self.truesinks_modifications_filepath,
-                                                  "truesinks_mods_for_HD_downscaled_to_"
-                                                  "10min_add_in_aral_sea_and_lake_chad.txt")
+                                                  "truesinks_mods_for_HD_downscaled_to_10min_"
+                                                  "add_in_aral_sea_and_lake_chad_and_lake_"
+                                                  "fezzan_and_lake_ahnet.txt")
         truesinks_mods_HD_filename = None
         utilities.downscale_true_sink_points_driver(input_fine_orography_filename=\
                                                         orography_filename,
@@ -3518,7 +3520,7 @@ def main():
     Select runs by uncommenting them and also the revelant object instantation.
     """
 
-    #ice5g_data_drivers = ICE5G_Data_Drivers()
+    ice5g_data_drivers = ICE5G_Data_Drivers()
     #ice5g_data_drivers.ICE5G_as_HD_data_21k_0k_sig_grad_only_all_neighbours_driver()
     #ice5g_data_drivers.ICE5G_as_HD_data_all_points_21k()
     #ice5g_data_drivers.ICE5G_as_HD_data_all_points_0k()
@@ -3535,7 +3537,7 @@ def main():
     #ice5g_data_drivers.ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless_downscaled_ls_mask_0k()
     #ice5g_data_drivers.ICE5G_and_tarasov_upscaled_srtm30plus_data_ALG4_sinkless_downscaled_ls_mask_0k_upscale_rdirs()
     #ice5g_data_drivers.ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless_downscaled_ls_mask_0k_upscale_rdirs()
-    #ice5g_data_drivers.ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless_glcc_olson_lsmask_0k()
+    ice5g_data_drivers.ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless_glcc_olson_lsmask_0k()
     #ice5g_data_drivers.ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless_glcc_olson_lsmask_0k_upscale_rdirs()
     #ice5g_data_drivers.\
     #ICE5G_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_tarasov_orog_corrs_generation_and_upscaling()
@@ -3544,7 +3546,7 @@ def main():
     #etopo1_data_drivers = ETOPO1_Data_Drivers()
     #etopo1_data_drivers.etopo1_data_all_points()
     #etopo1_data_drivers.etopo1_data_ALG4_sinkless()
-    utilities_drivers = Utilities_Drivers()
+    #utilities_drivers = Utilities_Drivers()
     #utilities_drivers.convert_corrected_HD_hydrology_dat_files_to_nc()
     #utilities_drivers.recreate_connected_HD_lsmask()
     #utilities_drivers.recreate_connected_HD_lsmask_true_seas_inc_casp_only()
@@ -3571,7 +3573,7 @@ def main():
     #utilities_drivers.renumber_catchments_from_strm30_plus()
     #utilities_drivers.create_lgm_orography_from_strm30_plus_and_ice_6g()
     #utilities_drivers.generate_rdirs_from_srtm30_plus_iceg6_30sec_lgm()
-    utilities_drivers.renumber_catchments_from_strm30_plus_ice6g_30sec_lgm()
+    #utilities_drivers.renumber_catchments_from_strm30_plus_ice6g_30sec_lgm()
     #utilities_drivers.generate_rdirs_from_ice5g_21k()
     #original_hd_model_rfd_drivers = Original_HD_Model_RFD_Drivers()
     #original_hd_model_rfd_drivers.corrected_HD_rdirs_post_processing()

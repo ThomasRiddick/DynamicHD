@@ -23,6 +23,8 @@ type, public, abstract :: field_section
     !> Given a pointer to an unlimited polymorphic variable set it at the given
     !! coordinates
     procedure(set_generic_value), deferred :: set_generic_value
+    !> For each cell in the section
+    procedure(for_all_section), deferred :: for_all_section
     !> Print the entire data field
     procedure(print_field_section), deferred :: print_field_section
     !> Deallocate the data object
@@ -47,6 +49,21 @@ abstract interface
         class(coords), intent(in) :: coords_in
         class(*), pointer, intent(in) :: value
     end subroutine
+
+    subroutine for_all_section(this,subroutine_in,calling_object)
+        import field_section
+        implicit none
+        class(field_section) :: this
+        interface
+            subroutine subroutine_interface(calling_object,coords_in)
+                use coords_mod
+                class(*) :: calling_object
+                class(coords),intent(in) :: coords_in
+            end subroutine subroutine_interface
+        end interface
+        procedure(subroutine_interface) :: subroutine_in
+        class(*) :: calling_object
+    end subroutine for_all_section
 
     subroutine print_field_section(this)
         import field_section
@@ -110,6 +127,8 @@ type, extends(field_section), public :: latlon_field_section
         !> Return an unlimited polymorphic pointer to a value at the given latitude
         !! longitude coordinates
         procedure, public :: get_value => latlon_get_value
+        !> For each cell in the section
+        procedure, public :: for_all_section => latlon_for_all_section
         !> Print the entire latitude longitude data field
         procedure, public :: print_field_section => latlon_print_field_section
         !> Deallocate the latitude longitude data array
@@ -147,6 +166,8 @@ type, extends(field_section), public :: icon_single_index_field_section
         !> Return an unlimited polymorphic pointer to a value at the given
         !! coordinates
         procedure, public :: get_value => icon_single_index_get_value
+        !> For each cell in the section
+        procedure, public :: for_all_section => icon_single_index_for_all_section
         !> Print the entire  data field
         procedure, public :: print_field_section => icon_single_index_print_field_section
         !> Deallocate the data array
@@ -306,6 +327,26 @@ contains
             end select
     end subroutine latlon_set_generic_value
 
+    subroutine latlon_for_all_section(this,subroutine_in,calling_object)
+        implicit none
+        class(latlon_field_section) :: this
+        class(*) :: calling_object
+        integer :: i,j
+        interface
+            subroutine subroutine_interface(calling_object,coords_in)
+                use coords_mod
+                class(*) :: calling_object
+                class(coords), intent(in) :: coords_in
+            end subroutine subroutine_interface
+        end interface
+        procedure(subroutine_interface) :: subroutine_in
+        do j = this%section_min_lat,this%section_max_lat
+            do i = this%section_min_lon,this%section_max_lon
+                call subroutine_in(calling_object,latlon_coords(i,j))
+            end do
+        end do
+    end subroutine latlon_for_all_section
+
     pure function get_nlat(this) result(nlat)
         class(latlon_field_section), intent(in) :: this
         integer nlat
@@ -444,6 +485,26 @@ contains
                 call this%set_data_array_element(coords_in%index,value)
             end select
     end subroutine icon_single_index_set_generic_value
+
+    subroutine icon_single_index_for_all_section(this,subroutine_in,calling_object)
+        implicit none
+        class(icon_single_index_field_section) :: this
+        class(*) :: calling_object
+        integer :: i
+        interface
+            subroutine subroutine_interface(calling_object,coords_in)
+                use coords_mod
+                class(*) :: calling_object
+                class(coords), intent(in) :: coords_in
+            end subroutine subroutine_interface
+        end interface
+        procedure(subroutine_interface) :: subroutine_in
+            do i = 1,this%num_points
+                if (this%mask(i)) then
+                    call subroutine_in(calling_object,generic_1d_coords(i,.true.))
+                end if
+            end do
+    end subroutine icon_single_index_for_all_section
 
     subroutine icon_single_index_print_field_section(this)
         class(icon_single_index_field_section) :: this

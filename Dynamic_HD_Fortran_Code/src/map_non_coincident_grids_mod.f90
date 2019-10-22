@@ -23,6 +23,7 @@ end type
 
 type, public, abstract :: non_coincident_grid_mapper
   class(field_section), pointer  :: mask
+  class(field_section), pointer  :: cell_numbers
   class(field_section), pointer  :: pixel_center_lats
   class(field_section), pointer  :: pixel_center_lons
   class(field_section), pointer  :: cell_vertex_coords
@@ -34,10 +35,14 @@ type, public, abstract :: non_coincident_grid_mapper
   contains
     procedure :: generate_pixels_in_cell_mask
     procedure :: check_if_pixel_is_in_cell
+    procedure :: generate_cell_numbers
+    procedure :: process_cell
     procedure(generate_cell_bounds), deferred :: generate_cell_bounds
     procedure(generate_areas_to_consider), deferred :: generate_areas_to_consider
     procedure(check_if_pixel_center_is_in_bounds), deferred :: &
       check_if_pixel_center_is_in_bounds
+    procedure(create_new_mask), deferred :: create_new_mask
+    procedure(assign_cell_numbers), deferred :: assign_cell_numbers
 end type
 
 abstract interface
@@ -62,6 +67,18 @@ abstract interface
     real(kind=double_precision), intent(in) :: pixel_center_lat, pixel_center_lon
     logical :: is_in_bounds
   end function check_if_pixel_center_is_in_bounds
+
+  subroutine create_new_mask(this)
+    import non_coincident_grid_mapper
+    implicit none
+    class(non_coincident_grid_mapper), intent(inout) :: this
+  end subroutine create_new_mask
+
+  subroutine assign_cell_numbers(this)
+    import non_coincident_grid_mapper
+    implicit none
+    class(non_coincident_grid_mapper), intent(inout) :: this
+  end subroutine
 end interface
 
 type, extends(non_coincident_grid_mapper), public :: &
@@ -74,6 +91,9 @@ contains
   procedure :: generate_areas_to_consider => latlon_pixel_generate_areas_to_consider
   procedure :: check_if_pixel_center_is_in_bounds => &
     icon_icosohedral_cell_check_if_pixel_center_is_in_bounds
+  procedure :: create_new_mask => latlon_pixel_create_new_mask
+  procedure :: assign_cell_numbers => &
+    icon_icosohedral_cell_latlon_pixel_assign_cell_numbers
   procedure :: init_icon_icosohedral_cell_latlon_pixel_ncg_mapper
 end type
 
@@ -83,12 +103,11 @@ end interface icon_icosohedral_cell_latlon_pixel_non_coincident_grid_mapper
 
 contains
 
-  function generate_pixels_in_cell_mask(this,cell_coords) result(mask)
+  subroutine generate_pixels_in_cell_mask(this,cell_coords)
     class(non_coincident_grid_mapper), intent(inout) :: this
     class(coords), pointer, intent(in) :: cell_coords
     !Despite the name this field section actually covers the entire field
-    class(field_section), pointer  :: mask
-    !Despite the name these section coords actually cover the entire field
+      call this%create_new_mask()
       this%coarse_cell_coords => cell_coords
       call this%generate_cell_bounds()
       call this%generate_areas_to_consider()
@@ -96,8 +115,7 @@ contains
       if (associated(this%secondary_area_to_consider_mask)) then
         call this%secondary_area_to_consider_mask%for_all(check_if_pixel_is_in_cell,this)
       end if
-      mask => this%mask
-  end
+  end subroutine generate_pixels_in_cell_mask
 
   subroutine check_if_pixel_is_in_cell(this,coords_in)
     class(non_coincident_grid_mapper), intent(inout) :: this
@@ -119,25 +137,20 @@ contains
                                                                        pixel_center_lon))
   end subroutine check_if_pixel_is_in_cell
 
-  subroutine icon_icosohedral_cell_generate_cell_bounds(this)
-      class(icon_icosohedral_cell_latlon_pixel_non_coincident_grid_mapper), intent(inout) :: this
-        this%cell_bounds%west_extreme_lon = &
-          max(max(this%icon_icosohedral_cell_get_vertex_coords(this%coarse_cell_coords,1,.FALSE.), &
-                  this%icon_icosohedral_cell_get_vertex_coords(this%coarse_cell_coords,2,.FALSE.)),&
-              this%icon_icosohedral_cell_get_vertex_coords(this%coarse_cell_coords,3,.FALSE.))
-        this%cell_bounds%east_extreme_lon = &
-          min(min(this%icon_icosohedral_cell_get_vertex_coords(this%coarse_cell_coords,1,.FALSE.),&
-                  this%icon_icosohedral_cell_get_vertex_coords(this%coarse_cell_coords,2,.FALSE.)),&
-              this%icon_icosohedral_cell_get_vertex_coords(this%coarse_cell_coords,3,.FALSE.))
-        this%cell_bounds%south_extreme_lat = &
-          max(max(this%icon_icosohedral_cell_get_vertex_coords(this%coarse_cell_coords,1,.TRUE.),&
-                this%icon_icosohedral_cell_get_vertex_coords(this%coarse_cell_coords,2,.TRUE.)),&
-              this%icon_icosohedral_cell_get_vertex_coords(this%coarse_cell_coords,3,.TRUE.))
-        this%cell_bounds%north_extreme_lat = &
-          min(min(this%icon_icosohedral_cell_get_vertex_coords(this%coarse_cell_coords,1,.TRUE.),&
-                this%icon_icosohedral_cell_get_vertex_coords(this%coarse_cell_coords,2,.TRUE.)),&
-              this%icon_icosohedral_cell_get_vertex_coords(this%coarse_cell_coords,3,.TRUE.))
-  end subroutine icon_icosohedral_cell_generate_cell_bounds
+  function generate_cell_numbers(this) &
+      result(cell_numbers)
+    class(non_coincident_grid_mapper), intent(inout) :: this
+    class(field_section), pointer  :: cell_numbers
+      call this%cell_vertex_coords%for_all_section(process_cell,this)
+      cell_numbers =>this%cell_numbers
+      deallocate(this%mask)
+  end function generate_cell_numbers
+
+  subroutine process_cell(this,coords_in)
+    class(non_coincident_grid_mapper), intent(inout) :: this
+    class(coords), pointer,intent(in) :: coords_in
+      call this%generate_pixels_in_cell_mask(coords_in)
+  end subroutine process_cell
 
   subroutine latlon_pixel_generate_areas_to_consider(this)
     class(icon_icosohedral_cell_latlon_pixel_non_coincident_grid_mapper), intent(inout) :: this
@@ -230,6 +243,41 @@ contains
       area_to_consider=> latlon_subfield(mask,area_to_consider_section_coords)
   end function latlon_pixel_generate_area_to_consider
 
+  subroutine latlon_pixel_create_new_mask(this)
+      class(icon_icosohedral_cell_latlon_pixel_non_coincident_grid_mapper), intent(inout) :: this
+      class(*),pointer,dimension(:,:) :: new_mask
+        select type(fine_grid_shape => this%fine_grid_shape)
+        type is (latlon_section_coords)
+          allocate(logical::new_mask(1:fine_grid_shape%section_width_lat, &
+                                     1:fine_grid_shape%section_width_lon))
+          select type(new_mask)
+          type is (logical)
+            new_mask = .False.
+          end select
+          this%mask => latlon_field_section(new_mask,fine_grid_shape)
+        end select
+  end subroutine latlon_pixel_create_new_mask
+
+  subroutine icon_icosohedral_cell_generate_cell_bounds(this)
+      class(icon_icosohedral_cell_latlon_pixel_non_coincident_grid_mapper), intent(inout) :: this
+        this%cell_bounds%west_extreme_lon = &
+          max(max(this%icon_icosohedral_cell_get_vertex_coords(this%coarse_cell_coords,1,.FALSE.), &
+                  this%icon_icosohedral_cell_get_vertex_coords(this%coarse_cell_coords,2,.FALSE.)),&
+              this%icon_icosohedral_cell_get_vertex_coords(this%coarse_cell_coords,3,.FALSE.))
+        this%cell_bounds%east_extreme_lon = &
+          min(min(this%icon_icosohedral_cell_get_vertex_coords(this%coarse_cell_coords,1,.FALSE.),&
+                  this%icon_icosohedral_cell_get_vertex_coords(this%coarse_cell_coords,2,.FALSE.)),&
+              this%icon_icosohedral_cell_get_vertex_coords(this%coarse_cell_coords,3,.FALSE.))
+        this%cell_bounds%south_extreme_lat = &
+          max(max(this%icon_icosohedral_cell_get_vertex_coords(this%coarse_cell_coords,1,.TRUE.),&
+                this%icon_icosohedral_cell_get_vertex_coords(this%coarse_cell_coords,2,.TRUE.)),&
+              this%icon_icosohedral_cell_get_vertex_coords(this%coarse_cell_coords,3,.TRUE.))
+        this%cell_bounds%north_extreme_lat = &
+          min(min(this%icon_icosohedral_cell_get_vertex_coords(this%coarse_cell_coords,1,.TRUE.),&
+                this%icon_icosohedral_cell_get_vertex_coords(this%coarse_cell_coords,2,.TRUE.)),&
+              this%icon_icosohedral_cell_get_vertex_coords(this%coarse_cell_coords,3,.TRUE.))
+  end subroutine icon_icosohedral_cell_generate_cell_bounds
+
   function icon_icosohedral_cell_check_if_pixel_center_is_in_bounds(this,pixel_center_lat,pixel_center_lon) &
         result(is_in_bounds)
       class(icon_icosohedral_cell_latlon_pixel_non_coincident_grid_mapper), intent(inout) :: this
@@ -312,50 +360,64 @@ contains
      end select
   end function icon_icosohedral_cell_get_vertex_coords
 
+  subroutine icon_icosohedral_cell_latlon_pixel_assign_cell_numbers(this)
+    class(icon_icosohedral_cell_latlon_pixel_non_coincident_grid_mapper), intent(inout) :: this
+      select type (mask=>this%mask)
+      type is (latlon_field_section)
+        select type (data=>mask%data)
+        type is (logical)
+          select type(cell_numbers => this%cell_numbers)
+          type is (latlon_field_section)
+            select type (cell_numbers_data => cell_numbers%data)
+            type is (integer)
+              select type (coarse_cell_coords=>this%coarse_cell_coords)
+              type is (generic_1d_coords)
+                  where(data) cell_numbers_data = coarse_cell_coords%index
+              end select
+            end select
+          end select
+        end select
+      end select
+  end subroutine icon_icosohedral_cell_latlon_pixel_assign_cell_numbers
+
   subroutine init_icon_icosohedral_cell_latlon_pixel_ncg_mapper(this,&
                                                                 pixel_center_lats,&
                                                                 pixel_center_lons,&
                                                                 cell_vertex_coords,&
-                                                                coarse_cell_coords,&
                                                                 fine_grid_shape)
     class(icon_icosohedral_cell_latlon_pixel_non_coincident_grid_mapper), intent(inout) :: this
     class(latlon_field_section), pointer, intent(in)  :: pixel_center_lats
     class(latlon_field_section), pointer, intent(in)  :: pixel_center_lons
     class(icon_single_index_field_section), pointer, intent(in)  :: cell_vertex_coords
-    class(generic_1d_coords), pointer,intent(in) :: coarse_cell_coords
     class(latlon_section_coords),pointer,intent(in) :: fine_grid_shape
-    class(*),pointer,dimension(:,:) :: mask
-      allocate(logical::mask(1:fine_grid_shape%section_width_lat, &
-                             1:fine_grid_shape%section_width_lon))
-      select type(mask)
-      type is (logical)
-        mask = .False.
-      end select
-      this%mask => latlon_field_section(mask,fine_grid_shape)
+    class(*),pointer,dimension(:,:) :: new_cell_numbers
       this%pixel_center_lats => pixel_center_lats
       this%pixel_center_lons => pixel_center_lons
       this%cell_vertex_coords => cell_vertex_coords
-      allocate(this%coarse_cell_coords,source=coarse_cell_coords)
       this%fine_grid_shape => fine_grid_shape
+      allocate(integer::new_cell_numbers(1:fine_grid_shape%section_width_lat, &
+                                         1:fine_grid_shape%section_width_lon))
+      select type(new_cell_numbers)
+      type is (integer)
+        new_cell_numbers = 0
+      end select
+      this%cell_numbers => latlon_field_section(new_cell_numbers,fine_grid_shape)
   end subroutine init_icon_icosohedral_cell_latlon_pixel_ncg_mapper
 
   function icon_icosohedral_cell_latlon_pixel_ncg_mapper_constructor(pixel_center_lats,&
                                                                      pixel_center_lons,&
                                                                      cell_vertex_coords,&
-                                                                     coarse_cell_coords,&
                                                                      fine_grid_shape) &
                                                                      result(constructor)
         type(icon_icosohedral_cell_latlon_pixel_non_coincident_grid_mapper), allocatable :: constructor
         class(latlon_field_section), pointer, intent(in)  :: pixel_center_lats
         class(latlon_field_section), pointer, intent(in)  :: pixel_center_lons
         class(icon_single_index_field_section), pointer, intent(in)  :: cell_vertex_coords
-        class(generic_1d_coords), pointer, intent(in) :: coarse_cell_coords
         class(latlon_section_coords),pointer, intent(in) :: fine_grid_shape
             allocate(constructor)
             call constructor%init_icon_icosohedral_cell_latlon_pixel_ncg_mapper(pixel_center_lats,&
                                                                                 pixel_center_lons,&
                                                                                 cell_vertex_coords,&
-                                                                                coarse_cell_coords,&
                                                                                 fine_grid_shape)
   end function icon_icosohedral_cell_latlon_pixel_ncg_mapper_constructor
 

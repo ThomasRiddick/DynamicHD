@@ -1416,3 +1416,106 @@ void latlon_basin_evaluation_algorithm::output_diagnostics_for_grid_section(int 
 	  cout << endl;
 	}
 }
+
+bool icon_single_index_basin_evaluation_algorithm::check_for_sinks_and_set_downstream_coords(coords* coords_in){
+	int rdir = (*prior_fine_rdirs)(coords_in);
+	downstream_coords = _grid->calculate_downstream_coords_from_index_based_rdir(coords_in,rdir);
+	int next_rdir = (*prior_fine_rdirs)(downstream_coords);
+	return (rdir == true_sink_value || next_rdir == outflow_value);
+}
+
+bool icon_single_index_basin_evaluation_algorithm::coarse_cell_is_sink(coords* coords_in){
+	int rdir = (*prior_coarse_rdirs)(coords_in);
+	return (rdir == true_sink_value);
+}
+
+void icon_single_index_basin_evaluation_algorithm::
+	set_previous_cells_flood_next_cell_index(coords* coords_in){
+	generic_1d_coords* generic_1d_coords_in = static_cast<generic_1d_coords*>(coords_in);
+	(*flood_next_cell_index)(previous_filled_cell_coords) = generic_1d_coords_in->get_index();
+}
+
+void icon_single_index_basin_evaluation_algorithm::
+	set_previous_cells_connect_next_cell_index(coords* coords_in){
+	generic_1d_coords* generic_1d_coords_in = static_cast<generic_1d_coords*>(coords_in);
+	(*connect_next_cell_index)(previous_filled_cell_coords) = generic_1d_coords_in->get_index();
+}
+
+void icon_single_index_basin_evaluation_algorithm::
+	set_previous_cells_flood_force_merge_index(coords* coords_in){
+	generic_1d_coords* generic_1d_coords_in = static_cast<generic_1d_coords*>(coords_in);
+	(*flood_force_merge_index)(previous_filled_cell_coords) = generic_1d_coords_in->get_index();
+}
+void icon_single_index_basin_evaluation_algorithm::
+	set_previous_cells_connect_force_merge_index(coords* coords_in){
+	generic_1d_coords* generic_1d_coords_in = static_cast<generic_1d_coords*>(coords_in);
+	(*connect_force_merge_index)(previous_filled_cell_coords) = generic_1d_coords_in->get_index();
+
+}
+
+void icon_single_index_basin_evaluation_algorithm::
+	set_previous_cells_redirect_index(coords* initial_fine_coords,coords* target_coords,
+	                                  height_types height_type,bool use_additional_fields) {
+	generic_1d_coords* icon_single_index_target_coords =
+		static_cast<generic_1d_coords*>(target_coords);
+	if (use_additional_fields){
+		if (height_type == connection_height){
+			(*additional_connect_redirect_index)(initial_fine_coords) = icon_single_index_target_coords->get_index();
+		} else if (height_type == flood_height) {
+			(*additional_flood_redirect_index)(initial_fine_coords) = icon_single_index_target_coords->get_index();
+		} else throw runtime_error("Height type not recognized");
+	} else {
+		if (height_type == connection_height){
+			(*connect_redirect_index)(initial_fine_coords) = icon_single_index_target_coords->get_index();
+		} else if (height_type == flood_height) {
+			(*flood_redirect_index)(initial_fine_coords) = icon_single_index_target_coords->get_index();
+		} else throw runtime_error("Height type not recognized");
+	}
+}
+
+coords* icon_single_index_basin_evaluation_algorithm::get_cells_next_cell_index_as_coords(coords* coords_in,
+                                                                               height_types height_type_in){
+
+	generic_1d_coords* generic_1d_coords_in = static_cast<generic_1d_coords*>(coords_in);
+	if (height_type_in == flood_height)
+		return new generic_1d_coords((*flood_next_cell_index)(generic_1d_coords_in));
+	else if (height_type_in == connection_height)
+		return new generic_1d_coords((*connect_next_cell_index)(generic_1d_coords_in));
+	else throw runtime_error("Height type not recognized");
+}
+
+coords* icon_single_index_basin_evaluation_algorithm::get_cells_redirect_index_as_coords(coords* coords_in,
+                                                                              height_types height_type_in,
+                                                                              bool use_additional_fields){
+	generic_1d_coords* generic_1d_coords_in = static_cast<generic_1d_coords*>(coords_in);
+	if (use_additional_fields){
+		if (height_type_in == flood_height)
+			return new generic_1d_coords((*additional_flood_redirect_index)(generic_1d_coords_in));
+		else if (height_type_in == connection_height)
+			return new generic_1d_coords((*additional_connect_redirect_index)(generic_1d_coords_in));
+		else throw runtime_error("Height type not recognized");
+	} else{
+		if (height_type_in == flood_height)
+			return new generic_1d_coords((*flood_redirect_index)(generic_1d_coords_in));
+		else if (height_type_in == connection_height)
+			return new generic_1d_coords((*connect_redirect_index)(generic_1d_coords_in));
+		else throw runtime_error("Height type not recognized");
+	}
+}
+
+coords* icon_single_index_basin_evaluation_algorithm::
+			  get_cells_next_force_merge_index_as_coords(coords* coords_in,
+                                                   height_types height_type_in){
+	generic_1d_coords* generic_1d_coords_in = static_cast<generic_1d_coords*>(coords_in);
+	if (height_type_in == flood_height)
+		return new generic_1d_coords((*flood_force_merge_index)(generic_1d_coords_in));
+	else if (height_type_in == connection_height)
+		return new generic_1d_coords((*connect_force_merge_index)(generic_1d_coords_in));
+	else throw runtime_error("Height type not recognized");
+}
+
+void icon_single_index_basin_evaluation_algorithm::
+		 output_diagnostics_for_grid_section(int min_lat,int max_lat,
+                                         int min_lon,int max_lon){
+		 	throw runtime_error("Not implemented for icosohedral grid");
+		 }

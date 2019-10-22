@@ -114,6 +114,7 @@ public:
 	                                        				grid_params* coarse_grid_params,
 	                                        				function<void(coords*)> func) = 0;
 	virtual coords* calculate_downstream_coords_from_dir_based_rdir(coords* initial_coords,double rdir) = 0;
+	virtual coords* calculate_downstream_coords_from_index_based_rdir(coords* initial_coords,int rdir) = 0;
 	virtual coords* convert_fine_coords(coords* fine_coords,grid_params* fine_grid_params) = 0;
 
 protected:
@@ -195,6 +196,7 @@ public:
 	///Return wrapped version of supplied coordinates
 	latlon_coords* latlon_wrapped_coords(latlon_coords*);
 	coords* calculate_downstream_coords_from_dir_based_rdir(coords* initial_coords,double rdir);
+	coords* calculate_downstream_coords_from_index_based_rdir(coords* initial_coords,int rdir);
 	coords* convert_fine_coords(coords* fine_coords,grid_params* fine_grid_params);
 	void for_all_fine_pixels_in_coarse_cell(coords* coarse_coords,
 	                                        grid_params* coarse_grid_params,
@@ -304,6 +306,7 @@ public:
 	coords* convert_fine_coords(coords* fine_coords,grid_params* fine_grid_params);
 	//Not implemeted for icon grid; return a runtime error
 	coords* calculate_downstream_coords_from_dir_based_rdir(coords* initial_coords,double rdir);
+	coords* calculate_downstream_coords_from_index_based_rdir(coords* initial_coords,int rdir);
 	//Convert an index to coordinates. This is for EXTERNAL INDICES and does not include the array offset
 	generic_1d_coords* convert_index_to_coords(int index)
 		{ return new generic_1d_coords(index); }

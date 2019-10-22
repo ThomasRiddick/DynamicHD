@@ -239,6 +239,11 @@ coords* latlon_grid::calculate_downstream_coords_from_dir_based_rdir(coords* ini
 		}
 }
 
+coords* latlon_grid::
+	calculate_downstream_coords_from_index_based_rdir(coords* initial_coords,int rdir){
+	throw runtime_error("Index based river directions not implemented for lat-lon grid");
+	}
+
 coords* latlon_grid::convert_fine_coords(coords* fine_coords,grid_params* fine_grid_params){
 		latlon_coords* latlon_fine_coords = static_cast<latlon_coords*>(fine_coords);
 		latlon_grid_params* latlon_fine_grid_params =
@@ -397,6 +402,11 @@ coords* icon_single_index_grid::convert_fine_coords(coords* fine_coords,grid_par
 coords* icon_single_index_grid::
 	calculate_downstream_coords_from_dir_based_rdir(coords* initial_coords,double rdir){
 	throw runtime_error("Direction based river directions not compatible with Icon grid");
+	}
+
+coords* icon_single_index_grid::
+	calculate_downstream_coords_from_index_based_rdir(coords* initial_coords,int rdir){
+		return new generic_1d_coords(rdir);
 	}
 
 #if USE_NETCDFCPP

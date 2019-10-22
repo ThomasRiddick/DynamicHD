@@ -325,3 +325,65 @@ private:
   field<int>* additional_connect_redirect_lat_index = nullptr;
   field<int>* additional_connect_redirect_lon_index = nullptr;
 };
+
+class icon_single_index_basin_evaluation_algorithm : public basin_evaluation_algorithm {
+public:
+  virtual ~icon_single_index_basin_evaluation_algorithm();
+  void setup_fields(bool* minima_in,
+                    double* raw_orography_in,
+                    double* corrected_orography_in,
+                    double* cell_areas_in,
+                    double* connection_volume_thresholds_in,
+                    double* flood_volume_thresholds_in,
+                    int* prior_fine_rdirs_in,
+                    int* prior_coarse_rdirs_in,
+                    int* prior_fine_catchments_in,
+                    int* coarse_catchment_nums_in,
+                    int* flood_next_cell_index_in,
+                    int* connect_next_cell_index_in,
+                    int* flood_force_merge_index_in,
+                    int* connect_force_merge_index_in,
+                    int* flood_redirect_index_in,
+                    int* connect_redirect_index_in,
+                    int* additional_flood_redirect_index_in,
+                    int* additional_connect_redirect_index_in,
+                    bool* flood_local_redirect_in,
+                    bool* connect_local_redirect_in,
+                    bool* additional_flood_local_redirect_in,
+                    bool* additional_connect_local_redirect_in,
+                    merge_types* merge_points_in,
+                    grid_params* grid_params_in,
+                    grid_params* coarse_grid_params_in);
+private:
+  void set_previous_cells_flood_next_cell_index(coords* coords_in);
+  void set_previous_cells_connect_next_cell_index(coords* coords_in);
+  void set_previous_cells_flood_force_merge_index(coords* coords_in);
+  void set_previous_cells_connect_force_merge_index(coords* coords_in);
+  void set_previous_cells_redirect_index(coords* initial_fine_coords,
+                                         coords* target_coords,
+                                         height_types height_type,
+                                         bool use_additional_fields=false);
+  bool check_for_sinks_and_set_downstream_coords(coords* coords_in);
+  bool coarse_cell_is_sink(coords* coords_in);
+  coords* get_cells_next_cell_index_as_coords(coords* coords_in,
+                                              height_types height_type_in);
+  coords* get_cells_redirect_index_as_coords(coords* coords_in,
+                                             height_types height_type_in,
+                                             bool use_additional_fields);
+  coords* get_cells_next_force_merge_index_as_coords(coords* coords_in,
+                                                     height_types height_type_in);
+  void output_diagnostics_for_grid_section(int min_lat,int max_lat,
+                                           int min_lon,int max_lon);
+  field<double>* prior_fine_rdirs = nullptr;
+  field<double>* prior_coarse_rdirs = nullptr;
+  field<int>* flood_next_cell_index = nullptr;
+  field<int>* connect_next_cell_index = nullptr;
+  field<int>* flood_force_merge_index = nullptr;
+  field<int>* connect_force_merge_index = nullptr;
+  field<int>* flood_redirect_index = nullptr;
+  field<int>* connect_redirect_index = nullptr;
+  field<int>* additional_flood_redirect_index = nullptr;
+  field<int>* additional_connect_redirect_index = nullptr;
+  const int true_sink_value = -5;
+  const int outflow_value = -1;
+};

@@ -1405,6 +1405,48 @@ contains
         end select
     end function latlon_find_edge_pixels
 
+    pure function irregular_latlon_find_edge_pixels(this) result(edge_pixel_coords_list)
+        class(irregular_latlon_cell), intent(in) :: this
+        class(coords), pointer :: edge_pixel_coords_list(:)
+        type(doubly_linked_list), pointer :: list_of_edge_pixels
+        class(*), pointer :: working_pixel_ptr
+        latlon_coords :: working_pixel
+        integer :: i,j
+        integer :: list_index
+            list_index = 1
+            allocate(list_of_edge_pixels)
+            do j = this%section_min_lon, this%section_max_lon
+                do i = this%section_min_lat, this%section_max_lat
+                    if(this%cell_numbers%data(i,j) == this%cell_number) then
+                        if((this%cell_numbers%get_value(latlon_coords(i-1,j-1) /= this%cell_number) .or. &
+                           (this%cell_numbers%get_value(latlon_coords(i-1,j)   /= this%cell_number) .or. &
+                           (this%cell_numbers%get_value(latlon_coords(i-1,j+1) /= this%cell_number) .or. &
+                           (this%cell_numbers%get_value(latlon_coords(i,j-1)   /= this%cell_number) .or. &
+                           (this%cell_numbers%get_value(latlon_coords(i,j+1)   /= this%cell_number) .or. &
+                           (this%cell_numbers%get_value(latlon_coords(i+1,j-1) /= this%cell_number) .or. &
+                           (this%cell_numbers%get_value(latlon_coords(i+1,j)   /= this%cell_number) .or. &
+                           (this%cell_numbers%get_value(latlon_coords(i+1,j+1) /= this%cell_number)) then
+                            call list_of_edge_pixels%add_value_to_back(latlon_coords(i,j))
+                        end if
+                    end if
+                end do
+            end do
+            allocate(latlon_coords::edge_pixel_coords_list(this%number_of_edge_pixels))
+            do while (list_of_edge_pixels%iterate_forward())
+                working_pixel_ptr => list_of_edge_pixels%get_value_at_iterator_position()
+                select type(working_pixel_ptr)
+                type is (latlon_coords)
+                    select type(edge_pixel_coords_list)
+                    type is (latlon_coords)
+                        edge_pixel_coords_list(list_index) = working_pixel_ptr
+                    end select
+                end select
+                list_index = list_index + 1
+                deallocate(working_pixel_ptr)
+            end do
+            deallocate(list_of_edge_pixels)
+    end function irregular_latlon_find_edge_pixels
+
     ! Note must explicit pass this function the object this as it has the nopass attribute
     ! so that it can be shared by latlon_cell and latlon_neighborhood
     function latlon_calculate_length_through_pixel(this,coords_in) result(length_through_pixel)
@@ -1436,6 +1478,35 @@ contains
             end if
         end select
     end function latlon_check_if_coords_are_in_area
+
+    ! Note must explicit pass this function the object this as it has the nopass attribute
+    ! so that it can be shared by latlon_cell and latlon_neighborhood
+    pure function generic_check_if_coords_are_in_area(this,coords_in) result(within_area)
+        class(area), intent(in) :: this
+        class(coords), intent(in) :: coords_in
+        logical :: within_area
+        class (*), pointer :: cell_number_ptr
+            within_area = .FALSE.
+            select type(this)
+            class is (cell)
+                if(this%cell_numbers%get_value(coords_in) == this%cell_number) then
+                    within_area = .TRUE.
+                end if
+            class is (neighborhood)
+            call this%reset_iterator()
+            do while (this%list_of_cells_in_neighborhood%iterate_forward())
+                if(this%cell_numbers%get_value(coords_in) == this%cell_number) then
+                    cell_number_ptr => &
+                        this%list_of_cells_in_neighborhood%get_value_at_iterator_position()
+                    select type (cell_number_ptr)
+                    type is (integer)
+                        if(this%cell_numbers%get_value(coords_in) == cell_number_ptr) then
+                            within_area = .TRUE.
+                        end
+                    end type
+                end if
+            end select
+    end function generic_check_if_coords_are_in_area
 
     ! Note must explicit pass this function the object this as it has the nopass attribute
     ! so that it can be shared by latlon_cell and latlon_neighborhood
@@ -1509,6 +1580,20 @@ contains
             do j = this%section_min_lon, this%section_max_lon
                 do i = this%section_min_lat, this%section_max_lat
                     call list_of_pixels_in_cell%add_value_to_back(latlon_coords(i,j))
+                end do
+            end do
+    end function
+
+    function irregular_latlon_generate_list_of_pixels_in_cell(this) result(list_of_pixels_in_cell)
+        class(irregular_latlon_cell), intent(in) :: this
+        type(doubly_linked_list), pointer :: list_of_pixels_in_cell
+        integer :: i,j
+            allocate(list_of_pixels_in_cell)
+            do j = this%section_min_lon, this%section_max_lon
+                do i = this%section_min_lat, this%section_max_lat
+                    if (this%cell_numbers(latlon_coords(i,j) == this%cell_number) then
+                        call list_of_pixels_in_cell%add_value_to_back(latlon_coords(i,j))
+                    end if
                 end do
             end do
     end function
@@ -1606,6 +1691,105 @@ contains
                                                                   highest_outflow_rmouth_lon))
             end if
     end function latlon_get_rmouth_outflow_combined_cumulative_flow
+
+   function irregular_latlon_get_sink_combined_cumulative_flow(this,main_sink_coords) &
+        result(combined_cumulative_flow_to_sinks)
+        class(latlon_cell), intent(in) :: this
+        class(coords), pointer, optional,intent(out) :: main_sink_coords
+        integer :: combined_cumulative_flow_to_sinks
+        integer :: greatest_flow_to_single_sink
+        class(*), pointer :: current_pixel_total_cumulative_flow
+        class(*), pointer :: current_pixel_flow_direction
+        class(direction_indicator), pointer :: flow_direction_for_sink
+        integer :: highest_outflow_sink_lat,highest_outflow_sink_lon
+        integer :: i,j
+            highest_outflow_sink_lat = 0
+            highest_outflow_sink_lon = 0
+            combined_cumulative_flow_to_sinks = 0
+            greatest_flow_to_single_sink = 0
+            flow_direction_for_sink => this%get_flow_direction_for_sink()
+            do j = this%section_min_lon, this%section_max_lon
+                do i = this%section_min_lat, this%section_max_lat
+                    if (this%cell_numbers(latlon_coords(i,j) == this%cell_number) then
+                        current_pixel_total_cumulative_flow => this%total_cumulative_flow%get_value(latlon_coords(i,j))
+                        current_pixel_flow_direction => this%river_directions%get_value(latlon_coords(i,j))
+                        select type (current_pixel_total_cumulative_flow)
+                        type is (integer)
+                            if (flow_direction_for_sink%is_equal_to(current_pixel_flow_direction)) then
+                                combined_cumulative_flow_to_sinks = current_pixel_total_cumulative_flow + &
+                                    combined_cumulative_flow_to_sinks
+                                if (present(main_sink_coords)) then
+                                    if (greatest_flow_to_single_sink < &
+                                        current_pixel_total_cumulative_flow) then
+                                        current_pixel_total_cumulative_flow = &
+                                            greatest_flow_to_single_sink
+                                        highest_outflow_sink_lat = i
+                                        highest_outflow_sink_lon = j
+                                    end if
+                                end if
+                            end if
+                            deallocate(current_pixel_flow_direction)
+                        end select
+                        deallocate(current_pixel_total_cumulative_flow)
+                    end if
+                end do
+            end do
+            deallocate(flow_direction_for_sink)
+            if(present(main_sink_coords)) then
+                allocate(main_sink_coords,source=latlon_coords(highest_outflow_sink_lat,&
+                                                               highest_outflow_sink_lon))
+            end if
+    end function irregular_latlon_get_sink_combined_cumulative_flow
+
+    function irregular_latlon_get_rmouth_outflow_combined_cumulative_flow(this,main_outflow_coords) &
+        result(combined_cumulative_rmouth_outflow)
+        class(latlon_cell), intent(in) :: this
+        class(coords), pointer, optional,intent(out) :: main_outflow_coords
+        class(*), pointer :: current_pixel_total_cumulative_flow
+        class(*), pointer :: current_pixel_flow_direction
+        class(direction_indicator), pointer :: flow_direction_for_outflow
+        integer :: greatest_flow_to_single_outflow
+        integer :: combined_cumulative_rmouth_outflow
+        integer :: highest_outflow_rmouth_lat,highest_outflow_rmouth_lon
+        integer :: i,j
+            highest_outflow_rmouth_lat = 0
+            highest_outflow_rmouth_lon = 0
+            combined_cumulative_rmouth_outflow = 0
+            greatest_flow_to_single_outflow = 0
+            flow_direction_for_outflow => this%get_flow_direction_for_outflow()
+            do j = this%section_min_lon, this%section_max_lon
+                do i = this%section_min_lat, this%section_max_lat
+                    if (this%cell_numbers(latlon_coords(i,j) == this%cell_number) then
+                        current_pixel_total_cumulative_flow => this%total_cumulative_flow%get_value(latlon_coords(i,j))
+                        current_pixel_flow_direction => this%river_directions%get_value(latlon_coords(i,j))
+                        select type (current_pixel_total_cumulative_flow)
+                        type is (integer)
+                            if (flow_direction_for_outflow%is_equal_to(current_pixel_flow_direction)) then
+                                combined_cumulative_rmouth_outflow = current_pixel_total_cumulative_flow + &
+                                    combined_cumulative_rmouth_outflow
+                                if (present(main_outflow_coords)) then
+                                    if (greatest_flow_to_single_outflow < &
+                                        current_pixel_total_cumulative_flow) then
+                                        current_pixel_total_cumulative_flow = &
+                                            greatest_flow_to_single_outflow
+                                        highest_outflow_rmouth_lat = i
+                                        highest_outflow_rmouth_lon = j
+                                    end if
+                                end if
+                            end if
+                        end select
+                        deallocate(current_pixel_total_cumulative_flow)
+                        deallocate(current_pixel_flow_direction)
+                    end if
+                end do
+            end do
+            deallocate(flow_direction_for_outflow)
+            if(present(main_outflow_coords)) then
+                allocate(main_outflow_coords,source=latlon_coords(highest_outflow_rmouth_lat,&
+                                                                  highest_outflow_rmouth_lon))
+            end if
+    end function irregular_latlon_get_rmouth_outflow_combined_cumulative_flow
+
 
     subroutine latlon_print_area(this)
     class(area), intent(in) :: this

@@ -59,8 +59,8 @@ function drive_hd_model_with_or_without_lakes(prognostic_fields::PrognosticField
     end
     accumulate_river_flow::AccumulateRiverFlow = AccumulateRiverFlow()
     handle_event(hsm,accumulate_river_flow)
-    output_timestep::Int64 = 365
-    if i%output_timestep == 0
+    output_timestep::Int64 = 90
+    if i%output_timestep == 0 || i == 1
       write_mean_river_flow::WriteMeanRiverFlow = WriteMeanRiverFlow(i,output_timestep)
       handle_event(hsm,write_mean_river_flow)
       reset_cumulative_river_flow::ResetCumulativeRiverFlow = ResetCumulativeRiverFlow()

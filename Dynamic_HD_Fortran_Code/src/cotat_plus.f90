@@ -87,7 +87,28 @@ contains
             deallocate(expanded_input_fine_total_cumulative_flow)
     end subroutine cotat_plus_latlon
 
-    subroutine cotat_plus_icon_icosohedral_cell_latlon_pixel
+    subroutine cotat_plus_icon_icosohedral_cell_latlon_pixel(input_fine_river_directions,&
+                                                             input_fine_total_cumulative_flow,&
+                                                             output_coarse_next_cell_index,&
+                                                             pixel_center_lats,&
+                                                             pixel_center_lons,&
+                                                             cell_vertices_lats, &
+                                                             cell_vertices_lons, &
+                                                             cell_neighbors, &
+                                                             cotat_parameters_filepath)
+        integer, dimension(:,:), intent(in) :: input_fine_river_directions
+        integer, dimension(:,:) :: input_fine_total_cumulative_flow
+        integer, dimension(:) :: output_coarse_next_cell_index
+        real(kind=double_precision), dimension(:) :: pixel_center_lats
+        real(kind=double_precision), dimension(:) :: pixel_center_lons
+        real(kind=double_precision), dimension(:,:) :: cell_vertices_lats
+        real(kind=double_precision), dimension(:,:) :: cell_vertices_lons
+        integer, dimension(:,:) :: cell_neighbors
+        character(len=*), optional :: cotat_parameters_filepath
+            if (present(cotat_parameters_filepath)) then
+                call read_cotat_parameters_namelist(cotat_parameters_filepath)
+            end if
+            coarse_grid = icon_icosohedral_grid(cell_neighbors)
 
     end subroutine cotat_plus_icon_icosohedral_cell_latlon_pixel
 
