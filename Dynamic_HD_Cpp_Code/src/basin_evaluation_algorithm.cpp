@@ -9,6 +9,7 @@
 #include <queue>
 #include <algorithm>
 #include <string>
+using namespace std;
 
 basin_evaluation_algorithm::~basin_evaluation_algorithm() {
 	delete minima; delete raw_orography; delete corrected_orography;
@@ -39,6 +40,18 @@ latlon_basin_evaluation_algorithm::~latlon_basin_evaluation_algorithm(){
   delete additional_flood_redirect_lon_index;
   delete additional_connect_redirect_lat_index;
   delete additional_connect_redirect_lon_index;
+}
+
+icon_single_index_basin_evaluation_algorithm::~icon_single_index_basin_evaluation_algorithm(){
+	delete prior_fine_rdirs; delete prior_coarse_rdirs;
+	delete flood_next_cell_index;
+	delete connect_next_cell_index;
+	delete flood_force_merge_index;
+	delete connect_force_merge_index;
+	delete flood_redirect_index;
+	delete connect_redirect_index;
+	delete additional_flood_redirect_index;
+  delete additional_connect_redirect_index;
 }
 
 void basin_evaluation_algorithm::setup_fields(bool* minima_in,
@@ -168,6 +181,65 @@ void latlon_basin_evaluation_algorithm::setup_fields(bool* minima_in,
   additional_connect_redirect_lon_index = new field<int>(additional_connect_redirect_lon_index_in,
                                                          grid_params_in);
   null_coords = new latlon_coords(-1,-1);
+	for (int i = 0; i < _grid->get_total_size(); i++){
+		basin_sink_points->push_back(null_coords->clone());
+	}
+}
+
+void icon_single_index_basin_evaluation_algorithm::
+										 setup_fields(bool* minima_in,
+							                    double* raw_orography_in,
+							                    double* corrected_orography_in,
+							                    double* cell_areas_in,
+							                    double* connection_volume_thresholds_in,
+							                    double* flood_volume_thresholds_in,
+							                    int* prior_fine_rdirs_in,
+							                    int* prior_coarse_rdirs_in,
+							                    int* prior_fine_catchments_in,
+							                    int* coarse_catchment_nums_in,
+							                    int* flood_next_cell_index_in,
+							                    int* connect_next_cell_index_in,
+							                    int* flood_force_merge_index_in,
+							                    int* connect_force_merge_index_in,
+							                    int* flood_redirect_index_in,
+							                    int* connect_redirect_index_in,
+							                    int* additional_flood_redirect_index_in,
+							                    int* additional_connect_redirect_index_in,
+							                    bool* flood_local_redirect_in,
+							                    bool* connect_local_redirect_in,
+							                    bool* additional_flood_local_redirect_in,
+							                    bool* additional_connect_local_redirect_in,
+							                    merge_types* merge_points_in,
+							                    grid_params* grid_params_in,
+							                    grid_params* coarse_grid_params_in)
+{
+	basin_evaluation_algorithm::setup_fields(minima_in,raw_orography_in,
+	                                         corrected_orography_in,
+	                                         cell_areas_in,
+	                                         connection_volume_thresholds_in,
+	                                         flood_volume_thresholds_in,
+		  	  	   														 prior_fine_catchments_in,
+		  	  	   														 coarse_catchment_nums_in,
+		  	  	   														 flood_local_redirect_in,
+		  	  	  	  	  	  	  	  	  		 connect_local_redirect_in,
+		  	  	  	  	  	  	  	  	  		 additional_flood_local_redirect_in,
+		  	  	  	  	  	  	  	  	  		 additional_connect_local_redirect_in,
+		  	  	  	  	  	  	  	  	  		 merge_points_in,
+		  	  	  	  	  	  	  	  	  		 grid_params_in,
+		  	  	  	  	  	  	  	  	  		 coarse_grid_params_in);
+	prior_fine_rdirs = new field<int>(prior_fine_rdirs_in,grid_params_in);
+	prior_coarse_rdirs = new field<int>(prior_coarse_rdirs_in,coarse_grid_params_in);
+	flood_next_cell_index = new field<int>(flood_next_cell_index_in,grid_params_in);
+	connect_next_cell_index = new field<int>(connect_next_cell_index_in,grid_params_in);
+	flood_force_merge_index = new field<int>(flood_force_merge_index_in,grid_params_in);
+	connect_force_merge_index = new field<int>(connect_force_merge_index_in,grid_params_in);
+	flood_redirect_index = new field<int>(flood_redirect_index_in,grid_params_in);
+	connect_redirect_index = new field<int>(connect_redirect_index_in,grid_params_in);
+	additional_flood_redirect_index = new field<int>(additional_flood_redirect_index_in,
+	                                                     grid_params_in);
+  additional_connect_redirect_index = new field<int>(additional_connect_redirect_index_in,
+                                                         grid_params_in);
+  null_coords = new generic_1d_coords(-1);
 	for (int i = 0; i < _grid->get_total_size(); i++){
 		basin_sink_points->push_back(null_coords->clone());
 	}

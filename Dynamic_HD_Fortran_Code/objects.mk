@@ -1,3 +1,3 @@
 USER_OBJS :=
 
-LIBS :=
+LIBS := $(NETCDF_F)/lib/$(NETCDF_F_LIB)

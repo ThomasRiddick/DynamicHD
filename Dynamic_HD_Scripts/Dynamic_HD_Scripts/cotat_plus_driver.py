@@ -35,7 +35,8 @@ def run_cotat_plus(fine_rdirs_field,fine_total_cumulative_flow_field,cotat_plus_
 
     additional_fortran_filenames = ["area_mod.o","coords_mod.o","cotat_parameters_mod.o","cotat_plus.o",
                                      "doubly_linked_list_mod.o","doubly_linked_list_link_mod.o",
-                                     "field_section_mod.o","precision_mod.o","subfield_mod.o"]
+                                     "field_section_mod.o","precision_mod.o","subfield_mod.o",
+                                     "map_non_coincident_grids_mod.o","unstructured_grid_mod.o"]
     additional_fortran_filepaths = [path.join(fortran_project_object_path,filename) for filename in\
                                     additional_fortran_filenames]
     f2py_mngr = f2py_manager.f2py_manager(path.join(fortran_project_source_path,"cotat_plus_driver_mod.f90"),

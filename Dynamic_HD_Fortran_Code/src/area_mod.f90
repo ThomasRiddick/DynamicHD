@@ -90,7 +90,7 @@ end type area
 abstract interface
     !Must explicit pass the object this to this function as pointers to it have the nopass
     !attribute
-    pure function check_if_coords_are_in_area(this,coords_in) result(within_area)
+    function check_if_coords_are_in_area(this,coords_in) result(within_area)
         import area
         import coords
         implicit none
@@ -420,11 +420,11 @@ type, extends(area), abstract :: cell
 end type cell
 
 abstract interface
-    pure function find_edge_pixels(this) result(edge_pixel_coords_list)
+    function find_edge_pixels(this) result(edge_pixel_coords_list)
         import cell
         import coords
         implicit none
-        class(cell), intent(in) :: this
+        class(cell), intent(inout) :: this
         class(coords), pointer :: edge_pixel_coords_list(:)
     end function find_edge_pixels
 
@@ -603,6 +603,21 @@ type, extends(neighborhood), abstract :: latlon_neighborhood
         procedure, nopass :: print_area => latlon_print_area
 end type latlon_neighborhood
 
+type, extends(neighborhood), abstract :: irregular_latlon_neighborhood
+    private
+        class(latlon_field_section),pointer :: cell_numbers
+        type(doubly_linked_list),pointer :: list_of_cells_in_neighborhood
+    contains
+        procedure :: init_irregular_latlon_neighborhood
+        procedure :: in_which_cell => irregular_latlon_in_which_cell
+        procedure, nopass :: check_if_coords_are_in_area => generic_check_if_coords_are_in_area
+        procedure, nopass :: print_area => latlon_print_area
+        procedure, nopass :: calculate_length_through_pixel => latlon_calculate_length_through_pixel
+        procedure, nopass :: find_upstream_neighbors => latlon_find_upstream_neighbors
+        procedure :: yamazaki_get_cell_coords => yamazaki_irregular_latlon_get_cell_coords_dummy
+        procedure :: yamazaki_wrap_coordinates => yamazaki_irregular_latlon_wrap_coordinates_dummy
+end type irregular_latlon_neighborhood
+
 !> An abstract implementation of the cell class for latitude longitude grids
 type, extends(cell), abstract :: latlon_cell
     !> Latitudinal width of the cell in pixels
@@ -655,6 +670,32 @@ type, extends(cell), abstract :: latlon_cell
         procedure, public :: yamazaki_calculate_river_directions_as_indices => &
             yamazaki_latlon_calculate_river_directions_as_indices
 end type latlon_cell
+
+!> An abstract implementation of the cell class for latitude longitude grids
+type, extends(latlon_cell), abstract :: irregular_latlon_cell
+    class(latlon_field_section),pointer :: cell_numbers
+    integer :: cell_number
+    contains
+        !> Function to produce a list of the coordinates of edge pixels of this cell. Takes no
+        !! arguments; returns a list of coordinates.
+        procedure :: find_edge_pixels => irregular_latlon_find_edge_pixels
+        !> Function that given the location of a pixel return the length of the river path
+        !! through it
+        procedure, nopass :: check_if_coords_are_in_area => generic_check_if_coords_are_in_area
+        !> Returns a list of the position of the pixels in the cell; takes no arguments other than
+        !! this
+        procedure :: generate_list_of_pixels_in_cell => &
+                     irregular_latlon_generate_list_of_pixels_in_cell
+        !> Function to calculate the combined cumulative flow into all the sinks in this
+        !! cell and return it; takes no arguments other than this
+        procedure :: get_sink_combined_cumulative_flow => &
+            irregular_latlon_get_sink_combined_cumulative_flow
+        !> Function to calculate the combined cumulative flow from all the river mouth in this
+        !! cell and return it; takes no arguments other than this
+        procedure :: get_rmouth_outflow_combined_cumulative_flow => &
+            irregular_latlon_get_rmouth_outflow_combined_cumulative_flow
+        procedure ::  init_irregular_latlon_cell
+end type irregular_latlon_cell
 
 !> A concerte subclass of latitude longitude field that uses direction (i.e. a 1-9
 !! direction code like a keypad) indicators to specify river directions
@@ -752,6 +793,45 @@ end type latlon_dir_based_rdirs_cell
 interface latlon_dir_based_rdirs_cell
     procedure latlon_dir_based_rdirs_cell_constructor,yamazaki_latlon_dir_based_rdirs_cell_constructor
 end interface latlon_dir_based_rdirs_cell
+
+type, public, extends(irregular_latlon_neighborhood) :: irregular_latlon_dir_based_rdirs_neighborhood
+    private
+    contains
+    private
+        procedure, nopass :: is_diagonal => dir_based_rdirs_is_diagonal
+        procedure, nopass :: find_next_pixel_downstream => latlon_dir_based_rdirs_find_next_pixel_downstream
+        procedure, nopass :: neighbor_flows_to_pixel => latlon_dir_based_rdirs_neighbor_flows_to_pixel
+        procedure :: calculate_direction_indicator => irregular_latlon_calculate_direction_indicator
+
+end type irregular_latlon_dir_based_rdirs_neighborhood
+
+interface irregular_latlon_dir_based_rdirs_neighborhood
+    procedure :: irregular_latlon_dir_based_rdirs_neighborhood_constructor
+end interface irregular_latlon_dir_based_rdirs_neighborhood
+
+type, public, extends(irregular_latlon_cell) :: irregular_latlon_dir_based_rdirs_cell
+    integer :: flow_direction_for_sink = -2
+    integer :: flow_direction_for_outflow = 0
+    integer :: flow_direction_for_ocean_point = -1
+contains
+    procedure :: init_irregular_latlon_dir_based_rdirs_cell
+    procedure, nopass :: is_diagonal => dir_based_rdirs_is_diagonal
+    procedure, nopass :: neighbor_flows_to_pixel => &
+        latlon_dir_based_rdirs_neighbor_flows_to_pixel
+    procedure :: get_flow_direction_for_sink => &
+        irregular_latlon_dir_based_rdirs_get_flow_direction_for_sink
+    procedure :: get_flow_direction_for_outflow => &
+        irregular_latlon_dir_based_rdirs_get_flow_direction_for_outflow
+    procedure :: get_flow_direction_for_ocean_point => &
+        irregular_latlon_dir_based_rdirs_get_flow_direction_for_o_point
+    procedure, nopass :: find_next_pixel_downstream => latlon_dir_based_rdirs_find_next_pixel_downstream
+    procedure, public :: mark_ocean_and_river_mouth_points => &
+        irregular_latlon_dir_based_rdirs_mark_o_and_rm_points
+end type irregular_latlon_dir_based_rdirs_cell
+
+interface irregular_latlon_dir_based_rdirs_cell
+    procedure :: irregular_latlon_dir_based_rdirs_cell_constructor
+end interface irregular_latlon_dir_based_rdirs_cell
 
 contains
 
@@ -1005,7 +1085,7 @@ contains
     end subroutine cell_destructor
 
     function yamazaki_retrieve_initial_outlet_pixel(this,outlet_pixel_type) result(initial_outlet_pixel)
-        class(cell), intent(in) :: this
+        class(cell), intent(inout) :: this
         integer, intent(out) :: outlet_pixel_type
         class(coords), pointer  :: initial_outlet_pixel
         class(coords), pointer :: working_pixel
@@ -1073,7 +1153,7 @@ contains
     end function yamazaki_retrieve_initial_outlet_pixel
 
     function find_pixel_with_LUDA(this,no_remaining_outlets) result(LUDA_pixel_coords)
-        class(cell), intent(in) :: this
+        class(cell), intent(inout) :: this
         class(coords), pointer :: LUDA_pixel_coords
         logical, intent(out) :: no_remaining_outlets
         class(coords), allocatable :: working_pixel_coords
@@ -1120,7 +1200,7 @@ contains
     end function find_pixel_with_LUDA
 
     function find_pixel_with_LCDA(this) result(LCDA_pixel_coords)
-        class(cell), intent(in) :: this
+        class(cell), intent(inout) :: this
         class(coords), pointer :: LCDA_pixel_coords
         class(coords), allocatable :: working_pixel_coords
         integer :: LCDA_pixel_working_value
@@ -1368,6 +1448,35 @@ contains
             this%ocean_cell = .FALSE.
     end subroutine init_latlon_cell
 
+    subroutine init_irregular_latlon_cell(this,cell_section_coords,river_directions,&
+                                          total_cumulative_flow)
+        class(irregular_latlon_cell), intent(inout) :: this
+        class(irregular_latlon_section_coords) :: cell_section_coords
+        integer, dimension(:,:), target :: river_directions
+        integer, dimension(:,:), target :: total_cumulative_flow
+        class(*), dimension(:,:), pointer :: river_directions_pointer
+        class(*), dimension(:,:), pointer :: total_cumulative_flow_pointer
+        class(*), dimension(:,:), pointer :: cell_numbers_pointer
+            allocate(this%cell_section_coords,source=cell_section_coords)
+            this%section_min_lat = cell_section_coords%section_min_lat
+            this%section_min_lon = cell_section_coords%section_min_lon
+            this%section_width_lat = cell_section_coords%section_width_lat
+            this%section_width_lon = cell_section_coords%section_width_lon
+            this%section_max_lat =  cell_section_coords%section_min_lat + cell_section_coords%section_width_lat - 1
+            this%section_max_lon =  cell_section_coords%section_min_lon + cell_section_coords%section_width_lon - 1
+            cell_numbers_pointer => cell_section_coords%cell_numbers
+            this%cell_numbers => latlon_field_section(cell_numbers_pointer,cell_section_coords)
+                this%cell_number = cell_section_coords%cell_number
+            river_directions_pointer => river_directions
+            total_cumulative_flow_pointer => total_cumulative_flow
+            this%river_directions => latlon_field_section(river_directions_pointer,cell_section_coords)
+            this%total_cumulative_flow => latlon_field_section(total_cumulative_flow_pointer,cell_section_coords)
+            this%number_of_edge_pixels = 0
+            call this%initialize_rejected_pixels_subfield()
+            this%contains_river_mouths = .FALSE.
+            this%ocean_cell = .FALSE.
+    end subroutine init_irregular_latlon_cell
+
     subroutine yamazaki_init_latlon_cell(this,cell_section_coords,river_directions, &
                                          total_cumulative_flow,yamazaki_outlet_pixels)
         class(latlon_cell), intent(inout) :: this
@@ -1383,8 +1492,8 @@ contains
                                                                 cell_section_coords)
     end subroutine yamazaki_init_latlon_cell
 
-    pure function latlon_find_edge_pixels(this) result(edge_pixel_coords_list)
-        class(latlon_cell), intent(in) :: this
+    function latlon_find_edge_pixels(this) result(edge_pixel_coords_list)
+        class(latlon_cell), intent(inout) :: this
         class(coords), pointer :: edge_pixel_coords_list(:)
         integer :: i
         integer :: list_index
@@ -1405,28 +1514,35 @@ contains
         end select
     end function latlon_find_edge_pixels
 
-    pure function irregular_latlon_find_edge_pixels(this) result(edge_pixel_coords_list)
-        class(irregular_latlon_cell), intent(in) :: this
+    function irregular_latlon_find_edge_pixels(this) result(edge_pixel_coords_list)
+        class(irregular_latlon_cell), intent(inout) :: this
         class(coords), pointer :: edge_pixel_coords_list(:)
         type(doubly_linked_list), pointer :: list_of_edge_pixels
         class(*), pointer :: working_pixel_ptr
-        latlon_coords :: working_pixel
+        type(latlon_field_section), pointer :: cell_numbers
+        integer, pointer, dimension(:,:) :: cell_numbers_data
         integer :: i,j
         integer :: list_index
+            cell_numbers => this%cell_numbers
             list_index = 1
             allocate(list_of_edge_pixels)
+            select type(cell_numbers_data_ptr => cell_numbers%data)
+            type is (integer)
+                cell_numbers_data => cell_numbers_data_ptr
+            end select
             do j = this%section_min_lon, this%section_max_lon
                 do i = this%section_min_lat, this%section_max_lat
-                    if(this%cell_numbers%data(i,j) == this%cell_number) then
-                        if((this%cell_numbers%get_value(latlon_coords(i-1,j-1) /= this%cell_number) .or. &
-                           (this%cell_numbers%get_value(latlon_coords(i-1,j)   /= this%cell_number) .or. &
-                           (this%cell_numbers%get_value(latlon_coords(i-1,j+1) /= this%cell_number) .or. &
-                           (this%cell_numbers%get_value(latlon_coords(i,j-1)   /= this%cell_number) .or. &
-                           (this%cell_numbers%get_value(latlon_coords(i,j+1)   /= this%cell_number) .or. &
-                           (this%cell_numbers%get_value(latlon_coords(i+1,j-1) /= this%cell_number) .or. &
-                           (this%cell_numbers%get_value(latlon_coords(i+1,j)   /= this%cell_number) .or. &
-                           (this%cell_numbers%get_value(latlon_coords(i+1,j+1) /= this%cell_number)) then
+                    if (cell_numbers_data(i,j) == this%cell_number) then
+                        if(cell_numbers_data(i-1,j-1) /= this%cell_number .or. &
+                           cell_numbers_data(i-1,j)   /= this%cell_number .or. &
+                           cell_numbers_data(i-1,j+1) /= this%cell_number .or. &
+                           cell_numbers_data(i,j-1)   /= this%cell_number .or. &
+                           cell_numbers_data(i,j+1)   /= this%cell_number .or. &
+                           cell_numbers_data(i+1,j-1) /= this%cell_number .or. &
+                           cell_numbers_data(i+1,j)   /= this%cell_number .or. &
+                           cell_numbers_data(i+1,j+1) /= this%cell_number) then
                             call list_of_edge_pixels%add_value_to_back(latlon_coords(i,j))
+                            this%number_of_edge_pixels = this%number_of_edge_pixels + 1
                         end if
                     end if
                 end do
@@ -1462,7 +1578,7 @@ contains
 
     ! Note must explicit pass this function the object this as it has the nopass attribute
     ! so that it can be shared by latlon_cell and latlon_neighborhood
-    pure function latlon_check_if_coords_are_in_area(this,coords_in) result(within_area)
+    function latlon_check_if_coords_are_in_area(this,coords_in) result(within_area)
         class(area), intent(in) :: this
         class(coords), intent(in) :: coords_in
         logical :: within_area
@@ -1481,30 +1597,52 @@ contains
 
     ! Note must explicit pass this function the object this as it has the nopass attribute
     ! so that it can be shared by latlon_cell and latlon_neighborhood
-    pure function generic_check_if_coords_are_in_area(this,coords_in) result(within_area)
+    function generic_check_if_coords_are_in_area(this,coords_in) result(within_area)
         class(area), intent(in) :: this
         class(coords), intent(in) :: coords_in
-        logical :: within_area
+        class(field_section), pointer :: cell_numbers
+        type(doubly_linked_list), pointer :: list_of_cells_in_neighborhood
         class (*), pointer :: cell_number_ptr
+        class (*), pointer :: working_cell_number_ptr
+        integer    :: working_cell_number
+        logical :: within_area
+        integer cell_number
+            select type(this)
+            class is (irregular_latlon_cell)
+                cell_numbers => this%cell_numbers
+                cell_number = this%cell_number
+            class is (irregular_latlon_neighborhood)
+                list_of_cells_in_neighborhood => this%list_of_cells_in_neighborhood
+                cell_numbers => this%cell_numbers
+            end select
             within_area = .FALSE.
             select type(this)
             class is (cell)
-                if(this%cell_numbers%get_value(coords_in) == this%cell_number) then
+                working_cell_number_ptr => cell_numbers%get_value(coords_in)
+                select type (working_cell_number_ptr)
+                    type is (integer)
+                        working_cell_number = working_cell_number_ptr
+                end select
+                if(working_cell_number == cell_number) then
                     within_area = .TRUE.
                 end if
             class is (neighborhood)
-            call this%reset_iterator()
-            do while (this%list_of_cells_in_neighborhood%iterate_forward())
-                if(this%cell_numbers%get_value(coords_in) == this%cell_number) then
+                call list_of_cells_in_neighborhood%reset_iterator()
+                do while (list_of_cells_in_neighborhood%iterate_forward())
                     cell_number_ptr => &
-                        this%list_of_cells_in_neighborhood%get_value_at_iterator_position()
+                        list_of_cells_in_neighborhood%get_value_at_iterator_position()
                     select type (cell_number_ptr)
                     type is (integer)
-                        if(this%cell_numbers%get_value(coords_in) == cell_number_ptr) then
+                        working_cell_number_ptr => cell_numbers%get_value(coords_in)
+                        select type (working_cell_number_ptr)
+                        type is (integer)
+                            working_cell_number = working_cell_number_ptr
+                        end select
+                        if(working_cell_number == cell_number_ptr) then
                             within_area = .TRUE.
-                        end
-                    end type
-                end if
+                        end if
+                    end select
+                end do
             end select
     end function generic_check_if_coords_are_in_area
 
@@ -1587,11 +1725,18 @@ contains
     function irregular_latlon_generate_list_of_pixels_in_cell(this) result(list_of_pixels_in_cell)
         class(irregular_latlon_cell), intent(in) :: this
         type(doubly_linked_list), pointer :: list_of_pixels_in_cell
+        class(latlon_field_section), pointer :: cell_numbers
+        integer, pointer, dimension(:,:) :: cell_numbers_data
         integer :: i,j
+            cell_numbers => this%cell_numbers
+            select type (cell_numbers_data_ptr => cell_numbers%data)
+            type is (integer)
+                cell_numbers_data => cell_numbers_data_ptr
+            end select
             allocate(list_of_pixels_in_cell)
             do j = this%section_min_lon, this%section_max_lon
                 do i = this%section_min_lat, this%section_max_lat
-                    if (this%cell_numbers(latlon_coords(i,j) == this%cell_number) then
+                    if (cell_numbers_data(i,j) == this%cell_number) then
                         call list_of_pixels_in_cell%add_value_to_back(latlon_coords(i,j))
                     end if
                 end do
@@ -1663,7 +1808,8 @@ contains
             flow_direction_for_outflow => this%get_flow_direction_for_outflow()
             do j = this%section_min_lon, this%section_min_lon + this%section_width_lon - 1
                 do i = this%section_min_lat, this%section_min_lat + this%section_width_lat - 1
-                    current_pixel_total_cumulative_flow => this%total_cumulative_flow%get_value(latlon_coords(i,j))
+                    current_pixel_total_cumulative_flow => &
+                        this%total_cumulative_flow%get_value(latlon_coords(i,j))
                     current_pixel_flow_direction => this%river_directions%get_value(latlon_coords(i,j))
                     select type (current_pixel_total_cumulative_flow)
                     type is (integer)
@@ -1694,15 +1840,22 @@ contains
 
    function irregular_latlon_get_sink_combined_cumulative_flow(this,main_sink_coords) &
         result(combined_cumulative_flow_to_sinks)
-        class(latlon_cell), intent(in) :: this
+        class(irregular_latlon_cell), intent(in) :: this
         class(coords), pointer, optional,intent(out) :: main_sink_coords
         integer :: combined_cumulative_flow_to_sinks
         integer :: greatest_flow_to_single_sink
         class(*), pointer :: current_pixel_total_cumulative_flow
         class(*), pointer :: current_pixel_flow_direction
         class(direction_indicator), pointer :: flow_direction_for_sink
+        class(latlon_field_section), pointer :: cell_numbers
+        integer, pointer, dimension(:,:) :: cell_numbers_data
         integer :: highest_outflow_sink_lat,highest_outflow_sink_lon
         integer :: i,j
+            cell_numbers => this%cell_numbers
+            select type (cell_numbers_data_ptr => cell_numbers%data)
+            type is (integer)
+                cell_numbers_data => cell_numbers_data_ptr
+            end select
             highest_outflow_sink_lat = 0
             highest_outflow_sink_lon = 0
             combined_cumulative_flow_to_sinks = 0
@@ -1710,7 +1863,7 @@ contains
             flow_direction_for_sink => this%get_flow_direction_for_sink()
             do j = this%section_min_lon, this%section_max_lon
                 do i = this%section_min_lat, this%section_max_lat
-                    if (this%cell_numbers(latlon_coords(i,j) == this%cell_number) then
+                    if (cell_numbers_data(i,j) == this%cell_number) then
                         current_pixel_total_cumulative_flow => this%total_cumulative_flow%get_value(latlon_coords(i,j))
                         current_pixel_flow_direction => this%river_directions%get_value(latlon_coords(i,j))
                         select type (current_pixel_total_cumulative_flow)
@@ -1743,15 +1896,22 @@ contains
 
     function irregular_latlon_get_rmouth_outflow_combined_cumulative_flow(this,main_outflow_coords) &
         result(combined_cumulative_rmouth_outflow)
-        class(latlon_cell), intent(in) :: this
+        class(irregular_latlon_cell), intent(in) :: this
         class(coords), pointer, optional,intent(out) :: main_outflow_coords
         class(*), pointer :: current_pixel_total_cumulative_flow
         class(*), pointer :: current_pixel_flow_direction
         class(direction_indicator), pointer :: flow_direction_for_outflow
+        class(latlon_field_section), pointer :: cell_numbers
+        integer, pointer, dimension(:,:) :: cell_numbers_data
         integer :: greatest_flow_to_single_outflow
         integer :: combined_cumulative_rmouth_outflow
         integer :: highest_outflow_rmouth_lat,highest_outflow_rmouth_lon
         integer :: i,j
+            cell_numbers => this%cell_numbers
+            select type (cell_numbers_data_ptr => cell_numbers%data)
+            type is (integer)
+                cell_numbers_data => cell_numbers_data_ptr
+            end select
             highest_outflow_rmouth_lat = 0
             highest_outflow_rmouth_lon = 0
             combined_cumulative_rmouth_outflow = 0
@@ -1759,7 +1919,7 @@ contains
             flow_direction_for_outflow => this%get_flow_direction_for_outflow()
             do j = this%section_min_lon, this%section_max_lon
                 do i = this%section_min_lat, this%section_max_lat
-                    if (this%cell_numbers(latlon_coords(i,j) == this%cell_number) then
+                    if (cell_numbers_data(i,j) == this%cell_number) then
                         current_pixel_total_cumulative_flow => this%total_cumulative_flow%get_value(latlon_coords(i,j))
                         current_pixel_flow_direction => this%river_directions%get_value(latlon_coords(i,j))
                         select type (current_pixel_total_cumulative_flow)
@@ -1846,6 +2006,23 @@ contains
                                                               total_cumulative_flow)
     end function
 
+    function irregular_latlon_dir_based_rdirs_cell_constructor(cell_section_coords, &
+                                                               river_directions, &
+                                                               total_cumulative_flow, &
+                                                               cell_neighbors) &
+                                                                result(constructor)
+        type(irregular_latlon_dir_based_rdirs_cell), allocatable :: constructor
+        class(irregular_latlon_section_coords) :: cell_section_coords
+        integer, dimension(:,:) :: river_directions
+        integer, dimension(:,:) :: total_cumulative_flow
+        integer, dimension(:,:), pointer, intent(in) :: cell_neighbors
+            allocate(constructor)
+            call constructor%init_irregular_latlon_dir_based_rdirs_cell(cell_section_coords,&
+                                                                        river_directions,&
+                                                                        total_cumulative_flow,&
+                                                                        cell_neighbors)
+    end function
+
 
     function yamazaki_latlon_dir_based_rdirs_cell_constructor(cell_section_coords,river_directions,&
                                                               total_cumulative_flow,yamazaki_outlet_pixels, &
@@ -1873,6 +2050,21 @@ contains
             allocate(this%cell_neighborhood, source=latlon_dir_based_rdirs_neighborhood(cell_section_coords, &
                      river_directions, total_cumulative_flow))
     end subroutine init_dir_based_rdirs_latlon_cell
+
+    subroutine init_irregular_latlon_dir_based_rdirs_cell(this,cell_section_coords,river_directions, &
+                                                          total_cumulative_flow,cell_neighbors)
+        class(irregular_latlon_dir_based_rdirs_cell), intent(inout) :: this
+        type(irregular_latlon_section_coords), intent(in) :: cell_section_coords
+        integer, dimension(:,:), intent(in) :: river_directions
+        integer, dimension(:,:), intent(in) :: total_cumulative_flow
+        integer, dimension(:,:), pointer, intent(in) :: cell_neighbors
+            call this%init_irregular_latlon_cell(cell_section_coords,river_directions,total_cumulative_flow)
+            allocate(this%cell_neighborhood, &
+                     source=irregular_latlon_dir_based_rdirs_neighborhood(cell_section_coords,&
+                                                                          cell_neighbors, &
+                                                                          river_directions,&
+                                                                          total_cumulative_flow))
+    end subroutine init_irregular_latlon_dir_based_rdirs_cell
 
     subroutine yamazaki_init_dir_based_rdirs_latlon_cell(this,cell_section_coords,river_directions,&
                                                          total_cumulative_flow,yamazaki_outlet_pixels, &
@@ -1991,6 +2183,30 @@ contains
                 dir_based_direction_indicator(this%flow_direction_for_ocean_point))
     end function latlon_dir_based_rdirs_get_flow_direction_for_ocean_point
 
+    pure function irregular_latlon_dir_based_rdirs_get_flow_direction_for_sink(this) &
+        result(flow_direction_for_sink)
+        class(irregular_latlon_dir_based_rdirs_cell), intent(in) :: this
+        class(direction_indicator), pointer :: flow_direction_for_sink
+            allocate(flow_direction_for_sink,source=&
+                index_based_direction_indicator(this%flow_direction_for_sink))
+    end function irregular_latlon_dir_based_rdirs_get_flow_direction_for_sink
+
+    pure function irregular_latlon_dir_based_rdirs_get_flow_direction_for_outflow(this) &
+        result(flow_direction_for_outflow)
+        class(irregular_latlon_dir_based_rdirs_cell), intent(in) :: this
+        class(direction_indicator), pointer :: flow_direction_for_outflow
+            allocate(flow_direction_for_outflow,source=&
+                index_based_direction_indicator(this%flow_direction_for_outflow))
+    end function irregular_latlon_dir_based_rdirs_get_flow_direction_for_outflow
+
+    pure function irregular_latlon_dir_based_rdirs_get_flow_direction_for_o_point(this) &
+        result(flow_direction_for_ocean_point)
+        class(irregular_latlon_dir_based_rdirs_cell), intent(in) :: this
+        class(direction_indicator), pointer :: flow_direction_for_ocean_point
+            allocate(flow_direction_for_ocean_point,source=&
+                index_based_direction_indicator(this%flow_direction_for_ocean_point))
+    end function irregular_latlon_dir_based_rdirs_get_flow_direction_for_o_point
+
     ! Note must explicit pass this function the object this as it has the nopass attribute
     ! so that it can be shared by latlon_cell and latlon_neighborhood
     function dir_based_rdirs_is_diagonal(this,coords_in) result(diagonal)
@@ -2034,7 +2250,42 @@ contains
             end do
             this%contains_river_mouths = .FALSE.
             this%ocean_cell = .not. non_ocean_cell_found
-    end subroutine
+    end subroutine latlon_dir_based_rdirs_mark_ocean_and_river_mouth_points
+
+    subroutine irregular_latlon_dir_based_rdirs_mark_o_and_rm_points(this)
+        class(irregular_latlon_dir_based_rdirs_cell), intent(inout) :: this
+        class(latlon_field_section), pointer :: cell_numbers
+        integer, pointer, dimension(:,:) :: cell_numbers_data
+        class(*), pointer :: rdir
+        logical :: non_ocean_cell_found
+        integer :: i,j
+            cell_numbers => this%cell_numbers
+            select type (cell_numbers_data_ptr => cell_numbers%data)
+            type is (integer)
+                cell_numbers_data => cell_numbers_data_ptr
+            end select
+            non_ocean_cell_found = .FALSE.
+            do j = this%section_min_lon, this%section_max_lon
+                do i = this%section_min_lat, this%section_max_lat
+                    if (cell_numbers_data(i,j) == this%cell_number) then
+                        rdir => this%river_directions%get_value(latlon_coords(i,j))
+                        select type (rdir)
+                        type is (integer)
+                            if( rdir == 0 ) then
+                                this%contains_river_mouths = .TRUE.
+                                this%ocean_cell = .FALSE.
+                            else if( rdir /= -1 ) then
+                                non_ocean_cell_found = .TRUE.
+                            end if
+                        end select
+                        deallocate(rdir)
+                        if(this%contains_river_mouths) return
+                    end if
+                end do
+            end do
+            this%contains_river_mouths = .FALSE.
+            this%ocean_cell = .not. non_ocean_cell_found
+    end subroutine irregular_latlon_dir_based_rdirs_mark_o_and_rm_points
 
     subroutine neighborhood_destructor(this)
         class(neighborhood), intent(inout) :: this
@@ -2196,6 +2447,65 @@ contains
             this%center_cell_id = 5
     end subroutine init_latlon_neighborhood
 
+    subroutine init_irregular_latlon_neighborhood(this,center_cell_section_coords,&
+                                                  coarse_cell_neighbors, &
+                                                  river_directions,&
+                                                  total_cumulative_flow)
+        class(irregular_latlon_neighborhood), intent(inout) :: this
+        class(irregular_latlon_section_coords) :: center_cell_section_coords
+        type(irregular_latlon_section_coords) :: neighborhood_section_coords
+        integer, dimension(:,:), target :: river_directions
+        integer, dimension(:,:), target :: total_cumulative_flow
+        integer, dimension(:,:), pointer :: coarse_cell_neighbors
+        integer, dimension(:), pointer :: list_of_cell_numbers
+        class(*), dimension(:,:), pointer :: river_directions_pointer
+        class(*), dimension(:,:), pointer :: total_cumulative_flow_pointer
+        class(*), dimension(:,:), pointer :: cell_numbers_pointer
+        class(*), pointer :: cell_number_pointer
+        integer :: i
+        integer :: max_nneigh_coarse,nneigh_coarse
+        integer :: nbr_cell_number
+            max_nneigh_coarse = size(coarse_cell_neighbors,2)
+            this%center_cell_id = center_cell_section_coords%cell_number
+            allocate(this%list_of_cells_in_neighborhood)
+            nneigh_coarse = 0
+            do i=1,max_nneigh_coarse
+                nbr_cell_number = coarse_cell_neighbors(this%center_cell_id,i)
+                if (nbr_cell_number > 0) then
+                    call this%list_of_cells_in_neighborhood%&
+                        &add_value_to_back(nbr_cell_number)
+                    nneigh_coarse = nneigh_coarse+1
+                end if
+            end do
+            allocate(list_of_cell_numbers(nneigh_coarse+1))
+            list_of_cell_numbers(1) = this%center_cell_id
+            call this%list_of_cells_in_neighborhood%reset_iterator()
+            i = 1
+            do while (this%list_of_cells_in_neighborhood%iterate_forward())
+                i = i + 1
+                cell_number_pointer => this%list_of_cells_in_neighborhood%get_value_at_iterator_position()
+                select type (cell_number_pointer)
+                type is (integer)
+                    list_of_cell_numbers(i) = cell_number_pointer
+                end select
+            end do
+            neighborhood_section_coords = &
+                irregular_latlon_section_coords(list_of_cell_numbers(i),&
+                                                center_cell_section_coords%cell_numbers, &
+                                                center_cell_section_coords%section_min_lats, &
+                                                center_cell_section_coords%section_min_lons, &
+                                                center_cell_section_coords%section_max_lats, &
+                                                center_cell_section_coords%section_max_lons )
+            cell_numbers_pointer => center_cell_section_coords%cell_numbers
+            this%cell_numbers => latlon_field_section(cell_numbers_pointer,neighborhood_section_coords)
+            river_directions_pointer => river_directions
+            this%river_directions => latlon_field_section(river_directions_pointer,&
+                                                          neighborhood_section_coords)
+            total_cumulative_flow_pointer => total_cumulative_flow
+            this%total_cumulative_flow => latlon_field_section(total_cumulative_flow_pointer,&
+                                                               neighborhood_section_coords)
+    end subroutine init_irregular_latlon_neighborhood
+
     subroutine yamazaki_init_latlon_neighborhood(this,center_cell_section_coords,river_directions,&
                                                  total_cumulative_flow,yamazaki_outlet_pixels, &
                                                  yamazaki_section_coords)
@@ -2245,6 +2555,16 @@ contains
             end select
     end function latlon_in_which_cell
 
+    pure function irregular_latlon_in_which_cell(this,pixel) result (in_cell)
+        class(irregular_latlon_neighborhood), intent(in) :: this
+        class(coords), intent(in) :: pixel
+        integer :: in_cell
+            select type (cell_number_ptr => this%cell_numbers%get_value(pixel))
+            type is (integer)
+                in_cell = cell_number_ptr
+            end select
+    end function irregular_latlon_in_which_cell
+
     pure function yamazaki_latlon_get_cell_coords(this,pixel_coords) result(cell_coords)
         class(latlon_neighborhood), intent(in) :: this
         class(coords), pointer, intent(in) :: pixel_coords
@@ -2255,6 +2575,20 @@ contains
                                                           ceiling(real(pixel_coords%lon)/this%yamazaki_cell_width_lon)))
             end select
     end function yamazaki_latlon_get_cell_coords
+
+
+    pure function yamazaki_irregular_latlon_get_cell_coords_dummy(this,pixel_coords) &
+            result(cell_coords)
+        class(irregular_latlon_neighborhood), intent(in) :: this
+        class(coords), pointer, intent(in) :: pixel_coords
+        class(coords), pointer :: cell_coords
+            !Prevents compiler warnings
+            select type (pixel_coords)
+            end select
+            select type (this)
+            end select
+            cell_coords => null()
+    end function yamazaki_irregular_latlon_get_cell_coords_dummy
 
     !This will neeed updating if we use neighborhood smaller than the full grid size for the
     !yamazaki-style algorithm - at the moment it assumes at neighborhood edges are edges of the
@@ -2272,6 +2606,16 @@ contains
                 end if
             end select
     end subroutine yamazaki_latlon_wrap_coordinates
+
+    subroutine yamazaki_irregular_latlon_wrap_coordinates_dummy(this,pixel_coords)
+        class(irregular_latlon_neighborhood), intent(in) :: this
+        class(coords), intent(inout) :: pixel_coords
+            !Prevents compiler warnings
+            select type (pixel_coords)
+            end select
+            select type (this)
+            end select
+    end subroutine yamazaki_irregular_latlon_wrap_coordinates_dummy
 
     function latlon_dir_based_rdirs_field_constructor(field_section_coords,river_directions) &
         result(constructor)
@@ -2294,6 +2638,23 @@ contains
             call constructor%init_latlon_neighborhood(center_cell_section_coords,river_directions,&
                                                       total_cumulative_flow)
     end function latlon_dir_based_rdirs_neighborhood_constructor
+
+    function irregular_latlon_dir_based_rdirs_neighborhood_constructor(center_cell_section_coords,&
+                                                                       coarse_cell_neighbors, &
+                                                                       river_directions,&
+                                                                       total_cumulative_flow) &
+                                                                        result(constructor)
+        type(irregular_latlon_dir_based_rdirs_neighborhood), allocatable :: constructor
+        type(irregular_latlon_section_coords) :: center_cell_section_coords
+        integer, dimension(:,:) :: river_directions
+        integer, dimension(:,:) :: total_cumulative_flow
+        integer, dimension(:,:), pointer :: coarse_celL_neighbors
+            allocate(constructor)
+            call constructor%init_irregular_latlon_neighborhood(center_cell_section_coords, &
+                                                                coarse_cell_neighbors, &
+                                                                river_directions, &
+                                                                total_cumulative_flow)
+    end function irregular_latlon_dir_based_rdirs_neighborhood_constructor
 
     function yamazaki_latlon_dir_based_rdirs_neighborhood_constructor(center_cell_section_coords,river_directions, &
                                                                       total_cumulative_flow,yamazaki_outlet_pixels,&
@@ -2360,5 +2721,15 @@ contains
             !Pointless test to get rid of compiler warning that 'this' is unused
             if(this%section_min_lat /= 0) continue
     end function dir_based_rdirs_calculate_direction_indicator
+
+    pure function irregular_latlon_calculate_direction_indicator(this,downstream_cell) &
+            result(flow_direction)
+        class(irregular_latlon_dir_based_rdirs_neighborhood), intent(in) :: this
+        integer, intent(in) :: downstream_cell
+        class(direction_indicator), pointer :: flow_direction
+            allocate(flow_direction,source=index_based_direction_indicator(downstream_cell))
+            !Pointless test to get rid of compiler warning that 'this' is unused
+            if(this%section_min_lat /= 0) continue
+    end function irregular_latlon_calculate_direction_indicator
 
 end module area_mod

@@ -372,6 +372,8 @@ public:
 	virtual ~sink_filling_algorithm_4() { if (not tarasov_mod) delete catchment_nums; }
 	///Getter
 	int get_method() {return method;}
+	///Setup required parameter and flags
+	void setup_flags(bool, bool = false, bool = false, int = 1, double = 1.1, bool = false);
 	// Activate minima queueing for basin filling code
 	void setup_minima_q(field<bool>*);
 	// Return q of minima for basin filling code
@@ -395,8 +397,6 @@ protected:
 	void find_initial_cell_flow_direction();
 	///Setup required fields and grid
 	void setup_fields(double*, bool*, bool*, grid_params*, int*);
-	///Setup required parameter and flags
-	void setup_flags(bool, bool = false, bool = false, int = 1, double = 1.1, bool = false);
 	///Implement virtual function of base class only used by Tarasov code
 	void tarasov_set_area_height();
 	///Set the flow direction of a cell to no data
@@ -540,7 +540,7 @@ public:
 							 	 	bool, field<int>*, bool, bool, field<int>*,field<int>*,
 									bool* = nullptr, field<short>* = nullptr);
 	///Setup fields and grid
-	void setup_fields(double*, bool*, bool*, int*, int*, grid_params*, short*, int*);
+	void setup_fields(double*,bool*,bool*, int*,grid_params* ,int*);
 	///Destructor
 	virtual ~sink_filling_algorithm_4_icon_single_index() {delete next_cell_index; };
 	///Setup and test find_initial_cell_flow_direction function on a latitude-longitude grid

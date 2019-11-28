@@ -8,6 +8,7 @@
 #include "evaluate_basins.hpp"
 #include "basin_evaluation_algorithm.hpp"
 #include "enums.hpp"
+using namespace std;
 
 void latlon_evaluate_basins_cython_wrapper(int* minima_in_int,
                                            double* raw_orography_in,
@@ -349,6 +350,114 @@ void latlon_evaluate_basins(bool* minima_in,
       basin_catchment_numbers_in[i-scale_factor*nlon_fine] =
         basin_catchment_numbers_in_ext[i];
     }
+  }
+  delete grid_params_in;
+  delete coarse_grid_params_in;
+}
+
+void icon_single_index_evaluate_basins(bool* minima_in,
+                                       double* raw_orography_in,
+                                       double* corrected_orography_in,
+                                       double* cell_areas_in,
+                                       double* connection_volume_thresholds_in,
+                                       double* flood_volume_thresholds_in,
+                                       int* prior_fine_rdirs_in,
+                                       int* prior_coarse_rdirs_in,
+                                       int* prior_fine_catchments_in,
+                                       int* coarse_catchment_nums_in,
+                                       int* flood_next_cell_index_in,
+                                       int* connect_next_cell_index_in,
+                                       int* flood_force_merge_index_in,
+                                       int* connect_force_merge_index_in,
+                                       int* flood_redirect_index_in,
+                                       int* connect_redirect_index_in,
+                                       int* additional_flood_redirect_index_in,
+                                       int* additional_connect_redirect_index_in,
+                                       bool* flood_local_redirect_in,
+                                       bool* connect_local_redirect_in,
+                                       bool* additional_flood_local_redirect_in,
+                                       bool* additional_connect_local_redirect_in,
+                                       int* merge_points_out_int,
+                                       int ncells_fine_in,
+                                       int ncells_coarse_in,
+                                       int* fine_neighboring_cell_indices_in,
+                                       int* coarse_neighboring_cell_indices_in,
+                                       int* fine_secondary_neighboring_cell_indices_in,
+                                       int* coarse_secondary_neighboring_cell_indices_in,
+                                       int* basin_catchment_numbers_in){
+  cout << "Entering Basin Evaluation C++ Code" << endl;
+  auto grid_params_in = new icon_single_index_grid_params(ncells_fine_in,
+                                                          fine_neighboring_cell_indices_in,true,
+                                                          fine_secondary_neighboring_cell_indices_in);
+  auto coarse_grid_params_in = new icon_single_index_grid_params(ncells_coarse_in,
+                                                                 coarse_neighboring_cell_indices_in,true,
+                                                                 coarse_secondary_neighboring_cell_indices_in);
+  auto alg = icon_single_index_basin_evaluation_algorithm();
+  merge_types* merge_points_in = new merge_types[ncells_fine_in];
+  fill_n(connection_volume_thresholds_in,ncells_fine_in,0.0);
+  fill_n(flood_volume_thresholds_in,ncells_fine_in,0.0);
+  fill_n(flood_next_cell_index_in,ncells_fine_in,-1);
+  fill_n(connect_next_cell_index_in,ncells_fine_in,-1);
+  fill_n(flood_force_merge_index_in,ncells_fine_in,-1);
+  fill_n(connect_force_merge_index_in,ncells_fine_in,-1);
+  fill_n(flood_redirect_index_in,ncells_fine_in,-1);
+  fill_n(connect_redirect_index_in,ncells_fine_in,-1);
+  fill_n(additional_flood_redirect_index_in,ncells_fine_in,-1);
+  fill_n(additional_connect_redirect_index_in,ncells_fine_in,-1);
+  fill_n(flood_local_redirect_in,ncells_fine_in,-1);
+  fill_n(connect_local_redirect_in,ncells_fine_in,-1);
+  fill_n(additional_flood_local_redirect_in,ncells_fine_in,-1);
+  fill_n(additional_connect_local_redirect_in,ncells_fine_in,-1);
+  auto sink_filling_alg_4 = new sink_filling_algorithm_4_icon_single_index();
+  int* next_cell_index_dummy_in = new int[ncells_fine_in];
+  int* catchment_nums_dummy_in = new int[ncells_fine_in];
+  bool* true_sinks_in = new bool[ncells_fine_in];
+  fill_n(true_sinks_in,ncells_fine_in,false);
+  bool* landsea_in = new bool[ncells_fine_in];
+  fill_n(landsea_in,ncells_fine_in,false);
+  for (int i = 0; i < ncells_fine_in; i++){
+    if (prior_fine_rdirs_in[i] == 0.0 ||
+        prior_fine_rdirs_in[i] == -1.0 ) landsea_in[i] = true;
+  }
+  sink_filling_alg_4->setup_flags(false,true,false,false);
+  sink_filling_alg_4->setup_fields(corrected_orography_in,
+                                  landsea_in,
+                                  true_sinks_in,
+                                  next_cell_index_dummy_in,
+                                  grid_params_in,
+                                  catchment_nums_dummy_in);
+  alg.setup_fields(minima_in,
+                   raw_orography_in,
+                   corrected_orography_in,
+                   cell_areas_in,
+                   connection_volume_thresholds_in,
+                   flood_volume_thresholds_in,
+                   prior_fine_rdirs_in,
+                   prior_coarse_rdirs_in,
+                   prior_fine_catchments_in,
+                   coarse_catchment_nums_in,
+                   flood_next_cell_index_in,
+                   connect_next_cell_index_in,
+                   flood_force_merge_index_in,
+                   connect_force_merge_index_in,
+                   flood_redirect_index_in,
+                   connect_redirect_index_in,
+                   additional_flood_redirect_index_in,
+                   additional_connect_redirect_index_in,
+                   flood_local_redirect_in,
+                   connect_local_redirect_in,
+                   additional_flood_local_redirect_in,
+                   additional_connect_local_redirect_in,
+                   merge_points_in,
+                   grid_params_in,
+                   coarse_grid_params_in);
+  alg.setup_sink_filling_algorithm(sink_filling_alg_4);
+  alg.evaluate_basins();
+  if(basin_catchment_numbers_in){
+    basin_catchment_numbers_in = alg.retrieve_lake_numbers();
+  }
+  for (int i = 0; i < ncells_fine_in; i++){
+    merge_points_out_int[i] = int(merge_points_in[i]);
   }
   delete grid_params_in;
   delete coarse_grid_params_in;

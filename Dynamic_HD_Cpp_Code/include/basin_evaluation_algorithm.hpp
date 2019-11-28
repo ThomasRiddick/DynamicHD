@@ -5,6 +5,9 @@
  *      Author: thomasriddick
  */
 
+#ifndef INCLUDE_BASIN_EVALUATION_ALGORITHM_HPP_
+#define INCLUDE_BASIN_EVALUATION_ALGORITHM_HPP_
+
 #include <queue>
 #include "cell.hpp"
 #include "grid.hpp"
@@ -12,6 +15,7 @@
 #include "enums.hpp"
 #include "priority_cell_queue.hpp"
 #include "sink_filling_algorithm.hpp"
+using namespace std;
 
 class basin_evaluation_algorithm {
 public:
@@ -374,8 +378,8 @@ private:
                                                      height_types height_type_in);
   void output_diagnostics_for_grid_section(int min_lat,int max_lat,
                                            int min_lon,int max_lon);
-  field<double>* prior_fine_rdirs = nullptr;
-  field<double>* prior_coarse_rdirs = nullptr;
+  field<int>* prior_fine_rdirs = nullptr;
+  field<int>* prior_coarse_rdirs = nullptr;
   field<int>* flood_next_cell_index = nullptr;
   field<int>* connect_next_cell_index = nullptr;
   field<int>* flood_force_merge_index = nullptr;
@@ -387,3 +391,5 @@ private:
   const int true_sink_value = -5;
   const int outflow_value = -1;
 };
+
+#endif /*INCLUDE_BASIN_EVALUATION_ALGORITHM_HPP_*/

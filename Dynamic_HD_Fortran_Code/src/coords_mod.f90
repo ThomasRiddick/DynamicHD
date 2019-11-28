@@ -76,8 +76,26 @@ type, extends(section_coords) :: latlon_section_coords
 end type latlon_section_coords
 
 interface latlon_section_coords
-    procedure latlat_section_coords_constructor
+    procedure latlon_section_coords_constructor
 end interface latlon_section_coords
+
+type, extends(latlon_section_coords) :: irregular_latlon_section_coords
+    integer :: cell_number
+    integer, dimension(:), pointer :: list_of_cell_numbers
+    integer, dimension(:,:), pointer :: cell_numbers
+    integer, dimension(:), pointer :: section_min_lats
+    integer, dimension(:), pointer :: section_min_lons
+    integer, dimension(:), pointer :: section_max_lats
+    integer, dimension(:), pointer :: section_max_lons
+end type irregular_latlon_section_coords
+
+public :: irregular_latlon_section_coords_constructor, &
+                 multicell_irregular_latlon_section_coords_constructor
+
+interface irregular_latlon_section_coords
+    procedure :: irregular_latlon_section_coords_constructor, &
+                 multicell_irregular_latlon_section_coords_constructor
+end interface irregular_latlon_section_coords
 
 type, extends(section_coords) :: generic_1d_section_coords
     integer, dimension(:,:), pointer :: cell_neighbors
@@ -94,6 +112,10 @@ type, extends(section_coords) :: generic_1d_section_coords
         procedure :: get_subfield_indices
         procedure :: get_full_field_indices
 end type generic_1d_section_coords
+
+interface generic_1d_section_coords
+    procedure :: generic_1d_section_coords_constructor
+end interface generic_1d_section_coords
 
 !> An abstract class holding a generic indicator of cell that
 !! a given cell flows to; this could be implemented as a direction
@@ -137,7 +159,22 @@ type, extends(direction_indicator) :: dir_based_direction_indicator
 end type dir_based_direction_indicator
 
 interface dir_based_direction_indicator
-    procedure dir_based_direction_indicator_constructor
+    procedure :: dir_based_direction_indicator_constructor
+end interface
+
+type, extends(direction_indicator) :: index_based_direction_indicator
+    integer :: index
+    contains
+        !> Getter for the direction indicator integer value
+        procedure :: get_direction => index_based_direction_indicator_get_direction
+        !> Check if this direction indicator object is equal to a given value
+        !! where the value is supplied as a polymorphic pointer to an integer
+        !! if it is return TRUE else return FALSE
+        procedure :: is_equal_to => index_based_direction_indicator_is_equal_to
+end type index_based_direction_indicator
+
+interface index_based_direction_indicator
+    procedure index_based_direction_indicator_constructor
 end interface
 
 contains
@@ -197,7 +234,7 @@ contains
             end select
     end function generic_1d_are_equal_to
 
-    function latlat_section_coords_constructor(section_min_lat,section_min_lon,&
+    function latlon_section_coords_constructor(section_min_lat,section_min_lon,&
                                                section_width_lat,section_width_lon) &
                                                result(constructor)
     type(latlon_section_coords) :: constructor
@@ -210,8 +247,102 @@ contains
         constructor%section_width_lat = section_width_lat
         constructor%section_width_lon = section_width_lon
         constructor%zero_line = 0.0
-    end function latlat_section_coords_constructor
+    end function latlon_section_coords_constructor
 
+    function irregular_latlon_section_coords_constructor(cell_number_in,cell_numbers_in, &
+                                                         section_min_lats_in, &
+                                                         section_min_lons_in, &
+                                                         section_max_lats_in, &
+                                                         section_max_lons_in) &
+                                                          result(constructor)
+    type(irregular_latlon_section_coords) :: constructor
+    integer, dimension(:,:), pointer :: cell_numbers_in
+    integer, dimension(:), pointer :: section_min_lats_in
+    integer, dimension(:), pointer :: section_min_lons_in
+    integer, dimension(:), pointer :: section_max_lats_in
+    integer, dimension(:), pointer :: section_max_lons_in
+    integer :: cell_number_in
+        constructor%section_min_lats => section_min_lats_in
+        constructor%section_min_lons => section_min_lons_in
+        constructor%section_max_lats => section_max_lats_in
+        constructor%section_max_lons => section_max_lons_in
+        constructor%cell_numbers => cell_numbers_in
+        constructor%list_of_cell_numbers => null()
+        constructor%cell_number = cell_number_in
+        constructor%section_min_lat = section_min_lats_in(cell_number_in)
+        constructor%section_min_lon = section_min_lons_in(cell_number_in)
+        constructor%section_width_lat = &
+            section_max_lats_in(cell_number_in) + 1 - section_min_lats_in(cell_number_in)
+        constructor%section_width_lon = &
+            section_max_lons_in(cell_number_in) + 1 - section_min_lons_in(cell_number_in)
+        constructor%zero_line = 0.0
+    end function irregular_latlon_section_coords_constructor
+
+function multicell_irregular_latlon_section_coords_constructor(list_of_cell_numbers_in,cell_numbers_in, &
+                                                               section_min_lats_in, &
+                                                               section_min_lons_in, &
+                                                               section_max_lats_in, &
+                                                               section_max_lons_in) &
+                                                                 result(constructor)
+    type(irregular_latlon_section_coords) :: constructor
+    integer, dimension(:,:), pointer :: cell_numbers_in
+    integer, dimension(:), pointer :: section_min_lats_in
+    integer, dimension(:), pointer :: section_min_lons_in
+    integer, dimension(:), pointer :: section_max_lats_in
+    integer, dimension(:), pointer :: section_max_lons_in
+    integer, dimension(:), pointer :: list_of_cell_numbers_in
+    integer :: section_min_lat
+    integer :: section_min_lon
+    integer :: section_max_lat
+    integer :: section_max_lon
+    integer :: i
+    integer :: working_cell_number
+        constructor%section_min_lats => section_min_lats_in
+        constructor%section_min_lons => section_min_lons_in
+        constructor%section_max_lats => section_max_lats_in
+        constructor%section_max_lons => section_max_lons_in
+        constructor%cell_numbers => cell_numbers_in
+        constructor%cell_number = 0
+        constructor%list_of_cell_numbers => list_of_cell_numbers_in
+        working_cell_number = list_of_cell_numbers_in(1)
+        section_min_lat=section_min_lats_in(working_cell_number)
+        section_min_lon=section_min_lons_in(working_cell_number)
+        section_max_lat=section_max_lats_in(working_cell_number)
+        section_max_lon=section_max_lons_in(working_cell_number)
+        do  i = 2,size(list_of_cell_numbers_in)
+            working_cell_number = list_of_cell_numbers_in(i)
+            section_min_lat=min(section_min_lats_in(working_cell_number), &
+                                section_min_lat)
+            section_min_lon=min(section_min_lons_in(working_cell_number), &
+                                section_min_lon)
+            section_max_lat=max(section_max_lats_in(working_cell_number), &
+                                section_max_lat)
+            section_max_lon=max(section_max_lons_in(working_cell_number), &
+                                section_max_lon)
+        end do
+        constructor%section_min_lat = section_min_lat
+        constructor%section_min_lon = section_min_lon
+        constructor%section_width_lat = &
+            section_max_lat + 1 - section_min_lat
+        constructor%section_width_lon = &
+            section_max_lon + 1 - section_min_lon
+        constructor%zero_line = 0.0
+        constructor%zero_line = 0.0
+    end function multicell_irregular_latlon_section_coords_constructor
+
+    function generic_1d_section_coords_constructor(cell_neighbors_in,&
+                                                   cell_secondary_neighbors_in) &
+                                                    result(constructor)
+        integer, dimension(:,:), pointer, intent(in) :: cell_neighbors_in
+        integer, dimension(:,:), pointer, intent(in) :: cell_secondary_neighbors_in
+        type(generic_1d_section_coords), allocatable :: constructor
+            constructor%cell_neighbors => cell_neighbors_in
+            constructor%cell_secondary_neighbors => cell_secondary_neighbors_in
+            constructor%edge_cells => null()
+            constructor%subfield_indices => null()
+            constructor%full_field_indices => null()
+            constructor%mask => null()
+    end function
 
     function get_cell_neighbors(this) result(cell_neighbors)
         class(generic_1d_section_coords), intent(inout) :: this
@@ -299,5 +430,31 @@ contains
                 end if
             end select
     end function dir_based_direction_indicator_is_equal_to
+
+    pure function index_based_direction_indicator_constructor(index) result(constructor)
+        type(index_based_direction_indicator) :: constructor
+        integer, intent(in) :: index
+            constructor%index = index
+    end function index_based_direction_indicator_constructor
+
+    pure function index_based_direction_indicator_get_direction(this) result(direction)
+        class(index_based_direction_indicator), intent(in) :: this
+        integer :: direction
+            direction = this%index
+    end function index_based_direction_indicator_get_direction
+
+    pure function index_based_direction_indicator_is_equal_to(this,value) result(is_equal)
+        class(index_based_direction_indicator), intent(in) :: this
+        class(*), pointer, intent(in) :: value
+        logical :: is_equal
+            select type(value)
+                type is (integer)
+                if (this%index == value) then
+                    is_equal = .True.
+                else
+                    is_equal = .False.
+                end if
+            end select
+    end function index_based_direction_indicator_is_equal_to
 
 end module coords_mod

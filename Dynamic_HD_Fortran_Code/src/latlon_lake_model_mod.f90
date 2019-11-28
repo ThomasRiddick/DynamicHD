@@ -1,41 +1,20 @@
 module latlon_lake_model_mod
 
-type, abstract :: Lake
-  integer :: lake_number
-  integer :: center_cell_lat
-  integer :: center_cell_lon
-  real    :: lake_volume
-  real    :: unprocessed_water
-  integer :: current_cell_to_fill_lat
-  integer :: current_cell_to_fill_lon
-  type(LakeParameters) :: lake_parameters
-  type(LakesFields) :: lake_fields
-  contains
-    procedure(add_water), deferred :: add_water
-    procedure :: accept_merge
-    procedure :: store_water
-    procedure :: find_true_primary_lake
-    procedure :: get_merge_type
-    procedure :: get_primary_merge_coords
-    procedure :: get_secondary_merge_coords
-    procedure :: InitialiseLake
-end type Lake
+implicit none
 
-abstract interface
-  function add_water result(updated_lake)
-    import Lake
-    class(Lake), intent(in) :: this
-    real, intent(in) :: inflow
-    class(Lake) :: updated_lake
-  end function add_water
-end interface
+integer, parameter :: no_merge = 0
+integer, parameter :: primary_merge   = 1
+integer, parameter :: secondary_merge = 2
+integer, parameter :: double_merge = 2
+integer, parameter, dimension(3) :: convert_to_simple_merge_type_flood = (/0,0,0/)
+integer, parameter, dimension(3) :: convert_to_simple_merge_type_connect = (/0,0,0/)
 
-type :: BasinList
-  integer, allocatable, dimension(:) basin_lats
-  integer, allocatable, dimension(:) basin_lons
-end type BasinList
+type :: basinlist
+  integer, allocatable, dimension(:) :: basin_lats
+  integer, allocatable, dimension(:) :: basin_lons
+end type basinlist
 
-type :: LakeParameters
+type :: lakeparameters
   logical :: instant_throughflow
   real :: lake_retention_coefficient
   logical, allocatable, dimension(:,:) :: lake_centers
@@ -48,7 +27,7 @@ type :: LakeParameters
   logical, allocatable, dimension(:,:) :: additional_connect_local_redirect
   integer, allocatable, dimension(:,:) :: merge_points
   integer, allocatable, dimension(:,:) :: basin_numbers
-  type(BasinList), allocatable, dimension(:) :: basins
+  type(basinlist), allocatable, dimension(:) :: basins
   integer, allocatable, dimension(:,:) :: flood_next_cell_lat_index
   integer, allocatable, dimension(:,:) :: flood_next_cell_lon_index
   integer, allocatable, dimension(:,:) :: connect_next_cell_lat_index
@@ -68,44 +47,75 @@ type :: LakeParameters
   integer :: nlat,nlon
   integer :: nlat_coarse,nlon_coarse
   contains
-     procedure :: InitialiseLakeParameters
-end type LakeParameters
+     procedure :: initialiselakeparameters
+end type lakeparameters
 
-interface LakeParameters
-  procedure LakeParametersConstructor
-end interface LakeParameters
+interface lakeparameters
+  procedure lakeparametersconstructor
+end interface lakeparameters
 
-type :: LakePointer
-  type(Lake), pointer :: lake_pointer
-end type LakePointer
+type :: lakepointer
+  class(lake), pointer :: lake_pointer
+end type lakepointer
 
-type :: LakeFields
+type :: lakefields
   logical, allocatable, dimension(:,:) :: completed_lake_cells
   integer, allocatable, dimension(:,:) :: lake_numbers
-  integer, allocatable, dimension(:,:) :: water_to_lakes
-  integer, allocatable, dimension(:,:) :: water_to_hd
+  real, allocatable, dimension(:,:) :: water_to_lakes
+  real, allocatable, dimension(:,:) :: water_to_hd
   integer, allocatable, dimension(:) :: cells_with_lakes_lat
   integer, allocatable, dimension(:) :: cells_with_lakes_lon
-  type(LakePointer), allocatable, dimension(:) :: other_lakes
+  type(lakepointer), allocatable, dimension(:) :: other_lakes
   contains
-    procedure :: InitialiseLakeFields
-end type LakeFields
+    procedure :: initialiselakefields
+end type lakefields
 
-interface LakeFields
-  procedure LakesConstructor
-end interface LakeFields
+interface lakefields
+  procedure lakefieldsconstructor
+end interface lakefields
 
-type LakePrognostics
-  type(LakePointer), allocatable, dimension(:) :: lakes
+type lakeprognostics
+  type(lakepointer), allocatable, dimension(:) :: lakes
   contains
-    procedure :: InitialiseLakePrognostics
-end type LakePrognostics
+    procedure :: initialiselakeprognostics
+end type lakeprognostics
 
-interface LakePrognostics
-  procedure LakePrognosticsConstructor
-end interface LakePrognostics
+interface lakeprognostics
+  procedure lakeprognosticsconstructor
+end interface lakeprognostics
 
-type, extends(Lake) :: FillingLake
+type, abstract :: lake
+  integer :: lake_number
+  integer :: center_cell_lat
+  integer :: center_cell_lon
+  real    :: lake_volume
+  real    :: unprocessed_water
+  integer :: current_cell_to_fill_lat
+  integer :: current_cell_to_fill_lon
+  type(lakeparameters) :: lake_parameters
+  type(lakefields) :: lake_fields
+  contains
+    procedure(add_water), deferred :: add_water
+    procedure :: accept_merge
+    procedure :: store_water
+    procedure :: find_true_primary_lake
+    procedure :: get_merge_type
+    procedure :: get_primary_merge_coords
+    procedure :: get_secondary_merge_coords
+    procedure :: check_if_merge_is_possible
+    procedure :: initialiselake
+end type lake
+
+abstract interface
+  function add_water(this,inflow) result(updated_lake)
+    import lake
+    class(lake), intent(inout), target :: this
+    real, intent(in) :: inflow
+    class(lake), pointer :: updated_lake
+  end function add_water
+end interface
+
+type, extends(lake) :: fillinglake
   logical :: primary_merge_completed
   logical :: use_additional_fields
   contains
@@ -115,61 +125,70 @@ type, extends(Lake) :: FillingLake
     procedure :: change_to_overflowing_lake
     procedure :: update_filling_cell
     procedure :: get_outflow_redirect_coords
-    procedure :: add_water => FillingLake_add_water
-    procedure :: FillingLake
-end type FillingLake
+    procedure :: add_water => fillinglake_add_water
+    procedure :: initialisefillinglake
+end type fillinglake
 
-interface FillingLake
-  procedure FillingLakeConstructor
-end interface FillingLake
+interface fillinglake
+  procedure :: fillinglakeconstructor
+end interface fillinglake
 
-type, extends(Lake) :: OverflowingLake
+type, extends(lake) :: overflowinglake
   real :: excess_water
   integer :: outflow_redirect_lat
   integer :: outflow_redirect_lon
+  integer :: next_merge_target_lat
+  integer :: next_merge_target_lon
   logical :: local_redirect
   real    :: lake_retention_coefficient
   contains
-    procedure :: change_to_filling_lake
+    procedure :: change_overflowing_lake_to_filling_lake
     procedure :: drain_excess_water
-    procedure :: add_water => OverflowingLake_add_water
-    procedure :: InitialiseOverflowingLake
-end type OverflowingLake
+    procedure :: add_water => overflowinglake_add_water
+    procedure :: initialiseoverflowinglake
+end type overflowinglake
 
 
-interface OverflowingLake
-  procedure OverflowingLakeConstructor
-end interface OverflowingLake
+interface overflowinglake
+  procedure :: overflowinglakeconstructor
+end interface overflowinglake
 
-type, extends(Lake) :: SubsumedLake
+type, extends(lake) :: subsumedlake
   integer :: primary_lake_number
   contains
-    procedure :: add_water => SubsumedLake_add_water
-    procedure :: InitialiseSubsumedLake
-end type SubsumedLake
+    procedure :: add_water => subsumedlake_add_water
+    procedure :: initialisesubsumedlake
+    procedure :: change_subsumed_lake_to_filling_lake
+end type subsumedlake
 
-interface SubsumedLake
-  procedure SubsumedLakeConstructor
-end interface SubsumedLake
+interface subsumedlake
+  procedure :: subsumedlakeconstructor
+end interface subsumedlake
 
-subroutine InitialiseLake(this,center_cell_lat_in,center_cell_lon_in,
+contains
+
+subroutine initialiselake(this,center_cell_lat_in,center_cell_lon_in, &
+                          current_cell_to_fill_lat_in, &
+                          current_cell_to_fill_lon_in, &
                           lake_number_in,lake_parameters_in,lake_fields_in)
-  class(Lake),intent(inout) :: this
+  class(lake),intent(inout) :: this
   integer, intent(in) :: center_cell_lat_in
   integer, intent(in) :: center_cell_lon_in
+  integer, intent(in) :: current_cell_to_fill_lat_in
+  integer, intent(in) :: current_cell_to_fill_lon_in
   integer, intent(in) :: lake_number_in
+  type(lakeparameters), intent(in) :: lake_parameters_in
+  type(lakefields), intent(in) :: lake_fields_in
+    this%lake_parameters = lake_parameters_in
+    this%lake_fields = lake_fields_in
     this%lake_number = lake_number_in
     this%center_cell_lat = center_cell_lat_in
     this%center_cell_lon = center_cell_lon_in
-    this%lake_volume = 0.0
-    this%unprocessed_water = 0.0
-    this%current_cell_to_fill_lat = center_cell_lat_in
-    this%current_cell_to_fill_lon = center_cell_lon_in
-    this%lake_parameters = lake_parameters_in
-    this%lake_fields = lake_fields_in
-end subroutine InitialiseLake
+    this%current_cell_to_fill_lat = current_cell_to_fill_lat_in
+    this%current_cell_to_fill_lon = current_cell_to_fill_lon_in
+end subroutine initialiselake
 
-subroutine InitialiseLakeParameters(this,lake_centers_in, &
+subroutine initialiselakeparameters(this,lake_centers_in, &
                                     connection_volume_thresholds_in, &
                                     flood_volume_thresholds_in, &
                                     flood_local_redirect_in, &
@@ -197,122 +216,125 @@ subroutine InitialiseLakeParameters(this,lake_centers_in, &
                                     nlat_coarse_in,nlon_coarse_in, &
                                     instant_throughflow_in, &
                                     lake_retention_coefficient_in)
-    class(LakeParameters),intent(inout) :: this
-    logical, allocatable, dimension(:,:), intent(in) :: lake_centers_in
-    real, allocatable, dimension(:,:), intent(in) :: connection_volume_thresholds_in
-    real, allocatable, dimension(:,:), intent(in) :: flood_volume_thresholds_in
-    logical, allocatable, dimension(:,:), intent(in) :: flood_local_redirect_in
-    logical, allocatable, dimension(:,:), intent(in) :: connect_local_redirect_in
-    logical, allocatable, dimension(:,:), intent(in) :: additional_flood_local_redirect_in
-    logical, allocatable, dimension(:,:), intent(in) :: additional_connect_local_redirect_in
-    integer, allocatable, dimension(:,:), intent(in) :: merge_points_in
-    integer, allocatable, dimension(:,:), intent(in) :: flood_next_cell_lat_index_in
-    integer, allocatable, dimension(:,:), intent(in) :: flood_next_cell_lon_index_in
-    integer, allocatable, dimension(:,:), intent(in) :: connect_next_cell_lat_index_in
-    integer, allocatable, dimension(:,:), intent(in) :: connect_next_cell_lon_index_in
-    integer, allocatable, dimension(:,:), intent(in) :: flood_force_merge_lat_index_in
-    integer, allocatable, dimension(:,:), intent(in) :: flood_force_merge_lon_index_in
-    integer, allocatable, dimension(:,:), intent(in) :: connect_force_merge_lat_index_in
-    integer, allocatable, dimension(:,:), intent(in) :: connect_force_merge_lon_index_in
-    integer, allocatable, dimension(:,:), intent(in) :: flood_redirect_lat_index_in
-    integer, allocatable, dimension(:,:), intent(in) :: flood_redirect_lon_index_in
-    integer, allocatable, dimension(:,:), intent(in) :: connect_redirect_lat_index_in
-    integer, allocatable, dimension(:,:), intent(in) :: connect_redirect_lon_index_in
-    integer, allocatable, dimension(:,:), intent(in) :: additional_flood_redirect_lat_index_in
-    integer, allocatable, dimension(:,:), intent(in) :: additional_flood_redirect_lon_index_in
-    integer, allocatable, dimension(:,:), intent(in) :: additional_connect_redirect_lat_index_in
-    integer, allocatable, dimension(:,:), intent(in) :: additional_connect_redirect_lon_index_in
-    integer, intent(in) :: nlat_in,nlon_in
-    integer, intent(in) :: nlat_coarse_in,nlon_coarse_in
-    logical, intent(in) :: instant_throughflow_in
-    real, intent(in) :: lake_retention_coefficient_in
-    integer, allocatable, dimension(:) :: basins_in_coarse_cell_lat_temp
-    integer, allocatable, dimension(:) :: basins_in_coarse_cell_lon_temp
-    integer, allocatable, dimension(:) :: basins_in_coarse_cell_lat
-    integer, allocatable, dimension(:) :: basins_in_coarse_cell_lon
-    type(BasinList), allocatable, dimension(:) :: basins
-    integer :: lat_scale_factor, lon_scale_factor
-    integer :: number_of_basins_in_coarse_cell
-    integer :: i,j,k,l,m
-    integer :: basin_number
-      this%lake_centers => lake_centers_in
-      this%conumber_of_basins_in_coarse_cell > 0 => connection_volume_thresholds_in
-      this%flood_volume_thresholds_in => connection_volume_thresholds_in
-      this%flood_local_redirect_in => flood_local_redirect_in
-      this%connect_local_redirect => connect_local_redirect_in
-      this%additional_flood_local_redirect => additional_flood_local_redirect_in
-      this%additional_connect_local_redirect => additional_connect_local_redirect_in
-      this%merge_points => merge_points_in
-      this%flood_next_cell_lat_index => flood_next_cell_lat_index_in
-      this%flood_next_cell_lon_index => flood_next_cell_lon_index_in
-      this%connect_next_cell_lat_index => connect_next_cell_lat_index_in
-      this%connect_next_cell_lon_index => connect_next_cell_lon_index_in
-      this%flood_force_merge_lat_index => flood_force_merge_lat_index_in
-      this%flood_force_merge_lon_index => flood_force_merge_lon_index_in
-      this%connect_force_merge_lat_index => connect_force_merge_lat_index_in
-      this%connect_force_merge_lon_index => connect_force_merge_lon_index_in
-      this%flood_redirect_lat_index => flood_redirect_lat_index_in
-      this%flood_redirect_lon_index => flood_redirect_lon_index_in
-      this%connect_redirect_lat_index => connect_redirect_lat_index_in
-      this%connect_redirect_lon_index => connect_redirect_lon_index_in
-      this%additional_flood_redirect_lat_index => additional_flood_redirect_lat_index_in
-      this%additional_flood_redirect_lon_index => additional_flood_redirect_lon_index_in
-      this%additional_connect_redirect_lat_index => additional_connect_redirect_lat_index_in
-      this%additional_connect_redirect_lon_index => additional_connect_redirect_lon_index_in
-      this%nlat = nlat_in
-      this%nlon = nlon_in
-      this%nlat_coarse = nlat_coarse_in
-      this%nlon_coarse = nlon_coarse_in
-      this%instant_throughflow = instant_throughflow_in
-      this%lake_retention_coefficient = lake_retention_coefficient_in
-      allocate(this%flood_only(nlat_in,nlon_in))
-      this%flood_only(:,:) = .false.
-      lat_scale_factor = nlat_in/nlat_coarse_in
-      lon_scale_factor = nlon_in/nlon_coarse_in
-      do i=1,nlat_in
-        do i=1,nlon_in
-          if (this%connection_volume_thresholds[i,j] == -1.0) then
-            this%flood_only[i,j] = .true.
-          end if
+  class(lakeparameters),intent(inout) :: this
+  logical :: instant_throughflow_in
+  real :: lake_retention_coefficient_in
+  logical, allocatable, dimension(:,:) :: lake_centers_in
+  real, allocatable, dimension(:,:) :: connection_volume_thresholds_in
+  real, allocatable, dimension(:,:) :: flood_volume_thresholds_in
+  logical, allocatable, dimension(:,:) :: flood_local_redirect_in
+  logical, allocatable, dimension(:,:) :: connect_local_redirect_in
+  logical, allocatable, dimension(:,:) :: additional_flood_local_redirect_in
+  logical, allocatable, dimension(:,:) :: additional_connect_local_redirect_in
+  integer, allocatable, dimension(:,:) :: merge_points_in
+  integer, allocatable, dimension(:,:) :: flood_next_cell_lat_index_in
+  integer, allocatable, dimension(:,:) :: flood_next_cell_lon_index_in
+  integer, allocatable, dimension(:,:) :: connect_next_cell_lat_index_in
+  integer, allocatable, dimension(:,:) :: connect_next_cell_lon_index_in
+  integer, allocatable, dimension(:,:) :: flood_force_merge_lat_index_in
+  integer, allocatable, dimension(:,:) :: flood_force_merge_lon_index_in
+  integer, allocatable, dimension(:,:) :: connect_force_merge_lat_index_in
+  integer, allocatable, dimension(:,:) :: connect_force_merge_lon_index_in
+  integer, allocatable, dimension(:,:) :: flood_redirect_lat_index_in
+  integer, allocatable, dimension(:,:) :: flood_redirect_lon_index_in
+  integer, allocatable, dimension(:,:) :: connect_redirect_lat_index_in
+  integer, allocatable, dimension(:,:) :: connect_redirect_lon_index_in
+  integer, allocatable, dimension(:,:) :: additional_flood_redirect_lat_index_in
+  integer, allocatable, dimension(:,:) :: additional_flood_redirect_lon_index_in
+  integer, allocatable, dimension(:,:) :: additional_connect_redirect_lat_index_in
+  integer, allocatable, dimension(:,:) :: additional_connect_redirect_lon_index_in
+  integer, allocatable, dimension(:) :: basins_in_coarse_cell_lat_temp
+  integer, allocatable, dimension(:) :: basins_in_coarse_cell_lon_temp
+  integer, allocatable, dimension(:) :: basins_in_coarse_cell_lat
+  integer, allocatable, dimension(:) :: basins_in_coarse_cell_lon
+  type(basinlist), allocatable, dimension(:) :: basins_temp
+  integer :: nlat_in,nlon_in
+  integer :: nlat_coarse_in,nlon_coarse_in
+  integer :: basin_number
+  integer :: number_of_basins_in_coarse_cell
+  integer :: i,j,k,l,m
+  integer :: lat_scale_factor,lon_scale_factor
+    number_of_basins_in_coarse_cell = 0
+    this%lake_centers = lake_centers_in
+    this%connection_volume_thresholds = connection_volume_thresholds_in
+    this%flood_volume_thresholds = flood_volume_thresholds_in
+    this%flood_local_redirect = flood_local_redirect_in
+    this%connect_local_redirect = connect_local_redirect_in
+    this%additional_flood_local_redirect = additional_flood_local_redirect_in
+    this%additional_connect_local_redirect = additional_connect_local_redirect_in
+    this%merge_points = merge_points_in
+    this%flood_next_cell_lat_index = flood_next_cell_lat_index_in
+    this%flood_next_cell_lon_index = flood_next_cell_lon_index_in
+    this%connect_next_cell_lat_index = connect_next_cell_lat_index_in
+    this%connect_next_cell_lon_index = connect_next_cell_lon_index_in
+    this%flood_force_merge_lat_index = flood_force_merge_lat_index_in
+    this%flood_force_merge_lon_index = flood_force_merge_lon_index_in
+    this%connect_force_merge_lat_index = connect_force_merge_lat_index_in
+    this%connect_force_merge_lon_index = connect_force_merge_lon_index_in
+    this%flood_redirect_lat_index = flood_redirect_lat_index_in
+    this%flood_redirect_lon_index = flood_redirect_lon_index_in
+    this%connect_redirect_lat_index = connect_redirect_lat_index_in
+    this%connect_redirect_lon_index = connect_redirect_lon_index_in
+    this%additional_flood_redirect_lat_index = additional_flood_redirect_lat_index_in
+    this%additional_flood_redirect_lon_index = additional_flood_redirect_lon_index_in
+    this%additional_connect_redirect_lat_index = additional_connect_redirect_lat_index_in
+    this%additional_connect_redirect_lon_index = additional_connect_redirect_lon_index_in
+    this%nlat = nlat_in
+    this%nlon = nlon_in
+    this%nlat_coarse = nlat_coarse_in
+    this%nlon_coarse = nlon_coarse_in
+    this%instant_throughflow = instant_throughflow_in
+    this%lake_retention_coefficient = lake_retention_coefficient_in
+    allocate(this%flood_only(nlat_in,nlon_in))
+    this%flood_only(:,:) = .false.
+    do i=1,this%nlat
+      do j=1,this%nlon
+        if (this%connection_volume_thresholds(i,j) == -1.0) then
+          this%flood_only(i,j) = .true.
+        end if
+      end do
+    end do
+    allocate(basins_in_coarse_cell_lat_temp((this%nlat*this%nlon)&
+                                            /(this%nlat_coarse*this%nlon_coarse)))
+    allocate(basins_in_coarse_cell_lon_temp((this%nlat*this%nlon)&
+                                            /(this%nlat_coarse*this%nlon_coarse)))
+    allocate(this%basin_numbers(this%nlat_coarse,this%nlon_coarse))
+    allocate(this%basins(this%nlat_coarse*this%nlon_coarse))
+    basin_number = 0
+    lat_scale_factor = nlat_in/nlat_coarse_in
+    lon_scale_factor = nlon_in/nlon_coarse_in
+    do i=1,nlat_coarse_in
+      do j=1,nlon_coarse_in
+        number_of_basins_in_coarse_cell = 0
+        do k = (i-1)*lat_scale_factor,i*lat_scale_factor
+          do l = (j-1)*lon_scale_factor,i*lon_scale_factor
+            if (this%lake_centers(k,l)) then
+              number_of_basins_in_coarse_cell = number_of_basins_in_coarse_cell + 1
+              basins_in_coarse_cell_lat_temp(number_of_basins_in_coarse_cell) = k
+              basins_in_coarse_cell_lon_temp(number_of_basins_in_coarse_cell) = l
+            end if
         end do
-      end do
-      allocate(basins_in_coarse_cell_lat_temp((nlat_in*nlon_in)/(nlat_coarse_in*nlon_coarse_in))
-      allocate(basins_in_coarse_cell_lon_temp((nlat_in*nlon_in)/(nlat_coarse_in*nlon_coarse_in))
-      allocate(this%basin_numbers(nlat_coarse_in,nlon_coarse_in))
-      allocate(this%basins(nlat_coarse_in*nlon_coarse_in))
-      basin_number = 0
-      do i=1,nlat_coarse_in
-        do j=1,nlon_coarse_in
-          number_of_basins_in_coarse_cell = 0
-          do k = (i-1)*lat_scale_factor,i*lat_scale_factor
-            do l = (j-1)*lon_scale_factor,i*lon_scale_factor
-              if (this%lake_centers[k,l]) then
-                number_of_basins_in_coarse_cell = number_of_basins_in_coarse_cell + 1
-                basins_in_coarse_cell_lat_temp[number_of_basins_in_coarse_cell] = k
-                basins_in_coarse_cell_lon_temp[number_of_basins_in_coarse_cell] = l
-              end if
-          end do
-          end do
-          if(number_of_basins_in_coarse_cell > 0) then
-            allocate(basins_in_coarse_cell_lat(number_of_basins_in_coarse_cell))
-            allocate(basins_in_coarse_cell_lon(number_of_basins_in_coarse_cell))
-            do m=1,number_of_basins_in_coarse_cell
-              basins_in_coarse_cell_lat[m] = basins_in_coarse_cell_lat_temp[m]
-              basins_in_coarse_cell_lon[m] = basins_in_coarse_cell_lon_temp[m]
-            end do
-            basin_number = basin_number + 1
-            basins_temp[basin_number] =
-              BasinList(basins_in_coarse_cell_lat,basins_in_coarse_cell_lon)
-            this%basin_numbers[i,j] = basin_number
-          end if
         end do
+        if(number_of_basins_in_coarse_cell > 0) then
+          allocate(basins_in_coarse_cell_lat(number_of_basins_in_coarse_cell))
+          allocate(basins_in_coarse_cell_lon(number_of_basins_in_coarse_cell))
+          do m=1,number_of_basins_in_coarse_cell
+            basins_in_coarse_cell_lat(m) = basins_in_coarse_cell_lat_temp(m)
+            basins_in_coarse_cell_lon(m) = basins_in_coarse_cell_lon_temp(m)
+          end do
+          basin_number = basin_number + 1
+          basins_temp(basin_number) = &
+            basinlist(basins_in_coarse_cell_lat,basins_in_coarse_cell_lon)
+          this%basin_numbers(i,j) = basin_number
+        end if
       end do
-      do m=1,basin_number
-        this%basins[m] = basins_temp[m]
-      end do
-end subroutine InitialiseLakeParameters
+    end do
+    do m=1,basin_number
+      this%basins(m) = basins_temp(m)
+    end do
+end subroutine initialiselakeparameters
 
-function LakeParametersConstructor(lake_centers_in, &
+function lakeparametersconstructor(lake_centers_in, &
                                    connection_volume_thresholds_in, &
                                    flood_volume_thresholds_in, &
                                    flood_local_redirect_in, &
@@ -340,7 +362,7 @@ function LakeParametersConstructor(lake_centers_in, &
                                    nlat_coarse_in,nlon_coarse_in, &
                                    instant_throughflow_in, &
                                    lake_retention_coefficient_in) result(constructor)
-  type(LakeParameters) :: constructor
+  type(lakeparameters), pointer :: constructor
   logical, allocatable, dimension(:,:), intent(in) :: lake_centers_in
   real, allocatable, dimension(:,:), intent(in) :: connection_volume_thresholds_in
   real, allocatable, dimension(:,:), intent(in) :: flood_volume_thresholds_in
@@ -370,7 +392,7 @@ function LakeParametersConstructor(lake_centers_in, &
   logical, intent(in) :: instant_throughflow_in
   real, intent(in) :: lake_retention_coefficient_in
     allocate(constructor)
-    call constructor%InitialiseLakeParameters(lake_centers_in, &
+    call constructor%initialiselakeparameters(lake_centers_in, &
                                               connection_volume_thresholds_in, &
                                               flood_volume_thresholds_in, &
                                               flood_local_redirect_in, &
@@ -398,11 +420,11 @@ function LakeParametersConstructor(lake_centers_in, &
                                               nlat_coarse_in,nlon_coarse_in, &
                                               instant_throughflow_in, &
                                               lake_retention_coefficient_in)
-end function LakeParametersConstructor
+end function lakeparametersconstructor
 
-subroutine InitialiseLakeFields(this,lake_parameters)
-    class(LakeFields), intent(inout) :: this
-    type(LakeParameters) :: lake_parameters
+subroutine initialiselakefields(this,lake_parameters)
+    class(lakefields), intent(inout) :: this
+    type(lakeparameters) :: lake_parameters
     integer :: lat_scale_factor, lon_scale_factor
     integer, allocatable, dimension(:) :: cells_with_lakes_lat_temp
     integer, allocatable, dimension(:) :: cells_with_lakes_lon_temp
@@ -420,190 +442,273 @@ subroutine InitialiseLakeFields(this,lake_parameters)
       allocate(cells_with_lakes_lat_temp(lake_parameters%nlat_coarse*lake_parameters%nlon_coarse))
       allocate(cells_with_lakes_lon_temp(lake_parameters%nlat_coarse*lake_parameters%nlon_coarse))
       number_of_cells_containing_lakes = 0
-      lat_scale_factor = lake_parameters%nlat/nlat_coarse
+      lat_scale_factor = lake_parameters%nlat/lake_parameters%nlat_coarse
       lon_scale_factor = lake_parameters%nlon/lake_parameters%nlon_coarse
-        do i=1,lake_parameters%nlat_coarse
-          do i=1,lake_parameters%nlon_coarse
-            contains_lake = .false.
-            do k = (i-1)*lat_scale_factor,i*lat_scale_factor
-              do l = (j-1)*lon_scale_factor,i*lon_scale_factor
-                if (lake_parameters%lake_centers[k,l]) contains_lake = .true.
-              end do
+      do i=1,lake_parameters%nlat_coarse
+        do j=1,lake_parameters%nlon_coarse
+          contains_lake = .false.
+          do k = (i-1)*lat_scale_factor,i*lat_scale_factor
+            do l = (j-1)*lon_scale_factor,i*lon_scale_factor
+              if (lake_parameters%lake_centers(k,l)) contains_lake = .true.
             end do
-            if(contains_lake) then
-              number_of_cells_containing_lakes = number_of_cells_containing_lakes + 1
-              cells_with_lakes_lat_temp[number_of_cells_containing_lakes] = i
-              cells_with_lakes_lon_temp[number_of_cells_containing_lakes] = j
-            end if
           end do
+          if(contains_lake) then
+            number_of_cells_containing_lakes = number_of_cells_containing_lakes + 1
+            cells_with_lakes_lat_temp(number_of_cells_containing_lakes) = i
+            cells_with_lakes_lon_temp(number_of_cells_containing_lakes) = j
+          end if
         end do
-      end
+      end do
       allocate(this%cells_with_lakes_lat(number_of_cells_containing_lakes))
       allocate(this%cells_with_lakes_lon(number_of_cells_containing_lakes))
       do i = 1,number_of_cells_containing_lakes
-        this%cells_with_lakes_lat[number_of_cells_containing_lakes] =
-          & cells_with_lakes_lat_temp[number_of_cells_containing_lakes]
-        this%cells_with_lakes_lon[number_of_cells_containing_lakes] =
-          & cells_with_lakes_lon_temp[number_of_cells_containing_lakes]
+        this%cells_with_lakes_lat(number_of_cells_containing_lakes) = &
+          & cells_with_lakes_lat_temp(number_of_cells_containing_lakes)
+        this%cells_with_lakes_lon(number_of_cells_containing_lakes) = &
+          & cells_with_lakes_lon_temp(number_of_cells_containing_lakes)
       end do
-end subroutine InitialiseLakeFields
+end subroutine initialiselakefields
 
-function LakeFieldsConstructor(lake_parameters)
-  type(LakeFields), intent(inout) :: constructor
-  type(LakeParameters) :: lake_parameters
+function lakefieldsconstructor(lake_parameters) result(constructor)
+  type(lakeparameters), intent(inout) :: lake_parameters
+  type(lakefields), allocatable :: constructor
     allocate(constructor)
-    call constructor%InitialiseLakeFields(lake_parameters)
-end function LakesFieldsConstructor
+    call constructor%initialiselakefields(lake_parameters)
+end function lakefieldsconstructor
 
-subroutine InitialiseLakePrognostics(this,lake_parameters_in,lake_fields_in)
-  type(LakePrognostics), intent(inout) :: this
-  type(LakeParameters), intent(in) :: lake_parameters_in
-  type(LakeFields), intent(inout) :: lake_fields_in
-    type(LakePointer), allocatable, dimension(:) :: lakes_temp
+subroutine initialiselakeprognostics(this,lake_parameters_in,lake_fields_in)
+  class(lakeprognostics), intent(inout) :: this
+  type(lakeparameters), intent(in) :: lake_parameters_in
+  type(lakefields), intent(inout) :: lake_fields_in
+  type(lakepointer), allocatable, dimension(:) :: lakes_temp
+  class(lake), pointer :: lake_temp
   integer :: lake_number
   integer :: i,j
-    allocate(lakes_temp(lake_parameters_in%nlat*lake_parameters%nlon))
+    allocate(lakes_temp(lake_parameters_in%nlat*lake_parameters_in%nlon))
     lake_number = 0
-    do i=1,lake_parameters%nlat
-      do j=1,lake_parameters%nlon
-        if(lake_parameters_in%lake_centers[i,j]) then
+    do i=1,lake_parameters_in%nlat
+      do j=1,lake_parameters_in%nlon
+        if(lake_parameters_in%lake_centers(i,j)) then
           lake_number = lake_number + 1
-          lakes_temp[lake_number] = LakePointer(FillingLake(lake_parameters_in,lake_fields_in, &
-                                                            i,j,lake_number))
-          this%lake_fields%lake_numbers[i,j] = lake_number
+          allocate(lake_temp,source=fillinglake(lake_parameters_in,lake_fields_in,&
+                                                i,j,i,j,&
+                                                lake_number))
+          lakes_temp(lake_number) = lakepointer(lake_temp)
+          lake_fields_in%lake_numbers(i,j) = lake_number
         end if
       end do
     end do
     do i=1,lake_number
-      this%lakes = lakes_temp[i]
+      this%lakes(i) = lakes_temp(i)
     end do
-end subroutine InitialiseLakePrognostics
+end subroutine initialiselakeprognostics
 
-function LakePrognosticsConstructor(lake_parameters_in,lake_fields_in)
-  type(LakePrognostics), intent(inout) :: constructor
-  type(LakeParameters), intent(in) :: lake_parameters_in
-  type(LakeFields), intent(inout) :: lake_fields_in
+function lakeprognosticsconstructor(lake_parameters_in,lake_fields_in) result(constructor)
+  type(lakeparameters), intent(in) :: lake_parameters_in
+  type(lakefields), intent(inout) :: lake_fields_in
+  type(lakeprognostics), pointer :: constructor
     allocate(constructor)
-    call constructor%InitialiseLakePrognostics(lake_parameters,lake_fields_in)
-end function LakePrognosticsConstructor
+    call constructor%initialiselakeprognostics(lake_parameters_in,lake_fields_in)
+end function lakeprognosticsconstructor
 
-subroutine InitialiseFillingLake(this,lake_parameters_in,lake_fields_in,center_cell_lat_in, &
-                                 center_cell_lon_in,lake_number_in)
-  class(FillingLake) :: this
-  type(LakeParameters), intent(in) :: lake_parameters_in
-  type(LakeFields), intent(inout) :: lake_fields_in
+subroutine initialisefillinglake(this,lake_parameters_in,lake_fields_in,center_cell_lat_in, &
+                                 center_cell_lon_in,current_cell_to_fill_lat_in, &
+                                 current_cell_to_fill_lon_in,lake_number_in)
+  class(fillinglake) :: this
+  type(lakeparameters), intent(in) :: lake_parameters_in
+  type(lakefields), intent(inout) :: lake_fields_in
   integer, intent(in) :: center_cell_lat_in
   integer, intent(in) :: center_cell_lon_in
+  integer, intent(in) :: current_cell_to_fill_lat_in
+  integer, intent(in) :: current_cell_to_fill_lon_in
   integer, intent(in) :: lake_number_in
-    call this%InitialiseLake(center_cell_lat_in,center_cell_lon_in, &
-                             lake_number_in,lake_parameters_in,lake_fields_in)
+    call this%initialiselake(center_cell_lat_in,center_cell_lon_in, &
+                             current_cell_to_fill_lat_in, &
+                             current_cell_to_fill_lon_in, &
+                             lake_number_in,lake_parameters_in, &
+                             lake_fields_in)
     this%primary_merge_completed = .false.
     this%use_additional_fields = .false.
-end subroutine InitialiseFillingLake
+end subroutine initialisefillinglake
 
-function FillingLakeConstructor(lake_parameters_in,lake_fields_in,center_cell_lat_in, &
-                                center_cell_lon_in,lake_number_in) result(constructor)
-  class(FillingLake) :: constructor
-  type(LakeParameters), intent(in) :: lake_parameters_in
-  type(Lake_Fields), intent(inout) :: lake_fields_in
+function fillinglakeconstructor(lake_parameters_in,lake_fields_in,center_cell_lat_in, &
+                                center_cell_lon_in,current_cell_to_fill_lat_in, &
+                                current_cell_to_fill_lon_in,&
+                                lake_number_in) result(constructor)
+  type(fillinglake), allocatable :: constructor
+  type(lakeparameters), intent(in) :: lake_parameters_in
+  type(lakefields), intent(inout) :: lake_fields_in
   integer, intent(in) :: center_cell_lat_in
   integer, intent(in) :: center_cell_lon_in
+  integer, intent(in) :: current_cell_to_fill_lat_in
+  integer, intent(in) :: current_cell_to_fill_lon_in
   integer, intent(in) :: lake_number_in
     allocate(constructor)
-    call constructor%InitialiseFillingLake(lake_parameters_in,lake_fields_in,center_cell_lat_in, &
-                                           center_cell_lon_in,lake_number_in)
-end function FillingLakeConstructor
+    call constructor%initialisefillinglake(lake_parameters_in, &
+                                           lake_fields_in, &
+                                           center_cell_lat_in, &
+                                           center_cell_lon_in, &
+                                           current_cell_to_fill_lat_in, &
+                                           current_cell_to_fill_lon_in, &
+                                           lake_number_in)
+end function fillinglakeconstructor
 
-subroutine InitialiseOverflowingLake(this,outflow_redirect_lat_in, &
+subroutine initialiseoverflowinglake(this,outflow_redirect_lat_in, &
                                      outflow_redirect_lon_in, &
                                      local_redirect_in, &
-                                     lake_retention_coefficient_in,
-                                     lake_parameters_in,lake_fields_in,
+                                     lake_retention_coefficient_in, &
+                                     lake_parameters_in,lake_fields_in, &
                                      center_cell_lat_in, &
-                                     center_cell_lon_in,lake_number_in)
-  class(OverflowingLake) :: this
+                                     center_cell_lon_in,&
+                                     current_cell_to_fill_lat_in, &
+                                     current_cell_to_fill_lon_in, &
+                                     next_merge_target_lat_in, &
+                                     next_merge_target_lon_in, &
+                                     lake_number_in)
+  class(overflowinglake) :: this
   integer, intent(in) :: outflow_redirect_lat_in
   integer, intent(in) :: outflow_redirect_lon_in
   logical, intent(in) :: local_redirect_in
   real, intent(in)    :: lake_retention_coefficient_in
   integer, intent(in) :: center_cell_lat_in
   integer, intent(in) :: center_cell_lon_in
+  integer, intent(in) :: current_cell_to_fill_lat_in
+  integer, intent(in) :: current_cell_to_fill_lon_in
+  integer, intent(in) :: next_merge_target_lat_in
+  integer, intent(in) :: next_merge_target_lon_in
   integer, intent(in) :: lake_number_in
-  type(LakeParameters), intent(in) :: lake_parameters
-  type(Lake_Fields), intent(inout) :: lake_fields
-    call this%InitialiseLake(center_cell_lat_in,center_cell_lon_in, &
-                             lake_number_in,lake_parameters_in,lake_fields_in)
+  type(lakeparameters), intent(in) :: lake_parameters_in
+  type(lakefields), intent(inout) :: lake_fields_in
+    call this%initialiselake(center_cell_lat_in,center_cell_lon_in, &
+                             current_cell_to_fill_lat_in, &
+                             current_cell_to_fill_lon_in, &
+                             lake_number_in,lake_parameters_in, &
+                             lake_fields_in)
     this%outflow_redirect_lat = outflow_redirect_lat_in
     this%outflow_redirect_lon = outflow_redirect_lon_in
+    this%next_merge_target_lat = next_merge_target_lat_in
+    this%next_merge_target_lon = next_merge_target_lon_in
     this%local_redirect = local_redirect_in
     this%lake_retention_coefficient = lake_retention_coefficient_in
     this%excess_water = 0.0
-end subroutine InitialiseOverflowingLake
+end subroutine initialiseoverflowinglake
 
-function OverflowingLakeConstructor(outflow_redirect_lat_in, &
+function overflowinglakeconstructor(outflow_redirect_lat_in, &
                                     outflow_redirect_lon_in, &
                                     local_redirect_in, &
                                     lake_retention_coefficient_in, &
-                                    lake_parameters_in,lake_fields_in
+                                    lake_parameters_in,lake_fields_in, &
                                     center_cell_lat_in, &
-                                    center_cell_lon_in,lake_number_in)
-  class(OverflowingLake) :: constructor
+                                    center_cell_lon_in, &
+                                    current_cell_to_fill_lat_in, &
+                                    current_cell_to_fill_lon_in, &
+                                    next_merge_target_lat_in, &
+                                    next_merge_target_lon_in, &
+                                    lake_number_in) result(constructor)
+  class(overflowinglake), pointer :: constructor
   integer, intent(in) :: outflow_redirect_lat_in
   integer, intent(in) :: outflow_redirect_lon_in
   logical, intent(in) :: local_redirect_in
   real, intent(in)    :: lake_retention_coefficient_in
   integer, intent(in) :: center_cell_lat_in
   integer, intent(in) :: center_cell_lon_in
+  integer, intent(in) :: current_cell_to_fill_lat_in
+  integer, intent(in) :: current_cell_to_fill_lon_in
+  integer, intent(in) :: next_merge_target_lat_in
+  integer, intent(in) :: next_merge_target_lon_in
   integer, intent(in) :: lake_number_in
-  type(LakeParameters), intent(in) :: lake_parameters
-  type(LakeFields), intent(inout) :: lake_fields
+  type(lakeparameters), intent(in) :: lake_parameters_in
+  type(lakefields), intent(inout) :: lake_fields_in
     allocate(constructor)
-    call constructor%InitialiseOverflowingLake(outflow_redirect_lat_in, &
+    call constructor%initialiseoverflowinglake(outflow_redirect_lat_in, &
                                                outflow_redirect_lon_in, &
                                                local_redirect_in, &
                                                lake_retention_coefficient_in, &
                                                lake_parameters_in,lake_fields_in, &
                                                center_cell_lat_in, &
-                                               center_cell_lon_in,lake_number_in)
-end function OverflowingLakeConstructor
+                                               center_cell_lon_in, &
+                                               current_cell_to_fill_lat_in, &
+                                               current_cell_to_fill_lon_in, &
+                                               next_merge_target_lat_in, &
+                                               next_merge_target_lon_in, &
+                                               lake_number_in)
+end function overflowinglakeconstructor
 
-subroutine InitialiseSubsumedLake(this,lake_parameters_in,lake_fields_in, &
+subroutine initialisesubsumedlake(this,lake_parameters_in,lake_fields_in, &
                                   primary_lake_number_in,center_cell_lat_in, &
-                                  center_cell_lon_in,lake_number_in)
-  class(SubsumedLake) :: this
-  type(LakeParameters), intent(in) :: lake_parameters_in
-  type(LakeFields), intent(inout) :: lake_fields_in
+                                  center_cell_lon_in,current_cell_to_fill_lat_in, &
+                                  current_cell_to_fill_lon_in,lake_number_in)
+  class(subsumedlake) :: this
+  type(lakeparameters), intent(in) :: lake_parameters_in
+  type(lakefields), intent(inout) :: lake_fields_in
   integer, intent(in) :: primary_lake_number_in
   integer, intent(in) :: center_cell_lat_in
   integer, intent(in) :: center_cell_lon_in
+  integer, intent(in) :: current_cell_to_fill_lat_in
+  integer, intent(in) :: current_cell_to_fill_lon_in
   integer, intent(in) :: lake_number_in
-    this%lake_fields = lake_fields_in
-    this%lake_parameters = lake_parameters_in
     this%primary_lake_number = primary_lake_number_in
-end subroutine InitialiseSubsumedLake
+    call this%initialiselake(center_cell_lat_in,center_cell_lon_in, &
+                             current_cell_to_fill_lat_in, &
+                             current_cell_to_fill_lon_in, &
+                             lake_number_in,lake_parameters_in, &
+                             lake_fields_in)
+end subroutine initialisesubsumedlake
 
-function SubsumedLakeConstructor(lake_parameters_in,lake_fields_in, &
+function subsumedlakeconstructor(lake_parameters_in,lake_fields_in, &
                                  primary_lake_number_in, &
                                  center_cell_lat_in, &
-                                 center_cell_lon_in,lake_number_in) result(constructor)
-  class(SubsumedLake) :: constructor
-  type(LakeParameters), intent(in) :: lake_parameters_in
-  type(LakeFields), intent(inout) :: lake_fields_in
+                                 center_cell_lon_in, &
+                                 current_cell_to_fill_lat_in, &
+                                 current_cell_to_fill_lon_in, &
+                                 lake_number_in) result(constructor)
+  class(subsumedlake), pointer :: constructor
+  type(lakeparameters), intent(in) :: lake_parameters_in
+  type(lakefields), intent(inout) :: lake_fields_in
   integer, intent(in) :: primary_lake_number_in
   integer, intent(in) :: center_cell_lat_in
   integer, intent(in) :: center_cell_lon_in
+  integer, intent(in) :: current_cell_to_fill_lat_in
+  integer, intent(in) :: current_cell_to_fill_lon_in
   integer, intent(in) :: lake_number_in
     allocate(constructor)
-    call constructor%InitialiseSubsumedLake(lake_parameters_in,lake_fields_in, &
+    call constructor%initialisesubsumedlake(lake_parameters_in,lake_fields_in, &
                                             primary_lake_number_in, &
                                             center_cell_lat_in, &
-                                            center_cell_lon_in,lake_number_in)
-end function SubsumedLakeConstructor
+                                            center_cell_lon_in, &
+                                            current_cell_to_fill_lat_in, &
+                                            current_cell_to_fill_lon_in, &
+                                            lake_number_in)
+end function subsumedlakeconstructor
+
+subroutine setup_lakes(lake_parameters,lake_prognostics,lake_fields,initial_water_to_lake_centers)
+  type(lakeparameters), intent(in) :: lake_parameters
+  type(lakeprognostics), intent(inout) :: lake_prognostics
+  type(lakefields), intent(inout) :: lake_fields
+  real, allocatable, dimension(:,:), intent(in) :: initial_water_to_lake_centers
+  class(lake), pointer :: working_lake
+  real :: initial_water_to_lake_center
+  integer :: lake_index
+  integer :: i,j
+    do i=1,lake_parameters%nlat
+      do j=1,lake_parameters%nlon
+        if(lake_parameters%lake_centers(i,j)) then
+          initial_water_to_lake_center = initial_water_to_lake_centers(i,j)
+          if(initial_water_to_lake_center > 0.0) then
+            lake_index = lake_fields%lake_numbers(i,j)
+            working_lake => lake_prognostics%lakes(lake_index)%lake_pointer
+            lake_prognostics%lakes(lake_index)%lake_pointer => &
+              working_lake%add_water(initial_water_to_lake_center)
+          end if
+        end if
+      end do
+    end do
+end subroutine setup_lakes
 
 subroutine run_lakes(lake_parameters,lake_prognostics,lake_fields)
-  type(LakeParameters), intent(in) :: lake_parameters
-  type(LakePrognostics), intent(inout) :: lake_prognostics
-  type(LakeFields), intent(inout) :: lake_fields
+  type(lakeparameters), intent(in) :: lake_parameters
+  type(lakeprognostics), intent(inout) :: lake_prognostics
+  type(lakefields), intent(inout) :: lake_fields
   integer :: lat,lon
   integer :: basin_center_lat,basin_center_lon
   integer :: lake_index
@@ -611,194 +716,244 @@ subroutine run_lakes(lake_parameters,lake_prognostics,lake_fields)
   integer :: num_basins_in_cell
   integer :: basin_number
   real :: share_to_each_lake
-  class(Lake) :: lake
+  class(lake), pointer :: lake
     lake_fields%water_to_hd = 0.0
     do i = 1,size(lake_fields%cells_with_lakes_lat)
-      lat = cells_with_lakes_lat[i]
-      lon = cells_with_lakes_lon[i]
-      if (lake_fields%water_to_lakes[lat,lon] > 0.0) then
-        basin_number = lake_parameters%basin_numbers[lat,lon]
-        num_basins_in_cell =
-          size(lake_parameters%basins[basin_number]%basin_lats)
+      lat = lake_fields%cells_with_lakes_lat(i)
+      lon = lake_fields%cells_with_lakes_lon(i)
+      if (lake_fields%water_to_lakes(lat,lon) > 0.0) then
+        basin_number = lake_parameters%basin_numbers(lat,lon)
+        num_basins_in_cell = &
+          size(lake_parameters%basins(basin_number)%basin_lats)
         share_to_each_lake = lake_fields%water_to_lakes(lat,lon)/num_basins_in_cell
-        do j = 1,num_basin_in_cell
-          basin_center_lat = lake_parameters%basins[basin_number]%basin_lats[j]
-          basin_center_lon = lake_parameters%basins[basin_number]%basin_lons[j]
-          lake_index = lake_fields%lake_numbers[basin_center_lat,basin_center_lon]
-          lake = lake_prognostics%lakes[lake_index]
-          lake_prognostics%lakes[lake_index] = lake%add_water(share_to_each_lake)
+        do j = 1,num_basins_in_cell
+          basin_center_lat = lake_parameters%basins(basin_number)%basin_lats(j)
+          basin_center_lon = lake_parameters%basins(basin_number)%basin_lons(j)
+          lake_index = lake_fields%lake_numbers(basin_center_lat,basin_center_lon)
+          lake => lake_prognostics%lakes(lake_index)%lake_pointer
+          lake_prognostics%lakes(lake_index)%lake_pointer => &
+              lake%add_water(share_to_each_lake)
         end do
       end if
     end do
     do i = 1,size(lake_prognostics%lakes)
-      lake = lake_prognostics%lakes[i]
-      if (.not. this%lake_parameters%instant_throughflow) then
+      lake => lake_prognostics%lakes(i)%lake_pointer
+      if (lake%unprocessed_water > 0.0) then
         lake_index = lake%lake_number
-        lake_prognostics%lakes[lake_index] = lake%add_water(0.0)
+        lake_prognostics%lakes(lake_index)%lake_pointer => lake%add_water(0.0)
       end if
       select type(lake)
-        type is (OverflowingLake))
+        type is (overflowinglake)
           call lake%drain_excess_water()
       end select
     end do
 end subroutine run_lakes
 
-function FillingLake_add_water(this,inflow) result(updated_lake)
-  class(Lake), intent(in) :: this
+function fillinglake_add_water(this,inflow) result(updated_lake)
+  class(fillinglake), target, intent(inout) :: this
   real, intent(in) :: inflow
-  class(Lake) :: updated_lake
+  class(lake), pointer :: updated_lake
+  class(lake),  pointer :: other_lake
+  type(fillinglake), pointer :: other_lake_as_filling_lake
+  integer :: target_cell_lat,target_cell_lon
   integer :: merge_type
+  integer :: other_lake_number
   logical :: filled
   logical :: merge_possible
   logical :: already_merged
-    inflow = inflow + this%unprocessed_water
+  real :: inflow_local
+    inflow_local = inflow + this%unprocessed_water
     this%unprocessed_water = 0.0
-    do while (inflow > 0.0)
-      filled = this%fill_current_cell(inflow)
+    do while (inflow_local > 0.0)
+      filled = this%fill_current_cell(inflow_local)
       if(filled) then
         merge_type = this%get_merge_type()
         if(merge_type /= no_merge) then
-          if (.not. (merge_type == primary_merge &&
-                this%primary_merge_completed)) then
-            if ((merge_type == double_merge &&
-                this%primary_merge_completed)) then
-              merge_type = secondary_merge
-            end if
-            merge_possible = &
-              this%check_if_merge_is_possible(merge_type,already_merged)
-            if (merge_possible) then
-              if (merge_type == secondary_merge) then
-                updated_lake = this%perform_secondary_merge()
-                updated_lake = updated_lake%store_water(inflow)
-                return
-              else
-                call this%perform_primary_merge()
-                if (merge_type == double_merge) then
-                  merge_type = secondary_merge
-                  this%use_additional_fields = .true.
-                end if
+          do
+            if (.not. (merge_type == primary_merge .and. &
+                       this%primary_merge_completed)) then
+              if (merge_type == double_merge .and. &
+                  this%primary_merge_completed) then
+                merge_type = secondary_merge
+                this%use_additional_fields = .true.
               end if
-            else if (.not. already_merged)
-              updated_lake = this%change_to_overflowing_lake()
-              updated_lake = updated_lake%store_water(inflow)
-              return
+              merge_possible = &
+                this%check_if_merge_is_possible(merge_type,already_merged)
+              if (merge_possible) then
+                if (merge_type == secondary_merge) then
+                  updated_lake => this%perform_secondary_merge()
+                  updated_lake => updated_lake%store_water(inflow_local)
+                  return
+                else
+                  call this%perform_primary_merge()
+                end if
+              else if (.not. already_merged) then
+                updated_lake => this%change_to_overflowing_lake(merge_type)
+                updated_lake => updated_lake%store_water(inflow_local)
+                return
+              else if (merge_type == secondary_merge) then
+                call this%get_secondary_merge_coords(target_cell_lat,target_cell_lon)
+                other_lake_number = &
+                  this%lake_fields%lake_numbers(target_cell_lat,target_cell_lon)
+                other_lake => &
+                  this%lake_fields%other_lakes(other_lake_number)%lake_pointer
+                select type (other_lake)
+                type is (subsumedlake)
+                  other_lake_as_filling_lake => &
+                    other_lake%change_subsumed_lake_to_filling_lake()
+                end select
+                this%lake_fields%other_lakes(other_lake_number)%lake_pointer => &
+                  other_lake_as_filling_lake%change_to_overflowing_lake(primary_merge)
+                updated_lake => this%perform_secondary_merge()
+                updated_lake => updated_lake%store_water(inflow_local)
+                return
+              end if
             end if
-          end if
+            if (merge_type /= double_merge) exit
+          end do
+          call this%update_filling_cell()
         end if
-        call this%update_filling_cell()
       end if
     end do
-    updated_lake = this
-end function FillingLake_add_water
+    updated_lake => this
+end function fillinglake_add_water
 
-function OverflowingLake_add_water(this,inflow) result(updated_lake)
-  class(Lake), intent(in) :: this
+function overflowinglake_add_water(this,inflow) result(updated_lake)
+  class(overflowinglake), intent(inout), target :: this
   real, intent(in) :: inflow
-  class(Lake) :: updated_lake
-  class(Lake) :: other_lake
+  class(lake), pointer :: updated_lake
+  class(lake), pointer :: other_lake
   integer :: other_lake_number
-    inflow = inflow + this%unprocessed_water
+  real :: inflow_local
+    inflow_local = inflow + this%unprocessed_water
     this%unprocessed_water = 0.0
     if (this%local_redirect) then
-      other_lake_number  = this%lake_fields%lake_numbers[this%outflow_redirect_lat, &
-                                                         this%outflow_redirect_lon]
-      other_lake = &
-        this%other_lakes[other_lake_number]
+      other_lake_number  = this%lake_fields%lake_numbers(this%outflow_redirect_lat, &
+                                                         this%outflow_redirect_lon)
+      other_lake => &
+        this%lake_fields%other_lakes(other_lake_number)%lake_pointer
       if (this%lake_parameters%instant_throughflow) then
-        this%other_lakes[other_lake_number] = other_lake%add_water(inflow)
+        this%lake_fields%other_lakes(other_lake_number)%lake_pointer => &
+          other_lake%add_water(inflow_local)
       else
-        this%other_lakes[other_lake_number] = other_lake%store_water(inflow)
+        this%lake_fields%other_lakes(other_lake_number)%lake_pointer => &
+          other_lake%store_water(inflow_local)
       end if
     else
-      this%excess_water = this%excess_water + inflow
+      this%excess_water = this%excess_water + inflow_local
     end if
-    updated_lake = this%other_lakes[lake%lake_number]
-end function OverflowingLake_add_water
+    updated_lake => this%lake_fields%other_lakes(this%lake_number)%lake_pointer
+end function overflowinglake_add_water
 
-function store_water(this,inflow) result(this)
-  class(Lake), intent(in) :: this
+function store_water(this,inflow) result(lake_after_storage)
+  class(lake), target, intent(inout) :: this
   real, intent(in) :: inflow
+  class(lake), pointer :: lake_after_storage
     this%unprocessed_water = this%unprocessed_water + inflow
-end
+    lake_after_storage => this
+end function store_water
 
-function SubsumedLake_add_water(this,inflow) result(updated_lake)
-  class(Lake), intent(inout) :: this
+function subsumedlake_add_water(this,inflow) result(updated_lake)
+  class(subsumedlake), intent(inout), target :: this
   real, intent(in) :: inflow
-  class(Lake) :: updated_lake
-    inflow = inflow + lake_variables%unprocessed_water
+  class(lake), pointer :: updated_lake
+  real :: inflow_local
+    inflow_local = inflow + this%unprocessed_water
     this%unprocessed_water = 0.0
-    this%other_lakes[lake%primary_lake_number] =
-      this%other_lakes[lake%primary_lake_number]%add_water(inflow)
-    updated_lake = this
-end function SubsumedLake_add_water
+    this%lake_fields%other_lakes(this%primary_lake_number)%lake_pointer => &
+      this%lake_fields%other_lakes(this%primary_lake_number)%&
+      &lake_pointer%add_water(inflow_local)
+    updated_lake => this
+end function subsumedlake_add_water
 
-function accept_merge(this,redirect_coords_lat,redirect_coords_lon)
+function accept_merge(this,redirect_coords_lat,redirect_coords_lon) &
     result(subsumed_lake)
-  type(Lake), intent(in) :: this
+  class(lake), intent(inout) :: this
   integer, intent(in) :: redirect_coords_lat
   integer, intent(in) :: redirect_coords_lon
-  type(SubsumedLake) :: subsumed_lake
-    subsumed_lake = SubsumedLake(this%lake_parameters, &
-                                 this%lake_fields, &
-                                 this%lake_fields%lake_numbers[redirect_coords_lat, &
-                                                               redirect_coords_lon], &
-                                this%center_cell_lat, &
-                                this%center_cell_lon,this%lake_number)
-    select type(lake)
-      type is (OverflowingLake)
-        subsumed_lake = subsumed_lake%store_water(lake%excess_water)
+  class(lake), pointer :: subsumed_lake
+    this%lake_fields%completed_lake_cells(this%current_cell_to_fill_lat,&
+                                          this%current_cell_to_fill_lon) = .true.
+    subsumed_lake => subsumedlake(this%lake_parameters, &
+                                  this%lake_fields, &
+                                  this%lake_fields%lake_numbers(redirect_coords_lat, &
+                                                                redirect_coords_lon), &
+                                  this%center_cell_lat, &
+                                  this%center_cell_lon, &
+                                  this%current_cell_to_fill_lat, &
+                                  this%current_cell_to_fill_lon, &
+                                  this%lake_number)
+    select type(this)
+      type is (overflowinglake)
+        subsumed_lake => subsumed_lake%store_water(this%excess_water)
     end select
 end function accept_merge
 
-function change_to_overflowing_lake(this) result(overflowing_lake)
-  type(FillingLake), intent(in) :: this
-  type(OverflowingLake) :: overflowing_lake
+function change_to_overflowing_lake(this,merge_type) result(overflowing_lake)
+  class(fillinglake), intent(inout) :: this
+  type(overflowinglake), pointer :: overflowing_lake
   integer :: outflow_redirect_lat
   integer :: outflow_redirect_lon
+  integer :: merge_type
+  integer :: target_cell_lat,target_cell_lon
   logical :: local_redirect
-    this%lake_fields%completed_lake_cells[this%current_cell_to_fill_lat,
-                                          this%current_cell_to_fill_lon] = .true.
-    call lake%get_outflow_redirect_coords(outflow_redirect_lat, &
+    this%lake_fields%completed_lake_cells(this%current_cell_to_fill_lat, &
+                                          this%current_cell_to_fill_lon) = .true.
+    call this%get_outflow_redirect_coords(outflow_redirect_lat, &
                                           outflow_redirect_lon, &
                                           local_redirect)
-    overflowing_lake = OverflowingLake(outflow_redirect_lat &
-                                       outflow_redirect_lon, &
-                                       local_redirect, &
-                                       lake%lake_parameters%lake_retention_coefficient, &
-                                       this%lake_parameters,this%lake_fields,
-                                       this%center_cell_lat, &
-                                       this%center_cell_lon,this%lake_number)
+    if (merge_type == secondary_merge) then
+      call this%get_secondary_merge_coords(target_cell_lat,target_cell_lon)
+    else
+      call this%get_primary_merge_coords(target_cell_lat,target_cell_lon)
+    end if
+    overflowing_lake => overflowinglake(outflow_redirect_lat, &
+                                        outflow_redirect_lon, &
+                                        local_redirect, &
+                                        this%lake_parameters%lake_retention_coefficient, &
+                                        this%lake_parameters,this%lake_fields, &
+                                        this%center_cell_lat, &
+                                        this%center_cell_lon, &
+                                        this%current_cell_to_fill_lat, &
+                                        this%current_cell_to_fill_lon, &
+                                        target_cell_lat, &
+                                        target_cell_lon, &
+                                        this%lake_number)
 end function change_to_overflowing_lake
 
 subroutine drain_excess_water(this)
-  type(OverflowingLake), intent(inout) :: this
+  class(overflowinglake), intent(inout) :: this
   real :: flow
-    if (this%excess_water > 0.0)
+    if (this%excess_water > 0.0) then
       this%excess_water = this%excess_water + this%unprocessed_water
-      lake_variables%unprocessed_water = 0.0
+      this%unprocessed_water = 0.0
       flow = this%excess_water*this%lake_retention_coefficient
-      lake_fields%water_to_hd[this%outflow_redirect_lat,this%outflow_redirect_lon] = &
-           lake_fields%water_to_hd[this%outflow_redirect_lat,this%outflow_redirect_lon]+flow)
+      this%lake_fields%water_to_hd(this%outflow_redirect_lat,this%outflow_redirect_lon) = &
+           this%lake_fields%water_to_hd(this%outflow_redirect_lat, &
+                                        this%outflow_redirect_lon)+flow
       this%excess_water = this%excess_water - flow
     end if
 end subroutine drain_excess_water
 
-function fill_current_cell(this,inflow,filled) result(filled)
-  type(FillingLake), intent(in) :: this
+function fill_current_cell(this,inflow) result(filled)
+  class(fillinglake), intent(inout) :: this
   real, intent(inout) :: inflow
   logical :: filled
   real :: new_lake_volume
   real :: maximum_new_lake_volume
-    current_cell_to_fill::Coords = lake_variables%current_cell_to_fill
     new_lake_volume = inflow + this%lake_volume
-      if (this%lake_fields%completed_lake_cells(current_cell_to_fill) .or. &
-          this%lake_parameters%flood_only(current_cell_to_fill)) then
-        maximum_new_lake_volume = &
-          lake_parameters%flood_volume_thresholds(current_cell_to_fill)
-      else
-        maximum_new_lake_volume = &
-          lake_parameters%connection_volume_thresholds(current_cell_to_fill)
-      end if
+    if (this%lake_fields%completed_lake_cells(this%current_cell_to_fill_lat, &
+                                              this%current_cell_to_fill_lon) .or. &
+        this%lake_parameters%flood_only(this%current_cell_to_fill_lat, &
+                                        this%current_cell_to_fill_lon)) then
+      maximum_new_lake_volume = &
+        this%lake_parameters%flood_volume_thresholds(this%current_cell_to_fill_lat, &
+                                                     this%current_cell_to_fill_lon)
+    else
+      maximum_new_lake_volume = &
+        this%lake_parameters%connection_volume_thresholds(this%current_cell_to_fill_lat, &
+                                                          this%current_cell_to_fill_lon)
+    end if
     if (new_lake_volume <= maximum_new_lake_volume) then
       this%lake_volume = new_lake_volume
       inflow = 0.0
@@ -811,147 +966,198 @@ function fill_current_cell(this,inflow,filled) result(filled)
 end function fill_current_cell
 
 function get_merge_type(this) result(simple_merge_type)
-  class(LakeField), intent(inout) :: this
+  class(lake), intent(inout) :: this
   integer :: simple_merge_type
   integer :: extended_merge_type
   logical :: completed_lake_cell
     completed_lake_cell = &
-      this%lake_fields%completed_lake_cells[this%current_cell_to_fill_lat, &
-                                            this%current_cell_to_fill_lon]
-    extended_merge_type = this%lake_parameters%merge_points[this%current_cell_to_fill_lat, &
-                                                            this%current_cell_to_fill_lon]
-    if (this%lake_fields%completed_lake_cells[this%current_cell_to_fill_lat, &
-                                              this%current_cell_to_fill_lon] .or. &
-        this%lake_parameters%flood_only[this%current_cell_to_fill_lat, &
-                                        this%current_cell_to_fill_lon]) then
-      simple_merge_type = convert_to_simple_merge_type_flood[Int(extended_merge_type)+1]
+      this%lake_fields%completed_lake_cells(this%current_cell_to_fill_lat, &
+                                            this%current_cell_to_fill_lon)
+    extended_merge_type = this%lake_parameters%merge_points(this%current_cell_to_fill_lat, &
+                                                       this%current_cell_to_fill_lon)
+    if (this%lake_fields%completed_lake_cells(this%current_cell_to_fill_lat, &
+                                              this%current_cell_to_fill_lon) .or. &
+        this%lake_parameters%flood_only(this%current_cell_to_fill_lat, &
+                                        this%current_cell_to_fill_lon)) then
+      simple_merge_type = convert_to_simple_merge_type_flood(Int(extended_merge_type)+1)
     else
-      simple_merge_type = convert_to_simple_merge_type_connect[Int(extended_merge_type)+1]
+      simple_merge_type = convert_to_simple_merge_type_connect(Int(extended_merge_type)+1)
     end if
 end function get_merge_type
 
 function check_if_merge_is_possible(this,simple_merge_type,already_merged) &
    result(merge_possible)
-  class(Lake), intent(in) :: this
+  class(lake), intent(in) :: this
   integer, intent(in) :: simple_merge_type
   logical, intent(out) :: already_merged
   logical :: merge_possible
-  class(Lake) :: other_lake
+  class(lake), pointer :: other_lake
+  class(lake), pointer :: other_lake_target_lake
+  class(lake), pointer :: other_lake_target_lake_true_primary
   integer :: target_cell_lat
   integer :: target_cell_lon
-    if (simple_merge_type == primary_merge) then
-      call this%get_primary_merge_coords(target_cell_lat,target_cell_lon)
-    else
+  integer :: other_lake_target_lake_number
+    if (simple_merge_type == secondary_merge) then
       call this%get_secondary_merge_coords(target_cell_lat,target_cell_lon)
+    else
+      call this%get_primary_merge_coords(target_cell_lat,target_cell_lon)
     end if
-    if (.not. this%lake_fields%completed_lake_cells[target_cell_lat,target_cell_lon]) then
+    if (.not. this%lake_fields%completed_lake_cells(target_cell_lat,target_cell_lon)) then
       merge_possible = .false.
       already_merged = .false.
       return
     end if
-    other_lake = this%other_lakes[lake_fields%lake_numbers[target_cell_lat,
-                                                           target_cell_lon]]
-    other_lake = other_lake%find_true_primary_lake()
+    other_lake => this%lake_fields%&
+                  &other_lakes(this%lake_fields%lake_numbers(target_cell_lat, &
+                                                             target_cell_lon))%lake_pointer
+    other_lake => other_lake%find_true_primary_lake()
     if (other_lake%lake_number == this%lake_number) then
       merge_possible = .false.
       already_merged = .true.
       return
     end if
     select type(other_lake)
-    type is (OverflowingLake)
-      merge_possible = .true.
-      already_merged = .false.
+    type is (overflowinglake)
+      other_lake_target_lake_number = &
+        this%lake_fields%lake_numbers(other_lake%next_merge_target_lat, &
+                                      other_lake%next_merge_target_lon)
+      do
+        if (other_lake_target_lake_number == 0) then
+          merge_possible = .false.
+          already_merged = .false.
+        end if
+        other_lake_target_lake => &
+          this%lake_fields%other_lakes(other_lake_target_lake_number)%lake_pointer
+        if (other_lake_target_lake%lake_number == this%lake_number) then
+          merge_possible = .true.
+          already_merged = .false.
+        else
+          select type (other_lake_target_lake)
+          type is (overflowinglake)
+            other_lake_target_lake_number = &
+              this%lake_fields%lake_numbers(other_lake_target_lake%next_merge_target_lat,&
+                                            other_lake_target_lake%next_merge_target_lon)
+          type is (subsumedlake)
+            other_lake_target_lake_true_primary => &
+              other_lake_target_lake%find_true_primary_lake()
+            other_lake_target_lake_number = &
+              other_lake_target_lake_true_primary%lake_number
+          class default
+             merge_possible = .false.
+             already_merged = .false.
+          end select
+        end if
+      end do
     class default
       merge_possible = .false.
       already_merged = .false.
     end select
 end function check_if_merge_is_possible
 
-function perform_primary_merge(this)
-  type(FillingLake), intent(in) :: this
-  class(Lake) :: other_lake
+subroutine perform_primary_merge(this)
+  class(fillinglake), intent(inout) :: this
+  class(lake), pointer :: other_lake
   integer :: target_cell_lat,target_cell_lon
   integer :: other_lake_number
     call this%get_primary_merge_coords(target_cell_lat,target_cell_lon)
-    other_lake_number = this%lake_fields%lake_numbers[target_cell_lat,target_cell_lon]
-    other_lake = this%other_lakes[other_lake_number]
-    other_lake = other_lake%find_true_primary_lake()
+    other_lake_number = this%lake_fields%lake_numbers(target_cell_lat,target_cell_lon)
+    other_lake => this%lake_fields%other_lakes(other_lake_number)%lake_pointer
+    other_lake => other_lake%find_true_primary_lake()
     other_lake_number = other_lake%lake_number
     this%primary_merge_completed = .true.
-    lake_variables%other_lakes[other_lake_number] = &
-      other_lake%accept_merge(center_cell_lat,center_cell_lon)
-end
+    this%lake_fields%other_lakes(other_lake_number)%lake_pointer => &
+      other_lake%accept_merge(this%center_cell_lat,this%center_cell_lon)
+end subroutine perform_primary_merge
 
 function perform_secondary_merge(this) result(merged_lake)
-  type(FillingLake), intent(in) :: this
-  class(Lake) :: merged_lake
-  class(Lake) :: other_lake
-  type(FillingLake) :: other_lake_as_filling_lake
+  class(fillinglake), intent(inout) :: this
+  class(lake), pointer :: merged_lake
+  class(lake), pointer :: other_lake
+  type(fillinglake), pointer :: other_lake_as_filling_lake
   integer :: target_cell_lat,target_cell_lon
   integer :: other_lake_number
-    this%lake_fields%completed_lake_cells[this%current_cell_to_fill_lat, &
-                                    this%current_cell_to_fill_lon] = .true.
+    this%lake_fields%completed_lake_cells(this%current_cell_to_fill_lat, &
+                                          this%current_cell_to_fill_lon) = .true.
     call this%get_secondary_merge_coords(target_cell_lat,target_cell_lon)
-    other_lake_number = this%lake_fields%lake_numbers[target_cell_lat,target_cell_lon]
-    other_lake = this%other_lakes[other_lake_number]
-    other_lake = other_lake%find_true_primary_lake()
+    other_lake_number = this%lake_fields%lake_numbers(target_cell_lat,target_cell_lon)
+    other_lake => this%lake_fields%other_lakes(other_lake_number)%lake_pointer
+    other_lake => other_lake%find_true_primary_lake()
     other_lake_number = other_lake%lake_number
-    other_lake_as_filling_lake = other_lake%change_to_filling_lake()
-    this%other_lakes[other_lake_number] = other_lake_as_filling_lake
-    merged_lake = lake%accept_merge(other_lake_as_filling_lake%center_cell_lat,
-                                    other_lake_as_filling_lake%center_cell_lon)
-end
+    select type (other_lake)
+    type is (overflowinglake)
+      other_lake_as_filling_lake => other_lake%change_overflowing_lake_to_filling_lake()
+    end select
+    this%lake_fields%other_lakes(other_lake_number)%lake_pointer => &
+                                            other_lake_as_filling_lake
+    merged_lake => this%accept_merge(other_lake_as_filling_lake%center_cell_lat, &
+                                     other_lake_as_filling_lake%center_cell_lon)
+end function perform_secondary_merge
 
-function change_to_filling_lake(this) result(filling_lake)
-  type(OverflowingLake), intent(inout) :: this
-  type(FillingLake) :: filling_lake
+function change_overflowing_lake_to_filling_lake(this) result(filling_lake)
+  class(overflowinglake), intent(inout) :: this
+  type(fillinglake), pointer :: filling_lake
   logical :: use_additional_fields
     this%unprocessed_water = this%unprocessed_water + this%excess_water
-    use_additional_fields = (lake%get_merge_type() == double_merge)
-    filling_lake = FillingLake(this%lake_parameters,this%lake_fields, &
-                               this%center_cell_lat, &
-                               this%center_cell_lon, &
-                               this%lake_number)
+    use_additional_fields = (this%get_merge_type() == double_merge)
+    allocate(filling_lake,source=fillinglake(this%lake_parameters,this%lake_fields, &
+                                             this%center_cell_lat, &
+                                             this%center_cell_lon, &
+                                             this%current_cell_to_fill_lat, &
+                                             this%current_cell_to_fill_lon,&
+                                             this%lake_number))
     filling_lake%primary_merge_completed = .true.
     filling_lake%use_additional_fields = use_additional_fields
-end function change_to_filling_lake
+end function change_overflowing_lake_to_filling_lake
+
+function change_subsumed_lake_to_filling_lake(this) result(filling_lake)
+  class(subsumedlake), intent(inout) :: this
+  type(fillinglake), pointer :: filling_lake
+    allocate(filling_lake,source=fillinglake(this%lake_parameters,this%lake_fields, &
+                                             this%center_cell_lat, &
+                                             this%center_cell_lon, &
+                                             this%current_cell_to_fill_lat, &
+                                             this%current_cell_to_fill_lon,&
+                                             this%lake_number))
+    filling_lake%primary_merge_completed = .false.
+    filling_lake%use_additional_fields = .false.
+end function change_subsumed_lake_to_filling_lake
 
 subroutine update_filling_cell(this)
-  type(FillingLake), intent(inout) :: this
+  class(fillinglake), intent(inout) :: this
   integer :: coords_lat, coords_lon
-    lake%primary_merge_completed = .false.
+    this%primary_merge_completed = .false.
     coords_lat = this%current_cell_to_fill_lat
     coords_lon = this%current_cell_to_fill_lon
-    this%lake_field%completed_lake_cells[coords_lat,coords_lat] = .true.
-    if (this%lake_fields%completed_lake_cells[coords_lat,coords_lon] .or. &
-        this%lake_parameters%flood_only[coords_lat,coords_lon]) then
+    this%lake_fields%completed_lake_cells(coords_lat,coords_lat) = .true.
+    if (this%lake_fields%completed_lake_cells(coords_lat,coords_lon) .or. &
+        this%lake_parameters%flood_only(coords_lat,coords_lon)) then
       this%current_cell_to_fill_lat = &
-        this%lake_parameters%flood_next_cell_lat_index[coords_lat,coords_lat]
+        this%lake_parameters%flood_next_cell_lat_index(coords_lat,coords_lat)
       this%current_cell_to_fill_lon = &
-        this%lake_parameters%flood_next_cell_lon_index[coords_lat,coords_lat]
+        this%lake_parameters%flood_next_cell_lon_index(coords_lat,coords_lat)
     else
       this%current_cell_to_fill_lat = &
-        this%lake_parameters%connect_next_cell_lat_index[coords_lat,coords_lat]
+        this%lake_parameters%connect_next_cell_lat_index(coords_lat,coords_lat)
       this%current_cell_to_fill_lon = &
-        this%lake_parameters%connect_next_cell_lon_index[coords_lat,coords_lat]
-    end
-    this%lake_fields%lake_numbers[this%current_cell_to_fill_lat, &
-                            this%current_cell_to_fill_lon] = this%lake_number
+        this%lake_parameters%connect_next_cell_lon_index(coords_lat,coords_lat)
+    end if
+    this%lake_fields%lake_numbers(this%current_cell_to_fill_lat, &
+                            this%current_cell_to_fill_lon) = this%lake_number
 end subroutine update_filling_cell
 
 subroutine get_primary_merge_coords(this,lat,lon)
-  type(Lake), intent(in) :: this
+  class(lake), intent(in) :: this
   integer, intent(out) :: lat
   integer, intent(out) :: lon
   logical :: completed_lake_cell
-  completed_lake_cell = ((this%completed_lake_cells(this%current_cell_to_fill_lat, &
-                                                    this%current_cell_to_fill_lon)) .or.
-                         (this%flood_only(this%current_cell_to_fill_lat,
-                                          this%current_cell_to_fill_lon)))
+  completed_lake_cell = ((this%lake_fields%completed_lake_cells(this%current_cell_to_fill_lat, &
+                                                                this%current_cell_to_fill_lon)) .or. &
+                         (this%lake_parameters%flood_only(this%current_cell_to_fill_lat, &
+                                                          this%current_cell_to_fill_lon)))
   if (completed_lake_cell) then
     lat = &
       this%lake_parameters%flood_force_merge_lat_index(this%current_cell_to_fill_lat, &
-                                                  this%current_cell_to_fill_lon),
+                                                       this%current_cell_to_fill_lon)
     lon = &
       this%lake_parameters%flood_force_merge_lon_index(this%current_cell_to_fill_lat, &
                                                   this%current_cell_to_fill_lon)
@@ -962,18 +1168,18 @@ subroutine get_primary_merge_coords(this,lat,lon)
     lon = &
       this%lake_parameters%connect_force_merge_lon_index(this%current_cell_to_fill_lat, &
                                                     this%current_cell_to_fill_lon)
-  end
+  end if
 end subroutine get_primary_merge_coords
 
 subroutine get_secondary_merge_coords(this,lat,lon)
-  type(Lake), intent(in) :: this
+  class(lake), intent(in) :: this
   integer, intent(out) :: lat
   integer, intent(out) :: lon
   logical :: completed_lake_cell
-  completed_lake_cell = ((this%completed_lake_cells(this%current_cell_to_fill_lat, &
-                                                    this%current_cell_to_fill_lon)) .or.
-                         (this%flood_only(this%current_cell_to_fill_lat,
-                                          this%current_cell_to_fill_lon)))
+  completed_lake_cell = ((this%lake_fields%completed_lake_cells(this%current_cell_to_fill_lat, &
+                                                                this%current_cell_to_fill_lon)) .or. &
+                         (this%lake_parameters%flood_only(this%current_cell_to_fill_lat, &
+                                                          this%current_cell_to_fill_lon)))
   if (completed_lake_cell) then
     lat = &
       this%lake_parameters%flood_next_cell_lat_index(this%current_cell_to_fill_lat, &
@@ -992,15 +1198,15 @@ subroutine get_secondary_merge_coords(this,lat,lon)
 end subroutine get_secondary_merge_coords
 
 subroutine get_outflow_redirect_coords(this,lat,lon,local_redirect)
-  type(FillingLake), intent(in) :: this
+  class(fillinglake), intent(in) :: this
   integer, intent(out) :: lat
   integer, intent(out) :: lon
   logical, intent(out) :: local_redirect
   logical :: completed_lake_cell
-  completed_lake_cell = ((this%completed_lake_cells(this%current_cell_to_fill_lat, &
-                                                    this%current_cell_to_fill_lon)) .or.
-                         (this%flood_only(this%current_cell_to_fill_lat,
-                                          this%current_cell_to_fill_lon)))
+  completed_lake_cell = (this%lake_fields%completed_lake_cells(this%current_cell_to_fill_lat, &
+                                                               this%current_cell_to_fill_lon) .or. &
+                                                               this%lake_parameters%flood_only(this%current_cell_to_fill_lat, &
+                                                                                               this%current_cell_to_fill_lon))
   if (this%use_additional_fields) then
     if (completed_lake_cell) then
       local_redirect = &
@@ -1021,9 +1227,9 @@ subroutine get_outflow_redirect_coords(this,lat,lon,local_redirect)
         this%lake_parameters%connect_local_redirect(this%current_cell_to_fill_lat, &
                                                     this%current_cell_to_fill_lon)
     end if
-  end
+  end if
   if (this%use_additional_fields) then
-    if (use_flood_redirect) then
+    if (completed_lake_cell) then
       lat = &
         this%lake_parameters%additional_flood_redirect_lat_index(this%current_cell_to_fill_lat, &
                                                                  this%current_cell_to_fill_lon)
@@ -1039,7 +1245,7 @@ subroutine get_outflow_redirect_coords(this,lat,lon,local_redirect)
                                                                    this%current_cell_to_fill_lon)
     end if
   else
-    if (use_flood_redirect) then
+    if (completed_lake_cell) then
       lat = &
         this%lake_parameters%flood_redirect_lat_index(this%current_cell_to_fill_lat, &
                                                       this%current_cell_to_fill_lon)
@@ -1057,14 +1263,14 @@ subroutine get_outflow_redirect_coords(this,lat,lon,local_redirect)
   end if
 end subroutine get_outflow_redirect_coords
 
-function find_true_primary_lake(this) result(lake)
-  class(Lake), intent(in) :: this
-  class(Lake) :: lake
-    select type (lake)
-      type is (SubsumedLake)
-        lake = find_true_primary_lake(this%other_lakes[this%primary_lake_number])
+recursive function find_true_primary_lake(this) result(true_primary_lake)
+  class(lake), target, intent(in) :: this
+  class(lake), pointer :: true_primary_lake
+    select type (this)
+      type is (subsumedlake)
+        true_primary_lake => find_true_primary_lake(this%lake_fields%other_lakes(this%primary_lake_number)%lake_pointer)
       class default
-        lake = this
+        true_primary_lake => this
     end select
 end function find_true_primary_lake
 

@@ -213,6 +213,17 @@ void sink_filling_algorithm_4_latlon::setup_fields(double* orography_in, bool* l
 	nlat = grid_latlon->get_nlat(); nlon = grid_latlon->get_nlon();
 }
 
+void sink_filling_algorithm_4_icon_single_index::setup_fields(double* orography_in, bool* landsea_in,
+								            	   															bool* true_sinks_in, int * next_cell_index_in,
+												   																	 	grid_params* grid_params_in,
+												   																	  int* catchment_nums_in) {
+	sink_filling_algorithm_4::setup_fields(orography_in,landsea_in,true_sinks_in,grid_params_in,
+										   									catchment_nums_in);
+	next_cell_index = new field<int>(next_cell_index_in,grid_params_in);
+	auto* grid_icon_single_index = dynamic_cast<icon_single_index_grid*>(_grid);
+	ncells = grid_icon_single_index->get_npoints();
+}
+
 void sink_filling_algorithm_1_latlon::setup_fields(double* orography_in, bool* landsea_in,
 									      	  	   bool* true_sinks_in,grid_params* grid_params){
 	sink_filling_algorithm::setup_fields(orography_in,landsea_in,true_sinks_in,grid_params);

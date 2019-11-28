@@ -1,5 +1,7 @@
 #!/bin/bash
 
+no_modules=${1}
+
 #Define module loading function
 function load_module
 {
@@ -20,8 +22,10 @@ if echo $LOADEDMODULES | fgrep -q ${module_name} ; then
 fi
 }
 
-unload_module netcdf_c
-load_module anaconda3
+if ! $no_modules ; then
+  unload_module netcdf_c
+  load_module anaconda3
+fi
 
 conda-env remove -n dyhdenv
 conda config --add channels conda-forge

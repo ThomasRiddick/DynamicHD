@@ -175,7 +175,7 @@ type, extends(field_section), public :: icon_single_index_field_section
 end type icon_single_index_field_section
 
 interface icon_single_index_field_section
-    procedure icon_single_index_field_section_constructor
+    procedure :: icon_single_index_field_section_constructor
 end interface icon_single_index_field_section
 
 contains

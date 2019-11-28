@@ -1,4 +1,4 @@
-module map_non_coincident_grids
+module map_non_coincident_grids_mod
 
 use precision_mod
 use coords_mod
@@ -32,11 +32,17 @@ type, public, abstract :: non_coincident_grid_mapper
   class(coords), pointer :: coarse_cell_coords
   class(bounds), pointer :: cell_bounds
   class(section_coords),pointer :: fine_grid_shape
+  integer, dimension(:), pointer :: section_min_lats
+  integer, dimension(:), pointer :: section_min_lons
+  integer, dimension(:), pointer :: section_max_lats
+  integer, dimension(:), pointer :: section_max_lons
   contains
     procedure :: generate_pixels_in_cell_mask
     procedure :: check_if_pixel_is_in_cell
     procedure :: generate_cell_numbers
     procedure :: process_cell
+    procedure(generate_limits), deferred :: generate_limits
+    procedure(process_pixel_for_limits), deferred :: process_pixel_for_limits
     procedure(generate_cell_bounds), deferred :: generate_cell_bounds
     procedure(generate_areas_to_consider), deferred :: generate_areas_to_consider
     procedure(check_if_pixel_center_is_in_bounds), deferred :: &
@@ -79,6 +85,20 @@ abstract interface
     implicit none
     class(non_coincident_grid_mapper), intent(inout) :: this
   end subroutine
+
+  subroutine process_pixel_for_limits(this,coords_in)
+    import non_coincident_grid_mapper
+    import coords
+    implicit none
+    class(non_coincident_grid_mapper), intent(inout) :: this
+    class(coords), intent(in) :: coords_in
+  end subroutine
+
+  subroutine generate_limits(this)
+    import non_coincident_grid_mapper
+    implicit none
+    class(non_coincident_grid_mapper), intent(inout) :: this
+  end subroutine generate_limits
 end interface
 
 type, extends(non_coincident_grid_mapper), public :: &
@@ -94,7 +114,9 @@ contains
   procedure :: create_new_mask => latlon_pixel_create_new_mask
   procedure :: assign_cell_numbers => &
     icon_icosohedral_cell_latlon_pixel_assign_cell_numbers
+  procedure :: process_pixel_for_limits => latlon_process_pixel_for_limits
   procedure :: init_icon_icosohedral_cell_latlon_pixel_ncg_mapper
+  procedure :: generate_limits => latlon_generate_limits
 end type
 
 interface icon_icosohedral_cell_latlon_pixel_non_coincident_grid_mapper
@@ -143,14 +165,49 @@ contains
     class(field_section), pointer  :: cell_numbers
       call this%cell_vertex_coords%for_all_section(process_cell,this)
       cell_numbers =>this%cell_numbers
-      deallocate(this%mask)
   end function generate_cell_numbers
 
   subroutine process_cell(this,coords_in)
     class(non_coincident_grid_mapper), intent(inout) :: this
     class(coords), pointer,intent(in) :: coords_in
       call this%generate_pixels_in_cell_mask(coords_in)
+      call this%assign_cell_numbers()
   end subroutine process_cell
+
+  subroutine latlon_generate_limits(this)
+    class(icon_icosohedral_cell_latlon_pixel_non_coincident_grid_mapper), intent(inout) :: this
+      call this%cell_numbers%for_all_section(latlon_process_pixel_for_limits,this)
+  end subroutine latlon_generate_limits
+
+  subroutine latlon_process_pixel_for_limits(this,coords_in)
+    class(icon_icosohedral_cell_latlon_pixel_non_coincident_grid_mapper), intent(inout) :: this
+    class(coords), pointer,intent(in) :: coords_in
+    integer :: i,j
+    integer :: working_cell_number
+    class(*), pointer :: working_cell_number_ptr
+      select type (coords_in)
+      type is (latlon_coords)
+        i = coords_in%lat
+        j = coords_in%lon
+      end select
+      working_cell_number_ptr => this%cell_numbers%get_value(coords_in)
+      select type (working_cell_number_ptr)
+      type is (integer)
+        working_cell_number = working_cell_number_ptr
+      end select
+      if (this%section_min_lats(working_cell_number) > i) then
+        this%section_min_lats(working_cell_number) = i
+      end if
+      if (this%section_max_lats(working_cell_number) < i) then
+        this%section_max_lats(working_cell_number) = i
+      end if
+      if (this%section_min_lons(working_cell_number) > j) then
+        this%section_min_lons(working_cell_number) = j
+      end if
+      if (this%section_max_lons(working_cell_number) < j) then
+        this%section_max_lons(working_cell_number) = j
+      end if
+  end subroutine latlon_process_pixel_for_limits
 
   subroutine latlon_pixel_generate_areas_to_consider(this)
     class(icon_icosohedral_cell_latlon_pixel_non_coincident_grid_mapper), intent(inout) :: this
@@ -421,4 +478,4 @@ contains
                                                                                 fine_grid_shape)
   end function icon_icosohedral_cell_latlon_pixel_ncg_mapper_constructor
 
-end module map_non_coincident_grids
+end module map_non_coincident_grids_mod

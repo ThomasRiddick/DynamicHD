@@ -271,12 +271,12 @@ function load_grid_specific_lake_parameters(file_handle::NcFile,grid::LatLonGrid
                               additional_connect_redirect_lon_index)
 end
 
-function load_lake_initial_values(lake_para_filepath::AbstractString,
+function load_lake_initial_values(lake_start_filepath::AbstractString,
                                   grid::LatLonGrid,hd_grid::LatLonGrid)
   local initial_water_to_lake_centers::Field{Float64}
   local initial_spillover_to_rivers::Field{Float64}
-  println("Loading: " * lake_para_filepath)
-  file_handle::NcFile = NetCDF.open(lake_para_filepath)
+  println("Loading: " * lake_start_filepath)
+  file_handle::NcFile = NetCDF.open(lake_start_filepath)
   try
     initial_water_to_lake_centers =
       load_field(file_handle,grid,"water_redistributed_to_lakes",Float64)

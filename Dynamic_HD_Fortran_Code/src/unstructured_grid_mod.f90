@@ -1,21 +1,25 @@
 module unstructured_grid_mod
 implicit none
+private
+public :: icon_icosohedral_grid_constructor
 
-type, abstract :: unstructured_grid
+type, public, abstract :: unstructured_grid
   private
-  integer :: num_points
+  integer, public :: num_points
   integer, dimension(:,:), pointer :: cell_neighbors
   integer, dimension(:,:), pointer :: cell_secondary_neighbors
   integer :: num_primary_neighbors
   integer :: num_secondary_neighbors
   contains
     private
+      procedure         :: initialise_unstructured_grid
+      procedure, public :: get_cell_secondary_neighbors
       procedure, public :: generate_cell_neighbors
       procedure, public :: generate_cell_secondary_neighbors
       procedure, public :: generate_edge_cells
       procedure, public :: generate_subfield_indices
       procedure, public :: generate_full_field_indices
-      procedure(calculate_secondary_neighbors), deferred :: &
+      procedure(calculate_secondary_neighbors), deferred, public :: &
         calculate_secondary_neighbors
 end type unstructured_grid
 
@@ -26,14 +30,57 @@ abstract interface
   end subroutine calculate_secondary_neighbors
 end interface
 
-type, extends(unstructured_grid) :: icon_icosohedral_grid
+type, public, extends(unstructured_grid) :: icon_icosohedral_grid
   private
   contains
     private
-      procedure :: calculate_secondary_neighbors => icon_icosohedral_calculate_secondary_neighbors
+      procedure :: initialise_icon_icosohedral_grid
+      procedure, public :: calculate_secondary_neighbors => icon_icosohedral_calculate_secondary_neighbors
 end type icon_icosohedral_grid
 
+interface icon_icosohedral_grid
+  procedure :: icon_icosohedral_grid_constructor
+end interface icon_icosohedral_grid
+
 contains
+
+  function get_cell_secondary_neighbors(this) result(secondary_neighbors)
+    class(unstructured_grid), intent(inout) :: this
+    integer, dimension(:,:), pointer :: secondary_neighbors
+      secondary_neighbors => this%cell_secondary_neighbors
+  end function get_cell_secondary_neighbors
+
+  subroutine initialise_unstructured_grid(this,cell_neighbors_in, &
+                                          num_primary_neighbors_in, &
+                                          num_secondary_neighbors_in)
+    class(unstructured_grid), intent(inout) :: this
+    integer, dimension(:,:), pointer, intent(in) :: cell_neighbors_in
+    integer, intent(in) :: num_primary_neighbors_in
+    integer, intent(in) :: num_secondary_neighbors_in
+      this%num_points = size(cell_neighbors_in)
+      this%cell_neighbors = cell_neighbors_in
+      this%num_primary_neighbors = num_primary_neighbors_in
+      this%num_secondary_neighbors = num_secondary_neighbors_in
+  end subroutine initialise_unstructured_grid
+
+  subroutine initialise_icon_icosohedral_grid(this,cell_neighbors_in)
+    class(icon_icosohedral_grid), intent(inout) :: this
+    integer, dimension(:,:), pointer, intent(in) :: cell_neighbors_in
+    integer :: num_primary_neighbors
+    integer :: num_secondary_neighbors
+      num_primary_neighbors = 3
+      num_secondary_neighbors = 9
+      call this%initialise_unstructured_grid(cell_neighbors_in, &
+                                             num_primary_neighbors, &
+                                             num_secondary_neighbors)
+  end subroutine initialise_icon_icosohedral_grid
+
+  function icon_icosohedral_grid_constructor(cell_neighbors_in) result(constructor)
+    integer, dimension(:,:), pointer, intent(in) :: cell_neighbors_in
+    type(icon_icosohedral_grid), allocatable :: constructor
+      allocate(constructor)
+      call constructor%initialise_icon_icosohedral_grid(cell_neighbors_in)
+  end function icon_icosohedral_grid_constructor
 
   function generate_edge_cells(this,cell_neighbors,cell_secondary_neighbors) &
       result(edge_cells)

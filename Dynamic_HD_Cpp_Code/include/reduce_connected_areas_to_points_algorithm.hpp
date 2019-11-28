@@ -34,10 +34,13 @@ private:
 	field<bool>* areas = nullptr;
 	field<bool>* completed_cells = nullptr;
 	field<double>* orography = nullptr;
+	field<int>* area_sizes = nullptr;
 	bool use_diagonals = true;
 	bool check_for_false_minima = false;
 	bool delete_initial_point = false;
 	unsigned int diagonal_neighbors = 0;
+	int points_in_area =  0;
+	bool calculate_area_sizes = false;
 };
 
 #endif /* INCLUDE_REDUCE_CONNECTED_AREAS_TO_POINTS_ALGORITHM_HPP_ */

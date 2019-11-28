@@ -27,7 +27,7 @@ endif
 -include ../src/subdir.mk
 -include ../subdir.mk
 
-EXECUTABLES += Dynamic_HD_Cpp_Exec Fill_Sinks_Icon_SI_Exec Compute_Catchments_SI_Exec Determine_River_Directions_SI_Exec
+EXECUTABLES += Dynamic_HD_Cpp_Exec Fill_Sinks_Icon_SI_Exec Compute_Catchments_SI_Exec Determine_River_Directions_SI_Exec Evaluate_Basins_SI_Exec
 
 ifneq ($(MAKECMDGOALS),clean)
 ifneq ($(strip $(CC_DEPS)),)
@@ -53,7 +53,7 @@ endif
 # Add inputs and outputs from these tool invocations to the build variables
 
 # All Target
-all: Dynamic_HD_Cpp_Code Fill_Sinks_Icon_SI_Exec Compute_Catchments_SI_Exec Determine_River_Directions_SI_Exec
+all: Dynamic_HD_Cpp_Code Fill_Sinks_Icon_SI_Exec Compute_Catchments_SI_Exec Determine_River_Directions_SI_Exec Evaluate_Basins_SI_Exec
 
 # Tool invocations
 compile_only: $(USER_OBJS)
@@ -79,6 +79,12 @@ Compute_Catchments_SI_Exec: $(USER_OBJS) $(CC_ICON_SI_OBJS)
 Determine_River_Directions_SI_Exec: $(USER_OBJS) $(DRD_ICON_SI_OBJS)
 	@echo 'Building target: $@'
 	$(GPLUSPLUS)  -o "Determine_River_Directions_SI_Exec" $(USER_OBJS) $(DRD_ICON_SI_OBJS) $(FLAGS) $(LIBS) $(INCLUDE)
+	@echo 'Finished building target: $@'
+	@echo ' '
+
+Evaluate_Basins_SI_Exec: $(USER_OBJS) $(EB_ICON_SI_OBJS)
+	@echo 'Building target: $@'
+	$(GPLUSPLUS)  -o "Evaluate_Basins_SI_Exec" $(USER_OBJS) $(EB_ICON_SI_OBJS) $(FLAGS) $(LIBS) $(INCLUDE)
 	@echo 'Finished building target: $@'
 	@echo ' '
 

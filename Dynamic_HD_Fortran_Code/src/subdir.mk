@@ -27,7 +27,12 @@ $(FRUIT_LOC)/fruit.f90 \
 ../src/loop_breaker_test_mod.f90 \
 ../src/manual_fruit_basket.f90 \
 ../src/manual_fruit_basket_driver.f90 \
-../src/flow_accumulation_algorithm_mod.f90
+../src/flow_accumulation_algorithm_mod.f90 \
+../src/latlon_hd_model_mod.f90 \
+../src/latlon_lake_model_mod.f90 \
+../src/latlon_lake_model_interface_mod.f90 \
+../src/latlon_hd_model_io_mod.f90 \
+../src/cotat_plus_latlon_to_icon_simple_interface.f90
 
 OBJS += \
 ./src/precision_mod.o \
@@ -47,7 +52,14 @@ OBJS += \
 ./src/cotat_plus_driver_mod.o \
 ./src/flow.o \
 ./src/loop_breaker_mod.o \
-./src/flow_accumulation_algorithm_mod.o
+./src/flow_accumulation_algorithm_mod.o \
+./src/latlon_lake_model_mod.o \
+./src/latlon_lake_model_interface_mod.o \
+./src/latlon_hd_model_mod.o \
+./src/latlon_hd_model_io_mod.o
+
+COTAT_PLUS_LATLON_TO_ICON_SIMPLE_INTERFACE_OBJS += \
+./src/cotat_plus_latlon_to_icon_simple_interface.o
 
 TEST_OBJS += \
 ./src/fruit.o \
@@ -59,7 +71,7 @@ TEST_OBJS += \
 ./src/flow_test_mod.o \
 ./src/loop_breaker_test_mod.o \
 ./src/manual_fruit_basket.o \
-./src/manual_fruit_basket_driver.o
+./src/manual_fruit_basket_driver.o \
 
 MODS += \
 ./fruit.mod \
@@ -90,7 +102,12 @@ MODS += \
 ./loop_breaker_test_mod.mod \
 ./manual_fruit_basket.mod \
 ./manual_fruit_basket_driver.mod \
-./flow_accumulation_algorithm_mod.mod
+./flow_accumulation_algorithm_mod.mod \
+./latlon_lake_model_interface_mod.mod \
+./latlon_hd_model_mod.mod \
+./latlon_lake_model_mod.mod \
+./latlon_hd_model_io_mod.mod \
+./cotat_plus_latlon_to_icon_simple_interface.mod
 
 # Each subdirectory must supply rules for building sources it contributes
 src/fruit.o: $(FRUIT_LOC)/fruit.f90
@@ -105,7 +122,7 @@ src/fruit.o: $(FRUIT_LOC)/fruit.f90
 src/%.o: ../src/%.f90
 	@echo 'Building file: $<'
 	@echo 'Invoking: GNU Fortran Compiler'
-	$(GFORTRAN) -funderscoring -O0 -g -Wall -c -fmessage-length=0 -fPIC -o "$@" "$<"
+	$(GFORTRAN) -funderscoring -O0 -g -Wall -c -fmessage-length=0 -fPIC -o "$@" "$<" "-I ../include" "-I $(NETCDF_F)/include"
 	@echo 'Finished building: $<'
 	@echo ' '
 
@@ -123,15 +140,15 @@ src/cotat_parameters_mod.o: ../src/cotat_parameters_mod.f90
 
 src/cotat_plus.o: ../src/cotat_plus.f90 src/area_mod.o src/coords_mod.o src/cotat_parameters_mod.o
 
-src/cotat_plus_driver_mod.o: ../src/cotat_plus_driver_mod.f90 src/cotat_plus.o
+src/map_non_coincident_grids_mod.o: ../src/map_non_coincident_grids_mod.f90 src/precision_mod.o src/coords_mod.o src/field_section_mod.o src/subfield_mod.o src/pointer_mod.o
+
+src/cotat_plus_driver_mod.o: ../src/cotat_plus_driver_mod.f90 src/cotat_plus.o src/map_non_coincident_grids_mod.o
 
 src/cotat_plus_test_mod.o: ../src/cotat_plus_test_mod.f90 src/cotat_parameters_mod.o src/cotat_plus.o src/fruit.o
 
 src/flow.o: ../src/flow.f90 src/area_mod.o src/coords_mod.o src/cotat_parameters_mod.o
 
 src/flow_test_mod.o: ../src/flow_test_mod.f90 src/cotat_parameters_mod.o src/flow.o src/fruit.o
-
-src/map_non_coincident_grids_mod.o: ../src/map_non_coincident_grids_mod.f90 src/precision_mod.o src/coords_mod.o src/field_section_mod.o src/subfield_mod.o src/pointer_mod.o
 
 src/doubly_linked_list_link_mod.o: ../src/doubly_linked_list_link_mod.f90
 
@@ -150,6 +167,8 @@ src/loop_breaker_test_mod.o: ../src/loop_breaker_test_mod.f90 src/fruit.o src/lo
 src/manual_fruit_basket.o: ../src/manual_fruit_basket.f90 src/area_test_mod.o src/cotat_plus_test_mod.o src/doubly_linked_list_test_module.o src/field_section_test_mod.o src/fruit.o src/loop_breaker_test_mod.o src/subfield_test_mod.o
 
 src/manual_fruit_basket_driver.o: ../src/manual_fruit_basket_driver.f90 src/fruit.o src/manual_fruit_basket.o
+
+src/cotat_plus_latlon_to_icon_simple_interface.o: ../src/cotat_plus_latlon_to_icon_simple_interface.f90 src/cotat_plus.o
 
 src/precision_mod.o: ../src/precision_mod.f90
 

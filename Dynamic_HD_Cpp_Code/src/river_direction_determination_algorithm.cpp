@@ -41,12 +41,13 @@ void river_direction_determination_algorithm::setup_fields(double* orography_in,
 
 void river_direction_determination_algorithm::determine_river_directions() {
   _grid->for_all([&](coords* coords_in){
-  if ((*true_sinks)(coords_in) &&
-      ! (*land_sea)(coords_in)) {
-    mark_as_sink_point(coords_in);
-    (*completed_cells)(coords_in) = true;
-  } else if(! (*land_sea)(coords_in)) find_river_direction(coords_in);
-  delete coords_in;
+    if(! (*land_sea)(coords_in)){
+      if ((*true_sinks)(coords_in)) {
+        mark_as_sink_point(coords_in);
+        (*completed_cells)(coords_in) = true;
+      } else  find_river_direction(coords_in);
+    }
+    delete coords_in;
   });
   resolve_flat_areas();
   //Need the river directions first before marking ocean points with inflows
@@ -158,7 +159,8 @@ void river_direction_determination_algorithm::process_neighbors(coords* center_c
                      &grid::for_non_diagonal_nbrs_wrapped;
   (_grid->*func)(center_coords,[&](coords* nbr_coords){
     if((*orography)(nbr_coords) == flat_height &&
-       ! (*completed_cells)(nbr_coords)){
+       ! (*completed_cells)(nbr_coords) &&
+       ! (*land_sea)(nbr_coords)){
       (*completed_cells)(nbr_coords) = true;
       mark_river_direction(nbr_coords,center_coords);
       q.push(nbr_coords);

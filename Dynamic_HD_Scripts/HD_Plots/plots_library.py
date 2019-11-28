@@ -31,6 +31,7 @@ import river_comparison_plotting_routines as rc_pts
 import flowmap_plotting_routines as fmp_pts #@UnresolvedImport
 from interactive_plotting_routines import Interactive_Plots
 import matplotlib.gridspec as gridspec
+import matplotlib.animation as animation
 
 global interactive_plots
 
@@ -3659,11 +3660,12 @@ class LakePlots(Plots):
     plt.imshow(fine_rivers_and_lakes,cmap=cmap,norm=norm,interpolation="none")
     plt.title('Cells with cumulative flow greater than or equal to {0}'.format(minflowcutoff))
 
-  def TwoColourRiverAndLakeAnimationHelper(self,river_flow_filename,
-                                           lsmask_filename,
-                                           basin_catchment_num_filename,
-                                           lake_data_filename,
-                                           glacier_data_filename,
+  def TwoColourRiverAndLakeAnimationHelper(self,
+                                           river_flow_file_basename,
+                                           lsmask_file_basename,
+                                           basin_catchment_num_file_basename,
+                                           lake_data_file_basename,
+                                           glacier_data_file_basename,
                                            flip_river_data=False,
                                            flip_mask=False,
                                            flip_catchment_nums=False,
@@ -3675,8 +3677,8 @@ class LakePlots(Plots):
                                            rotate_glacier_mask=False,
                                            minflowcutoff=1000000000000.0,
                                            lake_grid_type='LatLong10min',
-                                           lake_kwargs={},
-                                           river_grid_type='HD',**river_kwargs):
+                                           lake_grid_kwargs={},
+                                           river_grid_type='HD',**river_grid_kwargs):
     """Help produce a map of river flow, lakes and potential lakes"""
     fig = plt.figure()
     plt.subplot(111)
@@ -3684,11 +3686,39 @@ class LakePlots(Plots):
     bounds = range(7)
     norm = mpl.colors.BoundaryNorm(bounds,cmap.N)
     plt.title('Cells with cumulative flow greater than or equal to {0}'.format(minflowcutoff))
-    im = plt.imshow(fine_rivers_and_lakes,cmap=cmap,norm=norm,interpolation="none")
-    anim = animation.FuncAnimation(fig, function?,frames=850*2,interval=2000)
+    ims = []
+    for time in range(950,1850,3):
+      timeslice = int(math.floor(time/50.0)*50)
+      ims.append([self.TwoColourRiverAndLakeAnimationHelperSliceGenerator(cmap=cmap,norm=norm,
+                                                                          river_flow_filename=
+                                                                          river_flow_file_basename+"_"+str(time)+".nc",
+                                                                          lsmask_filename=
+                                                                          lsmask_file_basename+"_"+str(timeslice)+".nc",
+                                                                          basin_catchment_num_filename=
+                                                                          (basin_catchment_num_file_basename+
+                                                                           "_"+str(timeslice)+".nc"),
+                                                                          lake_data_filename=
+                                                                          lake_data_file_basename+"_"+str(time)+".nc",
+                                                                          glacier_data_filename=
+                                                                          glacier_data_file_basename+"_"+str(timeslice)+".nc",
+                                                                          flip_river_data=flip_river_data,
+                                                                          flip_mask=flip_mask,
+                                                                          flip_catchment_nums=flip_catchment_nums,
+                                                                          flip_lake_data=flip_lake_data,
+                                                                          flip_glacier_mask=flip_glacier_mask,
+                                                                          rotate_lsmask=rotate_lsmask,
+                                                                          rotate_catchment_nums=rotate_catchment_nums,
+                                                                          rotate_lake_data=rotate_lake_data,
+                                                                          rotate_glacier_mask=rotate_glacier_mask,
+                                                                          minflowcutoff=minflowcutoff,
+                                                                          lake_grid_type=lake_grid_type,
+                                                                          lake_kwargs=lake_grid_kwargs,
+                                                                          river_grid_type=river_grid_type)])
+    anim = animation.ArtistAnimation(fig,ims,interval=100,blit=False,repeat_delay=1000)
+    plt.show()
 
 
-  def TwoColourRiverAndLakeAnimationHelperSliceGenerator(self,im,
+  def TwoColourRiverAndLakeAnimationHelperSliceGenerator(self,cmap,norm,
                                                          river_flow_filename,
                                                          lsmask_filename,
                                                          basin_catchment_num_filename,
@@ -3771,8 +3801,8 @@ class LakePlots(Plots):
     fine_rivers_and_lakes[lake_data > 0] = 4
     fine_rivers_and_lakes[glacier_mask == 1] = 5
     fine_rivers_and_lakes[lsmask == 1] = 0
-    im.set_array(fine_rivers_and_lakes)
-    return [im]
+    im = plt.imshow(fine_rivers_and_lakes,cmap=cmap,norm=norm,interpolation="none")
+    return im
 
   def LakeAndRiverMap(self):
     timeinslice="18250"
@@ -3809,6 +3839,30 @@ class LakePlots(Plots):
                                          minflowcutoff=500000000.0,
                                          lake_grid_type='LatLong10min',
                                          river_grid_type='HD')
+
+  def LakeAndRiverMaps(self):
+    transient_run_path=\
+    "/Users/thomasriddick/Documents/data/temp/transient_sim_1/results"
+    river_flow_file_basename="/Users/thomasriddick/Documents/data/temp/transient_sim_1/results/river_model_results_ts360"
+    lsmask_file_basename=("/Users/thomasriddick/Documents/data/transient_sim_data/1/"
+                          "10min_lsmask_pmu0178_merged")
+    basin_catchment_num_file_basename=("/Users/thomasriddick/Documents/data/transient_sim_data/1/"
+                                       "basin_catchment_numbers_prepare_basins_from_glac1D")
+    lake_data_file_basename="/Users/thomasriddick/Documents/data/temp/transient_sim_1/results/lake_model_results_ts360"
+    glacier_file_basename="/Users/thomasriddick/Documents/data/transient_sim_data/1/GLAC1D_ICEM_10min"
+    self.TwoColourRiverAndLakeAnimationHelper(river_flow_file_basename,
+                                              lsmask_file_basename,
+                                              basin_catchment_num_file_basename,
+                                              lake_data_file_basename,
+                                              glacier_file_basename,
+                                              flip_river_data=False,flip_mask=False,
+                                              flip_catchment_num=False,flip_lake_data=False,
+                                              flip_glacier_mask=True,
+                                              rotate_lsmask=True,
+                                              rotate_glacier_mask=True,
+                                              minflowcutoff=500000000.0,
+                                              lake_grid_type='LatLong10min',
+                                              river_grid_type='HD')
 
 def main():
     """Top level function; define some overarching options and which plots to create"""
@@ -3887,7 +3941,8 @@ def main():
     #coupledrunoutputplots.extended_present_day_rdirs_vs_ice6g_rdirs_lgm_mpiom_pem()
     lake_plots = LakePlots()
     #lake_plots.plotLakeDepths()
-    lake_plots.LakeAndRiverMap()
+    #lake_plots.LakeAndRiverMap()
+    lake_plots.LakeAndRiverMaps()
     if show:
         plt.show()
 

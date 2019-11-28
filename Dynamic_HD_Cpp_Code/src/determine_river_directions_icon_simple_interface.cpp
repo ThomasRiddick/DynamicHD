@@ -154,6 +154,7 @@ int main(int argc, char *argv[]){
     //invert landsea mask
     for (auto i = 0; i <ncells;i++){
       if (landsea_in_double[i] < 0.5) landsea_in_double[i] = 0.0;
+      else landsea_in_double[i] = 1.0;
       landsea_in[i] = ! bool(landsea_in_double[i]);
     }
     delete[] landsea_in_double;

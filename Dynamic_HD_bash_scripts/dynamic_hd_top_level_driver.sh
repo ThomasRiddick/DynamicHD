@@ -234,11 +234,7 @@ if ! $no_conda ; then
 		conda env remove --yes --name dyhdenv
 	fi
 	if ! conda info -e | grep -q "dyhdenv"; then
-		#Use the txt file environment creation (not conda env create that requires a yml file)
-		#Create a dynamic_hd_env.txt using conda list --export > filename.txt not
-		#conda env export which creates a yml file.
-		conda config --add channels conda-forge
-		conda create --file "${source_directory}/Dynamic_HD_Environmental_Settings/dynamic_hd_env.txt" --yes --name "dyhdenv"
+		${source_directory}/Dynamic_HD_bash_scripts/regenerate_conda_environment.sh $no_modules
 	fi
 	source activate dyhdenv
 fi

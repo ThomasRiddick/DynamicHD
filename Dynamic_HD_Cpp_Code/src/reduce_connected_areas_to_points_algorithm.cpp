@@ -53,12 +53,14 @@ void reduce_connected_areas_to_points_algorithm::reduce_connected_area_to_point(
 		delete center_cell;
 	}
 	if (delete_initial_point) (*areas)(point) = false;
+	else if (calculate_area_sizes) (*area_sizes)(point) = points_in_area;
 }
 
 void reduce_connected_areas_to_points_algorithm::process_initial_point(coords* point) {
 	center_coords = point;
 	(*completed_cells)(center_coords) = true;
 	delete_initial_point = false;
+	points_in_area = 1;
 	process_neighbors();
 }
 
@@ -79,6 +81,7 @@ inline void reduce_connected_areas_to_points_algorithm::process_neighbor() {
 				q.push(new landsea_cell(nbr_coords));
 				(*areas)(nbr_coords) = false;
 				(*completed_cells)(nbr_coords) = true;
+				points_in_area += 1;
 			} else if(check_for_false_minima) {
 				//Note a neighbour of the same height that is not marked as a minima
 				//implies that one of the neighbour's neighbours is at a lower height
