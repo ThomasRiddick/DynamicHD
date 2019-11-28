@@ -29,7 +29,7 @@ fi
 
 conda-env remove -n dyhdenv
 conda config --add channels conda-forge
-conda create -n --yes dyhdenv python=2.7
+conda create --yes -n dyhdenv python=2.7
 source activate dyhdenv
 conda install --yes cdo netcdf4 numpy matplotlib xarray cython scipy python-cdo
 conda list -e
