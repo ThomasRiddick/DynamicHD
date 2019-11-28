@@ -52,14 +52,16 @@ OBJS += \
 ./src/cotat_plus_driver_mod.o \
 ./src/flow.o \
 ./src/loop_breaker_mod.o \
-./src/flow_accumulation_algorithm_mod.o \
+./src/flow_accumulation_algorithm_mod.o
+
+COTAT_PLUS_LATLON_TO_ICON_SIMPLE_INTERFACE_OBJS += \
+./src/cotat_plus_latlon_to_icon_simple_interface.o
+
+LATLON_HD_AND_LAKE_MODEL_OBJS += \
 ./src/latlon_lake_model_mod.o \
 ./src/latlon_lake_model_interface_mod.o \
 ./src/latlon_hd_model_mod.o \
 ./src/latlon_hd_model_io_mod.o
-
-COTAT_PLUS_LATLON_TO_ICON_SIMPLE_INTERFACE_OBJS += \
-./src/cotat_plus_latlon_to_icon_simple_interface.o
 
 TEST_OBJS += \
 ./src/fruit.o \
