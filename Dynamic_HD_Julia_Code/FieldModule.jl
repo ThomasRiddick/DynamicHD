@@ -10,6 +10,8 @@ using SpecialDirectionCodesModule
 using MergeTypesModule
 import Base.maximum
 import Base.+
+import Base.==
+import Base.isapprox
 import Base.fill!
 import Base.show
 import Base.round
@@ -35,6 +37,16 @@ function maximum(field::Field)
 end
 
 function +(lfield::Field,rfield::Field)
+  throw(UserError())
+end
+
+function ==(lfield::Field,rfield::Field)
+  throw(UserError())
+end
+
+function isapprox(lfield::Field,rfield::Field;
+                  rtol::Real=atol>0 ? 0 : sqrt(eps),
+                  atol::Real,nans::Bool)
   throw(UserError())
 end
 
@@ -159,6 +171,17 @@ function +(lfield::LatLonField{T},rfield::LatLonField{T}) where {T}
   return LatLonField{T}(lfield.grid,lfield.data + rfield.data)
 end
 
+function ==(lfield::LatLonField{T},rfield::LatLonField{T}) where {T}
+  return (lfield.data == rfield.data)::Bool
+end
+
+function isapprox(lfield::LatLonField{T},rfield::LatLonField{T};
+                  rtol::Real=atol>0 ? 0 : sqrt(eps),
+                  atol::Real=0.0,nans::Bool=false) where {T}
+  return isapprox(lfield.data,rfield.data,
+                 rtol=rtol,atol=atol,nans=nans)::Bool
+end
+
 function invert(field::LatLonField{T}) where {T}
   return LatLonField{T}(field.grid,.!field.data)
 end
@@ -202,6 +225,17 @@ end
 
 function +(lfield::UnstructuredField{T},rfield::UnstructuredField{T}) where {T}
   return UnstructuredField{T}(lfield.grid,lfield.data + rfield.data)
+end
+
+function ==(lfield::UnstructuredField{T},rfield::UnstructuredField{T}) where {T}
+  return (lfield.data == rfield.data)::Bool
+end
+
+function isapprox(lfield::UnstructuredField{T},rfield::UnstructuredField{T};
+                  rtol::Real=atol>0 ? 0 : sqrt(eps),
+                  atol::Real=0.0,nans::Bool) where {T}
+  return isapprox(lfield.data,rfield.data,
+                 rtol=rtol,atol=atol,nans=nans)::Bool
 end
 
 function invert(field::UnstructuredField{T}) where {T}

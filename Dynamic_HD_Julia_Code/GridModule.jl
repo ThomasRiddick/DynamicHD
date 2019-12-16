@@ -32,6 +32,10 @@ function wrap_coords!(grid::Grid,coords::Coords)
   throw(UserError())
 end
 
+function get_number_of_cells(grid::Grid)
+  throw(UserError)
+end
+
 get_number_of_dimensions(obj::T) where {T <: Grid} =
   obj.number_of_dimensions::Int64
 
@@ -125,6 +129,14 @@ function wrap_coords(grid::LatLonGrid,coords::LatLonCoords)
     wrapped_lon -= grid.nlon
   end
   return LatLonCoords(coords.lat,wrapped_lon)
+end
+
+function get_number_of_cells(grid::LatLonGrid)
+  return grid.nlat*grid.nlon
+end
+
+function get_number_of_cell(grid::UnstructuredGrid)
+  return grid.ncells
 end
 
 end

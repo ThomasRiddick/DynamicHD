@@ -4,11 +4,13 @@ using Serialization
 using Profile
 using Test: @test, @testset
 using HDDriverModule: drive_hd_model,drive_hd_and_lake_model
-using HDModule: RiverParameters
+using HDModule: RiverParameters,RiverPrognosticFields
 using GridModule: LatLonGrid
 using CoordsModule: LatLonCoords
-using FieldModule: Field,LatLonField,LatLonDirectionIndicators,set!,repeat,add_offset
-using LakeModule: GridSpecificLakeParameters,LakeParameters,LatLonLakeParameters
+using FieldModule: Field,LatLonField,LatLonDirectionIndicators,set!,repeat,add_offset,==,isequal
+using LakeModule: GridSpecificLakeParameters,LakeParameters,LatLonLakeParameters,LakeFields
+using LakeModule: LakePrognostics,Lake,FillingLake,OverflowingLake,SubsumedLake
+using LakeModule: get_lake_variables
 using MergeTypesModule
 
 @testset "HD model tests" begin
@@ -42,9 +44,23 @@ using MergeTypesModule
                                                                                  1.0 1.0 1.0 1.0
                                                                                  1.0 1.0 0.0 1.0
                                                                                  1.0 1.0 1.0 1.0 ])
-  drainages::Array{Field{Float64},1} = repeat(drainage,100)
+  drainages::Array{Field{Float64},1} = repeat(drainage,200)
   runoffs::Array{Field{Float64},1} = deepcopy(drainages)
-  @time drive_hd_model(river_parameters,drainages,runoffs,100,print_timestep_results=false)
+  expected_water_to_ocean::Field{Float64} =
+    LatLonField{Float64}(river_parameters.grid,Float64[ 0.0 0.0 0.0 0.0
+                                                        0.0 0.0 0.0 0.0
+                                                        0.0 0.0 30.0 0.0
+                                                        0.0 0.0 0.0 0.0 ])
+
+  expected_river_inflow::Field{Float64} =
+    LatLonField{Float64}(river_parameters.grid,Float64[ 0.0 0.0 0.0 0.0
+                                                        2.0 2.0 6.0 6.0
+                                                        0.0 6.0 0.0 8.0
+                                                        0.0 0.0 0.0 0.0 ])
+
+  @time water_to_ocean::Field{Float64},river_inflow::Field{Float64} =
+      drive_hd_model(river_parameters,drainages,runoffs,200,print_timestep_results=false,
+                     write_output=false,return_output=true)
   # Profile.clear()
   # Profile.print()
   # Profile.init(delay=0.01)
@@ -60,6 +76,8 @@ using MergeTypesModule
   # f = open("/Users/thomasriddick/Downloads/profile.bin", "w")
   # Serialization.serialize(f, r)
   # close(f)
+  @test expected_water_to_ocean == water_to_ocean
+  @test expected_river_inflow   == river_inflow
 end
 
 @testset "Lake model tests 1" begin
@@ -290,8 +308,71 @@ end
                                                                                  1.0 1.0 0.0 ])
   drainages::Array{Field{Float64},1} = repeat(drainage,1000)
   runoffs::Array{Field{Float64},1} = deepcopy(drainages)
-  drive_hd_and_lake_model(river_parameters,lake_parameters,
-                          drainages,runoffs,1000,print_timestep_results=true)
+  expected_river_inflow::Field{Float64} = LatLonField{Float64}(grid,
+                                                               Float64[ 0.0 0.0  2.0
+                                                                        4.0 0.0 14.0
+                                                                        0.0 0.0  0.0 ])
+  expected_water_to_ocean::Field{Float64} = LatLonField{Float64}(grid,
+                                                                 Float64[ 0.0 0.0  0.0
+                                                                          0.0 0.0  0.0
+                                                                          0.0 0.0 16.0 ])
+  expected_water_to_hd::Field{Float64} = LatLonField{Float64}(grid,
+                                                              Float64[ 0.0 0.0 10.0
+                                                                       0.0 0.0  0.0
+                                                                       0.0 0.0  0.0 ])
+  expected_lake_numbers::Field{Int64} = LatLonField{Int64}(lake_grid,
+      Int64[    0    0    0    1    0    0    0    0    0
+                  0    0    0    1    0    0    0    0    0
+                  0    0    1    1    0    0    0    0    0
+                  0    0    1    1    0    0    0    0    0
+                  0    0    1    1    0    0    0    0    0
+                  0    0    0    0    0    0    0    0    0
+                  0    0    0    0    0    0    0    0    0
+                  0    0    0    0    0    0    0    0    0
+                  0    0    0    0    0    0    0    0    0 ])
+  expected_lake_types::Field{Int64} = LatLonField{Int64}(lake_grid,
+      Int64[    0    0    0    2    0    0    0    0    0
+                  0    0    0    2    0    0    0    0    0
+                  0    0    2    2    0    0    0    0    0
+                  0    0    2    2    0    0    0    0    0
+                  0    0    2    2    0    0    0    0    0
+                  0    0    0    0    0    0    0    0    0
+                  0    0    0    0    0    0    0    0    0
+                  0    0    0    0    0    0    0    0    0
+                  0    0    0    0    0    0    0    0    0 ])
+  expected_lake_volumes::Array{Float64} = Float64[80.0]
+  @time river_fields::RiverPrognosticFields,lake_prognostics::LakePrognostics,lake_fields::LakeFields =
+    drive_hd_and_lake_model(river_parameters,lake_parameters,
+                            drainages,runoffs,1000,print_timestep_results=false,
+                            write_output=false,return_output=true)
+  lake_types::LatLonField{Int64} = LatLonField{Int64}(lake_grid,0)
+  for i = 1:9
+    for j = 1:9
+      coords::LatLonCoords = LatLonCoords(i,j)
+      lake_number::Int64 = lake_fields.lake_numbers(coords)
+      if lake_number <= 0 continue end
+      lake::Lake = lake_prognostics.lakes[lake_number]
+      if isa(lake,FillingLake)
+        set!(lake_types,coords,1)
+      elseif isa(lake,OverflowingLake)
+        set!(lake_types,coords,2)
+      elseif isa(lake,SubsumedLake)
+        set!(lake_types,coords,3)
+      else
+        set!(lake_types,coords,4)
+      end
+    end
+  end
+  lake_volumes::Array{Float64} = Float64[]
+  for lake::Lake in lake_prognostics.lakes
+    append!(lake_volumes,get_lake_variables(lake).lake_volume)
+  end
+  @test expected_river_inflow == river_fields.river_inflow
+  @test isapprox(expected_water_to_ocean,river_fields.water_to_ocean,rtol=0.0,atol=0.00001)
+  @test expected_water_to_hd    == lake_fields.water_to_hd
+  @test expected_lake_numbers == lake_fields.lake_numbers
+  @test expected_lake_types == lake_types
+  @test expected_lake_volumes == lake_volumes
 end
 
 @testset "Lake model tests 2" begin
@@ -877,8 +958,96 @@ end
                                                                                  1.0 0.0 1.0 0.0 ])
   drainages::Array{Field{Float64},1} = repeat(drainage,10000)
   runoffs::Array{Field{Float64},1} = deepcopy(drainages)
-  @time drive_hd_and_lake_model(river_parameters,lake_parameters,
-                          drainages,runoffs,10000,print_timestep_results=true)
+  expected_river_inflow::Field{Float64} = LatLonField{Float64}(grid,
+                                                               Float64[ 0.0 0.0 0.0 0.0
+                                                                        0.0 0.0 0.0 2.0
+                                                                        0.0 2.0 0.0 0.0
+                                                                        0.0 0.0 0.0 0.0 ])
+  expected_water_to_ocean::Field{Float64} = LatLonField{Float64}(grid,
+                                                                 Float64[ 0.0 0.0 0.0 0.0
+                                                                          0.0 0.0 0.0 0.0
+                                                                          0.0 0.0 0.0 0.0
+                                                                          0.0 6.0 0.0 22.0 ])
+  expected_water_to_hd::Field{Float64} = LatLonField{Float64}(grid,
+                                                              Float64[ 0.0 0.0 0.0  0.0
+                                                                       0.0 0.0 0.0 12.0
+                                                                       0.0 0.0 0.0  0.0
+                                                                       0.0 2.0 0.0 18.0 ])
+  expected_lake_numbers::Field{Int64} = LatLonField{Int64}(lake_grid,
+      Int64[ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+             0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
+             1 5 1 0 0 0 0 0 0 0 0 0 5 5 5 5 0 0 0 1
+             0 1 1 0 0 5 5 0 0 0 0 5 5 5 5 5 0 0 0 0
+             0 1 1 0 0 3 3 3 3 0 0 0 4 5 5 5 5 0 0 0
+             0 1 1 5 3 3 0 3 3 5 5 4 5 4 5 5 5 5 0 0
+             1 1 1 0 3 3 3 3 3 0 5 4 4 5 5 5 5 5 0 0
+             0 1 1 0 0 3 0 3 0 0 0 5 4 5 5 5 5 0 0 0
+             0 0 0 0 0 0 0 0 0 0 0 5 5 5 5 5 5 0 0 0
+             0 0 0 0 0 0 0 0 0 0 0 0 5 5 0 0 0 0 0 0
+             0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+             0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+             0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+             0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 6 6 6 6 0
+             0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 6 6 6 0 0
+             0 0 0 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+             0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+             0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+             0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+             0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ])
+  expected_lake_types::Field{Int64} = LatLonField{Int64}(lake_grid,
+      Int64[ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+             0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 3
+             3 2 3 0 0 0 0 0 0 0 0 0 2 2 2 2 0 0 0 3
+             0 3 3 0 0 2 2 0 0 0 0 2 2 2 2 2 0 0 0 0
+             0 3 3 0 0 3 3 3 3 0 0 0 3 2 2 2 2 0 0 0
+             0 3 3 2 3 3 0 3 3 2 2 3 2 3 2 2 2 2 0 0
+             3 3 3 0 3 3 3 3 3 0 2 3 3 2 2 2 2 2 0 0
+             0 3 3 0 0 3 0 3 0 0 0 2 3 2 2 2 2 0 0 0
+             0 0 0 0 0 0 0 0 0 0 0 2 2 2 2 2 2 0 0 0
+             0 0 0 0 0 0 0 0 0 0 0 0 2 2 0 0 0 0 0 0
+             0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+             0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+             0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+             0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 2 2 2 2 0
+             0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 2 2 2 0 0
+             0 0 0 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+             0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+             0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+             0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+             0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ])
+  expected_lake_volumes::Array{Float64} = Float64[46.0, 1.0, 38.0, 6.0, 340.0, 10.0]
+  @time river_fields::RiverPrognosticFields,lake_prognostics::LakePrognostics,lake_fields::LakeFields =
+    drive_hd_and_lake_model(river_parameters,lake_parameters,
+                            drainages,runoffs,10000,print_timestep_results=false,
+                            write_output=false,return_output=true)
+  lake_types::LatLonField{Int64} = LatLonField{Int64}(lake_grid,0)
+  for i = 1:20
+    for j = 1:20
+      coords::LatLonCoords = LatLonCoords(i,j)
+      lake_number::Int64 = lake_fields.lake_numbers(coords)
+      if lake_number <= 0 continue end
+      lake::Lake = lake_prognostics.lakes[lake_number]
+      if isa(lake,FillingLake)
+        set!(lake_types,coords,1)
+      elseif isa(lake,OverflowingLake)
+        set!(lake_types,coords,2)
+      elseif isa(lake,SubsumedLake)
+        set!(lake_types,coords,3)
+      else
+        set!(lake_types,coords,4)
+      end
+    end
+  end
+  lake_volumes::Array{Float64} = Float64[]
+  for lake::Lake in lake_prognostics.lakes
+    append!(lake_volumes,get_lake_variables(lake).lake_volume)
+  end
+  @test expected_river_inflow == river_fields.river_inflow
+  @test isapprox(expected_water_to_ocean,river_fields.water_to_ocean,rtol=0.0,atol=0.00001)
+  @test expected_water_to_hd    == lake_fields.water_to_hd
+  @test expected_lake_numbers == lake_fields.lake_numbers
+  @test expected_lake_types == lake_types
+  @test isapprox(expected_lake_volumes,lake_volumes,atol=0.00001)
   # function timing2(river_parameters,lake_parameters)
   #   for i in 1:50000
   #     drainagesl = repeat(drainage,20)

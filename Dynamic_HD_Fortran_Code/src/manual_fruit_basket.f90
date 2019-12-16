@@ -1222,4 +1222,42 @@ contains
 
     end subroutine loop_breaker_all_tests
 
+    subroutine latlon_hd_and_lake_model_all_tests
+    use latlon_hd_and_lake_model_test_mod
+
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testHdModel"
+        call set_unit_name('test_something')
+        call run_test_case(testHdModel,'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","HD Model test")
+        else
+            call case_passed_xml("test_something","HD Model test")
+        end if
+        call teardown
+
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testLakeModel1"
+        call set_unit_name('test_something')
+        call run_test_case(testLakeModel1,'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","Lake Model test 1")
+        else
+            call case_passed_xml("test_something","Lake Model test 1")
+        end if
+        call teardown
+
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testLakeModel2"
+        call set_unit_name('test_something')
+        call run_test_case(testLakeModel2,'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","Lake Model test 2")
+        else
+            call case_passed_xml("test_something","Lake Model test 2")
+        end if
+        call teardown
+
+    end subroutine latlon_hd_and_lake_model_all_tests
+
 end module manual_fruit_basket

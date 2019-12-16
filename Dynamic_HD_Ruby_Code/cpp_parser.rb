@@ -32,7 +32,7 @@ class CppParser
   @@cpp_bool_definition=/\s*bool\s*\w+\s*=\s*(true|false)/
   @@cpp_delete=/^\s*delete(\[\])?\s*/
   @@cpp_function_call=/^\s*\w+\(.*\)\s*$/m
-  @@cpp_assignement=/^\s*\w+\s*=/
+  @@cpp_assignment=/^\s*\w+\s*=/
   @@cpp_array_assignment=/^\s*\w+\[.*\]\s*=/m
   @@gtest_assertion=/^\s*EXPECT_/
   attr_reader :tests
@@ -100,7 +100,7 @@ class CppParser
                   when @@cpp_delete then :delete
                   when @@gtest_assertion then :gtest_assertion
                   when @@cpp_function_call then :function_call
-                  when @@cpp_assignement then :assignment
+                  when @@cpp_assignment then :assignment
                   when @@cpp_array_assignment then :array_assignment
                   else :unknown_statement_type
                 end

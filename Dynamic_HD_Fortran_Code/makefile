@@ -7,6 +7,8 @@ NETCDF_F_LIB :=libnetcdff.dylib
 else ifeq ($(shell uname -s),Linux)
 GFORTRAN := $(shell which gfortran)
 EXT_SOURCE :=$(shell echo ${HOME} )/HDancillarydata/code/
+NETCDF_F := /sw/stretch-x64/netcdf/netcdf_fortran-4.4.4-gcc63/
+NETCDF_F_LIB :=libnetcdff.so
 else
 $(error OS $(shell uname -s) not recognised)
 endif
@@ -27,7 +29,7 @@ endif
 # Add inputs and outputs from these tool invocations to the build variables
 
 # All Target
-all: Dynamic_HD_Fortran_Code COTAT_Plus_LatLon_To_Icon_Simple_Interface_Code
+all: Dynamic_HD_Fortran_Code COTAT_Plus_LatLon_To_Icon_Simple_Interface_Code LatLon_Lake_Model_Driver_Code
 
 # Tool invocations
 compile_only: $(OBJS) $(USER_OBJS)
@@ -44,9 +46,15 @@ COTAT_Plus_LatLon_To_Icon_Simple_Interface_Code: $(OBJS) $(COTAT_PLUS_LATLON_TO_
 	@echo 'Finished building target: $@'
 	@echo ' '
 
+LatLon_Lake_Model_Driver_Code: $(OBJS) $(LATLON_HD_AND_LAKE_MODEL_OBJS) $(USER_OBJS)
+	@echo 'Building target: $@'
+	$(GFORTRAN) -o "LatLon_Lake_Model_Driver_Exec" $(OBJS) $(LATLON_HD_AND_LAKE_MODEL_OBJS) $(USER_OBJS) $(LIBS)
+	@echo 'Finished building target: $@'
+	@echo ' '
+
 # Other Targets
 clean:
-	-$(RM) $(EXECUTABLES)$(OBJS)$(TEST_OBJS)$(C_DEPS) Dynamic_HD_Fortran_Exec
+	-$(RM) $(EXECUTABLES)$(OBJS)$(TEST_OBJS)$(LATLON_HD_AND_LAKE_MODEL_OBJS)$(C_DEPS) Dynamic_HD_Fortran_Exec
 	-$(RM) $(COTAT_PLUS_LATLON_TO_ICON_SIMPLE_INTERFACE_OBJS) COTAT_Plus_LatLon_To_Icon_Fortran_Exec
 	-$(RM) $(MODS)
 	-@echo ' '

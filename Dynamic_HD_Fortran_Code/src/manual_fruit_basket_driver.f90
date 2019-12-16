@@ -12,6 +12,7 @@ call area_all_tests
 call cotat_plus_all_tests
 call loop_breaker_all_tests
 call flow_all_tests
+call latlon_hd_and_lake_model_all_tests
 
 call fruit_summary
 call fruit_summary_xml

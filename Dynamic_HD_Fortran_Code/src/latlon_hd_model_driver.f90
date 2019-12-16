@@ -1,9 +1,11 @@
 program latlon_hd_model_driver
 
-  use latlon_hd_model_mod
+  use latlon_hd_model_interface_mod
+  use parameters_mod
   implicit none
 
-  integer, parameter :: max_name_length = 500
+  real   ,dimension(:,:,:), allocatable :: runoffs
+  real   ,dimension(:,:,:), allocatable :: drainages
 
   integer :: timesteps
   logical :: using_lakes
@@ -20,7 +22,8 @@ program latlon_hd_model_driver
 
   call init_hd_model(river_params_filename,hd_start_filename,lake_model_ctl_filename,&
                      using_lakes)
-
-  call run_hd_model(timesteps)
+  runoffs = 1.0
+  drainages = 1.0
+  call run_hd_model(timesteps,drainages,runoffs)
 
 end program latlon_hd_model_driver

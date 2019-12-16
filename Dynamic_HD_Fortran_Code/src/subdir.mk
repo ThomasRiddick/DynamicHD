@@ -25,14 +25,20 @@ $(FRUIT_LOC)/fruit.f90 \
 ../src/flow_test_mod.f90 \
 ../src/loop_breaker_mod.f90 \
 ../src/loop_breaker_test_mod.f90 \
-../src/manual_fruit_basket.f90 \
-../src/manual_fruit_basket_driver.f90 \
 ../src/flow_accumulation_algorithm_mod.f90 \
-../src/latlon_hd_model_mod.f90 \
+../src/check_return_code_netcdf_mod.f90 \
+../src/parameters_mod.f90 \
 ../src/latlon_lake_model_mod.f90 \
 ../src/latlon_lake_model_interface_mod.f90 \
+../src/latlon_lake_model_io_mod.f90 \
 ../src/latlon_hd_model_io_mod.f90 \
-../src/cotat_plus_latlon_to_icon_simple_interface.f90
+../src/latlon_hd_model_interface_mod.f90 \
+../src/latlon_hd_model_mod.f90 \
+../src/latlon_hd_model_driver.f90 \
+../src/latlon_hd_and_lake_model_test_mod.f90 \
+../src/cotat_plus_latlon_to_icon_simple_interface.f90 \
+../src/manual_fruit_basket.f90 \
+../src/manual_fruit_basket_driver.f90
 
 OBJS += \
 ./src/precision_mod.o \
@@ -58,10 +64,15 @@ COTAT_PLUS_LATLON_TO_ICON_SIMPLE_INTERFACE_OBJS += \
 ./src/cotat_plus_latlon_to_icon_simple_interface.o
 
 LATLON_HD_AND_LAKE_MODEL_OBJS += \
+./src/parameters_mod.o \
+./src/check_return_code_netcdf_mod.o \
 ./src/latlon_lake_model_mod.o \
 ./src/latlon_lake_model_interface_mod.o \
+./src/latlon_lake_model_io_mod.o \
 ./src/latlon_hd_model_mod.o \
-./src/latlon_hd_model_io_mod.o
+./src/latlon_hd_model_io_mod.o \
+./src/latlon_hd_model_interface_mod.o \
+./src/latlon_hd_model_driver.o
 
 TEST_OBJS += \
 ./src/fruit.o \
@@ -72,8 +83,17 @@ TEST_OBJS += \
 ./src/cotat_plus_test_mod.o \
 ./src/flow_test_mod.o \
 ./src/loop_breaker_test_mod.o \
+./src/parameters_mod.o \
+./src/check_return_code_netcdf_mod.o \
+./src/latlon_lake_model_mod.o \
+./src/latlon_lake_model_interface_mod.o \
+./src/latlon_lake_model_io_mod.o \
+./src/latlon_hd_model_io_mod.o \
+./src/latlon_hd_model_mod.o \
+./src/latlon_hd_model_interface_mod.o \
+./src/latlon_hd_and_lake_model_test_mod.o \
 ./src/manual_fruit_basket.o \
-./src/manual_fruit_basket_driver.o \
+./src/manual_fruit_basket_driver.o
 
 MODS += \
 ./fruit.mod \
@@ -105,11 +125,17 @@ MODS += \
 ./manual_fruit_basket.mod \
 ./manual_fruit_basket_driver.mod \
 ./flow_accumulation_algorithm_mod.mod \
-./latlon_lake_model_interface_mod.mod \
+./check_return_code_netcdf_mod.mod \
+./parameters_mod.mod \
 ./latlon_hd_model_mod.mod \
 ./latlon_lake_model_mod.mod \
+./latlon_lake_model_interface_mod.mod \
+./latlon_lake_model_io_mod.mod \
 ./latlon_hd_model_io_mod.mod \
-./cotat_plus_latlon_to_icon_simple_interface.mod
+./latlon_hd_model_interface_mod.mod \
+./latlon_hd_model_driver.mod \
+./cotat_plus_latlon_to_icon_simple_interface.mod \
+./latlon_hd_and_lake_model_test_mod.mod
 
 # Each subdirectory must supply rules for building sources it contributes
 src/fruit.o: $(FRUIT_LOC)/fruit.f90
@@ -166,7 +192,7 @@ src/loop_breaker_mod.o: ../src/loop_breaker_mod.f90 src/coords_mod.o src/doubly_
 
 src/loop_breaker_test_mod.o: ../src/loop_breaker_test_mod.f90 src/fruit.o src/loop_breaker_mod.o
 
-src/manual_fruit_basket.o: ../src/manual_fruit_basket.f90 src/area_test_mod.o src/cotat_plus_test_mod.o src/doubly_linked_list_test_module.o src/field_section_test_mod.o src/fruit.o src/loop_breaker_test_mod.o src/subfield_test_mod.o
+src/manual_fruit_basket.o: ../src/manual_fruit_basket.f90 src/area_test_mod.o src/cotat_plus_test_mod.o src/doubly_linked_list_test_module.o src/field_section_test_mod.o src/fruit.o src/loop_breaker_test_mod.o src/subfield_test_mod.o src/latlon_hd_and_lake_model_test_mod.o
 
 src/manual_fruit_basket_driver.o: ../src/manual_fruit_basket_driver.f90 src/fruit.o src/manual_fruit_basket.o
 
@@ -184,4 +210,22 @@ src/unstructured_grid_mod.o: ../src/unstructured_grid_mod.f90
 
 src/pointer_mod.o: ../src/pointer_mod.f90
 
+src/check_return_code_netcdf_mod.o: ../src/check_return_code_netcdf_mod.f90
 
+src/parameters_mod.o: ../src/parameters_mod.f90
+
+src/latlon_hd_model_driver.o: ../src/latlon_hd_model_driver.f90 src/latlon_hd_model_interface_mod.o src/parameters_mod.o
+
+src/latlon_hd_model_interface_mod.o: ../src/latlon_hd_model_interface_mod.f90 src/latlon_hd_model_mod.o src/latlon_hd_model_io_mod.o
+
+src/latlon_hd_model_io_mod.o: ../src/latlon_hd_model_io_mod.f90 src/latlon_hd_model_mod.o
+
+src/latlon_lake_model_mod.o: ../src/latlon_lake_model_mod.f90
+
+src/latlon_lake_model_interface_mod.o: ../src/latlon_lake_model_interface_mod.f90 src/latlon_lake_model_mod.o src/latlon_lake_model_io_mod.o
+
+src/latlon_lake_model_io_mod.o: ../src/latlon_lake_model_io_mod.f90   src/latlon_lake_model_mod.o src/parameters_mod.o src/check_return_code_netcdf_mod.o
+
+src/latlon_hd_model_mod.o: ../src/latlon_hd_model_mod.f90 src/latlon_lake_model_interface_mod.o
+
+src/latlon_hd_and_lake_model_test_mod.o: ../src/latlon_hd_and_lake_model_test_mod.f90 src/latlon_hd_model_interface_mod.o src/latlon_hd_model_mod.o
