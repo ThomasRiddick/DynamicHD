@@ -1132,7 +1132,6 @@ end function check_if_merge_is_possible
 subroutine perform_primary_merge(this)
   class(fillinglake), intent(inout) :: this
   class(lake), pointer :: other_lake
-  class(lake), pointer :: old_lake
   integer :: target_cell_lat,target_cell_lon
   integer :: other_lake_number
     call this%get_primary_merge_coords(target_cell_lat,target_cell_lon)
@@ -1141,10 +1140,9 @@ subroutine perform_primary_merge(this)
     other_lake => other_lake%find_true_primary_lake()
     other_lake_number = other_lake%lake_number
     this%primary_merge_completed = .true.
-    old_lake => this%lake_fields%other_lakes(other_lake_number)%lake_pointer
     this%lake_fields%other_lakes(other_lake_number)%lake_pointer => &
       other_lake%accept_merge(this%center_cell_lat,this%center_cell_lon)
-    deallocate(old_lake)
+    deallocate(other_lake)
 end subroutine perform_primary_merge
 
 function perform_secondary_merge(this) result(merged_lake)
