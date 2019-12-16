@@ -776,7 +776,8 @@ subroutine run_lakes(lake_parameters,lake_prognostics,lake_fields)
   integer :: num_basins_in_cell
   integer :: basin_number
   real :: share_to_each_lake
-  class(lake), pointer :: lake
+  class(lake), pointer :: working_lake
+  class(lake), pointer :: updated_lake
     lake_fields%water_to_hd = 0.0
     do i = 1,size(lake_fields%cells_with_lakes_lat)
       lat = lake_fields%cells_with_lakes_lat(i)
@@ -790,20 +791,29 @@ subroutine run_lakes(lake_parameters,lake_prognostics,lake_fields)
           basin_center_lat = lake_parameters%basins(basin_number)%basin_lats(j)
           basin_center_lon = lake_parameters%basins(basin_number)%basin_lons(j)
           lake_index = lake_fields%lake_numbers(basin_center_lat,basin_center_lon)
-          lake => lake_prognostics%lakes(lake_index)%lake_pointer
-          lake_prognostics%lakes(lake_index)%lake_pointer => &
-              lake%add_water(share_to_each_lake)
+          working_lake => lake_prognostics%lakes(lake_index)%lake_pointer
+          updated_lake => working_lake%add_water(share_to_each_lake)
+          lake_prognostics%lakes(lake_index)%lake_pointer => updated_lake
+          if (.not. associated(working_lake,updated_lake)) then
+            deallocate(working_lake)
+          end if
         end do
       end if
     end do
     do i = 1,size(lake_prognostics%lakes)
-      lake => lake_prognostics%lakes(i)%lake_pointer
-      if (lake%unprocessed_water > 0.0) then
-        lake_prognostics%lakes(i)%lake_pointer => lake%add_water(0.0)
+      working_lake => lake_prognostics%lakes(i)%lake_pointer
+      if (working_lake%unprocessed_water > 0.0) then
+          updated_lake => working_lake%add_water(0.0)
+          lake_prognostics%lakes(i)%lake_pointer => updated_lake
+          if (.not. associated(working_lake,updated_lake)) then
+            deallocate(working_lake)
+            working_lake => lake_prognostics%lakes(i)%lake_pointer
+          end if
       end if
-      select type(lake)
+
+      select type(working_lake)
         type is (overflowinglake)
-          call lake%drain_excess_water()
+          call working_lake%drain_excess_water()
       end select
     end do
 end subroutine run_lakes
@@ -840,7 +850,6 @@ function fillinglake_add_water(this,inflow) result(updated_lake)
                 this%check_if_merge_is_possible(merge_type,already_merged)
               if (merge_possible) then
                 if (merge_type == secondary_merge) then
-                  other_lake => this
                   updated_lake => this%perform_secondary_merge()
                   updated_lake => updated_lake%store_water(inflow_local)
                   return
@@ -848,10 +857,8 @@ function fillinglake_add_water(this,inflow) result(updated_lake)
                   call this%perform_primary_merge()
                 end if
               else if (.not. already_merged) then
-                other_lake => this
                 updated_lake => this%change_to_overflowing_lake(merge_type)
                 updated_lake => updated_lake%store_water(inflow_local)
-                deallocate(other_lake)
                 return
               else if (merge_type == secondary_merge) then
                 call this%get_secondary_merge_coords(target_cell_lat,target_cell_lon)
@@ -863,17 +870,13 @@ function fillinglake_add_water(this,inflow) result(updated_lake)
                 type is (subsumedlake)
                   other_lake_as_filling_lake => &
                     other_lake%change_subsumed_lake_to_filling_lake()
-                  deallocate(other_lake)
                 end select
-                other_lake => &
-                  this%lake_fields%other_lakes(other_lake_number)%lake_pointer
                 this%lake_fields%other_lakes(other_lake_number)%lake_pointer => &
                   other_lake_as_filling_lake%change_to_overflowing_lake(primary_merge)
+                deallocate(other_lake)
                 deallocate(other_lake_as_filling_lake)
-                other_lake => this
                 updated_lake => this%perform_secondary_merge()
                 updated_lake => updated_lake%store_water(inflow_local)
-                deallocate(other_lake)
                 return
               end if
             end if
@@ -1164,7 +1167,6 @@ function perform_secondary_merge(this) result(merged_lake)
     end select
     this%lake_fields%other_lakes(other_lake_number)%lake_pointer => &
                                             other_lake_as_filling_lake
-    deallocate(other_lake)
     merged_lake => this%accept_merge(other_lake_as_filling_lake%center_cell_lat, &
                                      other_lake_as_filling_lake%center_cell_lon)
 end function perform_secondary_merge
