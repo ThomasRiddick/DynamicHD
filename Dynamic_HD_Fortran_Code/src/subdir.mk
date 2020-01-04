@@ -37,6 +37,7 @@ $(FRUIT_LOC)/fruit.f90 \
 ../src/latlon_hd_model_driver.f90 \
 ../src/latlon_hd_and_lake_model_test_mod.f90 \
 ../src/cotat_plus_latlon_to_icon_simple_interface.f90 \
+../src/map_non_coincident_grids_test_mod.f90 \
 ../src/manual_fruit_basket.f90 \
 ../src/manual_fruit_basket_driver.f90
 
@@ -92,6 +93,7 @@ TEST_OBJS += \
 ./src/latlon_hd_model_mod.o \
 ./src/latlon_hd_model_interface_mod.o \
 ./src/latlon_hd_and_lake_model_test_mod.o \
+./src/map_non_coincident_grids_test_mod.o \
 ./src/manual_fruit_basket.o \
 ./src/manual_fruit_basket_driver.o
 
@@ -134,6 +136,7 @@ MODS += \
 ./latlon_hd_model_io_mod.mod \
 ./latlon_hd_model_interface_mod.mod \
 ./latlon_hd_model_driver.mod \
+./map_non_coincident_grid_test_mod.mod \
 ./cotat_plus_latlon_to_icon_simple_interface.mod \
 ./latlon_hd_and_lake_model_test_mod.mod
 
@@ -229,3 +232,7 @@ src/latlon_lake_model_io_mod.o: ../src/latlon_lake_model_io_mod.f90   src/latlon
 src/latlon_hd_model_mod.o: ../src/latlon_hd_model_mod.f90 src/latlon_lake_model_interface_mod.o
 
 src/latlon_hd_and_lake_model_test_mod.o: ../src/latlon_hd_and_lake_model_test_mod.f90 src/latlon_hd_model_interface_mod.o src/latlon_hd_model_mod.o
+
+src/map_non_coincident_grids_mod.o: ../src/map_non_coincident_grids_mod.f90
+
+src/map_non_coincident_grids_test_mod.o: ../src/map_non_coincident_grids_test_mod.f90 src/map_non_coincident_grids_mod.o

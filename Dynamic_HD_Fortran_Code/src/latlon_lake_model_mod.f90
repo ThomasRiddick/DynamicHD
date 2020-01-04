@@ -21,9 +21,13 @@ integer, parameter, dimension(17) :: convert_to_simple_merge_type_flood = (/no_m
                                                                             double_merge,null_mtype/)
 
 type :: basinlist
-  integer, allocatable, dimension(:) :: basin_lats
-  integer, allocatable, dimension(:) :: basin_lons
+  integer, pointer, dimension(:) :: basin_lats
+  integer, pointer, dimension(:) :: basin_lons
 end type basinlist
+
+interface basinlist
+  procedure basinlistconstructor
+end interface basinlist
 
 type :: lakeparameters
   logical :: instant_throughflow
@@ -205,6 +209,16 @@ subroutine initialiselake(this,center_cell_lat_in,center_cell_lon_in, &
     this%current_cell_to_fill_lon = current_cell_to_fill_lon_in
     this%unprocessed_water = 0.0
 end subroutine initialiselake
+
+function basinlistconstructor(basin_lats_in,basin_lons_in) &
+    result(constructor)
+  type(basinlist), allocatable :: constructor
+  integer, pointer, dimension(:) :: basin_lats_in
+  integer, pointer, dimension(:) :: basin_lons_in
+    allocate(constructor)
+    constructor%basin_lats => basin_lats_in
+    constructor%basin_lons => basin_lons_in
+end function basinlistconstructor
 
 subroutine initialiselakeparameters(this,lake_centers_in, &
                                     connection_volume_thresholds_in, &
@@ -447,8 +461,13 @@ end function lakeparametersconstructor
 
 subroutine lakeparametersdestructor(this)
   class(lakeparameters),intent(inout) :: this
+  integer :: i
     deallocate(this%flood_only)
     deallocate(this%basin_numbers)
+    do i = 1,size(this%basins)
+      deallocate(this%basins(i)%basin_lats)
+      deallocate(this%basins(i)%basin_lons)
+    end do
     deallocate(this%basins)
 end subroutine lakeparametersdestructor
 
@@ -557,6 +576,10 @@ end function lakeprognosticsconstructor
 
 subroutine lakeprognosticsdestructor(this)
   class(lakeprognostics), intent(inout) :: this
+  integer :: i
+    do i = 1,size(this%lakes)
+      deallocate(this%lakes(i)%lake_pointer)
+    end do
     deallocate(this%lakes)
 end subroutine lakeprognosticsdestructor
 
@@ -747,6 +770,7 @@ subroutine setup_lakes(lake_parameters,lake_prognostics,lake_fields,initial_wate
   type(lakefields), intent(inout) :: lake_fields
   real, allocatable, dimension(:,:), intent(in) :: initial_water_to_lake_centers
   class(lake), pointer :: working_lake
+  class(lake), pointer :: updated_lake
   real :: initial_water_to_lake_center
   integer :: lake_index
   integer :: i,j
@@ -757,8 +781,11 @@ subroutine setup_lakes(lake_parameters,lake_prognostics,lake_fields,initial_wate
           if(initial_water_to_lake_center > 0.0) then
             lake_index = lake_fields%lake_numbers(i,j)
             working_lake => lake_prognostics%lakes(lake_index)%lake_pointer
-            lake_prognostics%lakes(lake_index)%lake_pointer => &
-              working_lake%add_water(initial_water_to_lake_center)
+            updated_lake => working_lake%add_water(initial_water_to_lake_center)
+            lake_prognostics%lakes(lake_index)%lake_pointer => updated_lake
+            if (.not. associated(working_lake,updated_lake)) then
+              deallocate(working_lake)
+            end if
           end if
         end if
       end do
@@ -810,7 +837,6 @@ subroutine run_lakes(lake_parameters,lake_prognostics,lake_fields)
             working_lake => lake_prognostics%lakes(i)%lake_pointer
           end if
       end if
-
       select type(working_lake)
         type is (overflowinglake)
           call working_lake%drain_excess_water()
@@ -904,8 +930,12 @@ function overflowinglake_add_water(this,inflow) result(updated_lake)
       other_lake => &
         this%lake_fields%other_lakes(other_lake_number)%lake_pointer
       if (this%lake_parameters%instant_throughflow) then
+        updated_lake => other_lake%add_water(inflow_local)
         this%lake_fields%other_lakes(other_lake_number)%lake_pointer => &
-          other_lake%add_water(inflow_local)
+          updated_lake
+        if (.not. associated(other_lake,updated_lake)) then
+          deallocate(other_lake)
+        end if
       else
         this%lake_fields%other_lakes(other_lake_number)%lake_pointer => &
           other_lake%store_water(inflow_local)

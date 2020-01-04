@@ -172,6 +172,8 @@ type, extends(field_section), public :: icon_single_index_field_section
         procedure, public :: print_field_section => icon_single_index_print_field_section
         !> Deallocate the data array
         procedure, public :: deallocate_data => icon_single_index_deallocate_data
+        !> Get the number of points
+        procedure, public :: get_num_points
 end type icon_single_index_field_section
 
 interface icon_single_index_field_section
@@ -244,7 +246,7 @@ contains
     function latlon_field_section_constructor(data,section_coords) result(constructor)
         type(latlon_field_section), pointer :: constructor
         class (*), dimension(:,:), pointer :: data
-        class(latlon_section_coords) section_coords
+        class(latlon_section_coords) :: section_coords
             allocate(constructor)
             call constructor%init_latlon_field_section(data,section_coords)
     end function latlon_field_section_constructor
@@ -340,8 +342,8 @@ contains
             end subroutine subroutine_interface
         end interface
         procedure(subroutine_interface) :: subroutine_in
-        do j = this%section_min_lat,this%section_max_lat
-            do i = this%section_min_lon,this%section_max_lon
+        do j = this%section_min_lon,this%section_max_lon
+            do i = this%section_min_lat,this%section_max_lat
                 call subroutine_in(calling_object,latlon_coords(i,j))
             end do
         end do
@@ -425,6 +427,8 @@ contains
             this%cell_neighbors => section_coords%get_cell_neighbors()
             this%cell_secondary_neighbors => &
                 section_coords%get_cell_secondary_neighbors()
+            this%num_points = size(input_data)
+            this%mask => section_coords%get_section_mask()
     end subroutine init_icon_single_index_field_section
 
     subroutine icon_single_index_set_data_array_element(this,index,value)
@@ -522,6 +526,12 @@ contains
         logical, dimension(:), pointer :: mask
         mask => this%mask
     end function get_mask
+
+    function get_num_points(this) result(npoints)
+        class(icon_single_index_field_section) :: this
+        integer :: npoints
+            npoints = this%num_points
+    end function
 
     subroutine icon_single_index_deallocate_data(this)
         class(icon_single_index_field_section) :: this

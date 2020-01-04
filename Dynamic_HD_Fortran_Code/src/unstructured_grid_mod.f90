@@ -57,8 +57,8 @@ contains
     integer, dimension(:,:), pointer, intent(in) :: cell_neighbors_in
     integer, intent(in) :: num_primary_neighbors_in
     integer, intent(in) :: num_secondary_neighbors_in
-      this%num_points = size(cell_neighbors_in)
-      this%cell_neighbors = cell_neighbors_in
+      this%num_points = size(cell_neighbors_in,1)
+      this%cell_neighbors => cell_neighbors_in
       this%num_primary_neighbors = num_primary_neighbors_in
       this%num_secondary_neighbors = num_secondary_neighbors_in
   end subroutine initialise_unstructured_grid
@@ -77,7 +77,7 @@ contains
 
   function icon_icosohedral_grid_constructor(cell_neighbors_in) result(constructor)
     integer, dimension(:,:), pointer, intent(in) :: cell_neighbors_in
-    type(icon_icosohedral_grid), allocatable :: constructor
+    type(icon_icosohedral_grid), pointer :: constructor
       allocate(constructor)
       call constructor%initialise_icon_icosohedral_grid(cell_neighbors_in)
   end function icon_icosohedral_grid_constructor
@@ -219,21 +219,21 @@ contains
         !Six secondary neighbors are neighbors of primary neighbors
         do index_over_primary_nbrs=1,3
           primary_neighbor_index = this%cell_neighbors(index_over_grid,index_over_primary_nbrs)
-          valid_secondary_nbr_count = 0;
+          valid_secondary_nbr_count = 1;
           do index_over_secondary_nbrs=1,3
             !2 rather than 3 times primary neighbor index as we miss out 1 secondary neighbor for each
             !primary neighbor
             secondary_neighbor_index = this%cell_neighbors(primary_neighbor_index,index_over_secondary_nbrs)
             if (secondary_neighbor_index /= index_over_grid) then
               !Note this leaves gaps for the remaining three secondary neighbors
-              this%cell_secondary_neighbors(index_over_grid,3*index_over_primary_nbrs + &
+              this%cell_secondary_neighbors(index_over_grid,3*(index_over_primary_nbrs - 1) + &
                                             valid_secondary_nbr_count) = secondary_neighbor_index
               valid_secondary_nbr_count = valid_secondary_nbr_count + 1
             end if
           end do
         end do
         !Three secondary neighbors are common neighbors of the existing secondary neighbors
-        gap_index = 2;
+        gap_index = 3;
         !Last secondary neighbor is as yet unfilled so loop only up to an index of 8
         do index_over_secondary_nbrs=1,8
           !skip as yet unfilled entries in the secondary neighbors array

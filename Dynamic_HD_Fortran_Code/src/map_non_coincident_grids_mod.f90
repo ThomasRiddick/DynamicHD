@@ -17,9 +17,13 @@ type, public,abstract :: vertex_coords
 end type
 
 type, public, extends(vertex_coords) :: unstructured_grid_vertex_coords
-  real(kind=double_precision), dimension(:), allocatable :: vertex_lats
-  real(kind=double_precision), dimension(:), allocatable :: vertex_lons
+  real(kind=double_precision), dimension(:), pointer :: vertex_lats
+  real(kind=double_precision), dimension(:), pointer :: vertex_lons
 end type
+
+interface unstructured_grid_vertex_coords
+  procedure :: unstructured_grid_vertex_coords_constructor
+end interface unstructured_grid_vertex_coords
 
 type, public, abstract :: non_coincident_grid_mapper
   class(field_section), pointer  :: mask
@@ -70,7 +74,7 @@ abstract interface
     import double_precision
     implicit none
     class(non_coincident_grid_mapper), intent(inout) :: this
-    real(kind=double_precision), intent(in) :: pixel_center_lat, pixel_center_lon
+    real(kind=double_precision), intent(inout) :: pixel_center_lat, pixel_center_lon
     logical :: is_in_bounds
   end function check_if_pixel_center_is_in_bounds
 
@@ -123,7 +127,21 @@ interface icon_icosohedral_cell_latlon_pixel_non_coincident_grid_mapper
     procedure icon_icosohedral_cell_latlon_pixel_ncg_mapper_constructor
 end interface icon_icosohedral_cell_latlon_pixel_non_coincident_grid_mapper
 
+
 contains
+
+  function unstructured_grid_vertex_coords_constructor(vertex_lats_in,&
+                                                         vertex_lons_in) &
+                                                         result(constructor)
+
+    real(kind=double_precision), dimension(:), target, intent(in) :: &
+        vertex_lats_in
+    real(kind=double_precision), dimension(:), target, intent(in) :: &
+        vertex_lons_in
+    type(unstructured_grid_vertex_coords) :: constructor
+      constructor%vertex_lats => vertex_lats_in
+      constructor%vertex_lons => vertex_lons_in
+  end function unstructured_grid_vertex_coords_constructor
 
   subroutine generate_pixels_in_cell_mask(this,cell_coords)
     class(non_coincident_grid_mapper), intent(inout) :: this
@@ -146,12 +164,12 @@ contains
     real(kind=double_precision) :: pixel_center_lat, pixel_center_lon
       pixel_center_lat_ptr => this%pixel_center_lats%get_value(coords_in)
       select type (pixel_center_lat_ptr)
-        type is (real)
+        type is (real(kind=double_precision))
           pixel_center_lat = pixel_center_lat_ptr
       end select
       pixel_center_lon_ptr => this%pixel_center_lons%get_value(coords_in)
       select type (pixel_center_lon_ptr)
-        type is (real)
+        type is (real(kind=double_precision))
           pixel_center_lon = pixel_center_lon_ptr
       end select
       call this%mask%set_value(coords_in,&
@@ -212,21 +230,39 @@ contains
   subroutine latlon_pixel_generate_areas_to_consider(this)
     class(icon_icosohedral_cell_latlon_pixel_non_coincident_grid_mapper), intent(inout) :: this
     real(kind=double_precision) :: rotated_west_extreme_lon, rotated_east_extreme_lon
+    real(kind=double_precision) :: temp_for_swapping_lons
       select type (latlon_fine_grid_shape => this%fine_grid_shape)
       type is (latlon_section_coords)
         rotated_west_extreme_lon = this%cell_bounds%west_extreme_lon - latlon_fine_grid_shape%zero_line
         rotated_east_extreme_lon = this%cell_bounds%east_extreme_lon - latlon_fine_grid_shape%zero_line
+
       end select
       if (rotated_west_extreme_lon < 0) then
-        rotated_west_extreme_lon = rotated_west_extreme_lon + 360
+        rotated_west_extreme_lon = rotated_west_extreme_lon + 360.0
       end if
       if (rotated_east_extreme_lon < 0) then
-        rotated_east_extreme_lon = rotated_east_extreme_lon + 360
+        rotated_east_extreme_lon = rotated_east_extreme_lon + 360.0
       end if
-      if (rotated_west_extreme_lon < rotated_east_extreme_lon) then
+      if (rotated_west_extreme_lon > 360.0) then
+        rotated_west_extreme_lon = rotated_west_extreme_lon - 360.0
+      end if
+      if (rotated_east_extreme_lon > 360.0) then
+        rotated_east_extreme_lon = rotated_east_extreme_lon - 360.0
+      end if
+      if (rotated_east_extreme_lon - rotated_west_extreme_lon > 180.0) then
+        temp_for_swapping_lons = rotated_west_extreme_lon
+        rotated_west_extreme_lon = rotated_east_extreme_lon
+        rotated_east_extreme_lon = temp_for_swapping_lons
+      end if
+      if (rotated_west_extreme_lon < rotated_east_extreme_lon .or. &
+          rotated_east_extreme_lon == 0.0) then
+        if(rotated_east_extreme_lon == 0.0) then
+          rotated_east_extreme_lon = 360.0
+        end if
         this%area_to_consider_mask => &
           this%latlon_pixel_generate_area_to_consider(rotated_west_extreme_lon,&
                                                       rotated_east_extreme_lon)
+        this%secondary_area_to_consider_mask => null()
       else if (rotated_west_extreme_lon > rotated_east_extreme_lon) then
         this%area_to_consider_mask => &
           this%latlon_pixel_generate_area_to_consider(0.0_double_precision,rotated_east_extreme_lon)
@@ -252,6 +288,10 @@ contains
     integer :: nlat,nlon
     integer :: i
     logical :: minimum_found
+      area_min_lat_index = 0
+      area_max_lat_index = 0
+      area_min_lon_index = 0
+      area_max_lon_index = 0
       select type (latlon_fine_grid_shape => this%fine_grid_shape)
         type is (latlon_section_coords)
           nlat = latlon_fine_grid_shape%section_width_lat
@@ -263,7 +303,7 @@ contains
         pixel_in_row_or_column = latlon_coords(i,1)
         pixel_center_lat_ptr => this%pixel_center_lats%get_value(pixel_in_row_or_column)
         select type (pixel_center_lat_ptr)
-          type is (real)
+          type is (real(kind=double_precision))
             pixel_center_lat = pixel_center_lat_ptr
         end select
         if ( pixel_center_lat <= this%cell_bounds%north_extreme_lat &
@@ -272,17 +312,18 @@ contains
           minimum_found = .TRUE.
         end if
         area_max_lat_index = i
-        if (pixel_center_lat > &
+        if (pixel_center_lat < &
             this%cell_bounds%south_extreme_lat) exit
       end do
+      minimum_found = .FALSE.
       do i=1,nlon
         pixel_in_row_or_column = latlon_coords(1,i)
          pixel_center_lon_ptr => this%pixel_center_lons%get_value(pixel_in_row_or_column)
         select type (pixel_center_lon_ptr)
-          type is (real)
+          type is (real(kind=double_precision))
             pixel_center_lon = pixel_center_lon_ptr
         end select
-        if (pixel_center_lon <= area_min_lon .and. &
+        if (pixel_center_lon >= area_min_lon .and. &
             .not. minimum_found) then
           area_min_lon_index = i
           minimum_found = .TRUE.
@@ -291,12 +332,16 @@ contains
         if (pixel_center_lon > area_max_lon) exit
       end do
       allocate(area_to_consider_section_coords,&
-               source=latlon_section_coords(area_max_lat_index, &
+               source=latlon_section_coords(area_min_lat_index, &
                                             area_min_lon_index, &
                                             area_max_lat_index - area_min_lat_index + 1, &
                                             area_max_lon_index - area_min_lon_index + 1))
-      allocate(logical::mask(1:area_max_lon_index - area_min_lat_index + 1, &
+      allocate(logical::mask(1:area_max_lat_index - area_min_lat_index + 1, &
                              1:area_max_lon_index - area_min_lon_index + 1))
+      select type (mask)
+      type is (logical)
+        mask = .FALSE.
+      end select
       area_to_consider=> latlon_subfield(mask,area_to_consider_section_coords)
   end function latlon_pixel_generate_area_to_consider
 
@@ -317,32 +362,52 @@ contains
 
   subroutine icon_icosohedral_cell_generate_cell_bounds(this)
       class(icon_icosohedral_cell_latlon_pixel_non_coincident_grid_mapper), intent(inout) :: this
+      real(kind=double_precision) :: vertex_one_lat, vertex_two_lat, vertex_three_lat
+      real(kind=double_precision) :: vertex_one_lon, vertex_two_lon, vertex_three_lon
+        vertex_one_lat = this%icon_icosohedral_cell_get_vertex_coords(this%coarse_cell_coords,1,.TRUE.)
+        vertex_two_lat = this%icon_icosohedral_cell_get_vertex_coords(this%coarse_cell_coords,2,.TRUE.)
+        vertex_three_lat = this%icon_icosohedral_cell_get_vertex_coords(this%coarse_cell_coords,3,.TRUE.)
+        vertex_one_lon = this%icon_icosohedral_cell_get_vertex_coords(this%coarse_cell_coords,1,.FALSE.)
+        vertex_two_lon = this%icon_icosohedral_cell_get_vertex_coords(this%coarse_cell_coords,2,.FALSE.)
+        vertex_three_lon = this%icon_icosohedral_cell_get_vertex_coords(this%coarse_cell_coords,3,.FALSE.)
+        if (vertex_one_lat == 90.0 .or. vertex_one_lat == -90.0) then
+          vertex_one_lon = vertex_two_lon
+        else if (vertex_two_lat == 90.0 .or. vertex_two_lat == -90.0) then
+          vertex_two_lon = vertex_three_lon
+        else if (vertex_three_lat == 90.0 .or. vertex_three_lat == -90.0) then
+          vertex_three_lon = vertex_one_lon
+        end if
+        if (vertex_two_lon - vertex_one_lon > 180.0) then
+          vertex_one_lon = vertex_one_lon + 360.0
+        else if (vertex_two_lon - vertex_one_lon < -180.0) then
+          vertex_two_lon = vertex_two_lon + 360.0
+        end if
+        if (vertex_three_lon - vertex_one_lon > 180.0) then
+          vertex_one_lon = vertex_one_lon + 360.0
+        else if (vertex_three_lon - vertex_one_lon < -180.0) then
+          vertex_three_lon = vertex_three_lon + 360.0
+        end if
+        allocate(this%cell_bounds)
         this%cell_bounds%west_extreme_lon = &
-          max(max(this%icon_icosohedral_cell_get_vertex_coords(this%coarse_cell_coords,1,.FALSE.), &
-                  this%icon_icosohedral_cell_get_vertex_coords(this%coarse_cell_coords,2,.FALSE.)),&
-              this%icon_icosohedral_cell_get_vertex_coords(this%coarse_cell_coords,3,.FALSE.))
+                         min(min(vertex_one_lon,vertex_two_lon),vertex_three_lon)
         this%cell_bounds%east_extreme_lon = &
-          min(min(this%icon_icosohedral_cell_get_vertex_coords(this%coarse_cell_coords,1,.FALSE.),&
-                  this%icon_icosohedral_cell_get_vertex_coords(this%coarse_cell_coords,2,.FALSE.)),&
-              this%icon_icosohedral_cell_get_vertex_coords(this%coarse_cell_coords,3,.FALSE.))
+                         max(max(vertex_one_lon,vertex_two_lon),vertex_three_lon)
         this%cell_bounds%south_extreme_lat = &
-          max(max(this%icon_icosohedral_cell_get_vertex_coords(this%coarse_cell_coords,1,.TRUE.),&
-                this%icon_icosohedral_cell_get_vertex_coords(this%coarse_cell_coords,2,.TRUE.)),&
-              this%icon_icosohedral_cell_get_vertex_coords(this%coarse_cell_coords,3,.TRUE.))
+                         min(min(vertex_one_lat,vertex_two_lat),vertex_three_lat)
         this%cell_bounds%north_extreme_lat = &
-          min(min(this%icon_icosohedral_cell_get_vertex_coords(this%coarse_cell_coords,1,.TRUE.),&
-                this%icon_icosohedral_cell_get_vertex_coords(this%coarse_cell_coords,2,.TRUE.)),&
-              this%icon_icosohedral_cell_get_vertex_coords(this%coarse_cell_coords,3,.TRUE.))
+                         max(max(vertex_one_lat,vertex_two_lat),vertex_three_lat)
   end subroutine icon_icosohedral_cell_generate_cell_bounds
 
   function icon_icosohedral_cell_check_if_pixel_center_is_in_bounds(this,pixel_center_lat,pixel_center_lon) &
         result(is_in_bounds)
       class(icon_icosohedral_cell_latlon_pixel_non_coincident_grid_mapper), intent(inout) :: this
-      real(kind=double_precision), intent(in) :: pixel_center_lat, pixel_center_lon
+      real(kind=double_precision), intent(inout) :: pixel_center_lat, pixel_center_lon
       real(kind=double_precision) :: vertex_one_lat, vertex_one_lon
       real(kind=double_precision) :: vertex_two_lat, vertex_two_lon
       real(kind=double_precision) :: vertex_three_lat, vertex_three_lon
       real(kind=double_precision) :: vertex_temp_lat, vertex_temp_lon
+      real(kind=double_precision) :: lat_difference_at_pixel_center_lon
+      real(kind=double_precision) :: lat_difference_at_vertex_three_lon
       logical :: is_in_bounds
       integer :: i
         select type (coarse_cell_coords => this%coarse_cell_coords)
@@ -360,6 +425,21 @@ contains
           vertex_three_lon = &
             this%icon_icosohedral_cell_get_vertex_coords(coarse_cell_coords,3,.FALSE.)
         end select
+        if (vertex_two_lon - vertex_one_lon > 180.0) then
+          vertex_two_lon = vertex_two_lon - 360.0
+        else if(vertex_two_lon - vertex_one_lon < -180.0) then
+          vertex_two_lon = vertex_two_lon + 360.0
+        end if
+        if (vertex_three_lon - vertex_one_lon > 180.0) then
+          vertex_three_lon = vertex_three_lon - 360.0
+        else if(vertex_three_lon - vertex_one_lon < -180.0) then
+          vertex_three_lon = vertex_three_lon + 360.0
+        end if
+        if (pixel_center_lon - vertex_one_lon > 180.0) then
+          pixel_center_lon = pixel_center_lon - 360.0
+        else if(pixel_center_lon - vertex_one_lon < -180.0) then
+          pixel_center_lon = pixel_center_lon + 360.0
+        end if
         is_in_bounds = .TRUE.
         do i = 1,3
           vertex_temp_lon = vertex_three_lon
@@ -370,24 +450,38 @@ contains
           vertex_three_lat = vertex_two_lat
           vertex_two_lat = vertex_one_lat
           vertex_one_lat = vertex_temp_lat
-          if (vertex_one_lon-vertex_two_lon == 0) then
+          if (vertex_one_lon-vertex_two_lon == 0 .or. &
+              vertex_two_lat == 90.0 .or. vertex_two_lat == -90.0) then
             is_in_bounds = is_in_bounds .and. &
                            SIGN(1.0_double_precision,pixel_center_lon - vertex_one_lon) == &
                            SIGN(1.0_double_precision,vertex_three_lon - vertex_one_lon)
-          else if (vertex_two_lat - vertex_one_lat == 0) then
+          else if (vertex_two_lat - vertex_one_lat == 0  ) then
             is_in_bounds = is_in_bounds .and. &
                            SIGN(1.0_double_precision,pixel_center_lat - vertex_one_lat) == &
                            SIGN(1.0_double_precision,vertex_three_lat - vertex_one_lat)
-          else
+          else if(vertex_one_lat == 90.0 .or. vertex_one_lat == -90.0) then
             is_in_bounds = is_in_bounds .and. &
-                           SIGN(1.0_double_precision, &
-                                this%icon_icosohedral_cell_calculate_line(pixel_center_lon, vertex_one_lon, &
-                                                                          vertex_two_lon, vertex_one_lat, &
-                                                                          vertex_two_lat)) == &
-                           SIGN(1.0_double_precision, &
-                                this%icon_icosohedral_cell_calculate_line(vertex_three_lon, vertex_one_lon, &
-                                                                          vertex_two_lon, vertex_one_lat, &
-                                                                          vertex_two_lat))
+                           SIGN(1.0_double_precision,pixel_center_lon - vertex_two_lon) == &
+                           SIGN(1.0_double_precision,vertex_three_lon - vertex_two_lon)
+          else
+            lat_difference_at_pixel_center_lon = pixel_center_lat - &
+              this%icon_icosohedral_cell_calculate_line(pixel_center_lon, vertex_one_lon, &
+                                                        vertex_two_lon, vertex_one_lat, &
+                                                        vertex_two_lat)
+            lat_difference_at_vertex_three_lon = vertex_three_lat - &
+              this%icon_icosohedral_cell_calculate_line(vertex_three_lon, vertex_one_lon, &
+                                                        vertex_two_lon, vertex_one_lat, &
+                                                        vertex_two_lat)
+            if (lat_difference_at_pixel_center_lon == 0) then
+              is_in_bounds = is_in_bounds .and. &
+                             (lat_difference_at_vertex_three_lon >= 0)
+            else
+              is_in_bounds = is_in_bounds .and. &
+                              SIGN(1.0_double_precision, &
+                                   lat_difference_at_pixel_center_lon) == &
+                              SIGN(1.0_double_precision, &
+                                   lat_difference_at_vertex_three_lon)
+            end if
           end if
         end do
   end function icon_icosohedral_cell_check_if_pixel_center_is_in_bounds
@@ -398,22 +492,34 @@ contains
       y = ((y2 - y1)/(x2 - x1))*(x-x1) + y1
   end function icon_icosohedral_cell_calculate_line
 
-  function icon_icosohedral_cell_get_vertex_coords(this,coords_in,vertex_num,return_lat) result (coordinate)
+  function icon_icosohedral_cell_get_vertex_coords(this,coords_in,vertex_num_in,return_lat) result (coordinate)
     class(icon_icosohedral_cell_latlon_pixel_non_coincident_grid_mapper), intent(in) :: this
     class(coords), intent(in) ::  coords_in
-    integer, intent(in) :: vertex_num
+    integer, intent(in) :: vertex_num_in
     logical, intent(in) :: return_lat
     real(kind=double_precision) :: coordinate
-    class(*), pointer :: container_ptr
-    type(container_for_pointer) :: container
-      container_ptr => this%cell_vertex_coords%get_value(coords_in)
-      select type (object => container%object)
+    real(kind=double_precision) :: lat_coordinate
+    class(*), pointer :: vertex_positions_ptr
+    integer :: vertex_num
+      vertex_num = vertex_num_in
+      vertex_positions_ptr => this%cell_vertex_coords%get_value(coords_in)
+      select type (vertex_positions_ptr)
        type is (unstructured_grid_vertex_coords)
-        if (return_lat) then
-          coordinate = object%vertex_lats(vertex_num)
-        else
-          coordinate = object%vertex_lons(vertex_num)
-        end if
+       lat_coordinate = vertex_positions_ptr%vertex_lats(vertex_num)
+       if (return_lat) then
+
+          coordinate = lat_coordinate
+       else
+          !If at pole return one of the other coordinates instead
+          if (lat_coordinate == 90.0 .or. lat_coordinate == -90.0) then
+            if (vertex_num == 1) then
+              vertex_num = 2
+            else
+              vertex_num = 1
+            end if
+          end if
+          coordinate = vertex_positions_ptr%vertex_lons(vertex_num)
+       end if
      end select
   end function icon_icosohedral_cell_get_vertex_coords
 
@@ -445,7 +551,7 @@ contains
     class(icon_icosohedral_cell_latlon_pixel_non_coincident_grid_mapper), intent(inout) :: this
     class(latlon_field_section), pointer, intent(in)  :: pixel_center_lats
     class(latlon_field_section), pointer, intent(in)  :: pixel_center_lons
-    class(icon_single_index_field_section), pointer, intent(in)  :: cell_vertex_coords
+    class(icon_single_index_field_section), pointer, intent(inout)  :: cell_vertex_coords
     class(latlon_section_coords),pointer,intent(in) :: fine_grid_shape
     class(*),pointer,dimension(:,:) :: new_cell_numbers
       this%pixel_center_lats => pixel_center_lats
@@ -454,6 +560,10 @@ contains
       this%fine_grid_shape => fine_grid_shape
       allocate(integer::new_cell_numbers(1:fine_grid_shape%section_width_lat, &
                                          1:fine_grid_shape%section_width_lon))
+      allocate(this%section_min_lats(cell_vertex_coords%get_num_points()))
+      allocate(this%section_min_lons(cell_vertex_coords%get_num_points()))
+      allocate(this%section_max_lats(cell_vertex_coords%get_num_points()))
+      allocate(this%section_max_lons(cell_vertex_coords%get_num_points()))
       select type(new_cell_numbers)
       type is (integer)
         new_cell_numbers = 0
@@ -469,7 +579,7 @@ contains
         type(icon_icosohedral_cell_latlon_pixel_non_coincident_grid_mapper), allocatable :: constructor
         class(latlon_field_section), pointer, intent(in)  :: pixel_center_lats
         class(latlon_field_section), pointer, intent(in)  :: pixel_center_lons
-        class(icon_single_index_field_section), pointer, intent(in)  :: cell_vertex_coords
+        class(icon_single_index_field_section), pointer, intent(inout)  :: cell_vertex_coords
         class(latlon_section_coords),pointer, intent(in) :: fine_grid_shape
             allocate(constructor)
             call constructor%init_icon_icosohedral_cell_latlon_pixel_ncg_mapper(pixel_center_lats,&

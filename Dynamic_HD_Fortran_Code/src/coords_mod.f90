@@ -108,6 +108,7 @@ type, extends(section_coords) :: generic_1d_section_coords
     contains
         procedure :: get_cell_neighbors
         procedure :: get_cell_secondary_neighbors
+        procedure :: get_section_mask
         procedure :: get_edge_cells
         procedure :: get_subfield_indices
         procedure :: get_full_field_indices
@@ -331,17 +332,24 @@ function multicell_irregular_latlon_section_coords_constructor(list_of_cell_numb
     end function multicell_irregular_latlon_section_coords_constructor
 
     function generic_1d_section_coords_constructor(cell_neighbors_in,&
-                                                   cell_secondary_neighbors_in) &
+                                                   cell_secondary_neighbors_in,&
+                                                   mask_in) &
                                                     result(constructor)
         integer, dimension(:,:), pointer, intent(in) :: cell_neighbors_in
         integer, dimension(:,:), pointer, intent(in) :: cell_secondary_neighbors_in
-        type(generic_1d_section_coords), allocatable :: constructor
+        logical, dimension(:), pointer, intent(in), optional :: mask_in
+        type(generic_1d_section_coords) :: constructor
             constructor%cell_neighbors => cell_neighbors_in
             constructor%cell_secondary_neighbors => cell_secondary_neighbors_in
             constructor%edge_cells => null()
             constructor%subfield_indices => null()
             constructor%full_field_indices => null()
-            constructor%mask => null()
+            if (present(mask_in)) then
+                constructor%mask => mask_in
+            else
+                allocate(constructor%mask(size(cell_neighbors_in,1)))
+                constructor%mask = .True.
+            end if
     end function
 
     function get_cell_neighbors(this) result(cell_neighbors)
@@ -356,6 +364,12 @@ function multicell_irregular_latlon_section_coords_constructor(list_of_cell_numb
                                                       this%get_full_field_indices())
             end if
     end function get_cell_neighbors
+
+    function get_section_mask(this) result(mask)
+        class(generic_1d_section_coords), intent(inout) :: this
+        logical, dimension(:), pointer :: mask
+            mask => this%mask
+    end function get_section_mask
 
     function get_cell_secondary_neighbors(this) result(cell_secondary_neighbors)
         class(generic_1d_section_coords), intent(inout) :: this

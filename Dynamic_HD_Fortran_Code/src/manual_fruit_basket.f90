@@ -1260,4 +1260,18 @@ contains
 
     end subroutine latlon_hd_and_lake_model_all_tests
 
+    subroutine map_non_coincident_grids_all_tests
+        use map_non_coincident_grids_test_mod
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testLatLonToIconGrids"
+        call set_unit_name('test_something')
+        call run_test_case(testLatLonToIconGrids,'Test LatLon to Icon Grid Mapping')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","Test LatLon to Icon Grid Mapping")
+        else
+            call case_passed_xml("test_something","Test LatLon to Icon Grid Mapping")
+        end if
+        call teardown
+    end subroutine map_non_coincident_grids_all_tests
+
 end module manual_fruit_basket

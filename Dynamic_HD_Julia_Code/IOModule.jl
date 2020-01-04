@@ -2,7 +2,7 @@ module IOModule
 
 using NetCDF
 using NetCDF: NcFile,NcVar
-using GridModule: Grid, LatLonGrid, get_number_of_dimensions
+using GridModule: Grid, LatLonGrid, UnstructuredGrid, get_number_of_dimensions
 using FieldModule: Field, LatLonDirectionIndicators,round,convert,invert,add_offset,get_data
 using FieldModule: maximum
 using HDModule: RiverParameters,RiverPrognosticFields
@@ -17,10 +17,12 @@ function load_field(file_handle::NcFile,grid::Grid,variable_name::AbstractString
                     field_type::DataType,;timestep::Int64=-1)
   variable::NcVar = file_handle[variable_name]
   values::Array{field_type,get_number_of_dimensions(grid)} = NetCDF.readvar(variable)
-  if timestep == -1
-    values = permutedims(values, [2,1])
-  else
-    values = permutedims(values, [2,1])[timestep]
+  if isa(grid,LatLonGrid)
+    if timestep == -1
+      values = permutedims(values, [2,1])
+    else
+      values = permutedims(values, [2,1])[timestep]
+    end
   end
   return Field{field_type}(grid,values)
 end
@@ -60,10 +62,20 @@ function prep_dims(grid::LatLonGrid)
   return dims
 end
 
+function prep_dims(grid::UnstructuredGrid)
+  ncells = NcDim("ncells",grid.ncells)
+  dims::Array{NcDim} = NcDim[ ncells ]
+  return dims
+end
+
 function prep_field(dims::Array{NcDim},variable_name::AbstractString,
                     field::Field,fields_to_write::Vector{Pair})
   variable::NcVar = NcVar(variable_name,dims)
-  push!(fields_to_write,Pair(variable,permutedims(get_data(field), [2,1])))
+  if isa(field,LatLonField)
+    push!(fields_to_write,Pair(variable,permutedims(get_data(field), [2,1])))
+  else
+    push!(fields_to_write,Pair(variable,field))
+  end
 end
 
 function write_fields(fields_to_write::Vector{Pair},filepath::AbstractString)
@@ -74,13 +86,16 @@ function write_fields(fields_to_write::Vector{Pair},filepath::AbstractString)
   end
 end
 
-function write_field(grid::LatLonGrid,variable_name::AbstractString,
+function write_field(grid::Grid,variable_name::AbstractString,
                      field::Field,filepath::AbstractString)
-  lat = NcDim("Lat",grid.nlat)
-  lon = NcDim("Lon",grid.nlon)
-  variable::NcVar = NcVar(variable_name,[ lon; lat ])
+  dims::Array{NcDim} = prep_dims(grid)
+  variable::NcVar = NcVar(variable_name,dims)
   NetCDF.create(filepath,variable)
-  NetCDF.putvar(variable,permutedims(get_data(field), [2,1]))
+  if isa(grid,LatLonGrid)
+    NetCDF.putvar(variable,permutedims(get_data(field), [2,1]))
+  else
+    NetCDF.putvar(variable,field)
+  end
 end
 
 function load_river_parameters(hd_para_filepath::AbstractString,grid::Grid)

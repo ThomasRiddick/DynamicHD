@@ -97,7 +97,7 @@ contains
                                                              cell_vertices_lons, &
                                                              cell_neighbors, &
                                                              cotat_parameters_filepath)
-        type(icon_icosohedral_grid) :: coarse_grid
+        type(icon_icosohedral_grid), pointer :: coarse_grid
         type(icon_icosohedral_cell_latlon_pixel_non_coincident_grid_mapper) :: ncg_mapper
         type(irregular_latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
         class(direction_indicator), pointer :: output_coarse_river_direction
@@ -142,7 +142,7 @@ contains
             end do
             pixel_center_lats_field => latlon_field_section(pixel_center_lats_ptr_2d,fine_grid_shape)
             pixel_center_lons_field => latlon_field_section(pixel_center_lons_ptr_2d,fine_grid_shape)
-            coarse_grid = icon_icosohedral_grid(cell_neighbors)
+            coarse_grid => icon_icosohedral_grid(cell_neighbors)
             call coarse_grid%calculate_secondary_neighbors()
             secondary_neighbors => coarse_grid%get_cell_secondary_neighbors()
             cell_primary_and_secondary_neighbors(:,1:3) = cell_neighbors(:,:)
