@@ -14,7 +14,6 @@ end subroutine teardown
 subroutine testLatLonToIconGrids
   type(icon_icosohedral_grid), pointer :: coarse_grid
   type(icon_icosohedral_cell_latlon_pixel_non_coincident_grid_mapper) :: ncg_mapper
-  integer, dimension(:,:), pointer :: cell_primary_and_secondary_neighbors
   integer, dimension(:,:), pointer :: cell_neighbors
   integer, dimension(:,:), pointer :: secondary_neighbors
   real(kind=double_precision), dimension(:,:), allocatable :: cell_vertices_lats
@@ -41,9 +40,7 @@ subroutine testLatLonToIconGrids
     allocate(pixel_center_lons(40))
     allocate(real(kind=double_precision)::pixel_center_lats_ptr_2d(12,40))
     allocate(real(kind=double_precision)::pixel_center_lons_ptr_2d(12,40))
-    allocate(cell_primary_and_secondary_neighbors(80,12))
     allocate(cell_neighbors(80,3))
-    allocate(secondary_neighbors(80,9))
     cell_neighbors = transpose( reshape((/ 5,7,2, &
                                            1,10,3, &
                                            2,13,4, &
@@ -308,8 +305,6 @@ subroutine testLatLonToIconGrids
     coarse_grid => icon_icosohedral_grid(cell_neighbors)
     call coarse_grid%calculate_secondary_neighbors()
     secondary_neighbors => coarse_grid%get_cell_secondary_neighbors()
-    cell_primary_and_secondary_neighbors(:,1:3) = cell_neighbors(:,:)
-    cell_primary_and_secondary_neighbors(:,4:12) = secondary_neighbors(:,:)
     allocate(unstructured_grid_vertex_coords::cell_vertex_coords_data(size(cell_vertices_lats,1)))
     select type (cell_vertex_coords_data)
     type is (unstructured_grid_vertex_coords)
@@ -326,9 +321,7 @@ subroutine testLatLonToIconGrids
                                                                       pixel_center_lons_field,&
                                                                       cell_vertex_coords,&
                                                                       fine_grid_shape)
-    write(*,*) "point 12"
     cell_numbers => ncg_mapper%generate_cell_numbers()
-    write(*,*) "point 13"
     select type(cell_numbers)
     class is (latlon_field_section)
         cell_numbers_data_ptr => cell_numbers%data
@@ -338,13 +331,31 @@ subroutine testLatLonToIconGrids
         end select
     end select
     do i = 1,12
-      write(debug,'(20(I3))') (cell_numbers_data(i,j),j=1,15)
-      write(debug2,'(20(I3))') (cell_numbers_data(i,j),j=16,30)
-      write(*,*) trim(debug) // "  " // trim(debug2)
+      write(debug,'(20(I3))') (cell_numbers_data(i,j),j=1,20)
+      write(*,*) trim(debug)
     end do
-    write(*,*) "point 14"
+    do i = 1,12
+      write(debug2,'(XXXXXXXXXXXXX20(I3))') (cell_numbers_data(i,j),j=21,40)
+      write(*,*) trim(debug2)
+    end do
     call ncg_mapper%generate_limits()
-    write(*,*) "point 15"
+    call ncg_mapper%icon_icosohedral_cell_latlon_pixel_ncg_mapper_destructor()
+    call coarse_grid_shape%generic_1d_section_coords_destructor()
+    deallocate(coarse_grid)
+    deallocate(fine_grid_shape)
+    deallocate(coarse_grid_shape)
+    deallocate(cell_vertices_lats)
+    deallocate(cell_vertices_lons)
+    deallocate(pixel_center_lats)
+    deallocate(pixel_center_lons)
+    deallocate(pixel_center_lats_field)
+    deallocate(pixel_center_lons_field)
+    deallocate(pixel_center_lats_ptr_2d)
+    deallocate(pixel_center_lons_ptr_2d)
+    deallocate(cell_neighbors)
+    deallocate(secondary_neighbors)
+    deallocate(cell_vertex_coords_data)
+    deallocate(cell_vertex_coords)
 end subroutine testLatLonToIconGrids
 
 end module map_non_coincident_grids_test_mod

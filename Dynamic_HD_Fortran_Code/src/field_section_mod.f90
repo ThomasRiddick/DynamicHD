@@ -110,9 +110,11 @@ type, extends(field_section), public :: latlon_field_section
         procedure, public :: get_nlat
         !> Return the number of the longitude points in the entire grid
         procedure, public :: get_nlon
+        !> Return the value of the wrap flag
+        procedure, public :: get_wrap
         !> Returns a pointer to a copy of the array of data (this copy is created by
         !! this function using sourced allocation)
-        procedure, public :: get_data
+        procedure, public :: get_data => latlon_get_data
         !> Getter for section minimum latitude
         procedure, public :: get_section_min_lat
         !> Getter for section minimum longitude
@@ -166,6 +168,9 @@ type, extends(field_section), public :: icon_single_index_field_section
         !> Return an unlimited polymorphic pointer to a value at the given
         !! coordinates
         procedure, public :: get_value => icon_single_index_get_value
+        !> Returns a pointer to a copy of the array of data (this copy is created by
+        !! this function using sourced allocation)
+        procedure, public :: get_data => icon_single_index_get_data
         !> For each cell in the section
         procedure, public :: for_all_section => icon_single_index_for_all_section
         !> Print the entire  data field
@@ -351,21 +356,33 @@ contains
 
     pure function get_nlat(this) result(nlat)
         class(latlon_field_section), intent(in) :: this
-        integer nlat
+        integer :: nlat
             nlat = this%nlat
     end function get_nlat
 
     pure function get_nlon(this) result(nlon)
         class(latlon_field_section), intent(in) :: this
-        integer nlon
+        integer :: nlon
             nlon = this%nlon
     end function get_nlon
 
-    pure function get_data(this) result(data)
+    pure function get_wrap(this) result(wrap)
+        class(latlon_field_section), intent(in) :: this
+        logical :: wrap
+            wrap = this%wrap
+    end function get_wrap
+
+    pure function latlon_get_data(this) result(data)
         class(latlon_field_section), intent(in) :: this
         class(*), dimension(:,:), pointer :: data
             allocate(data(size(this%data,1),size(this%data,2)),source=this%data)
-    end function get_data
+    end function latlon_get_data
+
+    pure function icon_single_index_get_data(this) result(data)
+        class(icon_single_index_field_section), intent(in) :: this
+        class(*), dimension(:), pointer :: data
+            allocate(data(size(this%data)),source=this%data)
+    end function icon_single_index_get_data
 
     pure function get_section_min_lat(this) result(section_min_lat)
         class(latlon_field_section), intent(in) :: this

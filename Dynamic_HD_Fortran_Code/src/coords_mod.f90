@@ -87,6 +87,8 @@ type, extends(latlon_section_coords) :: irregular_latlon_section_coords
     integer, dimension(:), pointer :: section_min_lons
     integer, dimension(:), pointer :: section_max_lats
     integer, dimension(:), pointer :: section_max_lons
+    contains
+        procedure :: irregular_latlon_section_coords_destructor
 end type irregular_latlon_section_coords
 
 public :: irregular_latlon_section_coords_constructor, &
@@ -112,6 +114,7 @@ type, extends(section_coords) :: generic_1d_section_coords
         procedure :: get_edge_cells
         procedure :: get_subfield_indices
         procedure :: get_full_field_indices
+        procedure :: generic_1d_section_coords_destructor
 end type generic_1d_section_coords
 
 interface generic_1d_section_coords
@@ -229,32 +232,40 @@ contains
         logical ::are_equal
             select type (rhs_coords)
             type is (generic_1d_coords)
-                are_equal = (this%index == rhs_coords%index .and. &
-                             this%use_internal_index .eqv. &
-                             rhs_coords%use_internal_index)
+                !Be careful of operator precedence here
+                are_equal = ((this%index == rhs_coords%index) .and. &
+                             (this%use_internal_index .eqv. &
+                             rhs_coords%use_internal_index))
             end select
     end function generic_1d_are_equal_to
 
     function latlon_section_coords_constructor(section_min_lat,section_min_lon,&
-                                               section_width_lat,section_width_lon) &
+                                               section_width_lat,section_width_lon,&
+                                               zero_line) &
                                                result(constructor)
     type(latlon_section_coords) :: constructor
     integer :: section_min_lat
     integer :: section_min_lon
     integer :: section_width_lat
     integer :: section_width_lon
+    real(kind=double_precision),optional :: zero_line
         constructor%section_min_lat = section_min_lat
         constructor%section_min_lon = section_min_lon
         constructor%section_width_lat = section_width_lat
         constructor%section_width_lon = section_width_lon
-        constructor%zero_line = 0.0
+        if(present(zero_line)) then
+            constructor%zero_line = zero_line
+        else
+            constructor%zero_line = 0.0
+        end if
     end function latlon_section_coords_constructor
 
     function irregular_latlon_section_coords_constructor(cell_number_in,cell_numbers_in, &
                                                          section_min_lats_in, &
                                                          section_min_lons_in, &
                                                          section_max_lats_in, &
-                                                         section_max_lons_in) &
+                                                         section_max_lons_in, &
+                                                         lat_offset_in) &
                                                           result(constructor)
     type(irregular_latlon_section_coords) :: constructor
     integer, dimension(:,:), pointer :: cell_numbers_in
@@ -263,21 +274,38 @@ contains
     integer, dimension(:), pointer :: section_max_lats_in
     integer, dimension(:), pointer :: section_max_lons_in
     integer :: cell_number_in
-        constructor%section_min_lats => section_min_lats_in
-        constructor%section_min_lons => section_min_lons_in
-        constructor%section_max_lats => section_max_lats_in
+    integer, optional :: lat_offset_in
+    integer lat_offset
+        if (present(lat_offset_in)) then
+            lat_offset = lat_offset_in
+        else
+            lat_offset = 0
+        end if
         constructor%section_max_lons => section_max_lons_in
+        constructor%section_min_lons => section_min_lons_in
+        allocate(constructor%section_max_lats,source=section_max_lats_in)
+        allocate(constructor%section_min_lats,source=section_min_lats_in)
+        constructor%section_max_lats(:) = constructor%section_max_lats(:) + lat_offset
+        constructor%section_min_lats(:) = constructor%section_min_lats(:) + lat_offset
         constructor%cell_numbers => cell_numbers_in
         constructor%list_of_cell_numbers => null()
         constructor%cell_number = cell_number_in
-        constructor%section_min_lat = section_min_lats_in(cell_number_in)
-        constructor%section_min_lon = section_min_lons_in(cell_number_in)
+        constructor%section_min_lat = constructor%section_min_lats(cell_number_in)
+        constructor%section_min_lon = constructor%section_min_lons(cell_number_in)
         constructor%section_width_lat = &
-            section_max_lats_in(cell_number_in) + 1 - section_min_lats_in(cell_number_in)
+            constructor%section_max_lats(cell_number_in) + 1 - &
+                constructor%section_min_lats(cell_number_in)
         constructor%section_width_lon = &
-            section_max_lons_in(cell_number_in) + 1 - section_min_lons_in(cell_number_in)
+            constructor%section_max_lons(cell_number_in) + 1 - &
+                constructor%section_min_lons(cell_number_in)
         constructor%zero_line = 0.0
     end function irregular_latlon_section_coords_constructor
+
+    subroutine irregular_latlon_section_coords_destructor(this)
+        class(irregular_latlon_section_coords) :: this
+            deallocate(this%section_max_lats)
+            deallocate(this%section_min_lats)
+    end subroutine irregular_latlon_section_coords_destructor
 
 function multicell_irregular_latlon_section_coords_constructor(list_of_cell_numbers_in,cell_numbers_in, &
                                                                section_min_lats_in, &
@@ -351,6 +379,11 @@ function multicell_irregular_latlon_section_coords_constructor(list_of_cell_numb
                 constructor%mask = .True.
             end if
     end function
+
+    subroutine generic_1d_section_coords_destructor(this)
+        class(generic_1d_section_coords), intent(inout) :: this
+            deallocate(this%mask)
+    end subroutine generic_1d_section_coords_destructor
 
     function get_cell_neighbors(this) result(cell_neighbors)
         class(generic_1d_section_coords), intent(inout) :: this

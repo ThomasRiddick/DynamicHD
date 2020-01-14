@@ -254,7 +254,7 @@ end type neighborhood
 
 abstract interface
 
-    pure function in_which_cell(this,pixel) result(in_cell)
+    function in_which_cell(this,pixel) result(in_cell)
         import neighborhood
         import coords
         implicit none
@@ -448,31 +448,34 @@ abstract interface
         type(doubly_linked_list), pointer :: list_of_pixels_in_cell
     end function generate_list_of_pixels_in_cell
 
-    pure function get_flow_direction_for_sink(this) result(flow_direction_for_sink)
+    pure function get_flow_direction_for_sink(this,is_for_cell) result(flow_direction_for_sink)
         import cell
         import coords
         import direction_indicator
         implicit none
         class(cell), intent(in) :: this
         class(direction_indicator), pointer :: flow_direction_for_sink
+        logical, optional, intent(in) :: is_for_cell
     end function get_flow_direction_for_sink
 
-    pure function get_flow_direction_for_outflow(this) result(flow_direction_for_outflow)
+    pure function get_flow_direction_for_outflow(this,is_for_cell) result(flow_direction_for_outflow)
         import cell
         import coords
         import direction_indicator
         implicit none
         class(cell), intent(in) :: this
         class(direction_indicator), pointer :: flow_direction_for_outflow
+        logical, optional, intent(in) :: is_for_cell
     end function get_flow_direction_for_outflow
 
-    pure function get_flow_direction_for_ocean_point(this) result(flow_direction_for_ocean_point)
+    pure function get_flow_direction_for_ocean_point(this,is_for_cell) result(flow_direction_for_ocean_point)
         import cell
         import coords
         import direction_indicator
         implicit none
         class(cell), intent(in) :: this
         class(direction_indicator), pointer :: flow_direction_for_ocean_point
+        logical, optional, intent(in) :: is_for_cell
     end function get_flow_direction_for_ocean_point
 
     function get_sink_combined_cumulative_flow(this,main_sink_coords) &
@@ -542,6 +545,38 @@ type, extends(field), abstract :: latlon_field
         procedure :: initialize_cells_to_reprocess_field_section => &
             latlon_initialize_cells_to_reprocess_field_section
 end type latlon_field
+
+!> A abstract implementation of the field class for icon icosohedral grids
+
+type, extends(field), abstract :: icon_single_index_field
+    integer :: ncells
+    contains
+        private
+        !> Initialized a icon icosohedral field object from a set of coordinates for the edges of the field section
+        !! and a 2D array of river directions
+        procedure, public :: init_icon_single_index_field
+        !> Check this field objects field for localized loops; return a list of cells with localized
+        !! loops that need to be reprocessed as a 2D boolean array
+        procedure, public :: check_field_for_localized_loops => icon_single_index_check_field_for_localized_loops
+        !! These next four functions are all shared with various other subclasses as a workaround
+        !! for Fortran 2003's lack of multiple inheritance.
+        !> Function that returns boolean to indicate if a given coordinate is within the field
+        !! (TRUE) or not (FALSE)
+        procedure, nopass :: check_if_coords_are_in_area => generic_check_if_coords_are_in_area
+        !> Print information about this field object out
+        procedure, nopass :: print_area => icon_single_index_field_dummy_subroutine
+        !> Function that given the location of a pixel returns a list of the locations of its
+        !! those of it neighbors that are upstream of it.
+        procedure, nopass :: find_upstream_neighbors => icon_single_index_field_dummy_coords_pointer_function
+        !> Function that given the location of a pixel return the length of the river path
+        !! through it
+        procedure, nopass :: calculate_length_through_pixel => icon_single_index_field_dummy_real_function
+        !> Initialize a 2D array to store flags whether cells need to be reprocessed or not; set all
+        !! entries initial value to false. A subroutine that takes no arguments (and hence also
+        !! returns nothing.
+        procedure :: initialize_cells_to_reprocess_field_section => &
+            icon_single_index_initialize_cells_to_reprocess_field_section
+end type icon_single_index_field
 
 !> An abstract implementation of the neighborhood class for latitude longitude grids
 
@@ -616,6 +651,7 @@ type, extends(neighborhood), abstract :: irregular_latlon_neighborhood
         procedure, nopass :: find_upstream_neighbors => latlon_find_upstream_neighbors
         procedure :: yamazaki_get_cell_coords => yamazaki_irregular_latlon_get_cell_coords_dummy
         procedure :: yamazaki_wrap_coordinates => yamazaki_irregular_latlon_wrap_coordinates_dummy
+        procedure :: destructor => irregular_latlon_neighborhood_destructor
 end type irregular_latlon_neighborhood
 
 !> An abstract implementation of the cell class for latitude longitude grids
@@ -695,6 +731,7 @@ type, extends(latlon_cell), abstract :: irregular_latlon_cell
         procedure :: get_rmouth_outflow_combined_cumulative_flow => &
             irregular_latlon_get_rmouth_outflow_combined_cumulative_flow
         procedure ::  init_irregular_latlon_cell
+        procedure :: destructor => irregular_latlon_cell_destructor
 end type irregular_latlon_cell
 
 !> A concerte subclass of latitude longitude field that uses direction (i.e. a 1-9
@@ -718,6 +755,33 @@ end type latlon_dir_based_rdirs_field
 
 interface  latlon_dir_based_rdirs_field
     procedure latlon_dir_based_rdirs_field_constructor
+end interface
+
+!> A concerte subclass of icosohedral field that uses an index to specify river directions
+type, public, extends(icon_single_index_field) :: icon_single_index_index_based_rdirs_field
+    private
+    integer :: index_for_sink = -5
+    integer :: index_for_outflow = -1
+    integer :: index_for_ocean_point = -2
+    contains
+        private
+        !> Subroutine to find the next pixel downstream from the input pixel and returns it
+        !! via the same variable as used for input. Also flag if the cell next coords would
+        !! be outside the area and for the yamazaki style algorithm if the next pixel is an
+        !! outflow pixel (this is an optional intent OUT argument).
+        procedure, nopass :: find_next_pixel_downstream => &
+            icon_single_index_index_based_rdirs_find_next_pixel_downstream
+        !> Check if neighbor at a given coordinates flows to a pixel which lies in a given
+        !! direction from that neighbor (this direction being expressed in reverse, i.e. pointing
+        !! from the pixel to the neighbor)
+        procedure, nopass :: neighbor_flows_to_pixel => &
+            icon_si_index_based_rdirs_neighbor_flows_to_pixel_dummy
+        !> Check if the pixel at the input coordinates is a diagonal or not by looking up its flow direction
+        procedure, nopass :: is_diagonal => icon_si_index_based_rdirs_is_diagonal_dummy
+end type icon_single_index_index_based_rdirs_field
+
+interface  icon_single_index_index_based_rdirs_field
+    procedure icon_single_index_index_based_rdirs_field_constructor
 end interface
 
 !> A concrete subclass of latitude longitude neighborhood that uses direction
@@ -810,9 +874,12 @@ interface irregular_latlon_dir_based_rdirs_neighborhood
 end interface irregular_latlon_dir_based_rdirs_neighborhood
 
 type, public, extends(irregular_latlon_cell) :: irregular_latlon_dir_based_rdirs_cell
-    integer :: flow_direction_for_sink = -2
+    integer :: flow_direction_for_sink = 5
     integer :: flow_direction_for_outflow = 0
     integer :: flow_direction_for_ocean_point = -1
+    integer :: cell_flow_direction_for_sink = -5
+    integer :: cell_flow_direction_for_outflow = -1
+    integer :: cell_flow_direction_for_ocean_point = -2
 contains
     procedure :: init_irregular_latlon_dir_based_rdirs_cell
     procedure, nopass :: is_diagonal => dir_based_rdirs_is_diagonal
@@ -998,10 +1065,10 @@ contains
             call this%check_for_sinks_and_rmouth_outflows(outlet_pixel_coords,no_remaining_outlets,mark_sink, &
                                                           mark_outflow)
             if (mark_sink) then
-                flow_direction => this%get_flow_direction_for_sink()
+                flow_direction => this%get_flow_direction_for_sink(is_for_cell=.true.)
                 return
             else if (mark_outflow) then
-                flow_direction => this%get_flow_direction_for_outflow()
+                flow_direction => this%get_flow_direction_for_outflow(is_for_cell=.true.)
                 return
             end if
             allocate(downstream_cell,source=this%cell_neighborhood%find_downstream_cell(outlet_pixel_coords))
@@ -1022,7 +1089,7 @@ contains
                 flow_direction => this%find_cell_flow_direction(outlet_pixel_coords,no_remaining_outlets)
                 deallocate(outlet_pixel_coords)
             else
-                flow_direction => this%get_flow_direction_for_ocean_point()
+                flow_direction => this%get_flow_direction_for_ocean_point(is_for_cell=.true.)
             end if
     end function process_cell
 
@@ -1381,6 +1448,17 @@ contains
             call this%initialize_cells_to_reprocess_field_section()
     end subroutine init_latlon_field
 
+    subroutine init_icon_single_index_field(this,field_section_coords,river_directions)
+        class(icon_single_index_field) :: this
+        class(*), dimension(:), pointer :: river_directions
+        type(generic_1d_section_coords) :: field_section_coords
+            this%ncells = size(field_section_coords%cell_neighbors,1)
+            allocate(this%field_section_coords,source=field_section_coords)
+            this%total_cumulative_flow => null()
+            this%river_directions => icon_single_index_field_section(river_directions,field_section_coords)
+            call this%initialize_cells_to_reprocess_field_section()
+    end subroutine init_icon_single_index_field
+
     function latlon_check_field_for_localized_loops(this) result(cells_to_reprocess)
         implicit none
         class(latlon_field) :: this
@@ -1406,6 +1484,32 @@ contains
             end select
     end function latlon_check_field_for_localized_loops
 
+    function icon_single_index_check_field_for_localized_loops(this) result(cells_to_reprocess)
+        implicit none
+        class(icon_single_index_field) :: this
+        class(*), dimension(:), pointer :: cells_to_reprocess_data
+        !Retain the dimension from the lat lon version but only ever use a single column for the
+        !second index
+        logical, dimension(:,:), pointer :: cells_to_reprocess
+        type(generic_1d_coords) :: cell_coords
+        integer :: i
+            do i = 1, this%ncells
+                cell_coords = generic_1d_coords(i)
+                if (this%check_cell_for_localized_loops(cell_coords)) then
+                    call this%cells_to_reprocess%set_value(cell_coords,.True.)
+                end if
+            end do
+            allocate(cells_to_reprocess(this%ncells,1))
+            select type (cells_to_reprocess_field_section => this%cells_to_reprocess)
+            type is (icon_single_index_field_section)
+                cells_to_reprocess_data => cells_to_reprocess_field_section%get_data()
+                select type (cells_to_reprocess_data)
+                type is (logical)
+                    cells_to_reprocess(:,1) = cells_to_reprocess_data
+                end select
+            end select
+    end function icon_single_index_check_field_for_localized_loops
+
     subroutine latlon_initialize_cells_to_reprocess_field_section(this)
         class(latlon_field) :: this
         class(*), dimension(:,:), pointer :: cells_to_reprocess_initialization_data
@@ -1421,6 +1525,22 @@ contains
                                                                 field_section_coords)
             end select
     end subroutine latlon_initialize_cells_to_reprocess_field_section
+
+    subroutine icon_single_index_initialize_cells_to_reprocess_field_section(this)
+        class(icon_single_index_field) :: this
+        class(*), dimension(:), pointer :: cells_to_reprocess_initialization_data
+            allocate(logical:: cells_to_reprocess_initialization_data(this%ncells))
+            select type(cells_to_reprocess_initialization_data)
+            type is (logical)
+                cells_to_reprocess_initialization_data = .FALSE.
+            end select
+            select type (field_section_coords => this%field_section_coords)
+            type is (generic_1d_section_coords)
+                this%cells_to_reprocess => &
+                    icon_single_index_field_section(cells_to_reprocess_initialization_data, &
+                                                    field_section_coords)
+            end select
+    end subroutine icon_single_index_initialize_cells_to_reprocess_field_section
 
     subroutine init_latlon_cell(this,cell_section_coords,river_directions,&
                                 total_cumulative_flow)
@@ -1477,6 +1597,13 @@ contains
             this%ocean_cell = .FALSE.
     end subroutine init_irregular_latlon_cell
 
+    subroutine irregular_latlon_cell_destructor(this)
+        class(irregular_latlon_cell), intent(inout) :: this
+            call cell_destructor(this)
+            if(associated(this%cell_numbers)) deallocate(this%cell_numbers)
+            call this%cell_neighborhood%destructor()
+    end subroutine irregular_latlon_cell_destructor
+
     subroutine yamazaki_init_latlon_cell(this,cell_section_coords,river_directions, &
                                          total_cumulative_flow,yamazaki_outlet_pixels)
         class(latlon_cell), intent(inout) :: this
@@ -1530,6 +1657,7 @@ contains
             type is (integer)
                 cell_numbers_data => cell_numbers_data_ptr
             end select
+            this%number_of_edge_pixels = 0
             do j = this%section_min_lon, this%section_max_lon
                 do i = this%section_min_lat, this%section_max_lat
                     if (cell_numbers_data(i,j) == this%cell_number) then
@@ -1548,7 +1676,8 @@ contains
                 end do
             end do
             allocate(latlon_coords::edge_pixel_coords_list(this%number_of_edge_pixels))
-            do while (list_of_edge_pixels%iterate_forward())
+            call list_of_edge_pixels%reset_iterator()
+            do while (.not. list_of_edge_pixels%iterate_forward())
                 working_pixel_ptr => list_of_edge_pixels%get_value_at_iterator_position()
                 select type(working_pixel_ptr)
                 type is (latlon_coords)
@@ -1558,7 +1687,7 @@ contains
                     end select
                 end select
                 list_index = list_index + 1
-                deallocate(working_pixel_ptr)
+                call list_of_edge_pixels%remove_element_at_iterator_position()
             end do
             deallocate(list_of_edge_pixels)
     end function irregular_latlon_find_edge_pixels
@@ -1606,7 +1735,7 @@ contains
         class (*), pointer :: working_cell_number_ptr
         integer    :: working_cell_number
         logical :: within_area
-        integer cell_number
+        integer :: cell_number
             select type(this)
             class is (irregular_latlon_cell)
                 cell_numbers => this%cell_numbers
@@ -1617,18 +1746,21 @@ contains
             end select
             within_area = .FALSE.
             select type(this)
+            class is (field)
+                within_area = .TRUE.
             class is (cell)
                 working_cell_number_ptr => cell_numbers%get_value(coords_in)
                 select type (working_cell_number_ptr)
                     type is (integer)
                         working_cell_number = working_cell_number_ptr
                 end select
+                deallocate(working_cell_number_ptr)
                 if(working_cell_number == cell_number) then
                     within_area = .TRUE.
                 end if
             class is (neighborhood)
                 call list_of_cells_in_neighborhood%reset_iterator()
-                do while (list_of_cells_in_neighborhood%iterate_forward())
+                do while (.not. list_of_cells_in_neighborhood%iterate_forward())
                     cell_number_ptr => &
                         list_of_cells_in_neighborhood%get_value_at_iterator_position()
                     select type (cell_number_ptr)
@@ -1638,6 +1770,7 @@ contains
                         type is (integer)
                             working_cell_number = working_cell_number_ptr
                         end select
+                        deallocate(working_cell_number_ptr)
                         if(working_cell_number == cell_number_ptr) then
                             within_area = .TRUE.
                         end if
@@ -1684,29 +1817,42 @@ contains
     subroutine latlon_initialize_cell_cumulative_flow_subfield(this)
         class(latlon_cell), intent(inout) :: this
         class(*), dimension(:,:), pointer :: input_data
+        logical :: wrap
             allocate(integer::input_data(this%section_width_lat,this%section_width_lon))
             select type(input_data)
             type is (integer)
                 input_data = 0
             end select
+            select type (river_directions => this%river_directions)
+            class is (latlon_field_section)
+                wrap = (this%section_width_lon == river_directions%get_nlon() .and. &
+                        river_directions%get_wrap())
+            end select
             select type(cell_section_coords => this%cell_section_coords)
-            type is (latlon_section_coords)
-                this%cell_cumulative_flow => latlon_subfield(input_data,cell_section_coords)
+            class is (latlon_section_coords)
+                this%cell_cumulative_flow => latlon_subfield(input_data,cell_section_coords,&
+                                                             wrap)
             end select
     end subroutine latlon_initialize_cell_cumulative_flow_subfield
 
     subroutine latlon_initialize_rejected_pixels_subfield(this)
         class(latlon_cell), intent(inout) :: this
         class(*), dimension(:,:), pointer :: rejected_pixel_initialization_data
+        logical :: wrap
             allocate(logical::rejected_pixel_initialization_data(this%section_width_lat,&
                                                                  this%section_width_lon))
             select type(rejected_pixel_initialization_data)
             type is (logical)
                 rejected_pixel_initialization_data = .FALSE.
             end select
+            select type (river_directions => this%river_directions)
+            class is (latlon_field_section)
+                wrap = (this%section_width_lon == river_directions%get_nlon() .and. &
+                        river_directions%get_wrap())
+            end select
             select type (cell_section_coords => this%cell_section_coords)
-            type is (latlon_section_coords)
-                this%rejected_pixels => latlon_subfield(rejected_pixel_initialization_data,cell_section_coords)
+            class is (latlon_section_coords)
+                this%rejected_pixels => latlon_subfield(rejected_pixel_initialization_data,cell_section_coords,wrap)
             end select
     end subroutine latlon_initialize_rejected_pixels_subfield
 
@@ -1995,6 +2141,48 @@ contains
         end select
     end subroutine latlon_print_area
 
+    function icon_single_index_field_dummy_real_function(this,coords_in) result(dummy_result)
+        class(area), intent(in) :: this
+        class(coords), intent(in) :: coords_in
+        real(kind=double_precision) :: dummy_result
+            select type (this)
+            class is (icon_single_index_field)
+                continue
+            end select
+            select type (coords_in)
+            type is (generic_1d_coords)
+                continue
+            end select
+            dummy_result = 0.0
+            stop
+    end function icon_single_index_field_dummy_real_function
+
+    subroutine icon_single_index_field_dummy_subroutine(this)
+        class(area), intent(in) :: this
+            select type (this)
+            class is (icon_single_index_field)
+                continue
+            end select
+            stop
+    end subroutine icon_single_index_field_dummy_subroutine
+
+    function icon_single_index_field_dummy_coords_pointer_function(this,coords_in) &
+            result(list_of_neighbors)
+        class(area), intent(in) :: this
+        class(coords), intent(in) :: coords_in
+        class(coords), pointer :: list_of_neighbors(:)
+            select type (this)
+            class is (icon_single_index_field)
+                continue
+            end select
+            select type (coords_in)
+            type is (generic_1d_coords)
+                continue
+            end select
+            allocate(generic_1d_coords::list_of_neighbors(1))
+            stop
+    end function icon_single_index_field_dummy_coords_pointer_function
+
     function latlon_dir_based_rdirs_cell_constructor(cell_section_coords,river_directions,&
                                                     total_cumulative_flow) result(constructor)
         type(latlon_dir_based_rdirs_cell), allocatable :: constructor
@@ -2159,52 +2347,115 @@ contains
         end select
     end function latlon_dir_based_rdirs_neighbor_flows_to_pixel
 
-    pure function latlon_dir_based_rdirs_get_flow_direction_for_sink(this) &
+    ! Note must explicit pass this function the object this as it has the nopass attribute
+    ! so that it can be shared by latlon_cell and latlon_neighborhood
+    function icon_si_index_based_rdirs_neighbor_flows_to_pixel_dummy(this,coords_in, &
+                  flipped_direction_from_neighbor) result(neighbor_flows_to_pixel)
+        class(area), intent(in) :: this
+        class(coords), intent(in) :: coords_in
+        class(direction_indicator), intent(in) :: flipped_direction_from_neighbor
+        logical :: neighbor_flows_to_pixel
+            select type (this)
+            class is (icon_single_index_field)
+                continue
+            end select
+            select type (coords_in)
+            type is (generic_1d_coords)
+                continue
+            end select
+            select type (flipped_direction_from_neighbor)
+            type is (index_based_direction_indicator)
+                continue
+            end select
+            neighbor_flows_to_pixel = .true.
+    end function icon_si_index_based_rdirs_neighbor_flows_to_pixel_dummy
+
+
+    pure function latlon_dir_based_rdirs_get_flow_direction_for_sink(this,is_for_cell) &
         result(flow_direction_for_sink)
         class(latlon_dir_based_rdirs_cell), intent(in) :: this
         class(direction_indicator), pointer :: flow_direction_for_sink
+        logical, optional, intent(in) :: is_for_cell
+            if (present(is_for_cell)) continue
             allocate(flow_direction_for_sink,source=&
                 dir_based_direction_indicator(this%flow_direction_for_sink))
     end function latlon_dir_based_rdirs_get_flow_direction_for_sink
 
-    pure function latlon_dir_based_rdirs_get_flow_direction_for_outflow(this) &
+    pure function latlon_dir_based_rdirs_get_flow_direction_for_outflow(this,is_for_cell) &
         result(flow_direction_for_outflow)
         class(latlon_dir_based_rdirs_cell), intent(in) :: this
         class(direction_indicator), pointer :: flow_direction_for_outflow
+        logical, optional, intent(in) :: is_for_cell
+            if (present(is_for_cell)) continue
             allocate(flow_direction_for_outflow,source=&
                 dir_based_direction_indicator(this%flow_direction_for_outflow))
     end function latlon_dir_based_rdirs_get_flow_direction_for_outflow
 
-    pure function latlon_dir_based_rdirs_get_flow_direction_for_ocean_point(this) &
+    pure function latlon_dir_based_rdirs_get_flow_direction_for_ocean_point(this,is_for_cell) &
         result(flow_direction_for_ocean_point)
         class(latlon_dir_based_rdirs_cell), intent(in) :: this
         class(direction_indicator), pointer :: flow_direction_for_ocean_point
+        logical, optional, intent(in) :: is_for_cell
+            if (present(is_for_cell)) continue
             allocate(flow_direction_for_ocean_point,source=&
                 dir_based_direction_indicator(this%flow_direction_for_ocean_point))
     end function latlon_dir_based_rdirs_get_flow_direction_for_ocean_point
 
-    pure function irregular_latlon_dir_based_rdirs_get_flow_direction_for_sink(this) &
+    pure function irregular_latlon_dir_based_rdirs_get_flow_direction_for_sink(this,is_for_cell) &
         result(flow_direction_for_sink)
         class(irregular_latlon_dir_based_rdirs_cell), intent(in) :: this
         class(direction_indicator), pointer :: flow_direction_for_sink
-            allocate(flow_direction_for_sink,source=&
-                index_based_direction_indicator(this%flow_direction_for_sink))
+        logical, optional, intent(in) :: is_for_cell
+            if (present(is_for_cell)) then
+                if (is_for_cell) then
+                    allocate(flow_direction_for_sink,source=&
+                        index_based_direction_indicator(this%cell_flow_direction_for_sink))
+                else
+                    allocate(flow_direction_for_sink,source=&
+                        index_based_direction_indicator(this%flow_direction_for_sink))
+                end if
+            else
+                allocate(flow_direction_for_sink,source=&
+                    index_based_direction_indicator(this%flow_direction_for_sink))
+            end if
     end function irregular_latlon_dir_based_rdirs_get_flow_direction_for_sink
 
-    pure function irregular_latlon_dir_based_rdirs_get_flow_direction_for_outflow(this) &
+    pure function irregular_latlon_dir_based_rdirs_get_flow_direction_for_outflow(this,is_for_cell) &
         result(flow_direction_for_outflow)
         class(irregular_latlon_dir_based_rdirs_cell), intent(in) :: this
         class(direction_indicator), pointer :: flow_direction_for_outflow
-            allocate(flow_direction_for_outflow,source=&
-                index_based_direction_indicator(this%flow_direction_for_outflow))
+        logical, optional, intent(in) :: is_for_cell
+            if (present(is_for_cell)) then
+                if (is_for_cell) then
+                    allocate(flow_direction_for_outflow,source=&
+                        index_based_direction_indicator(this%cell_flow_direction_for_outflow))
+                else
+                    allocate(flow_direction_for_outflow,source=&
+                        index_based_direction_indicator(this%flow_direction_for_outflow))
+                end if
+            else
+                allocate(flow_direction_for_outflow,source=&
+                    index_based_direction_indicator(this%flow_direction_for_outflow))
+            end if
     end function irregular_latlon_dir_based_rdirs_get_flow_direction_for_outflow
 
-    pure function irregular_latlon_dir_based_rdirs_get_flow_direction_for_o_point(this) &
+    pure function irregular_latlon_dir_based_rdirs_get_flow_direction_for_o_point(this,is_for_cell) &
         result(flow_direction_for_ocean_point)
         class(irregular_latlon_dir_based_rdirs_cell), intent(in) :: this
         class(direction_indicator), pointer :: flow_direction_for_ocean_point
-            allocate(flow_direction_for_ocean_point,source=&
-                index_based_direction_indicator(this%flow_direction_for_ocean_point))
+        logical, optional, intent(in) :: is_for_cell
+            if (present(is_for_cell)) then
+                if (is_for_cell) then
+                    allocate(flow_direction_for_ocean_point,source=&
+                        index_based_direction_indicator(this%cell_flow_direction_for_ocean_point))
+                else
+                    allocate(flow_direction_for_ocean_point,source=&
+                        index_based_direction_indicator(this%flow_direction_for_ocean_point))
+                end if
+            else
+                allocate(flow_direction_for_ocean_point,source=&
+                    index_based_direction_indicator(this%flow_direction_for_ocean_point))
+            end if
     end function irregular_latlon_dir_based_rdirs_get_flow_direction_for_o_point
 
     ! Note must explicit pass this function the object this as it has the nopass attribute
@@ -2226,6 +2477,24 @@ contains
             deallocate(rdir)
     end function dir_based_rdirs_is_diagonal
 
+
+    ! Note must explicit pass this function the object this as it has the nopass attribute
+    ! so that it can be shared by icon_single_index_cell and icon_single_index_neighborhood
+    function icon_si_index_based_rdirs_is_diagonal_dummy(this,coords_in) result(diagonal)
+        class(area),intent(in) :: this
+        class(coords), intent(in) :: coords_in
+        logical :: diagonal
+            select type (this)
+            type is (icon_single_index_index_based_rdirs_field)
+                continue
+            end select
+            select type (coords_in)
+            type is (generic_1d_coords)
+                continue
+            end select
+            diagonal = .false.
+    end function icon_si_index_based_rdirs_is_diagonal_dummy
+
     subroutine latlon_dir_based_rdirs_mark_ocean_and_river_mouth_points(this)
         class(latlon_dir_based_rdirs_cell), intent(inout) :: this
         class(*), pointer :: rdir
@@ -2237,10 +2506,10 @@ contains
                     rdir => this%river_directions%get_value(latlon_coords(i,j))
                     select type (rdir)
                     type is (integer)
-                        if( rdir == 0 ) then
+                        if( rdir == this%flow_direction_for_outflow ) then
                             this%contains_river_mouths = .TRUE.
                             this%ocean_cell = .FALSE.
-                        else if( rdir /= -1 ) then
+                        else if( rdir /= this%flow_direction_for_ocean_point ) then
                             non_ocean_cell_found = .TRUE.
                         end if
                     end select
@@ -2271,10 +2540,10 @@ contains
                         rdir => this%river_directions%get_value(latlon_coords(i,j))
                         select type (rdir)
                         type is (integer)
-                            if( rdir == 0 ) then
+                            if( rdir == this%flow_direction_for_outflow ) then
                                 this%contains_river_mouths = .TRUE.
                                 this%ocean_cell = .FALSE.
-                            else if( rdir /= -1 ) then
+                            else if( rdir /= this%flow_direction_for_ocean_point ) then
                                 non_ocean_cell_found = .TRUE.
                             end if
                         end select
@@ -2481,7 +2750,7 @@ contains
             list_of_cell_numbers(1) = this%center_cell_id
             call this%list_of_cells_in_neighborhood%reset_iterator()
             i = 1
-            do while (this%list_of_cells_in_neighborhood%iterate_forward())
+            do while (.not. this%list_of_cells_in_neighborhood%iterate_forward())
                 i = i + 1
                 cell_number_pointer => this%list_of_cells_in_neighborhood%get_value_at_iterator_position()
                 select type (cell_number_pointer)
@@ -2504,7 +2773,22 @@ contains
             total_cumulative_flow_pointer => total_cumulative_flow
             this%total_cumulative_flow => latlon_field_section(total_cumulative_flow_pointer,&
                                                                neighborhood_section_coords)
+            call neighborhood_section_coords%irregular_latlon_section_coords_destructor()
+            deallocate(list_of_cell_numbers)
     end subroutine init_irregular_latlon_neighborhood
+
+    subroutine irregular_latlon_neighborhood_destructor(this)
+        class(irregular_latlon_neighborhood), intent(inout) :: this
+            call neighborhood_destructor(this)
+            if (associated(this%list_of_cells_in_neighborhood)) then
+                call this%list_of_cells_in_neighborhood%reset_iterator()
+                do while ( .not. this%list_of_cells_in_neighborhood%iterate_forward())
+                    call this%list_of_cells_in_neighborhood%remove_element_at_iterator_position()
+                end do
+                deallocate(this%list_of_cells_in_neighborhood)
+            end if
+            if (associated(this%cell_numbers)) deallocate(this%cell_numbers)
+    end subroutine irregular_latlon_neighborhood_destructor
 
     subroutine yamazaki_init_latlon_neighborhood(this,center_cell_section_coords,river_directions,&
                                                  total_cumulative_flow,yamazaki_outlet_pixels, &
@@ -2529,7 +2813,7 @@ contains
             this%yamazaki_cell_width_lon = this%center_cell_max_lon + 1 - this%center_cell_min_lon
     end subroutine yamazaki_init_latlon_neighborhood
 
-    pure function latlon_in_which_cell(this,pixel) result (in_cell)
+    function latlon_in_which_cell(this,pixel) result (in_cell)
         class(latlon_neighborhood), intent(in) :: this
         class(coords), intent(in) :: pixel
         integer :: in_cell
@@ -2555,14 +2839,17 @@ contains
             end select
     end function latlon_in_which_cell
 
-    pure function irregular_latlon_in_which_cell(this,pixel) result (in_cell)
+    function irregular_latlon_in_which_cell(this,pixel) result (in_cell)
         class(irregular_latlon_neighborhood), intent(in) :: this
         class(coords), intent(in) :: pixel
+        class(*), pointer :: cell_number_ptr
         integer :: in_cell
-            select type (cell_number_ptr => this%cell_numbers%get_value(pixel))
+            cell_number_ptr => this%cell_numbers%get_value(pixel)
+            select type (cell_number_ptr )
             type is (integer)
                 in_cell = cell_number_ptr
             end select
+            deallocate(cell_number_ptr)
     end function irregular_latlon_in_which_cell
 
     pure function yamazaki_latlon_get_cell_coords(this,pixel_coords) result(cell_coords)
@@ -2656,6 +2943,17 @@ contains
                                                                 total_cumulative_flow)
     end function irregular_latlon_dir_based_rdirs_neighborhood_constructor
 
+    function icon_single_index_index_based_rdirs_field_constructor(field_section_coords,river_directions) &
+            result(constructor)
+        type(icon_single_index_index_based_rdirs_field), allocatable :: constructor
+        type(generic_1d_section_coords) :: field_section_coords
+        integer, dimension(:), target :: river_directions
+        class(*), dimension(:), pointer :: river_directions_pointer
+            allocate(constructor)
+            river_directions_pointer => river_directions
+            call constructor%init_icon_single_index_field(field_section_coords,river_directions_pointer)
+    end function icon_single_index_index_based_rdirs_field_constructor
+
     function yamazaki_latlon_dir_based_rdirs_neighborhood_constructor(center_cell_section_coords,river_directions, &
                                                                       total_cumulative_flow,yamazaki_outlet_pixels,&
                                                                       yamazaki_section_coords) &
@@ -2699,17 +2997,52 @@ contains
                     if (present(outflow_pixel_reached)) outflow_pixel_reached =  .TRUE.
                 else
                     if (present(outflow_pixel_reached)) outflow_pixel_reached =  .FALSE.
-                    if (coords_inout%lon > this%section_max_lon .or. coords_inout%lon < this%section_min_lon  .or. &
-                        coords_inout%lat > this%section_max_lat .or. coords_inout%lat < this%section_min_lat) then
-                        coords_not_in_area = .TRUE.
-                    else
+                    if (this%check_if_coords_are_in_area(this,coords_inout)) then
                         coords_not_in_area = .FALSE.
+                    else
+                        coords_not_in_area = .TRUE.
                     end if
                 end if
             end select
             deallocate(rdir)
         end select
     end subroutine latlon_dir_based_rdirs_find_next_pixel_downstream
+
+    subroutine icon_single_index_index_based_rdirs_find_next_pixel_downstream(this,&
+                                                                              coords_inout,&
+                                                                              coords_not_in_area,&
+                                                                              outflow_pixel_reached)
+        class(area), intent(in) :: this
+        class(coords), intent(inout) :: coords_inout
+        logical, intent(out) :: coords_not_in_area
+        logical, intent(out), optional :: outflow_pixel_reached
+        class(*), pointer :: next_cell_index
+        select type (coords_inout)
+        type is (generic_1d_coords)
+            select type (this)
+            type is (icon_single_index_index_based_rdirs_field)
+                next_cell_index => this%river_directions%get_value(coords_inout)
+                select type (next_cell_index)
+                type is (integer)
+                    if ( next_cell_index == this%index_for_sink .or. &
+                         next_cell_index == this%index_for_outflow .or. &
+                         next_cell_index == this%index_for_ocean_point ) then
+                        coords_not_in_area = .FALSE.
+                        if (present(outflow_pixel_reached)) outflow_pixel_reached =  .TRUE.
+                    else
+                        if (present(outflow_pixel_reached)) outflow_pixel_reached =  .FALSE.
+                        if (this%check_if_coords_are_in_area(this,coords_inout)) then
+                            coords_inout%index = next_cell_index
+                            coords_not_in_area = .FALSE.
+                        else
+                            coords_not_in_area = .TRUE.
+                        end if
+                    end if
+                end select
+            end select
+            deallocate(next_cell_index)
+        end select
+    end subroutine icon_single_index_index_based_rdirs_find_next_pixel_downstream
 
     pure function dir_based_rdirs_calculate_direction_indicator(this,downstream_cell) result(flow_direction)
         class(latlon_dir_based_rdirs_neighborhood), intent(in) :: this

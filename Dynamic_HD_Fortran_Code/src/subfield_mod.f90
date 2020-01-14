@@ -140,6 +140,9 @@ type, extends(subfield), public :: latlon_subfield
     integer :: lat_max
     !> Maximum longitude in this subfield
     integer :: lon_max
+    !> Wrap coordinates in this subfield... this should be false unless the subfield
+    !> span 360 degree of longitude
+    logical :: wrap
 contains
     !> Initialize a latitude longitude subfield; takes a pointer to an array of
     !! data that fits the subfield and a section coordinates object that specifies
@@ -304,19 +307,30 @@ contains
             call this%set_all_generic(pointer_to_value)
     end subroutine
 
-    function latlon_subfield_constructor(input_data,subfield_section_coords) &
+    function latlon_subfield_constructor(input_data,subfield_section_coords,wrap) &
             result(constructor)
         type(latlon_subfield), pointer :: constructor
         class(*), dimension(:,:), pointer :: input_data
         class(latlon_section_coords) :: subfield_section_coords
+        logical, optional :: wrap
             allocate(constructor)
-            call constructor%init_latlon_subfield(input_data,subfield_section_coords)
+            if (present(wrap)) then
+                call constructor%init_latlon_subfield(input_data,subfield_section_coords,wrap)
+            else
+                call constructor%init_latlon_subfield(input_data,subfield_section_coords)
+            end if
     end function latlon_subfield_constructor
 
-    subroutine init_latlon_subfield(this,input_data,subfield_section_coords)
+    subroutine init_latlon_subfield(this,input_data,subfield_section_coords,wrap)
         class(latlon_subfield) :: this
         class(*), dimension(:,:), pointer :: input_data
-        type(latlon_section_coords) :: subfield_section_coords
+        class(latlon_section_coords) :: subfield_section_coords
+        logical, optional :: wrap
+            if (present(wrap)) then
+                this%wrap = wrap
+            else
+                this%wrap = .false.
+            end if
             this%data => input_data
             this%lat_offset = subfield_section_coords%section_min_lat - 1
             this%lon_offset = subfield_section_coords%section_min_lon - 1
@@ -332,10 +346,33 @@ contains
         class(latlon_subfield), intent(in) :: this
         class(coords), intent(in) :: coords_in
         class(*), pointer :: value
+        integer :: lat, lon
             select type (coords_in)
             type is (latlon_coords)
-                allocate(value,source=this%data(coords_in%lat-this%lat_offset,&
-                                                coords_in%lon-this%lon_offset))
+                if ( this%lat_max >= coords_in%lat .and. coords_in%lat >= this%lat_min) then
+                    lat = coords_in%lat
+                else if (this%lat_max < coords_in%lat) then
+                    lat = this%lat_max
+                else
+                    lat = this%lat_min
+                end if
+                if ( this%lon_max >= coords_in%lon .and. coords_in%lon >= this%lon_min) then
+                    lon = coords_in%lon
+                else if (this%lon_max < coords_in%lon) then
+                    if (.not. this%wrap) then
+                        lon = this%lon_max
+                    else
+                        lon = coords_in%lon - this%lon_max
+                    end if
+                else
+                    if (.not. this%wrap) then
+                        lon = this%lon_min
+                    else
+                        lon = this%lon_max - this%lon_min + 1 + coords_in%lon
+                    end if
+                end if
+                allocate(value,source=this%data(lat-this%lat_offset,&
+                                                lon-this%lon_offset))
             end select
     end function latlon_get_value
 
@@ -343,10 +380,33 @@ contains
         class(latlon_subfield) :: this
         class(coords), intent(in) :: coords_in
         class(*), pointer :: value
+        integer :: lat,lon
             select type (coords_in)
             type is (latlon_coords)
-                call this%set_data_array_element(coords_in%lat-this%lat_offset,&
-                    coords_in%lon-this%lon_offset,value)
+                if ( this%lat_max >= coords_in%lat .and. coords_in%lat >= this%lat_min) then
+                    lat = coords_in%lat
+                else if (this%lat_max < coords_in%lat) then
+                    lat = this%lat_max
+                else
+                    lat = this%lat_min
+                end if
+                if ( this%lon_max >= coords_in%lon .and. coords_in%lon >= this%lon_min) then
+                    lon = coords_in%lon
+                else if (this%lon_max < coords_in%lon) then
+                    if (.not. this%wrap) then
+                        lon = this%lon_max
+                    else
+                        lon = coords_in%lon - this%lon_max
+                    end if
+                else
+                    if (.not. this%wrap) then
+                        lon = this%lon_min
+                    else
+                        lon = this%lon_max - this%lon_min + 1 + coords_in%lon
+                    end if
+                end if
+                call this%set_data_array_element(lat-this%lat_offset,&
+                    lon-this%lon_offset,value)
             end select
             deallocate(value)
     end subroutine latlon_set_generic_value

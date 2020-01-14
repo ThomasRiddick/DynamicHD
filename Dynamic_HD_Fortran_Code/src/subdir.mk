@@ -39,7 +39,9 @@ $(FRUIT_LOC)/fruit.f90 \
 ../src/cotat_plus_latlon_to_icon_simple_interface.f90 \
 ../src/map_non_coincident_grids_test_mod.f90 \
 ../src/manual_fruit_basket.f90 \
-../src/manual_fruit_basket_driver.f90
+../src/manual_fruit_basket_driver.f90 \
+../src/icon_to_latlon_landsea_downscaler.f90 \
+../src/icon_to_latlon_landsea_downscaler_simple_interface.f90
 
 OBJS += \
 ./src/precision_mod.o \
@@ -59,10 +61,14 @@ OBJS += \
 ./src/cotat_plus_driver_mod.o \
 ./src/flow.o \
 ./src/loop_breaker_mod.o \
-./src/flow_accumulation_algorithm_mod.o
+./src/flow_accumulation_algorithm_mod.o \
+./src/icon_to_latlon_landsea_downscaler.o
 
 COTAT_PLUS_LATLON_TO_ICON_SIMPLE_INTERFACE_OBJS += \
 ./src/cotat_plus_latlon_to_icon_simple_interface.o
+
+ICON_TO_LATLON_LANDSEA_DOWNSCALER_SIMPLE_INTERFACE_OBJS += \
+./src/icon_to_latlon_landsea_downscaler_simple_interface.o
 
 LATLON_HD_AND_LAKE_MODEL_OBJS += \
 ./src/parameters_mod.o \
@@ -138,7 +144,9 @@ MODS += \
 ./latlon_hd_model_driver.mod \
 ./map_non_coincident_grid_test_mod.mod \
 ./cotat_plus_latlon_to_icon_simple_interface.mod \
-./latlon_hd_and_lake_model_test_mod.mod
+./latlon_hd_and_lake_model_test_mod.mod \
+./icon_to_latlon_landsea_downscaler.mod \
+./icon_to_latlon_landsea_downscaler_simple_interface.mod
 
 # Each subdirectory must supply rules for building sources it contributes
 src/fruit.o: $(FRUIT_LOC)/fruit.f90
@@ -236,3 +244,7 @@ src/latlon_hd_and_lake_model_test_mod.o: ../src/latlon_hd_and_lake_model_test_mo
 src/map_non_coincident_grids_mod.o: ../src/map_non_coincident_grids_mod.f90
 
 src/map_non_coincident_grids_test_mod.o: ../src/map_non_coincident_grids_test_mod.f90 src/map_non_coincident_grids_mod.o
+
+src/icon_to_latlon_landsea_downscaler.o: ../src/icon_to_latlon_landsea_downscaler.f90
+
+src/icon_to_latlon_landsea_downscaler_simple_interface.o: ../src/icon_to_latlon_landsea_downscaler_simple_interface.f90 src/icon_to_latlon_landsea_downscaler.o

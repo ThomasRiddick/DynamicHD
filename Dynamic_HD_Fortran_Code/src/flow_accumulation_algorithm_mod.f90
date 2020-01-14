@@ -316,6 +316,16 @@ end subroutine follow_paths
     class(icon_single_index_flow_accumulation_algorithm), intent (in) :: this
     class(coords), intent (in) :: coords_in
     integer :: index
+      ! Dummy code to prevent compiler warnings
+      select type (coords_in)
+      type is (latlon_coords)
+        index = coords_in%lat
+      end select
+      ! Dummy code to prevent compiler warnings
+      select type (ndv=> this%no_data_value)
+      type is (latlon_coords)
+      index = ndv%lat
+      end select
       index = 1
       stop "Function generate_coords_index not yet implemented for incon grid"
   end function icon_single_index_generate_coords_index

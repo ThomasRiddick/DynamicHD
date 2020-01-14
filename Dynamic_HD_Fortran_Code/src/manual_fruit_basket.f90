@@ -72,6 +72,54 @@ contains
         end if
         call teardown
 
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testSmallGridLatLonToIcon"
+        call set_unit_name('test_something')
+        call run_test_case(testSmallGridLatLonToIcon,&
+                           'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","test_small_grid_latlon_to_icon")
+        else
+            call case_passed_xml("test_something","test_small_grid_latlon_to_icon")
+        end if
+        call teardown
+
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testSmallGridLatLonToIconTwo"
+        call set_unit_name('test_something')
+        call run_test_case(testSmallGridLatLonToIconTwo,&
+                           'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","test_small_grid_latlon_to_icon_two")
+        else
+            call case_passed_xml("test_something","test_small_grid_latlon_to_icon_two")
+        end if
+        call teardown
+
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testSmallGridLatLonToIconThree"
+        call set_unit_name('test_something')
+        call run_test_case(testSmallGridLatLonToIconThree,&
+                           'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","test_small_grid_latlon_to_icon_three")
+        else
+            call case_passed_xml("test_something","test_small_grid_latlon_to_icon_three")
+        end if
+        call teardown
+
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testFindingLocalizedLoops"
+        call set_unit_name('test_something')
+        call run_test_case(testFindingLocalizedLoops,&
+                           'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","test_latlon_to_icon_finding_localized_loop")
+        else
+            call case_passed_xml("test_something","test_latlon_to_icon_finding_localized_loop")
+        end if
+        call teardown
+
     end subroutine cotat_plus_all_tests
 
     subroutine area_all_tests
