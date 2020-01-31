@@ -1,6 +1,6 @@
 '''
-A module containing top level functions (currently only one) related to finding and mark the river mouths 
-in a flow direction field 
+A module containing top level functions (currently only one) related to finding and mark the river mouths
+in a flow direction field
 
 Created on Apr 18, 2016
 
@@ -9,13 +9,35 @@ Created on Apr 18, 2016
 
 import dynamic_hd
 import field
+import iodriver
+
+def advanced_river_mouth_marking_driver(input_river_directions_filename,
+                                        output_river_directions_filename,
+                                        input_river_directions_fieldname,
+                                        output_river_directions_fieldname,
+                                        lsmask_filename=None,
+                                        lsmask_fieldname=None):
+    rdirs = iodriver.advanced_field_loader(input_river_directions_filename,
+                                           field_type="RiverDirections",
+                                           fieldname=input_river_directions_fieldname)
+    if lsmask_filename is not None:
+        lsmask = iodriver.advanced_field_loader(lsmask_filename,
+                                                field_type="Generic",
+                                                fieldname=lsmask_fieldname)
+    else:
+        lsmask=None
+    rdirs.mark_river_mouths(lsmask)
+    iodriver.advanced_field_writer(output_river_directions_filename,
+                                 field=rdirs,
+                                 fieldname=output_river_directions_fieldname)
+
 
 def main(rdirs_filepath,updatedrdirs_filepath,lsmask_filepath=None,
          flowtocell_filepath=None,rivermouths_filepath=None,
          flowtorivermouths_filepath=None,skip_marking_mouths=False,
          flip_mask_ud=False,grid_type='HD',**grid_kwargs):
     """Top level function to drive the river mouth marking process
-    
+
     Arguments:
     rdirs_filepath: string; full path to input river directions file
     updatedrdirs_filepath: string; full path to target output river directions file
@@ -24,7 +46,7 @@ def main(rdirs_filepath,updatedrdirs_filepath,lsmask_filepath=None,
         flowtorivermouths_filepath to be defined for this option to be meaningful; if it is not
         will raise a warning
     rivermouths_filepath(optional): string; full path to optional target river mouths output
-        file - if used this will create a file where the position of river mouths is marked 
+        file - if used this will create a file where the position of river mouths is marked
         True and all other points are marked false
     flowtorivermouths_filepath(optional): string; full path to optional target flow to river mouth
         output file that will contain 0 everywhere expect at river mouths where it will contain the
@@ -35,8 +57,8 @@ def main(rdirs_filepath,updatedrdirs_filepath,lsmask_filepath=None,
     grid_type: string; keyword specifying the grid type
     **grid_kwargs: dictionary of keyword arguments; parameters for the specified grid type if required
     Return: Nothing
-    
-    Additional tasks are producing a river mouths output file and producing a flow to river mouth output 
+
+    Additional tasks are producing a river mouths output file and producing a flow to river mouth output
     file.
     """
 
@@ -54,7 +76,7 @@ def main(rdirs_filepath,updatedrdirs_filepath,lsmask_filepath=None,
             lsmask.flip_data_ud()
     else:
         lsmask = None
-        
+
     if flowtocell_filepath:
         flowtocell_field = dynamic_hd.load_field(filename=flowtocell_filepath,
                                         file_type=dynamic_hd.get_file_extension(flowtocell_filepath),
@@ -66,9 +88,9 @@ def main(rdirs_filepath,updatedrdirs_filepath,lsmask_filepath=None,
     if not skip_marking_mouths:
         #Perform the actual marking of river mouths
         rdirs_field.mark_river_mouths(lsmask.get_data() if lsmask is not None else None)
-       
-        #Write out the updated river directions field 
-        dynamic_hd.write_field(filename=updatedrdirs_filepath, 
+
+        #Write out the updated river directions field
+        dynamic_hd.write_field(filename=updatedrdirs_filepath,
                                field=rdirs_field,
                                file_type=dynamic_hd.get_file_extension(updatedrdirs_filepath))
 
@@ -84,7 +106,7 @@ def main(rdirs_filepath,updatedrdirs_filepath,lsmask_filepath=None,
                                                                                           get_data()),
                                                           'Generic',grid_type,
                                                           **grid_kwargs)
-                                                          
+
                 dynamic_hd.write_field(flowtorivermouths_filepath,flowtorivermouths_field,
                                        file_type=dynamic_hd.get_file_extension(flowtorivermouths_filepath))
             else:

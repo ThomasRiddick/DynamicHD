@@ -97,11 +97,20 @@ end subroutine icon_single_index_init_flow_accumulation_algorithm
 subroutine generate_cumulative_flow(this,set_links)
   class(flow_accumulation_algorithm), intent(inout) :: this
   logical, intent(in) :: set_links
-  call this%river_directions%for_all(set_dependencies,this)
-  call this%dependencies%for_all(add_cells_to_queue,this)
+  call this%river_directions%for_all(set_dependencies_wrapper,this)
+  call this%dependencies%for_all(add_cells_to_queue_wrapper,this)
   call this%process_queue()
-  if (set_links) call this%river_directions%for_all_edge_cells(follow_paths,this)
+  if (set_links) call this%river_directions%for_all_edge_cells(follow_paths_wrapper,this)
 end subroutine generate_cumulative_flow
+
+subroutine set_dependencies_wrapper(this,coords_in)
+  class(*), intent(inout) :: this
+  class(coords), pointer, intent(in) :: coords_in
+    select type(this)
+      class is (flow_accumulation_algorithm)
+        call this%set_dependencies(coords_in)
+    end select
+end subroutine set_dependencies_wrapper
 
 subroutine set_dependencies(this,coords_in)
   class(flow_accumulation_algorithm), intent(inout) :: this
@@ -133,6 +142,15 @@ subroutine set_dependencies(this,coords_in)
       end select
     end if
 end subroutine set_dependencies
+
+subroutine add_cells_to_queue_wrapper(this,coords_in)
+  class(*), intent(inout) :: this
+  class(coords), pointer, intent(in) :: coords_in
+    select type(this)
+    class is (flow_accumulation_algorithm)
+      call this%add_cells_to_queue(coords_in)
+    end select
+end subroutine add_cells_to_queue_wrapper
 
 subroutine add_cells_to_queue(this,coords_in)
   class(flow_accumulation_algorithm), intent(inout) :: this
@@ -213,6 +231,15 @@ subroutine process_queue(this)
     end if
   end do
 end subroutine process_queue
+
+subroutine follow_paths_wrapper(this,initial_coords)
+  class(*), intent(inout) :: this
+  class(coords), pointer, intent(in) :: initial_coords
+    select type(this)
+    class is (flow_accumulation_algorithm)
+      call this%follow_paths(initial_coords)
+    end select
+end subroutine follow_paths_wrapper
 
 subroutine follow_paths(this,initial_coords)
   class(flow_accumulation_algorithm), intent(inout) :: this

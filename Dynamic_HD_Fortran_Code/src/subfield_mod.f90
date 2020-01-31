@@ -81,12 +81,12 @@ abstract interface
         interface
             subroutine subroutine_interface(calling_object,coords_in)
                 use coords_mod
-                class(*) :: calling_object
+                class(*), intent(inout) :: calling_object
                 class(coords),intent(in) :: coords_in
             end subroutine subroutine_interface
         end interface
         procedure(subroutine_interface) :: subroutine_in
-        class(*) :: calling_object
+        class(*), intent(inout) :: calling_object
     end subroutine for_all
 
     subroutine for_all_edge_cells(this,subroutine_in,calling_object)
@@ -96,12 +96,12 @@ abstract interface
         interface
             subroutine subroutine_interface(calling_object,coords_in)
                 use coords_mod
-                class(*) :: calling_object
+                class(*), intent(inout) :: calling_object
                 class(coords), intent(in) :: coords_in
             end subroutine subroutine_interface
         end interface
         procedure(subroutine_interface) :: subroutine_in
-        class(*) :: calling_object
+        class(*), intent(inout) :: calling_object
     end subroutine for_all_edge_cells
 
     subroutine set_all_generic(this,value)
@@ -425,12 +425,12 @@ contains
     subroutine latlon_for_all(this,subroutine_in,calling_object)
         implicit none
         class(latlon_subfield) :: this
-        class(*) :: calling_object
+        class(*), intent(inout) :: calling_object
         integer :: i,j
         interface
             subroutine subroutine_interface(calling_object,coords_in)
                 use coords_mod
-                class(*) :: calling_object
+                class(*), intent(inout) :: calling_object
                 class(coords), intent(in) :: coords_in
             end subroutine subroutine_interface
         end interface
@@ -445,12 +445,12 @@ contains
     subroutine latlon_for_all_edge_cells(this,subroutine_in,calling_object)
         implicit none
         class(latlon_subfield) :: this
-        class(*) :: calling_object
+        class(*), intent(inout) :: calling_object
         integer :: i,j
         interface
             subroutine subroutine_interface(calling_object,coords_in)
                 use coords_mod
-                class(*) :: calling_object
+                class(*), intent(inout) :: calling_object
                 class(coords),intent(in) :: coords_in
             end subroutine subroutine_interface
         end interface
@@ -595,12 +595,12 @@ contains
     subroutine icon_single_index_for_all(this,subroutine_in,calling_object)
         implicit none
         class(icon_single_index_subfield) :: this
-        class(*) :: calling_object
+        class(*), intent(inout) :: calling_object
         integer :: i
         interface
             subroutine subroutine_interface(calling_object,coords_in)
                 use coords_mod
-                class(*) :: calling_object
+                class(*), intent(inout) :: calling_object
                 class(coords), intent(in) :: coords_in
             end subroutine subroutine_interface
         end interface
@@ -613,12 +613,12 @@ contains
     subroutine icon_single_index_for_all_edge_cells(this,subroutine_in,calling_object)
         implicit none
         class(icon_single_index_subfield) :: this
-        class(*) :: calling_object
+        class(*), intent(inout) :: calling_object
         integer :: i
         interface
             subroutine subroutine_interface(calling_object,coords_in)
                 use coords_mod
-                class(*) :: calling_object
+                class(*), intent(inout) :: calling_object
                 class(coords),intent(in) :: coords_in
             end subroutine subroutine_interface
         end interface

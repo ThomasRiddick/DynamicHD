@@ -155,8 +155,7 @@ int main(int argc, char *argv[]){
     landsea_var.getVar(landsea_in_double);
     //invert landsea mask
     for (auto i = 0; i <ncells;i++){
-      if (landsea_in_double[i] < 0.5) landsea_in_double[i] = 0.0;
-      landsea_in[i] = ! bool(landsea_in_double[i]);
+      landsea_in[i] = ! bool(ceil(landsea_in_double[i]));
     }
     delete[] landsea_in_double;
   } else {

@@ -1508,6 +1508,7 @@ contains
                     cells_to_reprocess(:,1) = cells_to_reprocess_data
                 end select
             end select
+            deallocate(cells_to_reprocess_data)
     end function icon_single_index_check_field_for_localized_loops
 
     subroutine latlon_initialize_cells_to_reprocess_field_section(this)

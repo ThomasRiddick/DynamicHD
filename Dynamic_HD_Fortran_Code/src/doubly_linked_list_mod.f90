@@ -103,7 +103,7 @@ contains
     subroutine add_generic_value_to_back(this,value)
         class(doubly_linked_list), intent(inout) :: this
         class(*), pointer, intent(inout) :: value
-        class(doubly_linked_list_link), pointer :: new_element
+        type(doubly_linked_list_link), pointer :: new_element
         if (associated(this%first_element)) then
            this%length = this%length + 1
            !For gfortran 7.2.0
@@ -126,7 +126,7 @@ contains
     subroutine add_generic_value_to_front(this,value)
         class(doubly_linked_list), intent(inout) :: this
         class(*), pointer, intent(inout) :: value
-        class(doubly_linked_list_link), pointer :: new_element
+        type(doubly_linked_list_link), pointer :: new_element
         if (associated(this%first_element)) then
             this%length = this%length + 1
             !For gfortran 7.2.0
@@ -277,8 +277,8 @@ contains
 
     subroutine remove_element_at_iterator_position(this)
         class(doubly_linked_list), intent(inout) :: this
-        class(doubly_linked_list_link), pointer :: previous_element
-        class(doubly_linked_list_link), pointer :: next_element
+        type(doubly_linked_list_link), pointer :: previous_element
+        type(doubly_linked_list_link), pointer :: next_element
         if (associated(this%iterator_position)) then
             if(associated(this%iterator_position,this%first_element) .and. &
                associated(this%iterator_position,this%last_element)) then

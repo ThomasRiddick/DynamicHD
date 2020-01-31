@@ -65,10 +65,12 @@ OBJS += \
 ./src/icon_to_latlon_landsea_downscaler.o
 
 COTAT_PLUS_LATLON_TO_ICON_SIMPLE_INTERFACE_OBJS += \
-./src/cotat_plus_latlon_to_icon_simple_interface.o
+./src/cotat_plus_latlon_to_icon_simple_interface.o \
+./src/check_return_code_netcdf_mod.o
 
 ICON_TO_LATLON_LANDSEA_DOWNSCALER_SIMPLE_INTERFACE_OBJS += \
-./src/icon_to_latlon_landsea_downscaler_simple_interface.o
+./src/icon_to_latlon_landsea_downscaler_simple_interface.o \
+./src/check_return_code_netcdf_mod.o
 
 LATLON_HD_AND_LAKE_MODEL_OBJS += \
 ./src/parameters_mod.o \
@@ -149,21 +151,39 @@ MODS += \
 ./icon_to_latlon_landsea_downscaler_simple_interface.mod
 
 # Each subdirectory must supply rules for building sources it contributes
+ifeq ($(FORTRAN),$(GFORTRAN))
 src/fruit.o: $(FRUIT_LOC)/fruit.f90
 	@echo 'Building file: $<'
 	@echo 'Invoking: GNU Fortran Compiler'
-	$(GFORTRAN) -funderscoring -O0 -g -Wall -c -fmessage-length=0 -fPIC -o "$@" "$<"
+	$(FORTRAN) -funderscoring -cpp -O0 -g -Wall -c -fmessage-length=0 -fPIC -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
+else
+src/fruit.o: $(FRUIT_LOC)/fruit.f90
+	@echo 'Building file: $<'
+	@echo 'Invoking: NAG Fortran Compiler'
+	$(FORTRAN) -O0 -g -c -o "$@" "$<"
+	@echo 'Finished building: $<'
+	@echo ' '
+endif
 
 src/fruit.o: $(FRUIT_LOC)/fruit.f90
 
+ifeq ($(FORTRAN),$(GFORTRAN))
 src/%.o: ../src/%.f90
 	@echo 'Building file: $<'
 	@echo 'Invoking: GNU Fortran Compiler'
-	$(GFORTRAN) -funderscoring -O0 -g -Wall -c -fmessage-length=0 -fPIC -o "$@" "$<" "-I ../include" "-I $(NETCDF_F)/include"
+	$(FORTRAN) -funderscoring -cpp -O0 -g -Wall -c -fmessage-length=0 -fPIC -o "$@" "$<" "-I ../include" "-I $(NETCDF_F)/include"
 	@echo 'Finished building: $<'
 	@echo ' '
+else
+src/%.o: ../src/%.f90
+	@echo 'Invoking: NAG Fortran Compiler'
+	@echo 'Building file: $<'
+	$(FORTRAN) -O0 -g -c -o "$@" "$<" "-I ../include" "-I $(NETCDF_F)/include"
+	@echo 'Finished building: $<'
+	@echo ' '
+endif
 
 src/area_mod.o: ../src/area_mod.f90 src/coords_mod.o src/cotat_parameters_mod.o src/doubly_linked_list_mod.o src/field_section_mod.o src/precision_mod.o src/subfield_mod.o
 
@@ -207,7 +227,7 @@ src/manual_fruit_basket.o: ../src/manual_fruit_basket.f90 src/area_test_mod.o sr
 
 src/manual_fruit_basket_driver.o: ../src/manual_fruit_basket_driver.f90 src/fruit.o src/manual_fruit_basket.o
 
-src/cotat_plus_latlon_to_icon_simple_interface.o: ../src/cotat_plus_latlon_to_icon_simple_interface.f90 src/cotat_plus.o
+src/cotat_plus_latlon_to_icon_simple_interface.o: ../src/cotat_plus_latlon_to_icon_simple_interface.f90 src/cotat_plus.o src/check_return_code_netcdf_mod.o
 
 src/precision_mod.o: ../src/precision_mod.f90
 
@@ -247,4 +267,4 @@ src/map_non_coincident_grids_test_mod.o: ../src/map_non_coincident_grids_test_mo
 
 src/icon_to_latlon_landsea_downscaler.o: ../src/icon_to_latlon_landsea_downscaler.f90
 
-src/icon_to_latlon_landsea_downscaler_simple_interface.o: ../src/icon_to_latlon_landsea_downscaler_simple_interface.f90 src/icon_to_latlon_landsea_downscaler.o
+src/icon_to_latlon_landsea_downscaler_simple_interface.o: ../src/icon_to_latlon_landsea_downscaler_simple_interface.f90 src/icon_to_latlon_landsea_downscaler.o src/check_return_code_netcdf_mod.o

@@ -3,6 +3,7 @@ program icon_to_latlon_landsea_downscaler_simple_interface
   use netcdf
   use icon_to_latlon_landsea_downscaler
   use precision_mod
+  use check_return_code_netcdf_mod
   implicit none
 
   integer, parameter :: MAX_NAME_LENGTH = 1000
@@ -109,15 +110,6 @@ program icon_to_latlon_landsea_downscaler_simple_interface
     deallocate(fine_landsea_mask)
     deallocate(coarse_landsea_mask)
     deallocate(coarse_to_fine_cell_numbers_mapping)
-contains
-
-  subroutine check_return_code(return_code)
-    integer, intent(in) :: return_code
-      if(return_code /= nf90_noerr) then
-        print *,trim(nf90_strerror(return_code))
-        stop
-      end if
-  end subroutine check_return_code
 
 end program icon_to_latlon_landsea_downscaler_simple_interface
 

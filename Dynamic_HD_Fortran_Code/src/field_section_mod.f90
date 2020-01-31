@@ -57,12 +57,12 @@ abstract interface
         interface
             subroutine subroutine_interface(calling_object,coords_in)
                 use coords_mod
-                class(*) :: calling_object
+                class(*), intent(inout) :: calling_object
                 class(coords),intent(in) :: coords_in
             end subroutine subroutine_interface
         end interface
         procedure(subroutine_interface) :: subroutine_in
-        class(*) :: calling_object
+        class(*), intent(inout) :: calling_object
     end subroutine for_all_section
 
     subroutine print_field_section(this)
@@ -337,12 +337,12 @@ contains
     subroutine latlon_for_all_section(this,subroutine_in,calling_object)
         implicit none
         class(latlon_field_section) :: this
-        class(*) :: calling_object
+        class(*), intent(inout) :: calling_object
         integer :: i,j
         interface
             subroutine subroutine_interface(calling_object,coords_in)
                 use coords_mod
-                class(*) :: calling_object
+                class(*), intent(inout) :: calling_object
                 class(coords), intent(in) :: coords_in
             end subroutine subroutine_interface
         end interface
@@ -510,12 +510,12 @@ contains
     subroutine icon_single_index_for_all_section(this,subroutine_in,calling_object)
         implicit none
         class(icon_single_index_field_section) :: this
-        class(*) :: calling_object
+        class(*), intent(inout) :: calling_object
         integer :: i
         interface
             subroutine subroutine_interface(calling_object,coords_in)
                 use coords_mod
-                class(*) :: calling_object
+                class(*), intent(inout) :: calling_object
                 class(coords), intent(in) :: coords_in
             end subroutine subroutine_interface
         end interface

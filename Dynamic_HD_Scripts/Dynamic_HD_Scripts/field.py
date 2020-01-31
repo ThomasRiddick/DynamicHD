@@ -459,11 +459,36 @@ class RiverDirections(Field):
     """A subclass of field with various method specific to river directions
 
     Public Methods:
+    convert_hydrosheds_rdirs
     mark_river_mouths
     get_river_mouths
     get_lsmask
     extract_truesinks
     """
+
+    esri_to_one_to_nine_rdirs_conversions = [(32,7),(64,8),(128,9),
+                                             (16,4),(0,-1), (1,6),
+                                             (8,1), (4,2), (2,3),
+                                             (-1,5)]
+
+    def convert_hydrosheds_rdirs(self):
+        """Convert these river direction from the ESRI format to a 1-9 keypad format
+
+        Arguments: None
+        Returns: A Field of converted river directions
+
+        ESRI is the format used by hdyrosheds... direction are as follows
+        32 64 128
+        16  0   1
+        8   4   2
+        Final outlets to the oceans are marked with 0; Endorheic basins are marked with
+        a -1
+        """
+
+        new_rdirs = makeEmptyField('RiverDirections',np.float64,self.grid)
+        for old_num,new_num in self.esri_to_one_to_nine_rdirs_conversions:
+            new_rdirs.data[self.data == old_num] = new_num
+        return new_rdirs
 
     def mark_river_mouths(self,lsmask=None):
         """Mark points where a river flows into the sea

@@ -13,7 +13,7 @@ end subroutine teardown
 
 subroutine testLatLonToIconGrids
   type(icon_icosohedral_grid), pointer :: coarse_grid
-  type(icon_icosohedral_cell_latlon_pixel_non_coincident_grid_mapper) :: ncg_mapper
+  type(icon_icosohedral_cell_latlon_pixel_ncg_mapper) :: ncg_mapper
   integer, dimension(:,:), pointer :: cell_neighbors
   integer, dimension(:,:), pointer :: secondary_neighbors
   real(kind=double_precision), dimension(:,:), allocatable :: cell_vertices_lats
@@ -317,10 +317,10 @@ subroutine testLatLonToIconGrids
                                                                 secondary_neighbors))
     cell_vertex_coords => icon_single_index_field_section(cell_vertex_coords_data,coarse_grid_shape)
     ncg_mapper = &
-        icon_icosohedral_cell_latlon_pixel_non_coincident_grid_mapper(pixel_center_lats_field,&
-                                                                      pixel_center_lons_field,&
-                                                                      cell_vertex_coords,&
-                                                                      fine_grid_shape)
+        icon_icosohedral_cell_latlon_pixel_ncg_mapper(pixel_center_lats_field,&
+                                                      pixel_center_lons_field,&
+                                                      cell_vertex_coords,&
+                                                      fine_grid_shape)
     cell_numbers => ncg_mapper%generate_cell_numbers()
     select type(cell_numbers)
     class is (latlon_field_section)

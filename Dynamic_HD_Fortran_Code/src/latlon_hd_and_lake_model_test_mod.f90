@@ -14,24 +14,25 @@ subroutine testHdModel
    use latlon_hd_model_interface_mod
    use latlon_hd_model_mod
 
-   type(riverparameters) :: river_parameters
-   type(riverprognosticfields) :: river_fields
-   integer,dimension(:,:), allocatable :: river_reservoir_nums
-   integer,dimension(:,:), allocatable :: overland_reservoir_nums
-   integer,dimension(:,:), allocatable :: base_reservoir_nums
-   real   ,dimension(:,:), allocatable :: river_retention_coefficients
-   real   ,dimension(:,:), allocatable :: overland_retention_coefficients
-   real   ,dimension(:,:), allocatable :: base_retention_coefficients
-   logical,dimension(:,:), allocatable :: landsea_mask
+   type(riverparameters), pointer :: river_parameters
+   type(riverprognosticfields), pointer :: river_fields
+   integer,dimension(:,:), pointer :: river_reservoir_nums
+   integer,dimension(:,:), pointer :: overland_reservoir_nums
+   integer,dimension(:,:), pointer :: base_reservoir_nums
+   real   ,dimension(:,:), pointer :: river_retention_coefficients
+   real   ,dimension(:,:), pointer :: overland_retention_coefficients
+   real   ,dimension(:,:), pointer :: base_retention_coefficients
+   logical,dimension(:,:), pointer :: landsea_mask
    real   ,dimension(:,:), allocatable :: drainage
    real   ,dimension(:,:,:), allocatable :: drainages
    real   ,dimension(:,:,:), allocatable :: runoffs
    real   ,dimension(:,:), allocatable :: expected_water_to_ocean
    real   ,dimension(:,:), allocatable :: expected_river_inflow
-   real   ,dimension(:,:), allocatable :: flow_directions
+   real   ,dimension(:,:), pointer :: flow_directions
    type(prognostics), pointer :: global_prognostics_ptr
    integer :: timesteps, i
       timesteps = 200
+      allocate(flow_directions(4,4))
       flow_directions = transpose(reshape((/ 2.0, 2.0, 2.0, 2.0, &
                                    4.0, 6.0, 2.0, 2.0, &
                                    6.0, 6.0, 0.0, 4.0, &
@@ -55,15 +56,15 @@ subroutine testHdModel
       overland_reservoir_nums(3,3) = 0
       base_reservoir_nums(3,3) = 0
       landsea_mask(3,3) = .True.
-      river_parameters = riverparameters(flow_directions, &
-                                         river_reservoir_nums, &
-                                         overland_reservoir_nums, &
-                                         base_reservoir_nums, &
-                                         river_retention_coefficients, &
-                                         overland_retention_coefficients, &
-                                         base_retention_coefficients, &
-                                         landsea_mask)
-      river_fields = riverprognosticfields(4,4,1,1,5)
+      river_parameters => riverparameters(flow_directions, &
+                                          river_reservoir_nums, &
+                                          overland_reservoir_nums, &
+                                          base_reservoir_nums, &
+                                          river_retention_coefficients, &
+                                          overland_retention_coefficients, &
+                                          base_retention_coefficients, &
+                                          landsea_mask)
+      river_fields => riverprognosticfields(4,4,1,1,5)
       allocate(drainage(4,4))
       drainage = transpose(reshape((/ &
          1.0, 1.0, 1.0, 1.0, &
@@ -98,78 +99,71 @@ subroutine testHdModel
                          expected_water_to_ocean,4,4)
       call assert_equals(global_prognostics_ptr%river_fields%river_inflow,&
                          expected_river_inflow,4,4)
-      deallocate(river_reservoir_nums)
-      deallocate(overland_reservoir_nums)
-      deallocate(base_reservoir_nums)
-      deallocate(river_retention_coefficients)
-      deallocate(overland_retention_coefficients)
-      deallocate(base_retention_coefficients)
-      deallocate(landsea_mask)
       deallocate(drainage)
       deallocate(drainages)
       deallocate(runoffs)
       deallocate(expected_water_to_ocean)
       deallocate(expected_river_inflow)
-      deallocate(flow_directions)
       call clean_hd_model()
 end subroutine testHdModel
 
 subroutine testLakeModel1
    use latlon_hd_model_interface_mod
    use latlon_hd_model_mod
-   type(riverparameters) :: river_parameters
-   type(riverprognosticfields) :: river_fields
+   use latlon_lake_model_io_mod
+   type(riverparameters), pointer :: river_parameters
+   type(riverprognosticfields), pointer:: river_fields
    type(lakeparameters),pointer :: lake_parameters
    type(lakefields), pointer :: lake_fields_out
    type(lakeprognostics), pointer :: lake_prognostics_out
    type(lakepointer) :: working_lake_ptr
-   real   ,dimension(:,:), allocatable :: flow_directions
-   integer,dimension(:,:), allocatable :: river_reservoir_nums
-   integer,dimension(:,:), allocatable :: overland_reservoir_nums
-   integer,dimension(:,:), allocatable :: base_reservoir_nums
-   real,dimension(:,:), allocatable :: river_retention_coefficients
-   real,dimension(:,:), allocatable :: overland_retention_coefficients
-   real,dimension(:,:), allocatable :: base_retention_coefficients
-   logical,dimension(:,:), allocatable :: landsea_mask
-   logical,dimension(:,:), allocatable :: lake_centers
-   real,dimension(:,:), allocatable :: connection_volume_thresholds
-   real,dimension(:,:), allocatable :: flood_volume_thresholds
-   logical,dimension(:,:), allocatable :: flood_local_redirect
-   logical,dimension(:,:), allocatable :: connect_local_redirect
-   logical,dimension(:,:), allocatable :: additional_flood_local_redirect
-   logical,dimension(:,:), allocatable :: additional_connect_local_redirect
-   integer,dimension(:,:), allocatable :: merge_points
-   integer,dimension(:,:), allocatable :: flood_next_cell_lat_index
-   integer,dimension(:,:), allocatable :: flood_next_cell_lon_index
-   integer,dimension(:,:), allocatable :: connect_next_cell_lat_index
-   integer,dimension(:,:), allocatable :: connect_next_cell_lon_index
-   integer,dimension(:,:), allocatable :: flood_force_merge_lat_index
-   integer,dimension(:,:), allocatable :: flood_force_merge_lon_index
-   integer,dimension(:,:), allocatable :: connect_force_merge_lat_index
-   integer,dimension(:,:), allocatable :: connect_force_merge_lon_index
-   integer,dimension(:,:), allocatable :: flood_redirect_lat_index
-   integer,dimension(:,:), allocatable :: flood_redirect_lon_index
-   integer,dimension(:,:), allocatable :: connect_redirect_lat_index
-   integer,dimension(:,:), allocatable :: connect_redirect_lon_index
-   integer,dimension(:,:), allocatable :: additional_flood_redirect_lat_index
-   integer,dimension(:,:), allocatable :: additional_flood_redirect_lon_index
-   integer,dimension(:,:), allocatable :: additional_connect_redirect_lat_index
-   integer,dimension(:,:), allocatable :: additional_connect_redirect_lon_index
-   real,dimension(:,:), allocatable :: drainage
-   real,dimension(:,:,:), allocatable :: drainages
-   real,dimension(:,:), allocatable :: runoff
-   real,dimension(:,:,:), allocatable :: runoffs
-   real, allocatable, dimension(:,:) :: initial_spillover_to_rivers
-   real, allocatable, dimension(:,:) :: initial_water_to_lake_centers
-   real,dimension(:,:), allocatable :: expected_river_inflow
-   real,dimension(:,:), allocatable :: expected_water_to_ocean
-   real,dimension(:,:), allocatable :: expected_water_to_hd
-   integer,dimension(:,:), allocatable :: expected_lake_numbers
-   integer,dimension(:,:), allocatable :: expected_lake_types
-   real,dimension(:), allocatable :: expected_lake_volumes
-   integer,dimension(:,:), allocatable :: lake_types
+   real   ,dimension(:,:), pointer :: flow_directions
+   integer,dimension(:,:), pointer :: river_reservoir_nums
+   integer,dimension(:,:), pointer :: overland_reservoir_nums
+   integer,dimension(:,:), pointer :: base_reservoir_nums
+   real,dimension(:,:), pointer :: river_retention_coefficients
+   real,dimension(:,:), pointer :: overland_retention_coefficients
+   real,dimension(:,:), pointer :: base_retention_coefficients
+   logical,dimension(:,:), pointer :: landsea_mask
+   logical,dimension(:,:), pointer :: lake_centers
+   real,dimension(:,:), pointer :: connection_volume_thresholds
+   real,dimension(:,:), pointer :: flood_volume_thresholds
+   logical,dimension(:,:), pointer :: flood_local_redirect
+   logical,dimension(:,:), pointer :: connect_local_redirect
+   logical,dimension(:,:), pointer :: additional_flood_local_redirect
+   logical,dimension(:,:), pointer :: additional_connect_local_redirect
+   integer,dimension(:,:), pointer :: merge_points
+   integer,dimension(:,:), pointer :: flood_next_cell_lat_index
+   integer,dimension(:,:), pointer :: flood_next_cell_lon_index
+   integer,dimension(:,:), pointer :: connect_next_cell_lat_index
+   integer,dimension(:,:), pointer :: connect_next_cell_lon_index
+   integer,dimension(:,:), pointer :: flood_force_merge_lat_index
+   integer,dimension(:,:), pointer :: flood_force_merge_lon_index
+   integer,dimension(:,:), pointer :: connect_force_merge_lat_index
+   integer,dimension(:,:), pointer :: connect_force_merge_lon_index
+   integer,dimension(:,:), pointer :: flood_redirect_lat_index
+   integer,dimension(:,:), pointer :: flood_redirect_lon_index
+   integer,dimension(:,:), pointer :: connect_redirect_lat_index
+   integer,dimension(:,:), pointer :: connect_redirect_lon_index
+   integer,dimension(:,:), pointer :: additional_flood_redirect_lat_index
+   integer,dimension(:,:), pointer :: additional_flood_redirect_lon_index
+   integer,dimension(:,:), pointer :: additional_connect_redirect_lat_index
+   integer,dimension(:,:), pointer :: additional_connect_redirect_lon_index
+   real,dimension(:,:), pointer :: drainage
+   real,dimension(:,:,:), pointer :: drainages
+   real,dimension(:,:), pointer :: runoff
+   real,dimension(:,:,:), pointer :: runoffs
+   real, pointer, dimension(:,:) :: initial_spillover_to_rivers
+   real, pointer, dimension(:,:) :: initial_water_to_lake_centers
+   real,dimension(:,:), pointer :: expected_river_inflow
+   real,dimension(:,:), pointer :: expected_water_to_ocean
+   real,dimension(:,:), pointer :: expected_water_to_hd
+   integer,dimension(:,:), pointer :: expected_lake_numbers
+   integer,dimension(:,:), pointer :: expected_lake_types
+   real,dimension(:), pointer :: expected_lake_volumes
+   integer,dimension(:,:), pointer :: lake_types
    integer :: no_merge_mtype,connection_merge_not_set_flood_merge_as_secondary
-   real,dimension(:), allocatable :: lake_volumes
+   real,dimension(:), pointer :: lake_volumes
    integer :: nlat,nlon
    integer :: nlat_coarse,nlon_coarse
    integer :: timesteps
@@ -208,15 +202,15 @@ subroutine testLakeModel1
       base_reservoir_nums(3,3) = 0
       landsea_mask(:,:) = .False.
       landsea_mask(3,3) = .True.
-      river_parameters = RiverParameters(flow_directions, &
-                                         river_reservoir_nums, &
-                                         overland_reservoir_nums, &
-                                         base_reservoir_nums, &
-                                         river_retention_coefficients, &
-                                         overland_retention_coefficients, &
-                                         base_retention_coefficients, &
-                                         landsea_mask)
-      river_fields = riverprognosticfields(3,3,1,1,5)
+      river_parameters => RiverParameters(flow_directions, &
+                                          river_reservoir_nums, &
+                                          overland_reservoir_nums, &
+                                          base_reservoir_nums, &
+                                          river_retention_coefficients, &
+                                          overland_retention_coefficients, &
+                                          base_retention_coefficients, &
+                                          landsea_mask)
+      river_fields => riverprognosticfields(3,3,1,1,5)
       allocate(lake_centers(nlat,nlon))
       lake_centers = transpose(reshape((/ &
           .False., .False., .False., .False., .False., .False., .False., .False., .False., &
@@ -558,38 +552,7 @@ subroutine testLakeModel1
       call assert_equals(expected_lake_numbers,lake_fields_out%lake_numbers,9,9)
       call assert_equals(expected_lake_types,lake_types,9,9)
       call assert_equals(expected_lake_volumes,lake_volumes,1)
-      deallocate(flow_directions)
-      deallocate(river_reservoir_nums)
-      deallocate(overland_reservoir_nums)
-      deallocate(base_reservoir_nums)
-      deallocate(river_retention_coefficients)
-      deallocate(overland_retention_coefficients)
-      deallocate(base_retention_coefficients)
-      deallocate(landsea_mask)
-      deallocate(lake_centers)
-      deallocate(connection_volume_thresholds)
-      deallocate(flood_volume_thresholds)
-      deallocate(flood_local_redirect)
-      deallocate(connect_local_redirect)
-      deallocate(additional_flood_local_redirect)
-      deallocate(additional_connect_local_redirect)
-      deallocate(merge_points)
-      deallocate(flood_next_cell_lat_index)
-      deallocate(flood_next_cell_lon_index)
-      deallocate(connect_next_cell_lat_index)
-      deallocate(connect_next_cell_lon_index)
-      deallocate(flood_force_merge_lat_index)
-      deallocate(flood_force_merge_lon_index)
-      deallocate(connect_force_merge_lat_index)
-      deallocate(connect_force_merge_lon_index)
-      deallocate(flood_redirect_lat_index)
-      deallocate(flood_redirect_lon_index)
-      deallocate(connect_redirect_lat_index)
-      deallocate(connect_redirect_lon_index)
-      deallocate(additional_flood_redirect_lat_index)
-      deallocate(additional_flood_redirect_lon_index)
-      deallocate(additional_connect_redirect_lat_index)
-      deallocate(additional_connect_redirect_lon_index)
+      deallocate(lake_volumes)
       deallocate(drainage)
       deallocate(drainages)
       deallocate(runoff)
@@ -603,8 +566,6 @@ subroutine testLakeModel1
       deallocate(expected_lake_types)
       deallocate(expected_lake_volumes)
       deallocate(lake_types)
-      call lake_parameters%lakeparametersdestructor()
-      deallocate(lake_parameters)
       call clean_lake_model()
       call clean_hd_model()
 end subroutine testLakeModel1
@@ -612,61 +573,62 @@ end subroutine testLakeModel1
 subroutine testLakeModel2
   use latlon_hd_model_interface_mod
   use latlon_hd_model_mod
-  type(riverparameters) :: river_parameters
-  type(riverprognosticfields) :: river_fields
+  use latlon_lake_model_io_mod
+  type(riverparameters), pointer :: river_parameters
+  type(riverprognosticfields), pointer :: river_fields
   type(lakeparameters),pointer :: lake_parameters
   type(lakefields), pointer :: lake_fields_out
   type(lakeprognostics), pointer :: lake_prognostics_out
   type(lakepointer) :: working_lake_ptr
-  real   ,dimension(:,:), allocatable :: flow_directions
-  integer,dimension(:,:), allocatable :: river_reservoir_nums
-  integer,dimension(:,:), allocatable :: overland_reservoir_nums
-  integer,dimension(:,:), allocatable :: base_reservoir_nums
-  real,dimension(:,:), allocatable :: river_retention_coefficients
-  real,dimension(:,:), allocatable :: overland_retention_coefficients
-  real,dimension(:,:), allocatable :: base_retention_coefficients
-  logical,dimension(:,:), allocatable :: landsea_mask
-  logical,dimension(:,:), allocatable :: lake_centers
-  real,dimension(:,:), allocatable :: connection_volume_thresholds
-  real,dimension(:,:), allocatable :: flood_volume_thresholds
-  logical,dimension(:,:), allocatable :: flood_local_redirect
-  logical,dimension(:,:), allocatable :: connect_local_redirect
-  logical,dimension(:,:), allocatable :: additional_flood_local_redirect
-  logical,dimension(:,:), allocatable :: additional_connect_local_redirect
-  integer,dimension(:,:), allocatable :: merge_points
-  integer,dimension(:,:), allocatable :: flood_next_cell_lat_index
-  integer,dimension(:,:), allocatable :: flood_next_cell_lon_index
-  integer,dimension(:,:), allocatable :: connect_next_cell_lat_index
-  integer,dimension(:,:), allocatable :: connect_next_cell_lon_index
-  integer,dimension(:,:), allocatable :: flood_force_merge_lat_index
-  integer,dimension(:,:), allocatable :: flood_force_merge_lon_index
-  integer,dimension(:,:), allocatable :: connect_force_merge_lat_index
-  integer,dimension(:,:), allocatable :: connect_force_merge_lon_index
-  integer,dimension(:,:), allocatable :: flood_redirect_lat_index
-  integer,dimension(:,:), allocatable :: flood_redirect_lon_index
-  integer,dimension(:,:), allocatable :: connect_redirect_lat_index
-  integer,dimension(:,:), allocatable :: connect_redirect_lon_index
-  integer,dimension(:,:), allocatable :: additional_flood_redirect_lat_index
-  integer,dimension(:,:), allocatable :: additional_flood_redirect_lon_index
-  integer,dimension(:,:), allocatable :: additional_connect_redirect_lat_index
-  integer,dimension(:,:), allocatable :: additional_connect_redirect_lon_index
-  real,dimension(:,:), allocatable :: drainage
-  real,dimension(:,:,:), allocatable :: drainages
-  real,dimension(:,:), allocatable :: runoff
-  real,dimension(:,:,:), allocatable :: runoffs
-  real, allocatable, dimension(:,:) :: initial_spillover_to_rivers
-  real, allocatable, dimension(:,:) :: initial_water_to_lake_centers
-  real,dimension(:,:), allocatable :: expected_river_inflow
-  real,dimension(:,:), allocatable :: expected_water_to_ocean
-  real,dimension(:,:), allocatable :: expected_water_to_hd
-  integer,dimension(:,:), allocatable :: expected_lake_numbers
-  integer,dimension(:,:), allocatable :: expected_lake_types
-  real,dimension(:), allocatable :: expected_lake_volumes
-  integer,dimension(:,:), allocatable :: lake_types
+  real   ,dimension(:,:), pointer :: flow_directions
+  integer,dimension(:,:), pointer :: river_reservoir_nums
+  integer,dimension(:,:), pointer :: overland_reservoir_nums
+  integer,dimension(:,:), pointer :: base_reservoir_nums
+  real,dimension(:,:), pointer :: river_retention_coefficients
+  real,dimension(:,:), pointer :: overland_retention_coefficients
+  real,dimension(:,:), pointer :: base_retention_coefficients
+  logical,dimension(:,:), pointer :: landsea_mask
+  logical,dimension(:,:), pointer :: lake_centers
+  real,dimension(:,:), pointer :: connection_volume_thresholds
+  real,dimension(:,:), pointer :: flood_volume_thresholds
+  logical,dimension(:,:), pointer :: flood_local_redirect
+  logical,dimension(:,:), pointer :: connect_local_redirect
+  logical,dimension(:,:), pointer :: additional_flood_local_redirect
+  logical,dimension(:,:), pointer :: additional_connect_local_redirect
+  integer,dimension(:,:), pointer :: merge_points
+  integer,dimension(:,:), pointer :: flood_next_cell_lat_index
+  integer,dimension(:,:), pointer :: flood_next_cell_lon_index
+  integer,dimension(:,:), pointer :: connect_next_cell_lat_index
+  integer,dimension(:,:), pointer :: connect_next_cell_lon_index
+  integer,dimension(:,:), pointer :: flood_force_merge_lat_index
+  integer,dimension(:,:), pointer :: flood_force_merge_lon_index
+  integer,dimension(:,:), pointer :: connect_force_merge_lat_index
+  integer,dimension(:,:), pointer :: connect_force_merge_lon_index
+  integer,dimension(:,:), pointer :: flood_redirect_lat_index
+  integer,dimension(:,:), pointer :: flood_redirect_lon_index
+  integer,dimension(:,:), pointer :: connect_redirect_lat_index
+  integer,dimension(:,:), pointer :: connect_redirect_lon_index
+  integer,dimension(:,:), pointer :: additional_flood_redirect_lat_index
+  integer,dimension(:,:), pointer :: additional_flood_redirect_lon_index
+  integer,dimension(:,:), pointer :: additional_connect_redirect_lat_index
+  integer,dimension(:,:), pointer :: additional_connect_redirect_lon_index
+  real,dimension(:,:), pointer :: drainage
+  real,dimension(:,:,:), pointer :: drainages
+  real,dimension(:,:), pointer :: runoff
+  real,dimension(:,:,:), pointer :: runoffs
+  real, pointer, dimension(:,:) :: initial_spillover_to_rivers
+  real, pointer, dimension(:,:) :: initial_water_to_lake_centers
+  real,dimension(:,:), pointer :: expected_river_inflow
+  real,dimension(:,:), pointer :: expected_water_to_ocean
+  real,dimension(:,:), pointer :: expected_water_to_hd
+  integer,dimension(:,:), pointer :: expected_lake_numbers
+  integer,dimension(:,:), pointer :: expected_lake_types
+  real,dimension(:), pointer :: expected_lake_volumes
+  integer,dimension(:,:), pointer :: lake_types
   integer :: no_merge_mtype
   integer :: connection_merge_not_set_flood_merge_as_primary
   integer :: connection_merge_not_set_flood_merge_as_secondary
-  real,dimension(:), allocatable :: lake_volumes
+  real,dimension(:), pointer :: lake_volumes
   integer :: nlat,nlon
   integer :: nlat_coarse,nlon_coarse
   integer :: timesteps
@@ -711,15 +673,15 @@ subroutine testLakeModel2
     overland_reservoir_nums(4,2) = 0
     base_reservoir_nums(4,2) = 0
     landsea_mask(4,2) = .True.
-    river_parameters = RiverParameters(flow_directions, &
-                                       river_reservoir_nums, &
-                                       overland_reservoir_nums, &
-                                       base_reservoir_nums, &
-                                       river_retention_coefficients, &
-                                       overland_retention_coefficients, &
-                                       base_retention_coefficients, &
-                                       landsea_mask)
-    river_fields = riverprognosticfields(4,4,1,1,5)
+    river_parameters => RiverParameters(flow_directions, &
+                                        river_reservoir_nums, &
+                                        overland_reservoir_nums, &
+                                        base_reservoir_nums, &
+                                        river_retention_coefficients, &
+                                        overland_retention_coefficients, &
+                                        base_retention_coefficients, &
+                                        landsea_mask)
+    river_fields => riverprognosticfields(4,4,1,1,5)
     allocate(lake_centers(nlat,nlon))
     lake_centers = transpose(reshape((/ &
         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
@@ -1466,38 +1428,7 @@ subroutine testLakeModel2
     call assert_equals(expected_lake_numbers,lake_fields_out%lake_numbers,20,20)
     call assert_equals(expected_lake_types,lake_types,20,20)
     call assert_equals(expected_lake_volumes,lake_volumes,6)
-    deallocate(flow_directions)
-    deallocate(river_reservoir_nums)
-    deallocate(overland_reservoir_nums)
-    deallocate(base_reservoir_nums)
-    deallocate(river_retention_coefficients)
-    deallocate(overland_retention_coefficients)
-    deallocate(base_retention_coefficients)
-    deallocate(landsea_mask)
-    deallocate(lake_centers)
-    deallocate(connection_volume_thresholds)
-    deallocate(flood_volume_thresholds)
-    deallocate(flood_local_redirect)
-    deallocate(connect_local_redirect)
-    deallocate(additional_flood_local_redirect)
-    deallocate(additional_connect_local_redirect)
-    deallocate(merge_points)
-    deallocate(flood_next_cell_lat_index)
-    deallocate(flood_next_cell_lon_index)
-    deallocate(connect_next_cell_lat_index)
-    deallocate(connect_next_cell_lon_index)
-    deallocate(flood_force_merge_lat_index)
-    deallocate(flood_force_merge_lon_index)
-    deallocate(connect_force_merge_lat_index)
-    deallocate(connect_force_merge_lon_index)
-    deallocate(flood_redirect_lat_index)
-    deallocate(flood_redirect_lon_index)
-    deallocate(connect_redirect_lat_index)
-    deallocate(connect_redirect_lon_index)
-    deallocate(additional_flood_redirect_lat_index)
-    deallocate(additional_flood_redirect_lon_index)
-    deallocate(additional_connect_redirect_lat_index)
-    deallocate(additional_connect_redirect_lon_index)
+    deallocate(lake_volumes)
     deallocate(drainage)
     deallocate(drainages)
     deallocate(runoff)
@@ -1511,8 +1442,6 @@ subroutine testLakeModel2
     deallocate(expected_lake_types)
     deallocate(expected_lake_volumes)
     deallocate(lake_types)
-    call lake_parameters%lakeparametersdestructor()
-    deallocate(lake_parameters)
     call clean_lake_model()
     call clean_hd_model()
 end subroutine testLakeModel2

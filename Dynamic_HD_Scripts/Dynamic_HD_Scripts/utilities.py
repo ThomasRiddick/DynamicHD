@@ -1574,3 +1574,19 @@ def advanced_rebase_orography_driver(orography_filename,present_day_base_orograp
     iodriver.advanced_field_writer(rebased_orography_filename,
                                    field=rebased_orography,
                                    fieldname=rebased_orography_fieldname)
+
+def convert_hydrosheds_river_directions(input_rdirs_field):
+  output_rdirs_field = input_rdirs_field.convert_hydrosheds_rdirs()
+  return output_rdirs_field
+
+def advanced_convert_hydrosheds_river_directions_driver(input_river_directions_filename,
+                                                        output_river_directions_filename,
+                                                        input_river_directions_fieldname,
+                                                        output_river_directions_fieldname):
+  input_rdirs = iodriver.advanced_field_loader(input_river_directions_filename,
+                                               field_type="RiverDirections",
+                                               fieldname=input_river_directions_fieldname)
+  output_rdirs = convert_hydrosheds_river_directions(input_rdirs)
+  iodriver.advanced_field_writer(output_river_directions_filename,
+                                 field=output_rdirs,
+                                 fieldname=output_river_directions_fieldname)

@@ -751,6 +751,42 @@ class Dynamic_HD_Drivers(object):
 class Utilities_Drivers(Dynamic_HD_Drivers):
     """Drive miscellaneous utility processes"""
 
+    def convert_hydrosheds_30s_river_directions_to_one_to_nine_format(self):
+        """Convert hydrosheds data to 1-9 format"""
+        file_label = self._generate_file_label()
+        hydrosheds_river_directions_filepath =  ("/Users/thomasriddick/Documents/data/"
+                                                 "Hydrosheds_30sec/af_sa_au_comb_dir_30s.nc")
+        hydrosheds_river_directions_fieldname = "Band1"
+        output_river_directions_filepath = path.join(self.rdir_path,
+                                                    "rdirs_" +
+                                                    file_label + ".nc")
+        output_river_direction_fieldname = "rdirs"
+        utilities.\
+            advanced_convert_hydrosheds_river_directions_driver(input_river_directions_filename=
+                                                                hydrosheds_river_directions_filepath,
+                                                                output_river_directions_filename=
+                                                                output_river_directions_filepath,
+                                                                input_river_directions_fieldname=
+                                                                hydrosheds_river_directions_fieldname,
+                                                                output_river_directions_fieldname=
+                                                                output_river_direction_fieldname)
+
+    def mark_river_mouths_on_hydrosheds_30s_rdirs(self):
+        hydrosheds_river_directions_filename= path.join(self.rdir_path,
+                                                        "rdirs_hydrosheds_au_af_sa_30s.nc")
+        river_directions_fieldname="rdirs"
+        output_river_directions_filename= path.join(self.rdir_path,
+                                                        "rdirs_hydrosheds_au_af_sa_30s_mm.nc")
+        river_mouth_marking_driver.\
+            advanced_river_mouth_marking_driver(input_river_directions_filename=
+                                                hydrosheds_river_directions_filename,
+                                                output_river_directions_filename=
+                                                output_river_directions_filename,
+                                                input_river_directions_fieldname=
+                                                river_directions_fieldname,
+                                                output_river_directions_fieldname=
+                                                river_directions_fieldname)
+
     def create_catchments_from_hdpara_file_from_swati(self):
         """Create catchments from the hdpara file that Swati gave me"""
         file_label = self._generate_file_label()
@@ -3520,7 +3556,7 @@ def main():
     Select runs by uncommenting them and also the revelant object instantation.
     """
 
-    ice5g_data_drivers = ICE5G_Data_Drivers()
+    #ice5g_data_drivers = ICE5G_Data_Drivers()
     #ice5g_data_drivers.ICE5G_as_HD_data_21k_0k_sig_grad_only_all_neighbours_driver()
     #ice5g_data_drivers.ICE5G_as_HD_data_all_points_21k()
     #ice5g_data_drivers.ICE5G_as_HD_data_all_points_0k()
@@ -3537,7 +3573,7 @@ def main():
     #ice5g_data_drivers.ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless_downscaled_ls_mask_0k()
     #ice5g_data_drivers.ICE5G_and_tarasov_upscaled_srtm30plus_data_ALG4_sinkless_downscaled_ls_mask_0k_upscale_rdirs()
     #ice5g_data_drivers.ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless_downscaled_ls_mask_0k_upscale_rdirs()
-    ice5g_data_drivers.ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless_glcc_olson_lsmask_0k()
+    #ice5g_data_drivers.ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless_glcc_olson_lsmask_0k()
     #ice5g_data_drivers.ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless_glcc_olson_lsmask_0k_upscale_rdirs()
     #ice5g_data_drivers.\
     #ICE5G_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_tarasov_orog_corrs_generation_and_upscaling()
@@ -3546,7 +3582,9 @@ def main():
     #etopo1_data_drivers = ETOPO1_Data_Drivers()
     #etopo1_data_drivers.etopo1_data_all_points()
     #etopo1_data_drivers.etopo1_data_ALG4_sinkless()
-    #utilities_drivers = Utilities_Drivers()
+    utilities_drivers = Utilities_Drivers()
+    #utilities_drivers.convert_hydrosheds_30s_river_directions_to_one_to_nine_format()
+    utilities_drivers.mark_river_mouths_on_hydrosheds_30s_rdirs()
     #utilities_drivers.convert_corrected_HD_hydrology_dat_files_to_nc()
     #utilities_drivers.recreate_connected_HD_lsmask()
     #utilities_drivers.recreate_connected_HD_lsmask_true_seas_inc_casp_only()

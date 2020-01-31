@@ -5,6 +5,14 @@ use map_non_coincident_grids_mod
 use cotat_parameters_mod
 implicit none
 
+type :: latlon_limits
+    integer :: min_lat
+    integer :: min_lon
+    integer :: max_lat
+    integer :: max_lon
+    integer :: tile_size
+end type latlon_limits
+
 contains
 
     !> Main routine for the latitude-longitude version of the COTAT plus routine, takes as input the
@@ -13,9 +21,9 @@ contains
     !! directions.
     subroutine cotat_plus_latlon(input_fine_river_directions,input_fine_total_cumulative_flow,&
                                  output_coarse_river_directions,cotat_parameters_filepath)
-        integer, dimension(:,:) :: input_fine_river_directions
-        integer, dimension(:,:) :: input_fine_total_cumulative_flow
-        integer, dimension(:,:) :: output_coarse_river_directions
+        integer, dimension(:,:), optional :: input_fine_river_directions
+        integer, dimension(:,:), optional :: input_fine_total_cumulative_flow
+        integer, dimension(:,:), optional :: output_coarse_river_directions
         integer, dimension(:,:), allocatable :: expanded_input_fine_river_directions
         integer, dimension(:,:), allocatable :: expanded_input_fine_total_cumulative_flow
         logical, dimension(:,:), pointer :: cells_to_reprocess
@@ -29,6 +37,33 @@ contains
         integer :: nlat_fine, nlon_fine
         integer :: scale_factor
         integer :: i,j
+#ifdef USE_MPI
+        integer, dimension(:,:),allocatable :: output_coarse_river_directions_tile
+        integer :: mpi_error_code
+        integer :: proc_id,nprocs
+        integer :: ndivisions_lat
+        integer :: ndivisions_lon
+        type(latlon_limits) :: tile_limits
+        integer, dimension(mpi_status_size) :: status
+        integer :: k
+        integer :: loading_factor = 2
+        integer,parameter exit_tag = 0
+        integer,parameter process_tag = 1
+        integer(kind=mpi_address_kind), dimension(1) :: displacements
+        integer , dimension(1) :: block_counts
+        integer , dimension(1) :: data_types
+        integer :: latlon_limit_type
+        integer :: free_proc_id
+        integer, allocatable :: free_proc_register
+            call mpi_comm_rank(mpi_comm_world,proc_id,mpi_error_code)
+            call mpi_comm_size(mpi_comm_world,nprocs,mpi_error_code)
+            block_counts[1] = 5
+            data_types[1] = mpi_integer
+            displacements[1] = 0_mpi_address_kind
+            call mpi_type_create_struct(1,block_counts,diplacements,data_types,latlon_limit_type)
+            call mpi_type_commit(latlon_limit_type)
+            if (proc_id == 0) then
+#endif
             if (present(cotat_parameters_filepath)) then
                 call read_cotat_parameters_namelist(cotat_parameters_filepath)
             end if
@@ -47,9 +82,100 @@ contains
                 input_fine_total_cumulative_flow
             expanded_input_fine_total_cumulative_flow(1:scale_factor,1:nlon_fine) = 1
             expanded_input_fine_total_cumulative_flow(nlat_fine+scale_factor+1:nlat_fine+2*scale_factor,1:nlon_fine) = 1
+#ifdef USE_MPI
+            ndivisions_lat = floor(sqrt((nprocs-1)*loading_fraction))
+            ndivisions_lon = (nprocs-1)*loading_fraction/ndivisions_lat
+            end if
+            call mpi_bcast(scale_factor,1,mpi_integer,0,mpi_comm_world)
+            call mpi_bcast(expanded_input_fine_river_directions,&
+                           ncells_fine,mpi_integer,0,mpi_comm_world)
+            call mpi_bcast(expanded_input_fine_total_cumulative_flow,&
+                           ncells_fine,mpi_integer,0,mpi_comm_world)
+            if (proc_id == 0 .and. nprocs > 1) then
+                free_procs = nprocs - 1
+                allocate(free_proc_register(nprocs-1))
+                free_proc_register = .true.
+                do j = 1,ndivisions_lon
+                    do i = 1,ndivision_lat
+                        tile_limits%min_lon = (floor(nlon_coarse/ndivisions_lon)*(j-1))+1
+                        tile_limits%max_lon = min(floor(nlon_coarse/ndivisions_lon)*j,nlon_coarse)
+                        tile_limits%min_lat = (floor(nlat_coarse/ndivisions_lat)*(i-1))+1
+                        tile_limits%max_lat = min(floor(nlat_coarse/ndivisions_lat)*i,nlat_coarse)
+                        tile_limits%tile_size = (1+max_lat-min_lat)*(1+max_lon-min_lon)
+                        do
+                            if (free_procs > 0 .and. .not. all_tiles_assigned) then
+                                do k = 1,nprocs-1
+                                    if (free_proc_register(k)) then
+                                        free_proc_register(k) = .false.
+                                        free_proc_id = k - 1
+                                        exit
+                                    end if
+                                end do
+                                call mpi_send(tile_limits,1,latlon_limit_type,free_proc_id,
+                                              process_tag,mpi_comm_world,mpi_error_code)
+                                free_procs = free_procs - 1
+                                if((j == ndivisions_lon) .and. &
+                                   (i == ndivisions_lat)) then
+                                    all_tiles_assigned = .true.
+                                else
+                                    exit
+                                end if
+                            else
+                                call mpi_recieve(tile_limits,1,latlon_limit_type,mpi_any_source, &
+                                                 mpi_any_tag,mpi_comm_world,status,mpi_error_code)
+                                free_proc_id = status(mpi_source)
+                                free_procs = free_procs + 1
+                                free_proc_register(free_proc_id - 1) = .true.
+                                call mpi_recieve(output_coarse_river_directions_tile,tile_limits%tile_size,&
+                                                 mpi_integer,mpi_any_tag,free_proc_id,status,mpi_error_code)
+                                output_coarse_river_directions(tile_limits%min_lat:tile_limits%max_lat
+                                                               tile_limits%min_lon:tile_limits%max_lon) = &
+                                    output_coarse_river_directions_tile(1:1+tile_limits%max_lat-tile_limits%min_lat, &
+                                                                        1:1+tile_limits%max_lon-tile_limits%min_lon)
+                                if(all_tiles_assigned .and. (free_procs == nprocs)) exit
+                            end if
+                        end do
+                    end do
+                end do
+                do i = 1,nprocs-1
+                    call mpi_send(mpi_bottom,0,mpi_double_precision,i,exit_tag,mpi_comm_world,mpi_error_code)
+                end do
+            else if (proc_id > 0) then
+                do
+                    call mpi_recieve(tile_limits,1,latlon_limit_type,mpi_any_tag,mpi_any_source,status,&
+                                     mpi_error_code)
+                    if (status(mpi_tag) == exit_tag) exit
+                    allocate(output_coarse_river_directions_tile(1+max_lat-min_lat,&
+                                                                 1+max_lon-min_lon))
+                    do j = tile_limits%min_lon,tile_limits%max_lon
+                        do i = tile_limits%min_lat,tile_limits%max_lat
+                            cell_section_coords = latlon_section_coords(i*scale_factor+1,(j-1)*scale_factor+1, &
+                                                                        scale_factor,scale_factor)
+                            dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
+                                expanded_input_fine_river_directions, expanded_input_fine_total_cumulative_flow)
+                            call dir_based_rdirs_cell%mark_ocean_and_river_mouth_points()
+                            output_coarse_river_direction => dir_based_rdirs_cell%process_cell()
+                            call dir_based_rdirs_cell%destructor()
+                            select type (output_coarse_river_direction)
+                            type is (dir_based_direction_indicator)
+                                output_coarse_river_directions_tile(i+1-tile_limits%min_lat, &
+                                                                    j+1-tile_limits%min_lon) = &
+                                     output_coarse_river_direction%get_direction()
+                            end select
+                            deallocate(output_coarse_river_direction)
+                        end do
+                    end do
+                    call mpi_send(tile_limits,1,latlon_limit_type,0, &
+                                  process_tag,mpi_comm_world,mpi_error_code)
+                    call mpi_send(output_coarse_river_directions_tile,tile_limits%tile_size,mpi_integer,0,&
+                                  process_tag,mpi_comm_world,mpi_error_code)
+                end do
+            else
+#endif
             do j = 1,nlon_coarse
                 do i = 1,nlat_coarse
-                    cell_section_coords = latlon_section_coords(i*scale_factor+1,(j-1)*scale_factor+1,scale_factor,scale_factor)
+                    cell_section_coords = latlon_section_coords(i*scale_factor+1,(j-1)*scale_factor+1, &
+                                                                scale_factor,scale_factor)
                     dir_based_rdirs_cell = latlon_dir_based_rdirs_cell(cell_section_coords, &
                         expanded_input_fine_river_directions, expanded_input_fine_total_cumulative_flow)
                     call dir_based_rdirs_cell%mark_ocean_and_river_mouth_points()
@@ -62,6 +188,10 @@ contains
                     deallocate(output_coarse_river_direction)
                 end do
             end do
+#ifdef USE_MPI
+            end if
+            if(proc_id == 0) then
+#endif
             field_section_coords = latlon_section_coords(1,1,nlat_coarse,nlon_coarse)
             dir_based_rdirs_field = latlon_dir_based_rdirs_field(field_section_coords,output_coarse_river_directions)
             cells_to_reprocess => dir_based_rdirs_field%check_field_for_localized_loops()
@@ -86,6 +216,9 @@ contains
             deallocate(cells_to_reprocess)
             deallocate(expanded_input_fine_river_directions)
             deallocate(expanded_input_fine_total_cumulative_flow)
+#ifdef USE_MPI
+            end if
+#endif
     end subroutine cotat_plus_latlon
 
     subroutine cotat_plus_icon_icosohedral_cell_latlon_pixel(input_fine_river_directions,&
@@ -100,7 +233,7 @@ contains
                                                              cotat_parameters_filepath, &
                                                              cell_numbers_out)
         type(icon_icosohedral_grid), pointer :: coarse_grid
-        type(icon_icosohedral_cell_latlon_pixel_non_coincident_grid_mapper) :: ncg_mapper
+        type(icon_icosohedral_cell_latlon_pixel_ncg_mapper) :: ncg_mapper
         type(irregular_latlon_dir_based_rdirs_cell) :: dir_based_rdirs_cell
         class(direction_indicator), pointer :: output_coarse_river_direction
         type(icon_single_index_index_based_rdirs_field) :: index_based_rdirs_field
@@ -196,11 +329,11 @@ contains
                                                                         secondary_neighbors))
             cell_vertex_coords => icon_single_index_field_section(cell_vertex_coords_data,coarse_grid_shape)
             ncg_mapper = &
-                icon_icosohedral_cell_latlon_pixel_non_coincident_grid_mapper(pixel_center_lats_field,&
-                                                                              pixel_center_lons_field,&
-                                                                              cell_vertex_coords,&
-                                                                              fine_grid_shape, &
-                                                                              longitudal_range_centered_on_zero)
+                icon_icosohedral_cell_latlon_pixel_ncg_mapper(pixel_center_lats_field,&
+                                                              pixel_center_lons_field,&
+                                                              cell_vertex_coords,&
+                                                              fine_grid_shape, &
+                                                              longitudal_range_centered_on_zero)
             cell_numbers => ncg_mapper%generate_cell_numbers()
             select type(cell_numbers)
             class is (latlon_field_section)
@@ -325,6 +458,8 @@ contains
     deallocate(pixel_center_lons_field)
     deallocate(coarse_grid)
     deallocate(secondary_neighbors)
+    deallocate(cells_to_reprocess)
+    deallocate(cells_to_reprocess_local)
     end subroutine cotat_plus_icon_icosohedral_cell_latlon_pixel
 
 end module cotat_plus

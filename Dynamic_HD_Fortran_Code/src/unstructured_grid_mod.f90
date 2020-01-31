@@ -19,6 +19,7 @@ type, public, abstract :: unstructured_grid
       procedure, public :: generate_edge_cells
       procedure, public :: generate_subfield_indices
       procedure, public :: generate_full_field_indices
+      procedure, public :: unstructured_grid_destructor
       procedure(calculate_secondary_neighbors), deferred, public :: &
         calculate_secondary_neighbors
 end type unstructured_grid
@@ -62,6 +63,11 @@ contains
       this%num_primary_neighbors = num_primary_neighbors_in
       this%num_secondary_neighbors = num_secondary_neighbors_in
   end subroutine initialise_unstructured_grid
+
+  subroutine unstructured_grid_destructor(this)
+    class(unstructured_grid), intent(inout) :: this
+      deallocate(this%cell_secondary_neighbors)
+  end subroutine unstructured_grid_destructor
 
   subroutine initialise_icon_icosohedral_grid(this,cell_neighbors_in)
     class(icon_icosohedral_grid), intent(inout) :: this

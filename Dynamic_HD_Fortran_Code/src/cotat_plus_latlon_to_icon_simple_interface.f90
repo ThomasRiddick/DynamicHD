@@ -2,6 +2,7 @@ program cotat_plus_latlon_to_icon_simple_interface
 
   use netcdf
   use cotat_plus
+  use check_return_code_netcdf_mod
   implicit none
 
   integer, parameter :: MAX_NAME_LENGTH = 1000
@@ -91,12 +92,8 @@ program cotat_plus_latlon_to_icon_simple_interface
 
     allocate(input_fine_rdirs(nlat,nlon))
     allocate(input_fine_total_cumulative_flow(nlat,nlon))
-    do j = 1,nlon
-      do i = 1,nlat
-        input_fine_rdirs(i,j) = input_fine_rdirs_raw(j,i)
-        input_fine_total_cumulative_flow(i,j) = input_fine_total_cumulative_flow_raw(j,i)
-      end do
-    end do
+    input_fine_rdirs = transpose(input_fine_rdirs_raw)
+    input_fine_total_cumulative_flow = transpose(input_fine_total_cumulative_flow_raw)
     deallocate(input_fine_rdirs_raw)
     deallocate(input_fine_total_cumulative_flow_raw)
     write(*,*) "Reading Icosohedral Grid Parameters"
@@ -193,11 +190,7 @@ program cotat_plus_latlon_to_icon_simple_interface
     if (write_cell_numbers) then
       write(*,*) "Writing Cell Numbers File"
       allocate(output_cell_numbers_processed(nlon,nlat))
-      do j = 1,nlon
-        do i = 1,nlat
-          output_cell_numbers_processed(j,i) = output_cell_numbers(i,j)
-        end do
-      end do
+      output_cell_numbers_processed = transpose(output_cell_numbers)
       call check_return_code(nf90_create(output_cell_numbers_filename,nf90_netcdf4,ncid))
       call check_return_code(nf90_def_dim(ncid,"lat",nlat,lat_dimid))
       call check_return_code(nf90_def_dim(ncid,"lon",nlon,lon_dimid))
@@ -224,14 +217,6 @@ program cotat_plus_latlon_to_icon_simple_interface
     deallocate(cell_vertices_lats_raw)
     deallocate(cell_vertices_lons_raw)
     if(write_cell_numbers) deallocate(output_cell_numbers)
-contains
 
-  subroutine check_return_code(return_code)
-  integer, intent(in) :: return_code
-    if(return_code /= nf90_noerr) then
-      print *,trim(nf90_strerror(return_code))
-      stop
-    end if
-  end subroutine check_return_code
 
 end program cotat_plus_latlon_to_icon_simple_interface

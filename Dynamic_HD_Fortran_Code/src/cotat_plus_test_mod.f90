@@ -1092,7 +1092,7 @@ contains
     integer, dimension(80)  :: coarse_next_cell_index
     logical, dimension(:), allocatable :: cells_to_reprocess
     logical, dimension(:,:), pointer :: cells_to_reprocess_local
-    class(generic_1d_section_coords),pointer :: coarse_grid_shape
+    type(generic_1d_section_coords),pointer :: coarse_grid_shape
     integer :: i
         allocate(cell_neighbors(80,3))
         cell_neighbors = transpose( reshape((/ 5,7,2, &
@@ -1184,8 +1184,9 @@ contains
     coarse_grid => icon_icosohedral_grid(cell_neighbors)
     call coarse_grid%calculate_secondary_neighbors()
     secondary_neighbors => coarse_grid%get_cell_secondary_neighbors()
-    allocate(coarse_grid_shape,source=generic_1d_section_coords(cell_neighbors,&
-                                                                secondary_neighbors))
+    allocate(coarse_grid_shape)
+    coarse_grid_shape = generic_1d_section_coords(cell_neighbors,&
+                                                  secondary_neighbors)
     index_based_rdirs_field = &
       icon_single_index_index_based_rdirs_field(coarse_grid_shape,&
                                                 coarse_next_cell_index)
@@ -1200,6 +1201,12 @@ contains
     write(*,"(15(XL2X))") (cells_to_reprocess(i), i=61,75)
     write(*,"(5(5X(L2)5X))") (cells_to_reprocess(i), i=76,80)
     write(*,*) " "
+    call coarse_grid%unstructured_grid_destructor()
     deallocate(cell_neighbors)
+    deallocate(coarse_grid)
+    call coarse_grid_shape%generic_1d_section_coords_destructor()
+    deallocate(coarse_grid_shape)
+    deallocate(cells_to_reprocess)
+    deallocate(cells_to_reprocess_local)
   end subroutine testFindingLocalizedLoops
 end module cotat_plus_test_mod
