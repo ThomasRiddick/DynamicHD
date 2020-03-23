@@ -41,9 +41,10 @@ endif
 # Add inputs and outputs from these tool invocations to the build variables
 
 # All Target
-all: Dynamic_HD_Fortran_Code COTAT_Plus_LatLon_To_Icon_Simple_Interface_Code LatLon_Lake_Model_Driver_Code Icon_To_LatLon_Landsea_Downscaler_Simple_Interface
+all: Dynamic_HD_Fortran_Code COTAT_Plus_LatLon_To_Icon_Simple_Interface_Code LatLon_Lake_Model_Driver_Code Icon_To_LatLon_Landsea_Downscaler_Simple_Interface LatLon_Icon_Loop_Breaker_Simple_Interface_Code
 
 # Tool invocations
+tools_only: $(OBJS) $(USER_OBJS) COTAT_Plus_LatLon_To_Icon_Simple_Interface_Code LatLon_Lake_Model_Driver_Code Icon_To_LatLon_Landsea_Downscaler_Simple_Interface LatLon_Icon_Loop_Breaker_Simple_Interface_Code
 compile_only: $(OBJS) $(USER_OBJS)
 
 Dynamic_HD_Fortran_Code: $(OBJS) $(TEST_OBJS) $(USER_OBJS)
@@ -55,6 +56,12 @@ Dynamic_HD_Fortran_Code: $(OBJS) $(TEST_OBJS) $(USER_OBJS)
 COTAT_Plus_LatLon_To_Icon_Simple_Interface_Code: $(OBJS) $(COTAT_PLUS_LATLON_TO_ICON_SIMPLE_INTERFACE_OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	$(FORTRAN) -o "COTAT_Plus_LatLon_To_Icon_Fortran_Exec" $(OBJS) $(COTAT_PLUS_LATLON_TO_ICON_SIMPLE_INTERFACE_OBJS) $(USER_OBJS) $(LIBS)
+	@echo 'Finished building target: $@'
+	@echo ' '
+
+LatLon_Icon_Loop_Breaker_Simple_Interface_Code: $(OBJS) $(LATLON_TO_ICON_LOOP_BREAKER_SIMPLE_INTERFACE_OBJS) $(USER_OBJS)
+	@echo 'Building target: $@'
+	$(FORTRAN) -o "LatLon_To_Icon_Loop_Breaker_Fortran_Exec" $(OBJS) $(LATLON_TO_ICON_LOOP_BREAKER_SIMPLE_INTERFACE_OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 

@@ -192,7 +192,7 @@ class NetCDF4FileIOHelper(IOHelper):
                 potential_field_names = ['Topo','topo','field_value','orog','z','ICEM',
                                          'DEPTO','usurf','bats','slm','FDIR','lsmask',
                                          'lake_field','river_flow',
-                                         'basin_catchment_numbers']
+                                         'basin_catchment_numbers','rdirs','lsm']
             else:
                 potential_field_names = [fieldname]
             for potential_field_name in potential_field_names:

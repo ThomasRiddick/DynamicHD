@@ -18,6 +18,7 @@ class Field(object):
     Public methods:
     get_data
     set_data
+    set_all
     get_grid
     get_mask
     update_field_with_partially_masked_data
@@ -26,6 +27,7 @@ class Field(object):
     get_flagged_points_coords
     flag_listed_points
     change_dtype
+    make_contiguous
     mask_field_with_external_mask
     fill_mask
     subtract
@@ -74,6 +76,12 @@ class Field(object):
     def set_data(self,data):
         """Set the data attribute"""
         self.data = data
+
+    def set_all(self,value):
+        """Set all points to a fixed value"""
+        if hasattr(value,"__len__"):
+            raise RuntimeError("Set all only takes scalar arguments")
+        self.data[:,:] = value
 
     def get_grid(self):
         """Get the grid attribute"""
@@ -137,6 +145,12 @@ class Field(object):
         """
 
         self.data = np.ascontiguousarray(self.data, dtype)
+
+
+    def make_contiguous(self):
+        """Convert data to a c contiguous array"""
+        self.data = np.ascontiguousarray(self.data)
+
 
     def mask_field_with_external_mask(self,mask):
         """Mask a field using a supplied mask
@@ -464,6 +478,11 @@ class RiverDirections(Field):
     get_river_mouths
     get_lsmask
     extract_truesinks
+    remove_river_mouths
+    mark_ocean_points
+    fill_land_without_rdirs
+    find_endorheic_catchments
+    replace_specified_catchments
     """
 
     esri_to_one_to_nine_rdirs_conversions = [(32,7),(64,8),(128,9),
@@ -555,6 +574,48 @@ class RiverDirections(Field):
 
         return (self.data == 5)
 
+    def remove_river_mouths(self):
+        """Removes river mouths and mark them as ocean"""
+        self.data[self.data == 0] = -1
+
+    def mark_ocean_points(self,lsmask):
+        """Mark points in the given lsmask as ocean overwriting their present value"""
+        self.data[lsmask.get_data()] = -1
+
+    def fill_land_without_rdirs(self,alternative_rdirs):
+        """Fill in land without river directions using the provided set of river directions"""
+        cells_to_fill = np.logical_and(np.logical_or(self.data == 0,self.data==-1),
+                                       alternative_rdirs.get_data()> 0)
+        masked_rdirs = np.ma.array(self.data,mask=cells_to_fill,copy=False)
+        masked_alternative_rdirs =  np.ma.array(alternative_rdirs.get_data(),
+                                                mask=np.logical_not(cells_to_fill))
+        self.data = masked_rdirs.filled(fill_value=0) + \
+                    masked_alternative_rdirs.filled(fill_value=0)
+
+    def find_endorheic_catchments(self,catchments):
+        return catchments.get_data()[self.data == 5].tolist()
+
+    def replace_specified_catchments(self,catchments,catchments_to_replace,
+                                     rdirs_without_endorheic_basins):
+        for catchment in catchments_to_replace:
+            cells_in_catchment = (catchments.get_data() == catchment)
+            masked_rdirs = np.ma.array(self.data,mask=cells_in_catchment,copy=False,keep_mask=False)
+            masked_rdirs_without_endorheic_basins = \
+                           np.ma.array(rdirs_without_endorheic_basins.get_data(),
+                                       mask=(np.logical_not(cells_in_catchment)),
+                                       copy=False,keep_mask=False)
+            self.data = masked_rdirs.filled(fill_value=0) + \
+                        masked_rdirs_without_endorheic_basins.filled(fill_value=0)
+
+    def replace_areas_in_mask(self,mask,other_rdirs):
+        masked_rdirs = np.ma.array(self.data,mask=mask,copy=False,keep_mask=False)
+        masked_other_rdirs = np.ma.array(other_rdirs.get_data(),
+                                         mask=np.logical_not(mask),
+                                         copy=False,keep_mask=False)
+        self.data = masked_rdirs.filled(fill_value=0) + \
+                    masked_other_rdirs.filled(fill_value=0)
+
+
 class CumulativeFlow(Field):
     """A subclass of field with various methods specific to cumulative flows
 
@@ -591,6 +652,9 @@ class CumulativeFlow(Field):
         #Could also potentially return a list of locations and values however that would not
         #use numpy and thus be processed very slowly
         return cumulative_flow_at_outlets.filled(0)
+
+    def get_cells_with_loops(self):
+        return (self.data==0)
 
 class ReservoirSize(Field):
     """A subclass of field with various methods specific to field of initial reserviour size data

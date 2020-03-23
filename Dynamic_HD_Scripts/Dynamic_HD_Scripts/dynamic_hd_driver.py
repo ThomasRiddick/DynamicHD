@@ -787,6 +787,40 @@ class Utilities_Drivers(Dynamic_HD_Drivers):
                                                 output_river_directions_fieldname=
                                                 river_directions_fieldname)
 
+    def upscale_hydrosheds_30s_rdirs_to_10min(self):
+        file_label = self._generate_file_label()
+        river_directions_fieldname = "rdirs"
+        input_river_directions_filename = path.join(self.rdir_path,
+                                                    "rdirs_hydrosheds_au_af_sa_30s_mm.nc")
+        output_river_directions_filename = path.join(self.rdir_path,"generated",
+                                                    "rdirs_hydrosheds_au_af_sa_upscaled_10min"+
+                                                    file_label+".nc")
+        cumulative_flow_fieldname = "Band1"
+        input_cumulative_flow_filename = ("/Users/thomasriddick/Documents/data/"
+                                          "Hydrosheds_30sec/af_sa_au_comb_acc_30s.nc")
+        cotat_plus_params_filename = path.join(self.cotat_plus_parameters_path,
+                                               "cotat_plus_factor_20_params.nl")
+        self._run_advanced_cotat_plus_upscaling(input_fine_rdirs_filename=
+                                                input_river_directions_filename,
+                                                input_fine_cumulative_flow_filename=
+                                                input_cumulative_flow_filename,
+                                                output_course_rdirs_filename=
+                                                output_river_directions_filename,
+                                                input_fine_rdirs_fieldname=
+                                                river_directions_fieldname,
+                                                input_fine_cumulative_flow_fieldname=
+                                                cumulative_flow_fieldname,
+                                                output_course_rdirs_fieldname=
+                                                river_directions_fieldname,
+                                                cotat_plus_parameters_filename=
+                                                cotat_plus_params_filename,
+                                                output_file_label=file_label,
+                                                scaling_factor=20)
+        self._run_postprocessing(output_river_directions_filename,
+                                 output_file_label=file_label,ls_mask_filename = None,
+                                 skip_marking_mouths=False,compute_catchments=True,flip_mask_ud=False,
+                                 grid_type='LatLong10min')
+
     def create_catchments_from_hdpara_file_from_swati(self):
         """Create catchments from the hdpara file that Swati gave me"""
         file_label = self._generate_file_label()
@@ -1350,6 +1384,349 @@ class Utilities_Drivers(Dynamic_HD_Drivers):
                                         output_filename=outfile,
                                         flip_ud=True, rotate180lr=True, invert_data=True,
                                         grid_type='LatLong10min')
+
+    def generate_rdirs_for_present_day_from_orography_correction_including_tarasov_corrections_no_ts_r2b4_mask(self):
+        #Switched to Corrected Landsea Mask 16:20 2 March 2020
+        file_label = self._generate_file_label()
+        orography_filename = path.join(self.orography_path,"generated","corrected",
+                                       "corrected_orog_intermediary_ICE5G_and_tarasov_upscaled_"
+                                       "srtm30plus_north_america_only_data_ALG4_sinkless_glcc_"
+                                       "olson_lsmask_0k_20170517_003802.nc")
+        rdirs_filename = self.generated_rdir_filepath + file_label + ".nc"
+        ls_mask_filename= path.join(self.ls_masks_path,
+                                    "icon_r2b4_013_0031_mask_downscaled_to_10min_latlon_corrected.nc")
+        transformed_orography_filename = self.generated_orography_filepath + file_label + ".nc"
+        self._apply_transforms_to_field(input_filename=orography_filename,
+                                        output_filename=transformed_orography_filename,
+                                        flip_ud=True, rotate180lr=True, invert_data=False,
+                                        griddescfile=self.ten_minute_grid_filepath,
+                                        grid_type="LatLong10min")
+        fill_sinks_driver.advanced_sinkless_flow_directions_generator(filename=
+                                                                      transformed_orography_filename,
+                                                                      output_filename=
+                                                                      rdirs_filename,
+                                                                      fieldname="field_value",
+                                                                      output_fieldname="field_value",
+                                                                      ls_mask_filename=ls_mask_filename,
+                                                                      ls_mask_fieldname="lsm")
+        self._run_postprocessing(rdirs_filename=rdirs_filename,
+                                 output_file_label=file_label,
+                                 ls_mask_filename=ls_mask_filename,
+                                 compute_catchments=True,
+                                 grid_type='LatLong10min')
+
+    def generate_rdirs_for_present_day_from_orography_correction_including_tarasov_corrections_with_ts_r2b4_mask(self):
+        file_label = self._generate_file_label()
+        orography_filename = path.join(self.orography_path,"generated","corrected",
+                                       "corrected_orog_intermediary_ICE5G_and_tarasov_upscaled_"
+                                       "srtm30plus_north_america_only_data_ALG4_sinkless_glcc_"
+                                       "olson_lsmask_0k_20170517_003802.nc")
+        rdirs_filename = self.generated_rdir_filepath + file_label + ".nc"
+        ls_mask_filename= path.join(self.ls_masks_path,
+                                    "icon_r2b4_013_0031_mask_downscaled_to_10min_latlon.nc")
+        transformed_orography_filename = self.generated_orography_filepath + file_label + ".nc"
+        truesinks_filename=path.join(self.truesinks_path,
+                                     "truesinks_ICE5G_and_tarasov_upscaled_srtm30plus_north_america"
+                                     "_only_data_ALG4_sinkless_glcc_olson_lsmask_0k_20170517_003802"
+                                     "_with_grid.nc")
+        self._apply_transforms_to_field(input_filename=orography_filename,
+                                        output_filename=transformed_orography_filename,
+                                        flip_ud=True, rotate180lr=True, invert_data=False,
+                                        griddescfile=self.ten_minute_grid_filepath,
+                                        grid_type="LatLong10min")
+        fill_sinks_driver.advanced_sinkless_flow_directions_generator(filename=
+                                                                      transformed_orography_filename,
+                                                                      output_filename=
+                                                                      rdirs_filename,
+                                                                      fieldname="field_value",
+                                                                      output_fieldname="field_value",
+                                                                      truesinks_filename=
+                                                                      truesinks_filename,
+                                                                      truesinks_fieldname="true_sinks",
+                                                                      ls_mask_filename=ls_mask_filename,
+                                                                      ls_mask_fieldname="lsm")
+        self._run_postprocessing(rdirs_filename=rdirs_filename,
+                                 output_file_label=file_label,
+                                 ls_mask_filename=ls_mask_filename,
+                                 compute_catchments=True,
+                                 grid_type='LatLong10min')
+
+    def splice_upscaled_hydrosheds_with_present_day_orog_corr_inc_tc_10min_with_ts_r2b4_mask(self):
+        file_label = self._generate_file_label()
+        hydrosheds_rdirs_au_af_sa_10min_filename = \
+            path.join(self.rdir_path,"generated",
+                      "rdirs_hydrosheds_au_af_sa_upscaled_10min_20200203_163646.nc")
+        present_day_orog_corr_inc_tc_rdirs_with_ts_10min_filename = \
+            path.join(self.rdir_path,"generated",
+                      "updated_RFDs_generate_rdirs_for_present_day_from_orography_correction"
+                      "_including_tarasov_corrections_with_ts_r2b4_mask_20200207_120507.nc")
+        lsmask_10min_filename = path.join(self.ls_masks_path,
+                                          "icon_r2b4_013_0031_mask_downscaled_to_10min_latlon.nc")
+        output_rdirs_10min_filename = self.generated_rdir_filepath + file_label + ".nc"
+        utilities.advanced_splice_rdirs_driver(rdirs_matching_ls_mask_filename=
+                                               present_day_orog_corr_inc_tc_rdirs_with_ts_10min_filename,
+                                               ls_mask_filename=lsmask_10min_filename,
+                                               other_rdirs_filename=
+                                               hydrosheds_rdirs_au_af_sa_10min_filename,
+                                               output_river_directions_filename=
+                                               output_rdirs_10min_filename,
+                                               rdirs_matching_ls_mask_fieldname="field_value",
+                                               ls_mask_fieldname="lsm",
+                                               other_rdirs_fieldname="rdirs",
+                                               output_river_directions_fieldname="rdirs")
+        self._run_postprocessing(rdirs_filename=output_rdirs_10min_filename,
+                                 output_file_label=file_label,
+                                 ls_mask_filename=lsmask_10min_filename,
+                                 compute_catchments=True,
+                                 grid_type='LatLong10min')
+
+    def splice_upscaled_hydrosheds_with_present_day_orog_corr_inc_tc_10min_no_ts_r2b4_mask(self):
+        #Switched to Corrected Landsea Mask 16:33 2 March 2020
+        file_label = self._generate_file_label()
+        hydrosheds_rdirs_au_af_sa_10min_filename = \
+            path.join(self.rdir_path,"generated",
+                      "rdirs_hydrosheds_au_af_sa_upscaled_10min_20200203_163646.nc")
+        present_day_orog_corr_inc_tc_rdirs_with_ts_10min_filename = \
+            path.join(self.rdir_path,"generated",
+                      "updated_RFDs_generate_rdirs_for_present_day_from_orography_correction_including_tarasov_corrections_no_ts_r2b4_mask_20200302_162255.nc")
+        lsmask_10min_filename = path.join(self.ls_masks_path,
+                                          "icon_r2b4_013_0031_mask_downscaled_to_10min_latlon_corrected.nc")
+        output_rdirs_10min_filename = self.generated_rdir_filepath + file_label + ".nc"
+        utilities.advanced_splice_rdirs_driver(rdirs_matching_ls_mask_filename=
+                                               present_day_orog_corr_inc_tc_rdirs_with_ts_10min_filename,
+                                               ls_mask_filename=lsmask_10min_filename,
+                                               other_rdirs_filename=
+                                               hydrosheds_rdirs_au_af_sa_10min_filename,
+                                               output_river_directions_filename=
+                                               output_rdirs_10min_filename,
+                                               rdirs_matching_ls_mask_fieldname="field_value",
+                                               ls_mask_fieldname="lsm",
+                                               other_rdirs_fieldname="rdirs",
+                                               output_river_directions_fieldname="rdirs")
+        self._run_postprocessing(rdirs_filename=output_rdirs_10min_filename,
+                                 output_file_label=file_label,
+                                 ls_mask_filename=lsmask_10min_filename,
+                                 compute_catchments=True,
+                                 grid_type='LatLong10min')
+
+    def remove_endorheic_basins_from_upscaled_hydrosheds_with_pd_orog_corr_inc_tc_10min_no_ts_r2b4_mask(self):
+        #Switched to Corrected Landsea Mask 17:22 2 March 2020
+        file_label = self._generate_file_label()
+        rdirs_filename = path.join(self.rdir_path,"generated",
+                                  "updated_RFDs_splice_upscaled_hydrosheds_with_present_day_orog"
+                                  "_corr_inc_tc_10min_no_ts_r2b4_mask_20200302_163601.nc")
+        catchments_filename = path.join(self.catchments_path,
+                                        "catchmentmap_splice_upscaled_hydrosheds_with_present_day_orog"
+                                        "_corr_inc_tc_10min_no_ts_r2b4_mask_20200302_163601_with_grid.nc")
+        rdirs_without_endorheic_basins_filename = \
+            path.join(self.rdir_path,"generated",
+                      "updated_RFDs_generate_rdirs_for_present_day_from_orography_correction"
+                      "_including_tarasov_corrections_no_ts_r2b4_mask_20200302_162255.nc")
+        lsmask_10min_filename = path.join(self.ls_masks_path,
+                                          "icon_r2b4_013_0031_mask_downscaled_to_10min_latlon_corrected.nc")
+        output_rdirs_filename = self.generated_rdir_filepath + file_label + ".nc"
+        utilities.remove_endorheic_basins_driver(rdirs_filename,
+                                                 catchments_filename,
+                                                 rdirs_without_endorheic_basins_filename,
+                                                 output_rdirs_filename,
+                                                 rdirs_fieldname='rdirs',
+                                                 catchment_fieldname="field_value",
+                                                 rdirs_without_endorheic_basins_fieldname="field_value",
+                                                 output_rdirs_fieldname="rdirs")
+        self._run_postprocessing(rdirs_filename=output_rdirs_filename,
+                                 output_file_label=file_label,
+                                 ls_mask_filename=lsmask_10min_filename,
+                                 compute_catchments=True,
+                                 grid_type='LatLong10min')
+
+    def replace_streams_downstream_from_loops_upscaled_hydrosheds_with_pd_orog_corr_inc_tc_10min_no_ts_r2b4_mask(self):
+        #Switched to Corrected Landsea Mask 17:43 2 March 2020
+        file_label = self._generate_file_label()
+        rdirs_filename=path.join(self.rdir_path,"generated",
+                                 "updated_RFDs_remove_endorheic_basins_from_upscaled_hydrosheds_with_"
+                                 "pd_orog_corr_inc_tc_10min_no_ts_r2b4_mask_20200302_173009.nc")
+        cumulative_flow_filename=path.join(self.flowmaps_path,
+                                           "flowmap_remove_endorheic_basins_from_upscaled_hydrosheds_with"
+                                           "_pd_orog_corr_inc_tc_10min_no_ts_r2b4_mask_20200302_173009_with_grid.nc")
+        other_rdirs_filename=path.join(self.rdir_path,"generated",
+                                       "updated_RFDs_generate_rdirs_for_present_day_from_orography_correction"
+                                       "_including_tarasov_corrections_no_ts_r2b4_mask_20200302_162255.nc")
+        output_rdirs_filename = self.generated_rdir_filepath + file_label + ".nc"
+        lsmask_10min_filename = path.join(self.ls_masks_path,
+                                          "icon_r2b4_013_0031_mask_downscaled_to_10min_latlon_corrected.nc")
+        utilities.replace_streams_downstream_from_loop_driver(rdirs_filename=rdirs_filename,
+                                                              cumulative_flow_filename=
+                                                              cumulative_flow_filename,
+                                                              other_rdirs_filename=
+                                                              other_rdirs_filename,
+                                                              output_rdirs_filename=
+                                                              output_rdirs_filename,
+                                                              rdirs_fieldname="rdirs",
+                                                              cumulative_flow_fieldname=
+                                                              "field_value",
+                                                              other_rdirs_fieldname="field_value",
+                                                              output_rdirs_fieldname="rdirs")
+        self._run_postprocessing(rdirs_filename=output_rdirs_filename,
+                                 output_file_label=file_label,
+                                 ls_mask_filename=lsmask_10min_filename,
+                                 compute_catchments=True,
+                                 grid_type='LatLong10min')
+
+    def replace_streams_downstream_from_loops_upscaled_hydrosheds_with_pd_orog_corr_inc_tc_10min_no_ts_r2b4_mask_rep(self):
+        file_label = self._generate_file_label()
+        rdirs_filename=path.join(self.rdir_path,"generated",
+                                 "updated_RFDs_replace_streams_downstream_from_loops_upscaled_hydrosheds_"
+                                 "with_pd_orog_corr_inc_tc_10min_no_ts_r2b4_mask_20200212_171253.nc")
+        cumulative_flow_filename=path.join(self.flowmaps_path,
+                                           "flowmap_replace_streams_downstream_from_loops_upscaled_hydrosheds"
+                                           "_with_pd_orog_corr_inc_tc_10min_no_ts_r2b4_mask_20200212_171253_with_grid.nc")
+        other_rdirs_filename=path.join(self.rdir_path,"generated",
+                                       "updated_RFDs_generate_rdirs_for_present_day_from_orography_correction_"
+                                       "including_tarasov_corrections_no_ts_r2b4_mask_20200207_120449.nc")
+        output_rdirs_filename = self.generated_rdir_filepath + file_label + ".nc"
+        lsmask_10min_filename = path.join(self.ls_masks_path,
+                                          "icon_r2b4_013_0031_mask_downscaled_to_10min_latlon.nc")
+        utilities.replace_streams_downstream_from_loop_driver(rdirs_filename=rdirs_filename,
+                                                              cumulative_flow_filename=
+                                                              cumulative_flow_filename,
+                                                              other_rdirs_filename=
+                                                              other_rdirs_filename,
+                                                              output_rdirs_filename=
+                                                              output_rdirs_filename,
+                                                              rdirs_fieldname="rdirs",
+                                                              cumulative_flow_fieldname=
+                                                              "field_value",
+                                                              other_rdirs_fieldname="field_value",
+                                                              output_rdirs_fieldname="rdirs")
+        self._run_postprocessing(rdirs_filename=output_rdirs_filename,
+                                 output_file_label=file_label,
+                                 ls_mask_filename=lsmask_10min_filename,
+                                 compute_catchments=True,
+                                 grid_type='LatLong10min')
+
+
+    def remove_additional_loop_by_hand_to_delooped_hydrosheds_with_pd_orog_corr_inc_tc_10min_no_ts_r2b4_mask(self):
+        file_label = self._generate_file_label()
+        rdirs_filename=path.join(self.rdir_path,"generated",
+                                 "updated_RFDs_replace_streams_downstream_from_loops_upscaled_hydrosheds_"
+                                 "with_pd_orog_corr_inc_tc_10min_no_ts_r2b4_mask_20200212_171253.nc")
+        output_rdirs_filename = self.generated_rdir_filepath + file_label + ".nc"
+        lsmask_10min_filename = path.join(self.ls_masks_path,
+                                          "icon_r2b4_013_0031_mask_downscaled_to_10min_latlon.nc")
+        rdirs = iodriver.advanced_field_loader(rdirs_filename,
+                                         field_type="RiverDirections",
+                                         fieldname="rdirs")
+        rdirs.get_data()[532-1,781-1] = 6
+        iodriver.advanced_field_writer(output_rdirs_filename,field=rdirs,
+                                       fieldname="rdirs")
+        self._run_postprocessing(rdirs_filename=output_rdirs_filename,
+                                 output_file_label=file_label,
+                                 ls_mask_filename=lsmask_10min_filename,
+                                 compute_catchments=True,
+                                 grid_type='LatLong10min')
+
+    def replace_streams_ds_from_loops_upscaled_hydrosheds_with_pd_orog_corr_inc_tc_10min_with_ts_r2b4_mask(self):
+        file_label = self._generate_file_label()
+        rdirs_filename=path.join(self.rdir_path,"generated",
+                                 "updated_RFDs_splice_upscaled_hydrosheds_with_present_day_orog_corr"
+                                 "_inc_tc_10min_with_ts_r2b4_mask_20200207_123425.nc")
+        cumulative_flow_filename=path.join(self.flowmaps_path,
+                                           "flowmap_splice_upscaled_hydrosheds_with_present_day_orog_corr"
+                                           "_inc_tc_10min_with_ts_r2b4_mask_20200207_123425_with_grid.nc")
+        other_rdirs_filename=path.join(self.rdir_path,"generated",
+                                       "updated_RFDs_generate_rdirs_for_present_day_from_orography_correction"
+                                       "_including_tarasov_corrections_with_ts_r2b4_mask_20200207_120507.nc")
+        output_rdirs_filename = self.generated_rdir_filepath + file_label + ".nc"
+        lsmask_10min_filename = path.join(self.ls_masks_path,
+                                          "icon_r2b4_013_0031_mask_downscaled_to_10min_latlon.nc")
+        utilities.replace_streams_downstream_from_loop_driver(rdirs_filename=rdirs_filename,
+                                                              cumulative_flow_filename=
+                                                              cumulative_flow_filename,
+                                                              other_rdirs_filename=
+                                                              other_rdirs_filename,
+                                                              output_rdirs_filename=
+                                                              output_rdirs_filename,
+                                                              rdirs_fieldname="rdirs",
+                                                              cumulative_flow_fieldname=
+                                                              "field_value",
+                                                              other_rdirs_fieldname="field_value",
+                                                              output_rdirs_fieldname="rdirs")
+        self._run_postprocessing(rdirs_filename=output_rdirs_filename,
+                                 output_file_label=file_label,
+                                 ls_mask_filename=lsmask_10min_filename,
+                                 compute_catchments=True,
+                                 grid_type='LatLong10min')
+
+    def remove_additional_loop_by_hand_to_delooped_hydrosheds_with_pd_orog_corr_inc_tc_10min_with_ts_r2b4_mask(self):
+        file_label = self._generate_file_label()
+        rdirs_filename=path.join(self.rdir_path,"generated",
+                                 "updated_RFDs_replace_streams_ds_from_loops_upscaled_hydrosheds_with_pd_orog"
+                                 "_corr_inc_tc_10min_with_ts_r2b4_mask_20200218_145442.nc")
+        output_rdirs_filename = self.generated_rdir_filepath + file_label + ".nc"
+        lsmask_10min_filename = path.join(self.ls_masks_path,
+                                          "icon_r2b4_013_0031_mask_downscaled_to_10min_latlon.nc")
+        rdirs = iodriver.advanced_field_loader(rdirs_filename,
+                                         field_type="RiverDirections",
+                                         fieldname="rdirs")
+        rdirs.get_data()[532-1,781-1] = 6
+        iodriver.advanced_field_writer(output_rdirs_filename,field=rdirs,
+                                       fieldname="rdirs")
+        self._run_postprocessing(rdirs_filename=output_rdirs_filename,
+                                 output_file_label=file_label,
+                                 ls_mask_filename=lsmask_10min_filename,
+                                 compute_catchments=True,
+                                 grid_type='LatLong10min')
+
+    def remove_selected_basins_from_delooped_hydrosheds_with_pd_orog_corr_inc_tc_10min_with_ts_r2b4_mask(self):
+        file_label = self._generate_file_label()
+        rdirs_filename = path.join(self.rdir_path,"generated",
+                                  "updated_RFDs_remove_additional_loop_by_hand_to_delooped_hydrosheds_with_pd"
+                                  "_orog_corr_inc_tc_10min_with_ts_r2b4_mask_20200219_123907.nc")
+        catchments_filename = path.join(self.catchments_path,
+                                        "catchmentmap_remove_additional_loop_by_hand_to_delooped_hydrosheds"
+                                        "_with_pd_orog_corr_inc_tc_10min_with_ts_r2b4_mask_20200219_123907_with_grid.nc")
+        rdirs_without_endorheic_basins_filename = \
+            path.join(self.rdir_path,"generated",
+                      "updated_RFDs_generate_rdirs_for_present_day_from_orography_correction_"
+                      "including_tarasov_corrections_no_ts_r2b4_mask_20200207_120449.nc")
+        lsmask_10min_filename = path.join(self.ls_masks_path,
+                                          "icon_r2b4_013_0031_mask_downscaled_to_10min_latlon.nc")
+        output_rdirs_filename = self.generated_rdir_filepath + file_label + ".nc"
+        utilities.remove_endorheic_basins_driver(rdirs_filename,
+                                                 catchments_filename,
+                                                 rdirs_without_endorheic_basins_filename,
+                                                 output_rdirs_filename,
+                                                 rdirs_fieldname='rdirs',
+                                                 catchment_fieldname="field_value",
+                                                 rdirs_without_endorheic_basins_fieldname="field_value",
+                                                 output_rdirs_fieldname="rdirs",
+                                                 exclude_catchments=[17535,1261,12238,
+                                                                     18217,18458,4889])
+        self._run_postprocessing(rdirs_filename=output_rdirs_filename,
+                                 output_file_label=file_label,
+                                 ls_mask_filename=lsmask_10min_filename,
+                                 compute_catchments=True,
+                                 grid_type='LatLong10min')
+
+    def remove_additional_loop_by_hand_to_delooped_hydrosheds_with_pd_orog_corr_inc_tc_10min_with_ts_r2b5_mask(self):
+        file_label = self._generate_file_label()
+        rdirs_filename=path.join(self.rdir_path,"generated",
+                                 "updated_RFDs_generate_r2b5_mask_10min_combined"
+                                 "_river_directions_20200305_123332.nc")
+        output_rdirs_filename = self.generated_rdir_filepath + file_label + ".nc"
+        lsmask_10min_filename = path.join(self.ls_masks_path,
+                                          "icon_r2b5_019_0032_mask_downscaled_to_10min_latlon_corrected.nc")
+        rdirs = iodriver.advanced_field_loader(rdirs_filename,
+                                         field_type="RiverDirections",
+                                         fieldname="rdirs")
+        rdirs.get_data()[634-1,1828-1] = 1
+        iodriver.advanced_field_writer(output_rdirs_filename,field=rdirs,
+                                       fieldname="rdirs")
+        self._run_postprocessing(rdirs_filename=output_rdirs_filename,
+                                 output_file_label=file_label,
+                                 ls_mask_filename=lsmask_10min_filename,
+                                 compute_catchments=True,
+                                 grid_type='LatLong10min')
 
 class Original_HD_Model_RFD_Drivers(Dynamic_HD_Drivers):
     """Drive processes using the present day manually corrected river directions currently in JSBACH"""
@@ -3584,7 +3961,28 @@ def main():
     #etopo1_data_drivers.etopo1_data_ALG4_sinkless()
     utilities_drivers = Utilities_Drivers()
     #utilities_drivers.convert_hydrosheds_30s_river_directions_to_one_to_nine_format()
-    utilities_drivers.mark_river_mouths_on_hydrosheds_30s_rdirs()
+    #utilities_drivers.mark_river_mouths_on_hydrosheds_30s_rdirs()
+    #utilities_drivers.upscale_hydrosheds_30s_rdirs_to_10min()
+    #utilities_drivers.\
+    #    generate_rdirs_for_present_day_from_orography_correction_including_tarasov_corrections_no_ts_r2b4_mask()
+    #utilities_drivers.\
+    #    generate_rdirs_for_present_day_from_orography_correction_including_tarasov_corrections_with_ts_r2b4_mask()
+    #utilities_drivers.splice_upscaled_hydrosheds_with_present_day_orog_corr_inc_tc_10min_no_ts_r2b4_mask()
+    #utilities_drivers.splice_upscaled_hydrosheds_with_present_day_orog_corr_inc_tc_10min_with_ts_r2b4_mask()
+    #utilities_drivers.\
+    #    remove_endorheic_basins_from_upscaled_hydrosheds_with_pd_orog_corr_inc_tc_10min_no_ts_r2b4_mask()
+    #utilities_drivers.\
+    #    replace_streams_downstream_from_loops_upscaled_hydrosheds_with_pd_orog_corr_inc_tc_10min_no_ts_r2b4_mask()
+    #utilities_drivers.\
+    #    remove_additional_loop_by_hand_to_delooped_hydrosheds_with_pd_orog_corr_inc_tc_10min_no_ts_r2b4_mask()
+    #utilities_drivers.\
+    #     replace_streams_ds_from_loops_upscaled_hydrosheds_with_pd_orog_corr_inc_tc_10min_with_ts_r2b4_mask()
+    #utilities_drivers.\
+    #    remove_additional_loop_by_hand_to_delooped_hydrosheds_with_pd_orog_corr_inc_tc_10min_with_ts_r2b4_mask()
+    #utilities_drivers.\
+    #    remove_selected_basins_from_delooped_hydrosheds_with_pd_orog_corr_inc_tc_10min_with_ts_r2b4_mask()
+    utilities_drivers.\
+    remove_additional_loop_by_hand_to_delooped_hydrosheds_with_pd_orog_corr_inc_tc_10min_with_ts_r2b5_mask()
     #utilities_drivers.convert_corrected_HD_hydrology_dat_files_to_nc()
     #utilities_drivers.recreate_connected_HD_lsmask()
     #utilities_drivers.recreate_connected_HD_lsmask_true_seas_inc_casp_only()

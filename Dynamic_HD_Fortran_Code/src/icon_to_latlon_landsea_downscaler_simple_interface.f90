@@ -99,11 +99,11 @@ program icon_to_latlon_landsea_downscaler_simple_interface
     call check_return_code(nf90_def_dim(ncid,"lon",nlon,lon_dimid))
     call check_return_code(nf90_def_var(ncid,"lat",nf90_double,lat_dimid,lat_varid))
     call check_return_code(nf90_def_var(ncid,"lon",nf90_double,lon_dimid,lon_varid))
-    dimids = (/lat_dimid,lon_dimid/)
+    dimids = (/lon_dimid,lat_dimid/)
     call check_return_code(nf90_def_var(ncid,output_fine_landsea_mask_fieldname,nf90_int,&
                                         dimids,cells_varid))
     call check_return_code(nf90_enddef(ncid))
-    call check_return_code(nf90_put_var(ncid,cells_varid,fine_landsea_mask_integer))
+    call check_return_code(nf90_put_var(ncid,cells_varid,fine_landsea_mask_integer_processed))
     call check_return_code(nf90_put_var(ncid,lat_varid,pixel_center_lats))
     call check_return_code(nf90_put_var(ncid,lon_varid,pixel_center_lons))
     call check_return_code(nf90_close(ncid))

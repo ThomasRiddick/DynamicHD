@@ -56,6 +56,7 @@ endif
 all: Dynamic_HD_Cpp_Code Fill_Sinks_Icon_SI_Exec Compute_Catchments_SI_Exec Determine_River_Directions_SI_Exec Evaluate_Basins_SI_Exec
 
 # Tool invocations
+tools_only: $(USER_OBJS) Fill_Sinks_Icon_SI_Exec Compute_Catchments_SI_Exec Determine_River_Directions_SI_Exec Evaluate_Basins_SI_Exec
 compile_only: $(USER_OBJS)
 
 Dynamic_HD_Cpp_Code: $(OBJS) $(USER_OBJS) $(TEST_OBJS)

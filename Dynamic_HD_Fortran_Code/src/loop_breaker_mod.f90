@@ -4,7 +4,6 @@ module loop_breaker_mod
     use doubly_linked_list_mod
     implicit none
     private
-    public :: latlon_dir_based_rdirs_loop_breaker_constructor
 
     !> An abstract class containing a loop breaker (i.e. tool to remove upwanted
     !! loops in upscaled river directions) for a generic grid
@@ -153,6 +152,23 @@ module loop_breaker_mod
             procedure, public :: latlon_get_loop_free_rdirs
     end type latlon_loop_breaker
 
+    type, extends(loop_breaker), abstract, public :: &
+        icon_icosohedral_cell_latlon_pixel_loop_breaker
+            integer :: ncells
+            integer, dimension(:,:), pointer :: expanded_cell_numbers_data
+            integer, dimension(:), pointer :: section_min_lats
+            integer, dimension(:), pointer :: section_min_lons
+            integer, dimension(:), pointer :: section_max_lats
+            integer, dimension(:), pointer :: section_max_lons
+        contains
+            private
+            procedure :: init_icon_icosohedral_cell_latlon_pixel_loop_breaker
+            procedure :: find_cells_in_loop => icon_icosohedral_cell_latlon_pixel_find_cells_in_loop
+            procedure :: locate_highest_cumulative_flow_of_cell => &
+                icon_i_c_latlon_p_locate_highest_cumulative_flow_of_cell
+            procedure, public :: icon_icosohedral_cell_get_loop_free_rdirs
+    end type icon_icosohedral_cell_latlon_pixel_loop_breaker
+
     !> Concrete subclass of a latitude longitude loop breaker for direction (1-9 keypad code)
     !! based river directions
     type, extends(latlon_loop_breaker), public :: &
@@ -182,8 +198,41 @@ module loop_breaker_mod
     end type latlon_dir_based_rdirs_loop_breaker
 
     interface latlon_dir_based_rdirs_loop_breaker
-        procedure latlon_dir_based_rdirs_loop_breaker_constructor
+        procedure :: latlon_dir_based_rdirs_loop_breaker_constructor
     end interface latlon_dir_based_rdirs_loop_breaker
+
+    !> Concrete subclass of a latitude longitude loop breaker for direction (1-9 keypad code)
+    !! based river directions
+    type, extends(icon_icosohedral_cell_latlon_pixel_loop_breaker), public :: &
+        icon_icosohedral_cell_latlon_pixel_dir_based_rdirs_loop_breaker
+        !> Code for a no data river direction
+        integer :: no_data_rdir = -999
+        contains
+            private
+            !> Set the rdir of a coarse cell based on the rdir of the highest cumulative
+            !! flow fine cell. At non-corner cells simply the choose the correct direction
+            !! to cross the edge the cell is next to. For corner cells choose the cell that
+            !! the fine river direction of the cell with highest cumulative flow points
+            !! towards. Takes as input the fine coordinates of the highest cumulative flow
+            !! cell and return nothing directly (but changes the state of this).
+            procedure :: assign_rdir_of_highest_cumulative_flow_of_cell => &
+                irregular_dbr_assign_rdir_of_highest_cumulative_flow_of_cell
+            !> Function that takes the fine coordinates of the cell with the highest
+            !! cumulative flow along with the fine section coordinates that describe
+            !! the area that maps to the coarse cell and return the permitted diagonal
+            !! river direction (the one pointing out diagonally from the corner between
+            !! the vertical and horizontal directions possible from the cell with
+            !! the highest cumulative flow) as a direction based direction indicator
+            procedure :: generate_permitted_rdir => irregular_latlon_dir_based_rdirs_generate_permitted_rdir
+            !> Return a direction based direction indicator to represent a no data flow
+            !! direction.
+            procedure :: get_no_data_rdir_value => irregular_dir_based_rdirs_get_no_data_rdir_value
+            procedure :: iic_llp_dir_based_rdirs_calculate_new_coarse_coords
+    end type icon_icosohedral_cell_latlon_pixel_dir_based_rdirs_loop_breaker
+
+    interface icon_icosohedral_cell_latlon_pixel_dir_based_rdirs_loop_breaker
+        procedure :: iic_llp_dir_based_rdirs_loop_breaker_constructor
+    end interface icon_icosohedral_cell_latlon_pixel_dir_based_rdirs_loop_breaker
 
 contains
 
@@ -272,20 +321,62 @@ contains
         class(*), dimension(:,:), pointer :: coarse_rdirs
         class(*), dimension(:,:), pointer :: fine_rdirs
         class(*), dimension(:,:), pointer :: fine_cumulative_flow
-        this%coarse_catchment_field => latlon_field_section(coarse_catchments,&
-            latlon_section_coords(1,1,size(coarse_catchments,1),size(coarse_catchments,2)))
-        this%coarse_cumulative_flow_field => latlon_field_section(coarse_cumulative_flow,&
-            latlon_section_coords(1,1,size(coarse_cumulative_flow,1),size(coarse_cumulative_flow,2)))
-        this%coarse_rdirs_field => latlon_field_section(coarse_rdirs, &
-            latlon_section_coords(1,1,size(coarse_rdirs,1),size(coarse_rdirs,2)))
-        this%fine_rdirs_field => latlon_field_section(fine_rdirs, &
-            latlon_section_coords(1,1,size(fine_rdirs,1),size(fine_rdirs,2)))
-        this%fine_cumulative_flow_field => latlon_field_section(fine_cumulative_flow, &
-            latlon_section_coords(1,1,size(fine_cumulative_flow,1),size(fine_cumulative_flow,2)))
-        this%scale_factor = size(fine_rdirs,1)/size(coarse_rdirs,1)
-        this%nlat_coarse = size(coarse_rdirs,1)
-        this%nlon_coarse = size(coarse_rdirs,2)
+            this%coarse_catchment_field => latlon_field_section(coarse_catchments,&
+                latlon_section_coords(1,1,size(coarse_catchments,1),size(coarse_catchments,2)))
+            this%coarse_cumulative_flow_field => latlon_field_section(coarse_cumulative_flow,&
+                latlon_section_coords(1,1,size(coarse_cumulative_flow,1),size(coarse_cumulative_flow,2)))
+            this%coarse_rdirs_field => latlon_field_section(coarse_rdirs, &
+                latlon_section_coords(1,1,size(coarse_rdirs,1),size(coarse_rdirs,2)))
+            this%fine_rdirs_field => latlon_field_section(fine_rdirs, &
+                latlon_section_coords(1,1,size(fine_rdirs,1),size(fine_rdirs,2)))
+            this%fine_cumulative_flow_field => latlon_field_section(fine_cumulative_flow, &
+                latlon_section_coords(1,1,size(fine_cumulative_flow,1),size(fine_cumulative_flow,2)))
+            this%scale_factor = size(fine_rdirs,1)/size(coarse_rdirs,1)
+            this%nlat_coarse = size(coarse_rdirs,1)
+            this%nlon_coarse = size(coarse_rdirs,2)
     end subroutine init_latlon_loop_breaker
+
+    subroutine init_icon_icosohedral_cell_latlon_pixel_loop_breaker(this,&
+                                                                    coarse_catchments,&
+                                                                    coarse_cumulative_flow,&
+                                                                    coarse_rdirs,&
+                                                                    coarse_section_coords,&
+                                                                    fine_rdirs,&
+                                                                    fine_cumulative_flow, &
+                                                                    expanded_cell_numbers_data, &
+                                                                    section_min_lats, &
+                                                                    section_min_lons, &
+                                                                    section_max_lats, &
+                                                                    section_max_lons)
+        class(icon_icosohedral_cell_latlon_pixel_loop_breaker) :: this
+        class(*), dimension(:), pointer :: coarse_catchments
+        class(*), dimension(:), pointer :: coarse_cumulative_flow
+        type(generic_1d_section_coords) :: coarse_section_coords
+        class(*), dimension(:), pointer :: coarse_rdirs
+        class(*), dimension(:,:), pointer :: fine_rdirs
+        class(*), dimension(:,:), pointer :: fine_cumulative_flow
+        integer, dimension(:,:), pointer :: expanded_cell_numbers_data
+        integer, dimension(:), pointer :: section_min_lats
+        integer, dimension(:), pointer :: section_min_lons
+        integer, dimension(:), pointer :: section_max_lats
+        integer, dimension(:), pointer :: section_max_lons
+            this%coarse_catchment_field => icon_single_index_field_section(coarse_catchments,&
+                                                                           coarse_section_coords)
+            this%coarse_cumulative_flow_field => icon_single_index_field_section(coarse_cumulative_flow,&
+                                                                                 coarse_section_coords)
+            this%coarse_rdirs_field => icon_single_index_field_section(coarse_rdirs,&
+                                                                       coarse_section_coords)
+            this%fine_rdirs_field => latlon_field_section(fine_rdirs, &
+                latlon_section_coords(1,1,size(fine_rdirs,1),size(fine_rdirs,2)))
+            this%fine_cumulative_flow_field => latlon_field_section(fine_cumulative_flow, &
+                latlon_section_coords(1,1,size(fine_cumulative_flow,1),size(fine_cumulative_flow,2)))
+            this%ncells = size(coarse_rdirs)
+            this%expanded_cell_numbers_data => expanded_cell_numbers_data
+            this%section_min_lats => section_min_lats
+            this%section_min_lons => section_min_lons
+            this%section_max_lats => section_max_lats
+            this%section_max_lons => section_max_lons
+    end subroutine init_icon_icosohedral_cell_latlon_pixel_loop_breaker
 
     function latlon_get_loop_free_rdirs(this) result(loop_free_coarse_rdirs)
         class(latlon_loop_breaker) :: this
@@ -295,6 +386,15 @@ contains
                 loop_free_coarse_rdirs => coarse_rdirs_field%get_data()
             end select
     end function latlon_get_loop_free_rdirs
+
+    function icon_icosohedral_cell_get_loop_free_rdirs(this) result(loop_free_coarse_rdirs)
+        class(icon_icosohedral_cell_latlon_pixel_loop_breaker) :: this
+        class(*), dimension(:), pointer :: loop_free_coarse_rdirs
+            select type (coarse_rdirs_field => this%coarse_rdirs_field)
+            class is (icon_single_index_field_section)
+                loop_free_coarse_rdirs => coarse_rdirs_field%get_data()
+            end select
+    end function icon_icosohedral_cell_get_loop_free_rdirs
 
     function latlon_find_cells_in_loop(this,loop_num) result(cells_in_loop)
         class(latlon_loop_breaker) :: this
@@ -324,6 +424,33 @@ contains
                 end do
             end do
     end function latlon_find_cells_in_loop
+
+    function icon_icosohedral_cell_latlon_pixel_find_cells_in_loop(this,loop_num) result(cells_in_loop)
+        class(icon_icosohedral_cell_latlon_pixel_loop_breaker) :: this
+        type(doubly_linked_list), pointer :: cells_in_loop
+        class(*), pointer :: cumulative_flow_value
+        class(*), pointer :: catchment_value
+        integer :: loop_num
+        integer :: i
+            allocate(cells_in_loop)
+            do i = 1,this%ncells
+                cumulative_flow_value => &
+                    this%coarse_cumulative_flow_field%get_value(generic_1d_coords(i))
+                select type (cumulative_flow_value)
+                    type is (integer)
+                    catchment_value => &
+                        this%coarse_catchment_field%get_value(generic_1d_coords(i))
+                    select type (catchment_value)
+                    type is (integer)
+                        if (catchment_value == loop_num .and. cumulative_flow_value == 0 ) then
+                            call cells_in_loop%add_value_to_back(generic_1d_coords(i))
+                        end if
+                    end select
+                    deallocate(catchment_value)
+                end select
+                deallocate(cumulative_flow_value)
+            end do
+    end function icon_icosohedral_cell_latlon_pixel_find_cells_in_loop
 
     function latlon_locate_highest_cumulative_flow_of_cell(this,coords_in, &
             permitted_diagonal_outflow_rdir,vertical_boundary_outflow) result(highest_cumulative_flow_location)
@@ -400,6 +527,96 @@ contains
             end do
     end function latlon_locate_highest_cumulative_flow_of_cell
 
+    function icon_i_c_latlon_p_locate_highest_cumulative_flow_of_cell(this,coords_in, &
+            permitted_diagonal_outflow_rdir,vertical_boundary_outflow) result(highest_cumulative_flow_location)
+        class(icon_icosohedral_cell_latlon_pixel_loop_breaker) :: this
+        class(coords), allocatable :: coords_in
+        class(coords), pointer :: highest_cumulative_flow_location
+        class(direction_indicator), intent(out), pointer, optional :: permitted_diagonal_outflow_rdir
+        class(*), pointer :: pixel_cumulative_flow
+        logical, intent(out), optional :: vertical_boundary_outflow
+        type(irregular_latlon_section_coords) :: fine_resolution_section_coords
+        integer :: fine_resolution_min_lat
+        integer :: fine_resolution_max_lat
+        integer :: fine_resolution_min_lon
+        integer :: fine_resolution_max_lon
+        integer :: cell_number
+        integer :: i,j
+        integer :: current_highest_cumulative_flow
+            nullify(highest_cumulative_flow_location)
+            if (present(permitted_diagonal_outflow_rdir)) nullify(permitted_diagonal_outflow_rdir)
+            current_highest_cumulative_flow = 0
+            if (present(permitted_diagonal_outflow_rdir)) then
+                permitted_diagonal_outflow_rdir => this%get_no_data_rdir_value()
+            end if
+            if (present(vertical_boundary_outflow)) vertical_boundary_outflow = .False.
+            select type (coords_in)
+            type is (generic_1d_coords)
+                fine_resolution_section_coords = irregular_latlon_section_coords(coords_in%index, &
+                                                                                 this%expanded_cell_numbers_data, &
+                                                                                 this%section_min_lats, &
+                                                                                 this%section_min_lons, &
+                                                                                 this%section_max_lats, &
+                                                                                 this%section_max_lons,&
+                                                                                 1)
+            end select
+            fine_resolution_min_lat = fine_resolution_section_coords%section_min_lat
+            fine_resolution_max_lat = fine_resolution_section_coords%section_min_lat + &
+                                      fine_resolution_section_coords%section_width_lat - 1
+            fine_resolution_min_lon = fine_resolution_section_coords%section_min_lon
+            fine_resolution_max_lon = fine_resolution_section_coords%section_min_lon + &
+                                      fine_resolution_section_coords%section_width_lon - 1
+            cell_number = fine_resolution_section_coords%cell_number
+            do j = fine_resolution_min_lon,fine_resolution_max_lon
+                do i = fine_resolution_min_lat,fine_resolution_max_lat
+                    if(cell_number == fine_resolution_section_coords%cell_numbers(i,j)) then
+                        pixel_cumulative_flow => &
+                            this%fine_cumulative_flow_field%get_value(latlon_coords(i,j))
+                        select type(pixel_cumulative_flow)
+                            type is (integer)
+                            if ( pixel_cumulative_flow > &
+                                current_highest_cumulative_flow) then
+                                current_highest_cumulative_flow = pixel_cumulative_flow
+                                if (associated(highest_cumulative_flow_location)) deallocate(highest_cumulative_flow_location)
+                                allocate(highest_cumulative_flow_location,source=latlon_coords(i,j))
+                                if (present(vertical_boundary_outflow)) then
+                                    if ( j == fine_resolution_min_lon .or. j == fine_resolution_max_lon .or. &
+                                         (.not. (cell_number == &
+                                                 fine_resolution_section_coords%cell_numbers(i,j+1))) .or. &
+                                         (.not. (cell_number == &
+                                                 fine_resolution_section_coords%cell_numbers(i,j-1)))) then
+                                        vertical_boundary_outflow = .True.
+                                    else
+                                        vertical_boundary_outflow = .False.
+                                    end if
+                                end if
+                                if (present(vertical_boundary_outflow) .and. present(permitted_diagonal_outflow_rdir)) then
+                                    ! If this is both on the vertical and horizontal boundary it is a corner and
+                                    ! thus a diagonal outflow in one particular direction is possible
+                                    if ( (i == fine_resolution_min_lat .or. i == fine_resolution_max_lat .or. &
+                                         (.not. (cell_number == &
+                                                 fine_resolution_section_coords%cell_numbers(i+1,j))) .or. &
+                                         (.not. (cell_number == &
+                                                 fine_resolution_section_coords%cell_numbers(i-1,j)))) .and. &
+                                        vertical_boundary_outflow) then
+                                        if (associated(permitted_diagonal_outflow_rdir)) &
+                                            deallocate(permitted_diagonal_outflow_rdir)
+                                            permitted_diagonal_outflow_rdir => &
+                                                this%generate_permitted_rdir(latlon_coords(i,j), &
+                                                    fine_resolution_section_coords)
+                                    else
+                                        if (associated(permitted_diagonal_outflow_rdir)) &
+                                            deallocate(permitted_diagonal_outflow_rdir)
+                                            permitted_diagonal_outflow_rdir => this%get_no_data_rdir_value()
+                                    end if
+                                end if
+                            end if
+                        end select
+                        deallocate(pixel_cumulative_flow)
+                    end if
+                end do
+            end do
+    end function icon_i_c_latlon_p_locate_highest_cumulative_flow_of_cell
 
     function latlon_dir_based_rdirs_loop_breaker_constructor(coarse_catchments_in,coarse_cumulative_flow_in,coarse_rdirs_in,&
                                                              fine_rdirs_in,fine_cumulative_flow_in) result(constructor)
@@ -422,6 +639,52 @@ contains
             call constructor%init_latlon_loop_breaker(coarse_catchments,coarse_cumulative_flow,coarse_rdirs,&
                                                       fine_rdirs,fine_cumulative_flow)
     end function latlon_dir_based_rdirs_loop_breaker_constructor
+
+    function iic_llp_dir_based_rdirs_loop_breaker_constructor(coarse_catchments_in,&
+                                                              coarse_cumulative_flow_in,&
+                                                              coarse_rdirs_in,&
+                                                              coarse_section_coords_in, &
+                                                              fine_rdirs_in,fine_cumulative_flow_in, &
+                                                              expanded_cell_numbers_data, &
+                                                              section_min_lats, &
+                                                              section_min_lons, &
+                                                              section_max_lats, &
+                                                              section_max_lons) &
+                                                              result(constructor)
+        type(icon_icosohedral_cell_latlon_pixel_dir_based_rdirs_loop_breaker) :: constructor
+        type(generic_1d_section_coords) :: coarse_section_coords_in
+        integer, dimension(:), pointer :: coarse_catchments_in
+        integer, dimension(:), pointer :: coarse_cumulative_flow_in
+        integer, dimension(:), pointer :: coarse_rdirs_in
+        integer, dimension(:,:), pointer :: fine_cumulative_flow_in
+        integer, dimension(:,:), pointer :: fine_rdirs_in
+        class(*), dimension(:), pointer :: coarse_catchments
+        class(*), dimension(:), pointer :: coarse_cumulative_flow
+        class(*), dimension(:), pointer :: coarse_rdirs
+        class(*), dimension(:,:), pointer :: fine_cumulative_flow
+        class(*), dimension(:,:), pointer :: fine_rdirs
+        integer, dimension(:,:), pointer :: expanded_cell_numbers_data
+        integer, dimension(:), pointer :: section_min_lats
+        integer, dimension(:), pointer :: section_min_lons
+        integer, dimension(:), pointer :: section_max_lats
+        integer, dimension(:), pointer :: section_max_lons
+            coarse_catchments => coarse_catchments_in
+            coarse_cumulative_flow => coarse_cumulative_flow_in
+            coarse_rdirs => coarse_rdirs_in
+            fine_cumulative_flow => fine_cumulative_flow_in
+            fine_rdirs => fine_rdirs_in
+            call constructor%init_icon_icosohedral_cell_latlon_pixel_loop_breaker(coarse_catchments,&
+                                                                                  coarse_cumulative_flow,&
+                                                                                  coarse_rdirs,&
+                                                                                  coarse_section_coords_in,&
+                                                                                  fine_rdirs,&
+                                                                                  fine_cumulative_flow, &
+                                                                                  expanded_cell_numbers_data, &
+                                                                                  section_min_lats, &
+                                                                                  section_min_lons, &
+                                                                                  section_max_lats, &
+                                                                                  section_max_lons)
+    end function iic_llp_dir_based_rdirs_loop_breaker_constructor
 
     subroutine dir_based_rdirs_assign_rdir_of_highest_cumulative_flow_of_cell(&
         this,coords_in)
@@ -490,6 +753,26 @@ contains
             deallocate(rdir)
     end subroutine dir_based_rdirs_assign_rdir_of_highest_cumulative_flow_of_cell
 
+    subroutine irregular_dbr_assign_rdir_of_highest_cumulative_flow_of_cell(&
+        this,coords_in)
+        class(icon_icosohedral_cell_latlon_pixel_dir_based_rdirs_loop_breaker) :: this
+        class(coords), allocatable :: coords_in
+        class(coords), pointer :: highest_cumulative_flow_location
+        class(*), pointer :: rdir
+        type(generic_1d_coords) :: new_coarse_coords
+            highest_cumulative_flow_location => &
+                this%locate_highest_cumulative_flow_of_cell(coords_in)
+            rdir => this%fine_rdirs_field%get_value(highest_cumulative_flow_location)
+            select type (rdir)
+            type is (integer)
+                new_coarse_coords = &
+                    this%iic_llp_dir_based_rdirs_calculate_new_coarse_coords(rdir, &
+                                                       highest_cumulative_flow_location)
+                call this%coarse_rdirs_field%set_value(coords_in,new_coarse_coords%index)
+            end select
+            deallocate(rdir)
+    end subroutine irregular_dbr_assign_rdir_of_highest_cumulative_flow_of_cell
+
     function dir_based_rdirs_generate_permitted_rdir(this,coords_in,section_coords_in) result(permitted_rdir)
         class(latlon_dir_based_rdirs_loop_breaker) :: this
         class(coords) :: coords_in
@@ -521,10 +804,80 @@ contains
             end select
     end function dir_based_rdirs_generate_permitted_rdir
 
+    !This function is just a dummy
+    function irregular_latlon_dir_based_rdirs_generate_permitted_rdir(this,coords_in,&
+                                                                      section_coords_in) &
+                                                                  result(permitted_rdir)
+        class(icon_icosohedral_cell_latlon_pixel_dir_based_rdirs_loop_breaker) :: this
+        class(coords) :: coords_in
+        class(section_coords) :: section_coords_in
+        class(direction_indicator), pointer :: permitted_rdir
+            select type (coords_in)
+            class is (coords)
+                continue
+            end select
+            select type (section_coords_in)
+            class is (section_coords)
+                continue
+            end select
+            allocate(permitted_rdir,source=dir_based_direction_indicator(this%no_data_rdir))
+    end function irregular_latlon_dir_based_rdirs_generate_permitted_rdir
+
     function dir_based_rdirs_get_no_data_rdir_value(this) result(no_data_rdir_value)
         class(latlon_dir_based_rdirs_loop_breaker) :: this
         class(direction_indicator), pointer :: no_data_rdir_value
             allocate(no_data_rdir_value,source=dir_based_direction_indicator(this%no_data_rdir))
     end function dir_based_rdirs_get_no_data_rdir_value
+
+!   Repeat code due to restrictions of Fortan
+    function irregular_dir_based_rdirs_get_no_data_rdir_value(this) result(no_data_rdir_value)
+        class(icon_icosohedral_cell_latlon_pixel_dir_based_rdirs_loop_breaker) :: this
+        class(direction_indicator), pointer :: no_data_rdir_value
+            allocate(no_data_rdir_value,source=dir_based_direction_indicator(this%no_data_rdir))
+    end function irregular_dir_based_rdirs_get_no_data_rdir_value
+
+    function iic_llp_dir_based_rdirs_calculate_new_coarse_coords(this,rdir_in, &
+                                                                 fine_coords_in) &
+            result(new_coarse_coords)
+        class(icon_icosohedral_cell_latlon_pixel_dir_based_rdirs_loop_breaker) :: this
+        integer :: rdir_in
+        class(coords) :: fine_coords_in
+        type(latlon_coords) :: new_fine_coords
+        type(generic_1d_coords) :: new_coarse_coords
+        integer :: nlat,nlon
+        integer :: new_coarse_cell_index
+            select type(fine_rdirs => this%fine_rdirs_field)
+            type is (latlon_field_section)
+                nlat = fine_rdirs%get_nlat()
+                nlon = fine_rdirs%get_nlon()
+            end select
+            select type(fine_coords_in)
+            type is (latlon_coords)
+                new_fine_coords = fine_coords_in
+            end select
+            if ( rdir_in == 7 .or. rdir_in == 8 .or. rdir_in == 9) then
+                new_fine_coords%lat = new_fine_coords%lat - 1
+            else if ( rdir_in == 1 .or. rdir_in == 2 .or. rdir_in == 3) then
+                new_fine_coords%lat = new_fine_coords%lat + 1
+            end if
+            if ( rdir_in == 7 .or. rdir_in == 4 .or. rdir_in == 1 ) then
+                new_fine_coords%lon = new_fine_coords%lon - 1
+            else if ( rdir_in == 9 .or. rdir_in == 6 .or. rdir_in == 3 ) then
+                new_fine_coords%lon = new_fine_coords%lon + 1
+            end if
+            if ( rdir_in == 5 .or. rdir_in == 0 .or. rdir_in == -1 ) then
+                write(*,*) "Error in loop breaking code"
+                stop
+            end if
+            if (new_fine_coords%lat <= 0 .or. new_fine_coords%lon <= 0 .or. &
+                new_fine_coords%lat > nlat .or. new_fine_coords%lon > nlon ) then
+                write(*,*) "Error in loop breaking code"
+                write(*,*) "Wrapping for loop breaking has not been implemented!"
+                stop
+            end if
+            new_coarse_cell_index = this%expanded_cell_numbers_data(new_fine_coords%lat,&
+                                                                    new_fine_coords%lon)
+            new_coarse_coords = generic_1d_coords(new_coarse_cell_index)
+    end function iic_llp_dir_based_rdirs_calculate_new_coarse_coords
 
 end module loop_breaker_mod

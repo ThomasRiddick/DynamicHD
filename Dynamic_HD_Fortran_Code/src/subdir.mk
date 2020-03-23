@@ -41,7 +41,8 @@ $(FRUIT_LOC)/fruit.f90 \
 ../src/manual_fruit_basket.f90 \
 ../src/manual_fruit_basket_driver.f90 \
 ../src/icon_to_latlon_landsea_downscaler.f90 \
-../src/icon_to_latlon_landsea_downscaler_simple_interface.f90
+../src/icon_to_latlon_landsea_downscaler_simple_interface.f90 \
+../src/latlon_to_icon_loop_breaker_simple_interface.f90
 
 OBJS += \
 ./src/precision_mod.o \
@@ -70,6 +71,10 @@ COTAT_PLUS_LATLON_TO_ICON_SIMPLE_INTERFACE_OBJS += \
 
 ICON_TO_LATLON_LANDSEA_DOWNSCALER_SIMPLE_INTERFACE_OBJS += \
 ./src/icon_to_latlon_landsea_downscaler_simple_interface.o \
+./src/check_return_code_netcdf_mod.o
+
+LATLON_TO_ICON_LOOP_BREAKER_SIMPLE_INTERFACE_OBJS += \
+./src/latlon_to_icon_loop_breaker_simple_interface.o \
 ./src/check_return_code_netcdf_mod.o
 
 LATLON_HD_AND_LAKE_MODEL_OBJS += \
@@ -148,7 +153,8 @@ MODS += \
 ./cotat_plus_latlon_to_icon_simple_interface.mod \
 ./latlon_hd_and_lake_model_test_mod.mod \
 ./icon_to_latlon_landsea_downscaler.mod \
-./icon_to_latlon_landsea_downscaler_simple_interface.mod
+./icon_to_latlon_landsea_downscaler_simple_interface.mod \
+./latlon_to_icon_loop_breaker_simple_interface.mod
 
 # Each subdirectory must supply rules for building sources it contributes
 ifeq ($(FORTRAN),$(GFORTRAN))

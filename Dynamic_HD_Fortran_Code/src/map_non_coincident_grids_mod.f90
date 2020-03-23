@@ -42,11 +42,13 @@ type, public, abstract :: non_coincident_grid_mapper
   integer, dimension(:), pointer :: section_max_lons
   logical :: display_progress  = .true.
   contains
+    procedure :: set_cell_numbers
     procedure :: generate_pixels_in_cell_mask
     procedure :: check_if_pixel_is_in_cell
     procedure :: generate_cell_numbers
     procedure :: process_cell
     procedure :: generate_limits
+    procedure :: offset_limits
     procedure(process_pixel_for_limits), deferred :: process_pixel_for_limits
     procedure(generate_cell_bounds), deferred :: generate_cell_bounds
     procedure(generate_areas_to_consider), deferred :: generate_areas_to_consider
@@ -202,6 +204,12 @@ contains
       cell_numbers =>this%cell_numbers
   end function generate_cell_numbers
 
+  subroutine set_cell_numbers(this,cell_numbers_in)
+    class(non_coincident_grid_mapper), intent(inout) :: this
+    class(field_section), pointer  :: cell_numbers_in
+      this%cell_numbers => cell_numbers_in
+  end subroutine set_cell_numbers
+
   subroutine process_cell_wrapper(this,coords_in)
     class(*), intent(inout) :: this
     class(coords), pointer,intent(in) :: coords_in
@@ -231,6 +239,13 @@ contains
     class(non_coincident_grid_mapper), intent(inout) :: this
       call this%cell_numbers%for_all_section(process_pixel_for_limits_wrapper,this)
   end subroutine generate_limits
+
+  subroutine offset_limits(this,lat_offset)
+    class(non_coincident_grid_mapper), intent(inout) :: this
+    integer, intent(in) :: lat_offset
+      this%section_min_lats(:) = this%section_min_lats(:) + lat_offset
+      this%section_max_lats(:) = this%section_max_lats(:) + lat_offset
+  end subroutine offset_limits
 
   subroutine process_pixel_for_limits_wrapper(this,coords_in)
     class(*), intent(inout) :: this
@@ -650,8 +665,8 @@ contains
       allocate(this%section_min_lons(cell_vertex_coords%get_num_points()))
       allocate(this%section_max_lats(cell_vertex_coords%get_num_points()))
       allocate(this%section_max_lons(cell_vertex_coords%get_num_points()))
-      this%section_min_lats(:) = cell_vertex_coords%get_num_points() + 1
-      this%section_min_lons(:) = cell_vertex_coords%get_num_points() + 1
+      this%section_min_lats(:) = fine_grid_shape%section_width_lat + 1
+      this%section_min_lons(:) = fine_grid_shape%section_width_lon + 1
       this%section_max_lats(:) = 0
       this%section_max_lons(:) = 0
       select type(new_cell_numbers)

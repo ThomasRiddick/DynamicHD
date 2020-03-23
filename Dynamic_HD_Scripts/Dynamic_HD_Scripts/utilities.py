@@ -16,6 +16,7 @@ import netCDF4
 import shutil
 import cdo
 import iodriver
+import follow_streams_driver
 from context import fortran_source_path
 from Dynamic_HD_Scripts.field import makeField
 
@@ -1590,3 +1591,101 @@ def advanced_convert_hydrosheds_river_directions_driver(input_river_directions_f
   iodriver.advanced_field_writer(output_river_directions_filename,
                                  field=output_rdirs,
                                  fieldname=output_river_directions_fieldname)
+
+def splice_rdirs(rdirs_matching_ls_mask,ls_mask,
+                 other_rdirs):
+  other_rdirs.remove_river_mouths()
+  rdirs_matching_ls_mask.remove_river_mouths()
+  other_rdirs.mark_ocean_points(ls_mask)
+  other_rdirs.fill_land_without_rdirs(rdirs_matching_ls_mask)
+  other_rdirs.mark_river_mouths()
+  return other_rdirs
+
+def advanced_splice_rdirs_driver(rdirs_matching_ls_mask_filename,
+                                 ls_mask_filename,
+                                 other_rdirs_filename,
+                                 output_river_directions_filename,
+                                 rdirs_matching_ls_mask_fieldname,
+                                 ls_mask_fieldname,
+                                 other_rdirs_fieldname,
+                                 output_river_directions_fieldname):
+  rdirs_matching_ls_mask =  iodriver.advanced_field_loader(rdirs_matching_ls_mask_filename,
+                                                           field_type="RiverDirections",
+                                                           fieldname=rdirs_matching_ls_mask_fieldname)
+  ls_mask = iodriver.advanced_field_loader(ls_mask_filename,
+                                           field_type="Generic",
+                                           fieldname=ls_mask_fieldname)
+  other_rdirs = iodriver.advanced_field_loader(other_rdirs_filename,
+                                               field_type="RiverDirections",
+                                               fieldname=other_rdirs_fieldname)
+  spliced_rdirs = splice_rdirs(rdirs_matching_ls_mask,ls_mask,other_rdirs)
+  iodriver.advanced_field_writer(output_river_directions_filename,
+                                 field=spliced_rdirs,
+                                 fieldname=output_river_directions_fieldname)
+
+def remove_endorheic_basins(rdirs,catchments,rdirs_without_endorheic_basins,
+                            replace_only_catchments=[],exclude_catchments=[]):
+  rdirs.remove_river_mouths()
+  rdirs_without_endorheic_basins.remove_river_mouths()
+  if replace_only_catchments:
+    catchments_to_replace = replace_only_catchments
+  else:
+    catchments_to_replace = rdirs.find_endorheic_catchments(catchments)
+  catchments_to_replace = [catchment for catchment in catchments_to_replace if catchment not in exclude_catchments]
+  rdirs.replace_specified_catchments(catchments,catchments_to_replace,
+                                     rdirs_without_endorheic_basins)
+  rdirs.mark_river_mouths()
+  return rdirs
+
+def remove_endorheic_basins_driver(rdirs_filename,catchments_filename,
+                                   rdirs_without_endorheic_basins_filename,
+                                   output_rdirs_filename,
+                                   rdirs_fieldname,catchment_fieldname,
+                                   rdirs_without_endorheic_basins_fieldname,
+                                   output_rdirs_fieldname,
+                                   replace_only_catchments=[],
+                                   exclude_catchments=[]):
+  rdirs = iodriver.advanced_field_loader(rdirs_filename,
+                                         field_type="RiverDirections",
+                                         fieldname=rdirs_fieldname)
+  catchments = iodriver.advanced_field_loader(catchments_filename,
+                                              field_type="Generic",
+                                              fieldname=catchment_fieldname)
+  rdirs_without_endorheic_basins = \
+    iodriver.advanced_field_loader(rdirs_without_endorheic_basins_filename,
+                                   field_type="RiverDirections",
+                                   fieldname=rdirs_without_endorheic_basins_fieldname)
+  sinkless_rdirs = remove_endorheic_basins(rdirs,catchments,rdirs_without_endorheic_basins,
+                                                replace_only_catchments=replace_only_catchments,
+                                                exclude_catchments=exclude_catchments)
+  iodriver.advanced_field_writer(output_rdirs_filename,field=sinkless_rdirs,
+                                 fieldname=output_rdirs_fieldname)
+
+def replace_streams_downstream_from_loop(rdirs,cumulative_flow,other_rdirs):
+  rdirs.remove_river_mouths()
+  other_rdirs.remove_river_mouths()
+  mask = follow_streams_driver.follow_streams(other_rdirs,cumulative_flow)
+  rdirs.replace_areas_in_mask(mask=mask.get_data(),other_rdirs=other_rdirs)
+  rdirs.mark_river_mouths()
+  return rdirs
+
+def replace_streams_downstream_from_loop_driver(rdirs_filename,
+                                                cumulative_flow_filename,
+                                                other_rdirs_filename,
+                                                output_rdirs_filename,
+                                                rdirs_fieldname,
+                                                cumulative_flow_fieldname,
+                                                other_rdirs_fieldname,
+                                                output_rdirs_fieldname):
+  rdirs = iodriver.advanced_field_loader(rdirs_filename,
+                                         field_type="RiverDirections",
+                                         fieldname=rdirs_fieldname)
+  cumulative_flow = iodriver.advanced_field_loader(cumulative_flow_filename,
+                                                   field_type="CumulativeFlow",
+                                                   fieldname=cumulative_flow_fieldname)
+  other_rdirs = iodriver.advanced_field_loader(other_rdirs_filename,
+                                               field_type="RiverDirections",
+                                               fieldname=other_rdirs_fieldname)
+  new_rdirs = replace_streams_downstream_from_loop(rdirs,cumulative_flow,other_rdirs)
+  iodriver.advanced_field_writer(output_rdirs_filename,field=new_rdirs,
+                                 fieldname=output_rdirs_fieldname)

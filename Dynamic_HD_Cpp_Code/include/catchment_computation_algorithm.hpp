@@ -6,6 +6,7 @@
  */
 
 #include <queue>
+#include <tuple>
 #include <cell.hpp>
 #include "grid.hpp"
 #include "field.hpp"
@@ -18,6 +19,7 @@ public:
 	void setup_fields(int* catchment_numbers_in,
 					  grid_params* grid_params_in);
 	void compute_catchments();
+	void renumber_catchments_by_size();
 	vector<int>* identify_loops();
 	void test_compute_catchment(landsea_cell* outflow_in,
 	                            int catchmentnumber_in);
@@ -34,6 +36,7 @@ protected:
 	virtual coords* calculate_downstream_coords(coords* initial_coords) = 0;
 	queue<landsea_cell*> outflow_q;
 	queue<landsea_cell*> q;
+	vector<pair<int,int> >* catchment_sizes = nullptr;
 	grid_params* _grid_params = nullptr;
 	grid* _grid = nullptr;
 	field<bool>* completed_cells = nullptr;

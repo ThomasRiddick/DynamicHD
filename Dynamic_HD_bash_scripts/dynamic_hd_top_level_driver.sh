@@ -164,9 +164,10 @@ fi
 
 if ! [[ -d $source_directory ]]; then
 	echo "Source directory does not exist." 1>&2
-
+	exit 1
 fi
 
+shopt -s nocasematch
 no_conda=${no_conda:-"false"}
 if [[ $no_conda == "true" ]] || [[ $no_conda == "t" ]]; then
 	no_conda=true
@@ -186,6 +187,7 @@ else
 	echo "Format of no_modules flag is unknown, please use True/False or T/F" 1>&2
 	exit 1
 fi
+shopt -u nocasematch
 
 #Change to the working directory
 cd ${working_directory}

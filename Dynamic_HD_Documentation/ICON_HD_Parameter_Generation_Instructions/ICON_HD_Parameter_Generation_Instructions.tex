@@ -1,0 +1,153 @@
+\documentclass{article}
+\usepackage{geometry}                % See geometry.pdf to learn the layout options. There are lots.
+\geometry{a4paper}                   % ... or a4paper or a5paper or ...
+%\geometry{landscape}                % Activate for for rotated page geometry
+%\usepackage[parfill]{parskip}    % Activate to begin paragraphs with an empty line rather than an indent
+\usepackage{graphicx}
+\usepackage{amssymb}
+\usepackage{gensymb}
+\usepackage{epstopdf}
+\usepackage{enumerate}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{url}
+\usepackage{longtable}
+\usepackage{afterpage}
+\lstdefinestyle{bash_input}{
+language=bash,
+basicstyle=\small\sffamily,
+numbers=left,
+numberstyle=\tiny,
+numbersep=3pt,
+frame=tb,
+columns=fullflexible,
+backgroundcolor=\color{yellow!20},
+linewidth=0.9\linewidth,
+xleftmargin=0.1\linewidth
+}
+
+\DeclareGraphicsRule{.tif}{png}{.png}{`convert #1 `dirname #1`/`basename #1 .tif`.png}
+\newcounter{stepnum}[subsection]
+\newcommand{\customstep}[2][]{ \refstepcounter{stepnum}\paragraph{Step \thestepnum\label{#1}: #2}}
+
+\title{Generation of HD Parameters Files for ICON Grids: Description and Instructions}
+\author{Thomas Riddick}
+\date{21st February 2020}
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+\lstset{language=bash}
+\section{Introduction}
+This document describes the procedures used to generate river directions (also known as flow directions or river routings) and parameters for use with the JSBACH4 HD model running on ICON Icosahedral grids (see section \ref{sec-desc}). It also provides technical instructions for generating these parameters in the necessary format (see section \ref{sec-instr}). The basic method varies depending on whether river directions are required for a low (course) resolution ICON grid such as r2b3 or r2b4 or a fine resolution ICON grid such as r2b9. For low resolutions grids the method also varies depending on whether it is desired to include internal (endorheic) drainage basins or not. Discussion on the JSBACH4 HD model, on river direction determination in general and on the tools for this purpose at MPI-M is given in \ref{sub-sec-desc-gen-notes}. It is suggested reader interested only in one particular resolution skip straight to reading the description of the method for that resolution and then the instructions for that resolution before using the general information to help clarify any questions.
+\section{Descriptions of Procedures for Generating River Directions and Parameters} \label{sec-desc}
+\subsection{General Notes} \label{sub-sec-desc-gen-notes}
+The HD model (originally developed for JSBACH3 by Stefan Hagemann\cite{Hagemann:1998aa,Hagemann:1998ab,JGRD:JGRD8049}) in JSBACH4 (when it is being run on a ICON Icosahedral grid) runs on the same grid as the atmospheric (and land) model. It also runs on the same time-step as the rest of the land model. This is a marked difference from JSBACH3 where it ran on its own independent regular latitude-longitude grid at a 0.5\degree resolution. Apart from this difference in spatial and temporal resolution (and grid) the JSBACH4 HD model is scientifically identical to the JSBACH3 HD model. As the coupler is currently setup when using a fractional land-sea mask outflow into the ocean can only occur in cells which are 100\% ocean\footnote{On the JSBACH4 side there is no reason outflow cannot occur into partial ocean cells - however only flowing to 100\% ocean cells is a facet of how the coupler is currently setup}. 
+
+The HD model requires a set of river directions or flow directions for each cell (point) in the HD models grid. These directions always point to a neighbouring cell (or are a sink or outflow point); this includes diagonal neighbours on the latitude-longitude grid (such that each cell has 8 neighbours) and neighbour just touching a corner of the cell on the icon grid (such that each cell has 11 or 12 neighbours). Three components to the flow are simulated - base flow, overland flow and river flow. Base flow and overland flow are where water enters the HD model from the JSBACH soil moisture model. These two flow components flow just one cell from where they enter the model before being merged into the river flow. They use the same flow directions as the rivers themselves.
+
+River directions are generally derived by combining topographic analysis of Digital Elevation Models (DEMs) with information on known river networks. One source of high quality high resolutions river directions is the HydroSheds database \cite{doi:10.1029/2008EO100001}\footnote{A potential alternative source of high quality, high resolution river directions is the MERIT Hydro database\cite{doi:10.1029/2019WR024873} but this is yet to be explored.} which offers a corrected DEM, river directions and flow accumulation on 15 arc second and 30 arc second latitude-longitude grids (the corrected DEM and river direction are also available on a 3 arc second grid). A major downside of this database is that it does not cover regions above 60\degree N at the current time. A number of derived products (HydroBasins - a map of river basins; HydroRivers - a map of river paths) are also offered - these have been extended to cover the full globe by blending they HydroSheds data with lower quality data from an earlier project. It is worth noting these are derived products - they are generated by analysing the primary HydroSheds dataset.
+
+The most naive method for generating river direction is to route rivers down the path of steepest decent. However; a significant problem with this is DEM tend to contain very large numbers of false sinks (both a low resolutions due to unresolved valleys and high resolution due to sensing errors). These must be removed by a tool called a sink filling algorithm. Here we use the priority flood sink filling algorithm (for a wide overview of this topic see \cite{barnes2014priority}).
+
+Upscaling of river direction cannot be done using regular upscaling method. Instead specialised method are required based around the idea of preferable preserving lines of high cumulative flow. The algorithm used here is the COTAT plus algorithm\cite{WRCR:WRCR10603}  (or technically a modified version of this; see \cite{gmd-11-4291-2018}). An alternative algorithm, the FLOW algorithm\cite{hess-13-2241-2009}, can produce better results at low resolutions but requires non-local flows (i.e. cell flowing to a cell that isn't one of their neighbours) which aren't currently possible in the HD model and might interfere with parallelisation.
+
+Generation of river direction and parameters for ICON grids is done here at MPI-M using a package of tools originally developed for generating dynamic river directions for JSBACH3\cite{gmd-11-4291-2018} for use in long transient simulations in the PalMod project\cite{Latif:2016aa}. Many of these tools run on ICON grids as well as latitude-longitude grids.  Table \ref{table-tools} list the set of tools current available for latitude-longitude and/or ICON grids including some scaling tools that can be applied to scale between the two grids. Table \ref{table-tools-descs} gives a description of each tool.
+\renewcommand{\arraystretch}{1.15}
+\begin{table}
+\begin{tabular} { | l | c | c | c | c |} 
+\hline
+Tool & ICON& Lat-Lon & ICON to & Lat-Lon  \\
+& Grid & Grid & Lat-Lon & to ICON \\
+\hline
+Sink Filling Algorithm & \checkmark & \checkmark & N/A & N/A \\ 
+Downslope Routing Algorithm & \checkmark & \checkmark & N/A & N/A \\
+Land-sea Mask Downscaling Alg. & - & -  & \checkmark & - \\
+COTAT+ Upscaling Algorithm & - &  \checkmark & - &  \checkmark \\
+Complex Loop Breaking Alg. & - & \checkmark & - & \checkmark \\
+Catchment Generation Alg. & \checkmark & \checkmark & N/A & N/A \\
+Cumulative Flow Gen. Alg. & see\footnotemark & \checkmark & N/A & N/A \\
+Parameter Generation Code\footnotemark & \checkmark & \checkmark & N/A & N/A \\
+FLOW Upscaling Algorithm & - & \checkmark & - & - \\
+Orography Upscaling Algorithm &  - &\checkmark & - & - \\
+Basin Analysis Algorithm & \checkmark & \checkmark & N/A & N/A \\
+\hline
+\end{tabular} 
+\caption{List of the various available tools and the grids they can be applied on. The last three tools are not of direct relevance to ICON river direction generation and are only included for reference.}
+\label{table-tools}
+\end{table}
+
+\addtocounter{footnote}{-1}
+\footnotetext{Essentially exists but undergoing testing}
+\addtocounter{footnote}{1}
+\footnotetext{This code is a modified version of that developed by Stefan Hagemann.}
+
+\afterpage{
+\begin{center}
+\begin{longtable} { | l | p{8cm} |} 
+\caption{Descriptions of the various tools.} \\
+\hline
+Tool & Descriptions \\
+\hline
+Sink Filling Algorithm & Fills enclosed depressions in a DEM up to the level of the lowest point on the rim of the depression (such that after filling enclosed depressions will be removed from the DEM and downslope routing will always reach the ocean). Can be programmed to leave flagged 'true' sinks unfilled if desired. \\
+Downslope Routing Algorithm & Generates a set of river direction where each cell points to lowest among its neighbours (or outflows to the ocean) includes a sub-algorithm to deal with flat regions (so that all cells point to other cells such that the flow eventually exits the region). Can be set to report any depressions found as errors or to mark they as inland sink points. Cross grid downscaling from an ICON grid to a finer latitude-longitude grid is possible.\\
+Land-sea Mask Downscaling Alg. & Recreates the outline of a course land-sea mask in a finer grid.\\
+COTAT+ Upscaling Algorithm & Upscales river directions such as to preserve major rivers. Can incorporate inland sink points. Along with the fine river directions requires a set of fine cumulative flows. Automatically breaks simply 2-point loops. Cross grid upscaling from a latitude-longitude grid to a coarser ICON grid is possible.\\
+Complex Loop Breaking Alg. & Break complex multiple ($>2$) point loops. Needs the cumulative flow and catchments of both the coarse and fine grids alongside the river directions on both grids.  Cross grid application from a latitude-longitude grid to a coarser ICON grid is possible.   \\
+Catchment Generation Alg. &Generates the set of river catchments implied by a set of river directions. Marks any loops. Renumbers catchments by size.\\
+Cumulative Flow Gen. Alg. &Generates the total number of cells flowing (directly or indirectly) to each cell for a set of river directions. This is `dry' measure for the size/importance of rivers. Marks any loops. \\
+Parameter Generation Code & Code that generates the flow parameters (water residency times) for each cell. This code is adapted from the originally code written by Stefan Hagemann. \\
+FLOW Upscaling Algorithm & An alternative upscaling algorithm that performs better at low resolutions but requires non-local flows.\\
+Orography Upscaling Algorithm &An algorithm that generates a hydrologically corrected coarse orography from a fine orography by considering the height of rim points within each coarse cell. \\
+Basin Analysis Algorithm & An algorithm that analyses lake basins and produces the order with which surrounding cells would inundate as the size of the lake grew along with the quantity of water needed for each such expansion. \\
+\hline
+\end{longtable}
+\label{table-tools-descs}
+\end{center}}
+
+At the moment the hydrological buffering effect of lakes is not being accounted for in the flow parameters generated. This differs from JSBACH3 and earlier r2b4 HD parameters files where it was accounted for. This effect will hopefully be turned back on soon.
+
+\subsection{Procedure for Low Resolutions Without Internal Sinks}
+\noindent\textbf{Tested for: r2b4}
+
+Low resolution ICON river directions (from r2b3 to possibly r2b6 or r2b7) without any internal basins are generated by combining the river directions for Australia, South America and Africa from the HydroSheds database (as noted above this database doesn't extend above 60 \degree N) with river direction derived from a carefully corrected orography originally generated for work on dynamic river directions in the context of PalMod (see \cite{gmd-11-4291-2018}) on a 10 minute grid latitude-longitude grid before cross-grid upscaling to the appropriate ICON grid using the COTAT+ algorithm. (The river direction produced by this corrected orography having been previously evaluated against the old JSBACH3 river directions for the present day, the HydroBasins database and various other sources of geographical information.) Figure \ref{} X shows a flow diagram of the procedure. \newline
+
+\noindent\textbf{Prerequisites:}
+
+ \customstep{Upscaling 10 minute river direction for Australia, South America and Africa from HydroSheds.} The downloaded HydroSheds files with the river direction and accumulated flow on a 30 second grid are combined in a GIS package and then exported. Pseudo-coastline is added across the bottom edge of central America and across join between Africa and the Arabian Peninsular/Asia.  This set of river directions is then upscaled using the COTAT+ algorithm to a 10 minute latitude-longitude grid.
+\customstep[step-gen-10min]{Generating 10 minute river direction without internal basins for the entire global using a corrected orography.} River directions are generated for the entire globe using a river carving algorithm (similar to running a sink filling algorithm then a river direction determination algorithm but giving better directions inside of removed internal basins) as described in \cite{gmd-11-4291-2018} from the present day ICE5G DEM \cite{Peltier:2004aa} on a 10 minute resolution with the set of corrections applied that were derived for the dynamic hydrological discharge model\cite{gmd-11-4291-2018}. All internal basins were automatically removed by this process. These river directions will be generated using the r2b4 mask downscaled to the 10 minute latitude-longitude grid.
+\customstep{Merge these two sets of 10 minute river directions.} Use the upscaled HydroSheds directions wherever they exist and are not an ocean point or outflow. Fill all other points with the directions derived from the corrected orography. Remove any river directions that are in the ocean according to the downscaled r2b4 mask. \customstep[step-remove-int-basins]{Replace all internal drainage basins with the river directions from the corrected orography for the corresponding area.} All the internal drainage basins will be in regions where the HydroSheds directions are being used. Replacing the with the river directions from the corrected orography will always result in river pathways that flow to the ocean.
+\customstep[step-trace-paths]{Trace a path downstream to the sea from each cell marked as part of a loop in the cumulative flow field and replace these paths exclusively with the river directions from the corrected orography.}
+First the accumulated flow and catchments are generated from the river directions result from the last intermediate step. Then for each cell marked as part of a loop in the cumulative flow trace the path downstream to the cell from that cell in the river directions from corrected orography. Mark all of these cells including the loop cells themselves then replace all of the cells in the intermediate river directions from the last step with the river directions from the corrected orography. This ensure (almost) all loops are removed.\footnote{It is possible some loops will still need to removed from the intermediate river directions by hand after this step before proceeding to the next step.} 
+\customstep[step-upscale]{Upscale the intermediate river directions as produced above to the desire ICON icosahedral grid using a cross-grid version of the COTAT+ upscaling algorithm.} First generate the necessary diagnostic fields from the intermediate 10 minute river directions (specifically cumulative flow but also the catchments which will be needed in the next step). Then use the cross grid version of the COTAT+ upscaling algorithm to perform the upscaling and remove any simple loops.
+\customstep{Run the loop remover to remove any complex loops from the upscaled icosahedral ICON river directions.} This requires both the upscaled icosahedral river directions and the 10 minute river direction as well as the catchments of the icosahedral river directions and the catchments and accumulated flow of the 10 minute latitude-longitude river directions. First generate the catchments for the icosahedral river directions then perform the loop removal. Finally generate the new catchments for the icosahedral river directions and check all loops have been removed.
+\customstep[step-gen-flow-para]{Generate the flow parameter and create a hd para file.} Take the river direction from the previous set and run the flow parameters generation code to generate the necessary flow parameters, covert the river directions to the necessary format and create a hdpara file to use as input to JSBACH4.
+
+\subsection{Procedure for Low Resolutions With Internal Sinks}
+\noindent\textbf{Tested for: r2b4}
+The procedure for river direction for low resolution with some or all internal sink points included is similar to that outlined in the previous section but with a number of alterations:
+\begin{itemize}
+\item In step \ref{step-gen-10min} generate river directions including all sinks rather than excluding all sinks or if only some internal sinks are desired including only those sinks (if they are in Asia or Central America or North America or Europe at least).
+\item If all internal sinks should be kept then step \ref{step-remove-int-basins} should be skipped. If only some internal sinks should be kept then this step should be modified to remove all other sinks instead of all sinks.
+\end{itemize}
+If it is desire to keep only some basins and a set of directions already exists for the same land-sea mask where all the basins are kept then the intermediary produced by step \ref{step-remove-loops-by-hand} can be used as a starting point (thus saving some processing). Then a modified step \ref{step-remove-int-basins}  can be applied to remove those basins that are not to be kept. This will likely produce a set of 10 minute latitude-longitude grid river directions without any loops. If so then step \ref{step-trace-paths} and \ref{step-remove-loops-by-hand} can be skipped; otherwise they must be repeated. Finally steps \ref{step-upscale} to \ref{step-gen-flow-para} must be re-run.
+\subsection{Procedure for High Resolutions Without Internal Sinks}
+\noindent\textbf{Tested for: r2b9}
+High resolution ICON river directions (currently r2b9, potentially r2b7 and r2b8\footnote{Resolutions higher than r2b9 would likely require work on parallelisation of the tools used.}) without any internal basins are created by filling in the depressions (sinks) in a r2b9 orography then generating river directions according to the line of steepest descent from each cell to its neighbours (the flat regions created by sink filling are handled such that water from these areas always reaches the sea). Figure \ref{} X shows a flow diagram of the procedure. \newline
+
+\noindent\textbf{Prerequisites:}
+
+\customstep{Fill all sinks point (depressions) in a high resolution orography.} A high resolution r2b9 orography is taken from expar. A sink filling algorithm is run on this orography to remove all sink/depressions. Use the provided  r2b9 land-sea mask.
+\customstep{Generate river directions from the filled orography.} River directions are produced using the provided filled orography and the r2b9 land-sea mask according to a downslope routing. The river catchments are then computed from these river directions and check by eye.
+\customstep{Generate the flow parameter and create a hd para file.} Take the river direction from the previous set and run the flow parameters generation code to generate the necessary flow parameters, covert the river directions to the necessary format and create a hdpara file to use as input to JSBACH4.
+
+\section{Instructions} \label{sec-instr}
+\subsection{General Notes}
+\subsection{Instructions for Low Resolutions Without Internal Sinks}
+\subsection{Instructions for Low Resolutions With Internal Sinks}
+\subsection{Instructions for High Resolutions Without Internal Sinks}
+
+\bibliography{ICON_HD_Parameter_Generation_Instructions}{}
+\bibliographystyle{plain}
+
+\end{document}

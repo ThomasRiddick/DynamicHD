@@ -1587,7 +1587,7 @@ contains
             this%section_max_lon =  cell_section_coords%section_min_lon + cell_section_coords%section_width_lon - 1
             cell_numbers_pointer => cell_section_coords%cell_numbers
             this%cell_numbers => latlon_field_section(cell_numbers_pointer,cell_section_coords)
-                this%cell_number = cell_section_coords%cell_number
+            this%cell_number = cell_section_coords%cell_number
             river_directions_pointer => river_directions
             total_cumulative_flow_pointer => total_cumulative_flow
             this%river_directions => latlon_field_section(river_directions_pointer,cell_section_coords)

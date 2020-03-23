@@ -37,6 +37,9 @@ contains
         integer :: nlat_fine, nlon_fine
         integer :: scale_factor
         integer :: i,j
+#ifdef PROCESSED_COLUMN_COUNTER
+        character*1000 :: column_nbr_str
+#endif
 #ifdef USE_MPI
         integer, dimension(:,:),allocatable :: output_coarse_river_directions_tile
         integer :: mpi_error_code
@@ -173,6 +176,12 @@ contains
             else
 #endif
             do j = 1,nlon_coarse
+#ifdef PROCESSED_COLUMN_COUNTER
+                if (mod(j,100) == 0) then
+                    write(column_nbr_str,*) j
+                    write(*,*) "Processing Column: " // trim(column_nbr_str)
+                end if
+#endif
                 do i = 1,nlat_coarse
                     cell_section_coords = latlon_section_coords(i*scale_factor+1,(j-1)*scale_factor+1, &
                                                                 scale_factor,scale_factor)

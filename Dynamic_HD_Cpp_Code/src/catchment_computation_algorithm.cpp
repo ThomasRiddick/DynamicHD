@@ -203,3 +203,29 @@ coords* catchment_computation_algorithm_icon_single_index::
   return _icon_single_index_grid->
   	convert_index_to_coords((*next_cell_index)(initial_coords));
 }
+
+void catchment_computation_algorithm::renumber_catchments_by_size() {
+	int total_catchments = catchment_numbers->get_max_element();
+	catchment_sizes = new vector<pair<int,int> >();
+	for (int i = 1; i <= total_catchments; i++){
+		(*catchment_sizes).push_back(pair<int,int>(i,0));
+	}
+	_grid->for_all([&](coords* coords_in){
+		int catchment_number = (*catchment_numbers)(coords_in);
+		if (catchment_number != 0){
+			(*catchment_sizes)[catchment_number-1].second += 1;
+			delete coords_in;
+		}
+	});
+	sort(catchment_sizes->begin(),catchment_sizes->end(),
+	     [](pair<int,int> i, pair<int,int> j){return (i.second > j.second);});
+	for (int i = 1; i <= total_catchments; i++){
+		(*catchment_sizes)[i-1].second = i;
+	}
+	sort(catchment_sizes->begin(),catchment_sizes->end(),
+	     [](pair<int,int> i, pair<int,int> j){return (i.first < j.first);});
+	_grid->for_all([&](coords* coords_in){
+		(*catchment_numbers)(coords_in) = ((*catchment_numbers)(coords_in) == 0) ? 0 :
+			(*catchment_sizes)[(*catchment_numbers)(coords_in) - 1].second;
+	});
+}

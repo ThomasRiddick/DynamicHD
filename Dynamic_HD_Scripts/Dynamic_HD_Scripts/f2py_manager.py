@@ -103,6 +103,7 @@ class f2py_manager(object):
                                              include_dirs=ast.literal_eval(params.include_path),
                                              extra_objects=ast.literal_eval(params.objects),
                                              extra_link_args=extra_link_args,
+                                             extra_f90_compile_args=["-cpp"],
                                              language="f90")
             npdistutils_core.setup(name=params.module_name,
                                    ext_modules=[ext])

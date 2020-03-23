@@ -3714,9 +3714,10 @@ class LakePlots(Plots):
                                                                           lake_grid_type=lake_grid_type,
                                                                           lake_kwargs=lake_grid_kwargs,
                                                                           river_grid_type=river_grid_type)])
-    anim = animation.ArtistAnimation(fig,ims,interval=100,blit=False,repeat_delay=1000)
-    plt.show()
-
+    anim = animation.ArtistAnimation(fig,ims,interval=200,blit=False,repeat_delay=500)
+    #plt.show()
+    writer = animation.writers['ffmpeg'](fps=10,bitrate=1800)
+    anim.save('/Users/thomasriddick/Desktop/im2.mp4',writer=writer,dpi=1000)
 
   def TwoColourRiverAndLakeAnimationHelperSliceGenerator(self,cmap,norm,
                                                          river_flow_filename,
