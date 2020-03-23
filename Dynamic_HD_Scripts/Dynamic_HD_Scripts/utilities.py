@@ -1625,6 +1625,12 @@ def advanced_splice_rdirs_driver(rdirs_matching_ls_mask_filename,
 
 def remove_endorheic_basins(rdirs,catchments,rdirs_without_endorheic_basins,
                             replace_only_catchments=[],exclude_catchments=[]):
+  if replace_only_catchments:
+    print "Only replacing catchments:"
+    print replace_only_catchments
+  if exclude_catchments:
+    print "Not replacing catchments"
+    print exclude_catchments
   rdirs.remove_river_mouths()
   rdirs_without_endorheic_basins.remove_river_mouths()
   if replace_only_catchments:

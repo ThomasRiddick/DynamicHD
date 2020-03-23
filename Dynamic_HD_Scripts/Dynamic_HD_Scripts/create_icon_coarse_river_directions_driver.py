@@ -243,7 +243,7 @@ class Icon_Coarse_River_Directions_Creation_Drivers(dyn_hd_dr.Dynamic_HD_Drivers
                                                                                'exclude_catchments').\
                                                                          split(",")]
                                                                          if config.get('general_options',
-                                                                                       'replace_only_catchments')
+                                                                                       'exclude_catchments')
                                                                          else []) )
           third_intermediate_flowtocell = field.\
             CumulativeFlow(create_hypothetical_river_paths_map(riv_dirs=third_intermediate_rdirs.get_data(),

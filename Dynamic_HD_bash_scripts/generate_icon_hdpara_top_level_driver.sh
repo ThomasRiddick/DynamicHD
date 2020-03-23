@@ -1,6 +1,5 @@
 #!/bin/bash
 set -e
-set -x
 
 echo "Running Version 3.7 of the ICON HD Parameters Generation Code"
 
