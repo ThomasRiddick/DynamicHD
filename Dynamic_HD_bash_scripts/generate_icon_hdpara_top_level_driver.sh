@@ -235,6 +235,7 @@ if ! $no_modules ; then
 	fi
 fi
 
+export LD_LIBRARY_PATH="/sw/stretch-x64/netcdf/netcdf_fortran-4.4.4-gcc63/lib:/sw/stretch-x64/netcdf/netcdf_c-4.6.1/lib:/sw/stretch-x64/netcdf/netcdf_cxx-4.3.0-gccsys/lib:${LD_LIBRARY_PATH}"
 export LD_LIBRARY_PATH=/Users/thomasriddick/anaconda3/pkgs/netcdf-cxx4-4.3.0-h703b707_9/lib:/Users/thomasriddick/anaconda3/lib:${LD_LIBRARY_PATH}
 
 if ! $no_modules && ! $no_conda ; then
