@@ -35,6 +35,8 @@ contains
                                                       input_river_directions_ptr, &
                                                       output_cumulative_flow_ptr)
       call flow_acc_alg%generate_cumulative_flow(.false.)
+      call flow_acc_alg%destructor()
+      deallocate(coarse_grid_shape)
   end subroutine accumulate_flow_icon_single_index
 
 end module accumulate_flow_mod

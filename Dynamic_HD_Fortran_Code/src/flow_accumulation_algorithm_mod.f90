@@ -26,6 +26,7 @@ type, abstract :: flow_accumulation_algorithm
     procedure :: get_flow_terminates_value
     procedure :: get_no_data_value
     procedure :: get_no_flow_value
+    procedure, public :: destructor
     procedure(get_next_cell_coords), deferred :: get_next_cell_coords
     procedure(generate_coords_index), deferred :: generate_coords_index
     procedure(assign_coords_to_link_array), deferred :: assign_coords_to_link_array
@@ -138,6 +139,17 @@ function icon_single_index_flow_accumulation_algorithm_constructor(field_section
                                                                         next_cell_index, &
                                                                         cumulative_flow)
 end function icon_single_index_flow_accumulation_algorithm_constructor
+
+subroutine destructor(this)
+  class(flow_accumulation_algorithm), intent(inout) :: this
+    deallocate(this%dependencies)
+    deallocate(this%cumulative_flow)
+    deallocate(this%external_data_value)
+    deallocate(this%flow_terminates_value)
+    deallocate(this%no_data_value)
+    deallocate(this%no_flow_value)
+    call this%q%destructor()
+end subroutine destructor
 
 subroutine generate_cumulative_flow(this,set_links)
   class(flow_accumulation_algorithm), intent(inout) :: this

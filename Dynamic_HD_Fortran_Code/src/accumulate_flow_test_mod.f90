@@ -205,6 +205,10 @@ contains
             write(*,"(5(5X(I2)5X))") (output_cumulative_flow(i), i=76,80)
         call assert_true(all(output_cumulative_flow .eq. &
                              expected_output_cumulative_flow))
+        deallocate(input_river_directions)
+        deallocate(output_cumulative_flow)
+        deallocate(cell_neighbors)
+        deallocate(expected_output_cumulative_flow)
     end subroutine testCalculateCumlativeFlow
 
 end module accumulate_flow_test_mod
