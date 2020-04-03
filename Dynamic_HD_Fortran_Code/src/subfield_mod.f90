@@ -546,6 +546,7 @@ contains
             this%cell_neighbors => subfield_section_coords%get_cell_neighbors()
             this%cell_secondary_neighbors => &
                 subfield_section_coords%get_cell_secondary_neighbors()
+            this%num_points = size(input_data)
     end subroutine init_icon_single_index_subfield
 
     pure function icon_single_index_get_value(this,coords_in) result(value)
@@ -631,10 +632,13 @@ contains
     subroutine icon_single_index_set_all_generic(this,value)
         class(icon_single_index_subfield) :: this
         class(*), pointer :: value
+        class(*), pointer :: value_copy
         integer :: i
             do i = 1,this%num_points
-                call this%set_generic_value(generic_1d_coords(i,.true.),value)
+                allocate(value_copy,source=value)
+                call this%set_generic_value(generic_1d_coords(i,.true.),value_copy)
             end do
+            deallocate(value)
     end subroutine icon_single_index_set_all_generic
 
 

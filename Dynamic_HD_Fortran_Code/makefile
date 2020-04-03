@@ -41,10 +41,10 @@ endif
 # Add inputs and outputs from these tool invocations to the build variables
 
 # All Target
-all: Dynamic_HD_Fortran_Code COTAT_Plus_LatLon_To_Icon_Simple_Interface_Code LatLon_Lake_Model_Driver_Code Icon_To_LatLon_Landsea_Downscaler_Simple_Interface LatLon_Icon_Loop_Breaker_Simple_Interface_Code
+all: Dynamic_HD_Fortran_Code COTAT_Plus_LatLon_To_Icon_Simple_Interface_Code LatLon_Lake_Model_Driver_Code Icon_To_LatLon_Landsea_Downscaler_Simple_Interface LatLon_Icon_Loop_Breaker_Simple_Interface_Code Accumulate_Flow_Icon_Simple_Interface
 
 # Tool invocations
-tools_only: $(OBJS) $(USER_OBJS) COTAT_Plus_LatLon_To_Icon_Simple_Interface_Code LatLon_Lake_Model_Driver_Code Icon_To_LatLon_Landsea_Downscaler_Simple_Interface LatLon_Icon_Loop_Breaker_Simple_Interface_Code
+tools_only: $(OBJS) $(USER_OBJS) COTAT_Plus_LatLon_To_Icon_Simple_Interface_Code LatLon_Lake_Model_Driver_Code Icon_To_LatLon_Landsea_Downscaler_Simple_Interface LatLon_Icon_Loop_Breaker_Simple_Interface_Code Accumulate_Flow_Icon_Simple_Interface
 compile_only: $(OBJS) $(USER_OBJS)
 
 Dynamic_HD_Fortran_Code: $(OBJS) $(TEST_OBJS) $(USER_OBJS)
@@ -71,6 +71,12 @@ Icon_To_LatLon_Landsea_Downscaler_Simple_Interface: $(OBJS) $(ICON_TO_LATLON_LAN
 	@echo 'Finished building target: $@'
 	@echo ' '
 
+Accumulate_Flow_Icon_Simple_Interface: $(OBJS) $(ACCUMULATE_FLOW_ICON_SIMPLE_INTERFACE_OBJS) $(USER_OBJS)
+	@echo 'Building target: $@'
+	$(FORTRAN) -o "Accumulate_Flow_Icon_Simple_Interface_Exec" $(OBJS) $(ACCUMULATE_FLOW_ICON_SIMPLE_INTERFACE_OBJS) $(USER_OBJS) $(LIBS)
+	@echo 'Finished building target: $@'
+	@echo ' '
+
 LatLon_Lake_Model_Driver_Code: $(OBJS) $(LATLON_HD_AND_LAKE_MODEL_OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	$(FORTRAN) -o "LatLon_Lake_Model_Driver_Exec" $(OBJS) $(LATLON_HD_AND_LAKE_MODEL_OBJS) $(USER_OBJS) $(LIBS)
@@ -82,8 +88,10 @@ clean:
 	-$(RM) $(EXECUTABLES) $(OBJS) $(TEST_OBJS) $(LATLON_HD_AND_LAKE_MODEL_OBJS) $(C_DEPS) Dynamic_HD_Fortran_Exec
 	-$(RM) $(COTAT_PLUS_LATLON_TO_ICON_SIMPLE_INTERFACE_OBJS) COTAT_Plus_LatLon_To_Icon_Fortran_Exec
 	-$(RM) $(ICON_TO_LATLON_LANDSEA_DOWNSCALER_SIMPLE_INTERFACE_OBJS)
+	-$(RM) $(ACCUMULATE_FLOW_ICON_SIMPLE_INTERFACE_OBJS)
 	-$(RM) Icon_To_LatLon_Landsea_Downscaler_Simple_Interface
 	-$(RM) LatLon_Lake_Model_Driver_Exec
+	-$(RM) Accumulate_Flow_Icon_Simple_Interface_Exec
 	-$(RM) $(MODS)
 	-@echo ' '
 

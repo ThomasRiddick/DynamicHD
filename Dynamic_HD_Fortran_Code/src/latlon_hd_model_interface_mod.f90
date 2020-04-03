@@ -6,6 +6,7 @@ module latlon_hd_model_interface_mod
   implicit none
 
   type(prognostics), target :: global_prognostics
+  logical :: write_output
 
   contains
 
@@ -27,6 +28,7 @@ module latlon_hd_model_interface_mod
         call distribute_spillover(global_prognostics,initial_spillover_to_rivers)
         deallocate(initial_spillover_to_rivers)
       end if
+      write_output = .true.
   end subroutine init_hd_model
 
   subroutine init_hd_model_for_testing(river_parameters,river_fields,using_lakes, &
@@ -43,6 +45,7 @@ module latlon_hd_model_interface_mod
         call init_lake_model_test(lake_parameters,initial_water_to_lake_centers)
         call distribute_spillover(global_prognostics,initial_spillover_to_rivers)
       end if
+      write_output = .false.
   end subroutine init_hd_model_for_testing
 
   subroutine run_hd_model(timesteps,runoffs,drainages)
@@ -53,7 +56,7 @@ module latlon_hd_model_interface_mod
     do i = 1,timesteps
       call set_runoff_and_drainage(global_prognostics,runoffs(:,:,i),drainages(:,:,i))
       call run_hd(global_prognostics)
-      if (i == 1 .or. i == timesteps .or. mod(i,365) == 0) then
+      if ((i == 1 .or. i == timesteps .or. mod(i,365) == 0) .and. write_output) then
         call write_river_flow_field(global_prognostics%river_parameters,&
                                     global_prognostics%river_fields%river_inflow,i)
         call write_lake_numbers_field_interface(i)

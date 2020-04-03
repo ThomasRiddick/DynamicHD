@@ -580,7 +580,7 @@ class RiverDirections(Field):
 
     def mark_ocean_points(self,lsmask):
         """Mark points in the given lsmask as ocean overwriting their present value"""
-        self.data[lsmask.get_data()] = -1
+        self.data[lsmask.get_data() == 1.0] = -1
 
     def fill_land_without_rdirs(self,alternative_rdirs):
         """Fill in land without river directions using the provided set of river directions"""

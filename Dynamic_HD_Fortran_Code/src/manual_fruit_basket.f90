@@ -1322,4 +1322,19 @@ contains
         call teardown
     end subroutine map_non_coincident_grids_all_tests
 
+
+    subroutine accumulate_flow_all_tests
+        use accumulate_flow_test_mod
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testCalculateCumlativeFlow"
+        call set_unit_name('test_something')
+        call run_test_case(testCalculateCumlativeFlow,'test calculating cumulative flow on an ICON grid')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","test calculating cumulative flow on an ICON grid")
+        else
+            call case_passed_xml("test_something","test calculating cumulative flow on an ICON grid")
+        end if
+        call teardown
+    end subroutine accumulate_flow_all_tests
+
 end module manual_fruit_basket

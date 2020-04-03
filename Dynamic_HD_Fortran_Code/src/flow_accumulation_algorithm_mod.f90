@@ -6,7 +6,6 @@ implicit none
 
 type, abstract :: flow_accumulation_algorithm
   private
-    class(subfield), pointer :: river_directions => null()
     class(subfield), pointer :: dependencies => null()
     class(subfield), pointer :: cumulative_flow => null()
     type(doubly_linked_list) :: q
@@ -27,6 +26,7 @@ type, abstract :: flow_accumulation_algorithm
     procedure :: get_flow_terminates_value
     procedure :: get_no_data_value
     procedure :: get_no_flow_value
+    procedure(get_next_cell_coords), deferred :: get_next_cell_coords
     procedure(generate_coords_index), deferred :: generate_coords_index
     procedure(assign_coords_to_link_array), deferred :: assign_coords_to_link_array
 end type flow_accumulation_algorithm
@@ -47,6 +47,15 @@ abstract interface
     class(coords), pointer :: coords_in
     integer :: coords_index
   end subroutine assign_coords_to_link_array
+
+
+  function get_next_cell_coords(this,coords_in) result(next_cell_coords)
+    import flow_accumulation_algorithm
+    import coords
+    class(flow_accumulation_algorithm), intent(in) :: this
+    class(coords), pointer :: coords_in
+    class(coords), pointer :: next_cell_coords
+  end function get_next_cell_coords
 end interface
 
 type, extends(flow_accumulation_algorithm) :: latlon_flow_accumulation_algorithm
@@ -57,18 +66,28 @@ type, extends(flow_accumulation_algorithm) :: latlon_flow_accumulation_algorithm
     integer :: tile_max_lon
     integer :: tile_width_lat
     integer :: tile_width_lon
+    class(subfield), pointer :: next_cell_index_lat => null()
+    class(subfield), pointer :: next_cell_index_lon => null()
+    class(subfield), pointer :: river_directions => null()
   contains
     procedure :: generate_coords_index => latlon_generate_coords_index
     procedure :: assign_coords_to_link_array => latlon_assign_coords_to_link_array
+    procedure :: get_next_cell_coords => latlon_get_next_cell_coords
 end type latlon_flow_accumulation_algorithm
 
 type, extends(flow_accumulation_algorithm) :: icon_single_index_flow_accumulation_algorithm
   private
-
+    class(subfield), pointer :: next_cell_index => null()
   contains
+    procedure :: icon_single_index_init_flow_accumulation_algorithm
     procedure :: generate_coords_index => icon_single_index_generate_coords_index
     procedure :: assign_coords_to_link_array => icon_single_index_assign_coords_to_link_array
+    procedure :: get_next_cell_coords => icon_single_index_get_next_cell_coords
 end type icon_single_index_flow_accumulation_algorithm
+
+interface icon_single_index_flow_accumulation_algorithm
+  procedure :: icon_single_index_flow_accumulation_algorithm_constructor
+end interface icon_single_index_flow_accumulation_algorithm
 
 contains
 
@@ -86,21 +105,47 @@ subroutine latlon_init_flow_accumulation_algorithm(this)
     allocate(this%no_flow_value,source=latlon_coords(-4,-4))
 end subroutine latlon_init_flow_accumulation_algorithm
 
-subroutine icon_single_index_init_flow_accumulation_algorithm(this)
-  class(latlon_flow_accumulation_algorithm), intent(inout) :: this
-    allocate(this%external_data_value,source=generic_1d_coords(-2))
-    allocate(this%flow_terminates_value,source=generic_1d_coords(-3))
-    allocate(this%no_data_value,source=generic_1d_coords(-4))
-    allocate(this%no_flow_value,source=generic_1d_coords(-5))
+subroutine icon_single_index_init_flow_accumulation_algorithm(this,field_section_coords, &
+                                                              next_cell_index, &
+                                                              cumulative_flow)
+  class(icon_single_index_flow_accumulation_algorithm), intent(inout) :: this
+  class(*), dimension(:), pointer, intent(in) :: next_cell_index
+  class(*), dimension(:), pointer, intent(out) :: cumulative_flow
+  type(generic_1d_section_coords), intent(in) :: field_section_coords
+  class(*), dimension(:), pointer :: dependencies_data
+    this%next_cell_index => icon_single_index_subfield(next_cell_index,field_section_coords)
+    this%cumulative_flow => icon_single_index_subfield(cumulative_flow,field_section_coords)
+    allocate(integer::dependencies_data(size(next_cell_index)))
+    this%dependencies => icon_single_index_subfield(dependencies_data, &
+                                                    field_section_coords)
+    allocate(this%external_data_value,source=generic_1d_coords(-2,.true.))
+    allocate(this%flow_terminates_value,source=generic_1d_coords(-3,.true.))
+    allocate(this%no_data_value,source=generic_1d_coords(-4,.true.))
+    allocate(this%no_flow_value,source=generic_1d_coords(-5,.true.))
+    call this%init_flow_accumulation_algorithm()
 end subroutine icon_single_index_init_flow_accumulation_algorithm
+
+function icon_single_index_flow_accumulation_algorithm_constructor(field_section_coords, &
+                                                                   next_cell_index, &
+                                                                   cumulative_flow) &
+                                                                   result(constructor)
+  class(*), dimension(:), pointer, intent(in) :: next_cell_index
+  class(*), dimension(:), pointer, intent(out) :: cumulative_flow
+  type(generic_1d_section_coords), intent(in) :: field_section_coords
+  type(icon_single_index_flow_accumulation_algorithm), allocatable :: constructor
+    allocate(constructor)
+    call constructor%icon_single_index_init_flow_accumulation_algorithm(field_section_coords, &
+                                                                        next_cell_index, &
+                                                                        cumulative_flow)
+end function icon_single_index_flow_accumulation_algorithm_constructor
 
 subroutine generate_cumulative_flow(this,set_links)
   class(flow_accumulation_algorithm), intent(inout) :: this
   logical, intent(in) :: set_links
-  call this%river_directions%for_all(set_dependencies_wrapper,this)
-  call this%dependencies%for_all(add_cells_to_queue_wrapper,this)
-  call this%process_queue()
-  if (set_links) call this%river_directions%for_all_edge_cells(follow_paths_wrapper,this)
+    call this%dependencies%for_all(set_dependencies_wrapper,this)
+    call this%dependencies%for_all(add_cells_to_queue_wrapper,this)
+    call this%process_queue()
+    if (set_links) call this%dependencies%for_all_edge_cells(follow_paths_wrapper,this)
 end subroutine generate_cumulative_flow
 
 subroutine set_dependencies_wrapper(this,coords_in)
@@ -117,29 +162,27 @@ subroutine set_dependencies(this,coords_in)
   class(coords), pointer, intent(in) :: coords_in
   class(coords),pointer :: target_coords
   class(coords),pointer :: target_of_target_coords
-  class(*), pointer      :: target_coords_ptr
-  class(*), pointer      :: target_of_target_coords_ptr
   class(*), pointer  :: dependency_ptr
-    target_coords_ptr => this%river_directions%get_value(coords_in)
-    select type(target_coords_ptr)
-        class is (coords)
-          target_coords => target_coords_ptr
-    end select
-    select type(target_of_target_coords_ptr)
-        class is (coords)
-          target_of_target_coords => target_of_target_coords_ptr
-    end select
-    target_of_target_coords_ptr => this%river_directions%get_value(target_coords)
-    if ( target_coords%are_equal_to(this%get_no_data_value()) ) then
-      call this%cumulative_flow%set_value(coords_in,this%get_no_data_value())
-    else if ( .not. (target_coords%are_equal_to(this%get_no_flow_value()) .or. &
-                     target_of_target_coords%are_equal_to(this%get_no_flow_value()) ) ) then
-      dependency_ptr => this%dependencies%get_value(target_coords)
-      select type (dependency_ptr)
-        type is (integer)
-          call this%dependencies%set_value(target_coords, &
-                                           dependency_ptr+1)
-      end select
+    if ( .not. (coords_in%are_equal_to(this%get_no_data_value()) .or. &
+                coords_in%are_equal_to(this%get_no_flow_value()) .or. &
+                coords_in%are_equal_to(this%get_flow_terminates_value()) )) then
+      target_coords => this%get_next_cell_coords(coords_in)
+      if ( target_coords%are_equal_to(this%get_no_data_value()) ) then
+        call this%cumulative_flow%set_value(coords_in,this%get_no_data_value())
+      else if ( target_coords%are_equal_to(this%get_no_flow_value())) then
+        call this%cumulative_flow%set_value(coords_in,this%get_no_flow_value())
+      else if ( .not. target_coords%are_equal_to(this%get_flow_terminates_value())) then
+        target_of_target_coords => this%get_next_cell_coords(target_coords)
+        if ( .not. (target_of_target_coords%are_equal_to(this%get_no_flow_value()) .or. &
+                    target_of_target_coords%are_equal_to(this%get_no_data_value()) )) then
+          dependency_ptr => this%dependencies%get_value(target_coords)
+          select type (dependency_ptr)
+            type is (integer)
+              call this%dependencies%set_value(target_coords, &
+                                               dependency_ptr+1)
+          end select
+        end if
+      end if
     end if
 end subroutine set_dependencies
 
@@ -156,19 +199,17 @@ subroutine add_cells_to_queue(this,coords_in)
   class(flow_accumulation_algorithm), intent(inout) :: this
   class(coords), pointer, intent(in) :: coords_in
   class(coords), pointer :: target_coords
-  class(*), pointer  :: target_coords_ptr
   class(*), pointer  :: dependency_ptr
-  target_coords_ptr => this%river_directions%get_value(coords_in)
-  select type(target_coords_ptr)
-      class is (coords)
-        target_coords => target_coords_ptr
-  end select
+  target_coords => this%get_next_cell_coords(coords_in)
   dependency_ptr => this%dependencies%get_value(coords_in)
   select type (dependency_ptr)
     type is (integer)
     if (  dependency_ptr == 0 .and. &
          ( .not. target_coords%are_equal_to(this%get_no_data_value()) ) ) then
       call this%q%add_value_to_back(coords_in)
+      if ( .not. target_coords%are_equal_to(this%get_flow_terminates_value())) then
+        call this%cumulative_flow%set_value(coords_in,1)
+      end if
     end if
   end select
 end subroutine add_cells_to_queue
@@ -178,47 +219,30 @@ subroutine process_queue(this)
   class(coords), pointer :: current_coords
   class(*),      pointer :: current_coords_ptr
   class(coords), pointer :: target_coords
-  class(*), pointer      :: target_coords_ptr
   class(coords), pointer :: target_of_target_coords
-  class(*), pointer      :: target_of_target_coords_ptr
   class(*), pointer :: cumulative_flow_current_coords_ptr
   class(*), pointer :: cumulative_flow_target_coords_ptr
   class(*), pointer :: dependency_ptr
   integer :: dependency
-  if ( this%q%iterate_forward() ) stop 'Edge cell list is not correctly initialised'
-  do while ( this%q%get_length() > 0 )
+  do while ( .not. this%q%iterate_forward() )
     current_coords_ptr => this%q%get_value_at_iterator_position()
     select type(current_coords_ptr)
       class is (coords)
         current_coords => current_coords_ptr
     end select
-    call this%q%remove_element_at_iterator_position()
-    target_coords_ptr => this%river_directions%get_value(current_coords)
-    select type(target_coords_ptr)
-      class is (coords)
-        target_coords => target_coords_ptr
-    end select
-    target_of_target_coords_ptr => this%river_directions%get_value(target_coords)
-    select type(target_of_target_coords_ptr)
-      class is (coords)
-        target_of_target_coords => target_of_target_coords_ptr
-    end select
+    target_coords => this%get_next_cell_coords(current_coords)
     if ( target_coords%are_equal_to(this%get_no_data_value()) .or. &
-         target_coords%are_equal_to(this%get_no_flow_value()) .or. &
-         target_of_target_coords%are_equal_to(this%get_no_data_value()) ) then
+         target_coords%are_equal_to(this%get_no_flow_value())) then
+      call this%q%remove_element_at_iterator_position()
       cycle
     end if
-    cumulative_flow_target_coords_ptr => this%cumulative_flow%get_value(target_coords)
-    cumulative_flow_current_coords_ptr => this%cumulative_flow%get_value(current_coords)
-    select type (cumulative_flow_target_coords_ptr)
-      type is (integer)
-        select type(cumulative_flow_current_coords_ptr)
-          type is (integer)
-            call this%cumulative_flow%set_value(target_coords, &
-                                                cumulative_flow_target_coords_ptr + &
-                                                cumulative_flow_current_coords_ptr)
-        end select
-      end select
+    if ( .not. target_coords%are_equal_to(this%get_flow_terminates_value())) then
+      target_of_target_coords => this%get_next_cell_coords(target_coords)
+      if ( target_of_target_coords%are_equal_to(this%get_no_data_value())) then
+        call this%q%remove_element_at_iterator_position()
+        cycle
+      end if
+    end if
     dependency_ptr => this%dependencies%get_value(target_coords)
     select type (dependency_ptr)
       type is (integer)
@@ -226,9 +250,26 @@ subroutine process_queue(this)
     end select
     call this%dependencies%set_value(target_coords, &
                                      dependency)
-    if ( dependency == 0 ) then
-      call this%q%add_value_to_back(target_coords)
-    end if
+    cumulative_flow_target_coords_ptr => this%cumulative_flow%get_value(target_coords)
+    cumulative_flow_current_coords_ptr => this%cumulative_flow%get_value(current_coords)
+    call this%q%remove_element_at_iterator_position()
+    select type (cumulative_flow_target_coords_ptr)
+      type is (integer)
+        select type(cumulative_flow_current_coords_ptr)
+          type is (integer)
+            if (dependency == 0 .and. .not. &
+                target_coords%are_equal_to(this%get_flow_terminates_value())) then
+              call this%cumulative_flow%set_value(target_coords, &
+                                                  cumulative_flow_target_coords_ptr + &
+                                                  cumulative_flow_current_coords_ptr + 1)
+              call this%q%add_value_to_back(target_coords)
+            else
+              call this%cumulative_flow%set_value(target_coords, &
+                                                  cumulative_flow_target_coords_ptr + &
+                                                  cumulative_flow_current_coords_ptr)
+            end if
+        end select
+      end select
   end do
 end subroutine process_queue
 
@@ -245,7 +286,6 @@ subroutine follow_paths(this,initial_coords)
   class(flow_accumulation_algorithm), intent(inout) :: this
   class(coords), pointer, intent(in) :: initial_coords
   class(coords), pointer :: current_coords
-  class(*), pointer :: target_coords_ptr
   class(coords), pointer :: target_coords
   integer :: coords_index
   allocate(current_coords,source=initial_coords)
@@ -256,12 +296,8 @@ subroutine follow_paths(this,initial_coords)
       call this%assign_coords_to_link_array(coords_index,this%get_flow_terminates_value())
       exit
     end if
-    target_coords_ptr => this%river_directions%get_value(current_coords)
-    select type (target_coords_ptr)
-      class is (coords)
-        target_coords => target_coords_ptr
-    end select
-    if ( this%river_directions%coords_outside_subfield(target_coords) ) then
+    target_coords => this%get_next_cell_coords(current_coords)
+    if ( this%dependencies%coords_outside_subfield(target_coords) ) then
       if ( current_coords%are_equal_to(initial_coords) ) then
          call this%assign_coords_to_link_array(coords_index,this%get_external_flow_value())
       else
@@ -296,6 +332,25 @@ end subroutine follow_paths
     class(coords), pointer ::no_flow_value
       no_flow_value => this%no_flow_value
   end function get_no_flow_value
+
+  function latlon_get_next_cell_coords(this,coords_in) result(next_cell_coords)
+    class(latlon_flow_accumulation_algorithm), intent(in) :: this
+    class(coords), pointer :: coords_in
+    class(coords), pointer :: next_cell_coords
+    class(*), pointer :: next_cell_coords_lat_ptr
+    class(*), pointer :: next_cell_coords_lon_ptr
+      next_cell_coords_lat_ptr => this%next_cell_index_lat%get_value(coords_in)
+      next_cell_coords_lon_ptr => this%next_cell_index_lon%get_value(coords_in)
+      select type (next_cell_coords_lat_ptr)
+      type is (integer)
+        select type (next_cell_coords_lon_ptr)
+        type is (integer)
+          allocate(next_cell_coords, &
+                   source=latlon_coords(next_cell_coords_lat_ptr, &
+                                        next_cell_coords_lon_ptr))
+        end select
+      end select
+  end function latlon_get_next_cell_coords
 
   function latlon_generate_coords_index(this,coords_in) result(index)
     class(latlon_flow_accumulation_algorithm), intent (in) :: this
@@ -338,6 +393,19 @@ end subroutine follow_paths
       end select
     end select
   end subroutine latlon_assign_coords_to_link_array
+
+  function icon_single_index_get_next_cell_coords(this,coords_in) result(next_cell_coords)
+    class(icon_single_index_flow_accumulation_algorithm), intent(in) :: this
+    class(coords), pointer :: coords_in
+    class(coords), pointer :: next_cell_coords
+    class(*), pointer :: next_cell_coords_index_ptr
+      next_cell_coords_index_ptr => this%next_cell_index%get_value(coords_in)
+      select type (next_cell_coords_index_ptr)
+        type is (integer)
+          allocate(next_cell_coords, &
+                   source=generic_1d_coords(next_cell_coords_index_ptr,.true.))
+      end select
+  end function icon_single_index_get_next_cell_coords
 
   function icon_single_index_generate_coords_index(this,coords_in) result(index)
     class(icon_single_index_flow_accumulation_algorithm), intent (in) :: this
