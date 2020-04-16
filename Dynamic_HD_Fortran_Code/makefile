@@ -1,5 +1,5 @@
 RM := rm -rf
-USE_NAG := False
+USE_NAG := True
 ifeq ($(shell uname -s),Darwin)
 GFORTRAN :=  /usr/local/Cellar/gcc/9.2.0_3/bin/gfortran-9
 NAGFORTRAN :=  /usr/local/bin/nagfor
