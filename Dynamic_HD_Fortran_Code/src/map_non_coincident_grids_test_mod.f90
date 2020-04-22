@@ -22,12 +22,12 @@ subroutine testLatLonToIconGrids
   real(kind=double_precision), dimension(:), allocatable :: pixel_center_lons
   class(*), dimension(:,:), pointer :: pixel_center_lats_ptr_2d
   class(*), dimension(:,:), pointer :: pixel_center_lons_ptr_2d
-  type(latlon_field_section), pointer :: pixel_center_lats_field
-  type(latlon_field_section), pointer :: pixel_center_lons_field
+  class(latlon_field_section), pointer :: pixel_center_lats_field
+  class(latlon_field_section), pointer :: pixel_center_lons_field
   class(*), dimension(:),pointer :: cell_vertex_coords_data
   class(icon_single_index_field_section), pointer :: cell_vertex_coords
   type(generic_1d_section_coords),pointer :: coarse_grid_shape
-  type(latlon_section_coords),pointer :: fine_grid_shape
+  class(latlon_section_coords),pointer :: fine_grid_shape
   class(field_section), pointer :: cell_numbers
   integer, dimension(:,:), pointer :: cell_numbers_data
   class(*), dimension(:,:), pointer :: cell_numbers_data_ptr
@@ -335,7 +335,7 @@ subroutine testLatLonToIconGrids
       write(*,*) trim(debug)
     end do
     do i = 1,12
-      write(debug2,'(XXXXXXXXXXXXX20(I3))') (cell_numbers_data(i,j),j=21,40)
+      write(debug2,'(13X,20(I3))') (cell_numbers_data(i,j),j=21,40)
       write(*,*) trim(debug2)
     end do
     call ncg_mapper%generate_limits()

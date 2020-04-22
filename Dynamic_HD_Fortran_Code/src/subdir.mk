@@ -148,6 +148,7 @@ MODS += \
 ./loop_breaker_test_mod.mod \
 ./accumulate_flow_icon_simple_interface.mod \
 ./accumulate_flow_test_mod.mod \
+./accumulate_flow_mod.mod \
 ./manual_fruit_basket.mod \
 ./manual_fruit_basket_driver.mod \
 ./flow_accumulation_algorithm_mod.mod \
@@ -160,7 +161,7 @@ MODS += \
 ./latlon_hd_model_io_mod.mod \
 ./latlon_hd_model_interface_mod.mod \
 ./latlon_hd_model_driver.mod \
-./map_non_coincident_grid_test_mod.mod \
+./map_non_coincident_grids_test_mod.mod \
 ./cotat_plus_latlon_to_icon_simple_interface.mod \
 ./latlon_hd_and_lake_model_test_mod.mod \
 ./icon_to_latlon_landsea_downscaler.mod \
@@ -193,11 +194,18 @@ src/%.o: ../src/%.f90
 	$(FORTRAN) -funderscoring -cpp -O0 -g -Wall -c -fmessage-length=0 -fPIC -o "$@" "$<" "-I ../include" "-I $(NETCDF_F)/include"
 	@echo 'Finished building: $<'
 	@echo ' '
+else ifeq ($(FORTRAN),$(INTELFORTRAN))
+src/%.o: ../src/%.f90
+	@echo 'Invoking: Intel Fortran Compiler'
+	@echo 'Building file: $<'
+	$(FORTRAN) -O0 -fpp -g -c -o "$@" "$<" -I ../include -I $(NETCDF_F)/include
+	@echo 'Finished building: $<'
+	@echo ' '
 else
 src/%.o: ../src/%.f90
 	@echo 'Invoking: NAG Fortran Compiler'
 	@echo 'Building file: $<'
-	$(FORTRAN) -O0 -g -c -o "$@" "$<" "-I ../include" "-I $(NETCDF_F)/include"
+	$(FORTRAN) -O0 -fpp -g -c -o "$@" "$<" -I ../include -I $(NETCDF_F)/include
 	@echo 'Finished building: $<'
 	@echo ' '
 endif

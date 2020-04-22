@@ -283,10 +283,10 @@ contains
         end if
         constructor%section_max_lons => section_max_lons_in
         constructor%section_min_lons => section_min_lons_in
-        allocate(constructor%section_max_lats,source=section_max_lats_in)
-        allocate(constructor%section_min_lats,source=section_min_lats_in)
-        constructor%section_max_lats(:) = constructor%section_max_lats(:) + lat_offset
-        constructor%section_min_lats(:) = constructor%section_min_lats(:) + lat_offset
+        allocate(constructor%section_max_lats(size(section_max_lats_in)))
+        allocate(constructor%section_min_lats(size(section_min_lats_in)))
+        constructor%section_max_lats(:) = section_max_lats_in(:) + lat_offset
+        constructor%section_min_lats(:) = section_min_lats_in(:) + lat_offset
         constructor%cell_numbers => cell_numbers_in
         constructor%list_of_cell_numbers => null()
         constructor%cell_number = cell_number_in
@@ -326,10 +326,12 @@ function multicell_irregular_latlon_section_coords_constructor(list_of_cell_numb
     integer :: section_max_lon
     integer :: i
     integer :: working_cell_number
-        constructor%section_min_lats => section_min_lats_in
         constructor%section_min_lons => section_min_lons_in
-        constructor%section_max_lats => section_max_lats_in
         constructor%section_max_lons => section_max_lons_in
+        allocate(constructor%section_min_lats(size(section_min_lats_in)))
+        allocate(constructor%section_max_lats(size(section_max_lats_in)))
+        constructor%section_min_lats(:) = section_min_lats_in(:)
+        constructor%section_max_lats(:) = section_max_lats_in(:)
         constructor%cell_numbers => cell_numbers_in
         constructor%cell_number = 0
         constructor%list_of_cell_numbers => list_of_cell_numbers_in

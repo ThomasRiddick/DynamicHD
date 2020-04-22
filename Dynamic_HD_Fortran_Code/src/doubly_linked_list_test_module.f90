@@ -37,6 +37,7 @@ contains
             call assert_equals(1.0,result2)
             call assert_equals(1.5,result3)
             call list%destructor()
+            if (end0) continue
     end subroutine testAddingReals
 
     subroutine testAddingLogicals
@@ -66,6 +67,7 @@ contains
             call assert_equals(.TRUE.,result2)
             call assert_equals(.FALSE.,result3)
             call list%destructor()
+            if (end0) continue
     end subroutine testAddingLogicals
 
     subroutine testAddingCoords
@@ -103,6 +105,7 @@ contains
             call assert_equals(3,result5)
             call assert_equals(4,result6)
             call list%destructor()
+            if (end0) continue
     end subroutine testAddingCoords
 
     subroutine testAddingIntegersAndIteration
@@ -197,6 +200,7 @@ contains
             call assert_equals(.TRUE.,end6)
             call assert_equals(4,length)
             call list%destructor()
+            if (end0) continue
     end subroutine testAddingIntegersAndIteration
 
     subroutine testRemoveElementAtIteratorPosition
@@ -269,6 +273,7 @@ contains
             call assert_equals(6,length2)
             call assert_equals(5,length3)
             call list%destructor()
+            if (end0) continue
     end subroutine testRemoveElementAtIteratorPosition
 
 end module doubly_linked_list_test_module

@@ -81,6 +81,7 @@ type, extends(flow_accumulation_algorithm) :: icon_single_index_flow_accumulatio
     class(subfield), pointer :: next_cell_index => null()
   contains
     procedure :: icon_single_index_init_flow_accumulation_algorithm
+    procedure :: icon_single_index_destructor
     procedure :: generate_coords_index => icon_single_index_generate_coords_index
     procedure :: assign_coords_to_link_array => icon_single_index_assign_coords_to_link_array
     procedure :: get_next_cell_coords => icon_single_index_get_next_cell_coords
@@ -133,8 +134,7 @@ function icon_single_index_flow_accumulation_algorithm_constructor(field_section
   class(*), dimension(:), pointer, intent(in) :: next_cell_index
   class(*), dimension(:), pointer, intent(out) :: cumulative_flow
   type(generic_1d_section_coords), intent(in) :: field_section_coords
-  type(icon_single_index_flow_accumulation_algorithm), allocatable :: constructor
-    allocate(constructor)
+  type(icon_single_index_flow_accumulation_algorithm) :: constructor
     call constructor%icon_single_index_init_flow_accumulation_algorithm(field_section_coords, &
                                                                         next_cell_index, &
                                                                         cumulative_flow)
@@ -142,6 +142,7 @@ end function icon_single_index_flow_accumulation_algorithm_constructor
 
 subroutine destructor(this)
   class(flow_accumulation_algorithm), intent(inout) :: this
+    call this%dependencies%destructor()
     deallocate(this%dependencies)
     deallocate(this%cumulative_flow)
     deallocate(this%external_data_value)
@@ -150,6 +151,12 @@ subroutine destructor(this)
     deallocate(this%no_flow_value)
     call this%q%destructor()
 end subroutine destructor
+
+subroutine icon_single_index_destructor(this)
+  class(icon_single_index_flow_accumulation_algorithm), intent(inout) :: this
+    deallocate(this%next_cell_index)
+    call this%destructor
+end subroutine
 
 subroutine generate_cumulative_flow(this,set_links)
   class(flow_accumulation_algorithm), intent(inout) :: this
@@ -162,7 +169,7 @@ end subroutine generate_cumulative_flow
 
 subroutine set_dependencies_wrapper(this,coords_in)
   class(*), intent(inout) :: this
-  class(coords), pointer, intent(in) :: coords_in
+  class(coords), pointer, intent(inout) :: coords_in
     select type(this)
       class is (flow_accumulation_algorithm)
         call this%set_dependencies(coords_in)
@@ -171,7 +178,7 @@ end subroutine set_dependencies_wrapper
 
 subroutine set_dependencies(this,coords_in)
   class(flow_accumulation_algorithm), intent(inout) :: this
-  class(coords), pointer, intent(in) :: coords_in
+  class(coords), pointer, intent(inout) :: coords_in
   class(coords),pointer :: target_coords
   class(coords),pointer :: target_of_target_coords
   class(*), pointer  :: dependency_ptr
@@ -193,14 +200,18 @@ subroutine set_dependencies(this,coords_in)
               call this%dependencies%set_value(target_coords, &
                                                dependency_ptr+1)
           end select
+          deallocate(dependency_ptr)
         end if
+        deallocate(target_of_target_coords)
       end if
+      deallocate(target_coords)
     end if
+    deallocate(coords_in)
 end subroutine set_dependencies
 
 subroutine add_cells_to_queue_wrapper(this,coords_in)
   class(*), intent(inout) :: this
-  class(coords), pointer, intent(in) :: coords_in
+  class(coords), pointer, intent(inout) :: coords_in
     select type(this)
     class is (flow_accumulation_algorithm)
       call this%add_cells_to_queue(coords_in)
@@ -209,7 +220,7 @@ end subroutine add_cells_to_queue_wrapper
 
 subroutine add_cells_to_queue(this,coords_in)
   class(flow_accumulation_algorithm), intent(inout) :: this
-  class(coords), pointer, intent(in) :: coords_in
+  class(coords), pointer, intent(inout) :: coords_in
   class(coords), pointer :: target_coords
   class(*), pointer  :: dependency_ptr
   target_coords => this%get_next_cell_coords(coords_in)
@@ -224,6 +235,9 @@ subroutine add_cells_to_queue(this,coords_in)
       end if
     end if
   end select
+  deallocate(coords_in)
+  deallocate(dependency_ptr)
+  deallocate(target_coords)
 end subroutine add_cells_to_queue
 
 subroutine process_queue(this)
@@ -244,22 +258,25 @@ subroutine process_queue(this)
     end select
     target_coords => this%get_next_cell_coords(current_coords)
     if ( target_coords%are_equal_to(this%get_no_data_value()) .or. &
-         target_coords%are_equal_to(this%get_no_flow_value())) then
+         target_coords%are_equal_to(this%get_no_flow_value()) .or. &
+         target_coords%are_equal_to(this%get_flow_terminates_value())) then
       call this%q%remove_element_at_iterator_position()
+      deallocate(target_coords)
       cycle
     end if
-    if ( .not. target_coords%are_equal_to(this%get_flow_terminates_value())) then
-      target_of_target_coords => this%get_next_cell_coords(target_coords)
-      if ( target_of_target_coords%are_equal_to(this%get_no_data_value())) then
-        call this%q%remove_element_at_iterator_position()
-        cycle
-      end if
+    target_of_target_coords => this%get_next_cell_coords(target_coords)
+    if ( target_of_target_coords%are_equal_to(this%get_no_data_value())) then
+      call this%q%remove_element_at_iterator_position()
+      deallocate(target_of_target_coords)
+      cycle
     end if
+    deallocate(target_of_target_coords)
     dependency_ptr => this%dependencies%get_value(target_coords)
     select type (dependency_ptr)
       type is (integer)
       dependency = dependency_ptr - 1
     end select
+    deallocate(dependency_ptr)
     call this%dependencies%set_value(target_coords, &
                                      dependency)
     cumulative_flow_target_coords_ptr => this%cumulative_flow%get_value(target_coords)
@@ -282,12 +299,15 @@ subroutine process_queue(this)
             end if
         end select
       end select
+      deallocate(target_coords)
+      deallocate(cumulative_flow_target_coords_ptr)
+      deallocate(cumulative_flow_current_coords_ptr)
   end do
 end subroutine process_queue
 
 subroutine follow_paths_wrapper(this,initial_coords)
   class(*), intent(inout) :: this
-  class(coords), pointer, intent(in) :: initial_coords
+  class(coords), pointer, intent(inout) :: initial_coords
     select type(this)
     class is (flow_accumulation_algorithm)
       call this%follow_paths(initial_coords)
@@ -296,7 +316,7 @@ end subroutine follow_paths_wrapper
 
 subroutine follow_paths(this,initial_coords)
   class(flow_accumulation_algorithm), intent(inout) :: this
-  class(coords), pointer, intent(in) :: initial_coords
+  class(coords), pointer, intent(inout) :: initial_coords
   class(coords), pointer :: current_coords
   class(coords), pointer :: target_coords
   integer :: coords_index
@@ -319,6 +339,7 @@ subroutine follow_paths(this,initial_coords)
     end if
     current_coords => target_coords
   end do
+  deallocate(initial_coords)
 end subroutine follow_paths
 
   function get_external_flow_value(this) result(external_data_value)
@@ -366,7 +387,7 @@ end subroutine follow_paths
 
   function latlon_generate_coords_index(this,coords_in) result(index)
     class(latlon_flow_accumulation_algorithm), intent (in) :: this
-    class(coords), intent (in) :: coords_in
+    class(coords), pointer, intent (in) :: coords_in
     integer :: index
     integer :: relative_lat, relative_lon
     select type (coords_in)
@@ -417,11 +438,12 @@ end subroutine follow_paths
           allocate(next_cell_coords, &
                    source=generic_1d_coords(next_cell_coords_index_ptr,.true.))
       end select
+      deallocate(next_cell_coords_index_ptr)
   end function icon_single_index_get_next_cell_coords
 
   function icon_single_index_generate_coords_index(this,coords_in) result(index)
     class(icon_single_index_flow_accumulation_algorithm), intent (in) :: this
-    class(coords), intent (in) :: coords_in
+    class(coords), pointer, intent (in) :: coords_in
     integer :: index
       ! Dummy code to prevent compiler warnings
       select type (coords_in)

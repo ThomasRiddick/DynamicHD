@@ -13,7 +13,7 @@ type, public :: riverparameters
   real, pointer, dimension(:,:) :: overland_retention_coefficients
   real, pointer, dimension(:,:) :: base_retention_coefficients
   logical, pointer, dimension(:,:) :: landsea_mask
-  logical, allocatable, dimension(:,:) :: cascade_flag
+  logical, pointer, dimension(:,:) :: cascade_flag
   integer :: nlat,nlon
   contains
     procedure :: initialiseriverparameters
@@ -25,8 +25,8 @@ interface riverparameters
 end interface
 
 type, public :: riverprognosticfields
-  real, allocatable, dimension(:,:)   :: runoff
-  real, allocatable, dimension(:,:)   :: drainage
+  real, pointer,     dimension(:,:)   :: runoff
+  real, pointer,     dimension(:,:)   :: drainage
   real, pointer,     dimension(:,:)   :: river_inflow
   real, pointer,     dimension(:,:,:)   :: base_flow_reservoirs
   real, pointer,     dimension(:,:,:)   :: overland_flow_reservoirs

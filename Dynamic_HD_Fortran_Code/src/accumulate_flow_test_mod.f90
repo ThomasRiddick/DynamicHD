@@ -18,7 +18,7 @@ contains
       integer, dimension(:), pointer :: expected_output_cumulative_flow
       integer :: i
         allocate(input_river_directions(80))
-        allocate(cell_neighbors(3,80))
+        allocate(cell_neighbors(80,3))
         allocate(output_cumulative_flow(80))
         allocate(expected_output_cumulative_flow(80))
         input_river_directions = (/    2,10,  5,  5, -3, &
@@ -197,12 +197,12 @@ contains
         call accumulate_flow_icon_single_index(cell_neighbors, &
                                                input_river_directions, &
                                                output_cumulative_flow)
-            write(*,"(5(5X(I2)5X))") (output_cumulative_flow(i), i=1,5)
-            write(*,"(15(XI2X))") (output_cumulative_flow(i), i=6,20)
-            write(*,"(20(XI2))") (output_cumulative_flow(i), i=21,40)
-            write(*,"(20(XI2))") (output_cumulative_flow(i), i=41,60)
-            write(*,"(15(XI2X))") (output_cumulative_flow(i), i=61,75)
-            write(*,"(5(5X(I2)5X))") (output_cumulative_flow(i), i=76,80)
+            write(*,"(5(5X,(I2),5X))") (output_cumulative_flow(i), i=1,5)
+            write(*,"(15(1X,I2,1X))") (output_cumulative_flow(i), i=6,20)
+            write(*,"(20(1X,I2))") (output_cumulative_flow(i), i=21,40)
+            write(*,"(20(1X,I2))") (output_cumulative_flow(i), i=41,60)
+            write(*,"(15(1X,I2,1X))") (output_cumulative_flow(i), i=61,75)
+            write(*,"(5(5X,(I2),5X))") (output_cumulative_flow(i), i=76,80)
         call assert_true(all(output_cumulative_flow .eq. &
                              expected_output_cumulative_flow))
         deallocate(input_river_directions)

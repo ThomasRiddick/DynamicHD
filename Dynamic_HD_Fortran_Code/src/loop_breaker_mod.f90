@@ -86,7 +86,7 @@ module loop_breaker_mod
             class(loop_breaker) :: this
             class(coords), allocatable :: coords_in
             class(coords), pointer :: highest_cumulative_flow_location
-            class(direction_indicator), intent(out), allocatable, optional :: &
+            class(direction_indicator), intent(out), pointer, optional :: &
                 permitted_diagonal_outflow_rdir
             logical, intent(out), optional :: vertical_boundary_outflow
         end function locate_highest_cumulative_flow_of_cell
@@ -95,7 +95,7 @@ module loop_breaker_mod
             import loop_breaker
             import coords
             class(loop_breaker) :: this
-            class(coords) :: coords_in
+            class(coords), allocatable :: coords_in
         end subroutine assign_rdir_of_highest_cumulative_flow_of_cell
 
         function generate_permitted_rdir(this,coords_in,section_coords_in) &

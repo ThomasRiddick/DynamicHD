@@ -83,6 +83,7 @@ implicit none
         call check_return_code(nf90_close(ncid))
 
         write(*,*) "Generating Cumulative Flow"
+        allocate(cumulative_flow(ncells))
         call accumulate_flow_icon_single_index(cell_neighbors, &
                                                rdirs, cumulative_flow)
 

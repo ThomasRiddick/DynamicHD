@@ -252,8 +252,8 @@ contains
         integer, dimension(:,:), allocatable :: expanded_input_fine_total_cumulative_flow
         real(kind=double_precision), dimension(:), target, intent(in) :: pixel_center_lats
         real(kind=double_precision), dimension(:), target, intent(in):: pixel_center_lons
-        real(kind=double_precision), dimension(:,:), intent(in) :: cell_vertices_lats
-        real(kind=double_precision), dimension(:,:), intent(in) :: cell_vertices_lons
+        real(kind=double_precision), dimension(:,:), intent(in), allocatable :: cell_vertices_lats
+        real(kind=double_precision), dimension(:,:), intent(in), allocatable :: cell_vertices_lons
         logical, dimension(:), allocatable :: cells_to_reprocess
         logical, dimension(:,:), pointer :: cells_to_reprocess_local
         integer, dimension(:), intent(out) :: output_coarse_next_cell_index
@@ -371,7 +371,7 @@ contains
             expanded_cell_numbers_data(1,1:nlon_fine) = 0
             expanded_cell_numbers_data(nlat_fine+2,1:nlon_fine) = 0
             do i = 1,coarse_grid%num_points
-                if(mod(i,(coarse_grid%num_points/10)) == 0) then
+                if(mod(real(i),(real(coarse_grid%num_points)/10)) == 0) then
                     write(output,*) 100*i/coarse_grid%num_points
                     write(*,*) trim(output) // " % complete"
                 end if
@@ -432,19 +432,19 @@ contains
                 call dir_based_rdirs_cell%destructor()
             end do
             write(*,*) "COTAT+ upscaling complete"
-            write(*,"(5(5X(I2)5X))") (output_coarse_next_cell_index(i), i=1,5)
-            write(*,"(15(XI2X))") (output_coarse_next_cell_index(i), i=6,20)
-            write(*,"(20(XI2))") (output_coarse_next_cell_index(i), i=21,40)
-            write(*,"(20(XI2))") (output_coarse_next_cell_index(i), i=41,60)
-            write(*,"(15(XI2X))") (output_coarse_next_cell_index(i), i=61,75)
-            write(*,"(5(5X(I2)5X))") (output_coarse_next_cell_index(i), i=76,80)
+            write(*,'(5(5X,(I2),5X))') (output_coarse_next_cell_index(i), i=1,5)
+            write(*,'(15(1X,I2,1X))') (output_coarse_next_cell_index(i), i=6,20)
+            write(*,'(20(1X,I2))') (output_coarse_next_cell_index(i), i=21,40)
+            write(*,'(20(1X,I2))') (output_coarse_next_cell_index(i), i=41,60)
+            write(*,'(15(1X,I2,1X))') (output_coarse_next_cell_index(i), i=61,75)
+            write(*,'(5(5X,(I2),5X))') (output_coarse_next_cell_index(i), i=76,80)
             write(*,*) " "
                 do i = 2,13
       write(debug,'(20(I3))') (expanded_cell_numbers_data(i,j),j=1,20)
       write(*,*) trim(debug)
     end do
     do i = 2,13
-      write(debug2,'(XXXXXXXXXXXXX20(I3))') (expanded_cell_numbers_data(i,j),j=21,40)
+      write(debug2,'(13X,20(I3))') (expanded_cell_numbers_data(i,j),j=21,40)
       write(*,*) trim(debug2)
     end do
     call ncg_mapper%icon_icosohedral_cell_latlon_pixel_ncg_mapper_destructor()

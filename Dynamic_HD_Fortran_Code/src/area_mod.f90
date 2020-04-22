@@ -277,7 +277,7 @@ abstract interface
         import coords
         implicit none
         class(neighborhood), intent(in) :: this
-        class(coords), intent(in) :: pixel_coords
+        class(coords), pointer, intent(in) :: pixel_coords
         class(coords), pointer :: cell_coords
     end function yamazaki_get_cell_coords
 
@@ -1651,6 +1651,8 @@ contains
         integer, pointer, dimension(:,:) :: cell_numbers_data
         integer :: i,j
         integer :: list_index
+        integer :: imax,jmax
+        logical :: is_edge
             cell_numbers => this%cell_numbers
             list_index = 1
             allocate(list_of_edge_pixels)
@@ -1659,17 +1661,37 @@ contains
                 cell_numbers_data => cell_numbers_data_ptr
             end select
             this%number_of_edge_pixels = 0
+            imax = size(cell_numbers_data,1)
+            jmax = size(cell_numbers_data,2)
             do j = this%section_min_lon, this%section_max_lon
                 do i = this%section_min_lat, this%section_max_lat
                     if (cell_numbers_data(i,j) == this%cell_number) then
-                        if(cell_numbers_data(i-1,j-1) /= this%cell_number .or. &
-                           cell_numbers_data(i-1,j)   /= this%cell_number .or. &
-                           cell_numbers_data(i-1,j+1) /= this%cell_number .or. &
-                           cell_numbers_data(i,j-1)   /= this%cell_number .or. &
-                           cell_numbers_data(i,j+1)   /= this%cell_number .or. &
-                           cell_numbers_data(i+1,j-1) /= this%cell_number .or. &
-                           cell_numbers_data(i+1,j)   /= this%cell_number .or. &
-                           cell_numbers_data(i+1,j+1) /= this%cell_number) then
+                        is_edge = .false.
+                        if (i /= 1 .and. j /= 1) then
+                            is_edge = (cell_numbers_data(i-1,j-1) /= this%cell_number)
+                        end if
+                        if (i /= 1) then
+                            is_edge = (cell_numbers_data(i-1,j)   /= this%cell_number) .or. is_edge
+                        end if
+                        if (i /= 1 .and. j /= jmax) then
+                            is_edge = (cell_numbers_data(i-1,j+1) /= this%cell_number) .or. is_edge
+                        end if
+                        if (j /= 1 ) then
+                            is_edge = (cell_numbers_data(i,j-1)   /= this%cell_number) .or. is_edge
+                        end if
+                        if (j /= jmax) then
+                            is_edge = (cell_numbers_data(i,j+1)   /= this%cell_number) .or. is_edge
+                        end if
+                        if (i /= imax .and. j /= 1) then
+                            is_edge = (cell_numbers_data(i+1,j-1) /= this%cell_number) .or. is_edge
+                        end if
+                        if (i /= imax) then
+                            is_edge = (cell_numbers_data(i+1,j)   /= this%cell_number) .or. is_edge
+                        end if
+                        if (i /= imax .and. j /= jmax) then
+                            is_edge = (cell_numbers_data(i+1,j+1) /= this%cell_number) .or. is_edge
+                        end if
+                        if (is_edge) then
                             call list_of_edge_pixels%add_value_to_back(latlon_coords(i,j))
                             this%number_of_edge_pixels = this%number_of_edge_pixels + 1
                         end if
@@ -2872,8 +2894,12 @@ contains
         class(coords), pointer :: cell_coords
             !Prevents compiler warnings
             select type (pixel_coords)
+            class default
+                continue
             end select
             select type (this)
+            class default
+                continue
             end select
             cell_coords => null()
     end function yamazaki_irregular_latlon_get_cell_coords_dummy
@@ -2900,8 +2926,12 @@ contains
         class(coords), intent(inout) :: pixel_coords
             !Prevents compiler warnings
             select type (pixel_coords)
+            class default
+                continue
             end select
             select type (this)
+            class default
+                continue
             end select
     end subroutine yamazaki_irregular_latlon_wrap_coordinates_dummy
 

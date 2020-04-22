@@ -82,7 +82,7 @@ abstract interface
             subroutine subroutine_interface(calling_object,coords_in)
                 use coords_mod
                 class(*), intent(inout) :: calling_object
-                class(coords),intent(in) :: coords_in
+                class(coords), pointer, intent(inout) :: coords_in
             end subroutine subroutine_interface
         end interface
         procedure(subroutine_interface) :: subroutine_in
@@ -97,7 +97,7 @@ abstract interface
             subroutine subroutine_interface(calling_object,coords_in)
                 use coords_mod
                 class(*), intent(inout) :: calling_object
-                class(coords), intent(in) :: coords_in
+                class(coords), pointer, intent(inout) :: coords_in
             end subroutine subroutine_interface
         end interface
         procedure(subroutine_interface) :: subroutine_in
@@ -426,18 +426,20 @@ contains
         implicit none
         class(latlon_subfield) :: this
         class(*), intent(inout) :: calling_object
+        class(coords), pointer :: coords_in
         integer :: i,j
         interface
             subroutine subroutine_interface(calling_object,coords_in)
                 use coords_mod
                 class(*), intent(inout) :: calling_object
-                class(coords), intent(in) :: coords_in
+                class(coords), pointer, intent(inout) :: coords_in
             end subroutine subroutine_interface
         end interface
         procedure(subroutine_interface) :: subroutine_in
         do j = this%lon_min,this%lon_max
             do i = this%lat_min,this%lat_max
-                call subroutine_in(calling_object,latlon_coords(i,j))
+                allocate(coords_in,source=latlon_coords(i,j))
+                call subroutine_in(calling_object,coords_in)
             end do
         end do
     end subroutine latlon_for_all
@@ -446,22 +448,27 @@ contains
         implicit none
         class(latlon_subfield) :: this
         class(*), intent(inout) :: calling_object
+        class(coords), pointer :: coords_in
         integer :: i,j
         interface
             subroutine subroutine_interface(calling_object,coords_in)
                 use coords_mod
                 class(*), intent(inout) :: calling_object
-                class(coords),intent(in) :: coords_in
+                class(coords), pointer, intent(inout) :: coords_in
             end subroutine subroutine_interface
         end interface
         procedure(subroutine_interface) :: subroutine_in
         do j = this%lon_min,this%lon_max
-                call subroutine_in(calling_object,latlon_coords(this%lat_min,j))
-                call subroutine_in(calling_object,latlon_coords(this%lat_max,j))
+                allocate(coords_in,source=latlon_coords(this%lat_min,j))
+                call subroutine_in(calling_object,coords_in)
+                allocate(coords_in,source=latlon_coords(this%lat_max,j))
+                call subroutine_in(calling_object,coords_in)
         end do
         do i = this%lat_min+1,this%lat_max-1
-                call subroutine_in(calling_object,latlon_coords(i,this%lon_min))
-                call subroutine_in(calling_object,latlon_coords(i,this%lon_max))
+                allocate(coords_in,source=latlon_coords(i,this%lon_min))
+                call subroutine_in(calling_object,coords_in)
+                allocate(coords_in,source=latlon_coords(i,this%lon_max))
+                call subroutine_in(calling_object,coords_in)
         end do
     end subroutine latlon_for_all_edge_cells
 
@@ -533,7 +540,7 @@ contains
             result(constructor)
         type(icon_single_index_subfield), pointer :: constructor
         class(*), dimension(:), pointer :: input_data
-        class(generic_1d_section_coords) :: subfield_section_coords
+        class(generic_1d_section_coords), intent(in) :: subfield_section_coords
             allocate(constructor)
             call constructor%init_icon_single_index_subfield(input_data,subfield_section_coords)
     end function icon_single_index_subfield_constructor
@@ -597,17 +604,19 @@ contains
         implicit none
         class(icon_single_index_subfield) :: this
         class(*), intent(inout) :: calling_object
+        class(coords), pointer :: coords_in
         integer :: i
         interface
             subroutine subroutine_interface(calling_object,coords_in)
                 use coords_mod
                 class(*), intent(inout) :: calling_object
-                class(coords), intent(in) :: coords_in
+                class(coords), pointer, intent(inout) :: coords_in
             end subroutine subroutine_interface
         end interface
         procedure(subroutine_interface) :: subroutine_in
             do i = 1,this%num_points
-                call subroutine_in(calling_object,generic_1d_coords(i,.true.))
+                allocate(coords_in,source=generic_1d_coords(i,.true.))
+                call subroutine_in(calling_object,coords_in)
             end do
     end subroutine icon_single_index_for_all
 
@@ -615,17 +624,19 @@ contains
         implicit none
         class(icon_single_index_subfield) :: this
         class(*), intent(inout) :: calling_object
+        class(coords), pointer :: coords_in
         integer :: i
         interface
             subroutine subroutine_interface(calling_object,coords_in)
                 use coords_mod
                 class(*), intent(inout) :: calling_object
-                class(coords),intent(in) :: coords_in
+                class(coords), pointer, intent(inout) :: coords_in
             end subroutine subroutine_interface
         end interface
         procedure(subroutine_interface) :: subroutine_in
             do i = 1,this%num_edge_cells
-                    call subroutine_in(calling_object,generic_1d_coords(this%edge_cells(i),.true.))
+                    allocate(coords_in,source=generic_1d_coords(this%edge_cells(i),.true.))
+                    call subroutine_in(calling_object,coords_in)
             end do
     end subroutine icon_single_index_for_all_edge_cells
 

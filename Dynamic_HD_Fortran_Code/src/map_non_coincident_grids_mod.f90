@@ -99,7 +99,7 @@ abstract interface
     import coords
     implicit none
     class(non_coincident_grid_mapper), intent(inout) :: this
-    class(coords), pointer, intent(in) :: coords_in
+    class(coords), pointer, intent(inout) :: coords_in
   end subroutine
 
   subroutine print_progress(this)
@@ -167,7 +167,7 @@ contains
 
   subroutine check_if_pixel_is_in_cell_wrapper(this,coords_in)
     class(*), intent(inout) :: this
-    class(coords), pointer,intent(in) :: coords_in
+    class(coords), pointer,intent(inout) :: coords_in
       select type (this)
       class is (non_coincident_grid_mapper)
         call this%check_if_pixel_is_in_cell(coords_in)
@@ -176,7 +176,7 @@ contains
 
   subroutine check_if_pixel_is_in_cell(this,coords_in)
     class(non_coincident_grid_mapper), intent(inout) :: this
-    class(coords), pointer,intent(in) :: coords_in
+    class(coords), pointer,intent(inout) :: coords_in
     class(*), pointer :: pixel_center_lat_ptr, pixel_center_lon_ptr
     real(kind=double_precision) :: pixel_center_lat, pixel_center_lon
       pixel_center_lat_ptr => this%pixel_center_lats%get_value(coords_in)
@@ -194,6 +194,7 @@ contains
       call this%mask%set_value(coords_in,&
                                this%check_if_pixel_center_is_in_bounds(pixel_center_lat,&
                                                                        pixel_center_lon))
+      deallocate(coords_in)
   end subroutine check_if_pixel_is_in_cell
 
   function generate_cell_numbers(this) &
@@ -212,7 +213,7 @@ contains
 
   subroutine process_cell_wrapper(this,coords_in)
     class(*), intent(inout) :: this
-    class(coords), pointer,intent(in) :: coords_in
+    class(coords), pointer,intent(inout) :: coords_in
       select type (this)
         class is (non_coincident_grid_mapper)
           call this%process_cell(coords_in)
@@ -221,7 +222,7 @@ contains
 
   subroutine process_cell(this,coords_in)
     class(non_coincident_grid_mapper), intent(inout) :: this
-    class(coords), pointer,intent(in) :: coords_in
+    class(coords), pointer,intent(inout) :: coords_in
       call this%generate_pixels_in_cell_mask(coords_in)
       call this%assign_cell_numbers()
       call this%mask%deallocate_data()
@@ -233,6 +234,7 @@ contains
       call this%secondary_area_to_consider_mask%destructor()
        deallocate(this%secondary_area_to_consider_mask)
       end if
+      deallocate(coords_in)
   end subroutine process_cell
 
   subroutine generate_limits(this)
@@ -249,7 +251,7 @@ contains
 
   subroutine process_pixel_for_limits_wrapper(this,coords_in)
     class(*), intent(inout) :: this
-    class(coords), pointer, intent(in) :: coords_in
+    class(coords), pointer, intent(inout) :: coords_in
       select type(this)
         class is (non_coincident_grid_mapper)
           call this%process_pixel_for_limits(coords_in)
@@ -258,7 +260,7 @@ contains
 
   subroutine latlon_process_pixel_for_limits(this,coords_in)
     class(icon_icosohedral_cell_latlon_pixel_ncg_mapper), intent(inout) :: this
-    class(coords), pointer,intent(in) :: coords_in
+    class(coords), pointer,intent(inout) :: coords_in
     integer :: i,j
     integer :: working_cell_number
     class(*), pointer :: working_cell_number_ptr
@@ -285,6 +287,7 @@ contains
         this%section_max_lons(working_cell_number) = j
       end if
       deallocate(working_cell_number_ptr)
+      deallocate(coords_in)
   end subroutine latlon_process_pixel_for_limits
 
   subroutine latlon_pixel_generate_areas_to_consider(this)

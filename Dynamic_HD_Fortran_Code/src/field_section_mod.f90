@@ -58,7 +58,7 @@ abstract interface
             subroutine subroutine_interface(calling_object,coords_in)
                 use coords_mod
                 class(*), intent(inout) :: calling_object
-                class(coords),intent(in) :: coords_in
+                class(coords), pointer, intent(inout) :: coords_in
             end subroutine subroutine_interface
         end interface
         procedure(subroutine_interface) :: subroutine_in
@@ -338,18 +338,20 @@ contains
         implicit none
         class(latlon_field_section) :: this
         class(*), intent(inout) :: calling_object
+        class(coords), pointer :: coords_in
         integer :: i,j
         interface
             subroutine subroutine_interface(calling_object,coords_in)
                 use coords_mod
                 class(*), intent(inout) :: calling_object
-                class(coords), intent(in) :: coords_in
+                class(coords), pointer, intent(inout) :: coords_in
             end subroutine subroutine_interface
         end interface
         procedure(subroutine_interface) :: subroutine_in
         do j = this%section_min_lon,this%section_max_lon
             do i = this%section_min_lat,this%section_max_lat
-                call subroutine_in(calling_object,latlon_coords(i,j))
+                allocate(coords_in,source=latlon_coords(i,j))
+                call subroutine_in(calling_object,coords_in)
             end do
         end do
     end subroutine latlon_for_all_section
@@ -372,12 +374,14 @@ contains
             wrap = this%wrap
     end function get_wrap
 
+    !Explicit specification of bounds in source is safer
     pure function latlon_get_data(this) result(data)
         class(latlon_field_section), intent(in) :: this
         class(*), dimension(:,:), pointer :: data
             allocate(data(size(this%data,1),size(this%data,2)),source=this%data)
     end function latlon_get_data
 
+    !Explicit specification of bounds in source is safer
     pure function icon_single_index_get_data(this) result(data)
         class(icon_single_index_field_section), intent(in) :: this
         class(*), dimension(:), pointer :: data
@@ -511,18 +515,20 @@ contains
         implicit none
         class(icon_single_index_field_section) :: this
         class(*), intent(inout) :: calling_object
+        class(coords), pointer :: coords_in
         integer :: i
         interface
             subroutine subroutine_interface(calling_object,coords_in)
                 use coords_mod
                 class(*), intent(inout) :: calling_object
-                class(coords), intent(in) :: coords_in
+                class(coords), pointer, intent(inout) :: coords_in
             end subroutine subroutine_interface
         end interface
         procedure(subroutine_interface) :: subroutine_in
             do i = 1,this%num_points
                 if (this%mask(i)) then
-                    call subroutine_in(calling_object,generic_1d_coords(i,.true.))
+                    allocate(coords_in,source=generic_1d_coords(i,.true.))
+                    call subroutine_in(calling_object,coords_in)
                 end if
             end do
     end subroutine icon_single_index_for_all_section

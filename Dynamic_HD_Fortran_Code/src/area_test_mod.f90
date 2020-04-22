@@ -2442,8 +2442,8 @@ contains
         logical, dimension(:,:), pointer     :: cells_to_reprocess
         type(latlon_dir_based_rdirs_field) :: dir_based_rdirs_field
         type(latlon_section_coords) :: field_section_coords
-            allocate(river_directions(1:5,1:5))
-            allocate(expected_results(1:5,1:5))
+            allocate(river_directions(5,5))
+            allocate(expected_results(5,5))
             river_directions = transpose(reshape((/ 7,6,3,5,2,&
                                                     7,6,4,7,8,&
                                                     4,5,1,0,6,&
