@@ -30,8 +30,8 @@ relative_path=$1
 perl -MCwd -e 'print Cwd::abs_path($ARGV[0]),qq<\n>' $relative_path
 }
 
+no_compilation=false
 #Process command line arguments
-
 while getopts ":r:p:c:n" opt; do
 	case $opt in
 	r)
@@ -57,60 +57,52 @@ while getopts ":r:p:c:n" opt; do
 	esac
 done
 
-if [[ -n ${hd_driver_config_filepath+x} ]] && [[ -n ${hd_driver_print_info_target_filepath+x} ]]; then
+if ! [[ -z ${hd_driver_config_filepath} ]] && ! [[ -z ${hd_driver_print_info_target_filepath} ]]; then
 	echo "Incompatible options set" >&2
 	exit 1
 fi
 
-if [[ -z ${hd_driver_config_filepath+x} ]] || [[ -z ${hd_driver_print_info_target_filepath+x} ]]; then
+if [[ -z ${hd_driver_config_filepath} ]] && [[ -z ${hd_driver_print_info_target_filepath} ]]; then
 	echo "No options set; one option is required" >&2
 	exit 1
 fi
 
-if ! [[ ${hd_driver_config_filepath##*.} == "ini" ]] ; then
+if ! [[ -z ${hd_driver_config_filepath} ]] && ! [[ ${hd_driver_config_filepath##*.} == "ini" ]]; then
 	echo "HD driver config file has the wrong file extension (requires .ini extension)" 1>&2
 	exit 1
 fi
 
 #Find the directory of this script
-this_script_dir="$(dirname "$(readlink -f "$0")")"
+this_script_dir="$(dirname "$(readlink "$0")")"
 
 #Thus find the default source directory and convert it to an absolute filepath
 source_directory="${this_script_dir}/.."
-source_directory=$(find_ab_path $source_directory)
-
-#Allocate a default location for external source code
-external_source_directory=${source_directory}/../dynamic_hd_external_source_code
-external_source_directory=$(find_ab_path $external_source_directory)
+source_directory=$(find_abs_path $source_directory)
 
 #Convert input filepaths from relative filepaths to absolute filepaths
-hd_driver_config_filepath=$(find_abs_path $hd_driver_config_filepath)
-hd_driver_print_info_target_filepath=$(find_abs_path $hd_driver_print_info_target_filepath)
+if ! [[ -z ${hd_driver_config_filepath} ]]; then
+	hd_driver_config_filepath=$(find_abs_path $hd_driver_config_filepath)
+else
+	hd_driver_print_info_target_filepath=$(find_abs_path $hd_driver_print_info_target_filepath)
+fi
 
 # Check config file exists and has correct format (if a config file has been specified)
-if [[ -z ${config_file} ]]; then
-	if ! [[ -f ${config_file} ]]; then
-		echo "Top level script config file doesn't exist!"
-		exit 1
-	fi
-
-	if egrep -v -q "^(#.*|.*=.*)$" ${config_file}; then
-		echo "Config file has wrong format" 1>&2
-		exit 1
-	fi
-
-	# Read in source_directory and external_source_directory
-	source ${config_file}
+if ! [[ -f ${config_file} ]]; then
+	echo "Top level script config file doesn't exist!"
+	exit 1
 fi
+
+if egrep -v -q "^(#.*|.*=.*)$" ${config_file}; then
+	echo "Config file has wrong format" 1>&2
+	exit 1
+fi
+
+# Read in source_directory
+source ${config_file}
 
 # Check we have actually read the variables correctly
 if [[ -z ${source_directory} ]]; then
 	echo "Source directory set to a blank string" 1>&2
-	exit 1
-fi
-
-if [[ -z ${external_source_directory} ]]; then
-	echo "External source directory not set in config file or set to a blank string" 1>&2
 	exit 1
 fi
 
@@ -119,71 +111,85 @@ if ! [[ -d $source_directory ]]; then
 
 fi
 
-if ! [[ -d $external_source_directory ]]; then
-	echo "External Source directory does not exist." 1>&2
-
+shopt -s nocasematch
+no_conda=${no_conda:-"false"}
+if [[ $no_conda == "true" ]] || [[ $no_conda == "t" ]]; then
+	no_conda=true
+elif [[ $no_conda == "false" ]] || [[ $no_conda == "f" ]]; then
+	no_conda=false
+else
+	echo "Format of no_conda flag is unknown, please use True/False or T/F" 1>&2
+	exit 1
 fi
 
-#Check for locks if necesssary and set the compilation_required flag accordingly
-exec 200>"${source_directory}/compilation.lock"
-if ! ${no_compilation} ; then
-	if flock -x -n 200 ; then
-		compilation_required=true
-	else
-		flock -s 200
-		compilation_required=false
-	fi
+no_modules=${no_modules:-"false"}
+if [[ $no_modules == "true" ]] || [[ $no_modules == "t" ]]; then
+	no_modules=true
+elif [[ $no_modules == "false" ]] || [[ $no_modules == "f" ]]; then
+	no_modules=false
 else
-	flock -s 200
+	echo "Format of no_modules flag is unknown, please use True/False or T/F" 1>&2
+	exit 1
+fi
+shopt -u nocasematch
+
+#Check for locks if necesssary and set the compilation_required flag accordingly
+# exec 200>"${source_directory}/compilation.lock"
+# if ! ${no_compilation} ; then
+# 	if flock -x -n 200 ; then
+# 		compilation_required=true
+# 	else
+# 		flock -s 200
+# 		compilation_required=false
+# 	fi
+# else
+# 	flock -s 200
+# 	compilation_required=false
+# fi
+if ! ${no_compilation} ; then
+	compilation_required=true
+else
 	compilation_required=false
 fi
 
 #Setup conda environment
 echo "Setting up environment"
-if [[ $(hostname -d) == "hpc.dkrz.de" ]]; then
-	source /sw/rhel6-x64/etc/profile.mistral
-	unload_module netcdf_c
-    unload_module imagemagick
-	unload_module cdo/1.7.0-magicsxx-gcc48
-    unload_module python
-else
-	export MODULEPATH="/sw/common/Modules:/client/Modules"
+if ! $no_modules ; then
+	if [[ $(hostname -d) == "hpc.dkrz.de" ]]; then
+		source /sw/rhel6-x64/etc/profile.mistral
+		unload_module netcdf_c
+	    unload_module imagemagick
+		unload_module cdo/1.7.0-magicsxx-gcc48
+	    unload_module python
+	else
+		export MODULEPATH="/sw/common/Modules:/client/Modules"
+	fi
 fi
-load_module anaconda3
 
-if $compilation_required && conda info -e | grep -q "dyhdenv"; then
-	conda env remove --yes --name dyhdenv
+if ! $no_modules && ! $no_conda ; then
+	load_module anaconda3
 fi
-if ! conda info -e | grep -q "dyhdenv"; then
-	#Use the txt file environment creation (not conda env create that requires a yml file)
-	#Create a dynamic_hd_env.txt using conda list --export > filename.txt not
-	#conda env export which creates a yml file.
-	conda create --file "${source_directory}/Dynamic_HD_Environmental_Settings/dynamic_hd_env.txt" --yes --name "dyhdenv"
-fi
-source activate dyhdenv
 
-#Load CDOs if required and reload version of python with CDOs included
-if echo $LOADEDMODULES | fgrep -q -v "cdo" ; then
-	load_module cdo
-fi
-if [[ $(hostname -d) == "hpc.dkrz.de" ]]; then
-	load_module python/2.7.12
-else
-	load_module python
+if ! $no_conda ; then
+	if $compilation_required && conda info -e | grep -q "dyhdenv"; then
+		conda env remove --yes --name dyhdenv
+	fi
+	if ! conda info -e | grep -q "dyhdenv"; then
+		${source_directory}/Dynamic_HD_bash_scripts/regenerate_conda_environment.sh $no_modules
+	fi
+	source activate dyhdenv
 fi
 
 #Load a new version of gcc that doesn't have the polymorphic variable bug
-load_module gcc/6.2.0
+if ! $no_modules ; then
+	load_module gcc/6.2.0
+fi
 
 #Setup correct python path
 export PYTHONPATH=${source_directory}/Dynamic_HD_Scripts:${PYTHONPATH}
 
 #Compile C++ and Fortran Code if this is the first timestep
 if $compilation_required ; then
-	#Normalise external source path; use a crude yet portable method
-	cd $external_source_directory
-	external_source_directory=$(pwd -P)
-	cd - 2>&1 > /dev/null
 	echo "Compiling C++ code" 1>&2
 	mkdir -p ${source_directory}/Dynamic_HD_Cpp_Code/Release
 	mkdir -p ${source_directory}/Dynamic_HD_Cpp_Code/Release/src
@@ -196,7 +202,7 @@ if $compilation_required ; then
 	mkdir -p ${source_directory}/Dynamic_HD_Fortran_Code/Release/src
 	cd ${source_directory}/Dynamic_HD_Fortran_Code/Release
 	make -f ../makefile clean
-	make -f ../makefile -e "EXT_SOURCE=${external_source_directory}" all
+	make -f ../makefile compile_only
 	cd - 2>&1 > /dev/null
 fi
 
@@ -222,11 +228,11 @@ if $compilation_required; then
 fi
 
 #Prepare python script arguments
-if [[ -n ${hd_driver_config_filepath+x} ]]; then
+if ! [[ -z ${hd_driver_config_filepath} ]]; then
 	python_script_arguments="-r ${hd_driver_config_filepath}"
-elif [[ -n ${hd_driver_print_info_target_filepath+x} ]]; then
+elif ! [[ -z ${hd_driver_print_info_target_filepath} ]]; then
 	python_script_arguments="-p ${hd_driver_print_info_target_filepath}"
-else:
+else
 	echo "Incompatible options set or no options set. Early checks for this where ineffective!" >&2
 fi
 

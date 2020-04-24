@@ -9,9 +9,25 @@ from dynamic_hd import get_file_extension
 import numpy as np
 import field
 import libs.upscale_orography_wrapper as upscale_orography_wrapper  #@UnresolvedImport
-import ConfigParser
+import configparser
 import gc
 import iodriver
+
+def guess_bound(coord,tolerance=5.0):
+    if 90.0 - tolerance < coord <= 90.0 + tolerance:
+        return 90.0
+    elif -90.0 - tolerance < coord <= -90.0 + tolerance:
+        return -90.0
+    elif 180.0 - tolerance < coord <= 180.0 + tolerance:
+        return 180.0
+    elif -180.0 - tolerance < coord <= -180.0 + tolerance:
+        return -180.0
+    elif 0.0 - tolerance < coord <= 0.0 + tolerance:
+        return 0.0
+    elif 360.0 - tolerance < coord <= 360.0 + tolerance:
+        return 360.0
+    else:
+        raise RuntimeError("Bounds of input data can't be inferred")
 
 def drive_orography_upscaling(input_fine_orography_file,output_course_orography_file,
                               landsea_file=None,true_sinks_file=None,
@@ -146,10 +162,25 @@ def advanced_drive_orography_upscaling(input_fine_orography_file,output_course_o
                                                      fieldname=input_orography_fieldname)
     nlat_fine,nlon_fine = input_orography.get_grid_dimensions()
     lat_pts_fine,lon_pts_fine = input_orography.get_grid_coordinates()
-    nlat_course = scaling_factor*nlat_fine
-    nlon_course = scaling_factor*nlon_fine
-    lat_pts_course = scaling_factor*lat_pts_fine
-    lon_pts_course = scaling_factor*lon_pts_fine
+    nlat_course = nlat_fine/scaling_factor
+    nlon_course = nlon_fine/scaling_factor
+    lat_step_course = 180.0/nlat_course
+    lon_step_course = 360.0/nlon_course
+    lat_min_bound_fine = guess_bound(lat_pts_fine[0])
+    lat_max_bound_fine = guess_bound(lat_pts_fine[-1])
+    lon_min_bound_fine = guess_bound(lon_pts_fine[0])
+    lon_max_bound_fine = guess_bound(lon_pts_fine[-1])
+    if lat_min_bound_fine > 0:
+        lat_pts_course = np.linspace(lat_min_bound_fine-0.5*lat_step_course,
+                                     lat_max_bound_fine+0.5*lat_step_course,
+                                     num=nlat_course,endpoint=True)
+    else:
+        lat_pts_course = np.linspace(lat_min_bound_fine+0.5*lat_step_course,
+                                     lat_max_bound_fine-0.5*lat_step_course,
+                                     num=nlat_course,endpoint=True)
+    lon_pts_course = np.linspace(lon_min_bound_fine+0.5*lon_step_course,
+                                 lon_max_bound_fine-0.5*lon_step_course,
+                                 num=nlon_course,endpoint=True)
     output_orography = field.makeEmptyField(field_type='Orography',dtype=np.float64,
                                             grid_type='LatLong',nlat=nlat_course,
                                             nlong=nlon_course)
@@ -170,7 +201,7 @@ def advanced_drive_orography_upscaling(input_fine_orography_file,output_course_o
         true_sinks = field.makeEmptyField(field_type='Generic',dtype=np.int32,
                                           grid_type='LatLong',nlat=nlat_fine,
                                           nlong=nlon_fine)
-    if not np.issubdtype(input_orography.get_data().dtype,np.float64()):
+    if not input_orography.get_data().dtype is np.float64():
         input_orography.change_dtype(np.float64)
         #Make sure old data type array is flushed out of memory immediately
         gc.collect()

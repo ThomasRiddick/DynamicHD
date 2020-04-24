@@ -51,11 +51,11 @@ void latlon_upscale_orography(double* orography_in, int nlat_fine, int nlon_fine
 							  bool prefer_non_diagonal_initial_dirs) {
 	cout << "Entering orography upscaling C++ code now" << endl;
 	cout << "Parameters:" << endl;
-	cout << "Minimum Path Length Threshold: " << tarasov_min_path_length_in << endl;
+	cout << "Minimum Path Length Threshold: " << to_string(tarasov_min_path_length_in) << endl;
 	cout << "Include Corners in Same Edge Criteria: "
-			<< tarasov_include_corners_in_same_edge_criteria_in << endl;
+			<< to_string(tarasov_include_corners_in_same_edge_criteria_in) << endl;
 	cout << "Separation Threshold for Return to Same Edge: "
-			<<  tarasov_separation_threshold_for_returning_to_same_edge_in << endl;
+			<<  to_string(tarasov_separation_threshold_for_returning_to_same_edge_in) << endl;
 	const bool tarasov_mod = true;
 	const bool set_ls_as_no_data_flag = false;
 	const bool index_based_rdirs_only_in = false;

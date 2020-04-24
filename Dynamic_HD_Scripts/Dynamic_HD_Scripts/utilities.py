@@ -87,7 +87,17 @@ def replace_corrected_orography_with_original_for_glaciated_grid_points_drivers(
         where corrections are applied to both glaciated and unglaciated points
     input_original_orography_file: string; Full path to the original uncorrected orography file
     input_glacier_mask_file: string; Full path to the file containing the glacier mask with 1/True as
-        glacier and 0/False asget_file_extension(input_corrected_orography_file),
+        glacier and 0/False as non-glacier
+    out_orography_file: string; full path to target file to write corrected orography with original
+        orography used for glacial points to
+    grid_type: string; the code for this grid type
+    grid_kwargs: dictionary; key word arguments specifying parameters of the grid
+    Returns: Nothing
+    """
+
+    input_corrected_orography = dynamic_hd.load_field(input_corrected_orography_file,
+                                                      file_type=dynamic_hd.\
+                                                      get_file_extension(input_corrected_orography_file),
                                                       field_type='Orography',
                                                       unmask=True,grid_type=grid_type,
                                                       **grid_kwargs)
@@ -105,17 +115,7 @@ def replace_corrected_orography_with_original_for_glaciated_grid_points_drivers(
                                                unmask=True,grid_type=grid_type,
                                                **grid_kwargs)
     output_orography = replace_corrected_orography_with_original_for_glaciated_grid_points(input_corrected_orography,
-                                                                                           input_origin non-glacier
-    out_orography_file: string; full path to target file to write corrected orography with original
-        orography used for glacial points to
-    grid_type: string; the code for this grid type
-    grid_kwargs: dictionary; key word arguments specifying parameters of the grid
-    Returns: Nothing
-    """
-
-    input_corrected_orography = dynamic_hd.load_field(input_corrected_orography_file,
-                                                      file_type=dynamic_hd.\
-                                                      al_orography,
+                                                                                           input_original_orography,
                                                                                            input_glacier_mask)
     dynamic_hd.write_field(filename=out_orography_file,
                            field=output_orography,

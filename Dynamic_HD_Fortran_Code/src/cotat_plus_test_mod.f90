@@ -173,6 +173,7 @@ contains
     real(kind=double_precision), dimension(:), allocatable :: pixel_center_lats
     real(kind=double_precision), dimension(:), allocatable :: pixel_center_lons
     integer, dimension(80)  :: output_coarse_next_cell_index
+    integer, dimension(80)  :: expected_output_coarse_next_cell_index
     integer, dimension(12,40) :: input_fine_river_directions
     integer, dimension(12,40) :: input_fine_total_cumulative_flow
         allocate(cell_neighbors(80,3))
@@ -455,6 +456,13 @@ contains
                               94.5,103.5,112.5,121.5,130.5,139.5,148.5,157.5,166.5,175.5, &
                              184.5,193.5,202.5,211.5,220.5,229.5,238.5,247.5,256.5,265.5, &
                              274.5,283.5,292.5,301.5,310.5,319.5,328.5,337.5,346.5,355.5 /)
+        expected_output_coarse_next_cell_index = (/&
+               8,         10,         14,         15,         18, &
+          21, 23, 23, 24, 26, 28, 28, 31, 31, 33, 33, 35, 36, 38, 39, &
+          40,23,24,25,26,27,28,29,30,31,32,33,34,35,-1,35,36,37,38,39, &
+          23,23,23,24,27,27,28,28,29,30,32,32,33,34,37,37,38,38,39,40, &
+          41, 42, 43, 47, 47, 47, 49, 51, 51, 53, 56, 57, 57, 58, 41, &
+              61,         65,         69,         72,         72 /)
         call cotat_plus_icon_icosohedral_cell_latlon_pixel(input_fine_river_directions,&
                                                            input_fine_total_cumulative_flow,&
                                                            output_coarse_next_cell_index,&
@@ -463,6 +471,8 @@ contains
                                                            cell_vertices_lats, &
                                                            cell_vertices_lons, &
                                                            cell_neighbors)
+        call assert_equals(expected_output_coarse_next_cell_index,&
+                           output_coarse_next_cell_index,80)
         deallocate(cell_neighbors)
         deallocate(cell_vertices_lats)
         deallocate(cell_vertices_lons)

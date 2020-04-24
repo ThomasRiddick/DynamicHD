@@ -152,7 +152,7 @@ if $first_timestep && ! [[ -e $working_directory ]]; then
 	mkdir -p $working_directory
 fi
 
-#Check that the working directory, source directory and external source directory exist
+#Check that the working directory and the source directory exist
 if ! [[ -d $working_directory ]]; then
 	if $first_timestep ; then
 		echo "Working directory does not exist or is not a directory (even after attempt to create it)" 1>&2

@@ -14,7 +14,7 @@ import create_connected_lsmask_driver
 import utilities
 
 def get_option_if_defined(config,section,option):
-    return (config.get_option(section,option) 
+    return (config.get_option(section,option)
             if config.has_option(section,option) else None)
 
 class HDOperatorDrivers(object):
@@ -26,19 +26,19 @@ class HDOperatorDrivers(object):
         '''
         Constructor
         '''
-        
+
     def primary_driver(self,configuration_filepath):
         setup_validator_object = setup_validator.SetupValidator()
         setup_validator_object.read_config(configuration_filepath)
         driver_to_use = setup_validator_object.process_config()
         config = setup_validator_object.get_config()
         getattr(self,driver_to_use)(config)
-        
+
     def print_driver_options(self,driver_option_printout_target_filepath):
         setup_validator_object = setup_validator.SetupValidator()
         with open(driver_option_printout_target_filepath,'w') as f:
             f.write(setup_validator_object.print_valid_options())
-        
+
     def cotat_plus_driver(self,config):
         cotat_plus_driver.advanced_cotat_plus_driver(input_fine_rdirs_filepath=\
                                                      config.get("input_filepaths",
@@ -64,7 +64,7 @@ class HDOperatorDrivers(object):
                                                      scaling_factor=\
                                                      config.get("general",
                                                                         "upscaling_factor"))
-        
+
     def orography_upscaling_driver(self,config):
         upscale_orography_driver.advanced_drive_orography_upscaling(input_fine_orography_file=\
                                                                     config.get("input_filepaths",
@@ -89,7 +89,7 @@ class HDOperatorDrivers(object):
                                                                     landsea_fieldname=\
                                                                     get_option_if_defined(config,
                                                                                           "input_fieldname",
-                                                                                          "fine_landsea"), 
+                                                                                          "fine_landsea"),
                                                                     true_sinks_fieldname=\
                                                                     get_option_if_defined(config,
                                                                                           "input_fieldname",
@@ -98,9 +98,9 @@ class HDOperatorDrivers(object):
                                                                     config.get("orography_upscaling",
                                                                                        "parameter_filepath"),
                                                                     scaling_factor=\
-                                                                    config.get("general",
-                                                                                       "upscaling_factor"))
-        
+                                                                    int(config.get("general",
+                                                                                       "upscaling_factor")))
+
     def sink_filling_driver(self,config):
         fill_sinks_driver.generate_orography_with_sinks_filled_advanced_driver(input_orography_filename=\
                                                                                config.get("input_filepaths",
@@ -138,7 +138,7 @@ class HDOperatorDrivers(object):
                                                                                slope_param=\
                                                                                config.get("sink_filling",
                                                                                           "slope_param"))
-        
+
     def river_carving_driver(self,config):
         fill_sinks_driver.advanced_sinkless_flow_directions_generator(filename=\
                                                                       config.get("input_filepaths",
@@ -176,7 +176,7 @@ class HDOperatorDrivers(object):
                                                                       get_option_if_defined(config,
                                                                                             "input_fieldnames",
                                                                                             "catchments_out"))
-        
+
     def compute_catchment_driver(self,config):
         compute_catchments.advanced_main(filename=config.get("input_filepaths,rdirs"),
                                          fieldname=config.get("input_fieldnames,rdirs"),
@@ -186,7 +186,7 @@ class HDOperatorDrivers(object):
                                                                              "catchment_out"),
                                          loop_logfile=config.sections("output_filepaths",
                                                                       "loop_logfiles"))
-        
+
     def connected_ls_mask_creation_driver(self,config):
         create_connected_lsmask_driver.\
             advanced_connected_lsmask_creation_driver(input_lsmask_filename=config.\
@@ -212,7 +212,7 @@ class HDOperatorDrivers(object):
                                                       flip_seeds_ud=config.\
                                                       getboolean("connected_lsmask_generation",
                                                                   "flip_seeds_upside_down"))
-            
+
     def orography_rebasing_driver(self,config):
         utilities.advanced_rebase_orography_driver(orography_filename=config.\
                                                    get("input_filepaths","orography"),
@@ -230,7 +230,7 @@ class HDOperatorDrivers(object):
                                                    get("input_fieldnames","present_day_reference_orography"),
                                                    rebased_orography_fieldname=config.\
                                                    get("output_fieldnames","orography_out"))
-        
+
     def orography_correction_application_driver(self,config):
         utilities.advanced_apply_orog_correction_field(original_orography_filename=config.\
                                                        get("input_filepaths","orography"),
@@ -244,7 +244,7 @@ class HDOperatorDrivers(object):
                                                        get("input_fieldnames","orography_corrections"),
                                                        corrected_orography_fieldname=config.\
                                                        get("output_fieldnames","orography_out"))
-        
+
     def orography_correction_generation_driver(self,config):
         utilities.advanced_orog_correction_field_generator(original_orography_filename=config.\
                                                            get("input_filepaths",
@@ -264,7 +264,7 @@ class HDOperatorDrivers(object):
                                                            orography_corrections_fieldname=config.\
                                                            get("output_fieldnames",
                                                                "orography_corrections"))
-        
+
     def corrected_and_tarasov_upscaled_orography_merging_driver(self,config):
         utilities.advanced_merge_corrected_and_tarasov_upscaled_orography(input_corrected_orography_file=config.\
                                                                           get("input_filepaths",
@@ -290,7 +290,7 @@ class HDOperatorDrivers(object):
                                                                           config.has_option("upscale_orography_merging",
                                                                                             "use_upscaled_orography_"
                                                                                             "only_in_region") else None)
-        
+
     def replace_corrected_orog_with_orig_for_glcted_grid_points_drivers(self,config):
         utilities.\
         advanced_replace_corrected_orog_with_orig_for_glcted_grid_points_drivers(input_corrected_orography_file=\
@@ -317,7 +317,7 @@ class HDOperatorDrivers(object):
                                                                                  out_orography_fieldname=\
                                                                                  config.get("output_fieldnames",
                                                                                             "orography_out"))
-        
+
 def setup_and_run_hd_operator_driver_from_command_line_arguments(args):
     driver_object = HDOperatorDrivers()
     if args.print_hd_driver_options:
@@ -329,10 +329,9 @@ class Arguments(object):
     pass
 
 def parse_arguments():
-    
+
     args = Arguments()
     parser = argparse.ArgumentParser("Run HD Operator")
-    parser.parse_args(namespace=args)
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('-r','--run',metavar='settings-ini-file',
                        dest='run_hd_driver_script',type=str,
@@ -341,8 +340,11 @@ def parse_arguments():
                        dest='print_hd_driver_options',type=str,
                        help="Print the required and optional options for"
                             "each HD operator")
+    #Adding the variables to a namespace other than that of the parser keeps the namespace clean
+    #and allows us to pass it directly to main
+    parser.parse_args(namespace=args)
     return args
-    
+
 if __name__ == '__main__':
     #Parse arguments and then run
     args = parse_arguments()

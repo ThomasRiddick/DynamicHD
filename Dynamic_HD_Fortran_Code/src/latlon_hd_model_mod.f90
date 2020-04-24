@@ -377,7 +377,7 @@ subroutine run_hd(prognostic_fields)
     prognostic_fields%river_diagnostic_fields%drainage_to_rivers(:,:) = 0.0
     where (prognostic_fields%river_parameters%rdirs == -1.0 .or. &
            prognostic_fields%river_parameters%rdirs ==  0.0 .or. &
-           prognostic_fields%river_parameters%rdirs ==  -2.0) !5.0)
+           prognostic_fields%river_parameters%rdirs ==  5.0)
         prognostic_fields%river_fields%water_to_ocean = &
               prognostic_fields%river_fields%river_inflow + &
               prognostic_fields%river_fields%runoff + &
@@ -387,7 +387,7 @@ subroutine run_hd(prognostic_fields)
         prognostic_fields%river_fields%water_to_ocean = 0.0
     end where
     if (prognostic_fields%using_lakes) then
-      where(prognostic_fields%river_parameters%rdirs == 5.0)!-2.0)
+      where(prognostic_fields%river_parameters%rdirs == -2.0)
         prognostic_fields%lake_interface_fields%water_to_lakes = &
             prognostic_fields%river_fields%river_inflow + &
             prognostic_fields%river_fields%runoff + &
