@@ -352,6 +352,7 @@ done
  	cdo expr,"acc=(rdirs == -9999999)" ${icon_intermediate_rdirs_filepath} zeros_temp.nc
   ${source_directory}/Dynamic_HD_Fortran_Code/Release/LatLon_To_Icon_Loop_Breaker_Fortran_Exec ${ten_minute_river_direction_filepath}  ${ten_minute_accumulated_flow_filepath} ${cell_numbers}  ${grid_file} ${icon_final_filepath} ${icon_intermediate_catchments_filepath} zeros_temp.nc ${icon_intermediate_rdirs_filepath}  "rdirs" "acc" "cell_index" "next_cell_index" "catchment" "acc" "rdirs"  ${icon_intermediate_catchments_filepath%%.nc}_loops_log.log
   ${source_directory}/Dynamic_HD_Cpp_Code/Release/Compute_Catchments_SI_Exec ${icon_final_filepath} ${output_catchments_filepath} ${grid_file} "next_cell_index" 1 ${output_catchments_filepath%%.nc}_loops_log.log 1
+  ${source_directory}/Dynamic_HD_Fortran_Code/Release/Accumulate_Flow_Icon_Simple_Interface_Exec ${grid_file} ${icon_final_filepath} ${output_accumulated_flow_filepath} "next_cell_index" "acc"
   rm -f paragen/area_dlat_dlon.txt
   rm -f paragen/ddir.inp
   rm -f paragen/hd_partab.txt

@@ -32,7 +32,7 @@ xleftmargin=0.1\linewidth
 
 \title{Generation of HD Parameters Files for ICON Grids: Description and Instructions}
 \author{Thomas Riddick}
-\date{21st February 2020}
+\date{27th April 2020}
 \begin{document}
 \maketitle
 \tableofcontents
@@ -66,7 +66,7 @@ Land-sea Mask Downscaling Alg. & - & -  & \checkmark & - \\
 COTAT+ Upscaling Algorithm & - &  \checkmark & - &  \checkmark \\
 Complex Loop Breaking Alg. & - & \checkmark & - & \checkmark \\
 Catchment Generation Alg. & \checkmark & \checkmark & N/A & N/A \\
-Cumulative Flow Gen. Alg. & see\footnotemark & \checkmark & N/A & N/A \\
+Cumulative Flow Gen. Alg. &  \checkmark & \checkmark & N/A & N/A \\
 Parameter Generation Code\footnotemark & \checkmark & \checkmark & N/A & N/A \\
 FLOW Upscaling Algorithm & - & \checkmark & - & - \\
 Orography Upscaling Algorithm &  - &\checkmark & - & - \\
@@ -78,8 +78,6 @@ Basin Analysis Algorithm & \checkmark & \checkmark & N/A & N/A \\
 \end{table}
 
 \addtocounter{footnote}{-1}
-\footnotetext{Essentially exists but undergoing testing}
-\addtocounter{footnote}{1}
 \footnotetext{This code is a modified version of that developed by Stefan Hagemann.}
 
 \afterpage{
@@ -180,15 +178,18 @@ First the accumulated flow and catchments are generated from the river direction
 
 \section{Instructions} \label{sec-instr}
 \subsection{General Notes}
+
+All the necessary tools are contained within the  \lstinline[style=bash_input]{DynamicHD} git repository and the \lstinline[style=bash_input]{parameter_generation_scripts} git submodule. Most of the tools are written in either C++ or Fortran 2003. The interface for these tools differs for data for ICON icosahedral grids and data on normal latitude-longitude grids. Tools for ICON icosahedral grids and cross-grid tools are called from the command line specifying settings, inputs and outputs via command line arguments. Tools for latitude-longitude grids are called from Python using f2py and Cython to call Fortran tools and C++ tools respectively. However the tools required for creating ICON \lstinline[style=bash_input]{HDpara.nc} are run automatically by bash shell scripts thus it should not be necessary to call these tools directly. Although in principle all these tools will work on Mistral the correct library paths and compiler options have not been set for this and thus they are currently limited to the linux system. 
+
 \subsection{Instructions for Low Resolutions Without Internal Sinks}
 
-\emph{Instructions are provided for the bash shell.}
-
-
+\emph{Instructions are provided for the bash shell on the Linux desktop system.}
 
 \begin{enumerate}
-\item Choose an appropriate base directory (\lstinline[style=bash_input]|${base_directory_path}| for the scripting:
-
+\item Choose an appropriate base directory (\lstinline[style=bash_input]|${base_directory_path}| for the scripting.
+\begin{lstlisting}[style=bash_input,breaklines=true]
+mkdir ${base_directory_path}
+\end{lstlisting}
 \item Download the DynamicHD git repository from github:
 \begin{lstlisting}[style=bash_input,breaklines=true]
 git clone https://github.com/ThomasRiddick/DynamicHD ${base_directory_path}/DynamicHD
@@ -196,8 +197,7 @@ git clone https://github.com/ThomasRiddick/DynamicHD ${base_directory_path}/Dyna
 \item Install the parameter generation scripts git submodule into the DynamicHD repository:
 \begin{lstlisting}[style=bash_input,breaklines=true] 
 cd ${base_directory_path}/DynamicHD/Dynamic_HD_bash_scripts
-rmdir parameter_generation_scripts
-scp -r  username@login1.mpimet.mpg.de:/home/mpim/m300468/DynamicHD/Dynamic_HD_bash_scripts/parameter_generation_scripts
+git clone git+ssh://dattel.mpimet.mpg.de/home/mpim/m300468/workspace/Dynamic_HD_Code/Dynamic_HD_bash_scripts/parameter_generation_scripts
 \end{lstlisting}
 
 \item Load the necessary models. First unload any existing modules. Then load anaconda3, cdo, nco, and gcc/6.3.0
@@ -226,6 +226,7 @@ scp username@login1.mpimet.mpg.de:/home/mpim/m300468/mk_ic_rdirs/icon_hdpara_gen
 scp username@login1.mpimet.mpg.de:/home/mpim/m300468/mk_ic_rdirs/corrected_orog_intermediary_ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless_glcc_olson_lsmask_0k_20170517_003802.nc $(pwd)
 scp username@login1.mpimet.mpg.de:/home/mpim/m300468/mk_ic_rdirs/rdirs_hydrosheds_au_af_sa_upscaled_10min_20200203_163646.nc $(pwd) 
 \end{lstlisting}
+Note the file \lstinline[style=bash_input]{corrected_orog_intermediary_ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless_glcc_olson_lsmask_0k_20170517_003802.nc} currently lacks grid information. The script has been configured to read this file in the correct orientation. It may require modification if another corrected orography is substituted for this file.
 \item Prepare a python environment for the scripts run (this will take some minutes to run):
 \begin{lstlisting}[style=bash_input,breaklines=true]
 ${base_directory_path}/DynamicHD/Dynamic_HD_bash_scripts/regenerate_conda_environment.sh 
@@ -249,14 +250,14 @@ The script will produce a number of files. The key output file is the icon hdpar
 \item[input\_ls\_mask\_filepath] input lsmask file on ICON grid
 \item[output\_hdpara\_filepath] output hdpara file 
 \item[output\_catchments\_filepath] output catchments file
-\item[output\_accumulated\_flow\_filepath] dummy, does nothing at the moment
+\item[output\_accumulated\_flow\_filepath] output accumulated flow file
 \item[config\_filepath] a file specifying options for the top level bash script i.e. icon\_rdir\_gen\_top\_level\_config.cfg
-\item[working\_directory] - for the script
-\item[cell\_numbers] - mapping of icon cells onto 10 min lat-lon. This is actually generated by one of the tools used in the script as an optional extra but that would require extra steps so it is easiest just to download my version for the moment
-\item[grid\_file] - icon grid file
-\item[cotat\_params\_file] - some upscaling parameters for the upscaling algorithm. An appropriate file is provided in my scripts
-\item[compilation\_required] - Needs to be set to ?true? the first time you run but you can later set it to ?false? to make the script run quicker
-\item[true\_sinks\_filepath (optional)] - A file containing the position of false sinks to use on a 10min lat-lon grid. You could start from the file I suggested above for this but you will probably want to further develop this yourself. If you don?t specify this then no true sinks will be used when generating the set of river directions for Asia, North America and Europe).
+\item[working\_directory] for the script
+\item[cell\_numbers] mapping of icon cells onto 10 min lat-lon. This is actually generated by one of the tools used in the script as an optional extra but that would require extra steps so it is easiest just to download my version for the moment
+\item[grid\_file] icon grid file
+\item[cotat\_params\_file] some upscaling parameters for the upscaling algorithm. An appropriate file is provided in my scripts
+\item[compilation\_required]  Needs to be set to \lstinline[style=bash_input]{true} the first time you run but you can later set it to \lstinline[style=bash_input]{false} to make the script run quicker
+\item[true\_sinks\_filepath (optional)] A file containing the position of false sinks to use on a 10min lat-lon grid. You could start from the file I suggested above for this but you will probably want to further develop this yourself. If you don't specify this then no true sinks will be used when generating the set of river directions for Asia, North America and Europe).
 \end{description}
 
 Once you have finished a set of river direction it is best to check the final mask matches the originally. This can be done using:
@@ -274,16 +275,94 @@ and
 
 \lstinline[style=bash_input]{DynamicHD/Dynamic_HD_Scripts/Dynamic_HD_Scripts/create_icon_coarse_river_directions_driver.py}
 
+
 \subsection{Instructions for Low Resolutions With Internal Sinks}
 
-%
-%You can adjust the endorheic/internal basins for Europe, Asia and North America by adjusting the true sink file. To add an new internal basin just find the lowest point of the depression the basin occupies in the 10min lat-lon orography corrected_orog_intermediary_ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless_glcc_olson_lsmask_0k_20170517_003802.nc and put a true flag there in the true sinks file.
-%
-%To adjust which internal basins are kept from the hydrosheds river directions look in the 10 minute catchment file a run using all internal basins (such a file is available at /home/mpim/m300468/mk_ic_rdirs/ten_minute_catchments_all_sinks.nc).  Choose the endorheic  catchments you want to keep and write down their catchment number and then specify these in a comma separated list in icon_hdpara_generation_driver.cfg after exclude_catchments= (the file current has an example of this). All other internal basins from the hydrosheds river directions will be removed and only these will be kept (you can also choose only to remove a selected list of catchments with the replace_only_catchments option or keep all internal basins with keep_all_internal_basins=False).  
-%
-%There are two different options for how endorheic catchments that are removed are replaced. The simplest is to redirect the water to the sea (though it may end up in a bigger endorheic basin in some cases anyway) - this is selected with replace_internal_basins_with_rdirs_with_truesinks=False. The other option is to set replace_internal_basins_with_rdirs_with_truesinks=True. This is a more scientifically justified but a bit more complicated to use. You need to specify a true sink point for each major endorheic catchment - this isn?t not used to generated the major endorheic catchment itself (assuming you have excluded it from being removed as detailed above) but is used to reconnect other minor endorheic catchments with this major endorheic catchment in a logical way (i.e. across the lowest rims of basins). 
-%occasionally there a problems with endorheic catchments next to the coast? if this happens let me know and I?ll send instructions how to correct this by hand.
+The endorheic/internal basins for Europe, Asia and North America can be adjusted by adjusting the true sink file. To add an new internal basin just find the lowest point of the depression the basin occupies in the 10min latitude-longitude orography \lstinline[style=bash_input]{corrected_orog_intermediary_ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless_glcc_olson_lsmask_0k_20170517_003802.nc} and put a true flag there in the true sinks file.
+
+To adjust which internal basins are kept from the hydrosheds river directions look in the 10 minute catchment file a run using all internal basins.  Choose the endorheic  catchments you want to keep and write down their catchment number and then specify these in a comma separated list in \lstinline[style=bash_input]{icon\_hdpara\_generation\_driver.cfg} after \lstinline[style=bash_input]{exclude_catchments=} (the file current has an example of this). All other internal basins from the hydrosheds river directions will be removed and only these will be kept (you can also choose only to remove a selected list of catchments with the \lstinline[style=bash_input]{replace_only_catchments} option or keep all internal basins with \lstinline[style=bash_input]{keep_all_internal_basins=False}).  
+
+There are two different options for how endorheic catchments that are removed are replaced. The simplest is to redirect the water to the sea (though it may end up in a bigger endorheic basin in some cases anyway) - this is selected with \lstinline[style=bash_input]{replace_internal_basins_with_rdirs_with_truesinks=False}. The other option is to set \lstinline[style=bash_input]{replace_internal_basins_with_rdirs_with_truesinks=True}. This is a more scientifically justified but a bit more complicated to use. You need to specify a true sink point for each major endorheic catchment - this isn?t not used to generated the major endorheic catchment itself (assuming you have excluded it from being removed as detailed above) but is used to reconnect other minor endorheic catchments with this major endorheic catchment in a logical way (i.e. across the lowest rims of basins). 
+
+occasionally there a problems with endorheic catchments next to the coast?
 \subsection{Instructions for High Resolutions Without Internal Sinks}
+
+\emph{Instructions are provided for the bash shell on the Linux desktop system.}
+
+\begin{enumerate}
+
+\item Choose an appropriate base directory (\lstinline[style=bash_input]|${base_directory_path}| for the scripting:
+\begin{lstlisting}[style=bash_input,breaklines=true]
+mkdir ${base_directory_path}
+\end{lstlisting}
+\item Download the DynamicHD git repository from github:
+\begin{lstlisting}[style=bash_input,breaklines=true]
+git clone https://github.com/ThomasRiddick/DynamicHD ${base_directory_path}/DynamicHD
+\end{lstlisting}
+\item Install the parameter generation scripts git submodule into the DynamicHD repository:
+\begin{lstlisting}[style=bash_input,breaklines=true] 
+cd ${base_directory_path}/DynamicHD/Dynamic_HD_bash_scripts
+git clone git+ssh://dattel.mpimet.mpg.de/home/mpim/m300468/workspace/Dynamic_HD_Code/Dynamic_HD_bash_scripts/parameter_generation_scripts 
+\end{lstlisting}
+\item Create a working directory for the ICON HD parameter generation process and change to that directory:
+\begin{lstlisting}[style=bash_input,breaklines=true] 
+cd ${base_directory_path}
+mkdir hdpara_gen_workdir
+\end{lstlisting}
+\item Copy an orography, grid file and land-sea mask for the desired resolution to the working directory:
+\begin{lstlisting}[style=bash_input,breaklines=true] 
+cp /path/to/orography_r2bX.nc ${base_directory_path}/hdpara_gen_workdir/orography_r2bX.nc 
+cp /path/to/landsea_mask_r2bX.nc ${base_directory_path}/hdpara_gen_workdir/landsea_mask_r2bX.nc
+cp gridfile_r2bX.nc ${base_directory_path}/hdpara_gen_workdir/gridfile_r2bX.nc
+\end{lstlisting}
+\item Edit paths in the script \lstinline[style=bash_input]{generate_fine_icon_rdirs}:
+\begin{lstlisting}[style=bash_input,breaklines=true] 
+vim ${base_directory_path}/DynamicHD/Dynamic_HD_bash_scripts/generate_fine_icon_rdirs
+\end{lstlisting}
+Set:
+\begin{lstlisting}[style=bash_input,breaklines=true] 
+icon_data_dir=${base_directory_path}/hdpara_gen_workdir/
+cpp_icon_tool_dir=${base_directory_path}/DynamicHD/Dynamic_HD_Cpp_Code/Release
+grid_file=${icon_data_dir}/gridfile_r2bX.nc
+orography_file=${icon_data_dir}/orography_r2bX.nc
+lsmask_file=${icon_data_dir}/landsea_mask_r2bX.nc
+true_sinks_file=${icon_data_dir}/true_sinks_r2bX.nc
+output_orography_file=${icon_data_dir}/orography_r2bX_filled.nc
+next_cell_index_file=${icon_data_dir}/rdirs_r2bX.nc
+catchments_file=${icon_data_dir}/catchments_r2bX.nc
+ \end{lstlisting}
+ \item Edit other settings in the script \lstinline[style=bash_input]{generate_fine_icon_rdirs}. Set the field names of required fields in the input files:
+\begin{lstlisting}[style=bash_input,breaklines=true]
+input_orography_fieldname="z"
+input_lsmask_fieldname="cell_sea_land_mask"
+input_true_sinks_fieldname="true_sinks"
+\end{lstlisting}
+(Replacing  \lstinline[style=bash_input]{"z", "cell_sea_land_mask"} and  \lstinline[style=bash_input]{"true_sinks"} as appropriate.) Also set the flag for fractional land-sea mask usage to the false value (which is in this case 0):
+\begin{lstlisting}[style=bash_input,breaklines=true]
+fractional_lsmask_flag=0 
+\end{lstlisting}
+\item Run the river direction generation script:
+\begin{lstlisting}[style=bash_input,breaklines=true]
+cd ${base_directory_path}/hdpara_gen_workdir/
+${base_directory_path}/DynamicHD/Dynamic_HD_bash_scripts/generate_fine_icon_rdirs
+\end{lstlisting}
+\item Run the parameter generation script:
+\begin{lstlisting}[style=bash_input,breaklines=true]
+${base_directory_path}/DynamicHD/Dynamic_HD_bash_scripts/parameter_generation_scripts/generate_icon_hd_file_driver.sh ${base_directory_path}/hdpara_gen_workdir/ ${base_directory_path}/DynamicHD/Dynamic_HD_bash_scripts/parameter_generation_scripts/fortran ${base_directory_path}/hdpara_gen_workdir/ ${base_directory_path}/hdpara_gen_workdir/gridfile_r2bX.nc ${base_directory_path}/hdpara_gen_workdir/landsea_mask_r2bX.nc ${base_directory_path}/hdpara_gen_workdir/rdirs_r2bX.nc ${base_directory_path}/hdpara_gen_workdir/orography_r2bX_filled.nc
+\end{lstlisting} 
+The command line arguments are as follows:
+\begin{description}
+\item[workdir] Working directory to use for running the script.
+\item[fortran\_src\_dir] Directory containing the Fortran code for parameter generations; this is usually a subdirectory of  \lstinline[style=bash_input]{DynamicHD/Dynamic_HD_bash_scripts/parameter_generation_scripts} named \lstinline[style=bash_input]{fortran}.
+\item[base\_data\_dir] Prefix to add to paths to input and output files.
+\item[grid\_file] Input file containing ICON grid parameters.
+\item[lsmasks\_file] Input file containing binary land-sea mask.
+\item[rdirs\_file] Intermediary file produced by the previous step containing river direction in the form of indices to the next cell downstream.
+\item[orography\_file] Intermediary file produced by the previous step containing the filled orography.
+\end{description}
+The final \lstinline[style=bash_input]{hdpara.nc} file will be produced by this step named \lstinline[style=bash_input]{hdpara_icon.nc}
+\end{enumerate}
+
 
 \bibliography{ICON_HD_Parameter_Generation_Instructions}{}
 \bibliographystyle{plain}
