@@ -6,11 +6,11 @@ FLAGS := -DPROCESSED_CELL_COUNTER -DUSE_NETCDFCPP -DDARWIN
 NETCDFCXX := /Users/thomasriddick/anaconda3/pkgs/netcdf-cxx4-4.3.0-h703b707_9
 INCLUDE := -I"$(NETCDFCXX)/include"
 else ifeq ($(shell hostname -d),hpc.dkrz.de)
-GPLUSPLUS := /sw/rhel6-x64/gcc/gcc-6.2.0/bin/g++
+GPLUSPLUS := /sw/rhel6-x64/gcc/gcc-6.4.0/bin/g++
 STDLIB_OPT :=
-FLAGS :=-pthread
-NETCDFC := /sw/rhel6-x64/netcdf/netcdf/netcdf_c-4.6.1-gcc64
-NETCDFCXX := /sw/rhel6-x64/netcdf/netcdf/netcdf_cxx-4.3.0-gcc64
+FLAGS :=-pthread -DUSE_NETCDFCPP
+NETCDFC := /sw/rhel6-x64/netcdf/netcdf_c-4.6.1-gcc64
+NETCDFCXX := /sw/rhel6-x64/netcdf/netcdf_cxx-4.3.0-gcc64
 INCLUDE := -isystem"$(NETCDFCXX)/include" -isystem"$(NETCDFC)/include"
 else ifeq ($(shell uname -s),Linux)
 GPLUSPLUS := $(shell which g++)
