@@ -99,6 +99,10 @@ class Icon_Coarse_River_Directions_Creation_Drivers(dyn_hd_dr.Dynamic_HD_Drivers
                                  "river_directions_to_reprocess_fieldname"):
             config.set("input_fieldname_options",
                        "river_directions_to_reprocess_fieldname","rdirs")
+        if not config.has_option("input_fieldname_options",
+                                 "ten_minute_corrected_orography_fieldname"):
+            config.set("input_fieldname_options",
+                       "ten_minute_corrected_orography_fieldname","z")
         if not config.has_section("output_fieldname_options"):
             config.add_section("output_fieldname_options")
         if not config.has_option("output_fieldname_options","output_river_directions_fieldname"):
@@ -133,9 +137,10 @@ class Icon_Coarse_River_Directions_Creation_Drivers(dyn_hd_dr.Dynamic_HD_Drivers
                                            "river_directions_to_reprocess_fieldname"))
         else:
           orography_filename = config.get("input_options","ten_minute_corrected_orography_filename")
-          orography = dynamic_hd.load_field(orography_filename,
-                                            file_type=dynamic_hd.get_file_extension(orography_filename),
-                                            field_type='Orography', grid_type="LatLong10min")
+          orography = iodriver.advanced_field_loader(orography_filename,
+                                                     field_type='Orography',
+                                                     fieldname=config.get("input_fieldname_options",
+                                                     "ten_minute_corrected_orography_fieldname"))
           hydrosheds_rdirs_au_af_sa_10min_filename = \
             config.get("input_options","ten_minute_hydrosheds_au_auf_sa_river_directions_filename")
           hydrosheds_rdirs = \
