@@ -38,11 +38,10 @@ output_catchments_filepath=${4}
 output_accumulated_flow_filepath=${5}
 config_filepath=${6}
 working_directory=${7}
-cell_numbers=${8}
-grid_file=${9}
-cotat_params_file=${10}
-compilation_required=${11:-true}
-true_sinks_filepath=${12}
+grid_file=${8}
+cotat_params_file=${9}
+compilation_required=${10:-true}
+true_sinks_filepath=${11}
 
 
 #Change first_timestep into a bash command for true or false
@@ -58,19 +57,19 @@ fi
 shopt -u nocasematch
 
 #Check number of arguments makes sense
-if [[ $# -ne 10 ]] && [[ $# -ne 11 ]] && [[ $# -ne 12 ]]; then
-	echo "Wrong number of positional arguments ($# supplied), script only takes 10, 11 or 12 arguments"	1>&2
+if [[ $# -ne 9 ]] && [[ $# -ne 10 ]] && [[ $# -ne 11 ]]; then
+	echo "Wrong number of positional arguments ($# supplied), script only takes 9, 10 or 11 arguments"	1>&2
 	exit 1
 fi
 
-if [[ $# -eq 12 ]]; then
+if [[ $# -eq 11 ]]; then
 	use_truesinks=true
 else
 	use_truesinks=false
 fi
 
 #Check the arguments have the correct file extensions
-if ! [[ ${input_orography_filepath##*.} == "nc" ]] || ! [[ ${input_ls_mask_filepath##*.} == "nc" ]] || ! [[ ${cell_numbers##*.} == "nc" ]] || ! [[ ${grid_file##*.} == "nc" ]] || ! [[ ${cotat_params_file##*.} == "nl" ]]; then
+if ! [[ ${input_orography_filepath##*.} == "nc" ]] || ! [[ ${input_ls_mask_filepath##*.} == "nc" ]] || ! [[ ${grid_file##*.} == "nc" ]] || ! [[ ${cotat_params_file##*.} == "nl" ]]; then
 	echo "One or more input files has the wrong file extension" 1>&2
 	exit 1
 fi
@@ -98,13 +97,12 @@ working_directory=$(find_abs_path $working_directory)
 output_hdpara_filepath=$(find_abs_path $output_hdpara_filepath)
 output_catchments_filepath=$(find_abs_path $output_catchments_filepath)
 output_accumulated_flow_filepath=$(find_abs_path $output_accumulated_flow_filepath)
-cell_numbers=$(find_abs_path $cell_numbers)
 grid_file=$(find_abs_path $grid_file)
 cotat_params_file=$(find_abs_path $cotat_params_file)
 
 #Check input files, ancillary data directory and diagnostic output directory exist
 
-if ! [[ -e $input_ls_mask_filepath ]] || ! [[ -e $input_orography_filepath ]] || ! [[ -e $cell_numbers ]] || ! [ -e $grid_file ] || ! [ -e $cotat_params_file ]; then
+if ! [[ -e $input_ls_mask_filepath ]] || ! [[ -e $input_orography_filepath ]] || ! [ -e $grid_file ] || ! [ -e $cotat_params_file ]; then
 	echo "One or more input files does not exist" 1>&2
 	exit 1
 fi
@@ -319,11 +317,18 @@ rm -f icon_final_rdirs.nc
 rm -f orography_filled.nc
 rm -f grid_in_temp.nc
 rm -f mask_in_tmep.nc
+rm -f cell_numbers_temp.nc
 
 #Run
 echo "Running ICON HD River Direction Generation Code" 1>&2
+echo "Generating LatLon to ICON Cross Grid Mapping" 1>&2
+ten_minute_orography_file_and_fieldname=$(python2.7 ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/icon_rdirs_creation_config_printer.py ${python_config_filepath} | sed '1d')
+ten_minute_orography_filepath=$(cut -d ' ' -f 1 <<< ${ten_minute_orography_file_and_fieldname})
+ten_minute_orography_fieldpath=$(cut -d ' ' -f 2 <<< ${ten_minute_orography_file_and_fieldname})
+cell_numbers_filepath="cell_numbers_temp.nc"
+${source_directory}/Dynamic_HD_Fortran_Code/Release/LatLon_To_Icon_Cross_Grid_Mapper_Simple_Interface ${grid_file} ${ten_minute_orography_filepath} ${ten_minute_orography_fieldpath} ${cell_numbers_filepath} "cell_index"
 echo "Downscaling Landsea Mask" 1>&2
-${source_directory}/Dynamic_HD_Fortran_Code/Release/Icon_To_LatLon_Landsea_Downscaler_Simple_Interface ${cell_numbers} ${input_ls_mask_filepath} downscaled_ls_mask_temp.nc "cell_index" "cell_sea_land_mask" "lsm"
+${source_directory}/Dynamic_HD_Fortran_Code/Release/Icon_To_LatLon_Landsea_Downscaler_Simple_Interface ${cell_numbers_filepath} ${input_ls_mask_filepath} downscaled_ls_mask_temp.nc "cell_index" "cell_sea_land_mask" "lsm"
 cdo expr,'lsm=(!lsm)' downscaled_ls_mask_temp.nc downscaled_ls_mask_temp_inverted.nc
 echo "Generating Combined Hydrosheds and Corrected Data River Directions" 1>&2
 ten_minute_river_direction_filepath="ten_minute_river_direction_temp.nc"
@@ -350,7 +355,7 @@ done
  ${source_directory}/Dynamic_HD_Fortran_Code/Release/COTAT_Plus_LatLon_To_Icon_Fortran_Exec ${ten_minute_river_direction_filepath}  ${ten_minute_accumulated_flow_filepath} ${grid_file} ${icon_intermediate_rdirs_filepath} "rdirs" "acc" "rdirs" ${cotat_params_file}
   ${source_directory}/Dynamic_HD_Cpp_Code/Release/Compute_Catchments_SI_Exec ${icon_intermediate_rdirs_filepath} ${icon_intermediate_catchments_filepath} ${grid_file} "rdirs" 1 ${icon_intermediate_catchments_filepath%%.nc}_loops_log.log 1
  	cdo expr,"acc=(rdirs == -9999999)" ${icon_intermediate_rdirs_filepath} zeros_temp.nc
-  ${source_directory}/Dynamic_HD_Fortran_Code/Release/LatLon_To_Icon_Loop_Breaker_Fortran_Exec ${ten_minute_river_direction_filepath}  ${ten_minute_accumulated_flow_filepath} ${cell_numbers}  ${grid_file} ${icon_final_filepath} ${icon_intermediate_catchments_filepath} zeros_temp.nc ${icon_intermediate_rdirs_filepath}  "rdirs" "acc" "cell_index" "next_cell_index" "catchment" "acc" "rdirs"  ${icon_intermediate_catchments_filepath%%.nc}_loops_log.log
+  ${source_directory}/Dynamic_HD_Fortran_Code/Release/LatLon_To_Icon_Loop_Breaker_Fortran_Exec ${ten_minute_river_direction_filepath}  ${ten_minute_accumulated_flow_filepath} ${cell_numbers_filepath}  ${grid_file} ${icon_final_filepath} ${icon_intermediate_catchments_filepath} zeros_temp.nc ${icon_intermediate_rdirs_filepath}  "rdirs" "acc" "cell_index" "next_cell_index" "catchment" "acc" "rdirs"  ${icon_intermediate_catchments_filepath%%.nc}_loops_log.log
   ${source_directory}/Dynamic_HD_Cpp_Code/Release/Compute_Catchments_SI_Exec ${icon_final_filepath} ${output_catchments_filepath} ${grid_file} "next_cell_index" 1 ${output_catchments_filepath%%.nc}_loops_log.log 1
   ${source_directory}/Dynamic_HD_Fortran_Code/Release/Accumulate_Flow_Icon_Simple_Interface_Exec ${grid_file} ${icon_final_filepath} ${output_accumulated_flow_filepath} "next_cell_index" "acc"
   rm -f paragen/area_dlat_dlon.txt
@@ -390,3 +395,4 @@ done
   rm -f icon_intermediate_catchments.nc
   rm -f zeros_temp.nc
   rm -f icon_final_rdirs.nc
+  rm -f cell_numbers_temp.nc

@@ -14,6 +14,7 @@ import numpy as np
 import grid
 import dynamic_hd
 import iodriver
+import coordinate_scaling_utilities
 
 def run_cotat_plus(fine_rdirs_field,fine_total_cumulative_flow_field,cotat_plus_parameters_filepath,
                    course_grid_type,**course_grid_kwargs):
@@ -111,10 +112,10 @@ def advanced_cotat_plus_driver(input_fine_rdirs_filepath,input_fine_total_cumula
                                        fieldname=input_fine_total_cumulative_flow_fieldname)
     nlat_fine,nlon_fine = fine_rdirs_field.get_grid_dimensions()
     lat_pts_fine,lon_pts_fine = fine_rdirs_field.get_grid_coordinates()
-    nlat_course = int(nlat_fine/scaling_factor)
-    nlon_course = int(nlon_fine/scaling_factor)
-    lat_pts_course = lat_pts_fine[1:-1:scaling_factor]
-    lon_pts_course = lon_pts_fine[1:-1:scaling_factor]
+    nlat_course,nlon_course,lat_pts_course,lon_pts_course = \
+        coordinate_scaling_utilities.generate_course_coords(nlat_fine,nlon_fine,
+                                                            lat_pts_fine,lon_pts_fine,
+                                                            scaling_factor)
     course_rdirs_field = run_cotat_plus(fine_rdirs_field, fine_total_cumulative_flow_field,
                                         cotat_plus_parameters_filepath,
                                         course_grid_type="LatLong",nlat=nlat_course,

@@ -151,8 +151,6 @@ class Icon_Coarse_River_Directions_Creation_Drivers(dyn_hd_dr.Dynamic_HD_Drivers
           second_intermediate_loops_log_filename = tempfile.mkstemp(suffix=".txt",
                                                                     prefix="loops_log_second_int",
                                                                     dir="")[1]
-          orography.flip_data_ud()
-          orography.rotate_field_by_a_hundred_and_eighty_degrees()
           truesinks_dummy = field.makeEmptyField("Generic",np.bool_,grid_type="LatLong10min")
           truesinks_dummy.set_all(False)
           if self.true_sinks_filename is not None:
@@ -330,10 +328,12 @@ def parse_arguments():
                         type=str)
     parser.add_argument('python_config_filename',
                         metavar='python-config-filename',
-                        help='Full path to python configuration file')
+                        help='Full path to python configuration file',
+                        type=str)
     parser.add_argument('working_directory',
                         metavar='working-directory',
-                        help='Full path to working directory')
+                        help='Full path to working directory',
+                        type=str)
     parser.add_argument('-t','--true_sinks_filename',
                         metavar='true-sinks-filename',
                         help='Full path to true sink file',

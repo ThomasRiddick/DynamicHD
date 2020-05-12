@@ -3,6 +3,7 @@ program cotat_plus_latlon_to_icon_simple_interface
   use netcdf
   use cotat_plus
   use check_return_code_netcdf_mod
+  use cross_grid_mapper
   implicit none
 
   integer, parameter :: MAX_NAME_LENGTH = 1000

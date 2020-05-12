@@ -16,3 +16,5 @@ low_res_icon_proc_with_sinks.pdf
 low_res_icon_proc_with_sinks_var.pdf
 setup_validator.pyc
 config_layouts.pyc
+coordinate_scaling_utilities.pyc
+create_icon_coarse_river_directions_driver.pyc

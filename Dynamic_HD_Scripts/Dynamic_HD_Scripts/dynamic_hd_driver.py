@@ -751,6 +751,25 @@ class Dynamic_HD_Drivers(object):
 class Utilities_Drivers(Dynamic_HD_Drivers):
     """Drive miscellaneous utility processes"""
 
+    def add_grid_to_corrected_orography(self):
+        input_corrected_orography_filename = ("/Users/thomasriddick/Documents/data/HDdata/"
+                                              "orographys/generated/corrected/corrected_orog"
+                                              "_intermediary_ICE5G_and_tarasov_upscaled_srtm30plus"
+                                              "_north_america_only_data_ALG4_sinkless_glcc_olson_"
+                                              "lsmask_0k_20170517_003802.nc")
+        output_corrected_orography_filename = ("/Users/thomasriddick/Documents/data/HDdata/"
+                                               "orographys/generated/corrected/corrected_orog"
+                                               "_intermediary_ICE5G_and_tarasov_upscaled_srtm30plus"
+                                               "_north_america_only_data_ALG4_sinkless_glcc_olson_"
+                                               "lsmask_0k_20170517_003802_with_grid.nc")
+        self._apply_transforms_to_field(input_corrected_orography_filename,
+                                        output_corrected_orography_filename,
+                                        flip_ud=True,rotate180lr=True,
+                                        invert_data=False,
+                                        griddescfile="/Users/thomasriddick/Documents/"
+                                                     "data/HDdata/grids/grid_10min.txt",
+                                        grid_type='LatLong10min')
+
     def convert_hydrosheds_30s_river_directions_to_one_to_nine_format(self):
         """Convert hydrosheds data to 1-9 format"""
         file_label = self._generate_file_label()
@@ -3960,6 +3979,7 @@ def main():
     #etopo1_data_drivers.etopo1_data_all_points()
     #etopo1_data_drivers.etopo1_data_ALG4_sinkless()
     utilities_drivers = Utilities_Drivers()
+    utilities_drivers.add_grid_to_corrected_orography()
     #utilities_drivers.convert_hydrosheds_30s_river_directions_to_one_to_nine_format()
     #utilities_drivers.mark_river_mouths_on_hydrosheds_30s_rdirs()
     #utilities_drivers.upscale_hydrosheds_30s_rdirs_to_10min()
@@ -3981,8 +4001,8 @@ def main():
     #    remove_additional_loop_by_hand_to_delooped_hydrosheds_with_pd_orog_corr_inc_tc_10min_with_ts_r2b4_mask()
     #utilities_drivers.\
     #    remove_selected_basins_from_delooped_hydrosheds_with_pd_orog_corr_inc_tc_10min_with_ts_r2b4_mask()
-    utilities_drivers.\
-    remove_additional_loop_by_hand_to_delooped_hydrosheds_with_pd_orog_corr_inc_tc_10min_with_ts_r2b5_mask()
+    #utilities_drivers.\
+    #remove_additional_loop_by_hand_to_delooped_hydrosheds_with_pd_orog_corr_inc_tc_10min_with_ts_r2b5_mask()
     #utilities_drivers.convert_corrected_HD_hydrology_dat_files_to_nc()
     #utilities_drivers.recreate_connected_HD_lsmask()
     #utilities_drivers.recreate_connected_HD_lsmask_true_seas_inc_casp_only()

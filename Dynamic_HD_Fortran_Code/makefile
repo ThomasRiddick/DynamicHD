@@ -66,7 +66,7 @@ endif
 # Add inputs and outputs from these tool invocations to the build variables
 
 # All Target
-all: Dynamic_HD_Fortran_Code COTAT_Plus_LatLon_To_Icon_Simple_Interface_Code LatLon_Lake_Model_Driver_Code Icon_To_LatLon_Landsea_Downscaler_Simple_Interface LatLon_Icon_Loop_Breaker_Simple_Interface_Code Accumulate_Flow_Icon_Simple_Interface
+all: Dynamic_HD_Fortran_Code COTAT_Plus_LatLon_To_Icon_Simple_Interface_Code LatLon_Lake_Model_Driver_Code Icon_To_LatLon_Landsea_Downscaler_Simple_Interface LatLon_Icon_Loop_Breaker_Simple_Interface_Code LatLon_To_Icon_Cross_Grid_Mapper_Simple_Interface Accumulate_Flow_Icon_Simple_Interface
 
 # Tool invocations
 tools_only: $(OBJS) $(USER_OBJS) COTAT_Plus_LatLon_To_Icon_Simple_Interface_Code LatLon_Lake_Model_Driver_Code Icon_To_LatLon_Landsea_Downscaler_Simple_Interface LatLon_Icon_Loop_Breaker_Simple_Interface_Code Accumulate_Flow_Icon_Simple_Interface
@@ -93,6 +93,12 @@ LatLon_Icon_Loop_Breaker_Simple_Interface_Code: $(OBJS) $(LATLON_TO_ICON_LOOP_BR
 Icon_To_LatLon_Landsea_Downscaler_Simple_Interface: $(OBJS) $(ICON_TO_LATLON_LANDSEA_DOWNSCALER_SIMPLE_INTERFACE_OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	$(FORTRAN) -o "Icon_To_LatLon_Landsea_Downscaler_Simple_Interface" $(OBJS) $(ICON_TO_LATLON_LANDSEA_DOWNSCALER_SIMPLE_INTERFACE_OBJS) $(USER_OBJS) $(LIBS)
+	@echo 'Finished building target: $@'
+	@echo ' '
+
+LatLon_To_Icon_Cross_Grid_Mapper_Simple_Interface: $(OBJS) $(LATLON_TO_ICON_CROSS_GRID_MAPPER_SIMPLE_INTERFACE_OBJS) $(USER_OBJS)
+	@echo 'Building target: $@'
+	$(FORTRAN) -o "LatLon_To_Icon_Cross_Grid_Mapper_Simple_Interface" $(OBJS) $(LATLON_TO_ICON_CROSS_GRID_MAPPER_SIMPLE_INTERFACE_OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
