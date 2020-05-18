@@ -324,9 +324,9 @@ echo "Running ICON HD River Direction Generation Code" 1>&2
 echo "Generating LatLon to ICON Cross Grid Mapping" 1>&2
 ten_minute_orography_file_and_fieldname=$(python2.7 ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/icon_rdirs_creation_config_printer.py ${python_config_filepath} | sed '1d')
 ten_minute_orography_filepath=$(cut -d ' ' -f 1 <<< ${ten_minute_orography_file_and_fieldname})
-ten_minute_orography_fieldpath=$(cut -d ' ' -f 2 <<< ${ten_minute_orography_file_and_fieldname})
+ten_minute_orography_fieldname=$(cut -d ' ' -f 2 <<< ${ten_minute_orography_file_and_fieldname})
 cell_numbers_filepath="cell_numbers_temp.nc"
-${source_directory}/Dynamic_HD_Fortran_Code/Release/LatLon_To_Icon_Cross_Grid_Mapper_Simple_Interface ${grid_file} ${ten_minute_orography_filepath} ${ten_minute_orography_fieldpath} ${cell_numbers_filepath} "cell_index"
+${source_directory}/Dynamic_HD_Fortran_Code/Release/LatLon_To_Icon_Cross_Grid_Mapper_Simple_Interface ${grid_file} ${ten_minute_orography_filepath} ${ten_minute_orography_fieldname} ${cell_numbers_filepath} "cell_index"
 echo "Downscaling Landsea Mask" 1>&2
 ${source_directory}/Dynamic_HD_Fortran_Code/Release/Icon_To_LatLon_Landsea_Downscaler_Simple_Interface ${cell_numbers_filepath} ${input_ls_mask_filepath} downscaled_ls_mask_temp.nc "cell_index" "cell_sea_land_mask" "lsm"
 cdo expr,'lsm=(!lsm)' downscaled_ls_mask_temp.nc downscaled_ls_mask_temp_inverted.nc

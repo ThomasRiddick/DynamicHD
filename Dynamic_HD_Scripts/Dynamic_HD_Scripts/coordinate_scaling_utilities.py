@@ -4,6 +4,7 @@ Created on May 9, 2020
 
 @author: thomasriddick
 '''
+import numpy as np
 
 def guess_bound(coord,tolerance=5.0):
     if 90.0 - tolerance < coord <= 90.0 + tolerance:
