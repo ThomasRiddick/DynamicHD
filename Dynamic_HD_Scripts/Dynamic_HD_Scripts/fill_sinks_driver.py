@@ -70,8 +70,11 @@ def generate_orography_with_sinks_filled(input_orography_filename,output_orograp
                                         field_type='Generic',grid_type=grid_type,**grid_kwargs)
         if flip_lsmask_ud:
             ls_mask.flip_data_ud()
-    fill_sinks_wrapper.fill_sinks_cpp_func(orography_array=np.ascontiguousarray(orography.get_data(), #@UndefinedVariable
-                                                                                dtype=np.float64),
+    #Dtype change and ascontinguousarray must be applied here so orography keeps the correct
+    #reference when running the C++ code
+    orography.change_dtype(np.float64)
+    orography.make_contiguous()
+    fill_sinks_wrapper.fill_sinks_cpp_func(orography_array=orography.get_data(),
                                            method = 1,
                                            use_ls_mask = use_ls_mask,
                                            landsea_in = np.ascontiguousarray(ls_mask.get_data(),
