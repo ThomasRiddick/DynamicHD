@@ -2,7 +2,7 @@ module GridModule
 
 using UserExceptionModule: UserError
 using CoordsModule: Coords,DirectionIndicator,LatLonCoords,get_next_cell_coords
-using CoordsModule: LatLonSectionCoords
+using CoordsModule: LatLonSectionCoords,Generic1DCoords
 using InteractiveUtils
 
 abstract type Grid end
@@ -54,10 +54,18 @@ end
 struct UnstructuredGrid <: Grid
   ncells::Int64
   number_of_dimensions::Int64
-  function UnstructuredGrid(ncells::Int64)
-    return new(ncells,1)
+  clat::Array{Float64,1}
+  clon::Array{Float64,1}
+  clat_bounds::Array{Float64,2}
+  clon_bounds::Array{Float64,2}
+  function UnstructuredGrid(ncells::Int64,clat::Array{Float64,1},clon::Array{Float64,1},
+                            clat_bounds::Array{Float64,2},clon_bounds::Array{Float64,2})
+    return new(ncells,1,clat,clon,clat_bounds,clon_bounds)
   end
 end
+
+UnstructuredGrid(ncells::Int64) = UnstructuredGrid(ncells,Array{Float64,1}(undef,ncells),Array{Float64,1}(undef,ncells),
+                                                   Array{Float64,2}(undef,3,ncells),Array{Float64,2}(undef,3,ncells))
 
 LatLonGridOrUnstructuredGrid = Union{LatLonGrid,UnstructuredGrid}
 
@@ -135,7 +143,7 @@ function get_number_of_cells(grid::LatLonGrid)
   return grid.nlat*grid.nlon
 end
 
-function get_number_of_cell(grid::UnstructuredGrid)
+function get_number_of_cells(grid::UnstructuredGrid)
   return grid.ncells
 end
 

@@ -9,6 +9,7 @@ using InteractiveUtils: subtypes
 using SpecialDirectionCodesModule
 using MergeTypesModule
 import Base.maximum
+import Base.*
 import Base.+
 import Base.==
 import Base.isapprox
@@ -40,8 +41,17 @@ function +(lfield::Field,rfield::Field)
   throw(UserError())
 end
 
+function *(lfield::Field,value::T) where {T}
+  throw(UserError())
+end
+
 function ==(lfield::Field,rfield::Field)
   throw(UserError())
+end
+
+# This could be done by overloading broadcast but this is overcomplicated
+function equals(lfield::Field,value::T) where {T}
+  return Field{Bool}(lfield.grid,Bool.(lfield.data .== value))::Field{Bool}
 end
 
 function isapprox(lfield::Field,rfield::Field;
@@ -132,7 +142,7 @@ struct UnstructuredField{T} <: Field{T}
     return new(data,grid)
   end
   function UnstructuredField{T}(grid::UnstructuredGrid,values::AbstractArray{T,1}) where {T}
-    if size(values,1) != grid.ncells ||
+    if size(values,1) != grid.ncells
        error("Values provided don't match selected grid")
     end
     return new(values,grid)
@@ -146,8 +156,15 @@ UnstructuredField{T}(grid::UnstructuredGrid) where {T} = UnstructuredField{T}(gr
 Field{T}(grid::LatLonGrid,value::T) where {T} = LatLonField{T}(grid::LatLonGrid,value::T)
 Field{T}(grid::LatLonGrid) where {T} = LatLonField{T}(grid::LatLonGrid)
 
+Field{T}(grid::UnstructuredGrid,value::T) where {T} = UnstructuredField{T}(grid::UnstructuredGrid,
+                                                                           value::T)
+Field{T}(grid::UnstructuredGrid) where {T} = UnstructuredField{T}(grid::UnstructuredGrid)
+
 Field{T}(grid::LatLonGrid,values::AbstractArray{T,2}) where {T} =
   LatLonField{T}(grid::LatLonGrid,values::AbstractArray{T,2})
+Field{T}(grid::UnstructuredGrid,values::AbstractArray{T,1}) where {T} =
+  UnstructuredField{T}(grid::UnstructuredGrid,
+                       values::AbstractArray{T,1})
 
 Field{MergeTypes}(grid::LatLonGrid,integer_field::LatLonField{T}) where {T<:Signed} =
   LatLonField{MergeTypes}(grid,integer_field)
@@ -169,6 +186,10 @@ end
 
 function +(lfield::LatLonField{T},rfield::LatLonField{T}) where {T}
   return LatLonField{T}(lfield.grid,lfield.data + rfield.data)
+end
+
+function *(lfield::Field,value::T) where {T}
+  return LatLonField{T}(lfield.grid,lfield.data * value)
 end
 
 function ==(lfield::LatLonField{T},rfield::LatLonField{T}) where {T}
@@ -212,7 +233,7 @@ function fill!(field::LatLonField{T},value::T) where {T}
 end
 
 function (unstructured_field::UnstructuredField{T})(coords::Generic1DCoords) where {T}
-    return unstructured__field.data[coords.index]::T
+    return unstructured_field.data[coords.index]::T
 end
 
 function get(unstructured_field::UnstructuredField{T},coords::Generic1DCoords) where {T}
@@ -225,6 +246,10 @@ end
 
 function +(lfield::UnstructuredField{T},rfield::UnstructuredField{T}) where {T}
   return UnstructuredField{T}(lfield.grid,lfield.data + rfield.data)
+end
+
+function *(lfield::UnstructuredField,value::T) where {T}
+  return UnstructuredField{T}(lfield.grid,lfield.data * value)
 end
 
 function ==(lfield::UnstructuredField{T},rfield::UnstructuredField{T}) where {T}

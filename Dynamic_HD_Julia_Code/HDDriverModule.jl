@@ -5,7 +5,7 @@ using HierarchicalStateMachineModule: HierarchicalStateMachine
 using HDModule: RiverParameters,RiverPrognosticFields,RiverPrognosticFieldsOnly,RunHD,handle_event
 using HDModule: SetDrainage,SetRunoff,PrintResults,PrognosticFields,WriteRiverInitialValues
 using HDModule: WriteRiverFlow,AccumulateRiverFlow,ResetCumulativeRiverFlow,WriteMeanRiverFlow
-using HDModule: water_to_lakes,water_from_lakes,get_river_parameters
+using HDModule: PrintGlobalValues, water_to_lakes,water_from_lakes,get_river_parameters
 using FieldModule: Field
 using LakeModule: LakeParameters,LakePrognostics,LakeFields,RiverAndLakePrognosticFields,RunLakes
 using LakeModule: PrintSection,WriteLakeNumbers,WriteLakeVolumes,SetupLakes,DistributeSpillover
@@ -45,9 +45,17 @@ function drive_hd_model_with_or_without_lakes(prognostic_fields::PrognosticField
     end
   end
   for i in 1:timesteps
-    set_drainage = SetDrainage(deepcopy(drainages[convert(Int64,ceil(convert(Float64,i)/30.0))]))
+    if size(drainages) == (1,)
+      set_drainage = SetDrainage(deepcopy(drainages[1]))
+    else
+      set_drainage = SetDrainage(deepcopy(drainages[convert(Int64,ceil(convert(Float64,i)/30.0))]))
+    end
     handle_event(hsm,set_drainage)
-    set_runoff = SetRunoff(deepcopy(runoffs[convert(Int64,ceil(convert(Float64,i)/30.0))]))
+    if size(runoffs) == (1,)
+      set_runoff = SetRunoff(deepcopy(runoffs[1]))
+    else
+      set_runoff = SetRunoff(deepcopy(runoffs[convert(Int64,ceil(convert(Float64,i)/30.0))]))
+    end
     handle_event(hsm,set_runoff)
     handle_event(hsm,runHD)
     if run_lakes_flag
@@ -68,6 +76,8 @@ function drive_hd_model_with_or_without_lakes(prognostic_fields::PrognosticField
       accumulate_river_flow::AccumulateRiverFlow = AccumulateRiverFlow()
       handle_event(hsm,accumulate_river_flow)
       if i%output_timestep == 0 || i == 1
+        print_global_values::PrintGlobalValues = PrintGlobalValues()
+        handle_event(hsm,print_global_values::PrintGlobalValues)
         write_mean_river_flow::WriteMeanRiverFlow = WriteMeanRiverFlow(i,output_timestep)
         handle_event(hsm,write_mean_river_flow)
         reset_cumulative_river_flow::ResetCumulativeRiverFlow = ResetCumulativeRiverFlow()

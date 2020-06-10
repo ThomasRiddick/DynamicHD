@@ -38,8 +38,7 @@ class ExtendedInputField(InputField):
         return self.requires_netcdf_fieldname
 
 def valid_option_helper(values_and_layouts):
-    return [lambda value :
-            (value in values_and_layouts.keys())]
+    return lambda value : (value in values_and_layouts.keys())
 
 def check_extension_is_nc(value):
     return value.lower().endswith('nc')
@@ -62,7 +61,8 @@ class CheckIfOptionalNetCDFFilepathHasFieldName(object):
             if config.has_option(self.filepath_sectionname,
                                  self.filepath_optionname):
                 if config.has_section(self.fieldname_sectionname):
-                    if config.has_option(self.fieldname_optionname):
+                    if config.has_option(self.fieldname_sectionname,
+                                         self.fieldname_optionname):
                         return True
                     else:
                         return False
@@ -122,9 +122,7 @@ class GenericConfig(Config):
     terminal_node = False
     valid_operations_and_associated_layouts = {"cotat_plus":"CotatPlusConfig",
                                                "upscale_orography":"OrographyUpscalingConfig",
-                                               "fill_sinks":"DirectSinkFillingConfig",
-                                               "river_carving":"RiverCarvingConfig",
-                                               "compute_catchments":"CatchmentComputationConfig",
+                                               "fill_sinks":"GeneralSinkFillingConfig",
                                                "create_connected_ls_mask":"CreateConnectedLSMaskConfig",
                                                "rebase_orography":
                                                "OrographyRebasingConfig",
@@ -135,9 +133,15 @@ class GenericConfig(Config):
                                                "merge_upscaled_and_corrected_orographies":
                                                "UpscaledOrographyMergerConfig",
                                                "merge_glaciers_and_orog_corrections":
-                                               "GlacierAndOrographyCorrsMergerConfig"
-                                               # "compute_cumulativeflow":"CumulativeComputationFlowConfig"
-                                               }
+                                               "GlacierAndOrographyCorrsMergerConfig",
+                                               "create_orography":
+                                               "OrographyCreationConfig",
+                                               "determine_river_directions":
+                                               "RiverDirectionDeterminationConfig",
+                                               "compute_cumulative_flow":
+                                               "CumulativeFlowComputationConfig",
+                                               "compute_catchments":
+                                               "CatchmentComputationConfig"}
     common_additional_fields_objects = [ExtendedInputField("rdirs","input_filepaths",
                                                            True,[check_extension_is_nc]),
                                         ExtendedInputField("fine_rdirs","input_filepaths",
@@ -166,6 +170,9 @@ class GenericConfig(Config):
                                                            True,[check_extension_is_nc]),
                                         ExtendedInputField("catchments_out","output_filepaths",
                                                            True,[check_extension_is_nc]),
+                                        ExtendedInputField("cumulative_flow_out",
+                                                           "output_filepaths",True,
+                                                           [check_extension_is_nc]),
                                         ExtendedInputField("landsea_out","output_filepaths",
                                                            True,[check_extension_is_nc]),
                                         ExtendedInputField("upscaling_factor","general",
@@ -178,7 +185,9 @@ class GenericConfig(Config):
         self.required_input_fields = \
         {"general":
         [InputField("operation",
-                    valid_option_helper(self.valid_operations_and_associated_layouts))]}
+                    [valid_option_helper(self.valid_operations_and_associated_layouts)])]}
+        self.optional_input_fields = {}
+        self.field_value_relationships = []
 
     def get_next_layout_name(self,config):
         return self.valid_operations_and_associated_layouts[config.get("general","operation")]
@@ -213,7 +222,7 @@ class GenericConfig(Config):
                                 [InputField(field_object.name,[])]})
                 condition = CheckIfOptionalNetCDFFilepathHasFieldName(field_object.get_section(),
                                                                       field_object.get_section().
-                                                                      replace("paths",
+                                                                      replace("_filepaths",
                                                                               "_fieldnames"),
                                                                       field_object.name,
                                                                       field_object.name)
@@ -281,8 +290,8 @@ class GeneralSinkFillingConfig(GenericConfig):
         self.add_additional_existing_optional_fields(["landsea","truesinks"])
 
     def get_next_layout_name(self, config):
-        return self.upscaling_algorithms_and_associated_layouts[config.get("sink_filling",
-                                                                           "algorithm")]
+        return self.sink_filling_algorithms_and_associated_layouts[config.get("sink_filling",
+                                                                              "algorithm")]
 
 class DirectSinkFillingConfig(GeneralSinkFillingConfig):
 
@@ -294,7 +303,7 @@ class DirectSinkFillingConfig(GeneralSinkFillingConfig):
                        {"sink_filling":
                         [InputField("add_slight_slope_when_filling_sinks",
                                     [check_if_value_is_true_false]),
-                         InputField("slope_param",[lambda value: value > 0.0])]})
+                         InputField("slope_param",[lambda value: float(value) >= 0.0])]})
         self.add_additional_existing_required_fields(["orography_out"])
         self.driver_to_use = "sink_filling_driver"
 
@@ -307,7 +316,15 @@ class RiverCarvingConfig(GeneralSinkFillingConfig):
         self.add_additional_existing_required_fields(["rdirs_out"])
         self.add_additional_existing_optional_fields(["catchments_out"])
 
-class CatchmentComputationConfig(GenericConfig):
+class RiverDirectionPostProcessingConfig(GenericConfig):
+
+    terminal_node = False
+
+    def __init__(self):
+        super(RiverDirectionPostProcessingConfig,self).__init__()
+        self.add_additional_existing_required_fields(["rdirs"])
+
+class CatchmentComputationConfig(RiverDirectionPostProcessingConfig):
 
     terminal_node = True
 
@@ -317,7 +334,17 @@ class CatchmentComputationConfig(GenericConfig):
                        {"output_filepaths":
                         [InputField("loop_logfile",
                                     [lambda value : value.lower().endswith("txt")])]})
-        self.add_additional_existing_required_fields(["rdirs","catchments_out"])
+        self.add_additional_existing_required_fields(["catchments_out"])
+        self.driver_to_use = "compute_catchment_driver"
+
+class CumulativeFlowComputationConfig(RiverDirectionPostProcessingConfig):
+
+    terminal_node = True
+
+    def __init__(self):
+        super(CumulativeFlowComputationConfig,self).__init__()
+        self.add_additional_existing_required_fields(["cumulative_flow_out"])
+        self.driver_to_use = "compute_cumulative_flow_driver"
 
 class CreateConnectedLSMaskConfig(GenericConfig):
 
@@ -439,3 +466,37 @@ class GlacierAndOrographyCorrsMergerConfig(GenericConfig):
                          InputField("glacier_mask",
                                     [check_extension_is_nc])]})
         self.add_additional_existing_required_fields(["orography_out"])
+
+class OrographyCreationConfig(GenericConfig):
+
+    terminal_node = True
+
+    def __init__(self):
+        super(OrographyCreationConfig,self).__init__()
+        add_new_fields(self.required_input_fields,
+                       {"input_filepaths":
+                        [InputField("inclines",
+                                    [check_extension_is_nc])],
+                        "input_fieldnames":
+                        [InputField("inclines",[])]})
+        self.add_additional_existing_required_fields(["landsea","orography_out"])
+        self.driver_to_use = "orography_creation_driver"
+
+class RiverDirectionDeterminationConfig(GenericConfig):
+
+    terminal_node = True
+
+    def __init__(self):
+        super(RiverDirectionDeterminationConfig,self).__init__()
+        add_new_fields(self.optional_input_fields,
+                       {"river_direction_determination":
+                        [InputField("always_flow_to_sea",
+                                    [check_if_value_is_true_false]),
+                         InputField("use_diagonal_nbrs",
+                                    [check_if_value_is_true_false]),
+                         InputField("mark_pits_as_true_sinks",
+                                    [check_if_value_is_true_false])]})
+        self.add_additional_existing_required_fields(["rdirs_out","landsea",
+                                                      "orography"])
+        self.add_additional_existing_optional_fields(["truesinks"])
+        self.driver_to_use = "river_direction_determination_driver"

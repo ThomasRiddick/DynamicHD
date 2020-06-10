@@ -34,7 +34,10 @@ CPP_SRCS += \
 ../src/filter_out_shallow_lakes.cpp \
 ../src/evaluate_basins_simple_interface.cpp \
 ../src/stream_following_algorithm.cpp \
-../src/follow_streams.cpp
+../src/follow_streams.cpp \
+../src/orography_creation_algorithm.cpp \
+../src/create_orography.cpp \
+../src/test_orography_creation.cpp
 
 USER_OBJS += \
 ./src/cell.o \
@@ -61,7 +64,9 @@ USER_OBJS += \
 ./src/redistribute_water.o \
 ./src/filter_out_shallow_lakes.o \
 ./src/stream_following_algorithm.o \
-./src/follow_streams.o
+./src/follow_streams.o \
+./src/orography_creation_algorithm.o \
+./src/create_orography.o
 
 FS_ICON_SI_OBJS += \
 ./src/sink_filling_icon_simple_interface.o
@@ -81,7 +86,8 @@ TEST_OBJS += \
 ./src/test_catchment_computation.o \
 ./src/test_evaluate_basins.o \
 ./src/test_grid.o \
-./src/test_determine_river_directions.o
+./src/test_determine_river_directions.o \
+./src/test_orography_creation.o
 
 CPP_DEPS += \
 ./src/cell.d \
@@ -118,7 +124,10 @@ CPP_DEPS += \
 ./src/filter_out_shallow_lakes.d \
 ./src/evaluate_basins_simple_interface.d \
 ./src/stream_following_algorithm.d \
-./src/follow_streams.d
+./src/follow_streams.d \
+./src/orography_creation_algorithm.d \
+./src/create_orography.d \
+./src/test_orography_creation.d
 
 # Each subdirectory must supply rules for building sources it contributes
 src/%.o: ../src/%.cpp

@@ -1,17 +1,30 @@
 module IOModule
 
 using NetCDF
-using NetCDF: NcFile,NcVar
+using NetCDF: NcFile,NcVar,NC_NETCDF4
 using GridModule: Grid, LatLonGrid, UnstructuredGrid, get_number_of_dimensions
-using FieldModule: Field, LatLonDirectionIndicators,round,convert,invert,add_offset,get_data
-using FieldModule: maximum
+using FieldModule: Field, LatLonField,UnstructuredField,LatLonDirectionIndicators
+using FieldModule: UnstructuredDirectionIndicators
+using FieldModule: round,convert,invert,add_offset,get_data,maximum,equals
 using HDModule: RiverParameters,RiverPrognosticFields
 using LakeModule: LakeParameters,LatLonLakeParameters, GridSpecificLakeParameters,LakeFields
 using MergeTypesModule
-using NetCDF
-using NetCDF: NcFile,NcVar
+
 import LakeModule: write_lake_numbers_field,write_lake_volumes_field
 import HDModule: write_river_initial_values,write_river_flow_field
+
+function get_ncells(file_name::AbstractString)
+  river_directions::Array{Float64,1} = NetCDF.ncread(file_name,"FDIR")
+  return size(river_directions,1)
+end
+
+function get_additional_grid_information(file_name::AbstractString)
+  clat::Array{Float64,1} = NetCDF.ncread(file_name,"clat")
+  clon::Array{Float64,1} = NetCDF.ncread(file_name,"clon")
+  clat_bounds::Array{Float64,2} = NetCDF.ncread(file_name,"clat_bnds")
+  clon_bounds::Array{Float64,2} = NetCDF.ncread(file_name,"clon_bnds")
+  return clat,clon,clat_bounds,clon_bounds
+end
 
 function load_field(file_handle::NcFile,grid::Grid,variable_name::AbstractString,
                     field_type::DataType,;timestep::Int64=-1)
@@ -21,20 +34,41 @@ function load_field(file_handle::NcFile,grid::Grid,variable_name::AbstractString
     if timestep == -1
       values = permutedims(values, [2,1])
     else
-      values = permutedims(values, [2,1])[timestep]
+      values = permutedims(values, [2,1])[:,:,timestep]
     end
   end
   return Field{field_type}(grid,values)
 end
 
+function load_3d_field(file_handle::NcFile,grid::Grid,variable_name::AbstractString,
+                       field_type::DataType,layer=Int64,;timestep::Int64=-1)
+  variable::NcVar = file_handle[variable_name]
+  values::Array{field_type,(timestep == -1) ?
+                            get_number_of_dimensions(grid)+1 :
+                            get_number_of_dimensions(grid)+2 } = NetCDF.readvar(variable)
+  local layer_values::Array{field_type,get_number_of_dimensions(grid)}
+  if isa(grid,UnstructuredGrid)
+    if timestep == -1
+      layer_values = values[:,layer]
+    else
+      layer_values = values[:,layer,timestep]
+    end
+  end
+  return Field{field_type}(grid,layer_values)
+end
+
 function load_array_of_fields(file_handle::NcFile,grid::Grid,variable_base_name::AbstractString,
                               field_type::DataType,number_of_fields::Int64)
-  if number_of_fields == 1
+  if number_of_fields == 1 && isa(grid,LatLonGrid)
     return Field{field_type}[load_field(file_handle,grid,variable_base_name,field_type)]
   else
     array_of_fields::Array{Field{field_type},1} = Array{Field{field_type}}(undef,number_of_fields)
     for i = 1:number_of_fields
-      array_of_fields[i] = load_field(file_handle,grid,variable_base_name*string(i),field_type)
+      if isa(grid,LatLonGrid)
+        array_of_fields[i] = load_field(file_handle,grid,variable_base_name*string(i),field_type)
+      else
+        array_of_fields[i] = load_3d_field(file_handle,grid,variable_base_name,field_type,i)
+      end
     end
     return array_of_fields
   end
@@ -70,42 +104,91 @@ end
 
 function prep_field(dims::Array{NcDim},variable_name::AbstractString,
                     field::Field,fields_to_write::Vector{Pair})
-  variable::NcVar = NcVar(variable_name,dims)
+  local variable::NcVar
   if isa(field,LatLonField)
+    variable = NcVar(variable_name,dims)
     push!(fields_to_write,Pair(variable,permutedims(get_data(field), [2,1])))
-  else
-    push!(fields_to_write,Pair(variable,field))
+  elseif isa(field,UnstructuredField)
+    variable = NcVar(variable_name,dims,atts=Dict("grid_type"=>"unstructured",
+                                                  "coordinates"=>"clat clon"))
+    push!(fields_to_write,Pair(variable,get_data(field)))
   end
 end
 
-function write_fields(fields_to_write::Vector{Pair},filepath::AbstractString)
+function write_fields(grid::Grid,fields_to_write::Vector{Pair},filepath::AbstractString,
+                      dims::Array{NcDim})
   variables::Array{NcVar} = NcVar[ pair.first for pair in fields_to_write ]
-  NetCDF.create(filepath,variables)
+  if isa(grid,UnstructuredGrid)
+    prepare_icon_file(grid,filepath,dims,variables)
+  else
+    NetCDF.create(filepath,variables,mode=NC_NETCDF4)
+  end
   for (variable,data) in fields_to_write
     NetCDF.putvar(variable,data)
   end
 end
 
+function prepare_icon_file(grid::UnstructuredGrid,filepath::AbstractString,
+                           dims::Array{NcDim},variables::Array{NcVar})
+  vertices = NcDim("vertices",3)
+  extended_dims::Array{NcDim} = vcat(NcDim[ vertices ], dims)
+  clat = NcVar("clat",dims,atts=Dict("long_name"=>"center_latitude",
+                                     "units"=>"radians",
+                                     "bounds"=>"clat_bnds",
+                                     "standard_name"=>"latitude"))
+  clon = NcVar("clon",dims,atts=Dict("long_name"=>"center_longitude",
+                                     "units"=>"radians",
+                                     "bounds"=>"clon_bnds",
+                                     "standard_name"=>"longitude"))
+  clat_bounds = NcVar("clat_bnds",extended_dims)
+  clon_bounds = NcVar("clon_bnds",extended_dims)
+  extended_variables::Array{NcVar} = vcat(variables,NcVar[ clat, clon, clat_bounds, clon_bounds])
+  NetCDF.create(filepath,extended_variables,mode=NC_NETCDF4)
+  NetCDF.putvar(clat,grid.clat)
+  NetCDF.putvar(clon,grid.clon)
+  NetCDF.putvar(clat_bounds,grid.clat_bounds)
+  NetCDF.putvar(clon_bounds,grid.clon_bounds)
+end
+
 function write_field(grid::Grid,variable_name::AbstractString,
                      field::Field,filepath::AbstractString)
   dims::Array{NcDim} = prep_dims(grid)
-  variable::NcVar = NcVar(variable_name,dims)
-  NetCDF.create(filepath,variable)
+  local variable::NcVar
+  if isa(grid,UnstructuredGrid)
+    variable = NcVar(variable_name,dims,atts=Dict("grid_type"=>"unstructured",
+                                                  "coordinates"=>"clat clon"))
+    variables::Array{NcVar} = NcVar[ variable ]
+    prepare_icon_file(grid,filepath,dims,variables)
+  else
+    variable = NcVar(variable_name,dims)
+    NetCDF.create(filepath,variable,mode=NC_NETCDF4)
+  end
   if isa(grid,LatLonGrid)
     NetCDF.putvar(variable,permutedims(get_data(field), [2,1]))
   else
-    NetCDF.putvar(variable,field)
+    NetCDF.putvar(variable,get_data(field))
   end
 end
 
-function load_river_parameters(hd_para_filepath::AbstractString,grid::Grid)
+function load_river_parameters(hd_para_filepath::AbstractString,grid::Grid;
+                               day_length=1.0,step_length=1.0)
   println("Loading: " * hd_para_filepath)
   file_handle::NcFile = NetCDF.open(hd_para_filepath)
+  local landsea_mask::Field{Bool}
   try
     if isa(grid,LatLonGrid)
       direction_based_river_directions = load_field(file_handle,grid,"FDIR",Float64)
       flow_directions = LatLonDirectionIndicators(round(Int64,direction_based_river_directions))
+      landsea_mask =
+        load_field(file_handle,grid,"FLAG",Bool)
+    elseif isa(grid,UnstructuredGrid)
+      index_based_river_directions = load_field(file_handle,grid,"FDIR",Float64)
+      flow_directions = UnstructuredDirectionIndicators(round(Int64,index_based_river_directions))
+      landsea_mask_int::Field{Int64} =
+        load_field(file_handle,grid,"MASK",Int64)
+      landsea_mask = equals(landsea_mask_int,1)
     end
+    landsea_mask = invert(landsea_mask)
     river_reservoir_nums::Field{Int64} =
       round(Int64,load_field(file_handle,grid,"ARF_N",Float64))
     overland_reservoir_nums::Field{Int64} =
@@ -117,31 +200,33 @@ function load_river_parameters(hd_para_filepath::AbstractString,grid::Grid)
       load_field(file_handle,grid,"ALF_K",Float64)
     base_retention_coefficients::Field{Float64} =
       load_field(file_handle,grid,"AGF_K",Float64)
-    landsea_mask::Field{Bool} =
-      load_field(file_handle,grid,"FLAG",Bool)
-    landsea_mask = invert(landsea_mask)
     return  RiverParameters(flow_directions,
-                          river_reservoir_nums,
-                          overland_reservoir_nums,
-                          base_reservoir_nums,
-                          river_retention_coefficients,
-                          overland_retention_coefficients,
-                          base_retention_coefficients,
-                          landsea_mask,grid)
+                            river_reservoir_nums,
+                            overland_reservoir_nums,
+                            base_reservoir_nums,
+                            river_retention_coefficients,
+                            overland_retention_coefficients,
+                            base_retention_coefficients,
+                            landsea_mask,grid,day_length,
+                            step_length)
   finally
     NetCDF.close(file_handle)
   end
 end
 
-function load_river_initial_values(hd_start_filepath::AbstractString,
+function load_river_initial_values(hd_start_filepath::AbstractString,grid::Grid,
                                    river_parameters::RiverParameters)
   river_prognostic_fields::RiverPrognosticFields =
     RiverPrognosticFields(river_parameters)
   println("Loading: " * hd_start_filepath)
   file_handle::NcFile = NetCDF.open(hd_start_filepath)
   try
-    river_prognostic_fields.river_inflow =
-      load_field(file_handle,river_parameters.grid,"FINFL",Float64)
+    if ! isa(grid,UnstructuredGrid)
+      river_prognostic_fields.river_inflow =
+        load_field(file_handle,river_parameters.grid,"FINFL",Float64)
+    else
+      river_prognostic_fields.river_inflow = Field{Float64}(grid,0.0)
+    end
     river_prognostic_fields.base_flow_reservoirs =
       load_array_of_fields(file_handle,river_parameters.grid,"FGMEM",Float64,
                             maximum(river_parameters.base_reservoir_nums))
@@ -174,7 +259,7 @@ function write_river_initial_values(hd_start_filepath::AbstractString,
   prep_array_of_fields(dims,"FRFMEM",
                        river_prognostic_fields.river_flow_reservoirs,
                        fields_to_write)
-  write_fields(fields_to_write,hd_start_filepath)
+  write_fields(river_parameters.grid,fields_to_write,hd_start_filepath,dims)
 end
 
 function load_lake_parameters(lake_para_filepath::AbstractString,grid::Grid,hd_grid::Grid)
@@ -215,7 +300,7 @@ end
 
 function write_river_flow_field(river_parameters::RiverParameters,river_flow_field::Field{Float64};timestep::Int64=-1)
   variable_name::String = "river_flow"
-  filepath::String = timestep == -1 ? "/Users/thomasriddick/Documents/data/temp/transient_sim_1/river_model_results.nc" : "/Users/thomasriddick/Documents/data/temp/transient_sim_1/river_model_results_$(timestep).nc"
+  filepath::String = timestep == -1 ? "/Users/thomasriddick/Documents/data/temp/river_model_results.nc" : "/Users/thomasriddick/Documents/data/temp/river_model_results_$(timestep).nc"
   write_field(river_parameters.grid,variable_name,river_flow_field,filepath)
 end
 

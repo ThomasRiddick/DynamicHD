@@ -11,11 +11,18 @@ import upscale_orography_driver
 import fill_sinks_driver
 import compute_catchments
 import create_connected_lsmask_driver
+import create_orography_driver
+import determine_river_directions
 import utilities
+import flow_to_grid_cell
 
 def get_option_if_defined(config,section,option):
-    return (config.get_option(section,option)
+    return (config.get(section,option)
             if config.has_option(section,option) else None)
+
+def get_boolean_option_if_defined(config,section,option,default):
+    return (config.getboolean(section,option)
+            if config.has_option(section,option) else default)
 
 class HDOperatorDrivers(object):
     '''
@@ -135,9 +142,9 @@ class HDOperatorDrivers(object):
                                                                                                  "add_slight_slope"
                                                                                                  "_when_filling_"
                                                                                                  "sinks"),
-                                                                               slope_param=\
-                                                                               config.get("sink_filling",
-                                                                                          "slope_param"))
+                                                                               slope_param=
+                                                                               float(config.get("sink_filling",
+                                                                                     "slope_param")))
 
     def river_carving_driver(self,config):
         fill_sinks_driver.advanced_sinkless_flow_directions_generator(filename=\
@@ -178,14 +185,22 @@ class HDOperatorDrivers(object):
                                                                                             "catchments_out"))
 
     def compute_catchment_driver(self,config):
-        compute_catchments.advanced_main(filename=config.get("input_filepaths,rdirs"),
-                                         fieldname=config.get("input_fieldnames,rdirs"),
+        compute_catchments.advanced_main(filename=config.get("input_filepaths","rdirs"),
+                                         fieldname=config.get("input_fieldnames","rdirs"),
                                          output_filename=config.get("output_filepaths",
                                                                             "catchments_out"),
                                          output_fieldname=config.get("output_filepaths",
-                                                                             "catchment_out"),
-                                         loop_logfile=config.sections("output_filepaths",
-                                                                      "loop_logfiles"))
+                                                                             "catchments_out"),
+                                         loop_logfile=str(config.get("output_filepaths",
+                                                                     "loop_logfile")))
+
+    def compute_cumulative_flow_driver(self,config):
+        flow_to_grid_cell.advanced_main(rdirs_filename=config.get("input_filepaths","rdirs"),
+                                        output_filename=config.get("output_filepaths",
+                                                                   "cumulative_flow_out"),
+                                        rdirs_fieldname=config.get("input_fieldnames","rdirs"),
+                                        output_fieldname=config.get("output_fieldnames",
+                                                                    "cumulative_flow_out"))
 
     def connected_ls_mask_creation_driver(self,config):
         create_connected_lsmask_driver.\
@@ -317,6 +332,59 @@ class HDOperatorDrivers(object):
                                                                                  out_orography_fieldname=\
                                                                                  config.get("output_fieldnames",
                                                                                             "orography_out"))
+    def orography_creation_driver(self,config):
+      create_orography_driver.\
+        advanced_orography_creation_driver(landsea_mask_filename=config.\
+                                           get("input_filepaths","landsea"),
+                                           inclines_filename=config.\
+                                           get("input_filepaths","inclines"),
+                                           orography_filename=config.\
+                                           get("output_filepaths","orography_out"),
+                                           landsea_mask_fieldname=config.\
+                                           get("input_fieldnames","landsea"),
+                                           inclines_fieldname=config.\
+                                           get("input_fieldnames","inclines"),
+                                           orography_fieldname=config.\
+                                           get("output_fieldnames","orography_out"))
+
+    def river_direction_determination_driver(self,config):
+      determine_river_directions.\
+        advanced_river_direction_determination_driver(rdirs_filename=config.\
+                                                      get("output_filepaths","rdirs_out"),
+                                                      orography_filename=config.\
+                                                      get("input_filepaths","orography"),
+                                                      lsmask_filename=config.\
+                                                      get("input_filepaths","landsea"),
+                                                      truesinks_filename=\
+                                                      get_option_if_defined(config,
+                                                                            "input_filepaths",
+                                                                            "truesinks"),
+                                                      rdirs_fieldname=config.\
+                                                      get("output_fieldnames","rdirs_out"),
+                                                      orography_fieldname=config.\
+                                                      get("input_fieldnames","orography"),
+                                                      lsmask_fieldname=config.\
+                                                      get("input_fieldnames","landsea"),
+                                                      truesinks_fieldname=\
+                                                      get_option_if_defined(config,
+                                                                            "input_fieldnames",
+                                                                            "truesinks"),
+                                                      always_flow_to_sea=\
+                                                      get_boolean_option_if_defined(config,
+                                                                                    "river_direction_determination",
+                                                                                    "always_flow_to_sea",
+                                                                                    True),
+                                                      use_diagonal_nbrs=\
+                                                      get_boolean_option_if_defined(config,
+                                                                                    "river_direction_determination",
+                                                                                    "use_diagonal_nbrs",
+                                                                                    True),
+                                                      mark_pits_as_true_sinks=\
+                                                      get_boolean_option_if_defined(config,
+                                                                                    "river_direction_determination",
+                                                                                    "mark_pits_as_true_sinks",
+                                                                                    True))
+
 
 def setup_and_run_hd_operator_driver_from_command_line_arguments(args):
     driver_object = HDOperatorDrivers()

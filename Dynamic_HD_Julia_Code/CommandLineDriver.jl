@@ -107,7 +107,7 @@ function main()
 
   else
     if args["hd-init-file"] != nothing
-      river_fields = load_river_initial_values(args["hd-init-file"],river_parameters)
+      river_fields = load_river_initial_values(args["hd-init-file"],grid,river_parameters)
       drive_hd_model(river_parameters,river_fields,
                      drainages,runoffs,timesteps;
                      print_timestep_results=false)
