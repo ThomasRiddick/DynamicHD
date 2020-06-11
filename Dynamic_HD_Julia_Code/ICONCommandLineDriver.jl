@@ -4,6 +4,7 @@ using ArgParse
 using HDDriverModule: drive_hd_model,drive_hd_and_lake_model
 using FieldModule: UnstructuredField,Field,repeat
 using IOModule: load_river_parameters, load_river_initial_values,get_ncells
+using IOModule: load_lake_initial_values,load_river_initial_values
 using IOModule: get_additional_grid_information
 using GridModule: UnstructuredGrid
 
@@ -15,6 +16,10 @@ function pass_arguments()
     required = true
   "--hd-init-file", "-i"
     help = "Filepath to HD initialisation file (optional)"
+  "--lake-para-file", "-l"
+    help = "Filepath to lake model parameters file (optional)"
+  "--lake-init-file", "-n"
+    help = "Filepath to lake model initialisation file (optional)"
   "--drainage-file", "-d"
     help = "Filepath to file containing drainage values"
   "--runoff-file", "-r"
@@ -42,6 +47,7 @@ function main()
   local clon_bounds::Array{Float64,2}
   clat,clon,clat_bounds,clon_bounds = get_additional_grid_information(args["hd-para-file"])
   grid = UnstructuredGrid(ncells,clat,clon,clat_bounds,clon_bounds)
+  lake_grid = UnstructuredGrid(ncells,clat,clon,clat_bounds,clon_bounds)
   river_parameters = load_river_parameters(args["hd-para-file"],grid;
                                            day_length=86400.0,step_length=step_length)
   local drainages::Array{Field{Float64},1}
@@ -63,29 +69,63 @@ function main()
   else
     runoffs = deepcopy(drainages)
   end
-  if args["hd-init-file"] != nothing
-    river_fields = load_river_initial_values(args["hd-init-file"],grid,river_parameters)
-    drive_hd_model(river_parameters,river_fields,
-                   drainages,runoffs,timesteps;
-                   print_timestep_results=false,
-                   output_timestep=160)
-    # @time drive_hd_model(river_parameters,river_fields,
-    #                      drainages_copy,runoffs_copy,timesteps;
-    #                      print_timestep_results=false)
+  if args["lake-para-file"] != nothing
+    lake_parameters = load_lake_parameters(args["lake-para-file"],lake_grid,grid)
+    drainages_copy = deepcopy(drainages)
+    runoffs_copy = deepcopy(runoffs)
+    if args["hd-init-file"] != nothing
+      river_fields = load_river_initial_values(args["hd-init-file"],river_parameters)
+    end
+    if args["lake-init-file"] != nothing
+      initial_water_to_lake_centers::UnstructuredField{Float64},
+      initial_spillover_to_rivers::UnstructuredField{Float64} =
+        load_lake_initial_values(args["lake-init-file"],lake_grid,grid)
+      if args["hd-init-file"] != nothing
+        drive_hd_and_lake_model(river_parameters,river_fields,
+                                lake_parameters,drainages,runoffs,
+                                timesteps,true,initial_water_to_lake_centers,
+                                initial_spillover_to_rivers;print_timestep_results=false)
+        # Profile.clear()
+        # Profile.init(delay=0.01)
+        # @time drive_hd_and_lake_model(river_parameters,river_fields,
+        #                               lake_parameters,drainages_copy,runoffs_copy,
+        #                               timesteps,true,initial_water_to_lake_centers,
+        #                               initial_spillover_to_rivers;print_timestep_results=true)
+        # Profile.print()
+        # r = Profile.retrieve();
+        # f = open("/Users/thomasriddick/Downloads/profile.bin", "w")
+        # Serialization.serialize(f, r)
+        # close(f)
+      else
+        drive_hd_and_lake_model(river_parameters,lake_parameters,drainages,runoffs,
+                                timesteps,true,initial_water_to_lake_centers,
+                                initial_spillover_to_rivers;print_timestep_results=true)
+      end
   else
-    # drainages_copy = deepcopy(drainages)
-    # runoffs_copy = deepcopy(runoffs)
-    drive_hd_model(river_parameters,drainages,
-                   runoffs,timesteps;print_timestep_results=false)
-    # Profile.clear()
-    # Profile.init(delay=0.0001)
-    # @time drive_hd_model(river_parameters,drainages_copy,
-    #                      runoffs_copy,timesteps;print_timestep_results=false)
-    # Profile.print()
-    # r = Profile.retrieve();
-    # f = open("/Users/thomasriddick/Downloads/profile.bin", "w")
-    # Serialization.serialize(f, r)
-    # close(f)
+    if args["hd-init-file"] != nothing
+      river_fields = load_river_initial_values(args["hd-init-file"],grid,river_parameters)
+      drive_hd_model(river_parameters,river_fields,
+                     drainages,runoffs,timesteps;
+                     print_timestep_results=false,
+                     output_timestep=160)
+      # @time drive_hd_model(river_parameters,river_fields,
+      #                      drainages_copy,runoffs_copy,timesteps;
+      #                      print_timestep_results=false)
+    else
+      # drainages_copy = deepcopy(drainages)
+      # runoffs_copy = deepcopy(runoffs)
+      drive_hd_model(river_parameters,drainages,
+                     runoffs,timesteps;print_timestep_results=false)
+      # Profile.clear()
+      # Profile.init(delay=0.0001)
+      # @time drive_hd_model(river_parameters,drainages_copy,
+      #                      runoffs_copy,timesteps;print_timestep_results=false)
+      # Profile.print()
+      # r = Profile.retrieve();
+      # f = open("/Users/thomasriddick/Downloads/profile.bin", "w")
+      # Serialization.serialize(f, r)
+      # close(f)
+    end
   end
 end
 

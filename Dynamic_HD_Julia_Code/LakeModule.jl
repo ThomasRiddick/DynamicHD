@@ -137,6 +137,17 @@ struct LatLonLakeParameters <: GridSpecificLakeParameters
   additional_connect_redirect_lon_index::Field{Int64}
 end
 
+struct UnstructuredLakeParameters <: GridSpecificLakeParameters
+  flood_next_cell_index::Field{Int64}
+  connect_next_cell_index::Field{Int64}
+  flood_force_merge_index::Field{Int64}
+  connect_force_merge_index::Field{Int64}
+  flood_redirect_index::Field{Int64}
+  connect_redirect_index::Field{Int64}
+  additional_flood_redirect_index::Field{Int64}
+  additional_connect_redirect_index::Field{Int64}
+end
+
 struct LakeFields
   completed_lake_cells::Field{Bool}
   lake_numbers::Field{Int64}
@@ -756,6 +767,17 @@ function get_primary_merge_coords(lake_parameters::LakeParameters,initial_coords
   end
 end
 
+function get_primary_merge_coords(lake_parameters::LakeParameters,initial_coords::Generic1DCoords,
+                                  completed_lake_cell::Bool)
+  if completed_lake_cell
+    return Generic1DCoords(
+           lake_parameters.grid_specific_lake_parameters.flood_force_merge_index(initial_coords))
+  else
+    return Generic1DCoords(
+           lake_parameters.grid_specific_lake_parameters.connect_force_merge_index(initial_coords))
+  end
+end
+
 function get_secondary_merge_coords(lake_parameters::LakeParameters,initial_coords::LatLonCoords,
                                     completed_lake_cell::Bool)
   if completed_lake_cell
@@ -769,16 +791,37 @@ function get_secondary_merge_coords(lake_parameters::LakeParameters,initial_coor
   end
 end
 
+function get_secondary_merge_coords(lake_parameters::LakeParameters,initial_coords::Generic1DCoords,
+                                    completed_lake_cell::Bool)
+  if completed_lake_cell
+    return Generic1DCoords(
+           lake_parameters.grid_specific_lake_parameters.flood_next_cell_index(initial_coords))
+  else
+    return Generic1DCoords(
+           lake_parameters.grid_specific_lake_parameters.connect_next_cell_index(initial_coords))
+  end
+end
+
 function get_flood_next_cell_coords(lake_parameters::LakeParameters,initial_coords::LatLonCoords)
   return LatLonCoords(
     lake_parameters.grid_specific_lake_parameters.flood_next_cell_lat_index(initial_coords),
     lake_parameters.grid_specific_lake_parameters.flood_next_cell_lon_index(initial_coords))
 end
 
+function get_flood_next_cell_coords(lake_parameters::LakeParameters,initial_coords::Generic1DCoords)
+  return Generic1DCoords(
+    lake_parameters.grid_specific_lake_parameters.flood_next_cell_index(initial_coords))
+end
+
 function get_connect_next_cell_coords(lake_parameters::LakeParameters,initial_coords::LatLonCoords)
   return LatLonCoords(
     lake_parameters.grid_specific_lake_parameters.connect_next_cell_lat_index(initial_coords),
     lake_parameters.grid_specific_lake_parameters.connect_next_cell_lon_index(initial_coords))
+end
+
+function get_connect_next_cell_coords(lake_parameters::LakeParameters,initial_coords::Generic1DCoords)
+  return Generic1DCoords(
+    lake_parameters.grid_specific_lake_parameters.connect_next_cell_index(initial_coords))
 end
 
 function get_outflow_redirect_coords(lake_parameters::LakeParameters,
@@ -806,6 +849,24 @@ function get_outflow_redirect_coords(lake_parameters::LakeParameters,
   end
   return LatLonCoords(lat,lon)
 end
+
+function get_outflow_redirect_coords(lake_parameters::LakeParameters,
+                                     initial_coords::Generic1DCoords,
+                                     use_flood_redirect::Bool,
+                                     use_additional_fields::Bool)
+  local index::Int64
+  if use_additional_fields
+    index = use_flood_redirect ?
+      lake_parameters.grid_specific_lake_parameters.additional_flood_redirect_index(initial_coords) :
+      lake_parameters.grid_specific_lake_parameters.additional_connect_redirect_index(initial_coords)
+  else
+    index = use_flood_redirect ?
+      lake_parameters.grid_specific_lake_parameters.flood_redirect_index(initial_coords) :
+      lake_parameters.grid_specific_lake_parameters.connect_redirect_index(initial_coords)
+  end
+  return Generic1DCoords(index)
+end
+
 
 function handle_event(prognostic_fields::RiverAndLakePrognosticFields,
                       print_results::PrintResults)

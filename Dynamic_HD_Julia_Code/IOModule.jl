@@ -7,7 +7,8 @@ using FieldModule: Field, LatLonField,UnstructuredField,LatLonDirectionIndicator
 using FieldModule: UnstructuredDirectionIndicators
 using FieldModule: round,convert,invert,add_offset,get_data,maximum,equals
 using HDModule: RiverParameters,RiverPrognosticFields
-using LakeModule: LakeParameters,LatLonLakeParameters, GridSpecificLakeParameters,LakeFields
+using LakeModule: LakeParameters,LatLonLakeParameters, UnstructuredLakeParameters,
+using LakeModule: GridSpecificLakeParameters,LakeFields
 using MergeTypesModule
 
 import LakeModule: write_lake_numbers_field,write_lake_volumes_field
@@ -371,8 +372,43 @@ function load_grid_specific_lake_parameters(file_handle::NcFile,grid::LatLonGrid
                               additional_connect_redirect_lon_index)
 end
 
+function load_grid_specific_lake_parameters(file_handle::NcFile,grid::UnstructuredGrid)
+  flood_next_cell_index::Field{Int64} =
+      load_field(file_handle,grid,"flood_next_cell_index",Int64)
+  connect_next_cell_index::Field{Int64} =
+      load_field(file_handle,grid,"connect_next_cell_index",Int64)
+  flood_force_merge_index::Field{Int64} =
+      load_field(file_handle,grid,"flood_force_merge_index",Int64)
+  connect_force_merge_index::Field{Int64} =
+      load_field(file_handle,grid,"connect_force_merge_index",Int64)
+  flood_redirect_index::Field{Int64} =
+      load_field(file_handle,grid,"flood_redirect_index",Int64)
+  connect_redirect_index::Field{Int64} =
+      load_field(file_handle,grid,"connect_redirect_index",Int64)
+  additional_flood_redirect_index::Field{Int64} =
+      load_field(file_handle,grid,"additional_flood_redirect_index",Int64)
+  additional_connect_redirect_index::Field{Int64} =
+      load_field(file_handle,grid,"additional_connect_redirect_index",Int64)
+  add_offset(flood_next_cell_index,1,Int64[-1])
+  add_offset(connect_next_cell_index,1,Int64[-1])
+  add_offset(flood_force_merge_index,1,Int64[-1])
+  add_offset(connect_force_merge_index,1,Int64[-1])
+  add_offset(flood_redirect_index,1,Int64[-1])
+  add_offset(connect_redirect_index,1,Int64[-1])
+  add_offset(additional_flood_redirect_index,1,Int64[-1])
+  add_offset(additional_connect_redirect_index,1,Int64[-1])
+  return UnstructuredLakeParameters(flood_next_cell_index,
+                                    connect_next_cell_index,
+                                    flood_force_merge_index,
+                                    connect_force_merge_index,
+                                    flood_redirect_index,
+                                    connect_redirect_index,
+                                    additional_flood_redirect_index,
+                                    additional_connect_redirect_index)
+end
+
 function load_lake_initial_values(lake_start_filepath::AbstractString,
-                                  grid::LatLonGrid,hd_grid::LatLonGrid)
+                                  grid::Grid,hd_grid::Grid)
   local initial_water_to_lake_centers::Field{Float64}
   local initial_spillover_to_rivers::Field{Float64}
   println("Loading: " * lake_start_filepath)
@@ -402,7 +438,7 @@ function write_lake_volumes_field(lake_parameters::LakeParameters,lake_volumes::
   write_field(lake_parameters.grid,variable_name,lake_volumes,filepath)
 end
 
-function load_drainage_fields(drainages_filename::AbstractString,grid::LatLonGrid;
+function load_drainage_fields(drainages_filename::AbstractString,grid::Grid;
                               first_timestep::Int64=1,last_timestep::Int64=1)
   println("Loading: " * drainages_filename)
   file_handle::NcFile = NetCDF.open(drainages_filename)
@@ -418,7 +454,7 @@ function load_drainage_fields(drainages_filename::AbstractString,grid::LatLonGri
   return drainages
 end
 
-function load_runoff_fields(runoffs_filename::AbstractString,grid::LatLonGrid;
+function load_runoff_fields(runoffs_filename::AbstractString,grid::Grid;
                             first_timestep::Int64=1,last_timestep::Int64=1)
   println("Loading: " * runoffs_filename)
   file_handle::NcFile = NetCDF.open(runoffs_filename)
