@@ -17,6 +17,7 @@ FloatFieldOrNothing = Union{Field{Float64},Nothing}
 function drive_hd_model_with_or_without_lakes(prognostic_fields::PrognosticFields,
                                               drainages::Array{Field{Float64},1},
                                               runoffs::Array{Field{Float64},1},
+                                              lake_evaporations::Array{Field{Float64},1},
                                               timesteps::Int64,run_lakes_flag::Bool,
                                               process_initial_lake_water::Bool=false,
                                               initial_water_to_lake_centers::FloatFieldOrNothing=
@@ -57,6 +58,14 @@ function drive_hd_model_with_or_without_lakes(prognostic_fields::PrognosticField
       set_runoff = SetRunoff(deepcopy(runoffs[convert(Int64,ceil(convert(Float64,i)/30.0))]))
     end
     handle_event(hsm,set_runoff)
+    if size(lake_evaporations) == (1,)
+      set_lake_evaporation =
+        SetLakeEvaporation(deepcopy(lake_evaporations[1]))
+    else
+      set_lake_evaporation =
+        SetLakeEvaporation(deepcopy(lake_evaporations[convert(Int64,ceil(convert(Float64,i)/30.0))]))
+    end
+    handle_event(hsm,set_lake_evaporation)
     handle_event(hsm,runHD)
     if run_lakes_flag
       handle_event(hsm,run_lakes)
@@ -101,12 +110,14 @@ end
 
 function drive_hd_model(river_parameters::RiverParameters,river_fields::RiverPrognosticFields,
                         drainages::Array{Field{Float64},1},runoffs::Array{Field{Float64},1},
+                        lake_evaporations::Array{Field{Float64},1},
                         timesteps::Int64;print_timestep_results::Bool=false,
                         output_timestep::Int64=100,
                         write_output::Bool=true,
                         return_output::Bool=false)
   prognostic_fields::PrognosticFields = RiverPrognosticFieldsOnly(river_parameters,river_fields)
-  drive_hd_model_with_or_without_lakes(prognostic_fields,drainages,runoffs,timesteps,false,
+  drive_hd_model_with_or_without_lakes(prognostic_fields,drainages,runoffs,
+                                       lake_evaporations,timesteps,false,
                                        print_timestep_results=print_timestep_results,
                                        output_timestep=output_timestep,
                                        write_output=write_output)
@@ -116,14 +127,15 @@ function drive_hd_model(river_parameters::RiverParameters,river_fields::RiverPro
 end
 
 function drive_hd_model(river_parameters::RiverParameters,drainages::Array{Field{Float64},1},
-                        runoffs::Array{Field{Float64},1},timesteps::Int64;
+                        runoffs::Array{Field{Float64},1},
+                        lake_evaporations::Array{Field{Float64},1},timesteps::Int64;
                         print_timestep_results::Bool=false,
                         output_timestep::Int64=100,
                         write_output::Bool=true,
                         return_output::Bool=false)
   river_fields::RiverPrognosticFields = RiverPrognosticFields(river_parameters)
-  drive_hd_model(river_parameters,river_fields,drainages,runoffs,timesteps,
-                 print_timestep_results=print_timestep_results,
+  drive_hd_model(river_parameters,river_fields,drainages,runoffs,lake_evaporations,
+                 timesteps,print_timestep_results=print_timestep_results,
                  output_timestep=output_timestep,
                  write_output=write_output,
                  return_output=false)
@@ -136,6 +148,7 @@ function drive_hd_and_lake_model(river_parameters::RiverParameters,river_fields:
                                  lake_parameters::LakeParameters,lake_prognostics::LakePrognostics,
                                  lake_fields::LakeFields,drainages::Array{Field{Float64},1},
                                  runoffs::Array{Field{Float64},1},timesteps::Int64,
+                                 lake_evaporations::Array{Field{Float64},1},
                                  process_initial_lake_water::Bool=false,
                                  initial_water_to_lake_centers::FloatFieldOrNothing=nothing,
                                  initial_spillover_to_rivers::FloatFieldOrNothing=nothing;
@@ -146,7 +159,8 @@ function drive_hd_and_lake_model(river_parameters::RiverParameters,river_fields:
   prognostic_fields::PrognosticFields = RiverAndLakePrognosticFields(river_parameters,river_fields,
                                                                      lake_parameters,lake_prognostics,
                                                                      lake_fields)
-  drive_hd_model_with_or_without_lakes(prognostic_fields,drainages,runoffs,timesteps,
+  drive_hd_model_with_or_without_lakes(prognostic_fields,drainages,runoffs,
+                                       lake_evaporations,timesteps,
                                        true,process_initial_lake_water,
                                        initial_water_to_lake_centers,
                                        initial_spillover_to_rivers,
@@ -162,7 +176,9 @@ function drive_hd_and_lake_model(river_parameters::RiverParameters,
                                  river_fields::RiverPrognosticFields,
                                  lake_parameters::LakeParameters,
                                  drainages::Array{Field{Float64},1},
-                                 runoffs::Array{Field{Float64},1},timesteps::Int64,
+                                 runoffs::Array{Field{Float64},1},
+                                 lake_evaporations::Array{Field{Float64},1},
+                                 timesteps::Int64,
                                  process_initial_lake_water::Bool=false,
                                  initial_water_to_lake_centers::FloatFieldOrNothing=nothing,
                                  initial_spillover_to_rivers::FloatFieldOrNothing=nothing;
@@ -173,7 +189,7 @@ function drive_hd_and_lake_model(river_parameters::RiverParameters,
   lake_fields::LakeFields = LakeFields(lake_parameters)
   lake_prognostics::LakePrognostics = LakePrognostics(lake_parameters,lake_fields)
   drive_hd_and_lake_model(river_parameters,river_fields,lake_parameters,lake_prognostics,
-                          lake_fields,drainages,runoffs,timesteps,
+                          lake_fields,drainages,runoffs,lake_evaporations,timesteps,
                           process_initial_lake_water,initial_water_to_lake_centers,
                           initial_spillover_to_rivers,
                           print_timestep_results=print_timestep_results,
@@ -188,7 +204,8 @@ end
 function drive_hd_and_lake_model(river_parameters::RiverParameters,lake_parameters::LakeParameters,
                                  lake_prognostics::LakePrognostics,lake_fields::LakeFields,
                                  drainages::Array{Field{Float64},1},
-                                 runoffs::Array{Field{Float64},1},timesteps::Int64,
+                                 runoffs::Array{Field{Float64},1},
+                                 lake_evaporations::Array{Field{Float64},1},timesteps::Int64,
                                  process_initial_lake_water::Bool=false,
                                  initial_water_to_lake_centers::FloatFieldOrNothing=nothing,
                                  initial_spillover_to_rivers::FloatFieldOrNothing=nothing;
@@ -198,7 +215,7 @@ function drive_hd_and_lake_model(river_parameters::RiverParameters,lake_paramete
                                  return_output::Bool=false)
   river_fields::RiverPrognosticFields = RiverPrognosticFields(river_parameters)
   drive_hd_and_lake_model(river_parameters,river_fields,lake_parameters,lake_prognostics,
-                          lake_fields,drainages,runoffs,timesteps,
+                          lake_fields,drainages,runoffs,lake_evaporations,timesteps,
                           process_initial_lake_water,initial_water_to_lake_centers,
                           initial_spillover_to_rivers,
                           print_timestep_results=print_timestep_results,
@@ -212,7 +229,7 @@ end
 
 function drive_hd_and_lake_model(river_parameters::RiverParameters,lake_parameters::LakeParameters,
                                  drainages::Array{Field{Float64},1},runoffs::Array{Field{Float64},1},
-                                 timesteps::Int64,
+                                 lake_evaporations::Array{Field{Float64},1},timesteps::Int64,
                                  process_initial_lake_water::Bool=false,
                                  initial_water_to_lake_centers::FloatFieldOrNothing=nothing,
                                  initial_spillover_to_rivers::FloatFieldOrNothing=nothing;
@@ -224,7 +241,7 @@ function drive_hd_and_lake_model(river_parameters::RiverParameters,lake_paramete
   lake_fields::LakeFields = LakeFields(lake_parameters)
   lake_prognostics::LakePrognostics = LakePrognostics(lake_parameters,lake_fields)
   drive_hd_and_lake_model(river_parameters,river_fields,lake_parameters,lake_prognostics,
-                          lake_fields,drainages,runoffs,timesteps,
+                          lake_fields,drainages,runoffs,lake_evaporations,timesteps,
                           process_initial_lake_water,initial_water_to_lake_centers,
                           initial_spillover_to_rivers,
                           print_timestep_results=print_timestep_results,

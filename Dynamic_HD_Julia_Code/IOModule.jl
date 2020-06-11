@@ -434,4 +434,21 @@ function load_runoff_fields(runoffs_filename::AbstractString,grid::LatLonGrid;
   return runoffs
 end
 
+function load_lake_evaporation_fields(lake_evaporations_filename::AbstractString,
+                                      grid::LatLonGrid;first_timestep::Int64=1,
+                                      last_timestep::Int64=1)
+  println("Loading: " * lake_evaporations_filename)
+  file_handle::NcFile = NetCDF.open(lake_evaporations_filename)
+  lake_evaporations::Array{Field{Float64},1} = Field{Float64}[]
+  try
+    for i::Int64 = first_timestep:last_timestep
+      lake_evaporations[i] = load_field(file_handle,grid,"evaporation",
+                              Float64;timestep=i)
+    end
+  finally
+    NetCDF.close(file_handle)
+  end
+  return lake_evaporations
+end
+
 end

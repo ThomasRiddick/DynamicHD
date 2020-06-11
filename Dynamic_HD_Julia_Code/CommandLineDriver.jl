@@ -3,6 +3,7 @@ using ArgParse
 using HDDriverModule: drive_hd_model,drive_hd_and_lake_model
 using IOModule: load_river_parameters, load_lake_parameters
 using IOModule: load_drainage_fields, load_runoff_fields
+using IOModule: load_lake_evaporation_fields
 using IOModule: load_lake_initial_values,load_river_initial_values
 using GridModule: Grid, LatLonGrid
 using FieldModule: Field,LatLonField,repeat,divide
@@ -27,6 +28,8 @@ function pass_arguments()
     help = "Filepath to file containing drainage values"
   "--runoff-file", "-r"
     help = "Filepath to file containing runoff values"
+  "--lake-evaporation-file", "-e"
+    help = "Filepath to file containing values for evaporation from lakes"
   "--timesteps", "-t"
     help = "Number of timesteps to run"
     arg_type = Int
@@ -43,6 +46,7 @@ function main()
   river_parameters = load_river_parameters(args["hd-para-file"],grid)
   local drainages::Array{Field{Float64},1}
   local runoffs::Array{Field{Float64},1}
+  local lake_evaporations::Array{Field{Float64},1}
   if args["drainage-file"] != nothing
     drainages = load_drainage_fields(args["drainage-file"],grid,
                                      last_timestep=12)
@@ -58,10 +62,19 @@ function main()
   else
     runoffs = deepcopy(drainages)
   end
+  if args["lake-evaporation-file"] != nothing
+    lake_evaporations = load_lake_evaporation_fields(args["lake-evaporation-file"],grid,
+                                                     last_timestep=12)
+    lake_evaporations = [divide(x,30.0) for x in lake_evaporations]
+  else
+    lake_evaporation::Field{Float64} = LatLonField{Float64}(river_parameters.grid,0.0)
+    lake_evaporations = repeat(lake_evaporation,12*51)
+  end
   if args["lake-para-file"] != nothing
     lake_parameters = load_lake_parameters(args["lake-para-file"],lake_grid,grid)
     drainages_copy = deepcopy(drainages)
     runoffs_copy = deepcopy(runoffs)
+    lake_evaporations_copy = deep_copy(lake_evaporations)
     if args["hd-init-file"] != nothing
       river_fields = load_river_initial_values(args["hd-init-file"],river_parameters)
     end
@@ -71,14 +84,15 @@ function main()
         load_lake_initial_values(args["lake-init-file"],lake_grid,grid)
       if args["hd-init-file"] != nothing
         drive_hd_and_lake_model(river_parameters,river_fields,
-                                lake_parameters,drainages,runoffs,
+                                lake_parameters,drainages,runoffs,lake_evaporations,
                                 timesteps,true,initial_water_to_lake_centers,
                                 initial_spillover_to_rivers;print_timestep_results=false)
         # Profile.clear()
         # Profile.init(delay=0.01)
         # @time drive_hd_and_lake_model(river_parameters,river_fields,
         #                               lake_parameters,drainages_copy,runoffs_copy,
-        #                               timesteps,true,initial_water_to_lake_centers,
+        #                               lake_evaporations_copy,timesteps,
+        #                               true,initial_water_to_lake_centers,
         #                               initial_spillover_to_rivers;print_timestep_results=true)
         # Profile.print()
         # r = Profile.retrieve();
@@ -87,21 +101,23 @@ function main()
         # close(f)
       else
         drive_hd_and_lake_model(river_parameters,lake_parameters,drainages,runoffs,
-                                timesteps,true,initial_water_to_lake_centers,
+                                lake_evaporations,timesteps,true,initial_water_to_lake_centers,
                                 initial_spillover_to_rivers;print_timestep_results=true)
       end
     else
       if args["hd-init-file"] != nothing
         drive_hd_and_lake_model(river_parameters,river_fields,
                                 lake_parameters,drainages,runoffs,
-                                timesteps;print_timestep_results=true)
+                                lake_evaporations,timesteps;
+                                print_timestep_results=true)
       else
         drive_hd_and_lake_model(river_parameters,lake_parameters,
-                                drainages,runoffs,
+                                drainages,runoffs,lake_evaporations,
                                 timesteps;print_timestep_results=true)
         # @time drive_hd_and_lake_model(river_parameters,lake_parameters,
         #                               drainages_copy,runoffs_copy,
-        #                               timesteps;print_timestep_results=true)
+        #                               lake_evaporations_copy,timesteps;
+        #                               print_timestep_results=true)
       end
     end
 
@@ -109,20 +125,23 @@ function main()
     if args["hd-init-file"] != nothing
       river_fields = load_river_initial_values(args["hd-init-file"],grid,river_parameters)
       drive_hd_model(river_parameters,river_fields,
-                     drainages,runoffs,timesteps;
-                     print_timestep_results=false)
+                     drainages,runoffs,lake_evaporations,
+                     timesteps;print_timestep_results=false)
       @time drive_hd_model(river_parameters,river_fields,
-                           drainages_copy,runoffs_copy,timesteps;
-                           print_timestep_results=false)
+                           drainages_copy,runoffs_copy,lake_evaporations_copy,
+                           timesteps;print_timestep_results=false)
     else
       drainages_copy = deepcopy(drainages)
       runoffs_copy = deepcopy(runoffs)
-      drive_hd_model(river_parameters,drainages,
-                     runoffs,timesteps;print_timestep_results=true)
+      lake_evaporations_copy = deepcopy(lake_evaporations)
+      drive_hd_model(river_parameters,drainages,runoffs,
+                     lake_evaporations,timesteps;
+                     print_timestep_results=true)
       Profile.clear()
       Profile.init(delay=0.0001)
       @time drive_hd_model(river_parameters,drainages_copy,
-                           runoffs_copy,timesteps;print_timestep_results=false)
+                           runoffs_copy,lake_evaporations_copy,
+                           timesteps;print_timestep_results=false)
       Profile.print()
       r = Profile.retrieve();
       f = open("/Users/thomasriddick/Downloads/profile.bin", "w")
