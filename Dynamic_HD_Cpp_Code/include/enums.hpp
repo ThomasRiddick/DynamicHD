@@ -24,4 +24,6 @@
                           basic_null_mtype};
   enum redirect_type : bool {local_redirect = true,non_local_redirect = false};
 
+  enum geometry_types {icosohedral = 0};
+
 #endif /* ENUMS_HPP_ */

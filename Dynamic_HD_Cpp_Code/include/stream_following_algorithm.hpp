@@ -1,5 +1,5 @@
 /*
- * stream_follwing_algorithm.cpp
+ * stream_following_algorithm.cpp
  *
  *  Created on: Feb 10, 2020
  *      Author: thomasriddick

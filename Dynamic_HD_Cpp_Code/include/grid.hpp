@@ -203,6 +203,58 @@ public:
 	                                        function<void(coords*)> func);
 };
 
+class irregular_latlon_grid : public latlon_grid {
+	bool* grid_mask = nullptr
+	int* edge_mask = nullptr
+	int* secondary_edge_mask = nullptr
+	bool* corner_mask = nullptr;
+	vector<double*> edge_seperations;
+	geometry_types geometry_type;
+	//Used by the Tarasov Upscaling Code - numbers used
+	//to identify the various kinds of edge path has
+	//started from
+	//For irregular grid still specify these four although number of sides
+	//may vary
+	const int left_edge_num   = 1;
+	const int right_edge_num  = 2;
+	const int top_edge_num    = 3;
+	const int bottom_edge_num = 4;
+	//A landsea 'edge' is just a landsea point
+	const int landsea_edge_num = -1;
+	//A true sink 'edge' is just a true sink point
+	const int true_sink_edge_num = -2;
+	int number_of_edges = 3;
+public:
+	///Constructor
+	irregular_latlon_grid(grid_params*);
+	virtual ~irregular_latlon_grid() {};
+	///Getters
+	int get_edge_number(coords*);
+	///Getters
+	int get_separation_from_initial_edge(coords*,int);
+	//implement function that iterative apply a supplied function
+	void for_diagonal_nbrs(coords*,function<void(coords*)> );
+	void for_non_diagonal_nbrs(coords*,function<void(coords*)>);
+	void for_all_nbrs(coords*,function<void(coords*)>);
+	void for_all_nbrs_wrapped(coords* coords_in,function<void(coords*)> func);
+	void for_non_diagonal_nbrs_wrapped(coords* coords_in,function<void(coords*)> func);
+	void for_all(function<void(coords*)>);
+	void for_all_with_line_breaks(function<void(coords*,bool)>);
+	//These next two functions are endemic to this subclass and are
+	//called from the base class via a switch-case statement and
+	//static casting
+	///is given point outside limits of grid
+	bool latlon_outside_limits(latlon_coords* coords);
+	//Implementations of virtual functions of the base class
+	bool is_corner_cell(coords*);
+	bool is_edge(coords*);
+	bool check_if_cell_is_on_given_edge_number(coords*,int);
+	///Return wrapped version of supplied coordinates
+	latlon_coords* latlon_wrapped_coords(latlon_coords*);
+	void generate_edge_and_corner_masks();
+	void generate_edge_seperations();
+};
+
 /** A real class implementing functions on a ICON-style
  * grid without using blocks. Store index values as
  * FORTAN indices thus require an offset of one when
@@ -532,6 +584,12 @@ inline bool latlon_grid::latlon_outside_limits(latlon_coords* coords){
 	if (nowrap) return (coords->get_lat() < 0 || coords->get_lat() >= nlat ||
 			   		    coords->get_lon() < 0 || coords->get_lon() >= nlon);
 	else return (coords->get_lat() < 0 || coords->get_lat() >= nlat);
+}
+
+inline bool irregular_latlon_grid::irregular_latlon_outside_limits(latlon_coords* coords)
+	if (coords->get_lat() < 0 || coords->get_lat() >= nlat ||
+			coords->get_lon() < 0 || coords->get_lon() >= nlon) return true;
+	else return (! grid_mask[get_index(coords)]);
 }
 
 //avoid making this virtual so that it can be in-lined

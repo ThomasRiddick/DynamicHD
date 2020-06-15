@@ -274,6 +274,294 @@ void latlon_grid::for_all_fine_pixels_in_coarse_cell(coords* coarse_coords,
 		}
 }
 
+int irregular_latlon_grid::get_edge_number(coords* coords_in) {
+	latlon_coords* latlon_coords_in = static_cast<latlon_coords*>(coords_in);
+	int edge_number = edge_mask[latlon_get_index(latlon_coords_in)];
+	if (edge_number != 0) return edge_number;
+	else throw runtime_error("Internal logic broken - trying to get edge number of non-edge cell");
+}
+
+int irregular_latlon_grid::get_separation_from_initial_edge(coords* coords_in,int edge_number) {
+	latlon_coords* latlon_coords_in = static_cast<latlon_coords*>(coords_in);
+	if (edge_number == landsea_edge_num || edge_number == true_sink_edge_num) return 0;
+	else if(edge_number =< number_of_edges){
+		return (edge_seperations[edge_number])[latlon_get_index(latlon_coords_in)];
+	} else throw runtime_error("Internal logic broken - invalid initial edge number used as input to "
+						     						 "get_separation_from_initial_edge");
+}
+
+void irregular_latlon_grid::for_diagonal_nbrs(coords* coords_in,function<void(coords*)> func){
+	latlon_coords* latlon_coords_in = static_cast<latlon_coords*>(coords_in);
+	for (auto i = latlon_coords_in->get_lat()-1; i<=latlon_coords_in->get_lat()+1;i=i+2){
+		for (auto j = latlon_coords_in->get_lon()-1; j<=latlon_coords_in->get_lon()+1;j=j+2){
+			latlon_coords* nbr_coords = new latlon_coords(i,j)
+			if (grid_mask[latlon_get_index(new)]) func(nbr_coords);
+			else delete nbr_coords;
+		}
+	}
+};
+
+void irregular_latlon_grid::for_non_diagonal_nbrs(coords* coords_in,function<void(coords*)> func){
+	latlon_coords* latlon_coords_in = static_cast<latlon_coords*>(coords_in);
+	for (auto i = latlon_coords_in->get_lat()-1;i<=latlon_coords_in->get_lat()+1;i=i+2){
+		latlon_coords* nbr_coords = new latlon_coords(i,latlon_coords_in->get_lon())
+		if (grid_mask[latlon_get_index(new)]) func(nbr_coords);
+		else delete nbr_coords;
+	}
+	for (auto j = latlon_coords_in->get_lon()-1; j<=latlon_coords_in->get_lon()+1;j=j+2){
+		latlon_coords* nbr_coords = new latlon_coords(latlon_coords_in->get_lat(),j)
+		if (grid_mask[latlon_get_index(new)]) func(nbr_coords);
+		else delete nbr_coords;
+	}
+};
+
+void irregular_latlon_grid::for_all_nbrs(coords* coords_in,function<void(coords*)> func){
+	latlon_coords* latlon_coords_in = static_cast<latlon_coords*>(coords_in);
+	for (auto i = latlon_coords_in->get_lat()-1; i <= latlon_coords_in->get_lat()+1;i++){
+		for (auto j = latlon_coords_in->get_lon()-1; j <=latlon_coords_in->get_lon()+1; j++){
+			if (i == latlon_coords_in->get_lat() && j == latlon_coords_in->get_lon()) continue;
+			latlon_coords* nbr_coords = new latlon_coords(i,j)
+			if (grid_mask[latlon_get_index(new)]) func(nbr_coords);
+			else delete nbr_coords;
+		}
+	}
+};
+
+// This function is not meaningful on a irregular grid; pass to for_all_nbrs
+void irregular_latlon_grid::for_all_nbrs_wrapped(coords* coords_in,function<void(coords*)> func){
+	for_all_nbrs(coords_in,func);
+}
+
+void irregular_latlon_grid::for_all(function<void(coords*)> func){
+	for (auto i = 0; i < nlat; i++){
+		for (auto j = 0; j < nlon; j++){
+			latlon_coords* cell_coords = new latlon_coords(i,j)
+			if (grid_mask[latlon_get_index(new)]) func(cell_coords);
+			else delete cell_coords;
+		}
+	}
+};
+
+void irregular_latlon_grid::for_all_with_line_breaks(function<void(coords*,bool)> func){
+	bool end_of_line;
+	for (auto i = 0; i < nlat; i++){
+		end_of_line = true;
+		for (auto j = 0; j < nlon; j++){
+			latlon_coords* cell_coords = new latlon_coords(i,j)
+			if (grid_mask[latlon_get_index(new)]) {
+				func(cell_coords,end_of_line);
+				end_of_line = false;
+			} else delete cell_coords;
+		}
+	}
+};
+
+bool irregular_latlon_grid::is_corner_cell(coords* coords_in){
+	latlon_coords* latlon_coords_in = static_cast<latlon_coords*>(coords_in);
+	return corner_mask[get_latlon_index(latlon_coords_in)];
+}
+
+
+
+bool irregular_latlon_grid::
+	check_if_cell_is_on_given_edge_number(coords* coords_in,int edge_number) {
+	latlon_coords* latlon_coords_in = static_cast<latlon_coords*>(coords_in);
+	if (get_edge_number(coords_in) == edge_number) return true;
+	//deal with corner cells that are assigned horizontal edge edge numbers but should
+	//also be considered to be a vertical edge
+	else if (is_corner_cell(coords_in)){
+		if (secondary_edge_mask[get_latlon_index(latlon_coords_in)]
+		    == edge_number) return true;
+		else return false;
+	}
+	else return false;
+}
+
+bool irregular_latlon_grid::is_edge(coords* coords_in) {
+	latlon_coords* latlon_coords_in = static_cast<latlon_coords*>(coords_in);
+	cell_edge_number = edge_mask[get_latlon_index(latlon_coords_in)];
+	if (cell_edge_number == 0) return false;
+	else if((cell_edge_number == get_landsea_edge_num()) ||
+					(cell_edge_number == get_true_sink_edge_num())) return false;
+	else return true;
+}
+
+latlon_coords* irregular_latlon_grid::latlon_wrapped_coords(latlon_coords* coords_in){
+	//Wrapping not defined on a irregular grid so just return input coords
+	return coords_in;
+}
+
+void irregular_latlon_grid::generate_edge_and_corner_masks(){
+	switch (geometry_type){
+		case icosohedral:
+			bool* binary_edge_mask = new bool[get_total_size()];
+			bool* faces_east_mask  = new bool[get_total_size()];
+			bool* faces_west_mask = new bool[get_total_size()];
+			bool* faces_north_mask = new bool[get_total_size()];
+			bool* faces_south_mask = new bool[get_total_size()];
+			int north_facing_corner_count = 0;
+			int south_facing_corner_count = 0;
+			int east_facing_corner_count = 0;
+			int west_facing_corner_count = 0;
+			latlon_grid::for_all([&](coords* coords_in){
+				if( grid_mask[get_latlon_index(coords_in)] ){
+					bool is_edge_cell = false;
+					bool faces_east = false;
+					bool faces_west = false;
+					bool faces_north = false;
+					bool faces_south = false;
+					int outward_facing_direction_count = 0;
+					latlon_grid::for_all_nbrs([&](coords* nbr_coords){
+						if(! grid_mask[get_latlon_index(nbr_coords)] ) {
+							is_edge_cell = true;
+							outward_facing_direction_count += 1;
+							double rdir = calculate_dir_based_rdir(coords_in,nbr_coords)
+							switch(rdir){
+								case 1.0:
+									faces_west = true;
+									faces_south = true;
+									break;
+								case 2.0:
+									faces_south = true;
+									break;
+								case 3.0:
+									faces_south = true;
+									faces_east = true;
+									break;
+								case 4.0:
+									faces_west = true;
+									break;
+								case 5.0:
+									throw runtime_error();
+									break;
+								case 6.0:
+									faces_east = true;
+									break;
+								case 7.0:
+									faces_west = true;
+									faces_north = true;
+									break;
+								case 8.0;
+									faces_north = true;
+									break;
+								case 9.0
+									faces_north = true;
+									faces_east = true;
+									break;
+								default:
+									throw runtime_error();
+							}
+						}
+					});
+				}
+				binary_edge_mask[get_latlon_index(coords_in)] = is_edge_cell;
+				if (outward_facing_direction_count >= 5) {
+					corner_mask[get_latlon_index(coords_in)] = true;
+					if(faces_north) north_facing_corner_count += 1
+					if(faces_south) south_facing_corner_count += 1
+					if(faces_east) east_facing_corner_count += 1
+					if(faces_west) west_facing_corner_count += 1
+				}
+				faces_east_mask[get_latlon_index(coords_in)] = faces_east;
+				faces_west_mask[get_latlon_index(coords_in)] = faces_west;
+				faces_north_mask[get_latlon_index(coords_in)] = faces_north;
+				faces_south_mask[get_latlon_index(coords_in)] = faces_south;
+				delete coords_in;
+			});
+			latlon_grid::for_all([&](coords* coords_in){
+				if( grid_mask[get_latlon_index(coords_in)] ){
+					if (north_facing_corner_count == 2 && south_facing_corner_count == 2){
+					// In this case there is one exactly vertical side
+						if (faces_north_mask[get_latlon_index(coords_in)]){
+							edge_mask[get_latlon_index(coords_in)] = top_edge_num;
+						} else if (faces_south_mask[get_latlon_index(coords_in)]){
+							edge_mask[get_latlon_index(coords_in)] = bottom_edge_num;
+						} else if (west_facing_corner_count == 2 &&
+						           faces_west_mask[get_latlon_index(coords_in)]]) {
+							edge_mask[get_latlon_index(coords_in)] = west_edge_num
+						} else if (east_facing_corner_count == 2 &&
+						           faces_east_mask[get_latlon_index(coords_in)]]) {
+							edge_mask[get_latlon_index(coords_in)] = east_edge_num
+						} else throw runtime_error();
+						if (corner_mask[get_latlon_index(coords_in)]){
+							if (faces_west_mask[get_latlon_index(coords_in)] &&
+							    west_facing_corner_count == 2){
+								secondary_edge_mask[get_latlon_index(coords_in)] = west_edge_num;
+							} else if(faces_east_mask[get_latlon_index(coords_in)] &&
+							          east_facing_corner_count == 2){
+								secondary_edge_mask[get_latlon_index(coords_in)] = east_edge_num;
+							} else if(faces_north_mask[get_latlon_index(coords_in)] &&
+							          faces_south_mask[get_latlon_index(coords_in)]){
+								secondary_edge_mask[get_latlon_index(coords_in)] = bottom_edge_num;
+							} else throw runtime_error();
+						}
+					} else if (north_facing_corner_count == 2){
+						//The top is roughly horizontal
+						if (faces_north_mask[get_latlon_index(coords_in)]){
+							edge_mask[get_latlon_index(coords_in)] = top_edge_num;
+						} else if (faces_west_mask[get_latlon_index(coords_in)]) {
+							edge_mask[get_latlon_index(coords_in)] = west_edge_num;
+						} else if (faces_east_mask[get_latlon_index(coords_in)]) {
+							edge_mask[get_latlon_index(coords_in)] = east_edge_num;
+						} else throw runtime_error();
+						if (corner_mask[get_latlon_index(coords_in)]){
+							if(faces_north_mask[get_latlon_index(coords_in)]){
+								if(faces_west_mask[get_latlon_index(coords_in)]){
+									secondary_edge_mask[get_latlon_index(coords_in)] == west_edge_num;
+								} else if(faces_east_mask[get_latlon_index(coords_in)]){
+									secondary_edge_mask[get_latlon_index(coords_in)] == east_edge_num;
+								} else throw runtime_error();
+							} else if(faces_west_mask[get_latlon_index(coords_in)]){
+								if(faces_east_mask[get_latlon_index(coords_in)]){
+									secondary_edge_mask[get_latlon_index(coords_in)] == east_edge_num;
+								} else throw runtime_error()
+							} else throw runtime_error()
+						}
+					} else if (south_facing_corner_count == 2) {
+						//The bottom is roughly horizontal
+						if (faces_south_mask[get_latlon_index(coords_in)]){
+							edge_mask[get_latlon_index(coords_in)] = bottom_edge_num;
+						} else if (faces_west_mask[get_latlon_index(coords_in)]) {
+							edge_mask[get_latlon_index(coords_in)] = west_edge_num;
+						} else if (faces_east_mask[get_latlon_index(coords_in)]) {
+							edge_mask[get_latlon_index(coords_in)] = east_edge_num;
+						} else throw runtime_error();
+						if (corner_mask[get_latlon_index(coords_in)]){
+							if(face_south_mask[get_latlon_index(coords_in)]){
+								if(faces_west_mask[get_latlon_index(coords_in)]){
+									secondary_edge_mask[get_latlon_index(coords_in)] == west_edge_num;
+								} else if(faces_east_mask[get_latlon_index(coords_in)]){
+									secondary_edge_mask[get_latlon_index(coords_in)] == east_edge_num;
+								} else throw runtime_error();
+							} else if(faces_west_mask[get_latlon_index(coords_in)]){
+								if(faces_east_mask[get_latlon_index(coords_in)]){
+									secondary_edge_mask[get_latlon_index(coords_in)] == east_edge_num;
+								} else throw runtime_error()
+							} else throw runtime_error()
+						}
+					} else throw runtime_error();
+				}
+			});
+			break;
+		default:
+			throw runtime_error("Unknown geometry type");
+	}
+}
+
+void irregular_latlon_grid::generate_edge_seperations(){
+	q
+	latlon_grid::for_all([&](coords* coords_in){
+		if(edge_mask[get_latlon_index(coords_in)] != 0){
+		q.push()
+		}
+	while q not zero
+		pop
+		find nbrs
+		calc nbr length
+		pop nbrs
+	});
+}
+
 icon_single_index_grid::icon_single_index_grid(grid_params* params){
 	grid_type = grid_types::icon_single_index;
 	if(icon_single_index_grid_params* params_local = dynamic_cast<icon_single_index_grid_params*>(params)){
