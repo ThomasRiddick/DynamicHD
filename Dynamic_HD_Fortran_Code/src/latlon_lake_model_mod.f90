@@ -85,7 +85,6 @@ type :: lakefields
   integer, pointer, dimension(:) :: cells_with_lakes_lat
   integer, pointer, dimension(:) :: cells_with_lakes_lon
   type(lakepointer), pointer, dimension(:) :: other_lakes
-  logical, pointer, dimension(:) :: lock_lake_memory
   contains
     procedure :: initialiselakefields
     procedure :: lakefieldsdestructor
@@ -97,7 +96,6 @@ end interface lakefields
 
 type lakeprognostics
   type(lakepointer), pointer, dimension(:) :: lakes
-  logical, pointer, dimension(:) :: lock_lake_memory
   contains
     procedure :: initialiselakeprognostics
     procedure :: lakeprognosticsdestructor
@@ -565,10 +563,7 @@ subroutine initialiselakeprognostics(this,lake_parameters_in,lake_fields_in)
     do i=1,lake_number
       this%lakes(i) = lakes_temp(i)
     end do
-    allocate(this%lock_lake_memory(lake_number))
-    this%lock_lake_memory(:) = .false.
     lake_fields_in%other_lakes => this%lakes
-    lake_fields_in%lock_lake_memory => this%lock_lake_memory
     deallocate(lakes_temp)
 end subroutine initialiselakeprognostics
 
@@ -587,7 +582,6 @@ subroutine lakeprognosticsdestructor(this)
       deallocate(this%lakes(i)%lake_pointer)
     end do
     deallocate(this%lakes)
-    deallocate(this%lock_lake_memory)
 end subroutine lakeprognosticsdestructor
 
 subroutine initialisefillinglake(this,lake_parameters_in,lake_fields_in,center_cell_lat_in, &
@@ -740,7 +734,6 @@ subroutine setup_lakes(lake_parameters,lake_prognostics,lake_fields,initial_wate
   type(lakefields), intent(inout) :: lake_fields
   real, pointer, dimension(:,:), intent(in) :: initial_water_to_lake_centers
   type(lake), pointer :: working_lake
-  type(lake), pointer :: updated_lake
   real :: initial_water_to_lake_center
   integer :: lake_index
   integer :: i,j
@@ -751,13 +744,7 @@ subroutine setup_lakes(lake_parameters,lake_prognostics,lake_fields,initial_wate
           if(initial_water_to_lake_center > 0.0) then
             lake_index = lake_fields%lake_numbers(i,j)
             working_lake => lake_prognostics%lakes(lake_index)%lake_pointer
-            lake_prognostics%lock_lake_memory(lake_index) = .true.
-            updated_lake => working_lake%add_water(initial_water_to_lake_center)
-            lake_prognostics%lakes(lake_index)%lake_pointer => updated_lake
-            lake_prognostics%lock_lake_memory(lake_index) = .false.
-            if (.not. associated(working_lake,updated_lake)) then
-              deallocate(working_lake)
-            end if
+            call working_lake%add_water(initial_water_to_lake_center)
           end if
         end if
       end do
@@ -776,7 +763,6 @@ subroutine run_lakes(lake_parameters,lake_prognostics,lake_fields)
   integer :: basin_number
   real :: share_to_each_lake
   type(lake), pointer :: working_lake
-  type(lake), pointer :: updated_lake
     lake_fields%water_to_hd = 0.0
     do i = 1,size(lake_fields%cells_with_lakes_lat)
       lat = lake_fields%cells_with_lakes_lat(i)
@@ -791,27 +777,14 @@ subroutine run_lakes(lake_parameters,lake_prognostics,lake_fields)
           basin_center_lon = lake_parameters%basins(basin_number)%basin_lons(j)
           lake_index = lake_fields%lake_numbers(basin_center_lat,basin_center_lon)
           working_lake => lake_prognostics%lakes(lake_index)%lake_pointer
-          lake_prognostics%lock_lake_memory(lake_index) = .true.
-          updated_lake => working_lake%add_water(share_to_each_lake)
-          lake_prognostics%lakes(lake_index)%lake_pointer => updated_lake
-          lake_prognostics%lock_lake_memory(lake_index) = .false.
-          if (.not. associated(working_lake,updated_lake)) then
-            deallocate(working_lake)
-          end if
+          call working_lake%add_water(share_to_each_lake)
         end do
       end if
     end do
     do i = 1,size(lake_prognostics%lakes)
       working_lake => lake_prognostics%lakes(i)%lake_pointer
       if (working_lake%unprocessed_water > 0.0) then
-          lake_prognostics%lock_lake_memory(i) = .true.
-          updated_lake => working_lake%add_water(0.0)
-          lake_prognostics%lakes(i)%lake_pointer => updated_lake
-          lake_prognostics%lock_lake_memory(i) = .false.
-          if (.not. associated(working_lake,updated_lake)) then
-            deallocate(working_lake)
-            working_lake => lake_prognostics%lakes(i)%lake_pointer
-          end if
+          call working_lake%add_water(0.0)
       end if
       if (working_lake%lake_type == overflowing_lake_type) then
           call working_lake%drain_excess_water()
@@ -819,12 +792,10 @@ subroutine run_lakes(lake_parameters,lake_prognostics,lake_fields)
     end do
 end subroutine run_lakes
 
-recursive function add_water(this,inflow) result(updated_lake)
+recursive subroutine add_water(this,inflow)
   class(lake), target, intent(inout) :: this
   real, intent(in) :: inflow
-  type(lake), pointer :: updated_lake
   type(lake),  pointer :: other_lake
-  type(lake), pointer :: other_lake_as_filling_lake
   integer :: target_cell_lat,target_cell_lon
   integer :: merge_type
   integer :: other_lake_number
@@ -832,7 +803,6 @@ recursive function add_water(this,inflow) result(updated_lake)
   logical :: merge_possible
   logical :: already_merged
   real :: inflow_local
-  logical :: locking_other_lake_memory
     if (this%lake_type == filling_lake_type) then
       inflow_local = inflow + this%unprocessed_water
       this%unprocessed_water = 0.0
@@ -853,15 +823,15 @@ recursive function add_water(this,inflow) result(updated_lake)
                   this%check_if_merge_is_possible(merge_type,already_merged)
                 if (merge_possible) then
                   if (merge_type == secondary_merge) then
-                    updated_lake => this%perform_secondary_merge()
-                    updated_lake => updated_lake%store_water(inflow_local)
+                    call this%perform_secondary_merge()
+                    call this%store_water(inflow_local)
                     return
                   else
                     call this%perform_primary_merge()
                   end if
                 else if (.not. already_merged) then
-                  updated_lake => this%change_to_overflowing_lake(merge_type)
-                  updated_lake => updated_lake%store_water(inflow_local)
+                  call this%change_to_overflowing_lake(merge_type)
+                  call this%store_water(inflow_local)
                   return
                 else if (merge_type == secondary_merge) then
                   call this%get_secondary_merge_coords(target_cell_lat,target_cell_lon)
@@ -870,15 +840,11 @@ recursive function add_water(this,inflow) result(updated_lake)
                   other_lake => &
                     this%lake_fields%other_lakes(other_lake_number)%lake_pointer
                   if (other_lake%lake_type == subsumed_lake_type) then
-                    other_lake_as_filling_lake => &
-                      other_lake%change_subsumed_lake_to_filling_lake()
+                    call other_lake%change_subsumed_lake_to_filling_lake()
                   end if
-                  this%lake_fields%other_lakes(other_lake_number)%lake_pointer => &
-                    other_lake_as_filling_lake%change_to_overflowing_lake(primary_merge)
-                  if (.not. this%lake_fields%lock_lake_memory(other_lake_number)) deallocate(other_lake)
-                  deallocate(other_lake_as_filling_lake)
-                  updated_lake => this%perform_secondary_merge()
-                  updated_lake => updated_lake%store_water(inflow_local)
+                  call other_lake%change_to_overflowing_lake(primary_merge)
+                  call this%perform_secondary_merge()
+                  call this%store_water(inflow_local)
                   return
                 end if
               end if
@@ -888,7 +854,6 @@ recursive function add_water(this,inflow) result(updated_lake)
           call this%update_filling_cell()
         end if
       end do
-      updated_lake => this
     else if (this%lake_type == overflowing_lake_type) then
       inflow_local = inflow + this%unprocessed_water
       this%unprocessed_water = 0.0
@@ -898,89 +863,51 @@ recursive function add_water(this,inflow) result(updated_lake)
         other_lake => &
           this%lake_fields%other_lakes(other_lake_number)%lake_pointer
         if (this%lake_parameters%instant_throughflow) then
-          if (.not. this%lake_fields%lock_lake_memory(other_lake_number)) then
-            this%lake_fields%lock_lake_memory(other_lake_number) = .true.
-            locking_other_lake_memory = .true.
-          else
-            locking_other_lake_memory = .false.
-          end if
-          updated_lake => other_lake%add_water(inflow_local)
-          this%lake_fields%other_lakes(other_lake_number)%lake_pointer => &
-            updated_lake
-          if (locking_other_lake_memory) then
-           this%lake_fields%lock_lake_memory(other_lake_number) = .false.
-            if (.not. associated(other_lake,updated_lake)) then
-              deallocate(other_lake)
-            end if
-          end if
+          call other_lake%add_water(inflow_local)
         else
-          this%lake_fields%other_lakes(other_lake_number)%lake_pointer => &
-            other_lake%store_water(inflow_local)
+          call other_lake%store_water(inflow_local)
         end if
       else
         this%excess_water = this%excess_water + inflow_local
       end if
-      updated_lake => this%lake_fields%other_lakes(this%lake_number)%lake_pointer
     else if (this%lake_type == subsumed_lake_type) then
       inflow_local = inflow + this%unprocessed_water
       this%unprocessed_water = 0.0
       other_lake => this%lake_fields%other_lakes(this%primary_lake_number)%lake_pointer
-      if (.not. this%lake_fields%lock_lake_memory(this%primary_lake_number)) then
-        this%lake_fields%lock_lake_memory(this%primary_lake_number) = .true.
-        locking_other_lake_memory = .true.
-      else
-        locking_other_lake_memory = .false.
-      end if
-      updated_lake => &
-        other_lake%add_water(inflow_local)
-      this%lake_fields%other_lakes(this%primary_lake_number)%lake_pointer => &
-        updated_lake
-      if (locking_other_lake_memory) then
-        this%lake_fields%lock_lake_memory(this%primary_lake_number) = .false.
-        if (.not. associated(other_lake,updated_lake)) then
-          deallocate(other_lake)
-        end if
-      end if
-      updated_lake => this
+      call other_lake%add_water(inflow_local)
     end if
-end function add_water
+end subroutine add_water
 
-function store_water(this,inflow) result(lake_after_storage)
+subroutine store_water(this,inflow)
   class(lake), target, intent(inout) :: this
   real, intent(in) :: inflow
-  type(lake), pointer :: lake_after_storage
     this%unprocessed_water = this%unprocessed_water + inflow
-    lake_after_storage => this
-end function store_water
+end subroutine store_water
 
-function accept_merge(this,redirect_coords_lat,redirect_coords_lon) &
-    result(subsumed_lake)
+subroutine accept_merge(this,redirect_coords_lat,redirect_coords_lon)
   class(lake), intent(inout) :: this
   integer, intent(in) :: redirect_coords_lat
   integer, intent(in) :: redirect_coords_lon
-  type(lake), pointer :: subsumed_lake
   integer :: lake_type
     lake_type = this%lake_type
     this%lake_fields%completed_lake_cells(this%current_cell_to_fill_lat,&
                                           this%current_cell_to_fill_lon) = .true.
-    allocate(subsumed_lake)
-    call subsumed_lake%initialisesubsumedlake(this%lake_parameters, &
-                                              this%lake_fields, &
-                                              this%lake_fields%lake_numbers(redirect_coords_lat, &
-                                                                            redirect_coords_lon), &
-                                              this%center_cell_lat, &
-                                              this%center_cell_lon, &
-                                              this%current_cell_to_fill_lat, &
-                                              this%current_cell_to_fill_lon, &
-                                              this%lake_number,this%lake_volume)
+    call this%initialisesubsumedlake(this%lake_parameters, &
+                                     this%lake_fields, &
+                                     this%lake_fields%lake_numbers(redirect_coords_lat, &
+                                                                   redirect_coords_lon), &
+                                     this%center_cell_lat, &
+                                     this%center_cell_lon, &
+                                     this%current_cell_to_fill_lat, &
+                                     this%current_cell_to_fill_lon, &
+                                     this%lake_number,this%lake_volume)
     if (lake_type == overflowing_lake_type) then
-        subsumed_lake => subsumed_lake%store_water(this%excess_water)
+        call this%store_water(this%excess_water)
     end if
-end function accept_merge
+end subroutine accept_merge
 
-function change_to_overflowing_lake(this,merge_type) result(overflowing_lake)
+subroutine change_to_overflowing_lake(this,merge_type)
   class(lake), intent(inout) :: this
-  type(lake), pointer :: overflowing_lake
   integer :: outflow_redirect_lat
   integer :: outflow_redirect_lon
   integer :: merge_type
@@ -996,21 +923,20 @@ function change_to_overflowing_lake(this,merge_type) result(overflowing_lake)
     else
       call this%get_primary_merge_coords(target_cell_lat,target_cell_lon)
     end if
-    allocate(overflowing_lake)
-    call overflowing_lake%initialiseoverflowinglake(outflow_redirect_lat, &
-                                                    outflow_redirect_lon, &
-                                                    local_redirect, &
-                                                    this%lake_parameters%lake_retention_coefficient, &
-                                                    this%lake_parameters,this%lake_fields, &
-                                                    this%center_cell_lat, &
-                                                    this%center_cell_lon, &
-                                                    this%current_cell_to_fill_lat, &
-                                                    this%current_cell_to_fill_lon, &
-                                                    target_cell_lat, &
-                                                    target_cell_lon, &
-                                                    this%lake_number, &
-                                                    this%lake_volume)
-end function change_to_overflowing_lake
+    call this%initialiseoverflowinglake(outflow_redirect_lat, &
+                                        outflow_redirect_lon, &
+                                        local_redirect, &
+                                        this%lake_parameters%lake_retention_coefficient, &
+                                        this%lake_parameters,this%lake_fields, &
+                                        this%center_cell_lat, &
+                                        this%center_cell_lon, &
+                                        this%current_cell_to_fill_lat, &
+                                        this%current_cell_to_fill_lon, &
+                                        target_cell_lat, &
+                                        target_cell_lon, &
+                                        this%lake_number, &
+                                        this%lake_volume)
+end subroutine change_to_overflowing_lake
 
 subroutine drain_excess_water(this)
   class(lake), intent(inout) :: this
@@ -1151,18 +1077,13 @@ subroutine perform_primary_merge(this)
     other_lake_number = this%lake_fields%lake_numbers(target_cell_lat,target_cell_lon)
     other_lake => this%lake_fields%other_lakes(other_lake_number)%lake_pointer
     other_lake => other_lake%find_true_primary_lake()
-    other_lake_number = other_lake%lake_number
     this%primary_merge_completed = .true.
-    this%lake_fields%other_lakes(other_lake_number)%lake_pointer => &
-      other_lake%accept_merge(this%center_cell_lat,this%center_cell_lon)
-    if(.not. this%lake_fields%lock_lake_memory(other_lake_number)) deallocate(other_lake)
+    call other_lake%accept_merge(this%center_cell_lat,this%center_cell_lon)
 end subroutine perform_primary_merge
 
-function perform_secondary_merge(this) result(merged_lake)
+subroutine perform_secondary_merge(this)
   class(lake), intent(inout) :: this
-  type(lake), pointer :: merged_lake
   type(lake), pointer :: other_lake
-  type(lake), pointer :: other_lake_as_filling_lake
   integer :: target_cell_lat,target_cell_lon
   integer :: other_lake_number
     this%lake_fields%completed_lake_cells(this%current_cell_to_fill_lat, &
@@ -1171,47 +1092,39 @@ function perform_secondary_merge(this) result(merged_lake)
     other_lake_number = this%lake_fields%lake_numbers(target_cell_lat,target_cell_lon)
     other_lake => this%lake_fields%other_lakes(other_lake_number)%lake_pointer
     other_lake => other_lake%find_true_primary_lake()
-    other_lake_number = other_lake%lake_number
     if (other_lake%lake_type == overflowing_lake_type) then
-        other_lake_as_filling_lake => other_lake%change_overflowing_lake_to_filling_lake()
+        call other_lake%change_overflowing_lake_to_filling_lake()
     end if
-    this%lake_fields%other_lakes(other_lake_number)%lake_pointer => &
-                                            other_lake_as_filling_lake
-    if(.not. this%lake_fields%lock_lake_memory(other_lake_number)) deallocate(other_lake)
-    merged_lake => this%accept_merge(other_lake_as_filling_lake%center_cell_lat, &
-                                     other_lake_as_filling_lake%center_cell_lon)
-end function perform_secondary_merge
+    call this%accept_merge(other_lake%center_cell_lat, &
+                           other_lake%center_cell_lon)
+end subroutine perform_secondary_merge
 
-function change_overflowing_lake_to_filling_lake(this) result(filling_lake)
+subroutine change_overflowing_lake_to_filling_lake(this)
   class(lake), intent(inout) :: this
-  type(lake), pointer :: filling_lake
   logical :: use_additional_fields
     this%unprocessed_water = this%unprocessed_water + this%excess_water
     use_additional_fields = (this%get_merge_type() == double_merge)
-    allocate(filling_lake)
-    call filling_lake%initialisefillinglake(this%lake_parameters,this%lake_fields, &
-                                            this%center_cell_lat, &
-                                            this%center_cell_lon, &
-                                            this%current_cell_to_fill_lat, &
-                                            this%current_cell_to_fill_lon,&
-                                            this%lake_number,this%lake_volume)
-    filling_lake%primary_merge_completed = .true.
-    filling_lake%use_additional_fields = use_additional_fields
-end function change_overflowing_lake_to_filling_lake
+    call this%initialisefillinglake(this%lake_parameters,this%lake_fields, &
+                                    this%center_cell_lat, &
+                                    this%center_cell_lon, &
+                                    this%current_cell_to_fill_lat, &
+                                    this%current_cell_to_fill_lon,&
+                                    this%lake_number,this%lake_volume)
+    this%primary_merge_completed = .true.
+    this%use_additional_fields = use_additional_fields
+end subroutine change_overflowing_lake_to_filling_lake
 
-function change_subsumed_lake_to_filling_lake(this) result(filling_lake)
+subroutine change_subsumed_lake_to_filling_lake(this)
   class(lake), intent(inout) :: this
-  type(lake), pointer :: filling_lake
-    allocate(filling_lake)
-    call filling_lake%initialisefillinglake(this%lake_parameters,this%lake_fields, &
-                                            this%center_cell_lat, &
-                                            this%center_cell_lon, &
-                                            this%current_cell_to_fill_lat, &
-                                            this%current_cell_to_fill_lon,&
-                                            this%lake_number,this%lake_volume)
-    filling_lake%primary_merge_completed = .false.
-    filling_lake%use_additional_fields = .false.
-end function change_subsumed_lake_to_filling_lake
+    call this%initialisefillinglake(this%lake_parameters,this%lake_fields, &
+                                    this%center_cell_lat, &
+                                    this%center_cell_lon, &
+                                    this%current_cell_to_fill_lat, &
+                                    this%current_cell_to_fill_lon,&
+                                    this%lake_number,this%lake_volume)
+    this%primary_merge_completed = .false.
+    this%use_additional_fields = .false.
+end subroutine change_subsumed_lake_to_filling_lake
 
 subroutine update_filling_cell(this)
   class(lake), intent(inout) :: this
