@@ -171,6 +171,7 @@ subroutine testLakeModel1
    integer :: i,j
    logical :: instant_throughflow_local
    real :: lake_retention_coefficient_local
+   integer :: lake_type
       no_merge_mtype = 0
       connection_merge_not_set_flood_merge_as_secondary = 10
       timesteps = 1000
@@ -528,16 +529,16 @@ subroutine testLakeModel1
           lake_number = lake_fields_out%lake_numbers(i,j)
           if (lake_number > 0) then
             working_lake_ptr = lake_prognostics_out%lakes(lake_number)
-            select type(working_lake => working_lake_ptr%lake_pointer)
-            type is (FillingLake)
+            lake_type = working_lake_ptr%lake_pointer%lake_type
+            if (lake_type == filling_lake_type) then
               lake_types(i,j) = 1
-            type is (OverflowingLake)
+            else if (lake_type == overflowing_lake_type) then
               lake_types(i,j) = 2
-            type is (SubsumedLake)
+            else if (lake_type == subsumed_lake_type) then
               lake_types(i,j) = 3
-            class default
+            else
               lake_types(i,j) = 4
-            end select
+            end if
           end if
         end do
       end do
@@ -636,6 +637,7 @@ subroutine testLakeModel2
   integer :: i,j
   logical :: instant_throughflow_local
   real :: lake_retention_coefficient_local
+  integer :: lake_type
     no_merge_mtype = 0
     connection_merge_not_set_flood_merge_as_primary = 9
     connection_merge_not_set_flood_merge_as_secondary = 10
@@ -1403,16 +1405,16 @@ subroutine testLakeModel2
         lake_number = lake_fields_out%lake_numbers(i,j)
         if (lake_number > 0) then
           working_lake_ptr = lake_prognostics_out%lakes(lake_number)
-          select type(working_lake => working_lake_ptr%lake_pointer)
-          type is (FillingLake)
-            lake_types(i,j) = 1
-          type is (OverflowingLake)
-            lake_types(i,j) = 2
-          type is (SubsumedLake)
-            lake_types(i,j) = 3
-          class default
-            lake_types(i,j) = 4
-          end select
+          lake_type = working_lake_ptr%lake_pointer%lake_type
+            if (lake_type == filling_lake_type) then
+              lake_types(i,j) = 1
+            else if (lake_type == overflowing_lake_type) then
+              lake_types(i,j) = 2
+            else if (lake_type == subsumed_lake_type) then
+              lake_types(i,j) = 3
+            else
+              lake_types(i,j) = 4
+            end if
         end if
       end do
     end do
