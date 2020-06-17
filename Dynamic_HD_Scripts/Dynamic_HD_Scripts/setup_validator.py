@@ -120,16 +120,26 @@ class SetupValidator(object):
                 continue
             if config_layout.is_terminal_node():
                 config_layout_instance = config_layout.create_instance()
-                output_str += ";Configuration Name: {0}".\
-                                format(config_layout_instance.get_operation_name())
-                output_str += '\n ;Required'
+                output_str += ";Configuration Name: {0} {1}".\
+                                format(config_layout_instance.get_operation_name(),
+                                       config_layout_instance.get_subtitle())
+                output_str += '\n ;Required Sections'
                 for key in config_layout_instance.required_input_fields.keys():
                     output_str += "\n[{0}]".format(key)
+                    output_str += '\n ;Required Fields'
                     for value in config_layout_instance.required_input_fields[key]:
-                        output_str +=  "\n    " + str(value)
-                output_str += '\n ;Optional'
-                for key in config_layout_instance.optional_input_fields.keys():
-                    output_str += "\n[{0}]".format(key)
-                    for value in config_layout_instance.optional_input_fields[key]:                 output_str +=  "\n    " + str(value)
+                        output_str +=  "\n    " + value.str_with_prefilling(config_layout)
+                    if key in config_layout_instance.optional_input_fields.keys():
+                        output_str += '\n ;Optional Fields'
+                        for value in config_layout_instance.optional_input_fields[key]:
+                            output_str +=  "\n    " + value.str_with_prefilling(config_layout)
+                if (set(config_layout_instance.optional_input_fields.keys()) -
+                    set(config_layout_instance.required_input_fields.keys())):
+                    output_str += '\n ;Optional Sections'
+                    for key in list(set(config_layout_instance.optional_input_fields.keys()) -
+                                    set(config_layout_instance.required_input_fields.keys())):
+                        output_str += "\n[{0}]".format(key)
+                        for value in config_layout_instance.optional_input_fields[key]:
+                            output_str +=  "\n    " + value.str_with_prefilling(config_layout)
                 output_str += "\n\n"
         return output_str

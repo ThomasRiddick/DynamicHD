@@ -1747,6 +1747,42 @@ class Utilities_Drivers(Dynamic_HD_Drivers):
                                  compute_catchments=True,
                                  grid_type='LatLong10min')
 
+    def make_hdpara_for_pt_boundary_rdirs(self):
+        rdir_file = ("/Users/thomasriddick/Documents/data/temp/ptrbound_hdpara2/"
+                     "ptr_rdirs_30min.nc")
+        lsmask_file_inv = ("/Users/thomasriddick/Documents/data/temp/ptrbound_hdpara2/"
+                           "ptr_lsm_30min_from_guassian_inv_cnf_inv_inverted.nc")
+        lsmask_file = ("/Users/thomasriddick/Documents/data/temp/ptrbound_hdpara2/"
+                       "ptr_lsm_30min_from_guassian_inv_cnf_inv.nc")
+        self._generate_flow_parameters(rdir_file=rdir_file,
+                                       topography_file=
+                                       "/Users/thomasriddick/Documents/data/temp/ptrbound_hdpara2/"
+                                       "orog_ptr_30min_filled.nc",
+                                       inner_slope_file=\
+                                       path.join(self.orography_path,'bin_innerslope.dat'),
+                                       lsmask_file=lsmask_file_inv,
+                                       null_file=\
+                                       path.join(self.null_fields_filepath,'null.dat'),
+                                       area_spacing_file=\
+                                       path.join(self.grid_areas_and_spacings_filepath,
+                                                 'fl_dp_dl.dat'),
+                                       orography_variance_file=\
+                                       path.join(self.orography_path,'bin_toposig.dat'),
+                                       output_dir="/Users/thomasriddick/Documents/data/"
+                                                  "temp/ptrbound_hdpara2/output")
+        self._generate_hd_file(rdir_file=path.splitext(rdir_file)[0] + ".dat",
+                               lsmask_file=lsmask_file,
+                               null_file=\
+                               path.join(self.null_fields_filepath,'null.dat'),
+                               area_spacing_file=\
+                               path.join(self.grid_areas_and_spacings_filepath,
+                                         'fl_dp_dl.dat'),
+                               hd_grid_specs_file=self.half_degree_grid_filepath,
+                               output_file="/Users/thomasriddick/Documents/data/temp/"
+                                           "ptrbound_hdpara2/output/hdpara.nc",
+                               paras_dir="/Users/thomasriddick/Documents/data/temp/"
+                                         "ptrbound_hdpara2/output")
+
 class Original_HD_Model_RFD_Drivers(Dynamic_HD_Drivers):
     """Drive processes using the present day manually corrected river directions currently in JSBACH"""
 
@@ -3979,7 +4015,8 @@ def main():
     #etopo1_data_drivers.etopo1_data_all_points()
     #etopo1_data_drivers.etopo1_data_ALG4_sinkless()
     utilities_drivers = Utilities_Drivers()
-    utilities_drivers.add_grid_to_corrected_orography()
+    utilities_drivers.make_hdpara_for_pt_boundary_rdirs()
+    #utilities_drivers.add_grid_to_corrected_orography()
     #utilities_drivers.convert_hydrosheds_30s_river_directions_to_one_to_nine_format()
     #utilities_drivers.mark_river_mouths_on_hydrosheds_30s_rdirs()
     #utilities_drivers.upscale_hydrosheds_30s_rdirs_to_10min()

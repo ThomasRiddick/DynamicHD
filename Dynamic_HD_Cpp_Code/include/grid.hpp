@@ -10,10 +10,12 @@
 
 #include <sstream>
 #include <functional>
+#include <vector>
 #if USE_NETCDFCPP
 #include <netcdf>
 #endif
 #include "coords.hpp"
+#include "enums.hpp"
 using namespace std;
 #if USE_NETCDFCPP
 using namespace netCDF;
@@ -134,6 +136,7 @@ protected:
  */
 
 class latlon_grid : public grid {
+protected:
 	int nlat;
 	int nlon;
 	//Used by the Tarasov Upscaling Code - numbers used
@@ -204,9 +207,9 @@ public:
 };
 
 class irregular_latlon_grid : public latlon_grid {
-	bool* grid_mask = nullptr
-	int* edge_mask = nullptr
-	int* secondary_edge_mask = nullptr
+	bool* grid_mask = nullptr;
+	int* edge_mask = nullptr;
+	int* secondary_edge_mask = nullptr;
 	bool* corner_mask = nullptr;
 	vector<double*> edge_seperations;
 	geometry_types geometry_type;
@@ -244,7 +247,7 @@ public:
 	//called from the base class via a switch-case statement and
 	//static casting
 	///is given point outside limits of grid
-	bool latlon_outside_limits(latlon_coords* coords);
+	bool irregular_latlon_outside_limits(latlon_coords* coords);
 	//Implementations of virtual functions of the base class
 	bool is_corner_cell(coords*);
 	bool is_edge(coords*);
@@ -586,7 +589,7 @@ inline bool latlon_grid::latlon_outside_limits(latlon_coords* coords){
 	else return (coords->get_lat() < 0 || coords->get_lat() >= nlat);
 }
 
-inline bool irregular_latlon_grid::irregular_latlon_outside_limits(latlon_coords* coords)
+inline bool irregular_latlon_grid::irregular_latlon_outside_limits(latlon_coords* coords){
 	if (coords->get_lat() < 0 || coords->get_lat() >= nlat ||
 			coords->get_lon() < 0 || coords->get_lon() >= nlon) return true;
 	else return (! grid_mask[get_index(coords)]);
