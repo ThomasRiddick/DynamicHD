@@ -47,7 +47,14 @@ $(FRUIT_LOC)/fruit.f90 \
 ../src/latlon_to_icon_loop_breaker_simple_interface.f90 \
 ../src/accumulate_flow_icon_simple_interface.f90 \
 ../src/cross_grid_mapper_latlon_to_icon_simple_interface.f90 \
-../src/cross_grid_mapper.f90
+../src/cross_grid_mapper.f90 \
+../src/icosohedral_lake_model_mod.f90 \
+../src/icosohedral_lake_model_io_mod.f90 \
+../src/icosohedral_lake_model_interface_mod.f90 \
+../src/icosohedral_hd_model_mod.f90 \
+../src/icosohedral_hd_model_io_mod.f90 \
+../src/icosohedral_hd_model_interface_mod.f90 \
+../src/icosohedral_hd_model_driver.f90
 
 OBJS += \
 ./src/precision_mod.o \
@@ -102,6 +109,17 @@ LATLON_HD_AND_LAKE_MODEL_OBJS += \
 ./src/latlon_hd_model_io_mod.o \
 ./src/latlon_hd_model_interface_mod.o \
 ./src/latlon_hd_model_driver.o
+
+ICOSOHEDRAL_HD_AND_LAKE_MODEL_OBJS += \
+./src/parameters_mod.o \
+./src/check_return_code_netcdf_mod.o \
+./src/icosohedral_lake_model_mod.o \
+./src/icosohedral_lake_model_interface_mod.o \
+./src/icosohedral_lake_model_io_mod.o \
+./src/icosohedral_hd_model_mod.o \
+./src/icosohedral_hd_model_io_mod.o \
+./src/icosohedral_hd_model_interface_mod.o \
+./src/icosohedral_hd_model_driver.o
 
 TEST_OBJS += \
 ./src/fruit.o \
@@ -175,7 +193,14 @@ MODS += \
 ./icon_to_latlon_landsea_downscaler_simple_interface.mod \
 ./latlon_to_icon_loop_breaker_simple_interface.mod \
 ./cross_grid_mapper_latlon_to_icon_simple_interface.mod \
-./cross_grid_mapper.mod
+./cross_grid_mapper.mod \
+./icosohedral_lake_model_mod.mod \
+./icosohedral_lake_model_io_mod.mod \
+./icosohedral_lake_model_interface_mod.mod \
+./icosohedral_hd_model_interface_mod.mod \
+./icosohedral_hd_model_io_mod.mod \
+./icosohedral_hd_model_mod.mod \
+./icosohedral_hd_model_driver.mod
 
 # Each subdirectory must supply rules for building sources it contributes
 ifeq ($(FORTRAN),$(GFORTRAN))
@@ -312,5 +337,21 @@ src/cross_grid_mapper.o: ../src/cross_grid_mapper.f90 src/precision_mod.o src/ch
 src/cross_grid_mapper_latlon_to_icon_simple_interface.o: ../src/cross_grid_mapper_latlon_to_icon_simple_interface.f90 src/check_return_code_netcdf_mod.o ../src/cross_grid_mapper.f90
 
 src/accumulate_flow_icon_simple_interface.o: ../src/accumulate_flow_icon_simple_interface.f90  src/accumulate_flow_mod.o src/check_return_code_netcdf_mod.o
+
+src/icosohedral_hd_model_mod.o: ../src/icosohedral_hd_model_mod.f90 src/icosohedral_lake_model_interface_mod.o
+
+src/icosohedral_hd_model_io_mod.o: ../src/icosohedral_hd_model_io_mod.f90 src/icosohedral_hd_model_mod.o
+
+src/icosohedral_hd_model_interface_mod.o: ../src/icosohedral_hd_model_interface_mod.f90 src/icosohedral_hd_model_mod.o src/icosohedral_hd_model_io_mod.o
+
+src/icosohedral_lake_model_mod.o: ../src/icosohedral_lake_model_mod.f90
+
+src/icosohedral_lake_model_interface_mod.o: ../src/icosohedral_lake_model_interface_mod.f90 src/icosohedral_lake_model_mod.o src/icosohedral_lake_model_io_mod.o
+
+src/icosohedral_lake_model_io_mod.o: ../src/icosohedral_lake_model_io_mod.f90   src/icosohedral_lake_model_mod.o src/parameters_mod.o src/check_return_code_netcdf_mod.o
+
+src/icosohedral_hd_model_driver.o: ../src/icosohedral_hd_model_driver.f90 src/icosohedral_hd_model_interface_mod.o src/parameters_mod.o
+
+
 
 

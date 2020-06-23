@@ -66,7 +66,7 @@ endif
 # Add inputs and outputs from these tool invocations to the build variables
 
 # All Target
-all: Dynamic_HD_Fortran_Code COTAT_Plus_LatLon_To_Icon_Simple_Interface_Code LatLon_Lake_Model_Driver_Code Icon_To_LatLon_Landsea_Downscaler_Simple_Interface LatLon_Icon_Loop_Breaker_Simple_Interface_Code LatLon_To_Icon_Cross_Grid_Mapper_Simple_Interface Accumulate_Flow_Icon_Simple_Interface
+all: Dynamic_HD_Fortran_Code COTAT_Plus_LatLon_To_Icon_Simple_Interface_Code LatLon_Lake_Model_Driver_Code Icon_To_LatLon_Landsea_Downscaler_Simple_Interface LatLon_Icon_Loop_Breaker_Simple_Interface_Code LatLon_To_Icon_Cross_Grid_Mapper_Simple_Interface Accumulate_Flow_Icon_Simple_Interface Icosohedral_Lake_Model_Driver_Code
 
 # Tool invocations
 tools_only: $(OBJS) $(USER_OBJS) COTAT_Plus_LatLon_To_Icon_Simple_Interface_Code LatLon_Lake_Model_Driver_Code Icon_To_LatLon_Landsea_Downscaler_Simple_Interface LatLon_Icon_Loop_Breaker_Simple_Interface_Code LatLon_To_Icon_Cross_Grid_Mapper_Simple_Interface Accumulate_Flow_Icon_Simple_Interface
@@ -114,6 +114,12 @@ LatLon_Lake_Model_Driver_Code: $(OBJS) $(LATLON_HD_AND_LAKE_MODEL_OBJS) $(USER_O
 	@echo 'Finished building target: $@'
 	@echo ' '
 
+Icosohedral_Lake_Model_Driver_Code: $(OBJS) $(ICOSOHEDRAL_HD_AND_LAKE_MODEL_OBJS) $(USER_OBJS)
+	@echo 'Building target: $@'
+	$(FORTRAN) -o "Icosohedral_Lake_Model_Driver_Exec" $(OBJS) $(ICOSOHEDRAL_HD_AND_LAKE_MODEL_OBJS) $(USER_OBJS) $(LIBS)
+	@echo 'Finished building target: $@'
+	@echo ' '
+
 # Other Targets
 clean:
 	-$(RM) $(EXECUTABLES) $(OBJS) $(TEST_OBJS) $(LATLON_HD_AND_LAKE_MODEL_OBJS) $(C_DEPS) Dynamic_HD_Fortran_Exec
@@ -121,6 +127,7 @@ clean:
 	-$(RM) $(ICON_TO_LATLON_LANDSEA_DOWNSCALER_SIMPLE_INTERFACE_OBJS)
 	-$(RM) $(ACCUMULATE_FLOW_ICON_SIMPLE_INTERFACE_OBJS)
 	-$(RM) $(LATLON_TO_ICON_LOOP_BREAKER_SIMPLE_INTERFACE_OBJS)
+	-$(RM) $(ICOSOHEDRAL_HD_AND_LAKE_MODEL_OBJS)
 	-$(RM) Icon_To_LatLon_Landsea_Downscaler_Simple_Interface
 	-$(RM) LatLon_Lake_Model_Driver_Exec
 	-$(RM) Accumulate_Flow_Icon_Simple_Interface_Exec

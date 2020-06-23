@@ -29,6 +29,7 @@ string LATITUDE = "latitude";
 string CENTER_LATITUDE = "center latitude";
 string LONGITUDE = "longitude";
 string CENTER_LONGITUDE = "center longitude";
+string NONE = string();
 
 void print_usage(){
 
@@ -36,6 +37,26 @@ void print_usage(){
 
 void print_help(){
 
+}
+
+void write_variable(NcFile* file_in,string var_name_in,string long_name_in,
+                    string units_in,NcDim index_in,double* data_in){
+  NcVar var = file_in->addVar(var_name_in,ncDouble,index_in);
+  var.putAtt(LONG_NAME,"basin volume threshold for cell to overflow");
+  if(!units_in.empty()) var.putAtt(UNITS,units_in);
+  var.putAtt(GRID_TYPE,UNSTRUCTURED);
+  var.putAtt(COORDINATES,"clat clon");
+  var.putVar(data_in);
+}
+
+void write_variable(NcFile* file_in,string var_name_in,string long_name_in,
+                    string units_in,NcDim index_in,int* data_in){
+  NcVar var = file_in->addVar(var_name_in,ncInt,index_in);
+  var.putAtt(LONG_NAME,"basin volume threshold for cell to overflow");
+  if(!units_in.empty()) var.putAtt(UNITS,units_in);
+  var.putAtt(GRID_TYPE,UNSTRUCTURED);
+  var.putAtt(COORDINATES,"clat clon");
+  var.putVar(data_in);
 }
 
 int main(int argc, char *argv[]){
@@ -53,7 +74,7 @@ int main(int argc, char *argv[]){
     cout << "Run with option -h for help" << endl;
     exit(EXIT_FAILURE);
   }
-  if(argc>11) {
+  if(argc>12) {
     cout << "Too many arguments" << endl;
     print_usage();
     cout << "Run with option -h for help" << endl;
@@ -71,6 +92,11 @@ int main(int argc, char *argv[]){
   string prior_rdirs_fieldname(argv[10]);
   string prior_catchments_fieldname(argv[11]);
   bool use_secondary_neighbors_in  = true;
+  bool use_simple_output_format = true;
+  if (argc >= 11){
+    string simple_output_format_string(argv[12]);
+    use_simple_output_format = bool(stoi(simple_output_format_string));
+  }
 
   cout << "Loading grid parameters from:" << endl;
   cout << grid_params_filepath << endl;
@@ -164,42 +190,87 @@ int main(int argc, char *argv[]){
                                     grid_params_in->get_secondary_neighboring_cell_indices(),
                                     grid_params_in->get_secondary_neighboring_cell_indices(),
                                     basin_catchment_numbers_in);
-  NcFile basin_para_out_file(basin_para_out_filepath.c_str(),
-                             NcFile::newFile);
-  NcDim index = basin_para_out_file.addDim("ncells",ncells);
-  NcDim vertices = basin_para_out_file.addDim("vertices",3);
-  NcVar volume_thresholds_out_var = basin_para_out_file.addVar("volume_thresholds",
-                                                                ncDouble,index);
-  volume_thresholds_out_var.putAtt(LONG_NAME,"basin volume threshold for cell to overflow");
-  volume_thresholds_out_var.putAtt(UNITS,METRESCUBED);
-  volume_thresholds_out_var.putAtt(GRID_TYPE,UNSTRUCTURED);
-  volume_thresholds_out_var.putAtt(COORDINATES,"clat clon");
-  volume_thresholds_out_var.putVar(flood_volume_thresholds_in);
-  NcVar next_cell_index_out_var = basin_para_out_file.addVar("next_cell_index",
-                                                             ncInt,index);
-  next_cell_index_out_var.putAtt(LONG_NAME,
-                                 "index of the next cell to fill when this one overflows");
-  next_cell_index_out_var.putAtt(GRID_TYPE,UNSTRUCTURED);
-  next_cell_index_out_var.putAtt(COORDINATES,"clat clon");
-  next_cell_index_out_var.putVar(flood_next_cell_index_in);
-  NcVar flood_redirect_index_out_var = basin_para_out_file.addVar("flood_redirect_index",
-                                                                  ncInt,index);
-  flood_redirect_index_out_var.putAtt(LONG_NAME,
-                                      "index of the cell to redirect water to when this basins overflows");
-  flood_redirect_index_out_var.putAtt(GRID_TYPE,UNSTRUCTURED);
-  flood_redirect_index_out_var.putAtt(COORDINATES,"clat clon");
-  flood_redirect_index_out_var.putVar(flood_redirect_index_in);
-  NcVar merge_points_out_int_var = basin_para_out_file.addVar("overflow_points",
-                                                              ncInt,index);
-  merge_points_out_int_var.putAtt(LONG_NAME,
-                                  "points where a lake overflows");
-  merge_points_out_int_var.putAtt(GRID_TYPE,UNSTRUCTURED);
-  merge_points_out_int_var.putAtt(COORDINATES,"clat clon");
-  merge_points_out_int_var.putVar(merge_points_out_int);
-  NcVar clat_out = basin_para_out_file.addVar("clat",ncDouble,index);
-  NcVar clon_out = basin_para_out_file.addVar("clon",ncDouble,index);
-  NcVar clat_bnds_out = basin_para_out_file.addVar("clat_bnds",ncDouble,vector<NcDim>{index,vertices});
-  NcVar clon_bnds_out = basin_para_out_file.addVar("clon_bnds",ncDouble,vector<NcDim>{index,vertices});
+  NcFile* basin_para_out_file = new NcFile(basin_para_out_filepath.c_str(),
+                                           NcFile::newFile);
+  NcDim index = basin_para_out_file->addDim("ncells",ncells);
+  NcDim vertices = basin_para_out_file->addDim("vertices",3);
+  if (use_simple_output_format) {
+    write_variable(basin_para_out_file,"basin_volume_threshold",
+                   "basin volume threshold for cell to overflow",
+                   METRESCUBED,index,flood_volume_thresholds_in);
+    write_variable(basin_para_out_file,"next_cell_index",
+                   "index of the next cell to fill when this one overflows",
+                   NONE,index,flood_next_cell_index_in);
+    write_variable(basin_para_out_file,"flood_redirect_index",
+                   "index of the cell to redirect water to when this basins overflows",
+                   NONE,index,flood_next_cell_index_in);
+    write_variable(basin_para_out_file,"overflow_points",
+                   "points where a lake overflow",
+                   NONE,index,merge_points_out_int);
+  } else {
+    auto flood_local_redirect_in_int = new int[ncells];
+    auto connect_local_redirect_in_int = new int[ncells];
+    auto additional_flood_local_redirect_in_int = new int[ncells];
+    auto additional_connect_local_redirect_in_int = new int[ncells];
+    for (int i = 0; i<ncells;i++){
+      flood_local_redirect_in_int[i] = int(flood_local_redirect_in[i]);
+      connect_local_redirect_in_int[i] = int(connect_local_redirect_in[i]);
+      additional_flood_local_redirect_in_int[i] = int(additional_flood_local_redirect_in[i]);
+      additional_connect_local_redirect_in_int[i] = int(additional_connect_local_redirect_in[i]);
+    }
+    write_variable(basin_para_out_file,"flood_volume_thresholds",
+                   "flood volume threshold for cell to overflow",
+                   METRESCUBED,index,flood_volume_thresholds_in);
+    write_variable(basin_para_out_file,"connect_volume_thresholds",
+                   "connect volume threshold for cell to overflow",
+                   METRESCUBED,index,connection_volume_thresholds_in);
+    write_variable(basin_para_out_file,"flood_next_cell_index",
+                   "index of the next cell to fill when this one overflows",
+                   NONE,index,flood_next_cell_index_in);
+    write_variable(basin_para_out_file,"connect_next_cell_index",
+                   "index of the next cell to fill when this one connects",
+                   NONE,index,connect_next_cell_index_in);
+    write_variable(basin_para_out_file,"merge_points",
+                   "points where a lake overflow",
+                   NONE,index,merge_points_out_int);
+    write_variable(basin_para_out_file,"flood_force_merge_index",
+                   "flood force merge index",
+                   NONE,index,flood_force_merge_index_in);
+    write_variable(basin_para_out_file,"connect_force_merge_index",
+                   "connect force merge index",
+                   NONE,index,connect_force_merge_index_in);
+    write_variable(basin_para_out_file,"flood_redirect_index_in",
+                   "flood redirect index",
+                   NONE,index,flood_redirect_index_in);
+    write_variable(basin_para_out_file,"connect_redirect_index",
+                   "connect redirect index",
+                   NONE,index,connect_redirect_index_in);
+    write_variable(basin_para_out_file,"additional_flood_redirect_index",
+                   "additional flood redirect index",
+                   NONE,index,additional_flood_redirect_index_in);
+    write_variable(basin_para_out_file,"additional_connect_redirect_index",
+                   "additional connect redirect index",
+                   NONE,index,additional_connect_redirect_index_in);
+    write_variable(basin_para_out_file,"flood_local_redirect",
+                   "flood local redirect",
+                   NONE,index,flood_local_redirect_in_int);
+    write_variable(basin_para_out_file,"connect_local_redirect",
+                   "connect local redirect",
+                   NONE,index,connect_local_redirect_in_int);
+    write_variable(basin_para_out_file,"additional_flood_local_redirect",
+                   "additional flood local redirect",
+                   NONE,index,additional_flood_local_redirect_in_int);
+    write_variable(basin_para_out_file,"additional_connect_local_redirect",
+                   "additional connect local redirect",
+                   NONE,index,additional_connect_local_redirect_in_int);
+    write_variable(basin_para_out_file,"lake_centers",
+                   "lake centers",
+                   NONE,index,minima_in_int);
+  }
+  NcVar clat_out = basin_para_out_file->addVar("clat",ncDouble,index);
+  NcVar clon_out = basin_para_out_file->addVar("clon",ncDouble,index);
+  NcVar clat_bnds_out = basin_para_out_file->addVar("clat_bnds",ncDouble,vector<NcDim>{index,vertices});
+  NcVar clon_bnds_out = basin_para_out_file->addVar("clon_bnds",ncDouble,vector<NcDim>{index,vertices});
   clat_out.putVar(clat_local);
   clat_out.putAtt(STANDARD_NAME,LATITUDE);
   clat_out.putAtt(LONG_NAME,CENTER_LATITUDE);
@@ -212,22 +283,18 @@ int main(int argc, char *argv[]){
   clon_out.putAtt(BOUNDS,"clon_bnds");
   clat_bnds_out.putVar(clat_bnds_local);
   clon_bnds_out.putVar(clon_bnds_local);
-  NcFile basin_catchment_numbers_out_file(basin_catchment_numbers_out_filepath.c_str(),
-                                          NcFile::newFile);
-  NcDim index_bc = basin_catchment_numbers_out_file.addDim("ncells",ncells);
-  NcVar basin_catchment_numbers_out_var =
-    basin_catchment_numbers_out_file.addVar("basin_catchment_numbers",
-                                            ncInt,index_bc);
-  basin_catchment_numbers_out_var.putAtt(LONG_NAME,"basin catchment numbers");
-  basin_catchment_numbers_out_var.putAtt(GRID_TYPE,UNSTRUCTURED);
-  basin_catchment_numbers_out_var.putAtt(COORDINATES,"clat clon");
-  basin_catchment_numbers_out_var.putVar(basin_catchment_numbers_in);
-  NcVar clat_out_bc = basin_catchment_numbers_out_file.addVar("clat",ncDouble,index_bc);
-  NcVar clon_out_bc = basin_catchment_numbers_out_file.addVar("clon",ncDouble,index_bc);
+  NcFile* basin_catchment_numbers_out_file = new NcFile(basin_catchment_numbers_out_filepath.c_str(),
+                                                        NcFile::newFile);
+  NcDim index_bc = basin_catchment_numbers_out_file->addDim("ncells",ncells);
+  write_variable(basin_para_out_file,"basin_catchment_numbers",
+                 "basin catchment numbers",
+                 NONE,index,basin_catchment_numbers_in);
+  NcVar clat_out_bc = basin_catchment_numbers_out_file->addVar("clat",ncDouble,index_bc);
+  NcVar clon_out_bc = basin_catchment_numbers_out_file->addVar("clon",ncDouble,index_bc);
   NcVar clat_bnds_out_bc =
-    basin_catchment_numbers_out_file.addVar("clat_bnds",ncDouble,vector<NcDim>{index_bc,vertices});
+    basin_catchment_numbers_out_file->addVar("clat_bnds",ncDouble,vector<NcDim>{index_bc,vertices});
   NcVar clon_bnds_out_bc =
-    basin_catchment_numbers_out_file.addVar("clon_bnds",ncDouble,vector<NcDim>{index_bc,vertices});
+    basin_catchment_numbers_out_file->addVar("clon_bnds",ncDouble,vector<NcDim>{index_bc,vertices});
   clat_out_bc.putVar(clat_local);
   clat_out_bc.putAtt(STANDARD_NAME,LATITUDE);
   clat_out_bc.putAtt(LONG_NAME,CENTER_LATITUDE);
