@@ -26,9 +26,9 @@ xleftmargin=0.1\linewidth
 
 \DeclareGraphicsRule{.tif}{png}{.png}{`convert #1 `dirname #1`/`basename #1 .tif`.png}
 
-\title{Instruction for Running the Dynamic HD Parameter and Restart File Generation Code Version 3.3}
+\title{Instruction for Running the Dynamic HD Parameter and Restart File Generation Code Version 3.7}
 \author{Thomas Riddick}
-\date{4th December 2018}
+\date{24th June 2020}
 \begin{document}
 \lstset{language=bash}
 \maketitle
@@ -58,11 +58,11 @@ mkdir workdir
 mkdir outputdir_step1
 mkdir outputdir_step2
 \end{lstlisting}
-\item Download the dynamic HD code and switch the repository to version 3.3. (Be sure to perform this last step; older versions probably won't work anymore and if they do then they will likely give erroneous results.). The code is stored on Github; you could also download it from Zenodo.
+\item Download the dynamic HD code and switch the repository to version 3.7. (Be sure to perform this last step; older versions probably won't work anymore and if they do then they will likely give erroneous results.). The code is stored on Github; you could also download it from Zenodo.
 \begin{lstlisting}[style=bash_input,breaklines=true]
 git clone https://github.com/ThomasRiddick/DynamicHD.git Dynamic_HD_Code
 cd Dynamic_HD_Code
-git checkout release_version_3.3
+git checkout release_version_3.7
 cd ..
 \end{lstlisting}
 \item Download the parameter generation scripts (which are a separate submodule that is nested inside the dynamic HD code). The code is stored in my home area. Thus you can change  \lstinline[style=bash_input]{dattel} (the name of my machine) to the name of your own machine if you wish.

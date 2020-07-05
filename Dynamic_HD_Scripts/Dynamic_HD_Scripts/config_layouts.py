@@ -89,7 +89,7 @@ class printable_lambda(Condition):
     self.func_string = func_string
 
   def __call__(self,value):
-    return func(value)
+    return self.func(value)
 
   def __str__(self):
     return self.func_string
