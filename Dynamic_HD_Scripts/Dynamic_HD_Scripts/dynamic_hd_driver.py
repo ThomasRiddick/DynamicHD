@@ -1783,6 +1783,54 @@ class Utilities_Drivers(Dynamic_HD_Drivers):
                                paras_dir="/Users/thomasriddick/Documents/data/temp/"
                                          "ptrbound_hdpara2/output")
 
+    def make_hdpara_for_pt_boundary_rdirs_scotese(self):
+        rdir_file = ("/Users/thomasriddick/Documents/data/temp/ptrbound_hdpara3/"
+                     "scotese_255ma_rdirs.nc")
+        lsmask_file = ("/Users/thomasriddick/Documents/data/temp/ptrbound_hdpara3/"
+                       "scotese_255ma_lsm.nc")
+        transformed_lsmask_file_inv = ("/Users/thomasriddick/Documents/data/temp/ptrbound_hdpara3/"
+                                       "scotese_255ma_lsm_transf.nc")
+        transformed_lsmask_file = ("/Users/thomasriddick/Documents/data/temp/ptrbound_hdpara3/"
+                                   "scotese_255ma_lsm_inv_transf.nc")
+        self._apply_transforms_to_field(input_filename=lsmask_file,
+                                        output_filename=transformed_lsmask_file_inv,
+                                        flip_ud=True, rotate180lr=True, invert_data=True,
+                                        timeslice=None, griddescfile=self.half_degree_grid_filepath,
+                                        grid_type='HD')
+        self._apply_transforms_to_field(input_filename=lsmask_file,
+                                        output_filename=transformed_lsmask_file,
+                                        flip_ud=True, rotate180lr=True, invert_data=False,
+                                        timeslice=None, griddescfile=self.half_degree_grid_filepath,
+                                        grid_type='HD')
+        self._generate_flow_parameters(rdir_file=rdir_file,
+                                       topography_file=
+                                       "/Users/thomasriddick/Documents/data/temp/ptrbound_hdpara3/"
+                                       "scotese_255ma_sink-filled.nc",
+                                       inner_slope_file=\
+                                       path.join(self.orography_path,'bin_innerslope.dat'),
+                                       lsmask_file=transformed_lsmask_file_inv,
+                                       null_file=\
+                                       path.join(self.null_fields_filepath,'null.dat'),
+                                       area_spacing_file=\
+                                       path.join(self.grid_areas_and_spacings_filepath,
+                                                 'fl_dp_dl.dat'),
+                                       orography_variance_file=\
+                                       path.join(self.orography_path,'bin_toposig.dat'),
+                                       output_dir="/Users/thomasriddick/Documents/data/"
+                                                  "temp/ptrbound_hdpara3/output")
+        self._generate_hd_file(rdir_file=path.splitext(rdir_file)[0] + ".dat",
+                               lsmask_file=transformed_lsmask_file,
+                               null_file=\
+                               path.join(self.null_fields_filepath,'null.dat'),
+                               area_spacing_file=\
+                               path.join(self.grid_areas_and_spacings_filepath,
+                                         'fl_dp_dl.dat'),
+                               hd_grid_specs_file=self.half_degree_grid_filepath,
+                               output_file="/Users/thomasriddick/Documents/data/temp/"
+                                           "ptrbound_hdpara3/output/hdpara.nc",
+                               paras_dir="/Users/thomasriddick/Documents/data/temp/"
+                                         "ptrbound_hdpara3/output")
+
 class Original_HD_Model_RFD_Drivers(Dynamic_HD_Drivers):
     """Drive processes using the present day manually corrected river directions currently in JSBACH"""
 
@@ -4015,7 +4063,8 @@ def main():
     #etopo1_data_drivers.etopo1_data_all_points()
     #etopo1_data_drivers.etopo1_data_ALG4_sinkless()
     utilities_drivers = Utilities_Drivers()
-    utilities_drivers.make_hdpara_for_pt_boundary_rdirs()
+    #utilities_drivers.make_hdpara_for_pt_boundary_rdirs()
+    utilities_drivers.make_hdpara_for_pt_boundary_rdirs_scotese()
     #utilities_drivers.add_grid_to_corrected_orography()
     #utilities_drivers.convert_hydrosheds_30s_river_directions_to_one_to_nine_format()
     #utilities_drivers.mark_river_mouths_on_hydrosheds_30s_rdirs()
