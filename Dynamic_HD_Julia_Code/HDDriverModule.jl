@@ -6,6 +6,7 @@ using HDModule: RiverParameters,RiverPrognosticFields,RiverPrognosticFieldsOnly,
 using HDModule: SetDrainage,SetRunoff,PrintResults,PrognosticFields,WriteRiverInitialValues
 using HDModule: WriteRiverFlow,AccumulateRiverFlow,ResetCumulativeRiverFlow,WriteMeanRiverFlow
 using HDModule: PrintGlobalValues, water_to_lakes,water_from_lakes,get_river_parameters
+using HDModule: SetLakeEvaporation
 using FieldModule: Field
 using LakeModule: LakeParameters,LakePrognostics,LakeFields,RiverAndLakePrognosticFields,RunLakes
 using LakeModule: PrintSection,WriteLakeNumbers,WriteLakeVolumes,SetupLakes,DistributeSpillover
@@ -147,8 +148,8 @@ end
 function drive_hd_and_lake_model(river_parameters::RiverParameters,river_fields::RiverPrognosticFields,
                                  lake_parameters::LakeParameters,lake_prognostics::LakePrognostics,
                                  lake_fields::LakeFields,drainages::Array{Field{Float64},1},
-                                 runoffs::Array{Field{Float64},1},timesteps::Int64,
-                                 lake_evaporations::Array{Field{Float64},1},
+                                 runoffs::Array{Field{Float64},1},
+                                 lake_evaporations::Array{Field{Float64},1},timesteps::Int64,
                                  process_initial_lake_water::Bool=false,
                                  initial_water_to_lake_centers::FloatFieldOrNothing=nothing,
                                  initial_spillover_to_rivers::FloatFieldOrNothing=nothing;

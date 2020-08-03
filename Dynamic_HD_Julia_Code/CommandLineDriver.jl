@@ -74,7 +74,7 @@ function main()
     lake_parameters = load_lake_parameters(args["lake-para-file"],lake_grid,grid)
     drainages_copy = deepcopy(drainages)
     runoffs_copy = deepcopy(runoffs)
-    lake_evaporations_copy = deep_copy(lake_evaporations)
+    lake_evaporations_copy = deepcopy(lake_evaporations)
     if args["hd-init-file"] != nothing
       river_fields = load_river_initial_values(args["hd-init-file"],river_parameters)
     end

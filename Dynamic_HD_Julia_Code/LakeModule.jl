@@ -18,7 +18,6 @@ abstract type Lake <: State end
 
 struct RunLakes <: Event end
 
-
 struct AddWater <: Event
  inflow::Float64
 end
@@ -35,12 +34,9 @@ struct AcceptMerge <: Event
   redirect_coords::Coords
 end
 
-struct AcceptSplit <: Event
-end
+struct AcceptSplit <: Event end
 
 struct DrainExcessWater <: Event end
-
-
 
 struct WriteLakeNumbers <: Event
   timestep::Int64
@@ -349,9 +345,10 @@ function handle_event(prognostic_fields::RiverAndLakePrognosticFields,run_lake::
   lake_prognostics::LakePrognostics = get_lake_prognostics(prognostic_fields)
   drain_excess_water::DrainExcessWater = DrainExcessWater()
   fill!(lake_fields.water_to_hd,0.0)
+  local basins_in_cell::Array{Coords,1}
   for coords::Coords in lake_fields.cells_with_lakes
     if lake_fields.water_to_lakes(coords) > 0.0
-      basins_in_cell::Array{Coords,1} =
+      basins_in_cell =
         lake_parameters.basins[lake_parameters.basin_numbers(coords)]
       share_to_each_lake = lake_fields.water_to_lakes(coords)/length(basins_in_cell)
       add_water::AddWater = AddWater(share_to_each_lake)
@@ -361,7 +358,7 @@ function handle_event(prognostic_fields::RiverAndLakePrognosticFields,run_lake::
         lake_prognostics.lakes[lake_index] = handle_event(lake,add_water)
       end
     elseif lake_fields.water_to_lakes(coords) < 0.0
-      basins_in_cell::Array{Coords,1} =
+      basins_in_cell =
         lake_parameters.basins[lake_parameters.basin_numbers(coords)]
       share_to_each_lake = lake_fields.water_to_lakes(coords)/length(basins_in_cell)
       remove_water::RemoveWater = RemoveWater(share_to_each_lake)
@@ -459,6 +456,7 @@ function handle_event(lake::FillingLake,remove_water::RemoveWater)
         rollback_primary_merge(lake,new_outflow)
         outflow -= new_outflow
       end
+    end
   end
 end
 
@@ -1040,7 +1038,6 @@ function handle_event(prognostic_fields::RiverAndLakePrognosticFields,
   lake_parameters::LakeParameters = get_lake_parameters(prognostic_fields)
   lake_prognostics::LakePrognostics = get_lake_prognostics(prognostic_fields)
   lake_fields::LakeFields = get_lake_fields(prognostic_fields)
-  println()
   print_lake_types_section(lake_parameters.grid,lake_prognostics,lake_fields)
   return prognostic_fields
 end
