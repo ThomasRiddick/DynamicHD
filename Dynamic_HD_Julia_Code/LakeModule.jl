@@ -19,9 +19,12 @@ abstract type Lake <: State end
 
 struct RunLakes <: Event end
 
-
 struct AddWater <: Event
  inflow::Float64
+end
+
+struct RemoveWater <: Event
+  outflow::Float64
 end
 
 struct StoreWater <: Event
@@ -32,9 +35,9 @@ struct AcceptMerge <: Event
   redirect_coords::Coords
 end
 
+struct AcceptSplit <: Event end
+
 struct DrainExcessWater <: Event end
-
-
 
 struct WriteLakeNumbers <: Event
   timestep::Int64
@@ -202,13 +205,15 @@ mutable struct LakeVariables
   secondary_lake_volume::Float64
   unprocessed_water::Float64
   current_cell_to_fill::Coords
+  previous_cell_to_fill::Coords
   other_lakes::Vector{Lake}
   lake_number::Int64
+  filled_lake_cells::Vector{Coords}
   LakeVariables(center_cell::Coords,
                 other_lakes::Vector{Lake},
                 lake_number::Int64) =
-    new(center_cell,0.0,0.0,0.0,deepcopy(center_cell),other_lakes,
-        lake_number)
+    new(center_cell,0.0,0.0,deepcopy(center_cell),deepcopy(center_cell),
+        other_lakes,lake_number,Vector{Coords}[])
 end
 
 get_lake_parameters(obj::T) where {T <: Lake} =
@@ -353,9 +358,10 @@ function handle_event(prognostic_fields::RiverAndLakePrognosticFields,run_lake::
   lake_prognostics::LakePrognostics = get_lake_prognostics(prognostic_fields)
   drain_excess_water::DrainExcessWater = DrainExcessWater()
   fill!(lake_fields.water_to_hd,0.0)
+  local basins_in_cell::Array{Coords,1}
   for coords::Coords in lake_fields.cells_with_lakes
     if lake_fields.water_to_lakes(coords) > 0.0
-      basins_in_cell::Array{Coords,1} =
+      basins_in_cell =
         lake_parameters.basins[lake_parameters.basin_numbers(coords)]
       share_to_each_lake = lake_fields.water_to_lakes(coords)/length(basins_in_cell)
       add_water::AddWater = AddWater(share_to_each_lake)
@@ -363,6 +369,16 @@ function handle_event(prognostic_fields::RiverAndLakePrognosticFields,run_lake::
         lake_index::Int64 = lake_fields.lake_numbers(basin_center)
         lake::Lake = lake_prognostics.lakes[lake_index]
         lake_prognostics.lakes[lake_index] = handle_event(lake,add_water)
+      end
+    elseif lake_fields.water_to_lakes(coords) < 0.0
+      basins_in_cell =
+        lake_parameters.basins[lake_parameters.basin_numbers(coords)]
+      share_to_each_lake = lake_fields.water_to_lakes(coords)/length(basins_in_cell)
+      remove_water::RemoveWater = RemoveWater(share_to_each_lake)
+      for basin_center::Coords in basins_in_cell
+        lake_index::Int64 = lake_fields.lake_numbers(basin_center)
+        lake::Lake = lake_prognostics.lakes[lake_index]
+        lake_prognostics.lakes[lake_index] = handle_event(lake,remove_water)
       end
     end
   end
@@ -436,6 +452,27 @@ function handle_event(lake::FillingLake,add_water::AddWater)
   return lake
 end
 
+function handle_event(lake::FillingLake,remove_water::RemoveWater)
+  if remove_water.outflow <= lake.lake_variables.unprocessed_water
+    lake.lake_variables.unprocessed_water -= remove_water.outflow
+    return lake
+  end
+  outflow::Float64 = remove_water.outflow - lake.lake_variables.unprocessed_water
+  lake.lake_variables.unprocessed_water = 0.0
+  while outflow > 0.0
+    outflow,drained::Bool = drain_current_cell(lake,inflow)
+    if drained
+      rollback_filling_cell(lake)
+      merge_type::SimpleMergeTypes = get_merge_type(lake)
+      if merge_type == primary_merge || merge_type == double_merge
+        new_outflow::Float64 = outflow/2.0
+        rollback_primary_merge(lake,new_outflow)
+        outflow -= new_outflow
+      end
+    end
+  end
+end
+
 function handle_event(lake::OverflowingLake,add_water::AddWater)
   lake_parameters::LakeParameters = get_lake_parameters(lake)
   lake_variables::LakeVariables = get_lake_variables(lake)
@@ -460,6 +497,40 @@ function handle_event(lake::OverflowingLake,add_water::AddWater)
   return lake_variables.other_lakes[lake_variables.lake_number]
 end
 
+function handle_event(lake::OverflowingLake,remove_water::RemoveWater)
+  lake_variables::LakeVariables = get_lake_variables(lake)
+  if remove_water.outflow <= lake_variables.unprocessed_water
+    lake_variables.unprocessed_water -= remove_water.outflow
+    return lake
+  end
+  outflow::Float64 = remove_water.outflow - lake_variables.unprocessed_water
+  lake_variables.unprocessed_water = 0.0
+  if outflow <= lake.overflowing_lake_variables.excess_water
+    lake.overflowing_lake_variables.excess_water -= outflow
+    return lake
+  end
+  outflow -= lake.overflowing_lake_variables.excess_water
+  lake.overflowing_lake_variables.excess_water = 0
+  if lake_parameters.flood_only(lake_variables.current_cell_to_fill) ||
+     lake_variables.lake_volume <=
+     lake_parameters.connection_volume_thresholds(lake_variables.current_cell_to_fill)
+    set!(lake_fields.completed_lake_cells,lake_variables.current_cell_to_fill,false)
+  end
+  lake_as_filling_lake::FillingLake = change_to_filling_lake(lake)
+  merge_type::SimpleMergeTypes = get_merge_type(lake)
+  if merge_type == double_merge
+    if lake_as_filling_lake.filling_lake_variables.primary_merge_completed
+        new_outflow::Float64 = outflow/2.0
+        rollback_primary_merge(lake,new_outflow)
+        outflow -= new_outflow
+    end
+  end
+  lake_as_filling_lake.filling_lake_variables.primary_merge_completed = false
+  lake_as_filling_lake.filling_lake_variables.use_additional_fields = false
+  new_remove_water::RemoveWater = RemoveWater(outflow)
+  return handle_event(lake_as_filling_lake,new_remove_water)
+end
+
 function handle_event(lake::Lake,store_water::StoreWater)
   lake.lake_variables.unprocessed_water += store_water.inflow
   return lake
@@ -473,6 +544,20 @@ function handle_event(lake::SubsumedLake,add_water::AddWater)
     handle_event(lake_variables.other_lakes[lake.primary_lake_number],
                  AddWater(inflow))
   return lake
+end
+
+function handle_event(lake::SubsumedLake,remove_water::RemoveWater)
+  lake_variables::LakeVariables = get_lake_variables(lake)
+  if remove_water.outflow <= lake_variables.unprocessed_water
+    lake_variables.unprocessed_water -= remove_water.outflow
+    return lake
+  end
+  outflow::Float64 = remove_water.outflow - lake_variables.unprocessed_water
+  lake_variables.unprocessed_water = 0.0
+  lake_variables.other_lakes[lake.primary_lake_number] =
+    handle_event(lake_variables.other_lakes[lake.primary_lake_number],
+                 RemoveWater(outflow))
+  return lake_variables.other_lakes[lake_variables.lake_number]::Lake
 end
 
 function handle_event(lake::Lake,accept_merge::AcceptMerge)
@@ -491,6 +576,22 @@ function handle_event(lake::Lake,accept_merge::AcceptMerge)
                                                           excess_water))
   end
   return subsumed_lake
+end
+
+function handle_event(lake::SubsumedLake,accept_split::AcceptSplit)
+  lake_parameters::LakeParameters = get_lake_parameters(lake)
+  lake_variables::LakeVariables = get_lake_variables(lake)
+  if lake_parameters.flood_only(lake_variables.current_cell_to_fill) ||
+     lake_variables.lake_volume <=
+     lake_parameters.connection_volume_thresholds(lake_variables.current_cell_to_fill)
+    set!(lake_fields.completed_lake_cells,lake_variables.current_cell_to_fill,false)
+  end
+  filling_lake::FillingLake = FillingLake(lake_parameters,
+                                          lake_variables,
+                                          lake.lake_fields,
+                                          FillingLakeVariables(false,
+                                                               false))
+  return filling_lake
 end
 
 function change_to_overflowing_lake(lake::FillingLake,merge_type::SimpleMergeTypes)
@@ -548,6 +649,32 @@ function fill_current_cell(lake::FillingLake,inflow::Float64)
     inflow = new_lake_volume - maximum_new_lake_volume
     lake_variables.lake_volume = maximum_new_lake_volume
     return inflow,true
+  end
+end
+
+function drain_current_cell(lake::FillingLake,outflow::Float64)
+  lake_parameters::LakeParameters = get_lake_parameters(lake)
+  lake_variables::LakeVariables = get_lake_variables(lake)
+  lake_fields::LakeFields = get_lake_fields(lake)
+  if size(lake_variables.filled_lake_cells,1) == 0
+    lake_variables.lake_volume -= outflow
+    return
+  end
+  current_cell_to_fill::Coords = lake_variables.current_cell_to_fill
+  previous_cell_to_fill::Coords = lake_variables.previous_cell_to_fill
+  new_lake_volume::Float64 = lake_variables.lake_volume - outflow
+  miminum_new_lake_volume::Float64 =
+    (lake_fields.completed_lake_cells(previous_cell_to_fill) ||
+    lake_parameters.flood_only(previous_cell_to_fill)) ?
+    lake_parameters.flood_volume_thresholds(previous_cell_to_fill) :
+    lake_parameters.connection_volume_thresholds(previous_cell_to_fill)
+  if new_lake_volume >= minimum_new_lake_volume
+    lake_variables.lake_volume = new_lake_volume
+    return 0.0,false
+  else
+    outflow = minimum_new_lake_volume - new_lake_volume
+    lake_variables.lake_volume = minimum_new_lake_volume
+    return outflow,true
   end
 end
 
@@ -644,6 +771,23 @@ function perform_secondary_merge(lake::FillingLake)
   return handle_event(lake,accept_merge)
 end
 
+function rollback_primary_merge(lake::FillingLake,other_lake_outflow::Float64)
+  lake_variables::LakeVariables = get_lake_variables(lake)
+  lake_fields::LakeFields = get_lake_fields(lake)
+  target_cell::Coords = get_primary_merge_coords(lake)
+  other_lake_number::Integer = lake_fields.lake_numbers(target_cell)
+  other_lake::Lake = lake_variables.other_lakes[other_lake_number]
+  other_lake = find_true_rolledback_primary_lake(other_lake)
+  other_lake_number = other_lake.lake_variables.lake_number
+  accept_split::AcceptSplit = AcceptSplit()
+  lake_variables.other_lakes[other_lake_number] =
+    handle_event(other_lake,accept_split)
+  other_lake = lake_variables.other_lakes[other_lake_number]
+  remove_water::RemoveWater = RemoveWater(other_lake_outflow)
+  lake_variables.other_lakes[other_lake_number] =
+    handle_event(other_lake,remove_water)
+end
+
 function change_to_filling_lake(lake::OverflowingLake)
   lake.lake_variables.unprocessed_water +=
     lake.overflowing_lake_variables.excess_water
@@ -678,7 +822,35 @@ function update_filling_cell(lake::FillingLake)
   end
   set!(lake_fields.lake_numbers,new_coords,lake_variables.lake_number)
   set!(lake_fields.completed_lake_cells,coords,true)
+  push!(lake_variables.filled_lake_cells,coords)
+  lake_variables.previous_cell_to_fill = coords
   lake_variables.current_cell_to_fill = new_coords
+end
+
+function rollback_filling_cell(lake::FillingLake)
+  lake_parameters::LakeParameters = get_lake_parameters(lake)
+  lake_variables::LakeVariables = get_lake_variables(lake)
+  lake_fields::LakeFields = get_lake_fields(lake)
+  lake.filling_lake_variables.primary_merge_completed = false
+  coords::Coords = lake_variables.current_cell_to_fill
+  new_coords::Coords = lake_variables.previous_cell_to_fill
+  if lake_parameters.flood_only(coords) ||
+     lake_variables.lake_volume <=
+     lake_parameters.connection_volume_thresholds(coords)
+    set!(lake_fields.lake_numbers,coords,0)
+  end
+  if lake_parameters.flood_only(new_coords) ||
+     lake_variables.lake_volume <=
+     lake_parameters.connection_volume_thresholds(new_coords)
+    set!(lake_fields.completed_lake_cells,new_coords,false)
+  end
+  lake_variables.current_cell_to_fill = new_coords
+  pop!(lake_variables.filled_lake_cells)
+  if size(lake_variables.filled_lake_cells,1) != 0
+    lake_variables.previous_cell_to_fill = lake_variables.filled_lake_cells[end]
+  else
+    lake_variables.previous_cell_to_fill = new_coords
+  end
 end
 
 function get_primary_merge_coords(lake::Lake)
@@ -730,6 +902,15 @@ end
 function find_true_primary_lake(lake::Lake)
   if isa(lake,SubsumedLake)
     return find_true_primary_lake(lake.lake_variables.other_lakes[lake.primary_lake_number])
+  else
+    return lake
+  end
+end
+
+function find_true_rolledback_primary_lake(lake::Lake)
+  next_lake::Lake = lake.lake_variables.other_lakes[lake.primary_lake_number]
+  if isa(next_lake,SubsumedLake)
+    return find_true_primary_lake(next_lake)
   else
     return lake
   end

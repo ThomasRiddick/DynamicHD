@@ -71,6 +71,7 @@ RiverParameters(flow_directions::DirectionIndicators,
 mutable struct RiverPrognosticFields
   runoff::Field{Float64}
   drainage::Field{Float64}
+  lake_evaporation::Field{Float64}
   river_inflow::Field{Float64}
   base_flow_reservoirs::Array{Field{Float64},1}
   overland_flow_reservoirs::Array{Field{Float64},1}
@@ -79,6 +80,7 @@ mutable struct RiverPrognosticFields
   function RiverPrognosticFields(river_parameters::RiverParameters)
     runoff = Field{Float64}(river_parameters.grid,0.0)
     drainage = Field{Float64}(river_parameters.grid,0.0)
+    lake_evaporation = Field{Float64}(river_parameters.grid,0.0)
     river_inflow = Field{Float64}(river_parameters.grid,0.0)
     base_flow_reservoirs =      repeat(Field{Float64}(river_parameters.grid,0.0),
                                        maximum(river_parameters.base_reservoir_nums))
@@ -87,9 +89,8 @@ mutable struct RiverPrognosticFields
     river_flow_reservoirs =     repeat(Field{Float64}(river_parameters.grid,0.0),
                                        maximum(river_parameters.river_reservoir_nums))
     water_to_ocean = Field{Float64}(river_parameters.grid,0.0)
-    return new(runoff,drainage,river_inflow,base_flow_reservoirs,
-               overland_flow_reservoirs,river_flow_reservoirs,
-               water_to_ocean)
+    return new(runoff,drainage,lake_evaporation,river_inflow,base_flow_reservoirs,
+               overland_flow_reservoirs,river_flow_reservoirs,water_to_ocean)
   end
 end
 
@@ -208,7 +209,8 @@ function handle_event(prognostic_fields::PrognosticFields,
                 water_to_lakes(prognostic_fields,coords,
                                get(river_fields.river_inflow,coords) +
                                get(river_fields.runoff,coords) +
-                               get(river_fields.drainage,coords))
+                               get(river_fields.drainage,coords) -
+                               get(river_fields.lake_evaporation,coords))
                 set!(river_fields.river_inflow,coords,0.0)
             end
           end
@@ -347,6 +349,10 @@ struct SetRunoff <: Event
   new_runoff::Field{Float64}
 end
 
+struct SetLakeEvaporation <: Event
+  new_lake_evaporation::Field{Float64}
+end
+
 function handle_event(prognostic_fields::PrognosticFields,
                       set_drainage::SetDrainage)
   river_fields::RiverPrognosticFields = get_river_fields(prognostic_fields)
@@ -358,6 +364,13 @@ function handle_event(prognostic_fields::PrognosticFields,
                       set_runoff::SetRunoff)
   river_fields::RiverPrognosticFields = get_river_fields(prognostic_fields)
   river_fields.runoff = set_runoff.new_runoff
+  return prognostic_fields
+end
+
+function handle_event(prognostic_fields::PrognosticFields,
+                      set_lake_evaporation::SetLakeEvaporation)
+  river_fields::RiverPrognosticFields = get_river_fields(prognostic_fields)
+  river_fields.lake_evaporation = set_lake_evaporation.new_lake_evaporation
   return prognostic_fields
 end
 
