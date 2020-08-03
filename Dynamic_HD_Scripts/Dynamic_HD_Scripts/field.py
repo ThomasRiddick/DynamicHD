@@ -43,6 +43,9 @@ class Field(object):
     set_grid_dimensions
     find_all_local_minima
     to_data_array
+    find_maximum
+    equal_to_value
+    greater_than_value
     """
 
     def __init__(self,input_field,grid='HD',**grid_kwargs):
@@ -286,6 +289,15 @@ class Field(object):
         return xarray.DataArray(self.data,coords={'lat':self.grid.lat_points,
                                                   'lon':self.grid.lon_points},
                                                   dims=['lat','lon'])
+
+    def find_maximum(self):
+        return np.amax(self.data)
+
+    def equal_to_value(self,value):
+        return Field(self.data==value,grid=self.grid)
+
+    def greater_than_value(self,value):
+        return Field(self.data>value,grid=self.grid)
 
 class Orography(Field):
     """A subclass of Field with various method specific to orographies.

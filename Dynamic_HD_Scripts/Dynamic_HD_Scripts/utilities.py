@@ -135,20 +135,20 @@ def advanced_replace_corrected_orog_with_orig_for_glcted_grid_points_drivers(inp
                                                                field_type='Orography',
                                                                fieldname=\
                                                                input_corrected_orography_fieldname)
-    input_original_orography = dynamic_hd.load_field(input_original_orography_file,
-                                                     field_type='Orography',
-                                                     fieldname=\
-                                                     input_original_orography_fieldname)
-    input_glacier_mask = dynamic_hd.load_field(input_glacier_mask_file,
-                                               field_type='Orography',
-                                               fieldname=\
-                                               input_glacier_mask_fieldname)
+    input_original_orography = iodriver.advanced_field_loader(input_original_orography_file,
+                                                              field_type='Orography',
+                                                              fieldname=\
+                                                              input_original_orography_fieldname)
+    input_glacier_mask = iodriver.advanced_field_loader(input_glacier_mask_file,
+                                                        field_type='Orography',
+                                                        fieldname=\
+                                                        input_glacier_mask_fieldname)
     output_orography = replace_corrected_orography_with_original_for_glaciated_grid_points(input_corrected_orography,
                                                                                            input_original_orography,
                                                                                            input_glacier_mask)
-    dynamic_hd.write_field(filename=out_orography_file,
-                           field=output_orography,
-                           fieldname=out_orography_fieldname)
+    iodriver.advanced_field_writer(out_orography_file,
+                                   field=output_orography,
+                                   fieldname=out_orography_fieldname)
 
 def merge_corrected_and_tarasov_upscaled_orography_main_routine(corrected_orography_field,
                                                                 tarasov_upscaled_orography_field,
@@ -596,9 +596,9 @@ def advanced_apply_orog_correction_field(original_orography_filename,
                                                                  fieldname=\
                                                                  orography_corrections_fieldname)
     original_orography_field.add(orography_corrections_field)
-    dynamic_hd.write_field(corrected_orography_filename,
-                           original_orography_field,
-                           fieldname=corrected_orography_fieldname)
+    iodriver.advanced_field_writer(corrected_orography_filename,
+                                   original_orography_field,
+                                   fieldname=corrected_orography_fieldname)
 
 def generate_ls_mask(orography_filename,ls_mask_filename,sea_level=0.0,
                      grid_type='HD',**grid_kwargs):

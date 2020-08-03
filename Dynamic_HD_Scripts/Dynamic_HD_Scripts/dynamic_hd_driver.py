@@ -1831,6 +1831,19 @@ class Utilities_Drivers(Dynamic_HD_Drivers):
                                paras_dir="/Users/thomasriddick/Documents/data/temp/"
                                          "ptrbound_hdpara3/output")
 
+    def make_1000m_depth_contour_mask_from_ICE6G(self):
+        file_label = self._generate_file_label()
+        present_day_ice_6g_filepath = path.join(self.orography_path,"Ice6g_c_VM5a_10min_0k.nc")
+        output_lsmask_filepath = (self.generated_ls_mask_filepath +
+                                  file_label + '.nc')
+        topo = iodriver.advanced_field_loader(present_day_ice_6g_filepath,
+                                              field_type="Orography",
+                                              fieldname="Topo")
+        lsmask = field.Field(topo.generate_ls_mask(-1000.0).astype(np.int32),grid=topo.get_grid())
+        iodriver.advanced_field_writer(output_lsmask_filepath,field=lsmask,
+                                       fieldname="lsm")
+
+
 class Original_HD_Model_RFD_Drivers(Dynamic_HD_Drivers):
     """Drive processes using the present day manually corrected river directions currently in JSBACH"""
 
@@ -4063,8 +4076,9 @@ def main():
     #etopo1_data_drivers.etopo1_data_all_points()
     #etopo1_data_drivers.etopo1_data_ALG4_sinkless()
     utilities_drivers = Utilities_Drivers()
+    utilities_drivers.make_1000m_depth_contour_mask_from_ICE6G()
     #utilities_drivers.make_hdpara_for_pt_boundary_rdirs()
-    utilities_drivers.make_hdpara_for_pt_boundary_rdirs_scotese()
+    #utilities_drivers.make_hdpara_for_pt_boundary_rdirs_scotese()
     #utilities_drivers.add_grid_to_corrected_orography()
     #utilities_drivers.convert_hydrosheds_30s_river_directions_to_one_to_nine_format()
     #utilities_drivers.mark_river_mouths_on_hydrosheds_30s_rdirs()

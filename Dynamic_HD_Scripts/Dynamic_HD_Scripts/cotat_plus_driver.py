@@ -53,6 +53,15 @@ def run_cotat_plus(fine_rdirs_field,fine_total_cumulative_flow_field,cotat_plus_
                                            cotat_plus_parameters_filepath)
     course_rdirs_field = field.makeField(course_rdirs_field_raw.astype(np.float64),'RiverDirections',course_grid_type,
                                          **course_grid_kwargs)
+    if fine_rdirs_field.grid_has_coordinates():
+      nlat_fine,nlon_fine = fine_rdirs_field.get_grid_dimensions()
+      lat_pts_fine,lon_pts_fine = fine_rdirs_field.get_grid_coordinates()
+      nlat_course,nlon_course = course_grid.get_grid_dimensions()
+      lat_pts_course,lon_pts_course = \
+        coordinate_scaling_utilities.generate_course_pts(nlat_fine,nlon_fine,
+                                                         lat_pts_fine,lon_pts_fine,
+                                                         nlat_course,nlon_course)
+      course_rdirs_field.set_grid_coordinates([lat_pts_course,lon_pts_course])
     return course_rdirs_field
 
 def cotat_plus_driver(input_fine_rdirs_filepath,input_fine_total_cumulative_flow_path,

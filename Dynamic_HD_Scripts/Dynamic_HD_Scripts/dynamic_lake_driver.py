@@ -11,6 +11,7 @@ import iodriver
 import field
 import numpy as np
 import utilities
+import extract_lake_volumes
 import compute_catchments as cc
 import flow_to_grid_cell as ftgc
 from os.path import join
@@ -388,12 +389,12 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
         orog_corrections_filename = join(self.orography_corrections_fields_path,
                                                   "orog_corrs_field_ICE5G_and_tarasov_upscaled_"
                                                   "srtm30plus_north_america_only_data_ALG4_sinkless"
-                                                  "_glcc_olson_lsmask_0k_20170517_003802.nc")
+                                                  "_glcc_olson_lsmask_0k_20170517_003802_g.nc")
         intermediary_orography_filename = self.generated_orography_filepath +\
                                                 "intermediary_" + file_label + '.nc'
         second_intermediary_orography_filename = self.generated_orography_filepath +\
                                                 "second_intermediary_" + file_label + '.nc'
-        orography_filename = self.generated_orography_filepath + file_label + '.nc'
+        #orography_filename = self.generated_orography_filepath + file_label + '.nc'
         output_0k_ice5g_orog_filename = self.generated_orography_filepath + "0k_ice5g_lake_" + file_label + '.nc'
         output_working_orog_filename = self.generated_orography_filepath + "{}_ice6g_lake_".format(timestep) + file_label + '.nc'
         output_filtered_working_orog_filename = self.generated_orography_filepath +\
@@ -431,33 +432,30 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
         minima_fieldname = "minima"
         lakemask_filename= self.lakemask_filepath+"/empty_lakemask.nc"
         lakemask_fieldname="lakemask"
-        glacial_mask_file = join(self.orography_path,"ice5g_v1_2_21_0k_10min.nc")
+        glacial_mask_file = join(self.orography_path,"ice5g_v1_2_00_0k_10min.nc")
         utilities.change_dtype(input_filename=original_ls_mask_filename,
                                output_filename=original_ls_mask_with_new_dtype_filename,
                                input_fieldname=original_landsea_mask_fieldname,
                                output_fieldname="lsmask",
                                new_dtype=np.int32,grid_type='LatLong10min')
-        utilities.apply_orog_correction_field(original_orography_filename=original_orography_filename,
-                                              orography_corrections_filename=orog_corrections_filename,
-                                              corrected_orography_filename=
-                                              intermediary_orography_filename,
-                                              original_orography_fieldname=\
-                                              "orog",
-                                              grid_type="LatLong10min")
-        utilities.replace_corrected_orography_with_original_for_glaciated_grid_points_drivers(
+        utilities.advanced_apply_orog_correction_field(original_orography_filename=
+                                                       original_orography_filename,
+                                                       orography_corrections_filename=
+                                                       orog_corrections_filename,
+                                                       corrected_orography_filename=
+                                                       intermediary_orography_filename,
+                                                       original_orography_fieldname=
+                                                       "orog")
+        utilities.advanced_replace_corrected_orog_with_orig_for_glcted_grid_points_drivers(
           input_corrected_orography_file=intermediary_orography_filename,
           input_original_orography_file=original_orography_filename,
           input_glacier_mask_file=glacial_mask_file,
           out_orography_file=second_intermediary_orography_filename,
-          grid_type="LatLong10min")
-        iodriver.add_grid_information_to_field(target_filename=
-                                               orography_filename,
-                                               original_filename=
-                                               second_intermediary_orography_filename,
-                                               target_fieldname="field_value",
-                                               original_fieldname="field_value",
-                                               flip_ud_raw=True,rotate180lr_raw=True,
-                                               grid_desc_file=self.ten_minute_grid_filepath)
+          input_corrected_orography_fieldname=None,
+          input_original_orography_fieldname=None,
+          input_glacier_mask_fieldname=None,
+          out_orography_fieldname=None)
+        orography_filename = second_intermediary_orography_filename
         iodriver.add_grid_information_to_field(target_filename=
                                                original_ls_mask_with_grid_filename,
                                                original_filename=
@@ -512,6 +510,20 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
                                                                   minimum_height_change_threshold = 5.0,
                                                                   short_path_threshold = 6,
                                                                   short_minimum_height_change_threshold = 0.25)
+        new_orography_corrections_filename = path.join(self.orography_corrections_fields_path,
+                                                       "ice5g_0k_lake_corrs_" + file_label + ".nc")
+        utilities.advanced_orog_correction_field_generator(original_orography_filename=
+                                                           original_orography_filename,
+                                                           corrected_orography_filename=
+                                                           output_0k_ice5g_orog_filename,
+                                                           orography_corrections_filename=
+                                                           new_orography_corrections_filename,
+                                                           original_orography_fieldname=
+                                                           "orog",
+                                                           corrected_orography_fieldname=
+                                                           "Topo",
+                                                           orography_corrections_fieldname=
+                                                           "orog")
         print "Time for initial setup: " + str(time.time() - tstart)
         utilities.advanced_rebase_orography_driver(orography_filename=
                                                    working_orog_filename,
@@ -593,16 +605,36 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
         iodriver.advanced_field_writer(orog_diff_filename,improved_sinkless_orog,
                                        fieldname="depth",clobber=True)
 
+    def extract_lake_volumes_from_glac1D_basins(self):
+      overarching_file_label = self._generate_file_label()
+      transient_data_folder_path = "/Users/thomasriddick/Documents/data/transient_sim_data/1"
+      timesteps_to_use = [ 950,1000,1050,1100,1150,1200,1250,1300,1350,
+                          1400,1450,1500,1550,1600,1650,1700,1750,1800]
+      for timestep in timesteps_to_use:
+        file_label = self._generate_file_label() + "_" + str(timestep)
+        lake_parameters_filepath = join(transient_data_folder_path,
+                                        "lakeparas_prepare_basins_from_glac1D_{}.nc".format(timestep))
+        basin_catchment_numbers_filepath = join(transient_data_folder_path,
+                                                "basin_catchment_numbers_prepare_"
+                                                "basins_from_glac1D_{}.nc".format(timestep))
+        lake_volumes_out_filepath = ("/Users/thomasriddick/Documents/data/temp/"
+                                     "lake_volumes_out_{}.nc".format(timestep))
+        extract_lake_volumes.lake_volume_extraction_driver(lake_parameters_filepath,
+                                                           basin_catchment_numbers_filepath,
+                                                           lake_volumes_out_filepath)
+
     def prepare_basins_from_glac1D(self):
       overarching_file_label = self._generate_file_label()
       #timesteps_to_use = [ 950,1000,1050,1100,1150,1200,1250,1300,1350,
       #                    1400,1450,1500,1550,1600,1650,1700,1750,1800]
-      timesteps_to_use = [2550]
+      timesteps_to_use = [2600]
       timestep_for_0k = 2600
       glac_1d_topo_filename = join(self.orography_path,
                                    "GLAC1D_Top01_surf.nc")
       ls_mask_filename = join(self.ls_masks_path,
                              "10min_lsmask_pmu0178_merged.nc")
+      ls_mask_0k_filename = join(self.ls_masks_path,"generated",
+                                 "ls_mask_make_1000m_depth_contour_mask_from_ICE6G_20200721_144332.nc")
       glacier_mask_filename = join(self.orography_path,
                                    "GLAC1D_ICEM_10min.nc")
       cell_areas_filename_10min = join(self.grid_areas_and_spacings_filepath,
@@ -621,9 +653,12 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
                                ls_mask_filename=ls_mask_filename,
                                ls_mask_fieldname="field_value",
                                ls_mask_timestep=timestep,
-                               ls_mask_0k_filename=ls_mask_filename,
-                               ls_mask_0k_fieldname="field_value",
-                               ls_mask_timestep_0k=timestep_for_0k,
+                               #ls_mask_0k_filename=ls_mask_filename,
+                               ls_mask_0k_filename=ls_mask_0k_filename,
+                               #ls_mask_0kfieldname="field_value",
+                               ls_mask_0k_fieldname="lsm",
+                               #ls_mask_timestep_0k=timestep_for_0k,
+                               ls_mask_timestep_0k=None,
                                file_label=file_label)
         working_orography_filename = "/Users/thomasriddick/Documents/data/HDdata/orographys/generated/updated_orog_" + str(timestep) + \
                                      "_ice6g_lake_filtered_" + file_label + ".nc"
@@ -952,7 +987,8 @@ def main():
     #lake_drivers.evaluate_ICE6G_lgm_basins()
     # end = time.time()
     # print(end - start)
-    lake_drivers.prepare_basins_from_glac1D()
+    #lake_drivers.prepare_basins_from_glac1D()
+    lake_drivers.extract_lake_volumes_from_glac1D_basins()
 
 if __name__ == '__main__':
     main()

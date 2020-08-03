@@ -14,7 +14,7 @@ def determine_river_directions(orography,lsmask,truesinks=None,
                                always_flow_to_sea=True,
                                use_diagonal_nbrs=True,
                                mark_pits_as_true_sinks=True):
-    rdirs = field.makeEmptyField('Generic',np.float64,orography.get_grid())
+    rdirs = field.makeEmptyField('RiverDirections',np.float64,orography.get_grid())
     if truesinks is None:
         truesinks = field.makeEmptyField('Generic',np.float64,orography.get_grid())
     determine_river_directions_wrapper.determine_river_directions(rdirs.get_data(),

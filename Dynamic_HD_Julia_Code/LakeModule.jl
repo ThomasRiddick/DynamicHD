@@ -8,6 +8,7 @@ using HDModule: RiverParameters, PrognosticFields, RiverPrognosticFields, RiverD
 using HDModule: RiverDiagnosticOutputFields, PrintResults, PrintSection
 using HDModule: print_river_results, get_river_parameters, get_river_fields
 using CoordsModule: Coords,LatLonCoords,LatLonSectionCoords,is_lake
+using CoordsModule: Generic1DCoords
 using GridModule: Grid, LatLonGrid, for_all, for_all_fine_cells_in_coarse_cell, for_all_with_line_breaks
 using GridModule: for_section_with_line_breaks
 using FieldModule: Field, set!
@@ -198,6 +199,7 @@ end
 mutable struct LakeVariables
   center_cell::Coords
   lake_volume::Float64
+  secondary_lake_volume::Float64
   unprocessed_water::Float64
   current_cell_to_fill::Coords
   other_lakes::Vector{Lake}
@@ -205,7 +207,7 @@ mutable struct LakeVariables
   LakeVariables(center_cell::Coords,
                 other_lakes::Vector{Lake},
                 lake_number::Int64) =
-    new(center_cell,0.0,0.0,deepcopy(center_cell),other_lakes,
+    new(center_cell,0.0,0.0,0.0,deepcopy(center_cell),other_lakes,
         lake_number)
 end
 
@@ -614,6 +616,8 @@ function perform_primary_merge(lake::FillingLake)
   other_lake_number::Integer = lake_fields.lake_numbers(target_cell)
   other_lake::Lake = lake_variables.other_lakes[other_lake_number]
   other_lake = find_true_primary_lake(other_lake)
+  lake_variables.secondary_lake_volume += other_lake.lake_variables.lake_volume +
+    other_lake.lake_variables.secondary_lake_volume
   other_lake_number = other_lake.lake_variables.lake_number
   lake.filling_lake_variables.primary_merge_completed = true
   accept_merge::AcceptMerge = AcceptMerge(lake_variables.center_cell)
@@ -630,6 +634,8 @@ function perform_secondary_merge(lake::FillingLake)
   other_lake_number::Integer = lake_fields.lake_numbers(target_cell)
   other_lake::Lake = lake_variables.other_lakes[other_lake_number]
   other_lake = find_true_primary_lake(other_lake)
+  other_lake.lake_variables.secondary_lake_volume += lake_variables.lake_volume +
+    lake_variables.secondary_lake_volume
   other_lake_number = other_lake.lake_variables.lake_number
   other_lake_as_filling_lake::FillingLake = change_to_filling_lake(other_lake)
   lake_variables.other_lakes[other_lake_number] = other_lake_as_filling_lake
