@@ -153,8 +153,9 @@ function handle_event(prognostic_fields::PrognosticFields,
     get_river_diagnostic_fields(prognostic_fields)
   using_lakes::Bool =
               get_using_lakes(prognostic_fields)
+  local lake_water_from_ocean::Field{Float64}
   if using_lakes
-    lake_water_input::Field{Float64} =
+    lake_water_input::Field{Float64},lake_water_from_ocean =
       water_from_lakes(prognostic_fields)
     for_all(river_parameters.grid) do coords::Coords
       cell_lake_water_input::Float64 = lake_water_input(coords)
@@ -211,6 +212,8 @@ function handle_event(prognostic_fields::PrognosticFields,
                                get(river_fields.runoff,coords) +
                                get(river_fields.drainage,coords) -
                                get(river_fields.lake_evaporation,coords))
+                set!(river_fields.water_to_ocean,coords,
+                     -1.0*get(lake_water_from_ocean,coords))
                 set!(river_fields.river_inflow,coords,0.0)
             end
           end

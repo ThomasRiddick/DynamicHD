@@ -159,12 +159,14 @@ struct LakeFields
   lake_numbers::Field{Int64}
   water_to_lakes::Field{Float64}
   water_to_hd::Field{Float64}
+  lake_water_from_ocean::Field{Float64}
   cells_with_lakes::Vector{Coords}
   function LakeFields(lake_parameters::LakeParameters)
     completed_lake_cells = Field{Bool}(lake_parameters.grid,false)
     lake_numbers = Field{Int64}(lake_parameters.grid,0)
     water_to_lakes = Field{Float64}(lake_parameters.hd_grid,0.0)
     water_to_hd = Field{Float64}(lake_parameters.hd_grid,0.0)
+    lake_water_from_ocean = Field{Float64}(lake_parameters.hd_grid,0.0)
     cells_with_lakes::Vector{Coords} = Vector{Coords}[]
     for_all(lake_parameters.hd_grid) do coords::Coords
       contains_lake::Bool = false
@@ -176,7 +178,7 @@ struct LakeFields
         push!(cells_with_lakes,coords)
       end
     end
-    new(completed_lake_cells,lake_numbers,water_to_lakes,water_to_hd,
+    new(completed_lake_cells,lake_numbers,water_to_lakes,water_to_hd,lake_water_from_ocean,
         cells_with_lakes)
   end
 end
@@ -324,7 +326,7 @@ end
 
 function water_from_lakes(prognostic_fields::RiverAndLakePrognosticFields)
   lake_fields = get_lake_fields(prognostic_fields)
-  return lake_fields.water_to_hd
+  return lake_fields.water_to_hd,lake_fields.lake_water_from_ocean
 end
 
 function handle_event(prognostic_fields::RiverAndLakePrognosticFields,setup_lakes::SetupLakes)
@@ -366,6 +368,7 @@ function handle_event(prognostic_fields::RiverAndLakePrognosticFields,run_lake::
   lake_prognostics::LakePrognostics = get_lake_prognostics(prognostic_fields)
   drain_excess_water::DrainExcessWater = DrainExcessWater()
   fill!(lake_fields.water_to_hd,0.0)
+  fill!(lake_fields.lake_water_from_ocean,0.0)
   local basins_in_cell::Array{Coords,1}
   for coords::Coords in lake_fields.cells_with_lakes
     if lake_fields.water_to_lakes(coords) > 0.0
@@ -579,8 +582,10 @@ end
 function handle_event(lake::Lake,release_negative_water::ReleaseNegativeWater)
   lake_variables::LakeVariables = get_lake_variables(lake)
   lake_fields::LakeFields = get_lake_fields(lake)
-  #lake_fields.water_to_hd(lake_variables.center_cell_coarse_coords) =
-  #  -lake_variables.lake_volume
+  set!(lake_fields.lake_water_from_ocean,
+       lake_variables.center_cell_coarse_coords,
+       lake_fields.lake_water_from_ocean(lake_variables.center_cell_coarse_coords) -
+       lake_variables.lake_volume)
   lake_variables.lake_volume = 0.0
   return lake
 end

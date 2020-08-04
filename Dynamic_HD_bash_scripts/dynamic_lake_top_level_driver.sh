@@ -322,7 +322,12 @@ fi
 
 #Run
 echo "Running Dynamic HD Code" 1>&2
-python2.7 ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/dynamic_lake_production_run_driver.py ${input_orography_filepath} ${input_ls_mask_filepath} ${input_lake_volumes_filepath} ${present_day_base_orography_filepath} ${glacier_mask_filepath} ${output_hdpara_filepath} ${output_lakeparas_filepath} ${ancillary_data_directory} ${working_directory} ${output_lakestart_filepath} ${output_hdstart_argument}
+python2.7 ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/dynamic_lake_production_run_driver.py ${input_orography_filepath} ${input_ls_mask_filepath} ${input_lake_volumes_filepath} ${present_day_base_orography_filepath} ${glacier_mask_filepath} ${working_directory}/hdpara_out_temp.nc ${output_lakeparas_filepath} ${ancillary_data_directory} ${working_directory} ${output_lakestart_filepath} ${output_hdstart_argument}
+
+#Change lake centers FDIR from 5 to -2
+cdo expr,'FDIR=-2.0*(FDIR==5.0)+FDIR*(FDIR!=5.0)' hdpara_out_temp.nc corrected_FDIR_temp.nc
+cdo delete,'name=FDIR' hdpara_out_temp.nc hdpara_out_temp_remaining_vars.nc
+cdo merge hdpara_out_temp_remaining_vars.nc corrected_FDIR_temp.nc ${output_hdpara_filepath}
 
 #Release trapped water from hdstart file
 if ! ${first_timestep}; then
@@ -345,6 +350,7 @@ rm -f 30minute_ls_mask.dat 30minute_filled_orog.dat 30minute_river_dirs.dat || t
 #Delete other files
 rm -f catchments.log loops.log 30minute_filled_orog_temp.nc 30minute_river_dirs_temp.nc
 rm -f 30minute_ls_mask_temp.nc
+rm -f corrected_FDIR_temp.nc hdpara_out_temp.nc hdpara_out_temp_remaining_vars.nc
 
 #Generate full diagnostic output label
 diagnostic_output_label="${diagnostic_output_exp_id_label}_${diagnostic_output_time_label}"

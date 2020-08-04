@@ -1662,10 +1662,10 @@ end
                                                                         0.0 2.0 0.0 0.0
                                                                         0.0 0.0 0.0 0.0 ])
   expected_water_to_ocean::Field{Float64} = LatLonField{Float64}(grid,
-                                                                 Float64[ 0.0 0.0 0.0 0.0
-                                                                          0.0 0.0 0.0 0.0
-                                                                          0.0 0.0 0.0 0.0
-                                                                          0.0 4.0 0.0 4.0 ])
+                                                                 Float64[ -96.0   0.0   0.0   0.0
+                                                                            0.0 -96.0 -96.0   0.0
+                                                                            0.0   0.0   0.0 -94.0
+                                                                          -98.0   4.0   0.0   4.0 ])
   expected_water_to_hd::Field{Float64} = LatLonField{Float64}(grid,
                                                               Float64[ 0.0 0.0 0.0 0.0
                                                                        0.0 0.0 0.0 0.0
