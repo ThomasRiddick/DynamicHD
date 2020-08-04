@@ -411,7 +411,7 @@ function print_river_results_section(prognostic_fields::PrognosticFields)
     @printf("%.2f ",river_fields.river_inflow(coords))
     flush(stdout)
   end
-  println()
+  println("")
 end
 
 struct WriteRiverInitialValues <: Event end

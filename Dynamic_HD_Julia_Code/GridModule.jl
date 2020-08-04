@@ -18,6 +18,11 @@ function for_all_fine_cells_in_coarse_cell(function_on_point::Function,
   throw(UserError())
 end
 
+function find_coarse_cell_containing_fine_cell(fine_grid::Grid,coarse_grid::Grid,
+                                               fine_cell_coords::Coords)
+  throw(UserError())
+end
+
 function find_downstream_coords(grid::Grid,
                                 flow_direction::DirectionIndicator,
                                 coords::Coords)
@@ -108,7 +113,7 @@ end
 function for_all_fine_cells_in_coarse_cell(function_on_point::Function,
                                            fine_grid::LatLonGrid,
                                            coarse_grid::LatLonGrid,
-                                           coarse_cell_coords::Coords)
+                                           coarse_cell_coords::LatLonCoords)
   nlat_scale_factor = fine_grid.nlat/coarse_grid.nlat
   nlon_scale_factor = fine_grid.nlon/coarse_grid.nlon
   for j = 1+(coarse_cell_coords.lon - 1)*nlon_scale_factor:coarse_cell_coords.lon*nlon_scale_factor
@@ -116,6 +121,15 @@ function for_all_fine_cells_in_coarse_cell(function_on_point::Function,
       function_on_point(LatLonCoords(i,j))
     end
   end
+end
+
+function find_coarse_cell_containing_fine_cell(fine_grid::LatLonGrid,coarse_grid::LatLonGrid,
+                                               fine_cell_coords::LatLonCoords)
+  fine_cells_per_coarse_cell_lat::Int64 = fine_grid.nlat/coarse_grid.nlat
+  fine_cells_per_coarse_cell_lon::Int64 = fine_grid.nlon/coarse_grid.nlon
+  coarse_lat::Int64 = ceil(fine_cell_coords.lat/fine_cells_per_coarse_cell_lat);
+  coarse_lon::Int64 = ceil(fine_cell_coords.lon/fine_cells_per_coarse_cell_lon);
+  return LatLonCoords(coarse_lat,coarse_lon);
 end
 
 function find_downstream_coords(grid::T,

@@ -10,7 +10,7 @@ using HDModule: print_river_results, get_river_parameters, get_river_fields
 using CoordsModule: Coords,LatLonCoords,LatLonSectionCoords,is_lake
 using CoordsModule: Generic1DCoords
 using GridModule: Grid, LatLonGrid, for_all, for_all_fine_cells_in_coarse_cell, for_all_with_line_breaks
-using GridModule: for_section_with_line_breaks
+using GridModule: for_section_with_line_breaks,find_coarse_cell_containing_fine_cell
 using FieldModule: Field, set!
 import HDModule: water_to_lakes,water_from_lakes
 import HierarchicalStateMachineModule: handle_event
@@ -38,6 +38,8 @@ end
 struct AcceptSplit <: Event end
 
 struct DrainExcessWater <: Event end
+
+struct ReleaseNegativeWater <: Event end
 
 struct WriteLakeNumbers <: Event
   timestep::Int64
@@ -187,9 +189,13 @@ struct LakePrognostics
     lake_number::Int64 = 1
     for_all(lake_parameters.grid) do coords::Coords
       if lake_parameters.lake_centers(coords)
+        coarse_coords = find_coarse_cell_containing_fine_cell(lake_parameters.grid,
+                                                              lake_parameters.hd_grid,
+                                                              coords)
         push!(lakes,FillingLake(lake_parameters,
                                 LakeVariables(coords,lakes,
-                                              lake_number),
+                                              lake_number,
+                                              coarse_coords),
                                 lake_fields))
         set!(lake_fields.lake_numbers,coords,lake_number)
         lake_number += 1
@@ -209,11 +215,13 @@ mutable struct LakeVariables
   other_lakes::Vector{Lake}
   lake_number::Int64
   filled_lake_cells::Vector{Coords}
+  center_cell_coarse_coords::Coords
   LakeVariables(center_cell::Coords,
                 other_lakes::Vector{Lake},
-                lake_number::Int64) =
-    new(center_cell,0.0,0.0,deepcopy(center_cell),deepcopy(center_cell),
-        other_lakes,lake_number,Vector{Coords}[])
+                lake_number::Int64,
+                center_cell_coarse_coords::Coords) =
+    new(center_cell,0.0,0.0,0.0,deepcopy(center_cell),deepcopy(center_cell),
+        other_lakes,lake_number,Vector{Coords}[],center_cell_coarse_coords)
 end
 
 get_lake_parameters(obj::T) where {T <: Lake} =
@@ -373,7 +381,7 @@ function handle_event(prognostic_fields::RiverAndLakePrognosticFields,run_lake::
     elseif lake_fields.water_to_lakes(coords) < 0.0
       basins_in_cell =
         lake_parameters.basins[lake_parameters.basin_numbers(coords)]
-      share_to_each_lake = lake_fields.water_to_lakes(coords)/length(basins_in_cell)
+      share_to_each_lake = -1.0*lake_fields.water_to_lakes(coords)/length(basins_in_cell)
       remove_water::RemoveWater = RemoveWater(share_to_each_lake)
       for basin_center::Coords in basins_in_cell
         lake_index::Int64 = lake_fields.lake_numbers(basin_center)
@@ -384,9 +392,14 @@ function handle_event(prognostic_fields::RiverAndLakePrognosticFields,run_lake::
   end
   for lake::Lake in lake_prognostics.lakes
     lake_variables::LakeVariables = get_lake_variables(lake)
-    if lake_variables.unprocessed_water > 0
-      lake_index::Int64 = lake_variables.lake_number
+    local lake_index::Int64
+    if lake_variables.unprocessed_water > 0.0
+      lake_index = lake_variables.lake_number
       lake_prognostics.lakes[lake_index] = handle_event(lake,AddWater(0.0))
+    end
+    if lake_variables.lake_volume < 0.0
+      lake_index = lake_variables.lake_number
+      lake_prognostics.lakes[lake_index] = handle_event(lake,ReleaseNegativeWater())
     end
     if isa(lake,OverflowingLake)
       handle_event(lake,drain_excess_water)
@@ -460,7 +473,7 @@ function handle_event(lake::FillingLake,remove_water::RemoveWater)
   outflow::Float64 = remove_water.outflow - lake.lake_variables.unprocessed_water
   lake.lake_variables.unprocessed_water = 0.0
   while outflow > 0.0
-    outflow,drained::Bool = drain_current_cell(lake,inflow)
+    outflow,drained::Bool = drain_current_cell(lake,outflow)
     if drained
       rollback_filling_cell(lake)
       merge_type::SimpleMergeTypes = get_merge_type(lake)
@@ -471,6 +484,7 @@ function handle_event(lake::FillingLake,remove_water::RemoveWater)
       end
     end
   end
+  return lake
 end
 
 function handle_event(lake::OverflowingLake,add_water::AddWater)
@@ -498,7 +512,9 @@ function handle_event(lake::OverflowingLake,add_water::AddWater)
 end
 
 function handle_event(lake::OverflowingLake,remove_water::RemoveWater)
+  lake_parameters::LakeParameters = get_lake_parameters(lake)
   lake_variables::LakeVariables = get_lake_variables(lake)
+  lake_fields::LakeFields = get_lake_fields(lake)
   if remove_water.outflow <= lake_variables.unprocessed_water
     lake_variables.unprocessed_water -= remove_water.outflow
     return lake
@@ -560,6 +576,15 @@ function handle_event(lake::SubsumedLake,remove_water::RemoveWater)
   return lake_variables.other_lakes[lake_variables.lake_number]::Lake
 end
 
+function handle_event(lake::Lake,release_negative_water::ReleaseNegativeWater)
+  lake_variables::LakeVariables = get_lake_variables(lake)
+  lake_fields::LakeFields = get_lake_fields(lake)
+  #lake_fields.water_to_hd(lake_variables.center_cell_coarse_coords) =
+  #  -lake_variables.lake_volume
+  lake_variables.lake_volume = 0.0
+  return lake
+end
+
 function handle_event(lake::Lake,accept_merge::AcceptMerge)
   lake_variables::LakeVariables = get_lake_variables(lake)
   lake_fields::LakeFields = get_lake_fields(lake)
@@ -581,6 +606,7 @@ end
 function handle_event(lake::SubsumedLake,accept_split::AcceptSplit)
   lake_parameters::LakeParameters = get_lake_parameters(lake)
   lake_variables::LakeVariables = get_lake_variables(lake)
+  lake_fields::LakeFields = get_lake_fields(lake)
   if lake_parameters.flood_only(lake_variables.current_cell_to_fill) ||
      lake_variables.lake_volume <=
      lake_parameters.connection_volume_thresholds(lake_variables.current_cell_to_fill)
@@ -658,12 +684,12 @@ function drain_current_cell(lake::FillingLake,outflow::Float64)
   lake_fields::LakeFields = get_lake_fields(lake)
   if size(lake_variables.filled_lake_cells,1) == 0
     lake_variables.lake_volume -= outflow
-    return
+    return 0.0,false
   end
   current_cell_to_fill::Coords = lake_variables.current_cell_to_fill
   previous_cell_to_fill::Coords = lake_variables.previous_cell_to_fill
   new_lake_volume::Float64 = lake_variables.lake_volume - outflow
-  miminum_new_lake_volume::Float64 =
+  minimum_new_lake_volume::Float64 =
     (lake_fields.completed_lake_cells(previous_cell_to_fill) ||
     lake_parameters.flood_only(previous_cell_to_fill)) ?
     lake_parameters.flood_volume_thresholds(previous_cell_to_fill) :
@@ -1105,7 +1131,7 @@ function handle_event(prognostic_fields::RiverAndLakePrognosticFields,
   lake_parameters::LakeParameters = get_lake_parameters(prognostic_fields)
   lake_prognostics::LakePrognostics = get_lake_prognostics(prognostic_fields)
   lake_fields::LakeFields = get_lake_fields(prognostic_fields)
-  println()
+  println("")
   print_lake_types_section(lake_parameters.grid,lake_prognostics,lake_fields)
   return prognostic_fields
 end
