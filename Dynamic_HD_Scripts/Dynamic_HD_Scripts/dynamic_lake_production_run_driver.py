@@ -4,6 +4,7 @@ Created on April 1, 2020
 @author: thomasriddick
 '''
 import re
+import os
 import determine_river_directions
 import dynamic_hd_driver as dyn_hd_dr
 import dynamic_lake_operators
@@ -16,6 +17,7 @@ import field
 import libs.fill_sinks_wrapper as fill_sinks_wrapper
 import libs.lake_operators_wrapper as lake_operators_wrapper  #@UnresolvedImport
 import cdo
+import argparse
 from flow_to_grid_cell import create_hypothetical_river_paths_map
 import compute_catchments as comp_catchs
 from cotat_plus_driver import run_cotat_plus
@@ -27,7 +29,8 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
     def __init__(self,input_orography_filepath=None,input_ls_mask_filepath=None,
                  input_water_to_redistribute_filepath=None,
                  output_hdparas_filepath=None,output_lakeparas_filepath=None,
-                 ancillary_data_directory=None,working_directory=None,output_hdstart_filepath=None,
+                 output_lakestart_filepath=None,ancillary_data_directory=None,
+                 working_directory=None,output_hdstart_filepath=None,
                  present_day_base_orography_filepath=None,glacier_mask_filepath=None):
         """Class constructor.
 
@@ -43,6 +46,7 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         self.working_directory_path=working_directory
         self.output_hdstart_filepath=output_hdstart_filepath
         self.output_lakeparas_filepath = output_lakeparas_filepath
+        self.output_lakestart_filepath = output_lakestart_filepath
         self.present_day_base_orography_filename=present_day_base_orography_filepath
         self.glacier_mask_filename=glacier_mask_filepath
         self.tarasov_based_orog_correction=True
@@ -138,9 +142,6 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                                  "ice5g_v1_2_00_0k_10min.nc")
         orography_corrections_filename = path.join(self.ancillary_data_path,
                                                    "ice5g_0k_lake_corrs_no_intermediaries_lake_corrections_driver_20200726_181304.nc")
-                                                   #"orog_corrs_field_ICE5G_and_tarasov_upscaled_"
-                                                   #"srtm30plus_north_america_only_data_ALG4_sinkless"
-                                                   #"_glcc_olson_lsmask_0k_20170517_003802_g.nc")
         #Change ls mask to correct type
         ls_mask_10min = iodriver.advanced_field_loader(self.original_ls_mask_filename,
                                                        field_type='Generic',
@@ -504,24 +505,23 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                            catchments_30min,
                                            fieldname="catch")#config.get("output_fieldname_options",
                                                              #   "output_30min_catchments"))
-        #Write temporary output for basin evaulation
-        temp_folder = ("/Users/thomasriddick/Documents/"
-                       "data/temp/lakeparagen")
-        minima_filename = path.join(temp_folder,
+        minima_filename = path.join(self.working_directory_path,
                                     "minima_temp.nc")
-        temp_10min_orog_filename = path.join(temp_folder,
+        temp_10min_orog_filename = path.join(self.working_directory_path,
                                              "10min_orog_temp.nc")
-        cell_areas_filename_10min = ("/Users/thomasriddick/Documents/"
-                                     "data/HDdata/gridareasandspacings/10min_grid_area_default_R.nc")
-        temp_10min_rdirs_filename = path.join(temp_folder,
+        cell_areas_filename_10min = path.join(self.ancillary_data_path,
+                                              "10min_grid_area_default_R.nc")
+        temp_10min_rdirs_filename = path.join(self.working_directory_path,
                                               "10min_rdirs_temp.nc")
-        temp_30min_rdirs_filename = path.join(temp_folder,
+        temp_30min_rdirs_filename = path.join(self.working_directory_path,
                                               "30min_rdirs_temp.nc")
-        temp_10min_catchments_filename = path.join(temp_folder,
+        temp_10min_catchments_filename = path.join(self.working_directory_path,
                                                    "10min_catchments_temp.nc")
-        temp_30min_catchments_filename = path.join(temp_folder,
+        temp_30min_catchments_filename = path.join(self.working_directory_path,
                                                    "30min_catchments_temp.nc")
-        output_lakestart_dirname = path.dirname(output_lakestart_filepath)
+        temp_basin_catchment_numbers_filename = path.join(self.working_directory_path,
+                                                          "basin_catchment_numbers_temp.nc")
+        output_lakestart_dirname = path.dirname(self.output_lakestart_filepath)
         output_water_redistributed_to_lakes_file = path.join(output_lakestart_dirname,
                                                              "water_to_lakes.nc")
         output_water_redistributed_to_rivers_file = path.join(output_lakestart_dirname,
@@ -570,12 +570,10 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                            output_filepath=self.output_lakeparas_filepath,
                                            output_filelabel="temp",
                                            output_basin_catchment_nums_filepath=
-                                           path.join(temp_folder,
-                                                "basin_catchment_numbers_temp.nc"))
+                                           temp_basin_catchment_numbers_filename)
         dynamic_lake_operators.\
             advanced_water_redistribution_driver(input_lake_numbers_file=
-                                                 path.join(temp_folder,
-                                                 "basin_catchment_numbers_temp.nc"),
+                                                 temp_basin_catchment_numbers_filename,
                                                  input_lake_numbers_fieldname=
                                                  "basin_catchment_numbers",
                                                  input_lake_centers_file=
@@ -588,17 +586,25 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                  "lake_field",
                                                  output_water_redistributed_to_lakes_file=
                                                  output_water_redistributed_to_lakes_file,
-                                                 output_water_redistributed_to_lakes_fieldname=,
+                                                 output_water_redistributed_to_lakes_fieldname=
+                                                 "water_redistributed_to_lakes",
                                                  output_water_redistributed_to_rivers_file=
                                                  output_water_redistributed_to_rivers_file,
-                                                 output_water_redistributed_to_rivers_fieldname=,
+                                                 output_water_redistributed_to_rivers_fieldname=
+                                                 "water_redistributed_to_rivers",
                                                  coarse_grid_type="HD")
         cdo_inst = cdo.Cdo()
-        cdo_inst.merge(input=" ".join(output_water_redistributed_to_lakes_file,
-                                      output_water_redistributed_to_rivers_file),
-                       output=output_lakestart_filepath)
+        cdo_inst.merge(input=" ".join([output_water_redistributed_to_lakes_file,
+                                       output_water_redistributed_to_rivers_file]),
+                       output=self.output_lakestart_filepath)
         os.remove(output_water_redistributed_to_lakes_file)
         os.remove(output_water_redistributed_to_rivers_file)
+        os.remove(temp_10min_orog_filename)
+        os.remove(temp_10min_rdirs_filename)
+        os.remove(temp_30min_rdirs_filename)
+        os.remove(temp_10min_catchments_filename)
+        os.remove(temp_30min_catchments_filename)
+        os.remove(minima_filename)
         # if print_timing_info:
         #     end_time = timer()
         #     print "---- Timing info ----"
@@ -696,24 +702,4 @@ def parse_arguments():
 if __name__ == '__main__':
     #Parse arguments and then run
     args = parse_arguments()
-    # args = Arguments()
-    # for key,value in {"input_orography_filepath":
-    #                   "/Users/thomasriddick/Documents/data/HDdata/orographys/Ice6g_c_VM5a_10min_0k.nc",
-    #                   "input_ls_mask_filepath":
-    #                   "/Users/thomasriddick/Documents/data/HDdata/lsmasks/10min_ice6g_lsmask_with_disconnected_point_removed_0k_g.nc",
-    #                   "output_hdparas_filepath":
-    #                   "/Users/thomasriddick/Documents/data/temp/lakeparagen/hdpara.nc",
-    #                   "output_lakeparas_filepath":
-    #                   "/Users/thomasriddick/Documents/data/temp/lakeparagen",
-    #                   "ancillary_data_directory":
-    #                   "/Users/thomasriddick/Documents/data/HDancillarydata_lakes",
-    #                   "working_directory":
-    #                   "/Users/thomasriddick/Documents/data/temp/lakeparagen",
-    #                   "output_hdstart_filepath":
-    #                   "/Users/thomasriddick/Documents/data/temp/lakeparagen/hdstart.nc",
-    #                   "present_day_base_orography_filepath":
-    #                   "/Users/thomasriddick/Documents/data/HDdata/orographys/Ice6g_c_VM5a_10min_0k.nc",
-    #                   "glacier_mask_filepath":
-    #                   "/Users/thomasriddick/Documents/data/HDdata/orographys/Ice6g_c_VM5a_10min_0k.nc"}.iteritems():
-    #   setattr(args,key,value)
     setup_and_run_dynamic_hd_para_and_lake_gen_from_command_line_arguments(args)

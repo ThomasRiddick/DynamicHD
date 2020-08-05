@@ -99,8 +99,33 @@ output_lakestart_filepath=$(find_abs_path $output_lakestart_filepath)
 
 #Check input files, ancillary data directory and diagnostic output directory exist
 
-if ! [[ -e $input_ls_mask_filepath ]] || ! [[ -e $input_orography_filepath ]] || ! [[ -e $present_day_base_orography_filepath ]] || ! [[ -e $glacier_mask_filepath ]] || ! [[ -e $input_hdstart_filepath ]] || ! [[ -e $input_lake_volumes_filepath ]]; then
-	echo "One or more input files does not exist" 1>&2
+if ! [[ -e $input_ls_mask_filepath ]]; then
+		echo "Input land sea mask file does not exist" 1>&2
+	exit 1
+fi
+
+if ! [[ -e $input_orography_filepath ]]; then
+		echo "Input orography file does not exist" 1>&2
+	exit 1
+fi
+
+if ! [[ -e $present_day_base_orography_filepath ]]; then
+		echo "Input present day base orography file does not exist" 1>&2
+	exit 1
+fi
+
+if ! [[ -e $glacier_mask_filepath ]]; then
+		echo "Input glacier mask file does not exist" 1>&2
+	exit 1
+fi
+
+if ! [[ -e $input_hdstart_filepath ]] && ! ${first_timestep}; then
+		echo "Input hdstart file does not exist" 1>&2
+	exit 1
+fi
+
+if ! [[ -e $input_lake_volumes_filepath ]]; then
+	echo "Input lake volumes file does not exist" 1>&2
 	exit 1
 fi
 
@@ -119,7 +144,7 @@ if ! [[ -d ${output_lakepara_filepath%/*} ]]; then
 	exit 1
 fi
 
-if ! [[ -d ${output_hdstart_filepath%/*} ]] && ! ${first_timestep}; then
+if ! [[ -d ${output_hdstart_filepath%/*} ]]; then
 	echo "Filepath of output hdstart.nc does not exist" 1>&2
 	exit 1
 fi
@@ -207,17 +232,33 @@ shopt -u nocasematch
 cd ${working_directory}
 
 #Check for locks if necesssary and set the compilation_required flag accordingly
-exec 200>"${source_directory}/compilation.lock"
-if $first_timestep ; then
-	if flock -x -n 200 ; then
-		compilation_required=true
+if [[ $(uname) == "Darwin" ]]; then
+	#Need to compile manually to run on macos
+	echo "Warning - manual compilation is required on macos" 1>&2
+	compilation_required=false
+elif ! [[ $(hostname -d) == "hpc.dkrz.de" ]]; then
+	#We are on the linux system... for some reason the flock utility isn't working on
+	#linux system at the moment
+	echo "Warning - no locking in place; running multiple copies of this script from the"
+	echo "same code release will result in unpredictable results" 1>&2
+	if $first_timestep ; then
+			compilation_required=true
+	else
+			compilation_required=false
+	fi
+else
+	exec 200>"${source_directory}/compilation.lock"
+	if $first_timestep ; then
+		if flock -x -n 200 ; then
+			compilation_required=true
+		else
+			flock -s 200
+			compilation_required=false
+		fi
 	else
 		flock -s 200
 		compilation_required=false
 	fi
-else
-	flock -s 200
-	compilation_required=false
 fi
 
 #Setup conda environment
@@ -236,6 +277,7 @@ fi
 
 if ! $no_modules && ! $no_conda ; then
 	load_module anaconda3
+	load_module nco
 fi
 
 if ! $no_conda ; then
@@ -322,16 +364,14 @@ fi
 
 #Run
 echo "Running Dynamic HD Code" 1>&2
-python2.7 ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/dynamic_lake_production_run_driver.py ${input_orography_filepath} ${input_ls_mask_filepath} ${input_lake_volumes_filepath} ${present_day_base_orography_filepath} ${glacier_mask_filepath} ${working_directory}/hdpara_out_temp.nc ${output_lakeparas_filepath} ${ancillary_data_directory} ${working_directory} ${output_lakestart_filepath} ${output_hdstart_argument}
+python2.7 ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/dynamic_lake_production_run_driver.py ${input_orography_filepath} ${input_ls_mask_filepath} ${input_lake_volumes_filepath} ${present_day_base_orography_filepath} ${glacier_mask_filepath} ${working_directory}/hdpara_out_temp.nc ${output_lakepara_filepath} ${ancillary_data_directory} ${working_directory} ${output_lakestart_filepath} ${output_hdstart_argument}
 
 #Change lake centers FDIR from 5 to -2
-cdo expr,'FDIR=-2.0*(FDIR==5.0)+FDIR*(FDIR!=5.0)' hdpara_out_temp.nc corrected_FDIR_temp.nc
-cdo delete,'name=FDIR' hdpara_out_temp.nc hdpara_out_temp_remaining_vars.nc
-cdo merge hdpara_out_temp_remaining_vars.nc corrected_FDIR_temp.nc ${output_hdpara_filepath}
+ncap2 -s 'where(FDIR == 5.0) FDIR=-2.0' hdpara_out_temp.nc ${output_hdpara_filepath}
 
 #Release trapped water from hdstart file
 if ! ${first_timestep}; then
-	${source_directory}/Dynamic_HD_bash_scripts/${release_trapped_water_from_hd_start_file} ${output_hdstart_filepath} ${input_hdstart_filepath} ${output_hdstart_filepath} ${working_directory}
+	${source_directory}/Dynamic_HD_bash_scripts/release_trapped_water_from_hdstart_file.sh ${output_hdpara_filepath} ${input_hdstart_filepath} ${output_hdstart_filepath} ${working_directory} ${no_modules}
 fi
 
 #Delete paragen directory if it exists
@@ -348,9 +388,8 @@ rm -f 30minute_filled_orog_temp.dat 30minute_ls_mask_temp.dat 30minute_river_dir
 rm -f 30minute_ls_mask.dat 30minute_filled_orog.dat 30minute_river_dirs.dat || true
 
 #Delete other files
-rm -f catchments.log loops.log 30minute_filled_orog_temp.nc 30minute_river_dirs_temp.nc
-rm -f 30minute_ls_mask_temp.nc
-rm -f corrected_FDIR_temp.nc hdpara_out_temp.nc hdpara_out_temp_remaining_vars.nc
+rm -f catchments.log loops_10min.log loops_30min.log 30minute_filled_orog_temp.nc
+rm -f 30minute_river_dirs_temp.nc 30minute_ls_mask_temp.nc hdpara_out_temp.nc .nc
 
 #Generate full diagnostic output label
 diagnostic_output_label="${diagnostic_output_exp_id_label}_${diagnostic_output_time_label}"

@@ -23,16 +23,17 @@ relative_path=$1
 perl -MCwd -e 'print Cwd::abs_path($ARGV[0]),qq<\n>' $relative_path
 }
 
-#Load necessary modules
-if echo $LOADEDMODULES | fgrep -q -v "cdo" ; then
-	load_module cdo
-fi
-
 #Process command line arguments
 input_hdpara_filepath=${1}
 input_hdstart_filepath=${2}
 output_hdstart_filepath=${3}
 working_dir=${4}
+no_modules=${5:-false}
+
+#Load necessary modules
+if ! ${no_modules} && echo $LOADEDMODULES | fgrep -q -v "cdo" ; then
+  load_module cdo
+fi
 
 #convert to absolute path names
 input_hdpara_filepath=$(find_abs_path $input_hdpara_filepath)
@@ -45,8 +46,8 @@ cd ${working_dir}
 #hdstart file
 cdo select,name=FDIR ${input_hdpara_filepath} rdirs.nc
 cdo merge rdirs.nc ${input_hdstart_filepath} hdstart_temp.nc
-#Prepare a set of instructions for transferring water to the FINFL field from other 
-#reserviors 
+#Prepare a set of instructions for transferring water to the FINFL field from other
+#reserviors
 cat >move_res_to_rflow_inst.txt << EOL
 _mask=(FDIR==0.0||FDIR==-1.0||FDIR==5.0);
 FINFL=_mask ? FINFL+FGMEM : FINFL;
