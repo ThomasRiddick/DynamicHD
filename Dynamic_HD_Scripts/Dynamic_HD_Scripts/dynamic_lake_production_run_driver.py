@@ -565,9 +565,8 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                            temp_30min_rdirs_filename,
                                            input_coarse_rdirs_fieldname="FDIR",
                                            combined_output_filename=
-                                           path.join(self.output_lakeparas_filepath,
-                                                "lakeparas.nc"),
-                                           output_filepath=self.output_lakeparas_filepath,
+                                           self.output_lakeparas_filepath,
+                                           output_filepath=self.working_directory_path,
                                            output_filelabel="temp",
                                            output_basin_catchment_nums_filepath=
                                            temp_basin_catchment_numbers_filename)
