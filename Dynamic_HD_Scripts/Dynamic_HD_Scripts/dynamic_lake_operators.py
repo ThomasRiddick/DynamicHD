@@ -140,14 +140,10 @@ def advanced_basin_evaluation_driver(input_minima_file,
                                                       fieldname=input_cell_areas_fieldname)
     input_prior_fine_rdirs = iodriver.advanced_field_loader(input_prior_fine_rdirs_file,
                                                             field_type='RiverDirections',
-                                                            fieldname=input_prior_fine_rdirs_fieldname,
-                                                            grid_desc_file="/Users/thomasriddick/Documents/data/HDdata/grids/grid_10min.txt")
-    print "watch for the nasty hack"
+                                                            fieldname=input_prior_fine_rdirs_fieldname)
     input_prior_fine_catchments = iodriver.advanced_field_loader(input_prior_fine_catchments_file,
                                                                  field_type='Generic',
-                                                                 fieldname=input_prior_fine_catchments_fieldname,
-                                                                 grid_desc_file="/Users/thomasriddick/Documents/data/HDdata/grids/grid_10min.txt")
-    print "watch for the nasty hack"
+                                                                 fieldname=input_prior_fine_catchments_fieldname)
     input_coarse_catchment_nums = iodriver.advanced_field_loader(input_coarse_catchment_nums_file,
                                                                  field_type='Generic',
                                                                  fieldname=input_coarse_catchment_nums_fieldname)

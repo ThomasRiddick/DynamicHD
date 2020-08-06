@@ -292,7 +292,11 @@ fi
 
 #Load a new version of gcc that doesn't have the polymorphic variable bug
 if ! $no_modules ; then
-	load_module gcc/6.2.0
+	if [[ $(hostname -d) == "hpc.dkrz.de" ]]; then
+		load_module gcc/6.2.0
+	else
+		load_module gcc/6.3.0
+	fi
 fi
 
 #Setup correct python path

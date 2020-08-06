@@ -273,7 +273,7 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                               loops_log_10min_filename)
         catchments_10min = field.Field(comp_catchs.renumber_catchments_by_size(catchments_10min,
                                                                                loops_log_10min_filename),
-                                       grid="LatLong10min")
+                                       grid=rdirs_10min.get_grid())
         if config.getboolean("output_options","output_fine_flowtocell"):
             iodriver.advanced_field_writer(path.join(self.working_directory_path,
                                                        "10min_flowtocell.nc"),
