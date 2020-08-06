@@ -273,11 +273,11 @@ if ! $no_modules ; then
 	else
 		export MODULEPATH="/sw/common/Modules:/client/Modules"
 	fi
+	load_module nco
 fi
 
 if ! $no_modules && ! $no_conda ; then
 	load_module anaconda3
-	load_module nco
 fi
 
 if ! $no_conda ; then
