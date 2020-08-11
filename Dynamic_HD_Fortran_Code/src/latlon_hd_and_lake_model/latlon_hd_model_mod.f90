@@ -27,6 +27,7 @@ end interface
 type, public :: riverprognosticfields
   real, pointer,     dimension(:,:)   :: runoff
   real, pointer,     dimension(:,:)   :: drainage
+  real, pointer,     dimension(:,:)   :: lake_evaporation
   real, pointer,     dimension(:,:)   :: river_inflow
   real, pointer,     dimension(:,:,:)   :: base_flow_reservoirs
   real, pointer,     dimension(:,:,:)   :: overland_flow_reservoirs
@@ -168,9 +169,11 @@ subroutine initialiseriverprognosticfields(this,river_inflow_in, &
   real, pointer, dimension(:,:,:) :: river_flow_reservoirs_in
     allocate(this%runoff,mold=river_inflow_in)
     allocate(this%drainage,mold=river_inflow_in)
+    allocate(this%lake_evaporation,mold=river_inflow_in)
     allocate(this%water_to_ocean,mold=river_inflow_in)
     this%runoff(:,:) = 0
     this%drainage(:,:) = 0
+    this%lake_evaporation(:,:) = 0
     this%water_to_ocean(:,:) = 0
     this%river_inflow => river_inflow_in
     this%base_flow_reservoirs => base_flow_reservoirs_in
@@ -182,6 +185,7 @@ subroutine riverprognosticfieldsdestructor(this)
   class(riverprognosticfields) :: this
     deallocate(this%runoff)
     deallocate(this%drainage)
+    deallocate(this%lake_evaporation)
     deallocate(this%water_to_ocean)
     deallocate(this%river_inflow)
     deallocate(this%base_flow_reservoirs)
@@ -391,8 +395,11 @@ subroutine run_hd(prognostic_fields)
         prognostic_fields%lake_interface_fields%water_to_lakes = &
             prognostic_fields%river_fields%river_inflow + &
             prognostic_fields%river_fields%runoff + &
-            prognostic_fields%river_fields%drainage
+            prognostic_fields%river_fields%drainage - &
+            prognostic_fields%river_fields%lake_evaporation
         prognostic_fields%river_fields%river_inflow = 0.0
+        prognostic_fields%river_fields%water_to_ocean = &
+          -1.0*prognostic_fields%lake_interface_fields%lake_water_from_ocean
       end where
     end if
     prognostic_fields%river_fields%runoff(:,:) = 0.0
@@ -486,6 +493,12 @@ subroutine set_runoff(prognostic_fields,runoff)
   real, allocatable, dimension(:,:) :: runoff
     prognostic_fields%river_fields%runoff = runoff
 end subroutine set_runoff
+
+subroutine set_lake_evaporation(prognostic_fields,lake_evaporation)
+  type(prognostics), intent(inout) :: prognostic_fields
+  real, dimension(:,:) :: lake_evaporation
+    prognostic_fields%river_fields%lake_evaporation = lake_evaporation
+end subroutine set_lake_evaporation
 
 subroutine distribute_spillover(prognostic_fields, &
                                 initial_spillover_to_rivers)

@@ -48,20 +48,29 @@ module latlon_hd_model_interface_mod
       write_output = .false.
   end subroutine init_hd_model_for_testing
 
-  subroutine run_hd_model(timesteps,runoffs,drainages)
+  subroutine run_hd_model(timesteps,runoffs,drainages,lake_evaporation)
     integer, intent(in) :: timesteps
     real   ,dimension(:,:,:) :: runoffs
     real   ,dimension(:,:,:) :: drainages
+    real   ,dimension(:,:,:), optional :: lake_evaporation
+    real   ,dimension(:,:,:), allocatable :: lake_evaporation_local
     integer :: i
-    do i = 1,timesteps
-      call set_runoff_and_drainage(global_prognostics,runoffs(:,:,i),drainages(:,:,i))
-      call run_hd(global_prognostics)
-      if ((i == 1 .or. i == timesteps .or. mod(i,365) == 0) .and. write_output) then
-        call write_river_flow_field(global_prognostics%river_parameters,&
-                                    global_prognostics%river_fields%river_inflow,i)
-        call write_lake_numbers_field_interface(i)
+      allocate(lake_evaporation_local,mold=runoffs)
+      if (present(lake_evaporation)) then
+        lake_evaporation_local(:,:,:) = lake_evaporation(:,:,:)
+      else
+        lake_evaporation_local(:,:,:) = 0
       end if
-    end do
+      do i = 1,timesteps
+        call set_runoff_and_drainage(global_prognostics,runoffs(:,:,i),drainages(:,:,i))
+        call set_lake_evaporation(global_prognostics,lake_evaporation_local(:,:,i))
+        call run_hd(global_prognostics)
+        if ((i == 1 .or. i == timesteps .or. mod(i,365) == 0) .and. write_output) then
+          call write_river_flow_field(global_prognostics%river_parameters,&
+                                      global_prognostics%river_fields%river_inflow,i)
+          call write_lake_numbers_field_interface(i)
+        end if
+      end do
   end subroutine
 
   function get_global_prognostics() result(value)
