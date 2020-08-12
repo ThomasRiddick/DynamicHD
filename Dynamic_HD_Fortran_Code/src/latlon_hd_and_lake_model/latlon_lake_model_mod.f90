@@ -1081,7 +1081,7 @@ end subroutine accept_merge
 subroutine accept_split(this)
   class(lake), intent(inout) :: this
     if (this%lake_parameters%flood_only(this%current_cell_to_fill_lat, &
-                                        this%current_cell_to_fill_lat) .or. &
+                                        this%current_cell_to_fill_lon) .or. &
         this%lake_volume <= &
         this%lake_parameters%connection_volume_thresholds(this%current_cell_to_fill_lat, &
                                                           this%current_cell_to_fill_lon)) then

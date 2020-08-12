@@ -8,6 +8,8 @@ implicit none
 type lakeinterfaceprognosticfields
   real, allocatable, dimension(:)   :: water_from_lakes
   real, allocatable, dimension(:)   :: water_to_lakes
+  !Lake water from ocean means negative water from lakes to ocean
+  real, allocatable, dimension(:)   :: lake_water_from_ocean
   contains
     procedure :: initialiselakeinterfaceprognosticfields
     procedure :: lakeinterfaceprognosticfieldsdestructor
@@ -34,6 +36,7 @@ subroutine  lakeinterfaceprognosticfieldsdestructor(this)
   class(lakeinterfaceprognosticfields) :: this
     deallocate(this%water_from_lakes)
     deallocate(this%water_to_lakes)
+    deallocate(this%lake_water_from_ocean)
 end subroutine  lakeinterfaceprognosticfieldsdestructor
 
 subroutine initialiselakeinterfaceprognosticfields(this, &
@@ -42,8 +45,10 @@ subroutine initialiselakeinterfaceprognosticfields(this, &
   integer :: ncells_coarse
     allocate(this%water_from_lakes(ncells_coarse))
     allocate(this%water_to_lakes(ncells_coarse))
+    allocate(this%lake_water_from_ocean(ncells_coarse))
     this%water_from_lakes = 0.0
     this%water_to_lakes = 0.0
+    this%lake_water_from_ocean = 0.0
 end subroutine initialiselakeinterfaceprognosticfields
 
 subroutine init_lake_model(lake_model_ctl_filename,initial_spillover_to_rivers)
@@ -87,6 +92,7 @@ subroutine run_lake_model(lake_interface_fields)
     global_lake_fields%water_to_lakes(:) = lake_interface_fields%water_to_lakes(:)
     call run_lakes(global_lake_parameters,global_lake_prognostics,global_lake_fields)
     lake_interface_fields%water_from_lakes(:) = global_lake_fields%water_to_hd(:)
+    lake_interface_fields%lake_water_from_ocean(:) = global_lake_fields%lake_water_from_ocean(:)
 end subroutine run_lake_model
 
 subroutine run_lake_model_jsbach(water_to_lakes_in,water_to_hd_out)
