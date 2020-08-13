@@ -63,14 +63,32 @@ struct UnstructuredGrid <: Grid
   clon::Array{Float64,1}
   clat_bounds::Array{Float64,2}
   clon_bounds::Array{Float64,2}
+  mapping_to_coarse_grid::Array{Int64,1}
   function UnstructuredGrid(ncells::Int64,clat::Array{Float64,1},clon::Array{Float64,1},
-                            clat_bounds::Array{Float64,2},clon_bounds::Array{Float64,2})
-    return new(ncells,1,clat,clon,clat_bounds,clon_bounds)
+                            clat_bounds::Array{Float64,2},clon_bounds::Array{Float64,2},
+                            mapping_to_coarse_grid::Array{Int64,1})
+    return new(ncells,1,clat,clon,clat_bounds,clon_bounds,mapping_to_coarse_grid)
   end
 end
 
+UnstructuredGrid(ncells::Int64,clat::Array{Float64,1},clon::Array{Float64,1},
+                 clat_bounds::Array{Float64,2},clon_bounds::Array{Float64,2}) =
+  UnstructuredGrid(ncells::Int64,clat::Array{Float64,1},clon::Array{Float64,1},
+                   clat_bounds::Array{Float64,2},clon_bounds::Array{Float64,2},
+                   [i for i = 1:ncells]::Array{Int64,1})
+
+
 UnstructuredGrid(ncells::Int64) = UnstructuredGrid(ncells,Array{Float64,1}(undef,ncells),Array{Float64,1}(undef,ncells),
                                                    Array{Float64,2}(undef,3,ncells),Array{Float64,2}(undef,3,ncells))
+
+UnstructuredGrid(ncells::Int64) = UnstructuredGrid(ncells,Array{Float64,1}(undef,ncells),Array{Float64,1}(undef,ncells),
+                                                   Array{Float64,2}(undef,3,ncells),Array{Float64,2}(undef,3,ncells))
+
+UnstructuredGrid(ncells::Int64,
+                 mapping_to_coarse_grid::Array{Int64,1}) =
+  UnstructuredGrid(ncells,Array{Float64,1}(undef,ncells),Array{Float64,1}(undef,ncells),
+                   Array{Float64,2}(undef,3,ncells),Array{Float64,2}(undef,3,ncells),
+                   mapping_to_coarse_grid)
 
 LatLonGridOrUnstructuredGrid = Union{LatLonGrid,UnstructuredGrid}
 
@@ -123,6 +141,17 @@ function for_all_fine_cells_in_coarse_cell(function_on_point::Function,
   end
 end
 
+function for_all_fine_cells_in_coarse_cell(function_on_point::Function,
+                                           fine_grid::UnstructuredGrid,
+                                           coarse_grid::UnstructuredGrid,
+                                           coarse_cell_coords::Generic1DCoords)
+  for i = 1:fine_grid.ncells
+    if (fine_grid.mapping_to_coarse_grid[i] == coarse_cell_coords.index)
+      function_on_point(Generic1DCoords(i))
+    end
+  end
+end
+
 function find_coarse_cell_containing_fine_cell(fine_grid::LatLonGrid,coarse_grid::LatLonGrid,
                                                fine_cell_coords::LatLonCoords)
   fine_cells_per_coarse_cell_lat::Int64 = fine_grid.nlat/coarse_grid.nlat
@@ -130,6 +159,12 @@ function find_coarse_cell_containing_fine_cell(fine_grid::LatLonGrid,coarse_grid
   coarse_lat::Int64 = ceil(fine_cell_coords.lat/fine_cells_per_coarse_cell_lat);
   coarse_lon::Int64 = ceil(fine_cell_coords.lon/fine_cells_per_coarse_cell_lon);
   return LatLonCoords(coarse_lat,coarse_lon);
+end
+
+function find_coarse_cell_containing_fine_cell(fine_grid::UnstructuredGrid,
+                                               coarse_grid::UnstructuredGrid,
+                                               fine_cell_coords::Generic1DCoords)
+  return Generic1DCoords(fine_grid.mapping_to_coarse_grid[fine_cell_coords.index])
 end
 
 function find_downstream_coords(grid::T,

@@ -258,7 +258,7 @@ end
 
 function isapprox(lfield::UnstructuredField{T},rfield::UnstructuredField{T};
                   rtol::Real=atol>0 ? 0 : sqrt(eps),
-                  atol::Real=0.0,nans::Bool) where {T}
+                  atol::Real=0.0,nans::Bool=false) where {T}
   return isapprox(lfield.data,rfield.data,
                  rtol=rtol,atol=atol,nans=nans)::Bool
 end
