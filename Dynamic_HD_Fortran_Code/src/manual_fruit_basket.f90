@@ -1321,6 +1321,56 @@ contains
 
     end subroutine latlon_hd_and_lake_model_all_tests
 
+    subroutine icosohedral_hd_and_lake_model_all_tests
+    use icosohedral_hd_and_lake_model_test_mod
+
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testHdModel - ICON grid"
+        call set_unit_name('test_something')
+        call run_test_case(testHdModel,'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","HD Model test")
+        else
+            call case_passed_xml("test_something","HD Model test")
+        end if
+        call teardown
+
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testLakeModel1 - ICON grid"
+        call set_unit_name('test_something')
+        call run_test_case(testLakeModel1,'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","Lake Model test 1")
+        else
+            call case_passed_xml("test_something","Lake Model test 1")
+        end if
+        call teardown
+
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testLakeModel2 - ICON grid"
+        call set_unit_name('test_something')
+        call run_test_case(testLakeModel2,'test_something')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","Lake Model test 2")
+        else
+            call case_passed_xml("test_something","Lake Model test 2")
+        end if
+        call teardown
+
+
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testLakeModel3 - ICON grid"
+        call set_unit_name('Lake model with Evaporation')
+        call run_test_case(testLakeModel3,'Lake model with evaporation')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","Lake Model test 3")
+        else
+            call case_passed_xml("test_something","Lake Model test 3")
+        end if
+        call teardown
+
+    end subroutine icosohedral_hd_and_lake_model_all_tests
+
     subroutine map_non_coincident_grids_all_tests
         use map_non_coincident_grids_test_mod
         call setup

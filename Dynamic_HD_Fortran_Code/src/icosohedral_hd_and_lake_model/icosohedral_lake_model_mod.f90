@@ -228,7 +228,8 @@ subroutine initialiselakeparameters(this,lake_centers_in, &
                                     ncells_in,&
                                     ncells_coarse_in,&
                                     instant_throughflow_in, &
-                                    lake_retention_coefficient_in)
+                                    lake_retention_coefficient_in, &
+                                    coarse_cell_numbers_on_fine_grid_in)
   class(lakeparameters),intent(inout) :: this
   logical :: instant_throughflow_in
   real :: lake_retention_coefficient_in
@@ -250,6 +251,7 @@ subroutine initialiselakeparameters(this,lake_centers_in, &
   integer, pointer, dimension(:) :: additional_connect_redirect_index_in
   integer, pointer, dimension(:) :: basins_in_coarse_cell_index_temp
   integer, pointer, dimension(:) :: basins_in_coarse_cell_index
+  integer, pointer, dimension(:), optional :: coarse_cell_numbers_on_fine_grid_in
   type(basinlist), pointer, dimension(:) :: basins_temp
   integer :: ncells_in
   integer :: ncells_coarse_in
@@ -276,10 +278,14 @@ subroutine initialiselakeparameters(this,lake_centers_in, &
     this%additional_connect_redirect_index => additional_connect_redirect_index_in
     this%ncells = ncells_in
     this%ncells_coarse = ncells_coarse_in
-    allocate(this%coarse_cell_numbers_on_fine_grid(ncells_in))
-    do i = 1,ncells_in
-      this%coarse_cell_numbers_on_fine_grid(i) = i
-    end do
+    if (.not. present(coarse_cell_numbers_on_fine_grid_in)) then
+      allocate(this%coarse_cell_numbers_on_fine_grid(ncells_in))
+      do i = 1,ncells_in
+        this%coarse_cell_numbers_on_fine_grid(i) = i
+      end do
+    else
+      this%coarse_cell_numbers_on_fine_grid => coarse_cell_numbers_on_fine_grid_in
+    end if
     this%instant_throughflow = instant_throughflow_in
     this%lake_retention_coefficient = lake_retention_coefficient_in
     allocate(this%flood_only(ncells_in))
@@ -298,11 +304,13 @@ subroutine initialiselakeparameters(this,lake_centers_in, &
     scale_factor = ncells_in/ncells_coarse_in
     do i=1,ncells_coarse_in
       number_of_basins_in_coarse_cell = 0
-        do k = 1+(i-1)*scale_factor,i*scale_factor
+      do k = 1,this%ncells
+        if (this%coarse_cell_numbers_on_fine_grid(k) == i) then
           if (this%lake_centers(k)) then
             number_of_basins_in_coarse_cell = number_of_basins_in_coarse_cell + 1
             basins_in_coarse_cell_index_temp(number_of_basins_in_coarse_cell) = k
           end if
+        end if
       end do
       if(number_of_basins_in_coarse_cell > 0) then
         allocate(basins_in_coarse_cell_index(number_of_basins_in_coarse_cell))
@@ -342,7 +350,8 @@ function lakeparametersconstructor(lake_centers_in, &
                                    ncells_in,&
                                    ncells_coarse_in, &
                                    instant_throughflow_in, &
-                                   lake_retention_coefficient_in) result(constructor)
+                                   lake_retention_coefficient_in, &
+                                   coarse_cell_numbers_on_fine_grid_in) result(constructor)
   type(lakeparameters), pointer :: constructor
   logical, pointer, dimension(:), intent(in) :: lake_centers_in
   real, pointer, dimension(:), intent(in) :: connection_volume_thresholds_in
@@ -364,27 +373,53 @@ function lakeparametersconstructor(lake_centers_in, &
   integer, intent(in) :: ncells_coarse_in
   logical, intent(in) :: instant_throughflow_in
   real, intent(in) :: lake_retention_coefficient_in
+  integer, pointer, dimension(:), intent(in), optional :: &
+    coarse_cell_numbers_on_fine_grid_in
     allocate(constructor)
-    call constructor%initialiselakeparameters(lake_centers_in, &
-                                              connection_volume_thresholds_in, &
-                                              flood_volume_thresholds_in, &
-                                              flood_local_redirect_in, &
-                                              connect_local_redirect_in, &
-                                              additional_flood_local_redirect_in, &
-                                              additional_connect_local_redirect_in, &
-                                              merge_points_in, &
-                                              flood_next_cell_index_in, &
-                                              connect_next_cell_index_in, &
-                                              flood_force_merge_index_in, &
-                                              connect_force_merge_index_in, &
-                                              flood_redirect_index_in, &
-                                              connect_redirect_index_in, &
-                                              additional_flood_redirect_index_in, &
-                                              additional_connect_redirect_index_in, &
-                                              ncells_in, &
-                                              ncells_coarse_in, &
-                                              instant_throughflow_in, &
-                                              lake_retention_coefficient_in)
+    if (present(coarse_cell_numbers_on_fine_grid_in)) then
+      call constructor%initialiselakeparameters(lake_centers_in, &
+                                                connection_volume_thresholds_in, &
+                                                flood_volume_thresholds_in, &
+                                                flood_local_redirect_in, &
+                                                connect_local_redirect_in, &
+                                                additional_flood_local_redirect_in, &
+                                                additional_connect_local_redirect_in, &
+                                                merge_points_in, &
+                                                flood_next_cell_index_in, &
+                                                connect_next_cell_index_in, &
+                                                flood_force_merge_index_in, &
+                                                connect_force_merge_index_in, &
+                                                flood_redirect_index_in, &
+                                                connect_redirect_index_in, &
+                                                additional_flood_redirect_index_in, &
+                                                additional_connect_redirect_index_in, &
+                                                ncells_in, &
+                                                ncells_coarse_in, &
+                                                instant_throughflow_in, &
+                                                lake_retention_coefficient_in, &
+                                                coarse_cell_numbers_on_fine_grid_in)
+    else
+      call constructor%initialiselakeparameters(lake_centers_in, &
+                                                connection_volume_thresholds_in, &
+                                                flood_volume_thresholds_in, &
+                                                flood_local_redirect_in, &
+                                                connect_local_redirect_in, &
+                                                additional_flood_local_redirect_in, &
+                                                additional_connect_local_redirect_in, &
+                                                merge_points_in, &
+                                                flood_next_cell_index_in, &
+                                                connect_next_cell_index_in, &
+                                                flood_force_merge_index_in, &
+                                                connect_force_merge_index_in, &
+                                                flood_redirect_index_in, &
+                                                connect_redirect_index_in, &
+                                                additional_flood_redirect_index_in, &
+                                                additional_connect_redirect_index_in, &
+                                                ncells_in, &
+                                                ncells_coarse_in, &
+                                                instant_throughflow_in, &
+                                                lake_retention_coefficient_in)
+    end if
 end function lakeparametersconstructor
 
 subroutine lakeparametersdestructor(this)
@@ -437,8 +472,10 @@ subroutine initialiselakefields(this,lake_parameters)
       scale_factor = lake_parameters%ncells/lake_parameters%ncells_coarse
       do i=1,lake_parameters%ncells_coarse
         contains_lake = .false.
-        do k = 1+(i-1)*scale_factor,i*scale_factor
-          if (lake_parameters%lake_centers(k)) contains_lake = .true.
+        do k = 1,lake_parameters%ncells
+          if (lake_parameters%coarse_cell_numbers_on_fine_grid(k) == i) then
+            if (lake_parameters%lake_centers(k)) contains_lake = .true.
+          end if
         end do
         if(contains_lake) then
           number_of_cells_containing_lakes = number_of_cells_containing_lakes + 1

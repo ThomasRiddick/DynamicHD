@@ -38,6 +38,7 @@ $(FRUIT_LOC)/fruit.f90 \
 ../src/latlon_hd_and_lake_model/latlon_hd_model_mod.f90 \
 ../src/latlon_hd_and_lake_model/latlon_hd_model_driver.f90 \
 ../src/latlon_hd_and_lake_model_test_mod.f90 \
+../src/icosohedral_hd_and_lake_model_test_mod.f90 \
 ../src/cotat_plus_latlon_to_icon_simple_interface.f90 \
 ../src/map_non_coincident_grids_test_mod.f90 \
 ../src/manual_fruit_basket.f90 \
@@ -140,6 +141,13 @@ TEST_OBJS += \
 ./src/latlon_hd_and_lake_model/latlon_hd_model_mod.o \
 ./src/latlon_hd_and_lake_model/latlon_hd_model_interface_mod.o \
 ./src/latlon_hd_and_lake_model_test_mod.o \
+./src/icosohedral_hd_and_lake_model/icosohedral_lake_model_mod.o \
+./src/icosohedral_hd_and_lake_model/icosohedral_lake_model_interface_mod.o \
+./src/icosohedral_hd_and_lake_model/icosohedral_lake_model_io_mod.o \
+./src/icosohedral_hd_and_lake_model/icosohedral_hd_model_mod.o \
+./src/icosohedral_hd_and_lake_model/icosohedral_hd_model_io_mod.o \
+./src/icosohedral_hd_and_lake_model/icosohedral_hd_model_interface_mod.o \
+./src/icosohedral_hd_and_lake_model_test_mod.o \
 ./src/map_non_coincident_grids_test_mod.o \
 ./src/manual_fruit_basket.o \
 ./src/manual_fruit_basket_driver.o
@@ -189,6 +197,7 @@ MODS += \
 ./map_non_coincident_grids_test_mod.mod \
 ./cotat_plus_latlon_to_icon_simple_interface.mod \
 ./latlon_hd_and_lake_model_test_mod.mod \
+./icosohedral_hd_and_lake_model_test_mod.mod \
 ./icon_to_latlon_landsea_downscaler.mod \
 ./icon_to_latlon_landsea_downscaler_simple_interface.mod \
 ./latlon_to_icon_loop_breaker_simple_interface.mod \
@@ -286,7 +295,7 @@ src/accumulate_flow_mod.o: ../src/accumulate_flow_mod.f90 src/flow_accumulation_
 
 src/accumulate_flow_test_mod.o: ../src/accumulate_flow_test_mod.f90 src/accumulate_flow_mod.o src/fruit.o
 
-src/manual_fruit_basket.o: ../src/manual_fruit_basket.f90 src/area_test_mod.o src/cotat_plus_test_mod.o src/doubly_linked_list_test_module.o src/field_section_test_mod.o src/fruit.o src/loop_breaker_test_mod.o src/subfield_test_mod.o src/latlon_hd_and_lake_model_test_mod.o src/accumulate_flow_test_mod.o
+src/manual_fruit_basket.o: ../src/manual_fruit_basket.f90 src/area_test_mod.o src/cotat_plus_test_mod.o src/doubly_linked_list_test_module.o src/field_section_test_mod.o src/fruit.o src/loop_breaker_test_mod.o src/subfield_test_mod.o src/latlon_hd_and_lake_model_test_mod.o src/accumulate_flow_test_mod.o src/icosohedral_hd_and_lake_model_test_mod.o
 
 src/manual_fruit_basket_driver.o: ../src/manual_fruit_basket_driver.f90 src/fruit.o src/manual_fruit_basket.o
 
@@ -323,6 +332,8 @@ src/latlon_hd_and_lake_model/latlon_lake_model_io_mod.o: ../src/latlon_hd_and_la
 src/latlon_hd_and_lake_model/latlon_hd_model_mod.o: ../src/latlon_hd_and_lake_model/latlon_hd_model_mod.f90 src/latlon_hd_and_lake_model/latlon_lake_model_interface_mod.o
 
 src/latlon_hd_and_lake_model_test_mod.o: ../src/latlon_hd_and_lake_model_test_mod.f90 src/latlon_hd_and_lake_model/latlon_hd_model_interface_mod.o src/latlon_hd_and_lake_model/latlon_hd_model_mod.o
+
+src/icosohedral_hd_and_lake_model_test_mod.o: ../src/icosohedral_hd_and_lake_model_test_mod.f90 src/icosohedral_hd_and_lake_model/icosohedral_hd_model_interface_mod.o src/icosohedral_hd_and_lake_model/icosohedral_hd_model_mod.o
 
 src/map_non_coincident_grids_mod.o: ../src/map_non_coincident_grids_mod.f90
 
