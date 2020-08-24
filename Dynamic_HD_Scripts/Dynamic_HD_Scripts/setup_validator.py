@@ -78,7 +78,8 @@ class SetupValidator(object):
                                        format(input_field.name))
                 for condition in input_field.conditions:
                     if not condition(self.config.get(input_field_section,input_field.name)):
-                        raise RuntimeError("Condition {0} not met".format(condition))
+                        raise RuntimeError("Condition {0} not met for field {1}".\
+                                           format(condition,input_field.name))
         for input_field_section,section_input_fields in optional_input_fields.items():
             if self.config.has_section(input_field_section):
                 for input_field in section_input_fields:
