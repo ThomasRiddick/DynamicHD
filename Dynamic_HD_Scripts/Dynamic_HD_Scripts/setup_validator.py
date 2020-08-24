@@ -70,13 +70,15 @@ class SetupValidator(object):
     def validate_inputs_fields(self,required_input_fields,optional_input_fields):
         for input_field_section,section_input_fields in required_input_fields.items():
             if not self.config.has_section(input_field_section):
-                raise RuntimeError()
+                raise RuntimeError("Missing required section {0}".\
+                                   format(input_field_section))
             for input_field in section_input_fields:
                 if not self.config.has_option(input_field_section,input_field.name):
-                    raise RuntimeError()
+                    raise RuntimeError("Missing required option {0}".\
+                                       format(input_field.name))
                 for condition in input_field.conditions:
                     if not condition(self.config.get(input_field_section,input_field.name)):
-                        raise RuntimeError()
+                        raise RuntimeError("Condition {0} not met".format(condition))
         for input_field_section,section_input_fields in optional_input_fields.items():
             if self.config.has_section(input_field_section):
                 for input_field in section_input_fields:
