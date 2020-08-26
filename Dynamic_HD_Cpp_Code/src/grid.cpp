@@ -589,7 +589,7 @@ icon_single_index_grid::icon_single_index_grid(grid_params* params){
 		}
 		if (nowrap) subgrid_mask = params_local->get_subgrid_mask();
 	} else {
-		throw runtime_error("latlon_grid constructor received wrong kind of grid parameters");
+		throw runtime_error("icon_single_index_grid constructor received wrong kind of grid parameters");
 	}
 };
 
@@ -632,7 +632,9 @@ void icon_single_index_grid::for_all(function<void(coords*)> func) {
 }
 
 void icon_single_index_grid::for_all_with_line_breaks(function<void(coords*,bool)> func){
-	throw runtime_error("for_all_with_line_break not implemented for Icon grid");
+	for (auto i = 0; i < ncells; i++) {
+		func(new generic_1d_coords(i + array_offset),false);
+	}
 }
 
 generic_1d_coords* icon_single_index_grid::icon_single_index_wrapped_coords(generic_1d_coords* coords_in) {
@@ -698,7 +700,14 @@ int icon_single_index_grid::get_separation_from_initial_edge(coords* coords_in,i
 }
 
 coords* icon_single_index_grid::convert_fine_coords(coords* fine_coords,grid_params* fine_grid_params){
-	throw runtime_error("Convert fine coords not yet implemented for Icon grid");
+	icon_single_index_grid_params* fine_grid_params_local =
+	   static_cast<icon_single_index_grid_params*>(fine_grid_params);
+	generic_1d_coords* fine_coords_local = static_cast<generic_1d_coords*>(fine_coords);
+	int* fine_grid_mapping_to_coarse_grid = fine_grid_params_local->get_mapping_to_coarse_grid();
+	if (fine_grid_mapping_to_coarse_grid) {
+		return new generic_1d_coords(fine_grid_mapping_to_coarse_grid[fine_coords_local->get_index() -
+		                             fine_grid_params_local->get_array_offset()]);
+	} else throw runtime_error("No mapping between fine and coarse grid provided");
 }
 
 coords* icon_single_index_grid::

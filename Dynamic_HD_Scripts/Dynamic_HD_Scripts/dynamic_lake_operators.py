@@ -499,3 +499,34 @@ def advanced_shallow_lake_filtering_driver(input_unfilled_orography_file,
                                    output_unfilled_orography,
                                    fieldname=output_unfilled_orography_fieldname)
 
+def add_lake_bathymetry(input_orography,
+                        input_bathymetry,
+                        lake_mask):
+  input_orography.mask_field_with_external_mask(lake_mask.get_data())
+  output_orography = input_bathymetry
+  output_orography.update_field_with_partially_masked_data(input_orography)
+  return output_orography
+
+def add_lake_bathymetry_driver(input_orography_file,
+                               input_orography_fieldname,
+                               input_bathymetry_file,
+                               input_bathymetry_fieldname,
+                               lake_mask_file,
+                               lake_mask_fieldname,
+                               output_orography_file,
+                               output_orography_fieldname):
+  input_orography =  iodriver.advanced_field_loader(input_orography_file,
+                                                    field_type='Generic',
+                                                    fieldname=input_orography_fieldname)
+  input_bathymetry = iodriver.advanced_field_loader(input_bathymetry_file,
+                                                    field_type='Generic',
+                                                    fieldname=input_bathymetry_fieldname)
+  lake_mask = iodriver.advanced_field_loader(lake_mask_file,
+                                             field_type='Generic',
+                                             fieldname=lake_mask_fieldname)
+  output_orography = add_lake_bathymetry(input_orography,
+                                         input_bathymetry,
+                                         lake_mask)
+  iodriver.advanced_field_writer(output_orography_file,
+                                 output_orography,
+                                 fieldname=output_orography_fieldname)

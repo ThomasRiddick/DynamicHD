@@ -9,6 +9,7 @@
  */
 
 #include "create_orography.hpp"
+#include "field.hpp"
 #include "gtest/gtest.h"
 
 using namespace std;
@@ -31,6 +32,7 @@ class OrographyCreationTest : public ::testing::Test {
 TEST_F(OrographyCreationTest, OrographyCreationTestSmallGrid){
   int nlat = 20;
   int nlon = 20;
+  auto grid_params_in = new latlon_grid_params(nlat,nlon,false);
   bool* landsea_in = new bool[nlat*nlon]{
     true, true,false,false,false, false,false,false,false,false, false,false,false,false,false, false,false,false,false,true,
     true,false,false,false,false, false,false,false,false,false, false,false,false,false,false, false,false,false,false,true,
@@ -81,16 +83,32 @@ TEST_F(OrographyCreationTest, OrographyCreationTestSmallGrid){
     1,1,1,1,1, 1,1,1,1,1, 1,1,1,1,1, 1,1,1,1,1,
     1,1,1,1,1, 1,1,1,1,1, 1,1,1,1,1, 1,1,1,1,1 };
   double* orography_out = new double[nlat*nlon];
+  double* expected_orography_out = new double[nlat*nlon] {
+     -1, -1,  1,  2,  2,  3,  4,  5,  6,  6,  7,  8,  7,  6,  5,  4,  3,  2,  1, -1,
+     -1,  1,  1,  1,  2,  3,  4,  5,  5,  6,  7,  8,  7,  6,  5,  4,  3,  2,  1, -1,
+     -1, -1, -1,  1,  2,  3,  4,  4,  5,  6,  7,  8,  7,  6,  5,  4,  3,  2,  1, -1,
+     -1,  1, -1,  1,  2,  3,  3,  4,  5,  6,  7,  8,  7,  6,  5,  4,  3,  2,  1, -1,
+     -1,  1,  1,  1,  2,  2,  3,  4,  5,  6,  7,  7,  7,  6,  5,  4,  3,  2,  1, -1,
+     -1, -1, -1,  1,  1,  2,  3,  4,  5,  6,  6,  7,  7,  6,  5,  4,  3,  2,  1, -1,
+     -2, -2, -1, -1,  1,  2,  3,  4,  5,  5,  6,  7,  7,  6,  5,  4,  3,  2,  1, -1,
+     -2, -1, -1, -1,  1,  2,  3,  4,  4,  5,  6,  6,  6,  6,  5,  4,  3,  2,  1, -1,
+     -2, -1,  1,  1,  1,  2,  3,  3,  4,  5,  6,  5,  5,  5,  5,  4,  3,  2,  1, -1,
+     -2, -1, -1, -1,  1,  2,  2,  3,  4,  5,  6,  5,  4,  4,  4,  4,  3,  2,  1, -1,
+     -2, -1,  1,  1,  1,  1,  2,  3,  4,  5,  6,  5,  4,  3,  3,  3,  3,  2,  1, -1,
+     -1, -1, -1, -1, -1,  1, 11,  3,  4,  5,  6,  5,  4,  3,  2,  2,  2,  2,  1, -1,
+     -1,  1,  1,  1,  1,  1, 11,  4,  4,  5,  6,  5,  4,  3,  2,  1,  1,  1,  1, -1,
+     -1, -1, -1, -1,  1,  2, 11, 14, 14,  5,  6,  5,  4,  3,  2,  1, -1,  1,  1, -1,
+     -2, -1,  1,  1,  1,  2, 12, 13, 14,  6,  6,  5,  4,  3,  2,  1,  1,  1,  1, -1,
+     -1, -1, -1,  1,  2,  2,  3,  4,  5,  6,  6,  5,  4,  3,  2,  2,  2,  2,  1, -1,
+     -1,  1,  1,  1,  2,  3,  3,  4,  5,  6,  6,  5,  4,  3,  3,  3,  2,  2,  1, -1,
+     -1, -1, -1,  1,  2,  3,  4,  4,  5,  6,  6,  5,  4,  4,  4,  3,  2,  1,  1, -1,
+     -2, -1,  1,  1,  2,  3,  4,  5,  5,  6,  6,  5,  5,  5,  4,  3,  2,  1, -1, -1,
+     -2, -1,  1,  2,  2,  3,  4,  5,  6,  6,  6,  6,  6,  5,  4,  3,  2,  1,  1, -1 };
   fill_n(orography_out,nlat*nlon,0);
   create_orography(landsea_in,inclines_in,orography_out,
                    0.0,nlat,nlon);
-  for (int i = 0; i < nlat; i++){
-    for (int j = 0; j < nlon; j++){
-      cout << setw(3) << orography_out[nlat*i+j] << " ";
-    }
-    cout << endl;
-  }
-  EXPECT_TRUE(false);
+  EXPECT_TRUE(field<double>(expected_orography_out,grid_params_in)
+              == field<double>(orography_out,grid_params_in));
 }
 
 }

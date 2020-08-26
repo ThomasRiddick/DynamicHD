@@ -384,6 +384,7 @@ void icon_single_index_evaluate_basins(bool* minima_in,
                                        int* coarse_neighboring_cell_indices_in,
                                        int* fine_secondary_neighboring_cell_indices_in,
                                        int* coarse_secondary_neighboring_cell_indices_in,
+                                       int* mapping_from_fine_to_coarse_grid,
                                        int* basin_catchment_numbers_in){
   cout << "Entering Basin Evaluation C++ Code" << endl;
   auto grid_params_in = new icon_single_index_grid_params(ncells_fine_in,
@@ -392,6 +393,7 @@ void icon_single_index_evaluate_basins(bool* minima_in,
   auto coarse_grid_params_in = new icon_single_index_grid_params(ncells_coarse_in,
                                                                  coarse_neighboring_cell_indices_in,true,
                                                                  coarse_secondary_neighboring_cell_indices_in);
+  grid_params_in->set_mapping_to_coarse_grid(mapping_from_fine_to_coarse_grid);
   auto alg = icon_single_index_basin_evaluation_algorithm();
   merge_types* merge_points_in = new merge_types[ncells_fine_in];
   fill_n(connection_volume_thresholds_in,ncells_fine_in,0.0);
@@ -416,8 +418,8 @@ void icon_single_index_evaluate_basins(bool* minima_in,
   bool* landsea_in = new bool[ncells_fine_in];
   fill_n(landsea_in,ncells_fine_in,false);
   for (int i = 0; i < ncells_fine_in; i++){
-    if (prior_fine_rdirs_in[i] == 0.0 ||
-        prior_fine_rdirs_in[i] == -1.0 ) landsea_in[i] = true;
+    if (prior_fine_rdirs_in[i] == 0 ||
+        prior_fine_rdirs_in[i] == -1 ) landsea_in[i] = true;
   }
   sink_filling_alg_4->setup_flags(false,true,false,false);
   sink_filling_alg_4->setup_fields(corrected_orography_in,
@@ -454,7 +456,8 @@ void icon_single_index_evaluate_basins(bool* minima_in,
   alg.setup_sink_filling_algorithm(sink_filling_alg_4);
   alg.evaluate_basins();
   if(basin_catchment_numbers_in){
-    basin_catchment_numbers_in = alg.retrieve_lake_numbers();
+    std::copy_n(alg.retrieve_lake_numbers(),ncells_fine_in,
+                basin_catchment_numbers_in);
   }
   for (int i = 0; i < ncells_fine_in; i++){
     merge_points_out_int[i] = int(merge_points_in[i]);

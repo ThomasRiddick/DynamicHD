@@ -107,6 +107,7 @@ void icon_single_index_evaluate_basins(bool* minima_in,
                                        int* coarse_neighboring_cell_indices_in,
                                        int* fine_secondary_neighboring_cell_indices_in,
                                        int* coarse_secondary_neighboring_cell_indices_in,
+                                       int* mapping_from_fine_to_coarse_grid,
                                        int* basin_catchment_numbers_in = nullptr);
 
 #endif /* EVALUATE_BASINS_HPP_ */

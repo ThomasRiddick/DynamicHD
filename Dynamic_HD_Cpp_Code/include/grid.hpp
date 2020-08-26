@@ -417,6 +417,8 @@ class icon_single_index_grid_params : public grid_params {
 	//Flag to show if this class calculated secondary neighbors and thus
 	//needs to delete them
 	bool calculated_secondary_neighboring_cell_indices = false;
+	//Mapping to a coarser grid
+	int* mapping_to_coarse_grid = nullptr;
 	#if USE_NETCDFCPP
 	//ICON grid parameter file path
 	string icon_grid_params_filepath = "";
@@ -456,12 +458,17 @@ public:
 	  icon_grid_params_filepath(icon_grid_params_filepath_in)
 	{ if (read_params_file_immediately) icon_single_index_grid_read_params_file(); }
 	#endif
-	///Getter
+	///Getters
 	const int get_ncells() { return ncells; }
 	int* get_neighboring_cell_indices() { return neighboring_cell_indices; }
 	const bool get_use_secondary_neighbors() { return use_secondary_neighbors; }
 	int* get_secondary_neighboring_cell_indices() { return secondary_neighboring_cell_indices; }
 	bool* get_subgrid_mask() { return subgrid_mask; }
+	int* get_mapping_to_coarse_grid() { return mapping_to_coarse_grid; }
+	int get_array_offset() { return array_offset; }
+	///Setters
+	void set_mapping_to_coarse_grid(int* mapping_to_coarse_grid_in)
+		{ mapping_to_coarse_grid = mapping_to_coarse_grid_in; }
 	void icon_single_index_grid_calculate_secondary_neighbors();
 	#if USE_NETCDFCPP
 	void icon_single_index_grid_read_params_file();

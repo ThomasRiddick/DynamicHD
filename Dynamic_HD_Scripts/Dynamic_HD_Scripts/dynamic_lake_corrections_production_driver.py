@@ -31,10 +31,16 @@ class Dynamic_Lake_Correction_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Driver
                                                   "orog_corrs_field_ICE5G_and_tarasov_upscaled_"
                                                   "srtm30plus_north_america_only_data_ALG4_sinkless"
                                                   "_glcc_olson_lsmask_0k_20170517_003802_g.nc")
+        input_bathymetry_file=
+        input_bathymetry_fieldname=
+        lake_mask_file=
+        lake_mask_fieldname=
         intermediary_orography_filename = self.generated_orography_filepath +\
                                                 "intermediary_" + file_label + '.nc'
         second_intermediary_orography_filename = self.generated_orography_filepath +\
                                                 "second_intermediary_" + file_label + '.nc'
+        third_intermediary_orography_filename = self.generated_orography_filepath +\
+                                                "third_intermediary_" + file_label + '.nc'
         output_0k_ice5g_orog_filename = self.generated_orography_filepath + "0k_ice5g_lake_" + file_label + '.nc'
         rdirs_filename = self.generated_rdir_filepath + file_label + '.nc'
         original_ls_mask_with_new_dtype_filename = (self.generated_ls_mask_filepath +
@@ -118,7 +124,7 @@ class Dynamic_Lake_Correction_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Driver
                                                                   input_lakemask_fieldname=
                                                                   lakemask_fieldname,
                                                                   output_orography_file=
-                                                                  output_0k_ice5g_orog_filename,
+                                                                  third_intermediary_orography_filename,
                                                                   output_orography_fieldname=
                                                                   "Topo",
                                                                   add_slope = True,
@@ -126,6 +132,16 @@ class Dynamic_Lake_Correction_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Driver
                                                                   minimum_height_change_threshold = 5.0,
                                                                   short_path_threshold = 6,
                                                                   short_minimum_height_change_threshold = 0.25)
+        dynamic_lake_operators.add_lake_bathymetry_driver(input_orography_file=
+                                                          third_intermediary_orography_filename,
+                                                          input_orography_fieldname="Topo",
+                                                          input_bathymetry_file,
+                                                          input_bathymetry_fieldname,
+                                                          lake_mask_file,
+                                                          lake_mask_fieldname,
+                                                          output_orography_file=
+                                                          output_0k_ice5g_orog_filename,
+                                                          output_orography_fieldname="Topo")
         utilities.advanced_orog_correction_field_generator(original_orography_filename=
                                                            original_orography_filename,
                                                            corrected_orography_filename=
