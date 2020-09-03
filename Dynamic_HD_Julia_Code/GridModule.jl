@@ -118,6 +118,38 @@ function for_all_with_line_breaks(function_on_point::Function,
   end
 end
 
+function for_all_with_line_breaks(function_on_point::Function,
+                                  grid::UnstructuredGrid)
+  block_size::Int64 = round(grid.ncells/16)
+  print("                              ")
+  for i = 1:block_size
+    function_on_point(Generic1DCoords(i))
+  end
+  println("")
+  print("            ")
+  for i = (block_size+1):(4*block_size)
+    function_on_point(Generic1DCoords(i))
+  end
+  println("")
+  for i = (4*block_size+1):(8*block_size)
+    function_on_point(Generic1DCoords(i))
+  end
+  println("")
+  for i = (8*block_size+1):(12*block_size)
+    function_on_point(Generic1DCoords(i))
+  end
+  println("")
+  print("            ")
+  for i = (12*block_size+1):(15*block_size)
+    function_on_point(Generic1DCoords(i))
+  end
+  println("")
+  print("                              ")
+  for i = (15*block_size+1):(16*block_size)
+    function_on_point(Generic1DCoords(i))
+  end
+end
+
 function for_section_with_line_breaks(function_on_point::Function,
                  grid::LatLonGrid,section_coords::LatLonSectionCoords)
   for i = section_coords.min_lat:section_coords.max_lat

@@ -279,6 +279,19 @@ function fill!(field::UnstructuredField{T},value::T) where {T}
   return fill!(field.data,value)
 end
 
+function show(io::IO,field::UnstructuredField{T}) where {T <: Number}
+  for_all_with_line_breaks(field.grid) do coords::Coords
+    if T <: AbstractFloat
+      @printf(io,"%6.2f",field(coords))
+    elseif T == Bool
+      print(io,field(coords) ? " X " : " - ")
+    else
+      @printf(io,"%4.0f",field(coords))
+    end
+    print(io," ")
+  end
+end
+
 abstract type DirectionIndicators end
 
 function get(field::DirectionIndicators,coords::Coords)

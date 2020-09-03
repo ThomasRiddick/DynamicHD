@@ -2846,4 +2846,323 @@ end
   #@time timing2(river_parameters,lake_parameters)
 end
 
+@testset "Lake model tests 6" begin
+  grid = UnstructuredGrid(80)
+  flow_directions =  UnstructuredDirectionIndicators(UnstructuredField{Int64}(grid,
+                                                     vec(Int64[ 8,13,13,13,19, #=
+                                                             =# 8,8,24,24,13, 13,13,-2,13,13, #=
+                                                             =# 13,36,36,37,37, 8,24,24,64,45, #=
+                                                             =# 45,45,49,49,13, 13,30,52,55,55, #=
+                                                             =# 55,55,55,37,38, 61,61,64,64,64, #=
+                                                             =# 64,64,64,-2,49, 30,54,55,55,0, #=
+                                                             =# 55,55,38,38,59, 63,64,64,-2,64, #=
+                                                             =# 38,49,52,55,55, 55,55,56,58,58, #=
+                                                             =# 64,64,68,71,71 ])))
+  river_reservoir_nums = UnstructuredField{Int64}(grid,5)
+  overland_reservoir_nums = UnstructuredField{Int64}(grid,1)
+  base_reservoir_nums = UnstructuredField{Int64}(grid,1)
+  river_retention_coefficients = UnstructuredField{Float64}(grid,0.7)
+  overland_retention_coefficients = UnstructuredField{Float64}(grid,0.5)
+  base_retention_coefficients = UnstructuredField{Float64}(grid,0.1)
+  landsea_mask = UnstructuredField{Bool}(grid,false)
+  set!(river_reservoir_nums,Generic1DCoords(55),0)
+  set!(overland_reservoir_nums,Generic1DCoords(55),0)
+  set!(base_reservoir_nums,Generic1DCoords(55),0)
+  set!(landsea_mask,Generic1DCoords(55),true)
+  river_parameters = RiverParameters(flow_directions,
+                                     river_reservoir_nums,
+                                     overland_reservoir_nums,
+                                     base_reservoir_nums,
+                                     river_retention_coefficients,
+                                     overland_retention_coefficients,
+                                     base_retention_coefficients,
+                                     landsea_mask,
+                                     grid)
+  mapping_to_coarse_grid::Array{Int64,1} =
+    vec(Int64[ 1,2,3,4,5, #=
+            =# 6,7,8,9,10,     11,12,13,14,15, #=
+            =# 16,17,18,19,20, 21,22,23,24,25, #=
+            =# 26,27,28,29,30, 31,32,33,34,35, #=
+            =# 36,37,38,39,40, 41,42,43,44,45, #=
+            =# 46,47,48,49,50, 51,52,53,54,55, #=
+            =# 56,57,58,59,60, 61,62,63,64,65, #=
+            =# 66,67,68,69,70, 71,72,73,74,75, #=
+            =# 76,77,78,79,80 ])
+  lake_grid = UnstructuredGrid(80,mapping_to_coarse_grid)
+  lake_centers::Field{Bool} = UnstructuredField{Bool}(lake_grid,
+    vec(Bool[ false,false,false,false,false, #=
+        =# false,false,false,false,false, false,false,true,false,false, #=
+        =# false,false,false,false,false, false,false,false,false,false, #=
+        =# false,false,false,false,false, false,false,false,false,false, #=
+        =# false,false,false,false,false, false,false,false,false,false, #=
+        =# false,false,false,true, false, false,false,false,false,false, #=
+        =# false,false,false,false,false, false,false,false, true,false, #=
+        =# false,false,false,false,false, false,false,false,false,false, #=
+        =# false,false,false,false,false ]))
+  connection_volume_thresholds::Field{Float64} = UnstructuredField{Float64}(lake_grid,-1.0)
+  flood_volume_threshold::Field{Float64} = UnstructuredField{Float64}(lake_grid,
+    vec(Float64[ -1.0,-1.0,-1.0,-1.0,-1.0, #=
+              =# -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,3.0,-1.0,-1.0, #=
+              =# -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0, #=
+              =# -1.0,-1.0,-1.0,-1.0, 4.0, -1.0,-1.0,-1.0,-1.0,-1.0, #=
+              =# -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0, 5.0, #=
+              =# 1.0,22.0,-1.0,1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0, #=
+              =# -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,1.0,1.0,-1.0, #=
+              =# -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0, #=
+              =# 15.0,-1.0,-1.0,-1.0,-1.0 ]))
+  flood_local_redirect::Field{Bool} = UnstructuredField{Bool}(lake_grid,
+    vec(Bool[ true,true,true,true,true, #=
+           =# true,true,true,true,true, true,true,true,true,true, #=
+           =# true,true,true,true,true, true,true,true,true,true, #=
+           =# true,true,true,true,true, true,true,true,true,true, #=
+           =# true,true,true,true,true, true,true,true,true,true, #=
+           =# true,false,true,true,true, true,true,true,true,true, #=
+           =# true,true,true,true,true, true,true,true,true,true, #=
+           =# true,true,true,true,true, true,true,true,true,true, #=
+           =# true,true,true,true,true ]))
+  connect_local_redirect::Field{Bool} = UnstructuredField{Bool}(lake_grid,false)
+  additional_flood_local_redirect::Field{Bool} = UnstructuredField{Bool}(lake_grid,false)
+  additional_connect_local_redirect::Field{Bool} = UnstructuredField{Bool}(lake_grid,false)
+  merge_points::Field{MergeTypes} = UnstructuredField{MergeTypes}(lake_grid,
+    vec(MergeTypes[ no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, #=
+                 =# no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, #=
+                 =# no_merge_mtype,no_merge_mtype,connection_merge_not_set_flood_merge_as_secondary, #= =# no_merge_mtype,no_merge_mtype, #=
+                 =# no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, #=
+                 =# no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, #=
+                 =# no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, #=
+                 =# connection_merge_not_set_flood_merge_as_primary, #=
+                 =# no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, #=
+                 =# no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, #=
+                 =# no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, #=
+                 =# no_merge_mtype,connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype, #=
+                 =# connection_merge_not_set_flood_merge_as_primary,no_merge_mtype, #=
+                 =# no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, #=
+                 =# no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, #=
+                 =# no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, #=
+                 =# no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, #=
+                 =# no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, #=
+                 =# connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype,no_merge_mtype, #=
+                 =# no_merge_mtype,no_merge_mtype ]))
+  flood_next_cell_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,
+    vec(Int64[ -1,-1,-1,-1,-1, #=
+            =# -1,-1,-1,-1,-1, -1,-1,49,-1,-1, #=
+            =# -1,-1,-1,-1,-1, -1,-1,-1,-1,-1, #=
+            =# -1,-1,-1,-1,47, -1,-1,-1,-1,-1, #=
+            =# -1,-1,-1,-1,-1, -1,-1,-1,-1,76, #=
+            =# 45,52,-1,30,-1, -1,-1,-1,-1,-1, #=
+            =# -1,-1,-1,-1,-1, -1,-1,46,63,-1, #=
+            =# -1,-1,-1,-1,-1, -1,-1,-1,-1,-1, #=
+            =# 49,-1,-1,-1,-1 ]))
+  connect_next_cell_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,-1)
+  flood_force_merge_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,
+    vec(Int64[ -1,-1,-1,-1,-1, #=
+            =# -1,-1,-1,-1,-1, -1,-1,-1,-1,-1, #=
+            =# -1,-1,-1,-1,-1, -1,-1,-1,-1,-1, #=
+            =# -1,-1,-1,-1,64, -1,-1,-1,-1,-1, #=
+            =# -1,-1,-1,-1,-1, -1,-1,-1,-1,-1, #=
+            =# -1,-1,-1,13,-1, -1,-1,-1,-1,-1, #=
+            =# -1,-1,-1,-1,-1, -1,-1,-1,-1,-1, #=
+            =# -1,-1,-1,-1,-1, -1,-1,-1,-1,-1, #=
+            =# -1,-1,-1,-1,-1 ]))
+  connect_force_merge_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,-1)
+  flood_redirect_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,
+    vec(Int64[ -1,-1,-1,-1,-1, #=
+            =# -1,-1,-1,-1,-1, -1,-1,49,-1,-1, #=
+            =# -1,-1,-1,-1,-1, -1,-1,-1,-1,-1, #=
+            =# -1,-1,-1,-1,64, -1,-1,-1,-1,-1, #=
+            =# -1,-1,-1,-1,-1, -1,-1,-1,-1,-1, #=
+            =# -1,52,-1,13,-1, -1,-1,-1,-1,-1, #=
+            =# -1,-1,-1,-1,-1, -1,-1,-1,-1,-1, #=
+            =# -1,-1,-1,-1,-1, -1,-1,-1,-1,-1, #=
+            =# 49,-1,-1,-1,-1 ]))
+  connect_redirect_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,-1)
+  additional_flood_redirect_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,0)
+  additional_connect_redirect_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,0)
+  grid_specific_lake_parameters::GridSpecificLakeParameters =
+    UnstructuredLakeParameters(flood_next_cell_index,
+                               connect_next_cell_index,
+                               flood_force_merge_index,
+                               connect_force_merge_index,
+                               flood_redirect_index,
+                               connect_redirect_index,
+                               additional_flood_redirect_index,
+                               additional_connect_redirect_index)
+  lake_parameters = LakeParameters(lake_centers,
+                                   connection_volume_thresholds,
+                                   flood_volume_threshold,
+                                   flood_local_redirect,
+                                   connect_local_redirect,
+                                   additional_flood_local_redirect,
+                                   additional_connect_local_redirect,
+                                   merge_points,
+                                   lake_grid,
+                                   grid,
+                                   grid_specific_lake_parameters)
+  drainage::Field{Float64} = UnstructuredField{Float64}(river_parameters.grid,1.0)
+  set!(drainage,Generic1DCoords(55),0.0)
+  drainages::Array{Field{Float64},1} = repeat(drainage,10000)
+  runoffs::Array{Field{Float64},1} = deepcopy(drainages)
+  evaporation::Field{Float64} = UnstructuredField{Float64}(river_parameters.grid,0.0)
+  evaporations::Array{Field{Float64},1} = repeat(evaporation,180)
+  evaporation = UnstructuredField{Float64}(river_parameters.grid,100.0)
+  additional_evaporations::Array{Field{Float64},1} = repeat(evaporation,200)
+  append!(evaporations,additional_evaporations)
+  expected_river_inflow::Field{Float64} = UnstructuredField{Float64}(grid,
+                                                      vec(Float64[ #=
+              =# 0.0, 0.0, 0.0, 0.0, 0.0, #=
+              =# 0.0, 0.0, 8.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.0, 0.0, #=
+              =# 0.0, 0.0, 0.0, 16.0, 0.0, 0.0, 0.0, 0.0, 0.0, 4.0, #=
+              =# 0.0, 0.0, 0.0, 0.0, 0.0, 4.0, 8.0, 14.0, 0.0, 0.0, #=
+              =# 0.0, 0.0, 0.0, 0.0, 6.0, 0.0, 0.0, 0.0, 0.0, 0.0, #=
+              =# 0.0, 6.0, 0.0, 8.0, 0.0, 2.0, 0.0, 4.0, 2.0, 0.0, #=
+              =# 4.0, 0.0, 6.0, 0.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 4.0, 0.0, 0.0, 0.0, 0.0, #=
+              =# 0.0, 0.0, 0.0, 0.0, 0.0  ]))
+  expected_water_to_ocean::Field{Float64} = UnstructuredField{Float64}(grid,
+                                                              vec(Float64[ #=
+              =# 0, 0, 0, 0, 0, #=
+              =# 0, 0, 0, 0, 0, 0, 0,-72.0, 0, 0, 0, 0, 0, 0, 0, #=
+              =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+              =# 0, 0, 0, 0, 0, 0, 0, 0,-90.0, 0, 0, 0, 0, 0, 66.0, 0, 0, 0, 0, 0, #=
+              =# 0, 0, 0,-46.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+              =# 0, 0, 0, 0, 0 ]))
+  expected_water_to_hd::Field{Float64} = UnstructuredField{Float64}(grid,
+                                                           vec(Float64[ #=
+              =# 0, 0, 0, 0, 0, #=
+              =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+              =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+              =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+              =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+              =# 0, 0, 0, 0, 0 ]))
+  expected_lake_numbers::Field{Int64} = UnstructuredField{Int64}(lake_grid,
+      vec(Int64[ 0, 0, 0, 0, 0, #=
+              =# 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, #=
+              =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+              =# 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+              =# 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+              =# 0, 0, 0, 0, 0 ]))
+  expected_lake_types::Field{Int64} = UnstructuredField{Int64}(lake_grid,
+      vec(Int64[ 0, 0, 0, 0, 0, #=
+              =# 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, #=
+              =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+              =# 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+              =# 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+              =# 0, 0, 0, 0, 0 ]))
+  expected_lake_volumes::Array{Float64} = Float64[0.0, 0.0, 0.0]
+  expected_intermediate_river_inflow::Field{Float64} = UnstructuredField{Float64}(grid,
+                                                      vec(Float64[ #=
+              =# 0.0, 0.0, 0.0, 0.0, 0.0, #=
+              =# 0.0, 0.0, 8.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.0, 0.0, #=
+              =# 0.0, 0.0, 0.0,16.0, 0.0, 0.0, 0.0, 0.0, 0.0, 4.0, 0.0, 0.0, 0.0, 0.0,  0.0, #=
+              =# 4.0, 8.0, 14.0,0.0, 0.0,#=
+              =# 0.0, 0.0, 0.0, 0.0, 6.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 6.0, 0.0, 100.00,0.0, #=
+              =# 2.0, 0.0, 4.0, 2.0, 0.0, #=
+              =# 4.0, 0.0, 6.0, 0.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 4.0, 0.0, 0.0, 0.0, 0.0, #=
+              =# 0.0, 0.0, 0.0, 0.0, 0.0 ]))
+  expected_intermediate_water_to_ocean::Field{Float64} = UnstructuredField{Float64}(grid,
+                                                      vec(Float64[ #=
+              =# 0, 0, 0, 0, 0, #=
+              =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+              =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+              =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 158, 0, 0, 0, 0, 0, #=
+              =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+              =# 0, 0, 0, 0, 0 ]))
+  expected_intermediate_water_to_hd::Field{Float64} = UnstructuredField{Float64}(grid,
+                                                      vec(Float64[ #=
+              =# 0, 0, 0, 0, 0, #=
+              =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+              =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+              =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 92, 0, 0, 0, 0, 0, 0, 0, 0, #=
+              =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+              =# 0, 0, 0, 0, 0 ]))
+  expected_intermediate_lake_numbers::Field{Int64} = UnstructuredField{Int64}(lake_grid,
+      vec(Int64[ 0, 0, 0, 0, 0, #=
+              =# 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, #=
+              =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+              =# 0, 0, 0, 0, 3, 3, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+              =# 0, 0, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+              =# 3, 0, 0, 0, 0 ]))
+  expected_intermediate_lake_types::Field{Int64} = UnstructuredField{Int64}(lake_grid,
+      vec(Int64[ 0, 0, 0, 0, 0, #=
+              =# 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, #=
+              =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+              =# 0, 0, 0, 0, 3, 3, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+              =# 0, 0, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+              =# 3, 0, 0, 0, 0 ]))
+  expected_intermediate_lake_volumes::Array{Float64} = Float64[3.0, 22.0, 15.0]
+  evaporations_copy::Array{Field{Float64},1} = deepcopy(evaporations)
+  @time river_fields::RiverPrognosticFields,lake_prognostics::LakePrognostics,lake_fields::LakeFields =
+    drive_hd_and_lake_model(river_parameters,lake_parameters,
+                            drainages,runoffs,evaporations_copy,
+                            5000,print_timestep_results=false,
+                            write_output=false,return_output=true)
+  lake_types = UnstructuredField{Int64}(lake_grid,0)
+  for i = 1:80
+    coords::Generic1DCoords = Generic1DCoords(i)
+    lake_number::Int64 = lake_fields.lake_numbers(coords)
+    if lake_number <= 0 continue end
+    lake::Lake = lake_prognostics.lakes[lake_number]
+    if isa(lake,FillingLake)
+      set!(lake_types,coords,1)
+    elseif isa(lake,OverflowingLake)
+      set!(lake_types,coords,2)
+    elseif isa(lake,SubsumedLake)
+      set!(lake_types,coords,3)
+    else
+      set!(lake_types,coords,4)
+    end
+  end
+  lake_volumes = Float64[]
+  for lake::Lake in lake_prognostics.lakes
+    append!(lake_volumes,get_lake_variables(lake).lake_volume)
+  end
+  @test isapprox(expected_intermediate_river_inflow,river_fields.river_inflow,
+                 rtol=0.0,atol=0.00001)
+  @test isapprox(expected_intermediate_water_to_ocean,
+                 river_fields.water_to_ocean,rtol=0.0,atol=0.00001)
+  @test expected_intermediate_water_to_hd    == lake_fields.water_to_hd
+  @test expected_intermediate_lake_numbers == lake_fields.lake_numbers
+  @test expected_intermediate_lake_types == lake_types
+  @test isapprox(expected_intermediate_lake_volumes,lake_volumes,atol=0.00001)
+  @time river_fields,lake_prognostics,lake_fields =
+    drive_hd_and_lake_model(river_parameters,lake_parameters,
+                            drainages,runoffs,evaporations,
+                            10000,print_timestep_results=false,
+                            write_output=false,return_output=true)
+  lake_types::UnstructuredField{Int64} = UnstructuredField{Int64}(lake_grid,0)
+  for i = 1:80
+    coords::Generic1DCoords = Generic1DCoords(i)
+    lake_number::Int64 = lake_fields.lake_numbers(coords)
+    if lake_number <= 0 continue end
+    lake::Lake = lake_prognostics.lakes[lake_number]
+    if isa(lake,FillingLake)
+      set!(lake_types,coords,1)
+    elseif isa(lake,OverflowingLake)
+      set!(lake_types,coords,2)
+    elseif isa(lake,SubsumedLake)
+      set!(lake_types,coords,3)
+    else
+      set!(lake_types,coords,4)
+    end
+  end
+  lake_volumes::Array{Float64} = Float64[]
+  for lake::Lake in lake_prognostics.lakes
+    append!(lake_volumes,get_lake_variables(lake).lake_volume)
+  end
+  @test isapprox(expected_river_inflow,river_fields.river_inflow,rtol=0.0,atol=0.00001)
+  @test isapprox(expected_water_to_ocean,river_fields.water_to_ocean,rtol=0.0,atol=0.00001)
+  @test expected_water_to_hd    == lake_fields.water_to_hd
+  @test expected_lake_numbers == lake_fields.lake_numbers
+  @test expected_lake_types == lake_types
+  @test isapprox(expected_lake_volumes,lake_volumes,atol=0.00001)
+  # function timing2(river_parameters,lake_parameters)
+  #   for i in 1:50000
+  #     drainagesl = repeat(drainage,20)
+  #     runoffsl = deepcopy(drainages)
+  #     drive_hd_and_lake_model(river_parameters,lake_parameters,
+  #                             drainagesl,runoffsl,20,print_timestep_results=false)
+  #   end
+  # end
+  #@time timing2(river_parameters,lake_parameters)
+end
+
 end
