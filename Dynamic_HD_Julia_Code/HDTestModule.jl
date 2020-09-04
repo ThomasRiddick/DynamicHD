@@ -2926,7 +2926,8 @@ end
   merge_points::Field{MergeTypes} = UnstructuredField{MergeTypes}(lake_grid,
     vec(MergeTypes[ no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, #=
                  =# no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, #=
-                 =# no_merge_mtype,no_merge_mtype,connection_merge_not_set_flood_merge_as_secondary, #= =# no_merge_mtype,no_merge_mtype, #=
+                 =# no_merge_mtype,no_merge_mtype,connection_merge_not_set_flood_merge_as_secondary, #=
+                 =# no_merge_mtype,no_merge_mtype, #=
                  =# no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, #=
                  =# no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, #=
                  =# no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, #=
