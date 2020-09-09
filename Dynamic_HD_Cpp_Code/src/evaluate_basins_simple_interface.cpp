@@ -74,7 +74,7 @@ int main(int argc, char *argv[]){
     cout << "Run with option -h for help" << endl;
     exit(EXIT_FAILURE);
   }
-  if(argc>12) {
+  if(argc>13) {
     cout << "Too many arguments" << endl;
     print_usage();
     cout << "Run with option -h for help" << endl;
@@ -93,7 +93,7 @@ int main(int argc, char *argv[]){
   string prior_catchments_fieldname(argv[11]);
   bool use_secondary_neighbors_in  = true;
   bool use_simple_output_format = true;
-  if (argc >= 11){
+  if (argc == 13){
     string simple_output_format_string(argv[12]);
     use_simple_output_format = bool(stoi(simple_output_format_string));
   }
@@ -104,7 +104,7 @@ int main(int argc, char *argv[]){
     new icon_single_index_grid_params(grid_params_filepath,use_secondary_neighbors_in);
   int ncells = grid_params_in->get_ncells();
   NcFile grid_params_file(grid_params_filepath.c_str(), NcFile::read);
-  NcVar cell_areas_var = grid_params_file.getVar("");
+  NcVar cell_areas_var = grid_params_file.getVar("cell_area_p");
   auto cell_areas_in = new double[ncells];
   cell_areas_var.getVar(cell_areas_in);
   cout << "Loading minima from:" << endl;
@@ -164,6 +164,10 @@ int main(int argc, char *argv[]){
   auto additional_connect_local_redirect_in = new bool[ncells];
   auto merge_points_out_int = new int[ncells];
   auto basin_catchment_numbers_in = new int[ncells];
+  auto mapping_from_fine_to_coarse_grid = new int[ncells];
+  for (int i = 0; i < ncells; i++) {
+     mapping_from_fine_to_coarse_grid[i] = i;
+  }
   icon_single_index_evaluate_basins(minima_in,orography_in,orography_in,
                                     cell_areas_in,
                                     connection_volume_thresholds_in,
@@ -189,7 +193,10 @@ int main(int argc, char *argv[]){
                                     grid_params_in->get_neighboring_cell_indices(),
                                     grid_params_in->get_secondary_neighboring_cell_indices(),
                                     grid_params_in->get_secondary_neighboring_cell_indices(),
+                                    mapping_from_fine_to_coarse_grid,
                                     basin_catchment_numbers_in);
+  cout << "Writing basin parameters to:" << endl;
+  cout << basin_para_out_filepath << endl;
   NcFile* basin_para_out_file = new NcFile(basin_para_out_filepath.c_str(),
                                            NcFile::newFile);
   NcDim index = basin_para_out_file->addDim("ncells",ncells);
@@ -283,18 +290,22 @@ int main(int argc, char *argv[]){
   clon_out.putAtt(BOUNDS,"clon_bnds");
   clat_bnds_out.putVar(clat_bnds_local);
   clon_bnds_out.putVar(clon_bnds_local);
+  basin_para_out_file->close();
+  cout << "Writing basin catchments to:" << endl;
+  cout << basin_catchment_numbers_out_filepath << endl;
   NcFile* basin_catchment_numbers_out_file = new NcFile(basin_catchment_numbers_out_filepath.c_str(),
                                                         NcFile::newFile);
   NcDim index_bc = basin_catchment_numbers_out_file->addDim("ncells",ncells);
-  write_variable(basin_para_out_file,"basin_catchment_numbers",
+  NcDim vertices_bc = basin_catchment_numbers_out_file->addDim("vertices",3);
+  write_variable(basin_catchment_numbers_out_file,"basin_catchment_numbers",
                  "basin catchment numbers",
                  NONE,index,basin_catchment_numbers_in);
   NcVar clat_out_bc = basin_catchment_numbers_out_file->addVar("clat",ncDouble,index_bc);
   NcVar clon_out_bc = basin_catchment_numbers_out_file->addVar("clon",ncDouble,index_bc);
   NcVar clat_bnds_out_bc =
-    basin_catchment_numbers_out_file->addVar("clat_bnds",ncDouble,vector<NcDim>{index_bc,vertices});
+    basin_catchment_numbers_out_file->addVar("clat_bnds",ncDouble,vector<NcDim>{index_bc,vertices_bc});
   NcVar clon_bnds_out_bc =
-    basin_catchment_numbers_out_file->addVar("clon_bnds",ncDouble,vector<NcDim>{index_bc,vertices});
+    basin_catchment_numbers_out_file->addVar("clon_bnds",ncDouble,vector<NcDim>{index_bc,vertices_bc});
   clat_out_bc.putVar(clat_local);
   clat_out_bc.putAtt(STANDARD_NAME,LATITUDE);
   clat_out_bc.putAtt(LONG_NAME,CENTER_LATITUDE);
@@ -307,4 +318,5 @@ int main(int argc, char *argv[]){
   clon_out_bc.putAtt(BOUNDS,"clon_bnds");
   clat_bnds_out_bc.putVar(clat_bnds_local);
   clon_bnds_out_bc.putVar(clon_bnds_local);
+  basin_catchment_numbers_out_file->close();
 }

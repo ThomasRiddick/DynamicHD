@@ -271,9 +271,9 @@ subroutine write_lake_numbers_field(lake_parameters,lake_fields,timestep)
   integer :: ncid,varid,dimid
   integer, dimension(1) :: dimids
     if(timestep == -1) then
-      filename = '/Users/thomasriddick/Documents/data/temp/lake_model_results.nc'
+      filename = '/Users/thomasriddick/Documents/data/temp/icon_lake_model_test/lake_model_results.nc'
     else
-      filename = '/Users/thomasriddick/Documents/data/temp/lake_model_results_'
+      filename = '/Users/thomasriddick/Documents/data/temp/icon_lake_model_test/lake_model_results_'
       write (timestep_str,'(I0.3)') timestep
       filename = trim(filename) // trim(timestep_str) // '.nc'
     end if
