@@ -30,6 +30,25 @@ relative_path=$1
 perl -MCwd -e 'print Cwd::abs_path($ARGV[0]),qq<\n>' $relative_path
 }
 
+compile_only=false
+case ${1} in
+	-c | --compile)
+	compile_only=true
+	first_timestep=true
+	shift
+	ancillary_data_directory=${1}
+	if [[ $# -ne 1 ]]; then
+		echo "Wrong number of positional arguments ($# supplied)," 1>&2
+		echo "script only takes 1 in compilation mode"	1>&2
+	exit 1
+fi
+	;;
+	*)
+  ;;
+esac
+
+if ! ${compile_only} ; then
+
 #Process command line arguments
 first_timestep=${1}
 input_orography_filepath=${2}
@@ -92,23 +111,26 @@ input_ls_mask_filepath=$(find_abs_path $input_ls_mask_filepath)
 input_orography_filepath=$(find_abs_path $input_orography_filepath)
 present_day_base_orography_filepath=$(find_abs_path $present_day_base_orography_filepath)
 glacier_mask_filepath=$(find_abs_path $glacier_mask_filepath)
-ancillary_data_directory=$(find_abs_path $ancillary_data_directory)
 working_directory=$(find_abs_path $working_directory)
 diagnostic_output_directory=$(find_abs_path $diagnostic_output_directory)
 output_hdpara_filepath=$(find_abs_path $output_hdpara_filepath)
 if $first_timestep; then
 	output_hdstart_filepath=$(find_abs_path $output_hdstart_filepath)
 fi
+fi
+ancillary_data_directory=$(find_abs_path $ancillary_data_directory)
 
 #Check input files, ancillary data directory and diagnostic output directory exist
 
-if ! [[ -e $input_ls_mask_filepath ]] || ! [[ -e $input_orography_filepath ]] || ! [[ -e $present_day_base_orography_filepath ]] || ! [[ -e $glacier_mask_filepath ]]; then
-	echo "One or more input files does not exist" 1>&2
+if ! [[ -d $ancillary_data_directory ]]; then
+	echo "Ancillary data directory does not exist" 1>&2
 	exit 1
 fi
 
-if ! [[ -d $ancillary_data_directory ]]; then
-	echo "Ancillary data directory does not exist" 1>&2
+if ! ${compile_only} ; then
+
+if ! [[ -e $input_ls_mask_filepath ]] || ! [[ -e $input_orography_filepath ]] || ! [[ -e $present_day_base_orography_filepath ]] || ! [[ -e $glacier_mask_filepath ]]; then
+	echo "One or more input files does not exist" 1>&2
 	exit 1
 fi
 
@@ -120,6 +142,7 @@ fi
 if $first_timestep && ! [[ -d ${output_hdstart_filepath%/*} ]]; then
 	echo "Filepath of output hdstart.nc does not exist" 1>&2
 	exit 1
+fi
 fi
 
 # Define config file
@@ -146,6 +169,7 @@ if [[ -z ${source_directory} ]]; then
 	exit 1
 fi
 
+if ! ${compile_only} ; then
 # Prepare a working directory if it is the first timestep and it doesn't already exist
 if $first_timestep && ! [[ -e $working_directory ]]; then
 	echo "Creating a working directory"
@@ -160,6 +184,7 @@ if ! [[ -d $working_directory ]]; then
 		echo "Working directory does not exist or is not a directory" 1>&2
 	fi
 	exit 1
+fi
 fi
 
 if ! [[ -d $source_directory ]]; then
@@ -189,6 +214,7 @@ else
 fi
 shopt -u nocasematch
 
+if ! ${compile_only} ; then
 #Change to the working directory
 cd ${working_directory}
 
@@ -198,12 +224,16 @@ if ! ${first_timestep}; then
 else
 	output_hdstart_filepath="-s ${output_hdstart_filepath}"
 fi
+fi
 
 #Check for locks if necesssary and set the compilation_required flag accordingly
 exec 200>"${source_directory}/compilation.lock"
 if $first_timestep ; then
 	if flock -x -n 200 ; then
 		compilation_required=true
+	elif $compile_only ; then
+		echo "Can't compile - previous version of code still running" 1>&2
+		exit 1
 	else
 		flock -s 200
 		compilation_required=false
@@ -274,6 +304,7 @@ if $compilation_required; then
 	cd - 2>&1 > /dev/null
 fi
 
+if ! ${compile_only} ; then
 # Clean up paragen working directory if any
 if [[ -d "${working_directory}/paragen" ]]; then
 	cd ${working_directory}/paragen
@@ -281,6 +312,7 @@ if [[ -d "${working_directory}/paragen" ]]; then
 	rm -f hdpara.srv global.inp ddir.inp bas_k.dat || true
 	cd - 2>&1 > /dev/null
 	rmdir ${working_directory}/paragen
+fi
 fi
 
 #Setup cython interface between python and C++
@@ -308,6 +340,7 @@ if $compilation_required; then
 	fi
 fi
 
+if ! ${compile_only} ; then
 #Run
 echo "Running Dynamic HD Code" 1>&2
 python2.7 ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/dynamic_hd_production_run_driver.py ${input_orography_filepath} ${input_ls_mask_filepath} ${present_day_base_orography_filepath} ${glacier_mask_filepath} ${output_hdpara_filepath} ${ancillary_data_directory} ${working_directory} ${output_hdstart_filepath}
@@ -338,4 +371,5 @@ if [[ $(ls ${working_directory}) ]]; then
 	for file in ${working_directory}/*.nc ; do
 		mv  $file ${diagnostic_output_directory}/$(basename ${file} .nc)_${diagnostic_output_label}.nc
 	done
+fi
 fi
