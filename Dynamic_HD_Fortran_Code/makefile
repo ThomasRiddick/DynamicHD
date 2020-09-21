@@ -132,6 +132,8 @@ clean:
 	-$(RM) LatLon_Lake_Model_Driver_Exec
 	-$(RM) Accumulate_Flow_Icon_Simple_Interface_Exec
 	-$(RM) LatLon_To_Icon_Loop_Breaker_Fortran_Exec
+	-$(RM) LatLon_To_Icon_Cross_Grid_Mapper_Simple_Interface
+	-$(RM) Icosohedral_Lake_Model_Driver_Exec
 	-$(RM) $(MODS)
 	-@echo ' '
 

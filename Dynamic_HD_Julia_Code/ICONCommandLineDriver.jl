@@ -4,7 +4,7 @@ using ArgParse
 using HDDriverModule: drive_hd_model,drive_hd_and_lake_model
 using FieldModule: UnstructuredField,Field,repeat
 using IOModule: load_river_parameters, load_river_initial_values,get_ncells
-using IOModule: load_lake_initial_values,load_river_initial_values
+using IOModule: load_lake_initial_values,load_lake_parameters
 using IOModule: get_additional_grid_information
 using GridModule: UnstructuredGrid
 
@@ -24,6 +24,8 @@ function pass_arguments()
     help = "Filepath to file containing drainage values"
   "--runoff-file", "-r"
     help = "Filepath to file containing runoff values"
+  "--lake-evaporation-file", "-e"
+    help = "Filepath to file containing values for evaporation from lakes"
   "--timesteps", "-t"
     help = "Number of timesteps to run"
     arg_type = Int
@@ -52,12 +54,13 @@ function main()
                                            day_length=86400.0,step_length=step_length)
   local drainages::Array{Field{Float64},1}
   local runoffs::Array{Field{Float64},1}
+  local lake_evaporations::Array{Field{Float64},1}
   if args["drainage-file"] != nothing
     drainages = load_drainage_fields(args["drainage-file"],grid,
                                      last_timestep=12)
     drainages = [divide(x,30.0) for x in drainages]
   else
-    drainage::Field{Float64} = UnstructuredField{Float64}(river_parameters.grid,0.0)
+    drainage::Field{Float64} = UnstructuredField{Float64}(river_parameters.grid,100.0)
                                                           #0.0000000227*step_length*2.6*10000000000)
     #drainages = repeat(drainage,Int(round(timesteps/30)+1))
     drainages = [drainage]
@@ -69,12 +72,21 @@ function main()
   else
     runoffs = deepcopy(drainages)
   end
+  if args["lake-evaporation-file"] != nothing
+    lake_evaporations = load_lake_evaporation_fields(args["lake-evaporation-file"],grid,
+                                                     last_timestep=12)
+    lake_evaporations = [divide(x,30.0) for x in lake_evaporations]
+  else
+    lake_evaporation::Field{Float64} = UnstructuredField{Float64}(river_parameters.grid,0.0)
+    #lake_evaporations = repeat(lake_evaporation,12*51)
+    lake_evaporations = [lake_evaporation]
+  end
   if args["lake-para-file"] != nothing
     lake_parameters = load_lake_parameters(args["lake-para-file"],lake_grid,grid)
     drainages_copy = deepcopy(drainages)
     runoffs_copy = deepcopy(runoffs)
     if args["hd-init-file"] != nothing
-      river_fields = load_river_initial_values(args["hd-init-file"],river_parameters)
+      river_fields = load_river_initial_values(args["hd-init-file"],grid,river_parameters)
     end
     if args["lake-init-file"] != nothing
       initial_water_to_lake_centers::UnstructuredField{Float64},
@@ -83,7 +95,8 @@ function main()
       if args["hd-init-file"] != nothing
         drive_hd_and_lake_model(river_parameters,river_fields,
                                 lake_parameters,drainages,runoffs,
-                                timesteps,true,initial_water_to_lake_centers,
+                                lake_evaporations,timesteps,true,
+                                initial_water_to_lake_centers,
                                 initial_spillover_to_rivers;print_timestep_results=false)
         # Profile.clear()
         # Profile.init(delay=0.01)
@@ -97,10 +110,14 @@ function main()
         # Serialization.serialize(f, r)
         # close(f)
       else
-        drive_hd_and_lake_model(river_parameters,lake_parameters,drainages,runoffs,
-                                timesteps,true,initial_water_to_lake_centers,
-                                initial_spillover_to_rivers;print_timestep_results=true)
+        drive_hd_and_lake_model(river_parameters,lake_parameters,
+                                drainages,runoffs,
+                                lake_evaporations,timesteps,true,
+                                initial_water_to_lake_centers,
+                                initial_spillover_to_rivers;
+                                print_timestep_results=true)
       end
+    end
   else
     if args["hd-init-file"] != nothing
       river_fields = load_river_initial_values(args["hd-init-file"],grid,river_parameters)
@@ -130,8 +147,14 @@ function main()
 end
 
 empty!(ARGS)
-push!(ARGS,"-p/Users/thomasriddick/Documents/data/ICONHDdata/hdparafiles/hd_para_icon_r2b9_30_20191452_retuned_v3.nc")
-push!(ARGS,"-i/Users/thomasriddick/Documents/data/ICONHDdata/hdstartfiles/hdrestart_R02B09_015_G_241019_1337_v2.nc")
-push!(ARGS,"-t1920")
-push!(ARGS,"-s45")
+# push!(ARGS,"-p/Users/thomasriddick/Documents/data/ICONHDdata/hdparafiles/hd_para_icon_r2b9_30_20191452_retuned_v3.nc")
+# push!(ARGS,"-i/Users/thomasriddick/Documents/data/ICONHDdata/hdstartfiles/hdrestart_R02B09_015_G_241019_1337_v2.nc")
+# push!(ARGS,"-t1920")
+# push!(ARGS,"-s45")
+push!(ARGS,"-p/Users/thomasriddick/Documents/data/temp/icon_lake_model_test/hdpara_icon.nc")
+push!(ARGS,"-i/Users/thomasriddick/Documents/data/temp/icon_lake_model_test/hdrestart_R02B04_013_G_231019_1242_v2.nc")
+push!(ARGS,"-l/Users/thomasriddick/Documents/data/temp/icon_lake_model_test/lakeparams.nc")
+push!(ARGS,"-n/Users/thomasriddick/Documents/data/temp/icon_lake_model_test/lakestart.nc")
+push!(ARGS,"-t360")
+push!(ARGS,"-s86400")
 main()

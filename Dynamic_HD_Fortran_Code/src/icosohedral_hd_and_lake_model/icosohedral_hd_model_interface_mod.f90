@@ -6,6 +6,7 @@ module icosohedral_hd_model_interface_mod
   implicit none
 
   type(prognostics), target :: global_prognostics
+  type(gridinformation) :: grid_information
   logical :: write_output
 
   contains
@@ -19,6 +20,7 @@ module icosohedral_hd_model_interface_mod
     real, pointer, dimension(:) :: initial_spillover_to_rivers
     type(riverparameters), pointer :: river_parameters
     type(riverprognosticfields), pointer :: river_fields
+      grid_information = read_grid_information(river_params_filename)
       river_parameters => read_river_parameters(river_params_filename)
       river_fields => load_river_initial_values(hd_start_filename)
       global_prognostics = prognostics(using_lakes,river_parameters,river_fields)
@@ -48,13 +50,21 @@ module icosohedral_hd_model_interface_mod
       write_output = .false.
   end subroutine init_hd_model_for_testing
 
-  subroutine run_hd_model(timesteps,runoffs,drainages,lake_evaporation)
+  subroutine run_hd_model(timesteps,runoffs,drainages, &
+                          lake_evaporation,working_directory)
     integer, intent(in) :: timesteps
     real   ,dimension(:,:) :: runoffs
     real   ,dimension(:,:) :: drainages
     real   ,dimension(:,:), optional :: lake_evaporation
     real   ,dimension(:,:), allocatable :: lake_evaporation_local
+    character(len = *), intent(in),optional :: working_directory
     integer :: i
+    character(len = max_name_length) :: working_directory_local
+      if (present(working_directory)) then
+        working_directory_local = working_directory
+      else
+        working_directory_local = ""
+      end if
       allocate(lake_evaporation_local,mold=runoffs)
       if (present(lake_evaporation)) then
         lake_evaporation_local(:,:) = lake_evaporation(:,:)
@@ -66,9 +76,11 @@ module icosohedral_hd_model_interface_mod
         call set_lake_evaporation(global_prognostics,lake_evaporation_local(:,i))
         call run_hd(global_prognostics)
         if ((i == 1 .or. i == timesteps .or. mod(i,365) == 0) .and. write_output) then
-          call write_river_flow_field(global_prognostics%river_parameters,&
-                                      global_prognostics%river_fields%river_inflow,i)
-          call write_lake_numbers_field_interface(i)
+          call write_river_flow_field(working_directory,&
+                                      global_prognostics%river_parameters,&
+                                      global_prognostics%river_fields%river_inflow,i,&
+                                      grid_information)
+          call write_lake_numbers_field_interface(i,grid_information)
         end if
       end do
   end subroutine

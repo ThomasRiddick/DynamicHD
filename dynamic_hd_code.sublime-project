@@ -27,12 +27,15 @@
 	],
 	"settings":
 	{
-		"env":
+		"project_environment":
 		{
-			"Darwin":
+			"osx":
 			{
-				"PYTHONPATH": "/Users/thomasriddick/Documents/workspace/Dynamic_HD_Code/Dynamic_HD_Scripts",
-				"JULIA_LOAD_PATH": "/Users/thomasriddick/Documents/workspace/Dynamic_HD_Code/Dynamic_HD_Julia_Code/:"
+				"env":
+				{
+					"JULIA_LOAD_PATH": "/Users/thomasriddick/Documents/workspace/Dynamic_HD_Code/Dynamic_HD_Julia_Code/:",
+					"PYTHONPATH": "/Users/thomasriddick/Documents/workspace/Dynamic_HD_Code/Dynamic_HD_Scripts"
+				}
 			}
 		}
 	}

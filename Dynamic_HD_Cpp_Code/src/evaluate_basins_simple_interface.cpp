@@ -228,7 +228,7 @@ int main(int argc, char *argv[]){
     write_variable(basin_para_out_file,"flood_volume_thresholds",
                    "flood volume threshold for cell to overflow",
                    METRESCUBED,index,flood_volume_thresholds_in);
-    write_variable(basin_para_out_file,"connect_volume_thresholds",
+    write_variable(basin_para_out_file,"connection_volume_thresholds",
                    "connect volume threshold for cell to overflow",
                    METRESCUBED,index,connection_volume_thresholds_in);
     write_variable(basin_para_out_file,"flood_next_cell_index",
@@ -246,7 +246,7 @@ int main(int argc, char *argv[]){
     write_variable(basin_para_out_file,"connect_force_merge_index",
                    "connect force merge index",
                    NONE,index,connect_force_merge_index_in);
-    write_variable(basin_para_out_file,"flood_redirect_index_in",
+    write_variable(basin_para_out_file,"flood_redirect_index",
                    "flood redirect index",
                    NONE,index,flood_redirect_index_in);
     write_variable(basin_para_out_file,"connect_redirect_index",

@@ -324,8 +324,8 @@ subroutine set_runoff_and_drainage(prognostic_fields,runoff,drainage)
   type(prognostics), intent(inout) :: prognostic_fields
   real   ,dimension(:) :: runoff
   real   ,dimension(:) :: drainage
-    prognostic_fields%river_fields%runoff = runoff
-    prognostic_fields%river_fields%drainage = drainage
+    prognostic_fields%river_fields%runoff(:) = runoff(:)
+    prognostic_fields%river_fields%drainage(:) = drainage(:)
 end subroutine set_runoff_and_drainage
 
 subroutine run_hd(prognostic_fields)

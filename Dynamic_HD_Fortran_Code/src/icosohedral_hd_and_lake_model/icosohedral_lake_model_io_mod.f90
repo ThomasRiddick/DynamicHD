@@ -2,6 +2,7 @@ module icosohedral_lake_model_io_mod
 
 use netcdf
 use icosohedral_lake_model_mod
+use grid_information_mod
 use check_return_code_netcdf_mod
 use parameters_mod
 implicit none
@@ -78,12 +79,12 @@ function read_lake_parameters(instant_throughflow)&
   integer :: varid,dimid
 
     write(*,*) "Loading lake parameters from file: " // trim(lake_params_filename)
-    ncells_coarse = 360
 
     call check_return_code(nf90_open(lake_params_filename,nf90_nowrite,ncid))
 
     call check_return_code(nf90_inq_dimid(ncid,'ncells',dimid))
     call check_return_code(nf90_inquire_dimension(ncid,dimid,len=ncells))
+    ncells_coarse = ncells
 
     allocate(lake_centers_int(ncells))
     call check_return_code(nf90_inq_varid(ncid,'lake_centers',varid))
@@ -116,42 +117,34 @@ function read_lake_parameters(instant_throughflow)&
     allocate(flood_next_cell_index(ncells))
     call check_return_code(nf90_inq_varid(ncid,'flood_next_cell_index',varid))
     call check_return_code(nf90_get_var(ncid, varid,flood_next_cell_index))
-    call add_offset(flood_next_cell_index,1,(/-1/))
 
     allocate(connect_next_cell_index(ncells))
     call check_return_code(nf90_inq_varid(ncid,'connect_next_cell_index',varid))
     call check_return_code(nf90_get_var(ncid, varid,connect_next_cell_index))
-    call add_offset(connect_next_cell_index,1,(/-1/))
 
     allocate(flood_force_merge_index(ncells))
     call check_return_code(nf90_inq_varid(ncid,'flood_force_merge_index',varid))
     call check_return_code(nf90_get_var(ncid, varid,flood_force_merge_index))
-    call add_offset(flood_force_merge_index,1,(/-1/))
 
     allocate(connect_force_merge_index(ncells))
     call check_return_code(nf90_inq_varid(ncid,'connect_force_merge_index',varid))
     call check_return_code(nf90_get_var(ncid, varid,connect_force_merge_index))
-    call add_offset(connect_force_merge_index,1,(/-1/))
 
     allocate(flood_redirect_index(ncells))
     call check_return_code(nf90_inq_varid(ncid,'flood_redirect_index',varid))
     call check_return_code(nf90_get_var(ncid, varid,flood_redirect_index))
-    call add_offset(flood_redirect_index,1,(/-1/))
 
     allocate(connect_redirect_index(ncells))
     call check_return_code(nf90_inq_varid(ncid,'connect_redirect_index',varid))
     call check_return_code(nf90_get_var(ncid, varid,connect_redirect_index))
-    call add_offset(connect_redirect_index,1,(/-1/))
 
     allocate(additional_flood_redirect_index(ncells))
     call check_return_code(nf90_inq_varid(ncid,'additional_flood_redirect_index',varid))
     call check_return_code(nf90_get_var(ncid, varid,additional_flood_redirect_index))
-    call add_offset(additional_flood_redirect_index,1,(/-1/))
 
     allocate(additional_connect_redirect_index(ncells))
     call check_return_code(nf90_inq_varid(ncid,'additional_connect_redirect_index',varid))
     call check_return_code(nf90_get_var(ncid, varid,additional_connect_redirect_index))
-    call add_offset(additional_connect_redirect_index,1,(/-1/))
 
     allocate(merge_points(ncells))
     call check_return_code(nf90_inq_varid(ncid,'merge_points',varid))
@@ -228,12 +221,12 @@ subroutine load_lake_initial_values(initial_water_to_lake_centers,&
   integer :: ncells
   integer :: ncid,varid,dimid
 
-    ncells_coarse = 360
     write(*,*) "Loading lake initial values from file: " // trim(lake_start_filename)
     call check_return_code(nf90_open(lake_start_filename,nf90_nowrite,ncid))
 
-    call check_return_code(nf90_inq_dimid(ncid,'ncell',dimid))
+    call check_return_code(nf90_inq_dimid(ncid,'cell',dimid))
     call check_return_code(nf90_inquire_dimension(ncid,dimid,len=ncells))
+    ncells_coarse = ncells
 
     allocate(initial_water_to_lake_centers(ncells))
     call check_return_code(nf90_inq_varid(ncid,'water_redistributed_to_lakes',varid))
@@ -262,14 +255,18 @@ subroutine write_lake_volumes_field(lake_volumes_filename,&
     call check_return_code(nf90_close(ncid))
 end subroutine write_lake_volumes_field
 
-subroutine write_lake_numbers_field(lake_parameters,lake_fields,timestep)
+subroutine write_lake_numbers_field(lake_parameters,lake_fields,timestep,grid_information)
   type(lakeparameters), pointer, intent(in) :: lake_parameters
   type(lakefields), pointer, intent(in) :: lake_fields
+  type(gridinformation), intent(in) :: grid_information
   integer, intent(in) :: timestep
   character(len = 50) :: timestep_str
   character(len = max_name_length) :: filename
-  integer :: ncid,varid,dimid
+  integer :: ncid,varid,dimid,dimid_vert
+  integer :: varid_clat,varid_clon
+  integer :: varid_clat_bnds,varid_clon_bnds
   integer, dimension(1) :: dimids
+  integer, dimension(2) :: dimids_bnds
     if(timestep == -1) then
       filename = '/Users/thomasriddick/Documents/data/temp/icon_lake_model_test/lake_model_results.nc'
     else
@@ -279,13 +276,36 @@ subroutine write_lake_numbers_field(lake_parameters,lake_fields,timestep)
     end if
     call check_return_code(nf90_create(filename,nf90_noclobber,ncid))
     call check_return_code(nf90_def_dim(ncid,"ncells",lake_parameters%ncells,dimid))
-    ! call check_return_code(nf90_def_var(ncid,"ncells",nf90_double,dimid,varid))
+    call check_return_code(nf90_def_dim(ncid,"vertices",3,dimid_vert))
     dimids = (/dimid/)
-    call check_return_code(nf90_def_var(ncid,"lake_number",nf90_real,dimids,varid))
-    ! call check_return_code(nf90_put_var(ncid,varid,))
+    dimids_bnds = (/dimid_vert,dimid/)
+    call check_return_code(nf90_def_var(ncid,"lake_number",nf90_int,dimids,varid))
+    call check_return_code(nf90_def_var(ncid,"clat",nf90_double,dimids,varid_clat))
+    call check_return_code(nf90_def_var(ncid,"clon",nf90_double,dimids,varid_clon))
+    call check_return_code(nf90_def_var(ncid,"clat_bnds",nf90_double,dimids_bnds,varid_clat_bnds))
+    call check_return_code(nf90_def_var(ncid,"clon_bnds",nf90_double,dimids_bnds,varid_clon_bnds))
+    call check_return_code(nf90_put_att(ncid,varid_clat,"standard_name","latitude"))
+    call check_return_code(nf90_put_att(ncid,varid_clat,"long_name","center latitude"))
+    call check_return_code(nf90_put_att(ncid,varid_clat,"units","radian"))
+    call check_return_code(nf90_put_att(ncid,varid_clat,"bounds","clat_bnds"))
+    call check_return_code(nf90_put_att(ncid,varid_clon,"standard_name","longitude"))
+    call check_return_code(nf90_put_att(ncid,varid_clon,"long_name","center longitude"))
+    call check_return_code(nf90_put_att(ncid,varid_clon,"units","radian"))
+    call check_return_code(nf90_put_att(ncid,varid_clon,"bounds","clon_bnds"))
+    call check_return_code(nf90_put_att(ncid,varid,"standard_name","lake number"))
+    call check_return_code(nf90_put_att(ncid,varid,"grid_type","unstructured"))
+    call check_return_code(nf90_put_att(ncid,varid,"coordinates","clat clon"))
     call check_return_code(nf90_enddef(ncid))
     call check_return_code(nf90_put_var(ncid,varid,&
                                         lake_fields%lake_numbers))
+    call check_return_code(nf90_put_var(ncid,varid_clat,&
+                                        grid_information%clat))
+    call check_return_code(nf90_put_var(ncid,varid_clon,&
+                                        grid_information%clon))
+    call check_return_code(nf90_put_var(ncid,varid_clat_bnds,&
+                                        grid_information%clat_bounds))
+    call check_return_code(nf90_put_var(ncid,varid_clon_bnds,&
+                                        grid_information%clon_bounds))
     call check_return_code(nf90_close(ncid))
 end subroutine write_lake_numbers_field
 
