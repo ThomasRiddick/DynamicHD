@@ -389,14 +389,6 @@ function load_grid_specific_lake_parameters(file_handle::NcFile,grid::Unstructur
       load_field(file_handle,grid,"additional_flood_redirect_index",Int64)
   additional_connect_redirect_index::Field{Int64} =
       load_field(file_handle,grid,"additional_connect_redirect_index",Int64)
-  add_offset(flood_next_cell_index,1,Int64[-1])
-  add_offset(connect_next_cell_index,1,Int64[-1])
-  add_offset(flood_force_merge_index,1,Int64[-1])
-  add_offset(connect_force_merge_index,1,Int64[-1])
-  add_offset(flood_redirect_index,1,Int64[-1])
-  add_offset(connect_redirect_index,1,Int64[-1])
-  add_offset(additional_flood_redirect_index,1,Int64[-1])
-  add_offset(additional_connect_redirect_index,1,Int64[-1])
   return UnstructuredLakeParameters(flood_next_cell_index,
                                     connect_next_cell_index,
                                     flood_force_merge_index,

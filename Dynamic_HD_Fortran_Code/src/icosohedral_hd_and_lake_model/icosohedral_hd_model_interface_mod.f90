@@ -12,16 +12,19 @@ module icosohedral_hd_model_interface_mod
   contains
 
   subroutine init_hd_model(river_params_filename,hd_start_filename,using_lakes,&
-                           lake_model_ctl_filename)
+                           lake_model_ctl_filename,step_length,day_length)
     logical, intent(in) :: using_lakes
     character(len = *) :: river_params_filename
     character(len = *) :: hd_start_filename
     character(len = *), optional :: lake_model_ctl_filename
+    real :: step_length
+    real :: day_length
     real, pointer, dimension(:) :: initial_spillover_to_rivers
     type(riverparameters), pointer :: river_parameters
     type(riverprognosticfields), pointer :: river_fields
       grid_information = read_grid_information(river_params_filename)
-      river_parameters => read_river_parameters(river_params_filename)
+      river_parameters => read_river_parameters(river_params_filename,step_length, &
+                                                day_length)
       river_fields => load_river_initial_values(hd_start_filename)
       global_prognostics = prognostics(using_lakes,river_parameters,river_fields)
       if (using_lakes) then

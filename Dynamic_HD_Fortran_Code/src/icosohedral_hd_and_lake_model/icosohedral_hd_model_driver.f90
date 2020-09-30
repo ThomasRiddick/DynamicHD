@@ -42,15 +42,15 @@ program icosohedral_hd_model_driver
     read(timesteps_char,*) timesteps
     read(ncells_char,*) ncells
     call init_hd_model(river_params_filename,hd_start_filename,using_lakes,&
-                       lake_model_ctl_filename)
+                       lake_model_ctl_filename,86400.0,86400.0)
     allocate(runoffs(ncells,timesteps))
     allocate(drainages(ncells,timesteps))
     allocate(evaporations(ncells,timesteps))
     middle_timestep = timesteps/2
-    runoffs(:,:) = 1.0E9
-    drainages(:,:) = 1.0E9
+    runoffs(:,:) = 100.0*0.0000000227*86400.0*2.6*10000000000.0
+    drainages(:,:) = 100.0*0.0000000227*86400.0*2.6*10000000000.0
     evaporations(:,1:middle_timestep) = 0.0
-    evaporations(:,middle_timestep+1:timesteps) = 1.0E12
+    evaporations(:,middle_timestep+1:timesteps) = 100000.0*0.0000000227*86400.0*2.6*10000000000.0
     call run_hd_model(timesteps,drainages,runoffs,evaporations,working_directory)
     call clean_hd_model()
     if (using_lakes) call clean_lake_model()

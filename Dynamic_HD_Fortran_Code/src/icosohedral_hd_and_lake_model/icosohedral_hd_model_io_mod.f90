@@ -44,9 +44,11 @@ function read_grid_information(river_params_filename) &
     grid_information = gridinformation(ncells,clat,clon,clat_bounds,clon_bounds)
 end function read_grid_information
 
-function read_river_parameters(river_params_filename) &
+function read_river_parameters(river_params_filename,step_length,day_length) &
     result(river_parameters)
   character(len = max_name_length) :: river_params_filename
+  real :: step_length
+  real :: day_length
   type(riverparameters), pointer :: river_parameters
   integer, pointer, dimension(:) :: next_cell_index
   real, pointer, dimension(:)    :: temporary_real_array
@@ -118,7 +120,7 @@ function read_river_parameters(river_params_filename) &
                                         river_retention_coefficients, &
                                         overland_retention_coefficients, &
                                         base_retention_coefficients, &
-                                        landsea_mask)
+                                        landsea_mask,step_length,day_length)
 end function read_river_parameters
 
 function load_river_initial_values(hd_start_filename) &
@@ -141,22 +143,16 @@ function load_river_initial_values(hd_start_filename) &
     call check_return_code(nf90_inq_varid(ncid,'FGMEM',varid))
     call check_return_code(nf90_inquire_variable(ncid,varid,dimids=dimids))
     call check_return_code(nf90_inquire_dimension(ncid,dimids(1),len=ncells))
-    allocate(temporary_real_array(ncells,1))
-    call check_return_code(nf90_get_var(ncid, varid,temporary_real_array))
-    allocate(base_flow_reservoirs(1,ncells))
-    base_flow_reservoirs = transpose(temporary_real_array)
+    allocate(base_flow_reservoirs(ncells,1))
+    call check_return_code(nf90_get_var(ncid, varid,base_flow_reservoirs))
 
-    allocate(overland_flow_reservoirs(1,ncells))
+    allocate(overland_flow_reservoirs(ncells,1))
     call check_return_code(nf90_inq_varid(ncid,'FLFMEM',varid))
-    call check_return_code(nf90_get_var(ncid, varid,temporary_real_array))
-    overland_flow_reservoirs = transpose(temporary_real_array)
+    call check_return_code(nf90_get_var(ncid, varid,overland_flow_reservoirs))
 
-    deallocate(temporary_real_array)
-    allocate(temporary_real_array(ncells,5))
-    allocate(river_flow_reservoirs(5,ncells))
+    allocate(river_flow_reservoirs(ncells,5))
     call check_return_code(nf90_inq_varid(ncid,'FRFMEM',varid))
-    call check_return_code(nf90_get_var(ncid, varid,temporary_real_array))
-    river_flow_reservoirs  = transpose(temporary_real_array)
+    call check_return_code(nf90_get_var(ncid,varid,river_flow_reservoirs))
 
     allocate(river_inflow(ncells))
     river_inflow(:) = 0.0

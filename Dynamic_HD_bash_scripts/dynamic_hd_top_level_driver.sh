@@ -163,8 +163,10 @@ source ${config_file}
 
 # Check we have actually read the variables correctly
 if [[ -z ${source_directory} ]]; then
-	echo "Source directory not set in config file or set to a blank string" 1>&2
-	exit 1
+	echo "Source directory not set in config file or set to a blank string - " 1>&2
+	echo "defaulting to using base directory containing this top-level script" 1>&2
+	source_directory=${$(dirname $0)%DynamicHD/Dynamic_HD_bash_scripts}
+	source_directory=${source_directory%/}
 fi
 
 if ! ${compile_only} ; then
@@ -282,7 +284,7 @@ if ! $no_conda && ! $no_env_gen ; then
 		${source_directory}/Dynamic_HD_bash_scripts/regenerate_conda_environment.sh $no_modules
 	fi
 fi
-if ! $no_conda ; then 
+if ! $no_conda ; then
 	source activate dyhdenv
 fi
 

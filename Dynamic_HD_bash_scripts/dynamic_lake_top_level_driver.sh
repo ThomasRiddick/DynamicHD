@@ -62,7 +62,7 @@ shopt -u nocasematch
 
 #Check number of arguments makes sense
 if [[ $# -ne 16 ]]; then
-	echo "Wrong number of positional arguments ($# supplied), script only takes 11 or 12"	1>&2
+	echo "Wrong number of positional arguments ($# supplied), script only takes 16"	1>&2
 	exit 1
 fi
 

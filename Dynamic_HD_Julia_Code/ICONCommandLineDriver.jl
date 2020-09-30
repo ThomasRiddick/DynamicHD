@@ -60,8 +60,8 @@ function main()
                                      last_timestep=12)
     drainages = [divide(x,30.0) for x in drainages]
   else
-    drainage::Field{Float64} = UnstructuredField{Float64}(river_parameters.grid,100.0)
-                                                          #0.0000000227*step_length*2.6*10000000000)
+    drainage::Field{Float64} = UnstructuredField{Float64}(river_parameters.grid,
+                                                          100*0.0000000227*step_length*2.6*10000000000)
     #drainages = repeat(drainage,Int(round(timesteps/30)+1))
     drainages = [drainage]
   end
@@ -77,9 +77,13 @@ function main()
                                                      last_timestep=12)
     lake_evaporations = [divide(x,30.0) for x in lake_evaporations]
   else
-    lake_evaporation::Field{Float64} = UnstructuredField{Float64}(river_parameters.grid,0.0)
-    #lake_evaporations = repeat(lake_evaporation,12*51)
-    lake_evaporations = [lake_evaporation]
+    lake_evaporation_none ::Field{Float64} = UnstructuredField{Float64}(river_parameters.grid,0.0)
+    lake_evaporation_high ::Field{Float64} =
+      UnstructuredField{Float64}(river_parameters.grid,
+                                 100000*0.0000000227*step_length*2.6*10000000000)
+    lake_evaporations_none = repeat(lake_evaporation_none,Int(round(timesteps/60)+1))
+    lake_evaporations_high = repeat(lake_evaporation_high,Int(round(timesteps/60)+1))
+    lake_evaporations = vcat(lake_evaporations_none,lake_evaporations_high)
   end
   if args["lake-para-file"] != nothing
     lake_parameters = load_lake_parameters(args["lake-para-file"],lake_grid,grid)
@@ -155,6 +159,6 @@ push!(ARGS,"-p/Users/thomasriddick/Documents/data/temp/icon_lake_model_test/hdpa
 push!(ARGS,"-i/Users/thomasriddick/Documents/data/temp/icon_lake_model_test/hdrestart_R02B04_013_G_231019_1242_v2.nc")
 push!(ARGS,"-l/Users/thomasriddick/Documents/data/temp/icon_lake_model_test/lakeparams.nc")
 push!(ARGS,"-n/Users/thomasriddick/Documents/data/temp/icon_lake_model_test/lakestart.nc")
-push!(ARGS,"-t360")
+push!(ARGS,"-t3600")
 push!(ARGS,"-s86400")
 main()

@@ -92,7 +92,7 @@ subroutine initialiseriverparameters(this,next_cell_index_in,river_reservoir_num
                                      river_retention_coefficients_in, &
                                      overland_retention_coefficients_in, &
                                      base_retention_coefficients_in, &
-                                     landsea_mask_in)
+                                     landsea_mask_in,step_length,day_length)
   class(riverparameters) :: this
   integer, pointer, dimension(:) :: next_cell_index_in
   integer, pointer, dimension(:) :: river_reservoir_nums_in
@@ -102,6 +102,8 @@ subroutine initialiseriverparameters(this,next_cell_index_in,river_reservoir_num
   real, pointer, dimension(:) :: overland_retention_coefficients_in
   real, pointer, dimension(:) :: base_retention_coefficients_in
   logical, pointer, dimension(:) :: landsea_mask_in
+  real :: step_length
+  real :: day_length
     this%next_cell_index => next_cell_index_in
     this%river_reservoir_nums => river_reservoir_nums_in
     this%overland_reservoir_nums => overland_reservoir_nums_in
@@ -109,6 +111,15 @@ subroutine initialiseriverparameters(this,next_cell_index_in,river_reservoir_num
     this%river_retention_coefficients => river_retention_coefficients_in
     this%overland_retention_coefficients => overland_retention_coefficients_in
     this%base_retention_coefficients => base_retention_coefficients_in
+    this%river_retention_coefficients(:) = &
+      this%river_retention_coefficients(:) * &
+      (day_length/step_length)
+    this%overland_retention_coefficients(:) = &
+      this%overland_retention_coefficients(:) * &
+      (day_length/step_length)
+    this%base_retention_coefficients(:) = &
+      this%base_retention_coefficients(:) * &
+      (day_length/step_length)
     this%landsea_mask => landsea_mask_in
     allocate(this%cascade_flag,mold=landsea_mask_in)
     this%cascade_flag = .not. landsea_mask_in
@@ -124,7 +135,8 @@ function riverparametersconstructor(next_cell_index_in,river_reservoir_nums_in, 
                                     river_retention_coefficients_in, &
                                     overland_retention_coefficients_in, &
                                     base_retention_coefficients_in, &
-                                    landsea_mask_in) result(constructor)
+                                    landsea_mask_in,step_length, &
+                                    day_length) result(constructor)
   type(riverparameters), pointer :: constructor
   integer, pointer, dimension(:), intent(in) :: next_cell_index_in
   integer, pointer, dimension(:), intent(in) :: river_reservoir_nums_in
@@ -134,6 +146,20 @@ function riverparametersconstructor(next_cell_index_in,river_reservoir_nums_in, 
   real, pointer, dimension(:), intent(in) :: overland_retention_coefficients_in
   real, pointer, dimension(:), intent(in) :: base_retention_coefficients_in
   logical, pointer, dimension(:), intent(in) :: landsea_mask_in
+  real, optional :: step_length
+  real, optional :: day_length
+  real :: step_length_local
+  real :: day_length_local
+    if(present(step_length)) then
+      step_length_local = step_length
+    else
+      step_length_local = 86400.0
+    end if
+    if(present(day_length)) then
+      day_length_local = day_length
+    else
+      day_length_local = 86400.0
+    end if
     allocate(constructor)
     call constructor%initialiseriverparameters(next_cell_index_in,river_reservoir_nums_in, &
                                                overland_reservoir_nums_in, &
@@ -141,7 +167,7 @@ function riverparametersconstructor(next_cell_index_in,river_reservoir_nums_in, 
                                                river_retention_coefficients_in, &
                                                overland_retention_coefficients_in, &
                                                base_retention_coefficients_in, &
-                                               landsea_mask_in)
+                                               landsea_mask_in,step_length,day_length)
 end function riverparametersconstructor
 
 subroutine riverparametersdestructor(this)

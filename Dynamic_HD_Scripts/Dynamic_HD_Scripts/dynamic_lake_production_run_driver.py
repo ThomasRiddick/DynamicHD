@@ -16,6 +16,7 @@ import utilities
 import field
 import libs.fill_sinks_wrapper as fill_sinks_wrapper
 import libs.lake_operators_wrapper as lake_operators_wrapper  #@UnresolvedImport
+from timeit import default_timer as timer
 import cdo
 import argparse
 from flow_to_grid_cell import create_hypothetical_river_paths_map
