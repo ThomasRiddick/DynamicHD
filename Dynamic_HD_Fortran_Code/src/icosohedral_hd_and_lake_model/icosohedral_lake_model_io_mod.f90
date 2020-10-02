@@ -240,7 +240,7 @@ subroutine load_lake_initial_values(initial_water_to_lake_centers,&
 end subroutine load_lake_initial_values
 
 subroutine write_lake_volumes_field(lake_volumes_filename,&
-                                  lake_parameters,lake_volumes)
+                                    lake_parameters,lake_volumes)
   character(len = max_name_length) :: lake_volumes_filename
   real, pointer, dimension(:), intent(inout) :: lake_volumes
   type(lakeparameters), pointer :: lake_parameters
@@ -255,7 +255,10 @@ subroutine write_lake_volumes_field(lake_volumes_filename,&
     call check_return_code(nf90_close(ncid))
 end subroutine write_lake_volumes_field
 
-subroutine write_lake_numbers_field(lake_parameters,lake_fields,timestep,grid_information)
+subroutine write_lake_numbers_field(working_directory, &
+                                    lake_parameters,lake_fields,&
+                                    timestep,grid_information)
+  character(len = *), intent(in) :: working_directory
   type(lakeparameters), pointer, intent(in) :: lake_parameters
   type(lakefields), pointer, intent(in) :: lake_fields
   type(gridinformation), intent(in) :: grid_information
@@ -268,9 +271,9 @@ subroutine write_lake_numbers_field(lake_parameters,lake_fields,timestep,grid_in
   integer, dimension(1) :: dimids
   integer, dimension(2) :: dimids_bnds
     if(timestep == -1) then
-      filename = '/Users/thomasriddick/Documents/data/temp/icon_lake_model_test/lake_model_results.nc'
+      filename = trim(working_directory) // 'lake_model_results.nc'
     else
-      filename = '/Users/thomasriddick/Documents/data/temp/icon_lake_model_test/lake_model_results_'
+      filename = trim(working_directory) // 'lake_model_results_'
       write (timestep_str,'(I0.3)') timestep
       filename = trim(filename) // trim(timestep_str) // '.nc'
     end if

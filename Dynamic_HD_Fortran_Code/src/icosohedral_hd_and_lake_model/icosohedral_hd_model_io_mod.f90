@@ -131,7 +131,6 @@ function load_river_initial_values(hd_start_filename) &
   real, pointer,     dimension(:,:) :: base_flow_reservoirs
   real, pointer,    dimension(:,:) :: overland_flow_reservoirs
   real, pointer,     dimension(:,:) :: river_flow_reservoirs
-  real, pointer, dimension(:,:)    :: temporary_real_array
   integer, dimension(2) :: dimids
   integer :: ncells
   integer :: ncid,varid

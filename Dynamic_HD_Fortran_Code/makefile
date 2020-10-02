@@ -2,10 +2,10 @@ RM := rm -rf
 USE_NAG := False
 USE_INTEL := False
 ifeq ($(shell uname -s),Darwin)
-GFORTRAN :=  /usr/local/Cellar/gcc/9.2.0_3/bin/gfortran-9
+GFORTRAN :=  /usr/local/Cellar/gcc/10.2.0/bin/gfortran-10
 NAGFORTRAN :=  /usr/local/bin/nagfor
 EXT_SOURCE :=$(shell echo ${HOME} )/Documents/code/
-GFORTRAN_NETCDF_F := /usr/local/Cellar/netcdf/4.7.3
+GFORTRAN_NETCDF_F := /usr/local/Cellar/netcdf/4.7.4_1
 NETCDF_F_LIB :=libnetcdff.dylib
 else ifeq ($(shell hostname -d),hpc.dkrz.de)
 GFORTRAN := $(shell which gfortran)

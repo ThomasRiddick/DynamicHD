@@ -104,11 +104,12 @@ subroutine run_lake_model_jsbach(water_to_lakes_in,water_to_hd_out)
     water_to_hd_out(:) = global_lake_fields%water_to_hd(:)
 end subroutine run_lake_model_jsbach
 
-subroutine write_lake_numbers_field_interface(timestep,grid_information)
+subroutine write_lake_numbers_field_interface(timestep,grid_information,working_directory)
   integer :: timestep
   type(gridinformation) :: grid_information
-    call write_lake_numbers_field(global_lake_parameters,global_lake_fields,timestep,&
-                                  grid_information)
+  character(len = *), intent(in),optional :: working_directory
+    call write_lake_numbers_field(working_directory,global_lake_parameters, &
+                                  global_lake_fields,timestep,grid_information)
 end subroutine write_lake_numbers_field_interface
 
 function get_lake_prognostics() result(value)

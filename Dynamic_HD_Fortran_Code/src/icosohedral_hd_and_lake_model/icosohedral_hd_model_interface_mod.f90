@@ -83,7 +83,7 @@ module icosohedral_hd_model_interface_mod
                                       global_prognostics%river_parameters,&
                                       global_prognostics%river_fields%river_inflow,i,&
                                       grid_information)
-          call write_lake_numbers_field_interface(i,grid_information)
+          call write_lake_numbers_field_interface(i,grid_information,working_directory)
         end if
       end do
   end subroutine
