@@ -22,6 +22,9 @@ from Dynamic_HD_Scripts.field import Field, RiverDirections
 from flow_to_grid_cell import create_hypothetical_river_paths_map
 from cotat_plus_driver import run_cotat_plus
 from loop_breaker_driver import run_loop_breaker
+from process_manager import ProcessManager
+from process_manager import using_mpi
+from mpi4py import MPI
 
 class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
     """A class with methods used for running a production run of the dynamic HD generation code"""
@@ -715,6 +718,17 @@ def parse_arguments():
     return args
 
 if __name__ == '__main__':
-    #Parse arguments and then run
-    args = parse_arguments()
-    setup_and_run_dynamic_hd_para_gen_from_command_line_arguments(args)
+    if using_mpi():
+        comm = MPI.COMM_WORLD
+        rank = comm.Get_rank()
+        if rank == 0:
+            #Parse arguments and then run
+            args = parse_arguments()
+            setup_and_run_dynamic_hd_para_gen_from_command_line_arguments(args)
+        else:
+            process_manager = ProcessManager()
+            process_manager.wait_for_commands()
+    else:
+        #Parse arguments and then run
+        args = parse_arguments()
+        setup_and_run_dynamic_hd_para_gen_from_command_line_arguments(args)

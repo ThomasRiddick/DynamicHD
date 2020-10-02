@@ -15,6 +15,10 @@ import grid
 import dynamic_hd
 import iodriver
 import coordinate_scaling_utilities
+from process_manager import ProcessManager
+from process_manager import using_mpi
+from process_manager import MPICommands
+from mpi4py import MPI
 
 def run_cotat_plus(fine_rdirs_field,fine_total_cumulative_flow_field,cotat_plus_parameters_filepath,
                    course_grid_type,**course_grid_kwargs):
@@ -45,6 +49,8 @@ def run_cotat_plus(fine_rdirs_field,fine_total_cumulative_flow_field,cotat_plus_
                                           additional_fortran_files=additional_fortran_filepaths,
                                           include_path=fortran_project_include_path)
     course_grid = grid.makeGrid(course_grid_type,**course_grid_kwargs)
+    if using_mpi():
+        comm.bcast(MPICommands.RUNCOTATPLUS, root=0)
     course_rdirs_field_raw = f2py_mngr.\
         run_current_function_or_subroutine(course_grid.get_grid_dimensions()[0],
                                            course_grid.get_grid_dimensions()[1],

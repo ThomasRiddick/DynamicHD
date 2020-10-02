@@ -71,10 +71,16 @@ type, extends(flow_accumulation_algorithm) :: latlon_flow_accumulation_algorithm
     class(subfield), pointer :: next_cell_index_lon => null()
     class(subfield), pointer :: river_directions => null()
   contains
+    procedure :: latlon_init_flow_accumulation_algorithm
+    procedure :: latlon_destructor
     procedure :: generate_coords_index => latlon_generate_coords_index
     procedure :: assign_coords_to_link_array => latlon_assign_coords_to_link_array
     procedure :: get_next_cell_coords => latlon_get_next_cell_coords
 end type latlon_flow_accumulation_algorithm
+
+interface latlon_flow_accumulation_algorithm
+  procedure :: latlon_flow_accumulation_algorithm_constructor
+end interface latlon_flow_accumulation_algorithm
 
 type, extends(flow_accumulation_algorithm) :: icon_single_index_flow_accumulation_algorithm
   private
@@ -99,13 +105,45 @@ subroutine init_flow_accumulation_algorithm(this)
     call this%cumulative_flow%set_all(0)
 end subroutine init_flow_accumulation_algorithm
 
-subroutine latlon_init_flow_accumulation_algorithm(this)
+subroutine latlon_init_flow_accumulation_algorithm(this, &
+                                                   next_cell_index_lat, &
+                                                   next_cell_index_lon, &
+                                                   cumulative_flow)
   class(latlon_flow_accumulation_algorithm), intent(inout) :: this
+  class(*), dimension(:,:), pointer, intent(in) :: next_cell_index_lat
+  class(*), dimension(:,:), pointer, intent(in) :: next_cell_index_lon
+  class(*), dimension(:,:), pointer, intent(inout) :: cumulative_flow
+  class(*), dimension(:,:), pointer :: dependencies_data
+  type(latlon_section_coords), allocatable :: field_section_coords
+    allocate(field_section_coords)
+    field_section_coords = latlon_section_coords(1,1,size(next_cell_index_lat,1), &
+                                                     size(next_cell_index_lat,2))
+    this%next_cell_index_lat => latlon_subfield(next_cell_index_lat,field_section_coords,.true.)
+    this%next_cell_index_lon => latlon_subfield(next_cell_index_lon,field_section_coords,.true.)
+    this%cumulative_flow => latlon_subfield(cumulative_flow,field_section_coords,.true.)
+    allocate(integer::dependencies_data(size(next_cell_index_lat,1),&
+                                        size(next_cell_index_lon,2)))
+    this%dependencies => latlon_subfield(dependencies_data, &
+                                         field_section_coords,.true.)
     allocate(this%external_data_value,source=latlon_coords(-1,-1))
     allocate(this%flow_terminates_value,source=latlon_coords(-2,-2))
     allocate(this%no_data_value,source=latlon_coords(-3,-3))
     allocate(this%no_flow_value,source=latlon_coords(-4,-4))
+    call this%init_flow_accumulation_algorithm()
 end subroutine latlon_init_flow_accumulation_algorithm
+
+function latlon_flow_accumulation_algorithm_constructor(next_cell_index_lat, &
+                                                        next_cell_index_lon, &
+                                                        cumulative_flow) &
+                                                        result(constructor)
+  class(*), dimension(:,:), pointer, intent(in) :: next_cell_index_lat
+  class(*), dimension(:,:), pointer, intent(in) :: next_cell_index_lon
+  class(*), dimension(:,:), pointer, intent(inout) :: cumulative_flow
+  type(latlon_flow_accumulation_algorithm) :: constructor
+    call constructor%latlon_init_flow_accumulation_algorithm(next_cell_index_lat, &
+                                                             next_cell_index_lon, &
+                                                             cumulative_flow)
+end function latlon_flow_accumulation_algorithm_constructor
 
 subroutine icon_single_index_init_flow_accumulation_algorithm(this,field_section_coords, &
                                                               next_cell_index, &
@@ -113,7 +151,7 @@ subroutine icon_single_index_init_flow_accumulation_algorithm(this,field_section
   class(icon_single_index_flow_accumulation_algorithm), intent(inout) :: this
   class(*), dimension(:), pointer, intent(in) :: next_cell_index
   class(*), dimension(:), pointer, intent(out) :: cumulative_flow
-  type(generic_1d_section_coords), intent(in) :: field_section_coords
+   type(generic_1d_section_coords), intent(in) :: field_section_coords
   class(*), dimension(:), pointer :: dependencies_data
     this%next_cell_index => icon_single_index_subfield(next_cell_index,field_section_coords)
     this%cumulative_flow => icon_single_index_subfield(cumulative_flow,field_section_coords)
@@ -152,11 +190,18 @@ subroutine destructor(this)
     call this%q%destructor()
 end subroutine destructor
 
+subroutine latlon_destructor(this)
+  class(latlon_flow_accumulation_algorithm), intent(inout) :: this
+    deallocate(this%next_cell_index_lat)
+    deallocate(this%next_cell_index_lon)
+    call this%destructor
+end subroutine latlon_destructor
+
 subroutine icon_single_index_destructor(this)
   class(icon_single_index_flow_accumulation_algorithm), intent(inout) :: this
     deallocate(this%next_cell_index)
     call this%destructor
-end subroutine
+end subroutine icon_single_index_destructor
 
 subroutine generate_cumulative_flow(this,set_links)
   class(flow_accumulation_algorithm), intent(inout) :: this

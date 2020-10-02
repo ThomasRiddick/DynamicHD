@@ -1,6 +1,7 @@
 module accumulate_flow_mod
 use flow_accumulation_algorithm_mod
 use coords_mod
+use convert_rdirs_to_indices
 implicit none
 
 contains
@@ -40,5 +41,37 @@ contains
       deallocate(coarse_grid)
       deallocate(secondary_neighbors)
   end subroutine accumulate_flow_icon_single_index
+
+  subroutine accumulate_flow_latlon(input_river_directions, &
+                                    output_cumulative_flow)
+    integer, dimension(:,:), pointer, intent(inout) :: input_river_directions
+    integer, dimension(:,:), pointer, intent(out) :: output_cumulative_flow
+    integer, dimension(:,:), pointer :: next_cell_index_lat
+    integer, dimension(:,:), pointer :: next_cell_index_lon
+    class(*), dimension(:,:), pointer :: output_cumulative_flow_ptr
+    class(*), dimension(:,:), pointer :: next_cell_index_lat_ptr
+    class(*), dimension(:,:), pointer :: next_cell_index_lon_ptr
+    type(latlon_flow_accumulation_algorithm) :: flow_acc_alg
+      where (input_river_directions ==  0 .or. &
+             input_river_directions == -1 .or. &
+             input_river_directions == -2 .or. &
+             input_river_directions == -5)
+        input_river_directions = -3
+      end where
+      allocate(next_cell_index_lat,mold=input_river_directions)
+      allocate(next_cell_index_lon,mold=input_river_directions)
+      next_cell_index_lat_ptr => next_cell_index_lat
+      next_cell_index_lon_ptr => next_cell_index_lon
+      output_cumulative_flow_ptr => output_cumulative_flow
+      call convert_rdirs_to_latlon_indices(input_river_directions, &
+                                           next_cell_index_lat, &
+                                           next_cell_index_lon)
+      flow_acc_alg = &
+        latlon_flow_accumulation_algorithm(next_cell_index_lat_ptr, &
+                                           next_cell_index_lon_ptr, &
+                                           output_cumulative_flow_ptr)
+      call flow_acc_alg%generate_cumulative_flow(.false.)
+      call flow_acc_alg%latlon_destructor()
+  end subroutine accumulate_flow_latlon
 
 end module accumulate_flow_mod

@@ -45,7 +45,7 @@ class f2py_manager(object):
     wrapper_path=os.path.join(bin_path,'f2py_setup_wrapper.py')
 
     def __init__(self, fortran_file_name,func_name=None,remove_wrapper=False,
-                 additional_fortran_files=None,include_path=None):
+                 additional_fortran_files=None,include_path=None,no_compile=False):
         """Class Constructor. Ensure that the fortran module is compiled and then import it.
 
         Arguments:
@@ -108,7 +108,7 @@ class f2py_manager(object):
             npdistutils_core.setup(name=params.module_name,
                                    ext_modules=[ext])
             os.chdir(owd)""")
-        if self.check_for_changes():
+        if self.check_for_changes() and not no_compile:
             self.run_f2py_compilation()
         else:
             self.load_module()

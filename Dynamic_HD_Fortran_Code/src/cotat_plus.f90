@@ -3,7 +3,10 @@ use area_mod
 use coords_mod
 use map_non_coincident_grids_mod
 use cotat_parameters_mod
+use mpi
+
 implicit none
+
 
 type :: latlon_limits
     integer :: min_lat
@@ -50,21 +53,25 @@ contains
         integer, dimension(mpi_status_size) :: status
         integer :: k
         integer :: loading_factor = 2
-        integer,parameter exit_tag = 0
-        integer,parameter process_tag = 1
+        integer,parameter :: exit_tag = 0
+        integer,parameter :: process_tag = 1
         integer(kind=mpi_address_kind), dimension(1) :: displacements
         integer , dimension(1) :: block_counts
         integer , dimension(1) :: data_types
         integer :: latlon_limit_type
         integer :: free_proc_id
-        integer, allocatable :: free_proc_register
+        integer :: free_procs
+        integer :: ncells_fine
+        logical, allocatable, dimension(:) :: free_proc_register
+        logical :: all_tiles_assigned
             call mpi_comm_rank(mpi_comm_world,proc_id,mpi_error_code)
             call mpi_comm_size(mpi_comm_world,nprocs,mpi_error_code)
-            block_counts[1] = 5
-            data_types[1] = mpi_integer
-            displacements[1] = 0_mpi_address_kind
-            call mpi_type_create_struct(1,block_counts,diplacements,data_types,latlon_limit_type)
-            call mpi_type_commit(latlon_limit_type)
+            block_counts(1) = 5
+            data_types(1) = mpi_integer
+            displacements(1) = 0_mpi_address_kind
+            call mpi_type_create_struct(1,block_counts,displacements,data_types,&
+                                        latlon_limit_type,mpi_error_code)
+            call mpi_type_commit(latlon_limit_type,mpi_error_code)
             if (proc_id == 0) then
 #endif
             if (present(cotat_parameters_filepath)) then
@@ -86,25 +93,38 @@ contains
             expanded_input_fine_total_cumulative_flow(1:scale_factor,1:nlon_fine) = 1
             expanded_input_fine_total_cumulative_flow(nlat_fine+scale_factor+1:nlat_fine+2*scale_factor,1:nlon_fine) = 1
 #ifdef USE_MPI
-            ndivisions_lat = floor(sqrt((nprocs-1)*loading_fraction))
-            ndivisions_lon = (nprocs-1)*loading_fraction/ndivisions_lat
+            ncells_fine = nlat_fine*nlon_fine
+            ndivisions_lat = floor(sqrt((real(nprocs)-1.0)*loading_factor))
+            ndivisions_lon = (nprocs-1)*loading_factor/ndivisions_lat
             end if
-            call mpi_bcast(scale_factor,1,mpi_integer,0,mpi_comm_world)
-            call mpi_bcast(expanded_input_fine_river_directions,&
-                           ncells_fine,mpi_integer,0,mpi_comm_world)
-            call mpi_bcast(expanded_input_fine_total_cumulative_flow,&
-                           ncells_fine,mpi_integer,0,mpi_comm_world)
+            call mpi_bcast(scale_factor,1,mpi_integer,0,mpi_comm_world,mpi_error_code)
+            call mpi_bcast(nlat_fine,1,mpi_integer,0,mpi_comm_world,mpi_error_code)
+            call mpi_bcast(nlon_fine,1,mpi_integer,0,mpi_comm_world,mpi_error_code)
+            if (proc_id /= 0) then
+                ncells_fine = nlat_fine*nlon_fine
+                allocate(expanded_input_fine_river_directions(nlat_fine+2*scale_factor,nlon_fine))
+                allocate(expanded_input_fine_total_cumulative_flow(nlat_fine+2*scale_factor,nlon_fine))
+            end if
+            call mpi_bcast(expanded_input_fine_river_directions, &
+                           ncells_fine,mpi_integer,0,mpi_comm_world,mpi_error_code)
+            call mpi_bcast(expanded_input_fine_total_cumulative_flow, &
+                           ncells_fine,mpi_integer,0,mpi_comm_world,mpi_error_code)
             if (proc_id == 0 .and. nprocs > 1) then
                 free_procs = nprocs - 1
                 allocate(free_proc_register(nprocs-1))
-                free_proc_register = .true.
+                free_proc_register(:) = .true.
+                all_tiles_assigned = .false.
                 do j = 1,ndivisions_lon
-                    do i = 1,ndivision_lat
-                        tile_limits%min_lon = (floor(nlon_coarse/ndivisions_lon)*(j-1))+1
-                        tile_limits%max_lon = min(floor(nlon_coarse/ndivisions_lon)*j,nlon_coarse)
-                        tile_limits%min_lat = (floor(nlat_coarse/ndivisions_lat)*(i-1))+1
-                        tile_limits%max_lat = min(floor(nlat_coarse/ndivisions_lat)*i,nlat_coarse)
-                        tile_limits%tile_size = (1+max_lat-min_lat)*(1+max_lon-min_lon)
+                    do i = 1,ndivisions_lat
+                        tile_limits%min_lon = &
+                            (floor(real(nlon_coarse)/real(ndivisions_lon))*(j-1))+1
+                        tile_limits%max_lon = &
+                            min(floor(real(nlon_coarse)/real(ndivisions_lon))*j,nlon_coarse)
+                        tile_limits%min_lat = (floor(real(nlat_coarse)/real(ndivisions_lat))*(i-1))+1
+                        tile_limits%max_lat = &
+                            min(floor(real(nlat_coarse)/real(ndivisions_lat))*i,nlat_coarse)
+                        tile_limits%tile_size = (1+tile_limits%max_lat-tile_limits%min_lat) &
+                                                *(1+tile_limits%max_lon-tile_limits%min_lon)
                         do
                             if (free_procs > 0 .and. .not. all_tiles_assigned) then
                                 do k = 1,nprocs-1
@@ -114,7 +134,7 @@ contains
                                         exit
                                     end if
                                 end do
-                                call mpi_send(tile_limits,1,latlon_limit_type,free_proc_id,
+                                call mpi_send(tile_limits,1,latlon_limit_type,free_proc_id, &
                                               process_tag,mpi_comm_world,mpi_error_code)
                                 free_procs = free_procs - 1
                                 if((j == ndivisions_lon) .and. &
@@ -124,14 +144,17 @@ contains
                                     exit
                                 end if
                             else
-                                call mpi_recieve(tile_limits,1,latlon_limit_type,mpi_any_source, &
-                                                 mpi_any_tag,mpi_comm_world,status,mpi_error_code)
+                                call mpi_recv(tile_limits,1,latlon_limit_type,mpi_any_source, &
+                                              mpi_any_tag,mpi_comm_world,status,mpi_error_code)
                                 free_proc_id = status(mpi_source)
                                 free_procs = free_procs + 1
                                 free_proc_register(free_proc_id - 1) = .true.
-                                call mpi_recieve(output_coarse_river_directions_tile,tile_limits%tile_size,&
-                                                 mpi_integer,mpi_any_tag,free_proc_id,status,mpi_error_code)
-                                output_coarse_river_directions(tile_limits%min_lat:tile_limits%max_lat
+                                allocate(output_coarse_river_directions_tile(1:1+tile_limits%max_lat-tile_limits%min_lat, &
+                                                                             1:1+tile_limits%max_lon-tile_limits%min_lon))
+                                call mpi_recv(output_coarse_river_directions_tile,tile_limits%tile_size,&
+                                              mpi_integer,mpi_any_source,mpi_any_tag,free_proc_id,&
+                                              status,mpi_error_code)
+                                output_coarse_river_directions(tile_limits%min_lat:tile_limits%max_lat, &
                                                                tile_limits%min_lon:tile_limits%max_lon) = &
                                     output_coarse_river_directions_tile(1:1+tile_limits%max_lat-tile_limits%min_lat, &
                                                                         1:1+tile_limits%max_lon-tile_limits%min_lon)
@@ -145,11 +168,13 @@ contains
                 end do
             else if (proc_id > 0) then
                 do
-                    call mpi_recieve(tile_limits,1,latlon_limit_type,mpi_any_tag,mpi_any_source,status,&
-                                     mpi_error_code)
+                    call mpi_recv(tile_limits,1,latlon_limit_type,mpi_any_tag,mpi_any_source,mpi_comm_world, &
+                                  status,mpi_error_code)
                     if (status(mpi_tag) == exit_tag) exit
-                    allocate(output_coarse_river_directions_tile(1+max_lat-min_lat,&
-                                                                 1+max_lon-min_lon))
+                    allocate(output_coarse_river_directions_tile(1+tile_limits%max_lat - &
+                                                                 tile_limits%min_lat, &
+                                                                 1+tile_limits%max_lon - &
+                                                                 tile_limits%min_lon))
                     do j = tile_limits%min_lon,tile_limits%max_lon
                         do i = tile_limits%min_lat,tile_limits%max_lat
                             cell_section_coords = latlon_section_coords(i*scale_factor+1,(j-1)*scale_factor+1, &
