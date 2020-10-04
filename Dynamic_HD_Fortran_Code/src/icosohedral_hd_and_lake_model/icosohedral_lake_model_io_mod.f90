@@ -271,9 +271,9 @@ subroutine write_lake_numbers_field(working_directory, &
   integer, dimension(1) :: dimids
   integer, dimension(2) :: dimids_bnds
     if(timestep == -1) then
-      filename = trim(working_directory) // 'lake_model_results.nc'
+      filename = trim(working_directory) // '/lake_model_results.nc'
     else
-      filename = trim(working_directory) // 'lake_model_results_'
+      filename = trim(working_directory) // '/lake_model_results_'
       write (timestep_str,'(I0.3)') timestep
       filename = trim(filename) // trim(timestep_str) // '.nc'
     end if
