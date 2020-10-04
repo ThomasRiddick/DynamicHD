@@ -78,7 +78,7 @@ module icosohedral_hd_model_interface_mod
         call set_runoff_and_drainage(global_prognostics,runoffs(:,i),drainages(:,i))
         call set_lake_evaporation(global_prognostics,lake_evaporation_local(:,i))
         call run_hd(global_prognostics)
-        if ((i == 1 .or. i == timesteps .or. mod(i,365) == 0) .and. write_output) then
+        if ((i == 1 .or. i == timesteps .or. mod(i,10) == 0) .and. write_output) then
           call write_river_flow_field(working_directory,&
                                       global_prognostics%river_parameters,&
                                       global_prognostics%river_fields%river_inflow,i,&
