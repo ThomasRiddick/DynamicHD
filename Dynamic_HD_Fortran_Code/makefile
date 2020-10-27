@@ -1,13 +1,20 @@
 RM := rm -rf
 USE_NAG := False
 USE_INTEL := False
+USE_MPI ?= False
 ifeq ($(shell uname -s),Darwin)
+ifeq ($(USE_MPI),True)
 GFORTRAN :=  /usr/local/bin/mpifort
+else
+GFORTRAN :=  /usr/local/Cellar/gcc/10.2.0/bin/gfortran-10
+endif
 NAGFORTRAN :=  /usr/local/bin/nagfor
 EXT_SOURCE :=$(shell echo ${HOME} )/Documents/code/
 GFORTRAN_NETCDF_F := /usr/local/Cellar/netcdf/4.7.4_1
 NETCDF_F_LIB :=libnetcdff.dylib
+ifeq ($(USE_MPI),True)
 FLAGS := -DUSE_MPI -m64
+endif
 else ifeq ($(shell hostname -d),hpc.dkrz.de)
 GFORTRAN := $(shell which gfortran)
 NAGFORTRAN :=  $(shell which nagfor)
@@ -128,6 +135,7 @@ clean:
 	-$(RM) $(ICON_TO_LATLON_LANDSEA_DOWNSCALER_SIMPLE_INTERFACE_OBJS)
 	-$(RM) $(ACCUMULATE_FLOW_ICON_SIMPLE_INTERFACE_OBJS)
 	-$(RM) $(LATLON_TO_ICON_LOOP_BREAKER_SIMPLE_INTERFACE_OBJS)
+	-$(RM) $(LATLON_TO_ICON_CROSS_GRID_MAPPER_SIMPLE_INTERFACE_OBJS)
 	-$(RM) $(ICOSOHEDRAL_HD_AND_LAKE_MODEL_OBJS)
 	-$(RM) Icon_To_LatLon_Landsea_Downscaler_Simple_Interface
 	-$(RM) LatLon_Lake_Model_Driver_Exec

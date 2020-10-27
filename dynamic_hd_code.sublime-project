@@ -2,13 +2,22 @@
 	"build_systems":
 	[
 	],
+	"conda_environment": "/Users/thomasriddick/anaconda3/envs/dyhdenv",
 	"folders":
 	[
 		{
 			"file_exclude_patterns":
 			[
 				"Dynamic_HD_Scripts/Dynamic_HD_Scripts/fill_sinks_wrapper.cpp",
-				"Dynamic_HD_Scripts/Dynamic_HD_Scripts/upscale_orography_wrapper.cpp"
+				"Dynamic_HD_Scripts/Dynamic_HD_Scripts/fill_sinks_wrapper_low_mem.cpp",
+				"Dynamic_HD_Scripts/Dynamic_HD_Scripts/upscale_orography_wrapper.cpp",
+				"Dynamic_HD_Scripts/Dynamic_HD_Scripts/compute_catchments_wrapper.cpp",
+				"Dynamic_HD_Scripts/Dynamic_HD_Scripts/create_connected_lsmask_wrapper.cpp",
+				"Dynamic_HD_Scripts/Dynamic_HD_Scripts/create_orography_wrapper.cpp",
+				"Dynamic_HD_Scripts/Dynamic_HD_Scripts/follow_streams_wrapper.cpp",
+				"Dynamic_HD_Scripts/Dynamic_HD_Scripts/lake_operators_wrapper.cpp",
+				"Dynamic_HD_Scripts/Dynamic_HD_Scripts/evaluate_basins_wrapper.cpp",
+				"Dynamic_HD_Scripts/Dynamic_HD_Scripts/determine_river_directions_wrapper.cpp"
 			],
 			"folder_exclude_patterns":
 			[

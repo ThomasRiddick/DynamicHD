@@ -5,28 +5,41 @@ Created on Thu 1, 2020
 @author: thomasriddick
 '''
 from mpi4py import MPI
+import os
+import f2py_manager
+import os.path as path
+from context import fortran_project_source_path,fortran_project_object_path,fortran_project_include_path
 
 def using_mpi():
-    return (os.environ.get('USE_MPI_IN_PYTHON').lower() == "true" or
-            os.environ.get('USE_MPI_IN_PYTHON').lower() == "t")
+    use_mpi_in_python = os.environ.get('USE_MPI_IN_PYTHON')
+    if use_mpi_in_python is not None:
+        return (use_mpi_in_python.lower() == "true" or
+                use_mpi_in_python.get('USE_MPI_IN_PYTHON').lower() == "t")
+    else:
+        return False
 
-class MPICommands(Enum):
+class MPICommands(object):
+    EXIT = 0
     RUNCOTATPLUS = 1
 
 class ProcessManager(object):
 
-    def __init__(self):
-        commands = {MPICommands.RUNCOTATPLUS:self.run_cotat_plus}
+    def __init__(self,comm):
+        self.comm = comm
+        self.commands = {MPICommands.RUNCOTATPLUS:self.run_cotat_plus}
 
     def wait_for_commands(self):
         command = None
-        command  = comm.bcast(command, root=0)
+        command  = self.comm.bcast(command, root=0)
+        if command == MPICommands.EXIT:
+            return
         self.commands[command]()
         self.wait_for_commands()
 
     def run_cotat_plus(self):
         f2py_mngr = f2py_manager.f2py_manager(path.join(fortran_project_source_path,
                                                         "cotat_plus_driver_mod.f90"),
+                                              func_name="cotat_plus_latlon_f2py_worker_wrapper",
                                               no_compile=True)
         f2py_mngr.\
             run_current_function_or_subroutine()

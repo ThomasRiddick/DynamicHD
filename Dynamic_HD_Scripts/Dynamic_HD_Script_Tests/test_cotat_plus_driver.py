@@ -19,10 +19,14 @@ import subprocess
 import context
 import Dynamic_HD_Scripts.context as scripts_context
 from matplotlib.compat.subprocess import CalledProcessError
+from Dynamic_HD_Scripts.process_manager import ProcessManager
+from Dynamic_HD_Scripts.process_manager import using_mpi
+from Dynamic_HD_Scripts.process_manager import MPICommands
+from mpi4py import MPI
 
 class Test(unittest.TestCase):
     """Unit test object"""
-    
+
     show_output = False
 
     input_fine_river_directions_test_data = np.array([[-1,-1,-1, -1,0,4,   2,2,2, 2,2,2, 3,2,2],
@@ -58,15 +62,15 @@ class Test(unittest.TestCase):
                                                            [1,4,7, 1,5,6, 5,1,3, 1,2,11, 12,17,1],
                                                            [1,1,1, 1,1,1, 1,1,1, 4,8,9, 1,1,1]],
                                                           dtype=np.int64)
-    
+
     small_grid_expected_result = np.array([[-1,6,0,4,4],
                                            [0,4,4,8,5],
                                            [0,7,4,8,7],
                                            [8,4,7,4,7],
                                            [8,7,7,6,5]],dtype=np.int64)
-    
+
     directory = None
-    
+
     def setUp(self):
         """Unit test setup. Creates a temporary directory for results if necessary"""
         #create files
@@ -83,14 +87,14 @@ class Test(unittest.TestCase):
     def testUsingSmallGrid(self):
         """
         Test using a small 5 by 5 grid
-        
+
         Same data was used in FRUIT unit testing
         """
 
-        input_fine_river_directions_test_field = field.makeField(self.input_fine_river_directions_test_data, 
+        input_fine_river_directions_test_field = field.makeField(self.input_fine_river_directions_test_data,
                                                                  field_type='RiverDirections',
                                                                  grid_type='LatLong',nlat=15,nlong=15)
-        input_fine_total_cumulative_flow_test_field = field.makeField(self.input_fine_total_cumulative_flow_test_data, 
+        input_fine_total_cumulative_flow_test_field = field.makeField(self.input_fine_total_cumulative_flow_test_data,
                                                                       field_type='CumulativeFlow',
                                                                       grid_type='LatLong',nlat=15,nlong=15)
         cotat_params_text =\
@@ -104,16 +108,17 @@ class Test(unittest.TestCase):
         with open(self.cotat_params_file_path,'w') as f:
             f.write(textwrap.dedent(cotat_params_text))
         output_course_river_directions = \
-            cotat_plus_driver.run_cotat_plus(fine_rdirs_field=input_fine_river_directions_test_field, 
+            cotat_plus_driver.run_cotat_plus(fine_rdirs_field=input_fine_river_directions_test_field,
                                              fine_total_cumulative_flow_field=\
-                                             input_fine_total_cumulative_flow_test_field, 
-                                             cotat_plus_parameters_filepath=self.cotat_params_file_path, 
+                                             input_fine_total_cumulative_flow_test_field,
+                                             cotat_plus_parameters_filepath=self.cotat_params_file_path,
                                              course_grid_type='LatLong',nlat=5,nlong=5)
         np.testing.assert_array_equal(output_course_river_directions.get_data(),
                                       self.small_grid_expected_result,
                                       "Running scaling code over small 5 by 5 grid doesn't"
                                       " produce expected results")
-        
+
+    @unittest.skip("")
     def testForMemoryLeaksWithValgrind(self):
         """Run valgrind to check no new memory leaks are occurring"""
         try:
@@ -138,4 +143,15 @@ class Test(unittest.TestCase):
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
-    unittest.main()
+    if using_mpi():
+        comm = MPI.COMM_WORLD
+        rank = comm.Get_rank()
+        if rank == 0:
+            unittest.main(exit=False)
+            command = MPICommands.EXIT
+            comm.bcast(command, root=0)
+        else:
+            process_manager = ProcessManager(comm)
+            process_manager.wait_for_commands()
+    else:
+      unittest.main()

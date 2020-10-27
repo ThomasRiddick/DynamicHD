@@ -50,13 +50,14 @@ def run_cotat_plus(fine_rdirs_field,fine_total_cumulative_flow_field,cotat_plus_
                                           include_path=fortran_project_include_path)
     course_grid = grid.makeGrid(course_grid_type,**course_grid_kwargs)
     if using_mpi():
+        comm = MPI.COMM_WORLD
         comm.bcast(MPICommands.RUNCOTATPLUS, root=0)
     course_rdirs_field_raw = f2py_mngr.\
-        run_current_function_or_subroutine(course_grid.get_grid_dimensions()[0],
-                                           course_grid.get_grid_dimensions()[1],
-                                           fine_rdirs_field.get_data().astype(np.int64,order='F'),
+        run_current_function_or_subroutine(fine_rdirs_field.get_data().astype(np.int64,order='F'),
                                            fine_total_cumulative_flow_field.get_data().astype(np.int64,order='F'),
-                                           cotat_plus_parameters_filepath)
+                                           cotat_plus_parameters_filepath,
+                                           course_grid.get_grid_dimensions()[0],
+                                           course_grid.get_grid_dimensions()[1])
     course_rdirs_field = field.makeField(course_rdirs_field_raw.astype(np.float64),'RiverDirections',course_grid_type,
                                          **course_grid_kwargs)
     if fine_rdirs_field.grid_has_coordinates():

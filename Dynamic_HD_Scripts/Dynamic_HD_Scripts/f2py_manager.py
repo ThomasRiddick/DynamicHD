@@ -17,6 +17,7 @@ from numpy.distutils import core as distutils_core
 from subprocess import CalledProcessError
 from context import shared_object_path, bin_path,build_path
 from sys import platform
+from process_manager import using_mpi
 
 class f2py_manager(object):
     """Manages a f2py fortran module.
@@ -88,22 +89,38 @@ class f2py_manager(object):
             parser.add_argument("--sources",required=True)
             parser.add_argument("--include-path",required=True)
             parser.add_argument("--objects",required=True)
+            parser.add_argument('--use-mpi', action='store_true')
             params, unknown_args = parser.parse_known_args()
             sys.argv = [sys.argv[0]] + unknown_args
             path_to_build_dir = os.path.join(params.build_path,params.module_name,
                                              "temp")
             owd = os.getcwd()
             os.chdir(path_to_build_dir)
+            extra_link_args=[]
+            extra_include_dirs=[]
+            library_dirs=[]
+            runtime_library_dirs=[]
+            libraries=[]
+            extra_compile_args=[]
             if sys.platform == "darwin":
-                extra_link_args=['-Wl,-rpath,/usr/local/Cellar/gcc/9.2.0_3/lib/gcc/9/']
-            else:
-                extra_link_args=[]
+                extra_link_args=['-Wl,-rpath,/usr/local/Cellar/gcc/10.2.0/lib/gcc/10']
+                if params.use_mpi:
+                    extra_include_dirs=["/usr/local/Cellar/open-mpi/4.0.5/lib","/usr/local/Cellar/open-mpi/4.0.5/include"]
+                    library_dirs=["/usr/local/Cellar/gcc/10.2.0/lib/gcc/10","/usr/local/opt/libevent/lib","/usr/local/Cellar/open-mpi/4.0.5/lib"]
+                    runtime_library_dirs=["/usr/local/Cellar/gcc/10.2.0/lib/gcc/10","/usr/local/opt/libevent/lib","/usr/local/Cellar/open-mpi/4.0.5/lib"]
+                    libraries=["mpi_usempif08","mpi_usempi_ignore_tkr","mpi_mpifh","mpi"]
+                    extra_compile_args=["-Wl,-flat_namespace -Wl,-commons,use_dylibs"]
+            include_path = ast.literal_eval(params.include_path)
+            include_path.extend(extra_include_dirs)
             ext = npdistutils_core.Extension(name=params.module_name,
                                              sources=ast.literal_eval(params.sources),
-                                             include_dirs=ast.literal_eval(params.include_path),
+                                             include_dirs=include_path,
+                                             library_dirs=library_dirs,
+                                             runtime_library_dirs=runtime_library_dirs,
+                                             libraries=libraries,
                                              extra_objects=ast.literal_eval(params.objects),
                                              extra_link_args=extra_link_args,
-                                             extra_f90_compile_args=["-cpp"],
+                                             extra_f90_compile_args=["-cpp"].extend(extra_compile_args),
                                              language="f90")
             npdistutils_core.setup(name=params.module_name,
                                    ext_modules=[ext])
@@ -165,17 +182,19 @@ class f2py_manager(object):
         if os.path.isdir(path_to_build_dir):
             shutil.rmtree(path_to_build_dir)
         os.makedirs(path_to_build_dir)
-        distutils_core.run_setup(self.wrapper_path,["build_ext",
-                                                    "--build-lib={0}".format(shared_object_path),
-                                                    "--build-temp={0}".format(os.path.join(build_path,
-                                                                                      self.fortran_module_name,
-                                                                                      "temp")),
-                                                    "--build-path={0}".format(build_path),
-                                                    "--module-name={0}".format(self.fortran_module_name),
-                                                    "--sources={0}".format(str(self.sources)),
-                                                    "--include-path={0}".format(str(self.include_path)),
-                                                    "--objects={0}".
-                                                    format(str(self.additional_fortran_files))],
+        setup_args = ["build_ext",
+                      "--build-lib={0}".format(shared_object_path),
+                      "--build-temp={0}".format(os.path.join(build_path,
+                                                             self.fortran_module_name,
+                                                             "temp")),
+                      "--build-path={0}".format(build_path),
+                      "--module-name={0}".format(self.fortran_module_name),
+                      "--sources={0}".format(str(self.sources)),
+                      "--include-path={0}".format(str(self.include_path)),
+                      "--objects={0}".format(str(self.additional_fortran_files))]
+        if using_mpi():
+            setup_args.append("--use-mpi")
+        distutils_core.run_setup(self.wrapper_path,setup_args,
                                  stop_after="run")
         self.load_module()
 

@@ -215,7 +215,8 @@ MODS += \
 ./icosohedral_hd_model_interface_mod.mod \
 ./icosohedral_hd_model_io_mod.mod \
 ./icosohedral_hd_model_mod.mod \
-./icosohedral_hd_model_driver.mod
+./icosohedral_hd_model_driver.mod \
+./grid_information_mod.mod
 
 # Each subdirectory must supply rules for building sources it contributes
 ifeq ($(FORTRAN),$(GFORTRAN))
