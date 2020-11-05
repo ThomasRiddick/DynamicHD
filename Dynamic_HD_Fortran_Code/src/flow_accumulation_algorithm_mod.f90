@@ -369,6 +369,8 @@ subroutine check_for_loops_wrapper(this,cell_coords)
         end if
       end select
     end select
+    deallocate(dependency_ptr)
+    deallocate(cell_coords)
 end subroutine check_for_loops_wrapper
 
 subroutine follow_paths_wrapper(this,initial_coords)
@@ -412,14 +414,18 @@ subroutine label_loop(this,start_coords)
   class(flow_accumulation_algorithm), intent(in) :: this
   class(coords), pointer :: start_coords
   class(coords), pointer :: current_coords
-    current_coords => start_coords
+  class(coords), pointer :: new_current_coords
+    allocate(current_coords,source=start_coords)
     do
       call this%dependencies%set_value(current_coords,0)
       call this%cumulative_flow%set_value(current_coords,0)
-      current_coords => this%get_next_cell_coords(current_coords)
-      if (current_coords%are_equal_to(start_coords)) then
+      new_current_coords => this%get_next_cell_coords(current_coords)
+      deallocate(current_coords)
+      if (new_current_coords%are_equal_to(start_coords)) then
+        deallocate(new_current_coords)
         exit
       end if
+      current_coords => new_current_coords
     end do
 end subroutine label_loop
 
@@ -464,6 +470,8 @@ end subroutine label_loop
                                         next_cell_coords_lon_ptr))
         end select
       end select
+      deallocate(next_cell_coords_lat_ptr)
+      deallocate(next_cell_coords_lon_ptr)
   end function latlon_get_next_cell_coords
 
   function latlon_generate_coords_index(this,coords_in) result(index)

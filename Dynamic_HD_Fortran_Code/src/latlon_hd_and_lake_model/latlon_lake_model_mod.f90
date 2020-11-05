@@ -575,6 +575,7 @@ subroutine lakefieldsdestructor(this)
     deallocate(this%water_to_hd)
     deallocate(this%cells_with_lakes_lat)
     deallocate(this%cells_with_lakes_lon)
+    deallocate(this%lake_water_from_ocean)
 end subroutine lakefieldsdestructor
 
 subroutine initialiselakeprognostics(this,lake_parameters_in,lake_fields_in)

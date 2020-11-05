@@ -73,6 +73,8 @@ contains
                                            output_cumulative_flow_ptr)
       call flow_acc_alg%generate_cumulative_flow(.false.)
       call flow_acc_alg%latlon_destructor()
+      deallocate(next_cell_index_lat)
+      deallocate(next_cell_index_lon)
   end subroutine accumulate_flow_latlon
 
 end module accumulate_flow_mod

@@ -36,6 +36,9 @@ contains
                                     output_cumulative_flow)
         call assert_true(all(output_cumulative_flow .eq. &
                              expected_cumulative_flow))
+        deallocate(flow_dirs)
+        deallocate(expected_cumulative_flow)
+        deallocate(output_cumulative_flow)
     end subroutine testCalculateCumlativeFlowLatLon
 
     subroutine testCalculateCumlativeFlowLatLonWrapped()
@@ -65,6 +68,9 @@ contains
                                     output_cumulative_flow)
         call assert_true(all(output_cumulative_flow .eq. &
                              expected_cumulative_flow_with_wrap))
+        deallocate(flow_dirs_with_wrap)
+        deallocate(expected_cumulative_flow_with_wrap)
+        deallocate(output_cumulative_flow)
     end subroutine testCalculateCumlativeFlowLatLonWrapped
 
     subroutine testCalculateCumlativeFlowLatLonWithMask()
@@ -106,6 +112,10 @@ contains
                                     output_cumulative_flow)
         call assert_true(all(output_cumulative_flow .eq. &
                              expected_cumulative_flow_when_using_mask))
+        deallocate(flow_dirs)
+        deallocate(ls_mask)
+        deallocate(expected_cumulative_flow_when_using_mask)
+        deallocate(output_cumulative_flow)
     end subroutine testCalculateCumlativeFlowLatLonWithMask
 
     subroutine testCalculateCumlativeFlowLatLonWithBasicLoop()
@@ -129,6 +139,9 @@ contains
                                     output_cumulative_flow)
         call assert_true(all(output_cumulative_flow .eq. &
                              expected_cumulative_flow_with_loop))
+        deallocate(flow_dirs_with_loop)
+        deallocate(expected_cumulative_flow_with_loop)
+        deallocate(output_cumulative_flow)
     end subroutine testCalculateCumlativeFlowLatLonWithBasicLoop
 
     subroutine testCalculateCumlativeFlowLatLonWithLoop()
@@ -162,6 +175,9 @@ contains
                                     output_cumulative_flow)
         call assert_true(all(output_cumulative_flow .eq. &
                              expected_cumulative_flow_with_loop))
+        deallocate(flow_dirs_with_loop)
+        deallocate(expected_cumulative_flow_with_loop)
+        deallocate(output_cumulative_flow)
     end subroutine testCalculateCumlativeFlowLatLonWithLoop
 
     subroutine testCalculateCumlativeFlow
