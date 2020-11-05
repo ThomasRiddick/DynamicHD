@@ -14,6 +14,7 @@ type, abstract :: flow_accumulation_algorithm
     class(coords),pointer :: flow_terminates_value
     class(coords),pointer :: no_data_value
     class(coords),pointer :: no_flow_value
+    logical :: search_for_loops = .true.
   contains
     private
     procedure :: init_flow_accumulation_algorithm
@@ -26,6 +27,7 @@ type, abstract :: flow_accumulation_algorithm
     procedure :: get_flow_terminates_value
     procedure :: get_no_data_value
     procedure :: get_no_flow_value
+    procedure :: label_loop
     procedure, public :: destructor
     procedure(get_next_cell_coords), deferred :: get_next_cell_coords
     procedure(generate_coords_index), deferred :: generate_coords_index
@@ -348,7 +350,26 @@ subroutine process_queue(this)
       deallocate(cumulative_flow_target_coords_ptr)
       deallocate(cumulative_flow_current_coords_ptr)
   end do
+  if (this%search_for_loops) then
+    call this%dependencies%for_all(check_for_loops_wrapper,this)
+  end if
 end subroutine process_queue
+
+subroutine check_for_loops_wrapper(this,cell_coords)
+  class(*), intent(inout) :: this
+  class(coords), pointer, intent(inout) :: cell_coords
+  class(*), pointer :: dependency_ptr
+    select type(this)
+    class is (flow_accumulation_algorithm)
+      dependency_ptr => this%dependencies%get_value(cell_coords)
+      select type(dependency_ptr)
+      type is (integer)
+        if (dependency_ptr /= 0) then
+          call this%label_loop(cell_coords)
+        end if
+      end select
+    end select
+end subroutine check_for_loops_wrapper
 
 subroutine follow_paths_wrapper(this,initial_coords)
   class(*), intent(inout) :: this
@@ -386,6 +407,21 @@ subroutine follow_paths(this,initial_coords)
   end do
   deallocate(initial_coords)
 end subroutine follow_paths
+
+subroutine label_loop(this,start_coords)
+  class(flow_accumulation_algorithm), intent(in) :: this
+  class(coords), pointer :: start_coords
+  class(coords), pointer :: current_coords
+    current_coords => start_coords
+    do
+      call this%dependencies%set_value(current_coords,0)
+      call this%cumulative_flow%set_value(current_coords,0)
+      current_coords => this%get_next_cell_coords(current_coords)
+      if (current_coords%are_equal_to(start_coords)) then
+        exit
+      end if
+    end do
+end subroutine label_loop
 
   function get_external_flow_value(this) result(external_data_value)
     class(flow_accumulation_algorithm), intent(in) :: this

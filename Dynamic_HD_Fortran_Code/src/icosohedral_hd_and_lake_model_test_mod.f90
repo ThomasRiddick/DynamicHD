@@ -2288,9 +2288,6 @@ subroutine testLakeModel4
         working_lake_ptr = lake_prognostics_out%lakes(i)
         lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
       end do
-      do i =1,80
-        write(*,*) expected_intermediate_river_inflow(i) - river_fields%river_inflow(i)
-      end do
       call assert_equals(expected_intermediate_river_inflow,river_fields%river_inflow,&
                          ncells_coarse,0.0001)
       call assert_equals(expected_intermediate_water_to_ocean, &

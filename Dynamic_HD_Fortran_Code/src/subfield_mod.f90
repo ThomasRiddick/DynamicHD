@@ -475,12 +475,15 @@ contains
     subroutine latlon_set_all_generic(this,value)
         class(latlon_subfield) :: this
         class(*), pointer :: value
+        class(*), pointer :: value_copy
         integer :: i,j
-        do j = this%lon_min,this%lon_max
-            do i = this%lat_min,this%lat_max
-                call this%set_generic_value(latlon_coords(i,j),value)
+            do j = this%lon_min,this%lon_max
+                do i = this%lat_min,this%lat_max
+                    allocate(value_copy,source=value)
+                    call this%set_generic_value(latlon_coords(i,j),value_copy)
+                end do
             end do
-        end do
+            deallocate(value)
     end subroutine latlon_set_all_generic
 
     function latlon_coords_outside_subfield(this,coords_in) result(is_true)

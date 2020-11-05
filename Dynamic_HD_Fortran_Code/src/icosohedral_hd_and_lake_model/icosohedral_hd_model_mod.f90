@@ -167,7 +167,8 @@ function riverparametersconstructor(next_cell_index_in,river_reservoir_nums_in, 
                                                river_retention_coefficients_in, &
                                                overland_retention_coefficients_in, &
                                                base_retention_coefficients_in, &
-                                               landsea_mask_in,step_length,day_length)
+                                               landsea_mask_in,step_length_local, &
+                                               day_length_local)
 end function riverparametersconstructor
 
 subroutine riverparametersdestructor(this)

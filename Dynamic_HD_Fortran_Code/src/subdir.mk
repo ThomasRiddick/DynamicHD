@@ -29,6 +29,7 @@ $(FRUIT_LOC)/fruit.f90 \
 ../src/check_return_code_netcdf_mod.f90 \
 ../src/parameters_mod.f90 \
 ../src/accumulate_flow_mod.f90 \
+../src/accumulate_flow_driver_mod.f90 \
 ../src/accumulate_flow_test_mod.f90 \
 ../src/latlon_hd_and_lake_model/latlon_lake_model_mod.f90 \
 ../src/latlon_hd_and_lake_model/latlon_lake_model_interface_mod.f90 \
@@ -80,6 +81,7 @@ OBJS += \
 ./src/flow_accumulation_algorithm_mod.o \
 ./src/icon_to_latlon_landsea_downscaler.o \
 ./src/accumulate_flow_mod.o \
+./src/accumulate_flow_driver_mod.o \
 ./src/cross_grid_mapper.o \
 ./src/convert_rdirs_to_indices.o
 
@@ -187,6 +189,7 @@ MODS += \
 ./accumulate_flow_icon_simple_interface.mod \
 ./accumulate_flow_test_mod.mod \
 ./accumulate_flow_mod.mod \
+./accumulate_flow_driver_mod.mod \
 ./manual_fruit_basket.mod \
 ./manual_fruit_basket_driver.mod \
 ./flow_accumulation_algorithm_mod.mod \
@@ -299,6 +302,8 @@ src/loop_breaker_mod.o: ../src/loop_breaker_mod.f90 src/coords_mod.o src/doubly_
 src/loop_breaker_test_mod.o: ../src/loop_breaker_test_mod.f90 src/fruit.o src/loop_breaker_mod.o
 
 src/accumulate_flow_mod.o: ../src/accumulate_flow_mod.f90 src/flow_accumulation_algorithm_mod.o src/convert_rdirs_to_indices.o
+
+src/accumulate_flow_driver_mod.o: ../src/accumulate_flow_driver_mod.f90 src/accumulate_flow_mod.o
 
 src/accumulate_flow_test_mod.o: ../src/accumulate_flow_test_mod.f90 src/accumulate_flow_mod.o src/fruit.o
 

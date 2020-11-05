@@ -7,13 +7,19 @@ abstract Type Formula end
 abstract Type RiverFlowFormula <: Formula end
 
 struct RiverFlowSausen <: RiverFlowFormula
-
+  riverflow_dx::Float64 = 228000
+  minimum_height_threshold::Float64 = 0.0
+  default_height_change::Float64 = 0.0
+  riverflow_v0::Float64 = 1.0039
+  alpha::Float64 = 0.1
+  C::Float64 = 2.0
+  riverflow_k0 = 0.4112
 end
 
-function generateparameters(landsea_mask_filepath::AbstractString,
-                            orography_filepath::AbstractString;
-                            river_direction_filepath::AbstractString=nothing,
-                            inner_slope_filepath::AbstractString=nothing)
+function generate_parameters(landsea_mask_filepath::AbstractString,
+                             orography_filepath::AbstractString;
+                             river_direction_filepath::AbstractString=nothing,
+                             inner_slope_filepath::AbstractString=nothing)
   landsea_mask::SharedArray{Float64} = read_landsea_mask(landsea_mask_filepath)
   grid_dimensions::Tuple{Int64} = size(landsea_mask)
   number_of_riverflow_reservoirs = SharedArray{Float64}(grid_dimensions)
@@ -37,14 +43,32 @@ function generateparameters(landsea_mask_filepath::AbstractString,
   end
 end
 
-function generate_riverflow_parameters(i::CartesianIndices,formula::RiverFlowFormula)
+function calculate_distance(i::CartesianIndices)
+  next_cell::CartesianIndices = get_next_cell_coords(i)
+  earth_radius::Float64 = 6371000.0
+  if size(i) = 2
 
+  else
+    dlat::Float64  =
+    dlon::Float64 =
+  end
+  return distance
+end
+
+function generate_riverflow_parameters(i::CartesianIndices,formula::RiverFlowSausen)
   if size(i) == 2
     number_of_riverflow_reservoirs = 5.478720
   else
     number_of_riverflow_reservoirs = 5.0
   end
-  return number_of_riverflow_reservoirs,
+  if height_change < formula.minimum_height_threshold
+    height_change = formula.default_height_change
+  end
+  distance = calculate_distance(i)
+  vsau = formula.C*(height_change/distance)^formula.alpha
+  riverflow_retention_coefficient = formula.riverflow_k0*distance/
+                                    formula.riverflow_dx*formula.riverflow_v0/vsau
+  return number_of_riverflow_reservoirs,riverflow_retention_coefficient
 end
 
 end

@@ -1,4 +1,4 @@
-push!(LOAD_PATH, "/Users/thomasriddick/Documents/workspace/Dynamic_HD_Code/Dynamic_HD_Julia_Code/")
+push!(LOAD_PATH, "/Users/thomasriddick/Documents/workspace/Dynamic_HD_Code/Dynamic_HD_Julia_Code/HDandLakeModel")
 using ArgParse
 using HDDriverModule: drive_hd_model,drive_hd_and_lake_model
 using IOModule: load_river_parameters, load_lake_parameters
@@ -76,7 +76,8 @@ function main()
     runoffs_copy = deepcopy(runoffs)
     lake_evaporations_copy = deepcopy(lake_evaporations)
     if args["hd-init-file"] != nothing
-      river_fields = load_river_initial_values(args["hd-init-file"],river_parameters)
+      river_fields = load_river_initial_values(args["hd-init-file"],river_parameters.grid,
+                                               river_parameters)
     end
     if args["lake-init-file"] != nothing
       initial_water_to_lake_centers::LatLonField{Float64},
@@ -102,7 +103,7 @@ function main()
       else
         drive_hd_and_lake_model(river_parameters,lake_parameters,drainages,runoffs,
                                 lake_evaporations,timesteps,true,initial_water_to_lake_centers,
-                                initial_spillover_to_rivers;print_timestep_results=true)
+                                initial_spillover_to_rivers;print_timestep_results=false)
       end
     else
       if args["hd-init-file"] != nothing
@@ -113,7 +114,7 @@ function main()
       else
         drive_hd_and_lake_model(river_parameters,lake_parameters,
                                 drainages,runoffs,lake_evaporations,
-                                timesteps;print_timestep_results=true)
+                                timesteps;print_timestep_results=false)
         # @time drive_hd_and_lake_model(river_parameters,lake_parameters,
         #                               drainages_copy,runoffs_copy,
         #                               lake_evaporations_copy,timesteps;
@@ -158,9 +159,13 @@ end
 #push!(ARGS,"-n/Users/thomasriddick/Documents/data/temp/transient_sim_1/results_for_1400/lake_model_start_1400.nc")
 #push!(ARGS,"-i/Users/thomasriddick/Documents/data/temp/transient_sim_1/results_for_1400/hdstart_1400.nc")
 # push!(ARGS,"-t6000")
-push!(ARGS,"-p/Users/thomasriddick/Documents/data/temp/lakeparagen/hdpara.nc")
-push!(ARGS,"-l/Users/thomasriddick/Documents/data/temp/lakeparagen/lakeparas.nc")
+#push!(ARGS,"-p/Users/thomasriddick/Documents/data/temp/lakeparagen/hdpara.nc")
+#push!(ARGS,"-l/Users/thomasriddick/Documents/data/temp/lakeparagen/lakeparas.nc")
+push!(ARGS,"-p/Users/thomasriddick/Documents/data/temp/9760k/hdpara_9760k.nc")
+push!(ARGS,"-l/Users/thomasriddick/Documents/data/temp/9760k/lakepara_9760k.nc")
+push!(ARGS,"-n/Users/thomasriddick/Documents/data/temp/9760k/lakestart_9760k.nc")
+push!(ARGS,"-i/Users/thomasriddick/Documents/data/temp/9760k/hdrestart_9760k.nc")
 #push!(ARGS,"-n/Users/thomasriddick/Documents/data/temp/transient_sim_1/results_for_1400/lake_model_start_1400.nc")
 #push!(ARGS,"-i/Users/thomasriddick/Documents/data/temp/transient_sim_1/results_for_1400/hdstart_1400.nc")
-push!(ARGS,"-t1000")
+push!(ARGS,"-t3650")
 main()

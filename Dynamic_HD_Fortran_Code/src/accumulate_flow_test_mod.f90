@@ -10,6 +10,160 @@ contains
     subroutine teardown
     end subroutine teardown
 
+    subroutine testCalculateCumlativeFlowLatLon
+      use accumulate_flow_mod
+      integer, dimension(:,:), pointer :: flow_dirs
+      integer, dimension(:,:), pointer :: output_cumulative_flow
+      integer, dimension(:,:), pointer :: expected_cumulative_flow
+        allocate(flow_dirs(6,6))
+        allocate(expected_cumulative_flow(6,6))
+        allocate(output_cumulative_flow(6,6))
+        flow_dirs =  transpose(reshape((/3,1,4,4,4,4, &
+                                         2,4,4,4,7,7, &
+                                         3,9,8,7,6,2, &
+                                         5,3,6,9,2,1, &
+                                         6,7,2,3,1,8, &
+                                         5,0,7,0,4,4 /),&
+                               shape(transpose(flow_dirs))))
+        expected_cumulative_flow = transpose(reshape((/ 1, 7, 6, 5, 3, 1, &
+                                                       15, 7, 5, 1, 1, 1, &
+                                                       16, 1, 1, 1, 3, 4, &
+                                                       22,17, 1, 2, 1, 6, &
+                                                        1,21,18, 1, 8, 1, &
+                                                        0, 0,19,12, 3, 1 /),&
+                                             shape(transpose(expected_cumulative_flow))))
+        call accumulate_flow_latlon(flow_dirs, &
+                                    output_cumulative_flow)
+        call assert_true(all(output_cumulative_flow .eq. &
+                             expected_cumulative_flow))
+    end subroutine testCalculateCumlativeFlowLatLon
+
+    subroutine testCalculateCumlativeFlowLatLonWrapped()
+      use accumulate_flow_mod
+      integer, dimension(:,:), pointer :: flow_dirs_with_wrap
+      integer, dimension(:,:), pointer :: output_cumulative_flow
+      integer, dimension(:,:), pointer :: expected_cumulative_flow_with_wrap
+        allocate(flow_dirs_with_wrap(6,6))
+        allocate(expected_cumulative_flow_with_wrap(6,6))
+        allocate(output_cumulative_flow(6,6))
+        flow_dirs_with_wrap =  transpose(reshape((/1,1,4,4,4,3, &
+                                                   2,4,4,4,7,7, &
+                                                   3,9,8,7,6,2, &
+                                                   4,3,6,9,5,4, &
+                                                   6,7,2,3,1,8, &
+                                                   7,0,7,0,4,9 /),&
+                                     shape(transpose(flow_dirs_with_wrap))))
+        expected_cumulative_flow_with_wrap = \
+        transpose(reshape((/ 1, 7, 6, 5, 3, 1, &
+                            15, 6, 5, 1, 1, 2, &
+                            16, 1, 1, 1, 3, 4, &
+                            23, 17, 1, 2, 31, 30, &
+                             2, 22, 18, 1, 1, 2, &
+                              1, 0, 19, 4, 2, 1 /),&
+                  shape(transpose(expected_cumulative_flow_with_wrap))))
+        call accumulate_flow_latlon(flow_dirs_with_wrap, &
+                                    output_cumulative_flow)
+        call assert_true(all(output_cumulative_flow .eq. &
+                             expected_cumulative_flow_with_wrap))
+    end subroutine testCalculateCumlativeFlowLatLonWrapped
+
+    subroutine testCalculateCumlativeFlowLatLonWithMask()
+      use accumulate_flow_mod
+      integer, dimension(:,:), pointer :: flow_dirs
+      integer, dimension(:,:), pointer :: expected_cumulative_flow_when_using_mask
+      integer, dimension(:,:), pointer :: output_cumulative_flow
+      logical, dimension(:,:), pointer :: ls_mask
+        allocate(flow_dirs(6,6))
+        allocate(expected_cumulative_flow_when_using_mask(6,6))
+        allocate(ls_mask(6,6))
+        allocate(output_cumulative_flow(6,6))
+        flow_dirs =  transpose(reshape((/3,1,4,4,4,4, &
+                                         2,4,4,4,7,7, &
+                                         3,9,8,7,6,2, &
+                                         5,3,6,9,2,1, &
+                                         6,7,2,3,1,8, &
+                                         5,2,7,5,4,4 /),&
+                               shape(transpose(flow_dirs))))
+        expected_cumulative_flow_when_using_mask = \
+            transpose(reshape((/0, 0, 0, 2, 0, 0, &
+                                0, 4, 3, 1, 1, 0, &
+                                1, 0, 0, 1, 3, 4, &
+                                2, 2, 1, 2, 1, 5, &
+                                0, 1, 3, 1, 7, 0, &
+                                0, 0, 4,11, 3, 1 /),&
+                      shape(transpose(expected_cumulative_flow_when_using_mask))))
+        ls_mask = transpose(reshape((/.true.,.true.,.true.,.true.,.true.,.true., &
+                                      .true.,.true.,.false.,.false.,.false.,.true., &
+                                      .false.,.true.,.true.,.false.,.false.,.false., &
+                                      .false.,.false.,.false.,.false.,.false.,.false., &
+                                      .true.,.false.,.false.,.false.,.false.,.true., &
+                                      .true.,.true.,.true.,.false.,.false.,.false. /),&
+                            shape(ls_mask)))
+        where(ls_mask)
+          flow_dirs = 0
+        end where
+        call accumulate_flow_latlon(flow_dirs, &
+                                    output_cumulative_flow)
+        call assert_true(all(output_cumulative_flow .eq. &
+                             expected_cumulative_flow_when_using_mask))
+    end subroutine testCalculateCumlativeFlowLatLonWithMask
+
+    subroutine testCalculateCumlativeFlowLatLonWithBasicLoop()
+      use accumulate_flow_mod
+      integer, dimension(:,:), pointer :: flow_dirs_with_loop
+      integer, dimension(:,:), pointer :: output_cumulative_flow
+      integer, dimension(:,:), pointer :: expected_cumulative_flow_with_loop
+        allocate(flow_dirs_with_loop(3,3))
+        allocate(expected_cumulative_flow_with_loop(3,3))
+        allocate(output_cumulative_flow(3,3))
+        flow_dirs_with_loop =  transpose(reshape((/6,4,2, &
+                                                   6,6,5, &
+                                                   6,6,5/),&
+                                     shape(transpose(flow_dirs_with_loop))))
+        expected_cumulative_flow_with_loop = \
+        transpose(reshape((/ 0,0,1, &
+                             1,2,4, &
+                             1,2,3  /),&
+                  shape(transpose(expected_cumulative_flow_with_loop))))
+        call accumulate_flow_latlon(flow_dirs_with_loop, &
+                                    output_cumulative_flow)
+        call assert_true(all(output_cumulative_flow .eq. &
+                             expected_cumulative_flow_with_loop))
+    end subroutine testCalculateCumlativeFlowLatLonWithBasicLoop
+
+    subroutine testCalculateCumlativeFlowLatLonWithLoop()
+      use accumulate_flow_mod
+      integer, dimension(:,:), pointer :: flow_dirs_with_loop
+      integer, dimension(:,:), pointer :: output_cumulative_flow
+      integer, dimension(:,:), pointer :: expected_cumulative_flow_with_loop
+        allocate(flow_dirs_with_loop(8,8))
+        allocate(expected_cumulative_flow_with_loop(8,8))
+        allocate(output_cumulative_flow(8,8))
+        flow_dirs_with_loop =  transpose(reshape((/1,1,4,4,4,6,3,5, &
+                                                   2,4,4,4,7,8,4,4, &
+                                                   3,9,8,7,6,8,5,8, &
+                                                   4,3,6,9,5,8,5,5, &
+                                                   6,7,2,3,1,8,7,5, &
+                                                   7,2,7,1,4,9,8,4, &
+                                                   5,5,5,5,5,5,5,5, &
+                                                   5,5,5,5,5,5,5,5 /),&
+                                     shape(transpose(flow_dirs_with_loop))))
+        expected_cumulative_flow_with_loop = \
+        transpose(reshape((/ 1, 5,   4, 3, 1, 0, 0,  0, &
+                            12, 6,   5, 1, 1, 0, 0,  0, &
+                            13, 1,   1, 1, 3,10, 0,  1, &
+                            19, 14,  1, 2, 0, 6, 0, 20, &
+                            1,  18, 15, 1, 1, 1, 4,  2, &
+                            1,   1, 16, 4, 2, 1, 2,  1, &
+                            0,   2,  5, 0, 0, 0, 0,  0, &
+                            0,   0,  0, 0, 0, 0, 0,  0 /),&
+                  shape(transpose(expected_cumulative_flow_with_loop))))
+        call accumulate_flow_latlon(flow_dirs_with_loop, &
+                                    output_cumulative_flow)
+        call assert_true(all(output_cumulative_flow .eq. &
+                             expected_cumulative_flow_with_loop))
+    end subroutine testCalculateCumlativeFlowLatLonWithLoop
+
     subroutine testCalculateCumlativeFlow
       use accumulate_flow_mod
       integer, dimension(:), pointer :: input_river_directions

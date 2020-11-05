@@ -1399,6 +1399,67 @@ contains
 
     subroutine accumulate_flow_all_tests
         use accumulate_flow_test_mod
+
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testCalculateCumlativeFlowLatLon"
+        call set_unit_name('test_something')
+        call run_test_case(testCalculateCumlativeFlowLatLon,&
+                           'test calculating cumulative flow on an ICON grid')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","test calculating cumulative flow on an ICON grid")
+        else
+            call case_passed_xml("test_something","test calculating cumulative flow on an ICON grid")
+        end if
+        call teardown
+
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testCalculateCumlativeFlowLatLonWrapped"
+        call set_unit_name('test_something')
+        call run_test_case(testCalculateCumlativeFlowLatLonWrapped,&
+                           'test calculating cumulative flow on an ICON grid')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","test calculating cumulative flow on an ICON grid")
+        else
+            call case_passed_xml("test_something","test calculating cumulative flow on an ICON grid")
+        end if
+        call teardown
+
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testCalculateCumlativeFlowLatLonWithMask"
+        call set_unit_name('test_something')
+        call run_test_case(testCalculateCumlativeFlowLatLonWithMask,&
+                           'test calculating cumulative flow on an ICON grid')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","test calculating cumulative flow on an ICON grid")
+        else
+            call case_passed_xml("test_something","test calculating cumulative flow on an ICON grid")
+        end if
+        call teardown
+
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testCalculateCumlativeFlowLatLonWithBasicLoop"
+        call set_unit_name('test_something')
+        call run_test_case(testCalculateCumlativeFlowLatLonWithBasicLoop,&
+                           'test calculating cumulative flow on an ICON grid')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","test calculating cumulative flow on an ICON grid")
+        else
+            call case_passed_xml("test_something","test calculating cumulative flow on an ICON grid")
+        end if
+        call teardown
+
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testCalculateCumlativeFlowLatLonWithLoop"
+        call set_unit_name('test_something')
+        call run_test_case(testCalculateCumlativeFlowLatLonWithLoop,&
+                           'test calculating cumulative flow on an ICON grid')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","test calculating cumulative flow on an ICON grid")
+        else
+            call case_passed_xml("test_something","test calculating cumulative flow on an ICON grid")
+        end if
+        call teardown
+
         call setup
         if (verbose) write (*,('(/A)')) "..running test: testCalculateCumlativeFlow"
         call set_unit_name('test_something')

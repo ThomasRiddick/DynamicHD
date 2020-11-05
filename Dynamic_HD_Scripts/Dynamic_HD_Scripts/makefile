@@ -8,7 +8,7 @@ clean :
 		./libs/fill_sinks_wrapper_low_mem.so ./libs/upscale_orography_wrapper.so ./libs/compute_catchments_wrapper.so \
 		./libs/mod_local_minima_finding_kernels.so ./libs/lake_operators_wrapper.so ./libs/evaluate_basins_wrapper.so \
 		./libs/determine_river_directions_wrapper.so \
-		./libs/create_orography_wrapper.so
+		./libs/create_orography_wrapper.so ./libs/accumulate_flow_driver_mod.so
 		-$(RM) ./libs/mod_local_minima_finding_kernels.so.dSYM \
 		./libs/mod_check_for_value.so.dSYM \
 		./libs/mod_res_size_init_kernel.so.dSYM \
