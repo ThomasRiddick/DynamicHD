@@ -2,6 +2,7 @@
 set -e
 
 echo "Running Version 3.8 of the Dynamic HD Parameters Generation Code"
+start_time=$(date +%s%N)
 
 #Define module loading function
 function load_module
@@ -360,7 +361,9 @@ fi
 if ! ${compile_only} ; then
 	#Run
 	echo "Running Dynamic HD Code" 1>&2
+	setup_end_time=$(date +%s%N)
 	python2.7 ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/dynamic_hd_production_run_driver.py ${input_orography_filepath} ${input_ls_mask_filepath} ${present_day_base_orography_filepath} ${glacier_mask_filepath} ${output_hdpara_filepath} ${ancillary_data_directory} ${working_directory} ${output_hdstart_filepath}
+	computation_end_time=$(date +%s%N)
 
 	#Delete paragen directory if it exists
 	if [[ -d "${working_directory}/paragen" ]]; then
@@ -389,4 +392,9 @@ if ! ${compile_only} ; then
 			mv  $file ${diagnostic_output_directory}/$(basename ${file} .nc)_${diagnostic_output_label}.nc
 		done
 	fi
+	cleanup_end_time=$(date +%s%N)
+	echo "Total top level script total run time: " ((clean_up_end_time-start_time))
+	echo "Setup time: " ((setup_end_time-start_time))
+	echo "Computation time: " ((computation_end_time-setup_end_time))
+	echo "Clean-up time: " ((cleanup_end_time-computation_end_time))
 fi
