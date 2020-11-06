@@ -393,8 +393,8 @@ if ! ${compile_only} ; then
 		done
 	fi
 	cleanup_end_time=$(date +%s%N)
-	echo "Total top level script total run time: " ((clean_up_end_time-start_time))
-	echo "Setup time: " ((setup_end_time-start_time))
-	echo "Computation time: " ((computation_end_time-setup_end_time))
-	echo "Clean-up time: " ((cleanup_end_time-computation_end_time))
+	echo "Total top level script total run time: " $((clean_up_end_time-start_time))
+	echo "Setup time: " $((setup_end_time-start_time))
+	echo "Computation time: " $((computation_end_time-setup_end_time))
+	echo "Clean-up time: " $((cleanup_end_time-computation_end_time))
 fi
