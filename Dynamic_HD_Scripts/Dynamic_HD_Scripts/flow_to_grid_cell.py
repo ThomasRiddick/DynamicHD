@@ -18,7 +18,7 @@ from context import fortran_project_source_path,fortran_project_object_path,fort
 
 def create_hypothetical_river_paths_map(riv_dirs,lsmask=None,use_f2py_func=True,
                                         use_f2py_sparse_iterator=False,nlat=360,nlong=720,
-                                        sparse_fraction=0.5,use_new_method=True):
+                                        sparse_fraction=0.5,use_new_method=False):
     """Create map of cumulative flow to cell from a field of river directions
 
     Inputs:

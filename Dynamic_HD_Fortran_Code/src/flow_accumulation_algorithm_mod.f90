@@ -211,6 +211,7 @@ subroutine generate_cumulative_flow(this,set_links)
     call this%dependencies%for_all(set_dependencies_wrapper,this)
     call this%dependencies%for_all(add_cells_to_queue_wrapper,this)
     call this%process_queue()
+    if (this%search_for_loops) call this%dependencies%for_all(check_for_loops_wrapper,this)
     if (set_links) call this%dependencies%for_all_edge_cells(follow_paths_wrapper,this)
 end subroutine generate_cumulative_flow
 
@@ -350,9 +351,6 @@ subroutine process_queue(this)
       deallocate(cumulative_flow_target_coords_ptr)
       deallocate(cumulative_flow_current_coords_ptr)
   end do
-  if (this%search_for_loops) then
-    call this%dependencies%for_all(check_for_loops_wrapper,this)
-  end if
 end subroutine process_queue
 
 subroutine check_for_loops_wrapper(this,cell_coords)

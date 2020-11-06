@@ -180,7 +180,6 @@ DO WHILE ( npoints_current > 0 )
   EXIT
  END IF
  npoints_current = npoints_new
- WRITE (*,'(A,I10)') "Remaining points to process: ", npoints_current
 END DO  !for DO WHILE ( npoints_current > 0 )
 
 END SUBROUTINE sparse_iterator

@@ -154,7 +154,8 @@ class CreateHypotheticalRiverPathsMap(unittest.TestCase):
         paths_maps = flow_to_grid_cell.create_hypothetical_river_paths_map(self.flow_dirs_with_loop,
                                                                            use_f2py_func=True,
                                                                            nlat=8,
-                                                                           nlong=8)
+                                                                           nlong=8,
+                                                                           use_new_method=True)
         np.testing.assert_array_equal(paths_maps,
                                       self.expected_paths_map_with_loop,
                                       "Paths map created including loop doesn't match expectation")
