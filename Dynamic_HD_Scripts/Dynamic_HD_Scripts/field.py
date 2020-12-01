@@ -11,6 +11,7 @@ import sys
 import numpy as np
 import warnings
 import xarray
+import scipy.ndimage as ndi
 
 class Field(object):
     """A general class to store and manipulate fields on a given grid type
@@ -44,8 +45,14 @@ class Field(object):
     find_all_local_minima
     to_data_array
     find_maximum
+    less_than_value
+    equal_to
     equal_to_value
     greater_than_value
+    get_number_of_masked_neighbors
+    logical_or
+    logical_and
+    dilate
     """
 
     def __init__(self,input_field,grid='HD',**grid_kwargs):
@@ -293,11 +300,48 @@ class Field(object):
     def find_maximum(self):
         return np.amax(self.data)
 
+    def equal_to(self,field):
+        return Field(self.data==field.get_data(),grid=self.grid)
+
+    def less_than_value(self,value):
+        return Field(self.data<value,grid=self.grid)
+
+    def less_than_or_equal_to_value(self,value):
+        return Field(self.data<=value,grid=self.grid)
+
     def equal_to_value(self,value):
         return Field(self.data==value,grid=self.grid)
 
     def greater_than_value(self,value):
         return Field(self.data>value,grid=self.grid)
+
+    def greater_than_or_equal_to_value(self,value):
+        return Field(self.data>=value,grid=self.grid)
+
+    def get_number_of_masked_neighbors(self):
+        """Use a method from grid object to compute how many neighbors are masked for
+           masked cells
+
+        Return:
+        Numpy array with the number of neighbors
+        """
+
+        return Field(self.grid.get_number_of_masked_neighbors(self.data),grid=self.grid)
+
+    def logical_and(self,other_field):
+        return Field(np.logical_and(self.data,other_field.get_data()),grid=self.grid)
+
+    def logical_or(self,other_field):
+        return Field(np.logical_or(self.data,other_field.get_data()),grid=self.grid)
+
+    def dilate(self,structure,iterations):
+        for _ in xrange(iterations):
+            temp_data = self.grid.add_wrapping_halo(self.data)
+            temp_data = ndi.binary_dilation(temp_data,
+                                            structure=structure,
+                                            border_value=0)
+            self.data = self.grid.remove_wrapping_halo(temp_data)
+
 
 class Orography(Field):
     """A subclass of Field with various method specific to orographies.

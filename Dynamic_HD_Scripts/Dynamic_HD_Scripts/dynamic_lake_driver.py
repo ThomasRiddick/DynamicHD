@@ -361,6 +361,7 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
         flip_ls_mask_0k   = False
         invert_ls_mask    = True
         rotate_lsmask_180_lr = True
+        rotate_lsmask_180_lr_0k = False
         original_orography_filename = join(self.orography_path,
                                                 "ice5g_v1_2_00_0k_10min.nc")
         true_sinks_filename = join(self.truesinks_path,
@@ -397,6 +398,9 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
         #orography_filename = self.generated_orography_filepath + file_label + '.nc'
         output_0k_ice5g_orog_filename = self.generated_orography_filepath + "0k_ice5g_lake_" + file_label + '.nc'
         output_working_orog_filename = self.generated_orography_filepath + "{}_ice6g_lake_".format(timestep) + file_label + '.nc'
+        output_intermediary_filtered_working_orog_filename = self.generated_orography_filepath +\
+                                                             "{}_ice6g_lake_filtered_int_".format(timestep) +\
+                                                file_label + '.nc'
         output_filtered_working_orog_filename = self.generated_orography_filepath +\
                                                 "{}_ice6g_lake_filtered_".format(timestep) +\
                                                 file_label + '.nc'
@@ -462,7 +466,8 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
                                                original_ls_mask_with_new_dtype_filename,
                                                target_fieldname="lsmask",
                                                original_fieldname="lsmask",
-                                               flip_ud_raw=flip_ls_mask_0k,rotate180lr_raw=True,
+                                               flip_ud_raw=flip_ls_mask_0k,
+                                               rotate180lr_raw=rotate_lsmask_180_lr_0k,
                                                grid_desc_file=self.ten_minute_grid_filepath)
         dynamic_lake_operators.advanced_local_minima_finding_driver(orography_filename,
                                                                     "field_value",
@@ -557,9 +562,26 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
                                                output_working_orog_sinkless_filename,
                                                input_filled_orography_fieldname="Topo",
                                                output_unfilled_orography_file=
-                                               output_filtered_working_orog_filename,
+                                               output_intermediary_filtered_working_orog_filename,
                                                output_unfilled_orography_fieldname="Topo",
                                                minimum_depth_threshold=5.0)
+        dynamic_lake_operators.\
+        advanced_narrow_lake_filtering_driver(input_unfilled_orography_file=
+                                              output_intermediary_filtered_working_orog_filename,
+                                              input_unfilled_orography_fieldname=
+                                              "Topo",
+                                              input_filled_orography_file=
+                                              output_working_orog_sinkless_filename,
+                                              input_filled_orography_fieldname=
+                                              "Topo",
+                                              output_unfilled_orography_file=
+                                              output_filtered_working_orog_filename,
+                                              output_unfilled_orography_fieldname=
+                                              "Topo",
+                                              interior_cell_min_masked_neighbors=6,
+                                              edge_cell_max_masked_neighbors=4,
+                                              max_range=4,
+                                              iterations=5)
         working_orog_sinkless_field = iodriver.advanced_field_loader(output_working_orog_sinkless_filename,
                                                               fieldname="Topo",
                                                               adjust_orientation=True)
@@ -625,9 +647,9 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
 
     def prepare_basins_from_glac1D(self):
       overarching_file_label = self._generate_file_label()
-      #timesteps_to_use = [ 950,1000,1050,1100,1150,1200,1250,1300,1350,
-      #                    1400,1450,1500,1550,1600,1650,1700,1750,1800]
-      timesteps_to_use = [2600]
+      timesteps_to_use = [ 950,1000,1050,1100,1150,1200,1250,1300,1350,
+                          1400,1450,1500,1550,1600,1650,1700,1750,1800]
+      #timesteps_to_use = [1200]
       timestep_for_0k = 2600
       glac_1d_topo_filename = join(self.orography_path,
                                    "GLAC1D_Top01_surf.nc")
@@ -825,10 +847,6 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
                                       flip_ud=False, rotate180lr=False, invert_data=True,
                                       timeslice=None, griddescfile=self.half_degree_grid_filepath,
                                       grid_type='HD')
-      self.prepare_flow_parameters_from_rdirs(rdirs_filepath=rdirs_filename_30min,
-                                              orography_filepath=transformed_HD_filled_orography_filename,
-                                              lsmask_filepath=transformed_HD_ls_mask_filename,
-                                              file_label=file_label)
 
     def prepare_river_directions_with_depressions_from_glac1D(self):
       working_orography_filename = "/Users/thomasriddick/Documents/data/HDdata/orographys/generated/updated_orog_1900_ice6g_lake_prepare_orography_20190211_131605.nc"
@@ -987,8 +1005,8 @@ def main():
     #lake_drivers.evaluate_ICE6G_lgm_basins()
     # end = time.time()
     # print(end - start)
-    #lake_drivers.prepare_basins_from_glac1D()
-    lake_drivers.extract_lake_volumes_from_glac1D_basins()
+    lake_drivers.prepare_basins_from_glac1D()
+    #lake_drivers.extract_lake_volumes_from_glac1D_basins()
 
 if __name__ == '__main__':
     main()

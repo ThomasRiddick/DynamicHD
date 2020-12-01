@@ -159,7 +159,7 @@ end
 #push!(ARGS,"-i/Users/thomasriddick/Documents/data/temp/transient_sim_1/results_for_1400/hdstart_1400.nc")
 # push!(ARGS,"-t6000")
 push!(ARGS,"-p/Users/thomasriddick/Documents/data/temp/lakeparagen/hdpara.nc")
-push!(ARGS,"-l/Users/thomasriddick/Documents/data/temp/lakeparagen/lakeparas.nc")
+push!(ARGS,"-l/Users/thomasriddick/Documents/data/temp/lakeparagen/lakepara.nc")
 #push!(ARGS,"-n/Users/thomasriddick/Documents/data/temp/transient_sim_1/results_for_1400/lake_model_start_1400.nc")
 #push!(ARGS,"-i/Users/thomasriddick/Documents/data/temp/transient_sim_1/results_for_1400/hdstart_1400.nc")
 push!(ARGS,"-t1000")

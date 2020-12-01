@@ -530,3 +530,60 @@ def add_lake_bathymetry_driver(input_orography_file,
   iodriver.advanced_field_writer(output_orography_file,
                                  output_orography,
                                  fieldname=output_orography_fieldname)
+
+def filter_narrow_lakes(input_unfilled_orography,
+                        input_filled_orography,
+                        interior_cell_min_masked_neighbors=5,
+                        edge_cell_max_masked_neighbors=4,
+                        max_range=5,
+                        iterations=5):
+  unfilled_orography = input_unfilled_orography.copy()
+  for _ in xrange(iterations):
+    lake_mask = unfilled_orography.equal_to(input_filled_orography)
+    lake_mask.invert_data()
+    number_of_lake_neighbors = lake_mask.get_number_of_masked_neighbors()
+    edge_cell_mask = number_of_lake_neighbors.\
+      less_than_or_equal_to_value(edge_cell_max_masked_neighbors)
+    edge_cell_mask = edge_cell_mask.logical_and(lake_mask)
+    non_edge_cell_mask = edge_cell_mask.copy()
+    non_edge_cell_mask.invert_data()
+    non_edge_cell_mask = lake_mask.logical_and(non_edge_cell_mask)
+    dilated_interior_cell_mask = number_of_lake_neighbors.\
+      greater_than_or_equal_to_value(interior_cell_min_masked_neighbors)
+    dilated_interior_cell_mask.dilate(np.array([[True,True,True],
+                                        [True,True,True],
+                                        [True,True,True]],dtype=np.bool),
+                                       iterations=max_range)
+    filtered_lake_mask = non_edge_cell_mask.logical_or(dilated_interior_cell_mask.\
+                                                       logical_and(edge_cell_mask))
+    masked_filled_orography = input_filled_orography.copy()
+    masked_filled_orography.mask_field_with_external_mask(filtered_lake_mask.get_data())
+    unfilled_orography.update_field_with_partially_masked_data(masked_filled_orography)
+  return unfilled_orography
+
+def advanced_narrow_lake_filtering_driver(input_unfilled_orography_file,
+                                          input_unfilled_orography_fieldname,
+                                          input_filled_orography_file,
+                                          input_filled_orography_fieldname,
+                                          output_unfilled_orography_file,
+                                          output_unfilled_orography_fieldname,
+                                          interior_cell_min_masked_neighbors=5,
+                                          edge_cell_max_masked_neighbors=4,
+                                          max_range=5,
+                                          iterations=5):
+  input_unfilled_orography =  \
+    iodriver.advanced_field_loader(input_unfilled_orography_file,
+                                   field_type='Generic',
+                                   fieldname=input_unfilled_orography_fieldname)
+  input_filled_orography = \
+    iodriver.advanced_field_loader(input_filled_orography_file,
+                                   field_type='Generic',
+                                   fieldname=input_filled_orography_fieldname)
+  output_unfilled_orography = filter_narrow_lakes(input_unfilled_orography,
+                                                  input_filled_orography,
+                                                  interior_cell_min_masked_neighbors,
+                                                  edge_cell_max_masked_neighbors,
+                                                  max_range,iterations)
+  iodriver.advanced_field_writer(output_unfilled_orography_file,
+                                 output_unfilled_orography,
+                                 fieldname=output_unfilled_orography_fieldname)

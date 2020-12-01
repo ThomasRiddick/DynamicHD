@@ -22,6 +22,8 @@ class Grid(object):
     compute_flow_directions
     get_grid_dimensions
     set_grid_dimensions
+    add_wrapping_halo
+    remove_wrapping_halo
     mask_insignificant_gradient_changes
     calculate_gradients
     flip_ud
@@ -68,6 +70,11 @@ class Grid(object):
         Implementations should return the flow directions
         """
 
+        pass
+
+    @abstractmethod
+    def get_number_of_masked_neighbors(self,data):
+        """Compute the number of neighbors of each masked cell that are masked"""
         pass
 
     @abstractmethod
@@ -307,6 +314,14 @@ class Grid(object):
         """Return total number of points in the grid"""
         pass
 
+    @abstractmethod
+    def add_wrapping_halo(self):
+        pass
+
+    @abstractmethod
+    def remove_wrapping_halo(self):
+        pass
+
 class LatLongGrid(Grid):
     """Class that stores information on and functions to work with a Latitude-Longitude grid.
 
@@ -449,6 +464,22 @@ class LatLongGrid(Grid):
         flow_directions_as_float = np.flipud(flow_directions_as_float)
 
         return flow_directions_as_float[1:-1].astype(int)
+
+    def get_number_of_masked_neighbors(self,data):
+        """Compute the number of neighbors that are masked of each masked cell"""
+
+        #insert extra rows across the top and bottom of the grid to ensure correct
+        #treatmen of boundaries
+        data = np.insert(data,obj=(0,np.size(data,axis=0)),values=False, axis=0)
+        f2py_mngr = f2py_mg.f2py_manager(path.join(fortran_source_path,
+                                                   'mod_grid_m_nbrs_kernels.f90'),
+                                         func_name='HDgrid_masked_nbrs_kernel')
+        nbrs_kernel = f2py_mngr.run_current_function_or_subroutine
+        nbrs_num = ndi.generic_filter(data.astype(np.float64),
+                                      nbrs_kernel,
+                                      size=(3,3),
+                                      mode = 'wrap')
+        return nbrs_num[1:-1].astype(int)
 
     def get_grid_dimensions(self):
         """Get the dimension of the grid and return them as a tuple"""
@@ -845,6 +876,17 @@ class LatLongGrid(Grid):
     def get_npoints(self):
         """Return total number of points in the grid"""
         return self.nlat*self.nlong
+
+    def add_wrapping_halo(self,data):
+        data_with_halo = np.zeros((data.shape[0],data.shape[1]+2))
+        data_with_halo[:,0] = data[:,-1]
+        data_with_halo[:,-1] = data[:,0]
+        data_with_halo[:,1:-1] = data
+        return data_with_halo
+
+
+    def remove_wrapping_halo(self,data_with_halo):
+        return data_with_halo[:,1:-1]
 
 def makeGrid(grid_type,**kwargs):
     """Factory function that creates an object of the correct grid type given a keyword

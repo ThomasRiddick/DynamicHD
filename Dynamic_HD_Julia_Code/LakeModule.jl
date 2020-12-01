@@ -45,6 +45,10 @@ struct WriteLakeNumbers <: Event
   timestep::Int64
 end
 
+struct WriteDiagnosticLakeVolumes <: Event
+  timestep::Int64
+end
+
 struct WriteLakeVolumes <: Event end
 
 struct SetupLakes <: Event
@@ -395,13 +399,11 @@ function handle_event(prognostic_fields::RiverAndLakePrognosticFields,run_lake::
   end
   for lake::Lake in lake_prognostics.lakes
     lake_variables::LakeVariables = get_lake_variables(lake)
-    local lake_index::Int64
+    lake_index::Int64 = lake_variables.lake_number
     if lake_variables.unprocessed_water > 0.0
-      lake_index = lake_variables.lake_number
       lake_prognostics.lakes[lake_index] = handle_event(lake,AddWater(0.0))
     end
     if lake_variables.lake_volume < 0.0
-      lake_index = lake_variables.lake_number
       lake_prognostics.lakes[lake_index] = handle_event(lake,ReleaseNegativeWater())
     end
     if isa(lake,OverflowingLake)
@@ -654,7 +656,11 @@ function handle_event(lake::OverflowingLake,drain_excess_water::DrainExcessWater
     lake.overflowing_lake_variables.excess_water +=
       lake_variables.unprocessed_water
     lake_variables.unprocessed_water = 0.0
-    flow = lake.overflowing_lake_variables.excess_water/(lake.lake_retention_coefficient + 1.0)
+    flow = (lake.overflowing_lake_variables.excess_water+
+            lake_variables.lake_volume+
+            lake_variables.secondary_lake_volume)/
+           (lake.lake_retention_coefficient + 1.0)
+    flow = min(flow,lake.overflowing_lake_variables.excess_water)
     set!(lake_fields.water_to_hd,lake.outflow_redirect_coords,
          lake_fields.water_to_hd(lake.outflow_redirect_coords)+flow)
     lake.overflowing_lake_variables.excess_water -= flow
@@ -774,8 +780,8 @@ function perform_primary_merge(lake::FillingLake)
   other_lake_number::Integer = lake_fields.lake_numbers(target_cell)
   other_lake::Lake = lake_variables.other_lakes[other_lake_number]
   other_lake = find_true_primary_lake(other_lake)
-  lake_variables.secondary_lake_volume += other_lake.lake_variables.lake_volume +
-    other_lake.lake_variables.secondary_lake_volume
+  lake_variables.secondary_lake_volume += (other_lake.lake_variables.lake_volume +
+    other_lake.lake_variables.secondary_lake_volume)
   other_lake_number = other_lake.lake_variables.lake_number
   lake.filling_lake_variables.primary_merge_completed = true
   accept_merge::AcceptMerge = AcceptMerge(lake_variables.center_cell)
@@ -792,8 +798,8 @@ function perform_secondary_merge(lake::FillingLake)
   other_lake_number::Integer = lake_fields.lake_numbers(target_cell)
   other_lake::Lake = lake_variables.other_lakes[other_lake_number]
   other_lake = find_true_primary_lake(other_lake)
-  other_lake.lake_variables.secondary_lake_volume += lake_variables.lake_volume +
-    lake_variables.secondary_lake_volume
+  other_lake.lake_variables.secondary_lake_volume += (lake_variables.lake_volume +
+    lake_variables.secondary_lake_volume)
   other_lake_number = other_lake.lake_variables.lake_number
   other_lake_as_filling_lake::FillingLake = change_to_filling_lake(other_lake)
   lake_variables.other_lakes[other_lake_number] = other_lake_as_filling_lake
@@ -809,6 +815,9 @@ function rollback_primary_merge(lake::FillingLake,other_lake_outflow::Float64)
   other_lake_number::Integer = lake_fields.lake_numbers(target_cell)
   other_lake::Lake = lake_variables.other_lakes[other_lake_number]
   other_lake = find_true_rolledback_primary_lake(other_lake)
+  lake_variables.secondary_lake_volume -=
+    (other_lake.lake_variables.lake_volume +
+     other_lake.lake_variables.secondary_lake_volume)
   other_lake_number = other_lake.lake_variables.lake_number
   accept_split::AcceptSplit = AcceptSplit()
   lake_variables.other_lakes[other_lake_number] =
@@ -1177,7 +1186,49 @@ function handle_event(prognostic_fields::RiverAndLakePrognosticFields,
   return prognostic_fields
 end
 
+function handle_event(prognostic_fields::RiverAndLakePrognosticFields,
+                      write_diagnostic_lake_volumes::WriteDiagnosticLakeVolumes)
+  lake_parameters::LakeParameters = get_lake_parameters(prognostic_fields)
+  lake_fields::LakeFields = get_lake_fields(prognostic_fields)
+  lake_prognostics::LakePrognostics = get_lake_prognostics(prognostic_fields)
+  diagnostic_lake_volumes::Field{Float64} = calculate_diagnostic_lake_volumes_field(lake_parameters,
+                                                                                    lake_fields,
+                                                                                    lake_prognostics)
+  write_diagnostic_lake_volumes_field(lake_parameters,diagnostic_lake_volumes,
+                                      timestep=write_diagnostic_lake_volumes.timestep)
+  return prognostic_fields
+end
+
+function calculate_diagnostic_lake_volumes_field(lake_parameters::LakeParameters,
+                                                 lake_fields::LakeFields,
+                                                 lake_prognostics::LakePrognostics)
+  lake_volumes_by_lake_number::Vector{Float64} = zeros(Float64,size(lake_prognostics.lakes,1))
+  diagnostic_lake_volumes::Field{Float64} = Field{Float64}(lake_parameters.grid,0.0)
+  for lake::Lake in lake_prognostics.lakes
+    lake_variables::LakeVariables = get_lake_variables(lake)
+    original_lake_index::Int64 = lake_variables.lake_number
+    if isa(lake,SubsumedLake)
+      lake = find_true_primary_lake(lake)
+    end
+    lake_volumes_by_lake_number[original_lake_index] =
+      lake.lake_variables.lake_volume + lake.lake_variables.secondary_lake_volume
+  end
+  for_all(lake_parameters.grid) do coords::Coords
+    lake_number = lake_fields.lake_numbers(coords)
+    if (lake_number > 0)
+      set!(diagnostic_lake_volumes,coords,lake_volumes_by_lake_number[lake_number])
+    end
+  end
+  return diagnostic_lake_volumes
+end
+
 function write_lake_volumes_field(lake_parameters::LakeParameters,lake_volumes::Field{Float64})
+  throw(UserError())
+end
+
+function write_diagnostic_lake_volumes_field(lake_parameters::LakeParameters,
+                                             diagnostic_lake_volumes::Field{Float64};
+                                             timestep::Int64=-1)
   throw(UserError())
 end
 

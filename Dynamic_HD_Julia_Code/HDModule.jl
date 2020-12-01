@@ -25,6 +25,7 @@ struct RiverParameters
   landsea_mask::Field{Bool}
   cascade_flag::Field{Bool}
   grid::Grid
+  step_length::Float64
   function RiverParameters(flow_directions::DirectionIndicators,
                            river_reservoir_nums::Field{Int64},
                            overland_reservoir_nums::Field{Int64},
@@ -46,7 +47,7 @@ struct RiverParameters
     return new(flow_directions,river_reservoir_nums,overland_reservoir_nums,
                base_reservoir_nums,river_retention_coefficients,
                overland_retention_coefficients,base_retention_coefficients,
-               landsea_mask,cascade_flag,grid)
+               landsea_mask,cascade_flag,grid,step_length)
   end
 end
 
@@ -66,7 +67,7 @@ RiverParameters(flow_directions::DirectionIndicators,
                                               overland_retention_coefficients::Field{Float64},
                                               base_retention_coefficients::Field{Float64},
                                               landsea_mask::Field{Bool},
-                                              grid::Grid,1.0,1.0)
+                                              grid::Grid,86400.0,86400.0)
 
 mutable struct RiverPrognosticFields
   runoff::Field{Float64}
@@ -173,19 +174,22 @@ function handle_event(prognostic_fields::PrognosticFields,
           river_diagnostic_fields.runoff_to_rivers,
           river_parameters.overland_retention_coefficients,
           river_parameters.base_reservoir_nums,
-          river_parameters.cascade_flag,river_parameters.grid)
+          river_parameters.cascade_flag,river_parameters.grid,
+          river_parameters.step_length)
   cascade(river_fields.base_flow_reservoirs,
           river_fields.drainage,
           river_diagnostic_fields.drainage_to_rivers,
           river_parameters.base_retention_coefficients,
           river_parameters.base_reservoir_nums,
-          river_parameters.cascade_flag,river_parameters.grid)
+          river_parameters.cascade_flag,river_parameters.grid,
+          river_parameters.step_length)
   cascade(river_fields.river_flow_reservoirs,
           river_fields.river_inflow,
           river_diagnostic_fields.river_outflow,
           river_parameters.river_retention_coefficients,
           river_parameters.river_reservoir_nums,
-          river_parameters.cascade_flag,river_parameters.grid)
+          river_parameters.cascade_flag,river_parameters.grid,
+          river_parameters.step_length)
   fill!(river_fields.river_inflow,0.0)
   route(river_parameters.flow_directions,
         river_diagnostic_fields.river_outflow+
@@ -235,7 +239,8 @@ function cascade(reservoirs::Array{Field{Float64},1},
                  outflow::Field{Float64},
                  retention_coefficients::Field{Float64},
                  reservoir_nums::Field{Int64},
-                 cascade_flag::Field{Bool},grid::Grid)
+                 cascade_flag::Field{Bool},grid::Grid,
+                 step_length::Float64)
   for_all(grid) do coords::Coords
     if get(cascade_flag,coords)
       cascade_kernel(coords,
@@ -243,7 +248,8 @@ function cascade(reservoirs::Array{Field{Float64},1},
                     inflow,
                     outflow,
                     retention_coefficients,
-                    reservoir_nums)
+                    reservoir_nums,
+                    step_length)
     end
     return
   end
@@ -255,7 +261,8 @@ function cascade(reservoirs::Array{Array{Field{Float64},1},1},
                  retention_coefficients::Array{Field{Float64},1},
                  reservoir_nums::Array{Field{Int64},1},
                  cascade_flag::Field{Bool},grid::Grid,
-                 cascade_num::Int64)
+                 cascade_num::Int64,
+                 step_length::Float64)
   for_all(grid) do coords::Coords
     if get(cascade_flag,coords)
       for i = 1:cascade_num
@@ -269,7 +276,8 @@ function cascade(reservoirs::Array{Array{Field{Float64},1},1},
                        inflow_i,
                        outflow_i,
                        retention_coefficients_i,
-                       reservoir_nums_i)
+                       reservoir_nums_i,
+                       step_length)
       end
     end
     return
@@ -281,14 +289,16 @@ function cascade_kernel(coords::Coords,
                         inflow::Field{Float64},
                         outflow::Field{Float64},
                         retention_coefficients::Field{Float64},
-                        reservoir_nums::Field{Int64})
-  flow::Float64 = get(inflow,coords)
+                        reservoir_nums::Field{Int64},
+                        step_length::Float64)
+  flow::Float64 = get(inflow,coords)*step_length
   for i = 1:(get(reservoir_nums,coords))
     reservoir::Field{Float64} = reservoirs[i]
     new_reservoir_value::Float64 = get(reservoir,coords) + flow
     flow = new_reservoir_value/(get(retention_coefficients,coords)+1.0)
     set!(reservoir,coords,new_reservoir_value - flow)
   end
+  flow /= step_length
   set!(outflow,coords,flow)
   return
 end

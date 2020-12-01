@@ -312,11 +312,13 @@ function read_lake_parameters(instant_throughflow)&
 end function read_lake_parameters
 
 subroutine load_lake_initial_values(initial_water_to_lake_centers,&
-                                    initial_spillover_to_rivers)
+                                    initial_spillover_to_rivers, &
+                                    step_length)
   real, pointer, dimension(:,:), intent(inout) :: initial_water_to_lake_centers
   real, pointer, dimension(:,:), intent(inout) :: initial_spillover_to_rivers
   real, pointer, dimension(:,:) :: initial_water_to_lake_centers_temp
   real, pointer, dimension(:,:) :: initial_spillover_to_rivers_temp
+  real :: step_length
   integer :: nlat_coarse,nlon_coarse
   integer :: nlat,nlon
   integer :: ncid,varid,dimid
@@ -343,7 +345,7 @@ subroutine load_lake_initial_values(initial_water_to_lake_centers,&
     call check_return_code(nf90_get_var(ncid, varid,initial_spillover_to_rivers_temp))
     allocate(initial_spillover_to_rivers(nlat_coarse,nlon_coarse))
     initial_spillover_to_rivers = transpose(initial_spillover_to_rivers_temp)
-
+    initial_spillover_to_rivers(:,:) = initial_spillover_to_rivers(:,:)/step_length
     call check_return_code(nf90_close(ncid))
     deallocate(initial_water_to_lake_centers_temp)
     deallocate(initial_spillover_to_rivers_temp)
@@ -375,9 +377,9 @@ subroutine write_lake_numbers_field(lake_parameters,lake_fields,timestep)
   integer :: ncid,varid,lat_dimid,lon_dimid
   integer, dimension(2) :: dimids
     if(timestep == -1) then
-      filename = '/Users/thomasriddick/Documents/data/temp/lake_model_results.nc'
+      filename = 'lake_model_results.nc'
     else
-      filename = '/Users/thomasriddick/Documents/data/temp/lake_model_results_'
+      filename = 'lake_model_results_'
       write (timestep_str,'(I0.3)') timestep
       filename = trim(filename) // trim(timestep_str) // '.nc'
     end if
@@ -395,5 +397,39 @@ subroutine write_lake_numbers_field(lake_parameters,lake_fields,timestep)
                                         lake_fields%lake_numbers))
     call check_return_code(nf90_close(ncid))
 end subroutine write_lake_numbers_field
+
+subroutine write_diagnostic_lake_volumes(lake_parameters, &
+                                         lake_prognostics, &
+                                         lake_fields, &
+                                         timestep)
+  type(lakeparameters), pointer, intent(in) :: lake_parameters
+  type(lakeprognostics),pointer, intent(in) :: lake_prognostics
+  type(lakefields), pointer, intent(in) :: lake_fields
+  integer, intent(in) :: timestep
+  character(len = 50) :: timestep_str
+  character(len = max_name_length) :: filename
+  integer :: ncid,varid,lat_dimid,lon_dimid
+  integer, dimension(2) :: dimids
+  real, dimension(:,:), pointer :: diagnostic_lake_volume
+    diagnostic_lake_volume => calculate_diagnostic_lake_volumes(lake_parameters,&
+                                                                lake_prognostics,&
+                                                                lake_fields)
+    if(timestep == -1) then
+      filename = 'diagnostic_lake_volume_results.nc'
+    else
+      filename = 'diagnostic_lake_volume_results_'
+      write (timestep_str,'(I0.3)') timestep
+      filename = trim(filename) // trim(timestep_str) // '.nc'
+    end if
+    call check_return_code(nf90_create(filename,nf90_noclobber,ncid))
+    call check_return_code(nf90_def_dim(ncid,"lat",lake_parameters%nlat,lat_dimid))
+    call check_return_code(nf90_def_dim(ncid,"lon",lake_parameters%nlon,lon_dimid))
+    dimids = (/lat_dimid,lon_dimid/)
+    call check_return_code(nf90_def_var(ncid,"diagnostic_lake_volume",nf90_real,dimids,varid))
+    call check_return_code(nf90_enddef(ncid))
+    call check_return_code(nf90_put_var(ncid,varid,diagnostic_lake_volume))
+    call check_return_code(nf90_close(ncid))
+    deallocate(diagnostic_lake_volume)
+end subroutine write_diagnostic_lake_volumes
 
 end module latlon_lake_model_io_mod

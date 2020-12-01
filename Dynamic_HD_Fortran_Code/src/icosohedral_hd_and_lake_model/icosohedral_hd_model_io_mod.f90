@@ -1,5 +1,7 @@
 module icosohedral_hd_model_io_mod
 
+! The contains routines to handle detailed Input/Output for the HD model
+
 use netcdf
 use icosohedral_hd_model_mod
 use check_return_code_netcdf_mod
@@ -8,6 +10,7 @@ implicit none
 
 contains
 
+! Read the grid information from a hdpara file
 function read_grid_information(river_params_filename) &
     result(grid_information)
   character(len = max_name_length) :: river_params_filename
@@ -44,6 +47,8 @@ function read_grid_information(river_params_filename) &
     grid_information = gridinformation(ncells,clat,clon,clat_bounds,clon_bounds)
 end function read_grid_information
 
+! Read the river parameters from an HD para file. Need to provide the step and
+! day length
 function read_river_parameters(river_params_filename,step_length,day_length) &
     result(river_parameters)
   character(len = max_name_length) :: river_params_filename
@@ -123,6 +128,7 @@ function read_river_parameters(river_params_filename,step_length,day_length) &
                                         landsea_mask,step_length,day_length)
 end function read_river_parameters
 
+! Load the river initial reservoir values from the hdstart/restart file
 function load_river_initial_values(hd_start_filename) &
     result(river_prognostic_fields)
   character(len = max_name_length) :: hd_start_filename
@@ -164,6 +170,7 @@ function load_river_initial_values(hd_start_filename) &
                                                      river_flow_reservoirs)
 end function load_river_initial_values
 
+! Write the reservoir values to form a new hdrestart file
 subroutine write_river_initial_values(hd_start_filename,river_parameters, &
                                       river_prognostic_fields)
   character(len = max_name_length) :: hd_start_filename
@@ -188,6 +195,7 @@ subroutine write_river_initial_values(hd_start_filename,river_parameters, &
     call check_return_code(nf90_close(ncid))
 end subroutine write_river_initial_values
 
+! Load a set of drainage forcings
 function load_drainages_fields(drainages_filename,first_timestep,last_timestep,&
                                river_parameters) &
     result(drainages)
@@ -215,6 +223,7 @@ function load_drainages_fields(drainages_filename,first_timestep,last_timestep,&
     call check_return_code(nf90_close(ncid))
 end function load_drainages_fields
 
+! Load a set of runoff forcings
 function load_runoff_fields(runoffs_filename,first_timestep,last_timestep, &
                             river_parameters) &
     result(runoffs)
@@ -242,6 +251,7 @@ function load_runoff_fields(runoffs_filename,first_timestep,last_timestep, &
     call check_return_code(nf90_close(ncid))
 end function load_runoff_fields
 
+! Write a diagnostic files with river discharge, can label the file by time-step
 subroutine write_river_flow_field(working_directory,river_parameters,&
                                   river_flow_field,timestep, &
                                   grid_information)

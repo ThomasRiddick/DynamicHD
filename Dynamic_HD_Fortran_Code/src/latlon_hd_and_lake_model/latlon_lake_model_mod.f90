@@ -112,6 +112,7 @@ type :: lake
   integer :: center_cell_lat
   integer :: center_cell_lon
   real    :: lake_volume
+  real    :: secondary_lake_volume
   real    :: unprocessed_water
   integer :: current_cell_to_fill_lat
   integer :: current_cell_to_fill_lon
@@ -1138,7 +1139,11 @@ subroutine drain_excess_water(this)
     if (this%excess_water > 0.0) then
       this%excess_water = this%excess_water + this%unprocessed_water
       this%unprocessed_water = 0.0
-      flow = this%excess_water*this%lake_retention_coefficient
+      flow = (this%excess_water+ &
+              this%lake_volume+ &
+              this%secondary_lake_volume)/ &
+             (this%lake_retention_coefficient + 1.0)
+      flow = min(flow,this%excess_water)
       this%lake_fields%water_to_hd(this%outflow_redirect_lat,this%outflow_redirect_lon) = &
            this%lake_fields%water_to_hd(this%outflow_redirect_lat, &
                                         this%outflow_redirect_lon)+flow
@@ -1308,6 +1313,8 @@ subroutine perform_primary_merge(this)
     other_lake_number = this%lake_fields%lake_numbers(target_cell_lat,target_cell_lon)
     other_lake => this%lake_fields%other_lakes(other_lake_number)%lake_pointer
     other_lake => other_lake%find_true_primary_lake()
+    this%secondary_lake_volume = this%secondary_lake_volume + other_lake%lake_volume + &
+      other_lake%secondary_lake_volume
     this%primary_merge_completed = .true.
     call other_lake%accept_merge(this%center_cell_lat,this%center_cell_lon)
 end subroutine perform_primary_merge
@@ -1323,6 +1330,8 @@ subroutine perform_secondary_merge(this)
     other_lake_number = this%lake_fields%lake_numbers(target_cell_lat,target_cell_lon)
     other_lake => this%lake_fields%other_lakes(other_lake_number)%lake_pointer
     other_lake => other_lake%find_true_primary_lake()
+    other_lake%secondary_lake_volume = other_lake%secondary_lake_volume + &
+      this%lake_volume + this%secondary_lake_volume
     if (other_lake%lake_type == overflowing_lake_type) then
         call other_lake%change_overflowing_lake_to_filling_lake()
     end if
@@ -1342,6 +1351,8 @@ subroutine rollback_primary_merge(this,other_lake_outflow)
                                                       target_cell_lon)
     other_lake => this%lake_fields%other_lakes(other_lake_number)%lake_pointer
     other_lake => find_true_rolledback_primary_lake(other_lake)
+    this%secondary_lake_volume = this%secondary_lake_volume - other_lake%lake_volume - &
+      other_lake%secondary_lake_volume
     call other_lake%accept_split()
     call other_lake%remove_water(other_lake_outflow)
 end subroutine rollback_primary_merge
@@ -1584,5 +1595,40 @@ recursive function find_true_primary_lake(this) result(true_primary_lake)
         true_primary_lake => this
     end if
 end function find_true_primary_lake
+
+function calculate_diagnostic_lake_volumes(lake_parameters,&
+                                           lake_prognostics,&
+                                           lake_fields) result(diagnostic_lake_volumes)
+  type(lakeparameters), pointer, intent(in) :: lake_parameters
+  type(lakeprognostics), pointer, intent(in) :: lake_prognostics
+  type(lakefields), pointer, intent(in) :: lake_fields
+  real, dimension(:,:), pointer :: diagnostic_lake_volumes
+  real, dimension(:), allocatable :: lake_volumes_by_lake_number
+  type(lake), pointer :: working_lake
+  integer :: i,j
+  integer :: original_lake_index,lake_number
+    allocate(diagnostic_lake_volumes(lake_parameters%nlat,&
+                                     lake_parameters%nlon))
+    diagnostic_lake_volumes(:,:) = 0.0
+    allocate(lake_volumes_by_lake_number(size(lake_prognostics%lakes)))
+    do i = 1,size(lake_prognostics%lakes)
+      working_lake => lake_prognostics%lakes(i)%lake_pointer
+      original_lake_index = working_lake%lake_number
+      if (working_lake%lake_type == subsumed_lake_type) then
+        working_lake => working_lake%find_true_primary_lake()
+      end if
+      lake_volumes_by_lake_number(original_lake_index) = &
+        working_lake%lake_volume + &
+        working_lake%secondary_lake_volume
+    end do
+    do j=1,lake_parameters%nlon
+      do i=1,lake_parameters%nlat
+        lake_number = lake_fields%lake_numbers(i,j)
+        if (lake_number > 0) then
+          diagnostic_lake_volumes(i,j) = lake_volumes_by_lake_number(lake_number)
+        end if
+      end do
+    end do
+end function calculate_diagnostic_lake_volumes
 
 end module latlon_lake_model_mod

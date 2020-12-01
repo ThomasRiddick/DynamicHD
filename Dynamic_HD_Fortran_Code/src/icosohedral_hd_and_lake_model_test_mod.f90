@@ -150,8 +150,10 @@ subroutine testLakeModel1
    integer,dimension(:), pointer :: expected_lake_numbers
    integer,dimension(:), pointer :: expected_lake_types
    real,dimension(:), pointer :: expected_lake_volumes
+   real, dimension(:), pointer :: expected_diagnostic_lake_volumes
    integer,dimension(:), pointer :: lake_types
    integer :: no_merge_mtype,connection_merge_not_set_flood_merge_as_secondary
+   real, dimension(:), pointer :: diagnostic_lake_volumes
    real,dimension(:), pointer :: lake_volumes
    integer :: ncells
    integer :: ncells_coarse
@@ -374,6 +376,17 @@ subroutine testLakeModel1
          0,    0,    0,    0,    0,    0,    0,    0,    0, &
          0,    0,    0,    0,    0,    0,    0,    0,    0, &
          0,    0,    0,    0,    0,    0,    0,    0,    0 /)
+      allocate(expected_diagnostic_lake_volumes(ncells))
+      expected_diagnostic_lake_volumes = (/ &
+                  0.0,  0.0,  0.0,  80.0, 0.0, 0.0, 0.0, 0.0,  0.0, &
+                  0.0,  0.0,  0.0,  80.0, 0.0, 0.0, 0.0, 0.0,  0.0, &
+                  0.0,  0.0,  80.0, 80.0, 0.0, 0.0, 0.0, 0.0,  0.0, &
+                  0.0,  0.0,  80.0, 80.0, 0.0, 0.0, 0.0, 0.0,  0.0, &
+                  0.0,  0.0,  80.0, 80.0, 0.0, 0.0, 0.0, 0.0,  0.0, &
+                  0.0,  0.0,  0.0,   0.0, 0.0, 0.0, 0.0, 0.0,  0.0, &
+                  0.0,  0.0,  0.0,   0.0, 0.0, 0.0, 0.0, 0.0,  0.0, &
+                  0.0,  0.0,  0.0,   0.0, 0.0, 0.0, 0.0, 0.0,  0.0, &
+                  0.0,  0.0,  0.0,   0.0, 0.0, 0.0, 0.0, 0.0,  0.0 /)
       allocate(expected_lake_volumes(1))
       expected_lake_volumes(1) = 80.0
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
@@ -406,11 +419,15 @@ subroutine testLakeModel1
         working_lake_ptr = lake_prognostics_out%lakes(i)
         lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
       end do
+      diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
+                                                                   lake_prognostics_out,&
+                                                                   lake_fields_out)
       call assert_equals(expected_river_inflow,river_fields%river_inflow,9,0.00001)
       call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,9,0.00001)
       call assert_equals(expected_water_to_hd,lake_fields_out%water_to_hd,9,0.00001)
       call assert_equals(expected_lake_numbers,lake_fields_out%lake_numbers,81)
       call assert_equals(expected_lake_types,lake_types,81)
+      call assert_equals(expected_diagnostic_lake_volumes,diagnostic_lake_volumes,ncells)
       call assert_equals(expected_lake_volumes,lake_volumes,1)
       deallocate(lake_volumes)
       deallocate(drainage)
@@ -419,12 +436,14 @@ subroutine testLakeModel1
       deallocate(runoffs)
       deallocate(initial_spillover_to_rivers)
       deallocate(initial_water_to_lake_centers)
+      deallocate(diagnostic_lake_volumes)
       deallocate(expected_river_inflow)
       deallocate(expected_water_to_ocean)
       deallocate(expected_water_to_hd)
       deallocate(expected_lake_numbers)
       deallocate(expected_lake_types)
       deallocate(expected_lake_volumes)
+      deallocate(expected_diagnostic_lake_volumes)
       deallocate(lake_types)
       call clean_lake_model()
       call clean_hd_model()
@@ -477,11 +496,13 @@ subroutine testLakeModel2
   integer,dimension(:), pointer :: expected_lake_numbers
   integer,dimension(:), pointer :: expected_lake_types
   real,dimension(:), pointer :: expected_lake_volumes
+   real, dimension(:), pointer :: expected_diagnostic_lake_volumes
   integer,dimension(:), pointer :: lake_types
   integer :: no_merge_mtype
   integer :: connection_merge_not_set_flood_merge_as_primary
   integer :: connection_merge_not_set_flood_merge_as_secondary
   real,dimension(:), pointer :: lake_volumes
+  real, dimension(:), pointer :: diagnostic_lake_volumes
   integer :: ncells
   integer :: ncells_coarse
   integer :: timesteps
@@ -1044,6 +1065,48 @@ subroutine testLakeModel2
    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0, &
    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0, &
    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0 /)
+    allocate(expected_diagnostic_lake_volumes(ncells))
+    expected_diagnostic_lake_volumes = (/ &
+                   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  &
+                   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  &
+                   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  &
+                   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  430.0,&
+                   430.0,430.0,430.0,0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  &
+                   0.0,  0.0,  430.0,430.0,430.0,430.0,0.0,  0.0,  0.0,  430.0,&
+                   0.0, 430.0,430.0,0.0,  0.0,  430.0,430.0, 0.0,  0.0,  0.0,  &
+                   0.0, 430.0,430.0,430.0,430.0,430.0,0.0,   0.0,  0.0,  0.0,  &
+                   0.0, 430.0,430.0,0.0,  0.0,  430.0,430.0, 430.0,430.0,0.0,  &
+                   0.0, 0.0,  430.0,430.0,430.0,430.0,430.0, 0.0,  0.0,  0.0,  &
+                   0.0, 430.0,430.0,430.0,430.0,430.0,0.0,   430.0,430.0,430.0,&
+                   430.0,430.0,430.0,430.0,430.0,430.0,430.0,430.0,0.0,  0.0,  &
+                   430.0,430.0,430.0,0.0,  430.0,430.0,430.0,430.0,430.0,0.0,  &
+                   430.0,430.0,430.0,430.0,430.0,430.0,430.0,430.0,0.0,  0.0,   &
+                   0.0,  430.0,430.0,0.0,  0.0,  430.0,0.0,  430.0,0.0,  0.0,   &
+                   0.0,  430.0,430.0,430.0,430.0,430.0,430.0,0.0,  0.0,  0.0,   &
+                   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,   &
+                   0.0,  430.0,430.0,430.0,430.0,430.0,430.0,0.0,  0.0,  0.0,   &
+                   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,   &
+                   0.0,  0.0,  430.0,430.0,0.0,  0.0,  0.0,  0.0,  0.0,  0.0,   &
+                   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,    &
+                   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,    &
+                   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,    &
+                   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,    &
+                   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,    &
+                   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,    &
+                   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,    &
+                   0.0,  0.0,  0.0,  0.0,  0.0,  10.0, 10.0, 10.0, 10.0, 0.0,    &
+                   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,    &
+                   0.0,  0.0,  0.0,  0.0,  0.0,  10.0, 10.0, 10.0, 0.0,  0.0,    &
+                   0.0,  0.0,  0.0,  1.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,    &
+                   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,    &
+                   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,    &
+                   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,    &
+                   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,    &
+                   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,    &
+                   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,    &
+                   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,    &
+                   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,    &
+                   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0 /)
     allocate(expected_lake_volumes(6))
     expected_lake_volumes = (/46.0, 6.0, 38.0,  340.0, 10.0, 1.0/)
     call init_hd_model_for_testing(river_parameters,river_fields,.True., &
@@ -1076,12 +1139,16 @@ subroutine testLakeModel2
       working_lake_ptr = lake_prognostics_out%lakes(i)
       lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
     end do
+    diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
+                                                                   lake_prognostics_out,&
+                                                                   lake_fields_out)
     call assert_equals(expected_river_inflow,river_fields%river_inflow,&
                        ncells_coarse)
     call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,16,0.00001)
     call assert_equals(expected_water_to_hd,lake_fields_out%water_to_hd,16,0.00001)
     call assert_equals(expected_lake_numbers,lake_fields_out%lake_numbers,400)
     call assert_equals(expected_lake_types,lake_types,400)
+    call assert_equals(expected_diagnostic_lake_volumes,diagnostic_lake_volumes,ncells)
     call assert_equals(expected_lake_volumes,lake_volumes,6)
     deallocate(lake_volumes)
     deallocate(drainage)
@@ -1090,12 +1157,14 @@ subroutine testLakeModel2
     deallocate(runoffs)
     deallocate(initial_spillover_to_rivers)
     deallocate(initial_water_to_lake_centers)
+    deallocate(diagnostic_lake_volumes)
     deallocate(expected_river_inflow)
     deallocate(expected_water_to_ocean)
     deallocate(expected_water_to_hd)
     deallocate(expected_lake_numbers)
     deallocate(expected_lake_types)
     deallocate(expected_lake_volumes)
+    deallocate(expected_diagnostic_lake_volumes)
     deallocate(lake_types)
     call clean_lake_model()
     call clean_hd_model()
@@ -1152,18 +1221,21 @@ subroutine testLakeModel3
   integer,dimension(:), pointer :: expected_lake_numbers
   integer,dimension(:), pointer :: expected_lake_types
   real,dimension(:), pointer :: expected_lake_volumes
+  real, dimension(:), pointer :: expected_diagnostic_lake_volumes
   real,dimension(:), pointer :: expected_intermediate_river_inflow
   real,dimension(:), pointer :: expected_intermediate_water_to_ocean
   real,dimension(:), pointer :: expected_intermediate_water_to_hd
   integer,dimension(:), pointer :: expected_intermediate_lake_numbers
   integer,dimension(:), pointer :: expected_intermediate_lake_types
   real,dimension(:), pointer :: expected_intermediate_lake_volumes
+  real, dimension(:), pointer :: expected_intermediate_diagnostic_lake_volumes
   integer,dimension(:), pointer :: coarse_cell_numbers_on_fine_grid
   integer,dimension(:), pointer :: lake_types
   integer :: no_merge_mtype
   integer :: connection_merge_not_set_flood_merge_as_primary
   integer :: connection_merge_not_set_flood_merge_as_secondary
   real,dimension(:), pointer :: lake_volumes
+  real, dimension(:), pointer :: diagnostic_lake_volumes
   integer :: ncells
   integer :: ncells_coarse
   integer :: lake_number
@@ -1799,6 +1871,50 @@ subroutine testLakeModel3
          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 /)
+      allocate(expected_diagnostic_lake_volumes(ncells))
+      expected_diagnostic_lake_volumes(:) = 0.0
+      allocate(expected_intermediate_diagnostic_lake_volumes(ncells))
+      expected_intermediate_diagnostic_lake_volumes = (/ &
+                   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  &
+                   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  &
+                   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  &
+                   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  430.0,&
+                   430.0,430.0,430.0,0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  &
+                   0.0,  0.0,  430.0,430.0,430.0,430.0,0.0,  0.0,  0.0,  430.0,&
+                   0.0, 430.0,430.0,0.0,  0.0,  430.0,430.0, 0.0,  0.0,  0.0,  &
+                   0.0, 430.0,430.0,430.0,430.0,430.0,0.0,   0.0,  0.0,  0.0,  &
+                   0.0, 430.0,430.0,0.0,  0.0,  430.0,430.0, 430.0,430.0,0.0,  &
+                   0.0, 0.0,  430.0,430.0,430.0,430.0,430.0, 0.0,  0.0,  0.0,  &
+                   0.0, 430.0,430.0,430.0,430.0,430.0,0.0,   430.0,430.0,430.0,&
+                   430.0,430.0,430.0,430.0,430.0,430.0,430.0,430.0,0.0,  0.0,  &
+                   430.0,430.0,430.0,0.0,  430.0,430.0,430.0,430.0,430.0,0.0,  &
+                   430.0,430.0,430.0,430.0,430.0,430.0,430.0,430.0,0.0,  0.0,   &
+                   0.0,  430.0,430.0,0.0,  0.0,  430.0,0.0,  430.0,0.0,  0.0,   &
+                   0.0,  430.0,430.0,430.0,430.0,430.0,430.0,0.0,  0.0,  0.0,   &
+                   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,   &
+                   0.0,  430.0,430.0,430.0,430.0,430.0,430.0,0.0,  0.0,  0.0,   &
+                   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,   &
+                   0.0,  0.0,  430.0,430.0,0.0,  0.0,  0.0,  0.0,  0.0,  0.0,   &
+                   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,    &
+                   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,    &
+                   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,    &
+                   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,    &
+                   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,    &
+                   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,    &
+                   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,    &
+                   0.0,  0.0,  0.0,  0.0,  0.0,  10.0, 10.0, 10.0, 10.0, 0.0,    &
+                   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,    &
+                   0.0,  0.0,  0.0,  0.0,  0.0,  10.0, 10.0, 10.0, 0.0,  0.0,    &
+                   0.0,  0.0,  0.0,  1.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,    &
+                   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,    &
+                   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,    &
+                   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,    &
+                   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,    &
+                   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,    &
+                   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,    &
+                   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,    &
+                   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,    &
+                   0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0 /)
       allocate(expected_intermediate_lake_volumes(6))
       expected_intermediate_lake_volumes = (/46.0, 6.0, 38.0,  340.0, 10.0, 1.0/)
       allocate(runoffs_copy(16,5000))
@@ -1835,12 +1951,16 @@ subroutine testLakeModel3
         working_lake_ptr = lake_prognostics_out%lakes(i)
         lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
       end do
+      diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
+                                                                   lake_prognostics_out,&
+                                                                   lake_fields_out)
       call assert_equals(expected_intermediate_river_inflow,river_fields%river_inflow,&
                          16)
       call assert_equals(expected_intermediate_water_to_ocean,river_fields%water_to_ocean,16,0.00001)
       call assert_equals(expected_intermediate_water_to_hd,lake_fields_out%water_to_hd,16,0.00001)
       call assert_equals(expected_intermediate_lake_numbers,lake_fields_out%lake_numbers,400)
       call assert_equals(expected_intermediate_lake_types,lake_types,400)
+      call assert_equals(expected_intermediate_diagnostic_lake_volumes,diagnostic_lake_volumes,ncells)
       call assert_equals(expected_intermediate_lake_volumes,lake_volumes,6)
       call run_hd_model(5000,runoffs_copy,drainages_copy,evaporations_set_two)
       lake_prognostics_out => get_lake_prognostics()
@@ -1866,12 +1986,16 @@ subroutine testLakeModel3
         working_lake_ptr = lake_prognostics_out%lakes(i)
         lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
       end do
+      diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
+                                                                   lake_prognostics_out,&
+                                                                   lake_fields_out)
       call assert_equals(expected_river_inflow,river_fields%river_inflow,&
                          16)
       call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,16,0.00001)
       call assert_equals(expected_water_to_hd,lake_fields_out%water_to_hd,16,0.00001)
       call assert_equals(expected_lake_numbers,lake_fields_out%lake_numbers,400)
       call assert_equals(expected_lake_types,lake_types,400)
+      call assert_equals(expected_diagnostic_lake_volumes,diagnostic_lake_volumes,ncells)
       call assert_equals(expected_lake_volumes,lake_volumes,6)
       deallocate(lake_volumes)
       deallocate(drainage)
@@ -1880,12 +2004,15 @@ subroutine testLakeModel3
       deallocate(runoffs)
       deallocate(initial_spillover_to_rivers)
       deallocate(initial_water_to_lake_centers)
+      deallocate(diagnostic_lake_volumes)
       deallocate(expected_river_inflow)
       deallocate(expected_water_to_ocean)
       deallocate(expected_water_to_hd)
       deallocate(expected_lake_numbers)
       deallocate(expected_lake_types)
       deallocate(expected_lake_volumes)
+      deallocate(expected_diagnostic_lake_volumes)
+      deallocate(expected_intermediate_diagnostic_lake_volumes)
       deallocate(lake_types)
       call clean_lake_model()
       call clean_hd_model()
@@ -1942,18 +2069,21 @@ subroutine testLakeModel4
   integer,dimension(:), pointer :: expected_lake_numbers
   integer,dimension(:), pointer :: expected_lake_types
   real,dimension(:), pointer :: expected_lake_volumes
+  real, dimension(:), pointer :: expected_diagnostic_lake_volumes
   real,dimension(:), pointer :: expected_intermediate_river_inflow
   real,dimension(:), pointer :: expected_intermediate_water_to_ocean
   real,dimension(:), pointer :: expected_intermediate_water_to_hd
   integer,dimension(:), pointer :: expected_intermediate_lake_numbers
   integer,dimension(:), pointer :: expected_intermediate_lake_types
   real,dimension(:), pointer :: expected_intermediate_lake_volumes
+  real, dimension(:), pointer :: expected_intermediate_diagnostic_lake_volumes
   integer,dimension(:), pointer :: coarse_cell_numbers_on_fine_grid
   integer,dimension(:), pointer :: lake_types
   integer :: no_merge_mtype
   integer :: connection_merge_not_set_flood_merge_as_primary
   integer :: connection_merge_not_set_flood_merge_as_secondary
   real,dimension(:), pointer :: lake_volumes
+  real, dimension(:), pointer :: diagnostic_lake_volumes
   integer :: ncells
   integer :: ncells_coarse
   integer :: lake_number
@@ -2252,6 +2382,18 @@ subroutine testLakeModel4
                0, 0, 0, 0, 3, 3, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
                0, 0, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
                3, 0, 0, 0, 0 /)
+            allocate(expected_diagnostic_lake_volumes(ncells))
+      expected_diagnostic_lake_volumes(:) = 0.0
+      allocate(expected_intermediate_diagnostic_lake_volumes(ncells))
+      expected_intermediate_diagnostic_lake_volumes = (/ &
+               0.0, 0.0, 0.0, 0.0, 0.0, &
+               0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 40.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
+               0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 40.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
+               0.0, 0.0, 0.0, 0.0, 0.0, &
+               0.0, 0.0, 0.0, 0.0, 40.0, 40.0, 40.0, 0.0, 40.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
+               0.0, 0.0, 0.0, 0.0, 0.0, &
+               0.0, 0.0, 40.0, 40.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
+               40.0, 0.0, 0.0, 0.0, 0.0 /)
       allocate(expected_intermediate_lake_volumes(3))
       expected_intermediate_lake_volumes = (/ 3.0, 22.0, 15.0 /)
       allocate(runoffs_copy(80,5000))
@@ -2288,9 +2430,9 @@ subroutine testLakeModel4
         working_lake_ptr = lake_prognostics_out%lakes(i)
         lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
       end do
-      do i =1,80
-        write(*,*) expected_intermediate_river_inflow(i) - river_fields%river_inflow(i)
-      end do
+      diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
+                                                                   lake_prognostics_out,&
+                                                                   lake_fields_out)
       call assert_equals(expected_intermediate_river_inflow,river_fields%river_inflow,&
                          ncells_coarse,0.0001)
       call assert_equals(expected_intermediate_water_to_ocean, &
@@ -2299,6 +2441,7 @@ subroutine testLakeModel4
                          lake_fields_out%water_to_hd,ncells_coarse,0.0001)
       call assert_equals(expected_intermediate_lake_numbers,lake_fields_out%lake_numbers,ncells)
       call assert_equals(expected_intermediate_lake_types,lake_types,ncells)
+      call assert_equals(expected_intermediate_diagnostic_lake_volumes,diagnostic_lake_volumes,ncells)
       call assert_equals(expected_intermediate_lake_volumes,lake_volumes,3)
       call run_hd_model(5000,runoffs_copy,drainages_copy,evaporations_set_two)
       lake_prognostics_out => get_lake_prognostics()
@@ -2324,12 +2467,16 @@ subroutine testLakeModel4
         working_lake_ptr = lake_prognostics_out%lakes(i)
         lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
       end do
+      diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
+                                                                   lake_prognostics_out,&
+                                                                   lake_fields_out)
       call assert_equals(expected_river_inflow,river_fields%river_inflow,&
                          ncells_coarse)
       call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,ncells_coarse,0.00001)
       call assert_equals(expected_water_to_hd,lake_fields_out%water_to_hd,ncells_coarse,0.00001)
       call assert_equals(expected_lake_numbers,lake_fields_out%lake_numbers,ncells)
       call assert_equals(expected_lake_types,lake_types,ncells)
+      call assert_equals(expected_diagnostic_lake_volumes,diagnostic_lake_volumes,ncells)
       call assert_equals(expected_lake_volumes,lake_volumes,3)
       deallocate(lake_volumes)
       deallocate(drainage)
@@ -2338,12 +2485,15 @@ subroutine testLakeModel4
       deallocate(runoffs)
       deallocate(initial_spillover_to_rivers)
       deallocate(initial_water_to_lake_centers)
+      deallocate(diagnostic_lake_volumes)
       deallocate(expected_river_inflow)
       deallocate(expected_water_to_ocean)
       deallocate(expected_water_to_hd)
       deallocate(expected_lake_numbers)
       deallocate(expected_lake_types)
       deallocate(expected_lake_volumes)
+      deallocate(expected_diagnostic_lake_volumes)
+      deallocate(expected_intermediate_diagnostic_lake_volumes)
       deallocate(lake_types)
       call clean_lake_model()
       call clean_hd_model()

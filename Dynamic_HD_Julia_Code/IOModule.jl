@@ -12,6 +12,7 @@ using LakeModule: GridSpecificLakeParameters,LakeFields
 using MergeTypesModule
 
 import LakeModule: write_lake_numbers_field,write_lake_volumes_field
+import LakeModule: write_diagnostic_lake_volumes_field
 import HDModule: write_river_initial_values,write_river_flow_field
 
 function get_ncells(file_name::AbstractString)
@@ -172,7 +173,7 @@ function write_field(grid::Grid,variable_name::AbstractString,
 end
 
 function load_river_parameters(hd_para_filepath::AbstractString,grid::Grid;
-                               day_length=1.0,step_length=1.0)
+                               day_length=86400.0,step_length=86400.0)
   println("Loading: " * hd_para_filepath)
   file_handle::NcFile = NetCDF.open(hd_para_filepath)
   local landsea_mask::Field{Bool}
@@ -219,24 +220,30 @@ function load_river_initial_values(hd_start_filepath::AbstractString,grid::Grid,
                                    river_parameters::RiverParameters)
   river_prognostic_fields::RiverPrognosticFields =
     RiverPrognosticFields(river_parameters)
+  local reservoir_units_adjustment_factor
   println("Loading: " * hd_start_filepath)
   file_handle::NcFile = NetCDF.open(hd_start_filepath)
   try
     if ! isa(grid,UnstructuredGrid)
+      reservoir_units_adjustment = 1.0/river_parameters.step_length
       river_prognostic_fields.river_inflow =
         load_field(file_handle,river_parameters.grid,"FINFL",Float64)
     else
       river_prognostic_fields.river_inflow = Field{Float64}(grid,0.0)
+      reservoir_units_adjustment = 1.0
     end
     river_prognostic_fields.base_flow_reservoirs =
       load_array_of_fields(file_handle,river_parameters.grid,"FGMEM",Float64,
                             maximum(river_parameters.base_reservoir_nums))
+    river_prognostic_fields.base_flow_reservoirs *= reservoir_units_adjustment
     river_prognostic_fields.overland_flow_reservoirs =
       load_array_of_fields(file_handle,river_parameters.grid,"FLFMEM",Float64,
                             maximum(river_parameters.overland_reservoir_nums))
+    river_prognostic_fields.overland_flow_reservoirs *= reservoir_units_adjustment
     river_prognostic_fields.river_flow_reservoirs =
       load_array_of_fields(file_handle,river_parameters.grid,"FRFMEM",Float64,
                             maximum(river_parameters.river_reservoir_nums))
+    river_prognostic_fields.river_flow_reservoirs *= reservoir_units_adjustment
   finally
     NetCDF.close(file_handle)
   end
@@ -247,6 +254,14 @@ function write_river_initial_values(hd_start_filepath::AbstractString,
                                     river_parameters::RiverParameters,
                                     river_prognostic_fields::RiverPrognosticFields)
   println("Writing: " * hd_start_filepath)
+  if ! isa(river_parameters.grid,UnstructuredGrid)
+    reservoir_units_adjustment = river_parameters.step_length
+  else
+    reservoir_units_adjustment = 1.0
+  end
+  river_prognostic_fields.base_flow_reservoirs *= reservoir_units_adjustment
+  river_prognostic_fields.overland_flow_reservoirs *= reservoir_units_adjustment
+  river_prognostic_fields.river_flow_reservoirs *= reservoir_units_adjustment
   fields_to_write::Vector{Pair} = Pair[]
   dims::Array{NcDim} = prep_dims(river_parameters.grid)
   prep_field(dims,"FINFL",
@@ -428,6 +443,17 @@ function write_lake_volumes_field(lake_parameters::LakeParameters,lake_volumes::
   variable_name::String = "lake_field"
   filepath::String = "/Users/thomasriddick/Documents/data/temp/lake_model_out.nc"
   write_field(lake_parameters.grid,variable_name,lake_volumes,filepath)
+end
+
+
+function write_diagnostic_lake_volumes_field(lake_parameters::LakeParameters,
+                                             diagnostic_lake_volumes::Field{Float64};
+                                             timestep::Int64=-1)
+  variable_name::String = "diagnostic_lake_volumes"
+  filepath::String = timestep == -1 ?
+                     "/Users/thomasriddick/Documents/data/temp/lake_model_volume_results.nc" :
+                     "/Users/thomasriddick/Documents/data/temp/lake_model_volume_results_$(timestep).nc"
+  write_field(lake_parameters.grid,variable_name,diagnostic_lake_volumes,filepath)
 end
 
 function load_drainage_fields(drainages_filename::AbstractString,grid::Grid;

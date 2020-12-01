@@ -1,5 +1,8 @@
 module icosohedral_lake_model_io_mod
 
+!This module contains the detailed Input/Output routines for the
+!lake model
+
 use netcdf
 use icosohedral_lake_model_mod
 use grid_information_mod
@@ -13,6 +16,8 @@ real :: lake_retention_coefficient
 
 contains
 
+! Add an offset to a c-style array index excepting a list of possible
+! exceptions
 subroutine add_offset(array,offset,exceptions)
   integer, dimension(:), intent(inout) :: array
   integer, intent(in) :: offset
@@ -35,6 +40,7 @@ subroutine add_offset(array,offset,exceptions)
     end where
 end subroutine
 
+! Load the lake namelist
 subroutine config_lakes(lake_model_ctl_filename)
   include 'lake_model_ctl.inc'
 
@@ -48,6 +54,9 @@ subroutine config_lakes(lake_model_ctl_filename)
 
 end subroutine config_lakes
 
+! Read the set of pre-calculated parameters for the lakes from the file set in the
+! lake_params_filename module variable. Takes the instant_throughflow flag as an input
+! and adds it to the lake parameters object created
 function read_lake_parameters(instant_throughflow)&
                               result(lake_parameters)
   logical, intent(in) :: instant_throughflow
@@ -213,6 +222,8 @@ function read_lake_parameters(instant_throughflow)&
                                       lake_retention_coefficient)
 end function read_lake_parameters
 
+! Read the initial water to place into lakes and water lakes that used to exist that
+! needs to be returned to the HD model
 subroutine load_lake_initial_values(initial_water_to_lake_centers,&
                                     initial_spillover_to_rivers)
   real, pointer, dimension(:), intent(inout) :: initial_water_to_lake_centers
@@ -239,6 +250,8 @@ subroutine load_lake_initial_values(initial_water_to_lake_centers,&
     call check_return_code(nf90_close(ncid))
 end subroutine load_lake_initial_values
 
+! Write the lake volumes in format that can be post processed to create a new lake
+! start files
 subroutine write_lake_volumes_field(lake_volumes_filename,&
                                     lake_parameters,lake_volumes)
   character(len = max_name_length) :: lake_volumes_filename
@@ -255,6 +268,7 @@ subroutine write_lake_volumes_field(lake_volumes_filename,&
     call check_return_code(nf90_close(ncid))
 end subroutine write_lake_volumes_field
 
+! Write out the ID number of each point with a lake
 subroutine write_lake_numbers_field(working_directory, &
                                     lake_parameters,lake_fields,&
                                     timestep,grid_information)
@@ -311,5 +325,69 @@ subroutine write_lake_numbers_field(working_directory, &
                                         grid_information%clon_bounds))
     call check_return_code(nf90_close(ncid))
 end subroutine write_lake_numbers_field
+
+!Write out the full volume of the lake (including all sub-basin) to each point
+!the lake covers
+subroutine write_diagnostic_lake_volumes(lake_parameters, &
+                                         lake_prognostics, &
+                                         lake_fields, &
+                                         timestep,grid_information)
+  type(lakeparameters), pointer, intent(in) :: lake_parameters
+  type(lakeprognostics),pointer, intent(in) :: lake_prognostics
+  type(lakefields), pointer, intent(in) :: lake_fields
+  type(gridinformation) :: grid_information
+  integer, intent(in) :: timestep
+  character(len = 50) :: timestep_str
+  character(len = max_name_length) :: filename
+    integer :: ncid,varid,dimid,dimid_vert
+  integer :: varid_clat,varid_clon
+  integer :: varid_clat_bnds,varid_clon_bnds
+  integer, dimension(1) :: dimids
+  integer, dimension(2) :: dimids_bnds
+  real, dimension(:), pointer :: diagnostic_lake_volume
+    diagnostic_lake_volume => calculate_diagnostic_lake_volumes(lake_parameters,&
+                                                                lake_prognostics,&
+                                                                lake_fields)
+    if(timestep == -1) then
+      filename = '/Users/thomasriddick/Documents/data/temp/diagnostic_lake_volume_results.nc'
+    else
+      filename = '/Users/thomasriddick/Documents/data/temp/diagnostic_lake_volume_results_'
+      write (timestep_str,'(I0.3)') timestep
+      filename = trim(filename) // trim(timestep_str) // '.nc'
+    end if
+    call check_return_code(nf90_create(filename,nf90_noclobber,ncid))
+    call check_return_code(nf90_def_dim(ncid,"ncells",lake_parameters%ncells,dimid))
+    call check_return_code(nf90_def_dim(ncid,"vertices",3,dimid_vert))
+    dimids = (/dimid/)
+    dimids_bnds = (/dimid_vert,dimid/)
+    call check_return_code(nf90_def_var(ncid,"diagnostic_lake_volume",nf90_real,dimids,varid))
+    call check_return_code(nf90_def_var(ncid,"clat",nf90_double,dimids,varid_clat))
+    call check_return_code(nf90_def_var(ncid,"clon",nf90_double,dimids,varid_clon))
+    call check_return_code(nf90_def_var(ncid,"clat_bnds",nf90_double,dimids_bnds,varid_clat_bnds))
+    call check_return_code(nf90_def_var(ncid,"clon_bnds",nf90_double,dimids_bnds,varid_clon_bnds))
+    call check_return_code(nf90_put_att(ncid,varid_clat,"standard_name","latitude"))
+    call check_return_code(nf90_put_att(ncid,varid_clat,"long_name","center latitude"))
+    call check_return_code(nf90_put_att(ncid,varid_clat,"units","radian"))
+    call check_return_code(nf90_put_att(ncid,varid_clat,"bounds","clat_bnds"))
+    call check_return_code(nf90_put_att(ncid,varid_clon,"standard_name","longitude"))
+    call check_return_code(nf90_put_att(ncid,varid_clon,"long_name","center longitude"))
+    call check_return_code(nf90_put_att(ncid,varid_clon,"units","radian"))
+    call check_return_code(nf90_put_att(ncid,varid_clon,"bounds","clon_bnds"))
+    call check_return_code(nf90_put_att(ncid,varid,"standard_name","lake number"))
+    call check_return_code(nf90_put_att(ncid,varid,"grid_type","unstructured"))
+    call check_return_code(nf90_put_att(ncid,varid,"coordinates","clat clon"))
+    call check_return_code(nf90_enddef(ncid))
+    call check_return_code(nf90_put_var(ncid,varid,diagnostic_lake_volume))
+    call check_return_code(nf90_put_var(ncid,varid_clat,&
+                                        grid_information%clat))
+    call check_return_code(nf90_put_var(ncid,varid_clon,&
+                                        grid_information%clon))
+    call check_return_code(nf90_put_var(ncid,varid_clat_bnds,&
+                                        grid_information%clat_bounds))
+    call check_return_code(nf90_put_var(ncid,varid_clon_bnds,&
+                                        grid_information%clon_bounds))
+    call check_return_code(nf90_close(ncid))
+    deallocate(diagnostic_lake_volume)
+end subroutine write_diagnostic_lake_volumes
 
 end module icosohedral_lake_model_io_mod

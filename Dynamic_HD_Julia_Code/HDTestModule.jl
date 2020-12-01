@@ -12,7 +12,7 @@ using FieldModule: UnstructuredField,UnstructuredDirectionIndicators
 using LakeModule: GridSpecificLakeParameters,LakeParameters,LatLonLakeParameters,LakeFields
 using LakeModule: UnstructuredLakeParameters
 using LakeModule: LakePrognostics,Lake,FillingLake,OverflowingLake,SubsumedLake
-using LakeModule: get_lake_variables
+using LakeModule: get_lake_variables,calculate_diagnostic_lake_volumes_field
 using MergeTypesModule
 
 @testset "HD model tests" begin
@@ -347,6 +347,16 @@ end
                   0    0    0    0    0    0    0    0    0
                   0    0    0    0    0    0    0    0    0
                   0    0    0    0    0    0    0    0    0 ])
+  expected_diagnostic_lake_volumes::Field{Float64} = LatLonField{Float64}(lake_grid,
+        Float64[    0    0    0    80.0    0    0    0    0    0
+                  0    0    0    80.0   0    0    0    0    0
+                  0    0    80.0 80.0    0    0    0    0    0
+                  0    0    80.0 80.0    0    0    0    0    0
+                  0    0    80.0 80.0    0    0    0    0    0
+                  0    0    0    0    0    0    0    0    0
+                  0    0    0    0    0    0    0    0    0
+                  0    0    0    0    0    0    0    0    0
+                  0    0    0    0    0    0    0    0    0 ])
   expected_lake_volumes::Array{Float64} = Float64[80.0]
   @time river_fields::RiverPrognosticFields,lake_prognostics::LakePrognostics,lake_fields::LakeFields =
     drive_hd_and_lake_model(river_parameters,lake_parameters,
@@ -375,12 +385,16 @@ end
   for lake::Lake in lake_prognostics.lakes
     append!(lake_volumes,get_lake_variables(lake).lake_volume)
   end
+  diagnostic_lake_volumes::Field{Float64} =
+    calculate_diagnostic_lake_volumes_field(lake_parameters,lake_fields,
+                                            lake_prognostics)
   @test expected_river_inflow == river_fields.river_inflow
   @test isapprox(expected_water_to_ocean,river_fields.water_to_ocean,rtol=0.0,atol=0.00001)
   @test expected_water_to_hd    == lake_fields.water_to_hd
   @test expected_lake_numbers == lake_fields.lake_numbers
   @test expected_lake_types == lake_types
   @test expected_lake_volumes == lake_volumes
+  @test diagnostic_lake_volumes == expected_diagnostic_lake_volumes
 end
 
 @testset "Lake model tests 2" begin
@@ -1025,6 +1039,47 @@ end
              0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
              0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
              0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ])
+  expected_diagnostic_lake_volumes::Field{Float64} = LatLonField{Float64}(lake_grid,
+        Float64[   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     430.0
+                   430.0 430.0 430.0 0     0     0     0     0     0     0     #=
+                =# 0     0     430.0 430.0 430.0 430.0 0     0     0     430.0
+                   0     430.0 430.0 0     0     430.0 430.0 0     0     0     #=
+                =# 0     430.0 430.0 430.0 430.0 430.0 0     0     0     0
+                   0     430.0 430.0 0     0     430.0 430.0 430.0 430.0 0     #=
+                =# 0     0     430.0 430.0 430.0 430.0 430.0 0     0     0
+                   0     430.0 430.0 430.0 430.0 430.0 0     430.0 430.0 430.0 #=
+                =# 430.0 430.0 430.0 430.0 430.0 430.0 430.0 430.0 0     0
+                   430.0 430.0 430.0 0     430.0 430.0 430.0 430.0 430.0 0     #=
+                =# 430.0 430.0 430.0 430.0 430.0 430.0 430.0 430.0 0     0
+                   0     430.0 430.0 0     0     430.0 0     430.0 0     0     #=
+                =# 0     430.0 430.0 430.0 430.0 430.0 430.0 0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     430.0 430.0 430.0 430.0 430.0 430.0 0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     430.0 430.0 0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     10.0  10.0  10.0  10.0  0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     10.0  10.0  10.0  0     0
+                   0     0     0     1.0   0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0 ])
   expected_lake_volumes::Array{Float64} = Float64[46.0, 1.0, 38.0, 6.0, 340.0, 10.0]
   @time river_fields::RiverPrognosticFields,lake_prognostics::LakePrognostics,lake_fields::LakeFields =
     drive_hd_and_lake_model(river_parameters,lake_parameters,
@@ -1053,12 +1108,16 @@ end
   for lake::Lake in lake_prognostics.lakes
     append!(lake_volumes,get_lake_variables(lake).lake_volume)
   end
+  diagnostic_lake_volumes::Field{Float64} =
+    calculate_diagnostic_lake_volumes_field(lake_parameters,lake_fields,
+                                            lake_prognostics)
   @test expected_river_inflow == river_fields.river_inflow
   @test isapprox(expected_water_to_ocean,river_fields.water_to_ocean,rtol=0.0,atol=0.00001)
   @test expected_water_to_hd    == lake_fields.water_to_hd
   @test expected_lake_numbers == lake_fields.lake_numbers
   @test expected_lake_types == lake_types
   @test isapprox(expected_lake_volumes,lake_volumes,atol=0.00001)
+  @test diagnostic_lake_volumes == expected_diagnostic_lake_volumes
   # function timing2(river_parameters,lake_parameters)
   #   for i in 1:50000
   #     drainagesl = repeat(drainage,20)
@@ -1773,6 +1832,90 @@ end
              0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
              0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
              0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ])
+    expected_intermediate_diagnostic_lake_volumes::Field{Float64} =
+      LatLonField{Float64}(lake_grid,
+        Float64[   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     430.0
+                   430.0 430.0 430.0 0     0     0     0     0     0     0     #=
+                =# 0     0     430.0 430.0 430.0 430.0 0     0     0     430.0
+                   0     430.0 430.0 0     0     430.0 430.0 0     0     0     #=
+                =# 0     430.0 430.0 430.0 430.0 430.0 0     0     0     0
+                   0     430.0 430.0 0     0     430.0 430.0 430.0 430.0 0     #=
+                =# 0     0     430.0 430.0 430.0 430.0 430.0 0     0     0
+                   0     430.0 430.0 430.0 430.0 430.0 0     430.0 430.0 430.0 #=
+                =# 430.0 430.0 430.0 430.0 430.0 430.0 430.0 430.0 0     0
+                   430.0 430.0 430.0 0     430.0 430.0 430.0 430.0 430.0 0     #=
+                =# 430.0 430.0 430.0 430.0 430.0 430.0 430.0 430.0 0     0
+                   0     430.0 430.0 0     0     430.0 0     430.0 0     0     #=
+                =# 0     430.0 430.0 430.0 430.0 430.0 430.0 0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     430.0 430.0 430.0 430.0 430.0 430.0 0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     430.0 430.0 0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     10.0  10.0  10.0  10.0  0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     10.0  10.0  10.0  0     0
+                   0     0     0     1.0   0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0 ])
+    expected_diagnostic_lake_volumes::Field{Float64} =
+      LatLonField{Float64}(lake_grid,
+        Float64[   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0 ])
   expected_intermediate_lake_volumes::Array{Float64} = Float64[46.0, 1.0, 38.0, 6.0, 340.0, 10.0]
   evaporations_copy::Array{Field{Float64},1} = deepcopy(evaporations)
   @time river_fields::RiverPrognosticFields,lake_prognostics::LakePrognostics,lake_fields::LakeFields =
@@ -1802,6 +1945,9 @@ end
   for lake::Lake in lake_prognostics.lakes
     append!(lake_volumes,get_lake_variables(lake).lake_volume)
   end
+  diagnostic_lake_volumes::Field{Float64} =
+    calculate_diagnostic_lake_volumes_field(lake_parameters,lake_fields,
+                                            lake_prognostics)
   @test expected_intermediate_river_inflow == river_fields.river_inflow
   @test isapprox(expected_intermediate_water_to_ocean,
                  river_fields.water_to_ocean,rtol=0.0,atol=0.00001)
@@ -1809,6 +1955,7 @@ end
   @test expected_intermediate_lake_numbers == lake_fields.lake_numbers
   @test expected_intermediate_lake_types == lake_types
   @test isapprox(expected_intermediate_lake_volumes,lake_volumes,atol=0.00001)
+  @test expected_intermediate_diagnostic_lake_volumes == diagnostic_lake_volumes
   @time river_fields,lake_prognostics,lake_fields =
     drive_hd_and_lake_model(river_parameters,lake_parameters,
                             drainages,runoffs,evaporations,
@@ -1836,12 +1983,16 @@ end
   for lake::Lake in lake_prognostics.lakes
     append!(lake_volumes,get_lake_variables(lake).lake_volume)
   end
+  diagnostic_lake_volumes =
+    calculate_diagnostic_lake_volumes_field(lake_parameters,lake_fields,
+                                            lake_prognostics)
   @test expected_river_inflow == river_fields.river_inflow
   @test isapprox(expected_water_to_ocean,river_fields.water_to_ocean,rtol=0.0,atol=0.00001)
   @test expected_water_to_hd    == lake_fields.water_to_hd
   @test expected_lake_numbers == lake_fields.lake_numbers
   @test expected_lake_types == lake_types
   @test isapprox(expected_lake_volumes,lake_volumes,atol=0.00001)
+  @test expected_diagnostic_lake_volumes == diagnostic_lake_volumes
   # function timing2(river_parameters,lake_parameters)
   #   for i in 1:50000
   #     drainagesl = repeat(drainage,20)
@@ -2260,6 +2411,48 @@ end
               =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
               =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
               =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ]))
+  expected_diagnostic_lake_volumes::Field{Float64} =
+  UnstructuredField{Float64}(lake_grid,
+    vec(Float64[   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     430.0 #=
+                =# 430.0 430.0 430.0 0     0     0     0     0     0     0     #=
+                =# 0     0     430.0 430.0 430.0 430.0 0     0     0     430.0 #=
+                =# 0     430.0 430.0 0     0     430.0 430.0 0     0     0     #=
+                =# 0     430.0 430.0 430.0 430.0 430.0 0     0     0     0     #=
+                =# 0     430.0 430.0 0     0     430.0 430.0 430.0 430.0 0     #=
+                =# 0     0     430.0 430.0 430.0 430.0 430.0 0     0     0     #=
+                =# 0     430.0 430.0 430.0 430.0 430.0 0     430.0 430.0 430.0 #=
+                =# 430.0 430.0 430.0 430.0 430.0 430.0 430.0 430.0 0     0     #=
+                =# 430.0 430.0 430.0 0     430.0 430.0 430.0 430.0 430.0 0     #=
+                =# 430.0 430.0 430.0 430.0 430.0 430.0 430.0 430.0 0     0     #=
+                =# 0     430.0 430.0 0     0     430.0 0     430.0 0     0     #=
+                =# 0     430.0 430.0 430.0 430.0 430.0 430.0 0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     430.0 430.0 430.0 430.0 430.0 430.0 0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     430.0 430.0 0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     10.0  10.0  10.0  10.0  0     #=
+                =# 0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     10.0  10.0  10.0  0     0     #=
+                =# 0     0     0     1.0   0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0 ]))
   expected_lake_volumes::Array{Float64} = Float64[46.0, 6.0, 38.0,  340.0, 10.0, 1.0]
   @time river_fields::RiverPrognosticFields,lake_prognostics::LakePrognostics,lake_fields::LakeFields =
     drive_hd_and_lake_model(river_parameters,lake_parameters,
@@ -2286,12 +2479,16 @@ end
   for lake::Lake in lake_prognostics.lakes
     append!(lake_volumes,get_lake_variables(lake).lake_volume)
   end
+  diagnostic_lake_volumes::Field{Float64} =
+    calculate_diagnostic_lake_volumes_field(lake_parameters,lake_fields,
+                                            lake_prognostics)
   @test expected_river_inflow == river_fields.river_inflow
   @test isapprox(expected_water_to_ocean,river_fields.water_to_ocean,rtol=0.0,atol=0.00001)
   @test expected_water_to_hd    == lake_fields.water_to_hd
   @test expected_lake_numbers == lake_fields.lake_numbers
   @test expected_lake_types == lake_types
   @test isapprox(expected_lake_volumes,lake_volumes,atol=0.00001)
+  @test expected_diagnostic_lake_volumes == diagnostic_lake_volumes
   # function timing2(river_parameters,lake_parameters)
   #   for i in 1:50000
   #     drainagesl = repeat(drainage,20)
@@ -2770,6 +2967,90 @@ end
               =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
               =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
               =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ]))
+  expected_intermediate_diagnostic_lake_volumes::Field{Float64} =
+    UnstructuredField{Float64}(lake_grid,
+    vec(Float64[   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     430.0 #=
+                =# 430.0 430.0 430.0 0     0     0     0     0     0     0     #=
+                =# 0     0     430.0 430.0 430.0 430.0 0     0     0     430.0 #=
+                =# 0     430.0 430.0 0     0     430.0 430.0 0     0     0     #=
+                =# 0     430.0 430.0 430.0 430.0 430.0 0     0     0     0     #=
+                =# 0     430.0 430.0 0     0     430.0 430.0 430.0 430.0 0     #=
+                =# 0     0     430.0 430.0 430.0 430.0 430.0 0     0     0     #=
+                =# 0     430.0 430.0 430.0 430.0 430.0 0     430.0 430.0 430.0 #=
+                =# 430.0 430.0 430.0 430.0 430.0 430.0 430.0 430.0 0     0     #=
+                =# 430.0 430.0 430.0 0     430.0 430.0 430.0 430.0 430.0 0     #=
+                =# 430.0 430.0 430.0 430.0 430.0 430.0 430.0 430.0 0     0     #=
+                =# 0     430.0 430.0 0     0     430.0 0     430.0 0     0     #=
+                =# 0     430.0 430.0 430.0 430.0 430.0 430.0 0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     430.0 430.0 430.0 430.0 430.0 430.0 0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     430.0 430.0 0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     10.0  10.0  10.0  10.0  0     #=
+                =# 0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     10.0  10.0  10.0  0     0     #=
+                =# 0     0     0     1.0   0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0 ]))
+  expected_diagnostic_lake_volumes::Field{Float64} =
+    UnstructuredField{Float64}(lake_grid,
+    vec(Float64[   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0
+                   0     0     0     0     0     0     0     0     0     0     #=
+                =# 0     0     0     0     0     0     0     0     0     0 ]))
   expected_intermediate_lake_volumes::Array{Float64} = Float64[46.0, 6.0, 38.0,  340.0, 10.0, 1.0]
   evaporations_copy::Array{Field{Float64},1} = deepcopy(evaporations)
   @time river_fields::RiverPrognosticFields,lake_prognostics::LakePrognostics,lake_fields::LakeFields =
@@ -2797,6 +3078,9 @@ end
   for lake::Lake in lake_prognostics.lakes
     append!(lake_volumes,get_lake_variables(lake).lake_volume)
   end
+  diagnostic_lake_volumes::Field{Float64} =
+    calculate_diagnostic_lake_volumes_field(lake_parameters,lake_fields,
+                                            lake_prognostics)
   @test expected_intermediate_river_inflow == river_fields.river_inflow
   @test isapprox(expected_intermediate_water_to_ocean,
                  river_fields.water_to_ocean,rtol=0.0,atol=0.00001)
@@ -2804,6 +3088,7 @@ end
   @test expected_intermediate_lake_numbers == lake_fields.lake_numbers
   @test expected_intermediate_lake_types == lake_types
   @test isapprox(expected_intermediate_lake_volumes,lake_volumes,atol=0.00001)
+  @test expected_intermediate_diagnostic_lake_volumes == diagnostic_lake_volumes
   @time river_fields,lake_prognostics,lake_fields =
     drive_hd_and_lake_model(river_parameters,lake_parameters,
                             drainages,runoffs,evaporations,
@@ -2829,11 +3114,15 @@ end
   for lake::Lake in lake_prognostics.lakes
     append!(lake_volumes,get_lake_variables(lake).lake_volume)
   end
+  diagnostic_lake_volumes =
+    calculate_diagnostic_lake_volumes_field(lake_parameters,lake_fields,
+                                            lake_prognostics)
   @test expected_river_inflow == river_fields.river_inflow
   @test isapprox(expected_water_to_ocean,river_fields.water_to_ocean,rtol=0.0,atol=0.00001)
   @test expected_water_to_hd    == lake_fields.water_to_hd
   @test expected_lake_numbers == lake_fields.lake_numbers
   @test expected_lake_types == lake_types
+  @test expected_diagnostic_lake_volumes == diagnostic_lake_volumes
   @test isapprox(expected_lake_volumes,lake_volumes,atol=0.00001)
   # function timing2(river_parameters,lake_parameters)
   #   for i in 1:50000
@@ -3089,6 +3378,22 @@ end
               =# 0, 0, 0, 0, 3, 3, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
               =# 0, 0, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
               =# 3, 0, 0, 0, 0 ]))
+  expected_intermediate_diagnostic_lake_volumes::Field{Float64} =
+    UnstructuredField{Float64}(lake_grid,
+    vec(Float64[ 0, 0, 0, 0, 0, #=
+              =# 0, 0, 0, 0, 0, 0, 0, 40.0, 0, 0, 0, 0, 0, 0, 0, #=
+              =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 40.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+              =# 0, 0, 0, 0, 40.0, 40.0, 40.0, 0, 40.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+              =# 0, 0, 40.0, 40.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+              =# 40.0, 0, 0, 0, 0 ]))
+  expected_diagnostic_lake_volumes::Field{Float64} =
+    UnstructuredField{Float64}(lake_grid,
+    vec(Float64[ 0, 0, 0, 0, 0, #=
+              =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+              =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+              =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+              =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+              =# 0, 0, 0, 0, 0 ]))
   expected_intermediate_lake_volumes::Array{Float64} = Float64[3.0, 22.0, 15.0]
   evaporations_copy::Array{Field{Float64},1} = deepcopy(evaporations)
   @time river_fields::RiverPrognosticFields,lake_prognostics::LakePrognostics,lake_fields::LakeFields =
@@ -3116,6 +3421,9 @@ end
   for lake::Lake in lake_prognostics.lakes
     append!(lake_volumes,get_lake_variables(lake).lake_volume)
   end
+  diagnostic_lake_volumes::Field{Float64} =
+    calculate_diagnostic_lake_volumes_field(lake_parameters,lake_fields,
+                                            lake_prognostics)
   @test isapprox(expected_intermediate_river_inflow,river_fields.river_inflow,
                  rtol=0.0,atol=0.00001)
   @test isapprox(expected_intermediate_water_to_ocean,
@@ -3124,6 +3432,7 @@ end
   @test expected_intermediate_lake_numbers == lake_fields.lake_numbers
   @test expected_intermediate_lake_types == lake_types
   @test isapprox(expected_intermediate_lake_volumes,lake_volumes,atol=0.00001)
+  @test expected_intermediate_diagnostic_lake_volumes == diagnostic_lake_volumes
   @time river_fields,lake_prognostics,lake_fields =
     drive_hd_and_lake_model(river_parameters,lake_parameters,
                             drainages,runoffs,evaporations,
@@ -3149,12 +3458,16 @@ end
   for lake::Lake in lake_prognostics.lakes
     append!(lake_volumes,get_lake_variables(lake).lake_volume)
   end
+  diagnostic_lake_volumes =
+    calculate_diagnostic_lake_volumes_field(lake_parameters,lake_fields,
+                                            lake_prognostics)
   @test isapprox(expected_river_inflow,river_fields.river_inflow,rtol=0.0,atol=0.00001)
   @test isapprox(expected_water_to_ocean,river_fields.water_to_ocean,rtol=0.0,atol=0.00001)
   @test expected_water_to_hd    == lake_fields.water_to_hd
   @test expected_lake_numbers == lake_fields.lake_numbers
   @test expected_lake_types == lake_types
   @test isapprox(expected_lake_volumes,lake_volumes,atol=0.00001)
+  @test expected_diagnostic_lake_volumes == diagnostic_lake_volumes
   # function timing2(river_parameters,lake_parameters)
   #   for i in 1:50000
   #     drainagesl = repeat(drainage,20)

@@ -276,7 +276,7 @@ subroutine write_river_flow_field(river_parameters,river_flow_field,timestep)
   integer, dimension(2) :: dimids
   character(len = max_name_length) :: filename
   character(len = 50) :: timestep_str
-    filename = '/Users/thomasriddick/Documents/data/temp/river_model_results_'
+    filename = 'river_model_results_'
     write (timestep_str,'(I0.3)') timestep
     filename = trim(filename) // trim(timestep_str) // '.nc'
     call check_return_code(nf90_create(filename,nf90_noclobber,ncid))

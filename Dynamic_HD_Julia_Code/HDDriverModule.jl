@@ -10,6 +10,7 @@ using HDModule: SetLakeEvaporation
 using FieldModule: Field
 using LakeModule: LakeParameters,LakePrognostics,LakeFields,RiverAndLakePrognosticFields,RunLakes
 using LakeModule: PrintSection,WriteLakeNumbers,WriteLakeVolumes,SetupLakes,DistributeSpillover
+using LakeModule: WriteDiagnosticLakeVolumes
 using LakeModule: water_to_lakes,handle_event,water_from_lakes
 using GridModule: get_number_of_cells
 
@@ -95,8 +96,11 @@ function drive_hd_model_with_or_without_lakes(prognostic_fields::PrognosticField
         reset_cumulative_river_flow::ResetCumulativeRiverFlow = ResetCumulativeRiverFlow()
         handle_event(hsm,reset_cumulative_river_flow)
         if run_lakes_flag
-           write_lake_numbers::WriteLakeNumbers = WriteLakeNumbers(i)
-           handle_event(hsm,write_lake_numbers)
+           #write_lake_numbers::WriteLakeNumbers = WriteLakeNumbers(i)
+           #handle_event(hsm,write_lake_numbers)
+           write_diagnostic_lake_volumes::WriteDiagnosticLakeVolumes =
+              WriteDiagnosticLakeVolumes(i)
+           handle_event(hsm,write_diagnostic_lake_volumes)
          end
       end
     end
