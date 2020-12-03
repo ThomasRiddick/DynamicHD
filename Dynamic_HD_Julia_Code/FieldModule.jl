@@ -10,6 +10,7 @@ using SpecialDirectionCodesModule
 using MergeTypesModule
 import Base.maximum
 import Base.*
+import Base./
 import Base.+
 import Base.==
 import Base.isapprox
@@ -17,6 +18,7 @@ import Base.fill!
 import Base.show
 import Base.round
 import Base.convert
+import Base.sum
 using InteractiveUtils
 
 abstract type Field{T} end
@@ -45,7 +47,15 @@ function *(lfield::Field,value::T) where {T}
   throw(UserError())
 end
 
+function /(lfield::Field,value::T) where {T}
+  throw(UserError())
+end
+
 function ==(lfield::Field,rfield::Field)
+  throw(UserError())
+end
+
+function sum(field::Field)
   throw(UserError())
 end
 
@@ -209,8 +219,18 @@ function *(lfield::Field,value::T) where {T}
   return LatLonField{T}(lfield.grid,lfield.data * value)
 end
 
+function /(lfield::Field,value::T) where {T}
+  return LatLonField{T}(lfield.grid,lfield.data / value)
+end
+
 function ==(lfield::LatLonField{T},rfield::LatLonField{T}) where {T}
   return (lfield.data == rfield.data)::Bool
+end
+
+LatLonFieldOrUnstructuredField = Union{LatLonField{T},UnstructuredField{T}} where {T}
+
+function sum(field::T) where {T<:LatLonFieldOrUnstructuredField}
+  return sum(field.data)
 end
 
 function isapprox(lfield::LatLonField{T},rfield::LatLonField{T};
@@ -267,6 +287,10 @@ end
 
 function *(lfield::UnstructuredField,value::T) where {T}
   return UnstructuredField{T}(lfield.grid,lfield.data * value)
+end
+
+function /(lfield::UnstructuredField,value::T) where {T}
+  return UnstructuredField{T}(lfield.grid,lfield.data / value)
 end
 
 function ==(lfield::UnstructuredField{T},rfield::UnstructuredField{T}) where {T}

@@ -26,9 +26,9 @@ module icosohedral_hd_model_interface_mod
     character(len = *) :: river_params_filename
     character(len = *) :: hd_start_filename
     character(len = *), optional :: lake_model_ctl_filename
-    real :: step_length
-    real :: day_length
-    real, pointer, dimension(:) :: initial_spillover_to_rivers
+    real(dp) :: step_length
+    real(dp) :: day_length
+    real(dp), pointer, dimension(:) :: initial_spillover_to_rivers
     type(riverparameters), pointer :: river_parameters
     type(riverprognosticfields), pointer :: river_fields
       grid_information = read_grid_information(river_params_filename)
@@ -55,8 +55,8 @@ module icosohedral_hd_model_interface_mod
     type(riverparameters), intent(in) :: river_parameters
     type(lakeparameters), pointer, optional, intent(in) :: lake_parameters
     type(riverprognosticfields), pointer, optional, intent(inout) :: river_fields
-    real, pointer, dimension(:),optional, intent(in) :: initial_spillover_to_rivers
-    real, pointer, dimension(:),optional, intent(in) :: initial_water_to_lake_centers
+    real(dp), pointer, dimension(:),optional, intent(in) :: initial_spillover_to_rivers
+    real(dp), pointer, dimension(:),optional, intent(in) :: initial_water_to_lake_centers
       global_prognostics = prognostics(using_lakes,river_parameters,river_fields)
       if (using_lakes) then
         call init_lake_model_test(lake_parameters,initial_water_to_lake_centers, &
@@ -71,10 +71,10 @@ module icosohedral_hd_model_interface_mod
   subroutine run_hd_model(timesteps,runoffs,drainages, &
                           lake_evaporation,working_directory)
     integer, intent(in) :: timesteps
-    real   ,dimension(:,:) :: runoffs
-    real   ,dimension(:,:) :: drainages
-    real   ,dimension(:,:), optional :: lake_evaporation
-    real   ,dimension(:,:), allocatable :: lake_evaporation_local
+    real(dp)   ,dimension(:,:) :: runoffs
+    real(dp)   ,dimension(:,:) :: drainages
+    real(dp)   ,dimension(:,:), optional :: lake_evaporation
+    real(dp)   ,dimension(:,:), allocatable :: lake_evaporation_local
     character(len = *), intent(in),optional :: working_directory
     integer :: i
     character(len = max_name_length) :: working_directory_local
@@ -87,7 +87,7 @@ module icosohedral_hd_model_interface_mod
       if (present(lake_evaporation)) then
         lake_evaporation_local(:,:) = lake_evaporation(:,:)
       else
-        lake_evaporation_local(:,:) = 0
+        lake_evaporation_local(:,:) = 0.0_dp
       end if
       do i = 1,timesteps
         call set_runoff_and_drainage(global_prognostics,runoffs(:,i),drainages(:,i))
@@ -99,7 +99,8 @@ module icosohedral_hd_model_interface_mod
                                       global_prognostics%river_fields%river_inflow,i,&
                                       grid_information)
           !call write_lake_numbers_field_interface(i,grid_information,working_directory)
-          call write_diagnostic_lake_volumes_interface(i,grid_information)
+          call write_diagnostic_lake_volumes_interface(working_directory,i,&
+                                                       grid_information)
         end if
       end do
   end subroutine

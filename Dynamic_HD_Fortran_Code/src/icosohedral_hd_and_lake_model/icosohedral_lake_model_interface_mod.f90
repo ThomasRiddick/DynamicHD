@@ -11,12 +11,12 @@ implicit none
 
 ! An object to store fields to be transferred between the HD model and the lake model
 type lakeinterfaceprognosticfields
-  real, allocatable, dimension(:)   :: water_from_lakes ! Water flowing out of lakes
-  real, allocatable, dimension(:)   :: water_to_lakes ! Water flowing into lakes, can also include
+  real(dp), allocatable, dimension(:)   :: water_from_lakes ! Water flowing out of lakes
+  real(dp), allocatable, dimension(:)   :: water_to_lakes ! Water flowing into lakes, can also include
                                                       ! evaporation as a negative contribution and
                                                       ! thus can be overall negative or positive
   !Lake water from ocean means negative water from lakes to ocean
-  real, allocatable, dimension(:)   :: lake_water_from_ocean ! Negative water to add to the ocean
+  real(dp), allocatable, dimension(:)   :: lake_water_from_ocean ! Negative water to add to the ocean
                                                              ! to close water budget should a lake
                                                              ! ever achieve a negative volume
   contains
@@ -31,7 +31,7 @@ end interface
 type(lakeparameters), pointer ::  global_lake_parameters
 type(lakeprognostics), pointer :: global_lake_prognostics
 type(lakefields), pointer ::      global_lake_fields
-real :: global_step_length
+real(dp) :: global_step_length
 
 contains
 
@@ -59,18 +59,18 @@ subroutine initialiselakeinterfaceprognosticfields(this, &
     allocate(this%water_from_lakes(ncells_coarse))
     allocate(this%water_to_lakes(ncells_coarse))
     allocate(this%lake_water_from_ocean(ncells_coarse))
-    this%water_from_lakes = 0.0
-    this%water_to_lakes = 0.0
-    this%lake_water_from_ocean = 0.0
+    this%water_from_lakes = 0.0_dp
+    this%water_to_lakes = 0.0_dp
+    this%lake_water_from_ocean = 0.0_dp
 end subroutine initialiselakeinterfaceprognosticfields
 
 ! Initialise the lake model using input data in the provided files
 subroutine init_lake_model(lake_model_ctl_filename,initial_spillover_to_rivers, &
                            step_length)
   character(len = *) :: lake_model_ctl_filename
-  real, pointer, dimension(:),intent(out) :: initial_spillover_to_rivers
-  real, pointer, dimension(:) :: initial_water_to_lake_centers
-  real :: step_length
+  real(dp), pointer, dimension(:),intent(out) :: initial_spillover_to_rivers
+  real(dp), pointer, dimension(:) :: initial_water_to_lake_centers
+  real(dp) :: step_length
     call config_lakes(lake_model_ctl_filename)
     global_lake_parameters => read_lake_parameters(.true.)
     global_lake_fields => lakefields(global_lake_parameters)
@@ -88,8 +88,8 @@ end subroutine init_lake_model
 subroutine init_lake_model_test(lake_parameters,initial_water_to_lake_centers, &
                                 step_length)
   type(lakeparameters), pointer :: lake_parameters
-  real, pointer, dimension(:), intent(in) :: initial_water_to_lake_centers
-  real :: step_length
+  real(dp), pointer, dimension(:), intent(in) :: initial_water_to_lake_centers
+  real(dp) :: step_length
     global_lake_parameters => lake_parameters
     global_lake_fields => lakefields(global_lake_parameters)
     global_lake_prognostics => lakeprognostics(global_lake_parameters, &
@@ -110,11 +110,21 @@ subroutine clean_lake_model()
 end subroutine clean_lake_model
 
 ! Interface for the lake model to be used by the HD model code in this repo
-subroutine run_lake_model(lake_interface_fields)
+subroutine run_lake_model(lake_interface_fields,run_water_budget_check)
   type(lakeinterfaceprognosticfields), intent(inout) :: lake_interface_fields
+  logical,optional :: run_water_budget_check
+  logical :: run_water_budget_check_local
+    if (present(run_water_budget_check)) then
+      run_water_budget_check_local = run_water_budget_check
+    else
+      run_water_budget_check_local = .true.
+    end if
     global_lake_fields%water_to_lakes(:) = &
       lake_interface_fields%water_to_lakes(:)*global_step_length
     call run_lakes(global_lake_parameters,global_lake_prognostics,global_lake_fields)
+    if (run_water_budget_check_local) then
+      call check_water_budget(global_lake_prognostics,global_lake_fields)
+    end if
     global_lake_fields%water_to_hd(:) = &
       global_lake_fields%water_to_hd(:)/global_step_length
     lake_interface_fields%water_from_lakes(:) = global_lake_fields%water_to_hd(:)
@@ -129,9 +139,9 @@ end subroutine run_lake_model
 ! Multiplication by step length is to be applied outside of this routine in the
 ! main HD model
 subroutine run_lake_model_jsbach(water_to_lakes_in,water_to_hd_out,water_from_ocean_out)
-  real, allocatable, dimension(:), intent(in)   :: water_to_lakes_in
-  real, allocatable, dimension(:), intent(out)  :: water_to_hd_out
-  real, allocatable, dimension(:), intent(out)  :: water_from_ocean_out
+  real(dp), allocatable, dimension(:), intent(in)   :: water_to_lakes_in
+  real(dp), allocatable, dimension(:), intent(out)  :: water_to_hd_out
+  real(dp), allocatable, dimension(:), intent(out)  :: water_from_ocean_out
     global_lake_fields%water_to_lakes(:) = water_to_lakes_in(:)
     call run_lakes(global_lake_parameters,global_lake_prognostics,global_lake_fields)
     water_to_hd_out(:) = global_lake_fields%water_to_hd(:)
@@ -149,10 +159,13 @@ end subroutine write_lake_numbers_field_interface
 
 ! Write a field of diagnostic lake volumes out - the same volume is written for every
 ! point in the lake
-subroutine write_diagnostic_lake_volumes_interface(timestep,grid_information)
+subroutine write_diagnostic_lake_volumes_interface(working_directory,timestep,&
+                                                   grid_information)
+  character(len = *), intent(in),optional :: working_directory
   integer :: timestep
   type(gridinformation) :: grid_information
-    call write_diagnostic_lake_volumes(global_lake_parameters, &
+    call write_diagnostic_lake_volumes(working_directory, &
+                                       global_lake_parameters, &
                                        global_lake_prognostics, &
                                        global_lake_fields, &
                                        timestep, &

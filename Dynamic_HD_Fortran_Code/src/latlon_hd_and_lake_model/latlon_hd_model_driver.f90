@@ -4,8 +4,8 @@ program latlon_hd_model_driver
   use parameters_mod
   implicit none
 
-  real   ,dimension(:,:,:), allocatable :: runoffs
-  real   ,dimension(:,:,:), allocatable :: drainages
+  real(dp)   ,dimension(:,:,:), allocatable :: runoffs
+  real(dp)   ,dimension(:,:,:), allocatable :: drainages
 
   integer :: timesteps
   logical :: using_lakes
@@ -37,8 +37,8 @@ program latlon_hd_model_driver
                        lake_model_ctl_filename)
     allocate(runoffs(360,720,timesteps))
     allocate(drainages(360,720,timesteps))
-    runoffs = 1.0
-    drainages = 1.0
+    runoffs = 1.0_dp
+    drainages = 1.0_dp
     call run_hd_model(timesteps,drainages,runoffs)
     call clean_hd_model()
     if (using_lakes) call clean_lake_model()

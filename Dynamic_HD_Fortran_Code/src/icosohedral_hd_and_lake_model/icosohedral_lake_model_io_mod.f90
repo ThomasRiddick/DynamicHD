@@ -12,7 +12,7 @@ implicit none
 
 character(len = max_name_length) :: lake_params_filename
 character(len = max_name_length) :: lake_start_filename
-real :: lake_retention_coefficient
+real(dp) :: lake_retention_coefficient
 
 contains
 
@@ -63,8 +63,8 @@ function read_lake_parameters(instant_throughflow)&
   type(lakeparameters), pointer :: lake_parameters
   logical, pointer, dimension(:) :: lake_centers
   integer, pointer, dimension(:) :: lake_centers_int
-  real, pointer, dimension(:) :: connection_volume_thresholds
-  real, pointer, dimension(:) :: flood_volume_thresholds
+  real(dp), pointer, dimension(:) :: connection_volume_thresholds
+  real(dp), pointer, dimension(:) :: flood_volume_thresholds
   logical, pointer, dimension(:) :: flood_local_redirect
   integer, pointer, dimension(:) :: flood_local_redirect_int
   logical, pointer, dimension(:) :: connect_local_redirect
@@ -226,8 +226,8 @@ end function read_lake_parameters
 ! needs to be returned to the HD model
 subroutine load_lake_initial_values(initial_water_to_lake_centers,&
                                     initial_spillover_to_rivers)
-  real, pointer, dimension(:), intent(inout) :: initial_water_to_lake_centers
-  real, pointer, dimension(:), intent(inout) :: initial_spillover_to_rivers
+  real(dp), pointer, dimension(:), intent(inout) :: initial_water_to_lake_centers
+  real(dp), pointer, dimension(:), intent(inout) :: initial_spillover_to_rivers
   integer :: ncells_coarse
   integer :: ncells
   integer :: ncid,varid,dimid
@@ -255,7 +255,7 @@ end subroutine load_lake_initial_values
 subroutine write_lake_volumes_field(lake_volumes_filename,&
                                     lake_parameters,lake_volumes)
   character(len = max_name_length) :: lake_volumes_filename
-  real, pointer, dimension(:), intent(inout) :: lake_volumes
+  real(dp), pointer, dimension(:), intent(inout) :: lake_volumes
   type(lakeparameters), pointer :: lake_parameters
   integer :: ncid,varid,dimid
   integer, dimension(1) :: dimids
@@ -328,10 +328,12 @@ end subroutine write_lake_numbers_field
 
 !Write out the full volume of the lake (including all sub-basin) to each point
 !the lake covers
-subroutine write_diagnostic_lake_volumes(lake_parameters, &
+subroutine write_diagnostic_lake_volumes(working_directory, &
+                                         lake_parameters, &
                                          lake_prognostics, &
                                          lake_fields, &
                                          timestep,grid_information)
+  character(len = *), intent(in) :: working_directory
   type(lakeparameters), pointer, intent(in) :: lake_parameters
   type(lakeprognostics),pointer, intent(in) :: lake_prognostics
   type(lakefields), pointer, intent(in) :: lake_fields
@@ -344,14 +346,14 @@ subroutine write_diagnostic_lake_volumes(lake_parameters, &
   integer :: varid_clat_bnds,varid_clon_bnds
   integer, dimension(1) :: dimids
   integer, dimension(2) :: dimids_bnds
-  real, dimension(:), pointer :: diagnostic_lake_volume
+  real(dp), dimension(:), pointer :: diagnostic_lake_volume
     diagnostic_lake_volume => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                 lake_prognostics,&
                                                                 lake_fields)
     if(timestep == -1) then
-      filename = '/Users/thomasriddick/Documents/data/temp/diagnostic_lake_volume_results.nc'
+      filename = trim(working_directory) // '/diagnostic_lake_volume_results.nc'
     else
-      filename = '/Users/thomasriddick/Documents/data/temp/diagnostic_lake_volume_results_'
+      filename = trim(working_directory) // '/diagnostic_lake_volume_results_'
       write (timestep_str,'(I0.3)') timestep
       filename = trim(filename) // trim(timestep_str) // '.nc'
     end if

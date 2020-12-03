@@ -10,7 +10,7 @@ using HDModule: SetLakeEvaporation
 using FieldModule: Field
 using LakeModule: LakeParameters,LakePrognostics,LakeFields,RiverAndLakePrognosticFields,RunLakes
 using LakeModule: PrintSection,WriteLakeNumbers,WriteLakeVolumes,SetupLakes,DistributeSpillover
-using LakeModule: WriteDiagnosticLakeVolumes
+using LakeModule: WriteDiagnosticLakeVolumes,CheckWaterBudget
 using LakeModule: water_to_lakes,handle_event,water_from_lakes
 using GridModule: get_number_of_cells
 
@@ -71,6 +71,7 @@ function drive_hd_model_with_or_without_lakes(prognostic_fields::PrognosticField
     handle_event(hsm,runHD)
     if run_lakes_flag
       handle_event(hsm,run_lakes)
+      handle_event(hsm,CheckWaterBudget())
     end
     if print_timestep_results
       if i%output_timestep == 0 || i == 1

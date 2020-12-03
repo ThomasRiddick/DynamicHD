@@ -59,6 +59,8 @@ struct DistributeSpillover <: Event
   initial_spillover_to_rivers::Field{Float64}
 end
 
+struct CheckWaterBudget <: Event end
+
 abstract type GridSpecificLakeParameters end
 
 struct LakeParameters
@@ -287,6 +289,11 @@ struct SubsumedLake <: Lake
   primary_lake_number::Int64
 end
 
+mutable struct LakeDiagnosticVariables
+  total_lake_volume::Float64
+end
+
+LakeDiagnosticVariables() = LakeDiagnosticVariables(0.0)
 
 struct RiverAndLakePrognosticFields <: PrognosticFields
   river_parameters::RiverParameters
@@ -296,6 +303,7 @@ struct RiverAndLakePrognosticFields <: PrognosticFields
   lake_parameters::LakeParameters
   lake_prognostics::LakePrognostics
   lake_fields::LakeFields
+  lake_diagnostics_variables::LakeDiagnosticVariables
   using_lakes::Bool
   function RiverAndLakePrognosticFields(river_parameters::RiverParameters,
                                river_fields::RiverPrognosticFields,
@@ -309,7 +317,7 @@ struct RiverAndLakePrognosticFields <: PrognosticFields
     end
     new(river_parameters,river_fields,RiverDiagnosticFields(river_parameters),
         RiverDiagnosticOutputFields(river_parameters),lake_parameters,
-        lake_prognostics,lake_fields,true)
+        lake_prognostics,lake_fields,LakeDiagnosticVariables(),true)
   end
 end
 
@@ -322,15 +330,20 @@ get_lake_fields(river_and_lake_prognostics::RiverAndLakePrognosticFields) =
 get_lake_parameters(river_and_lake_prognostics::RiverAndLakePrognosticFields) =
                      river_and_lake_prognostics.lake_parameters::LakeParameters
 
+get_lake_diagnostic_variables(river_and_lake_prognostics::RiverAndLakePrognosticFields) =
+  river_and_lake_prognostics.lake_diagnostics_variables::LakeDiagnosticVariables
+
 function water_to_lakes(prognostic_fields::RiverAndLakePrognosticFields,coords::Coords,
-                        inflow::Float64)
+                        inflow::Float64,step_length::Float64)
   lake_fields = get_lake_fields(prognostic_fields)
-  set!(lake_fields.water_to_lakes,coords,inflow)
+  set!(lake_fields.water_to_lakes,coords,inflow*step_length)
 end
 
-function water_from_lakes(prognostic_fields::RiverAndLakePrognosticFields)
+function water_from_lakes(prognostic_fields::RiverAndLakePrognosticFields,
+                          step_length::Float64)
   lake_fields = get_lake_fields(prognostic_fields)
-  return lake_fields.water_to_hd,lake_fields.lake_water_from_ocean
+  return lake_fields.water_to_hd/step_length,
+         lake_fields.lake_water_from_ocean/step_length
 end
 
 function handle_event(prognostic_fields::RiverAndLakePrognosticFields,setup_lakes::SetupLakes)
@@ -1230,6 +1243,36 @@ function write_diagnostic_lake_volumes_field(lake_parameters::LakeParameters,
                                              diagnostic_lake_volumes::Field{Float64};
                                              timestep::Int64=-1)
   throw(UserError())
+end
+
+function handle_event(prognostic_fields::RiverAndLakePrognosticFields,
+                      check_water_budget::CheckWaterBudget)
+  lake_prognostics::LakePrognostics = get_lake_prognostics(prognostic_fields)
+  lake_fields::LakeFields = get_lake_fields(prognostic_fields)
+  lake_diagnostic_variables = get_lake_diagnostic_variables(prognostic_fields)
+  new_total_lake_volume::Float64 = 0.0
+  for lake::Lake in lake_prognostics.lakes
+    lake_variables::LakeVariables = get_lake_variables(lake)
+    new_total_lake_volume += lake_variables.unprocessed_water + lake_variables.lake_volume
+    if isa(lake,OverflowingLake)
+      new_total_lake_volume += lake.overflowing_lake_variables.excess_water
+    end
+  end
+  change_in_total_lake_volume::Float64 = new_total_lake_volume -
+                                         lake_diagnostic_variables.total_lake_volume
+  total_inflow_minus_outflow::Float64 = sum(lake_fields.water_to_lakes) +
+                                        sum(lake_fields.lake_water_from_ocean) -
+                                        sum(lake_fields.water_to_hd)
+  difference::Float64 = change_in_total_lake_volume - total_inflow_minus_outflow
+  if ! isapprox(difference,0,atol=0.1)
+    println("*** Lake Water Budget ***")
+    println("Total lake volume: $(new_total_lake_volume)")
+    println("Total inflow - outflow: $(total_inflow_minus_outflow)")
+    println("Change in lake volume: $(change_in_total_lake_volume)")
+    println("Difference: $(difference)")
+  end
+  lake_diagnostic_variables.total_lake_volume = new_total_lake_volume
+  return prognostic_fields
 end
 
 end

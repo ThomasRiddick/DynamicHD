@@ -47,6 +47,9 @@ module icosohedral_lake_model_mod
 
 implicit none
 
+!Parameter for double precision floating point numbers
+integer,parameter :: dp = selected_real_kind(12)
+
 ! Lake Type Labels
 integer, parameter :: filling_lake_type = 1
 integer, parameter :: overflowing_lake_type = 2
@@ -85,11 +88,11 @@ end interface basinlist
 type :: lakeparameters
   logical :: instant_throughflow ! Flag to determine if sublakes recieving water from another sublake should
                                  ! recalculate immediately
-  real :: lake_retention_coefficient ! Parameter determining the rate of flow from overflowing lakes
+  real(dp) :: lake_retention_coefficient ! Parameter determining the rate of flow from overflowing lakes
   ! Surface Spatial Variables
   logical, pointer, dimension(:) :: lake_centers ! Center points (deepest points) of lakes
-  real, pointer, dimension(:) :: connection_volume_thresholds ! Thresholds to connect to next cell
-  real, pointer, dimension(:) :: flood_volume_thresholds ! Threshold to flood next cell
+  real(dp), pointer, dimension(:) :: connection_volume_thresholds ! Thresholds to connect to next cell
+  real(dp), pointer, dimension(:) :: flood_volume_thresholds ! Threshold to flood next cell
   logical, pointer, dimension(:) :: flood_only ! Cells where the connection and flood height are the same
                                                ! thus the connection step can be skipped
   logical, pointer, dimension(:) :: flood_local_redirect ! If this cell is a flood outlet does water flood
@@ -148,9 +151,9 @@ type :: lakefields
   logical, pointer, dimension(:) :: completed_lake_cells ! Fully flood cells
   integer, pointer, dimension(:) :: lake_numbers ! ID number of lake in this cell (if any)
   ! On the HD grid
-  real, pointer, dimension(:) :: water_to_lakes ! Water from HD model sink points to distribute to lakes
-  real, pointer, dimension(:) :: water_to_hd ! Water from overflowing lakes to redistribute to the HD model
-  real, pointer, dimension(:) :: lake_water_from_ocean ! Water to remove from the ocean to prevent negative
+  real(dp), pointer, dimension(:) :: water_to_lakes ! Water from HD model sink points to distribute to lakes
+  real(dp), pointer, dimension(:) :: water_to_hd ! Water from overflowing lakes to redistribute to the HD model
+  real(dp), pointer, dimension(:) :: lake_water_from_ocean ! Water to remove from the ocean to prevent negative
                                                        ! lake volumes occuring
   ! Lists
   integer, pointer, dimension(:) :: cells_with_lakes_index ! Coordinates of cells containing at least one lake
@@ -169,6 +172,7 @@ end interface lakefields
 type lakeprognostics
   type(lakepointer), pointer, dimension(:) :: lakes ! An array of lake objects representing each
                                                     ! lake basin/sub-basin
+  real(dp) :: total_lake_volume
   contains
     procedure :: initialiselakeprognostics
     procedure :: lakeprognosticsdestructor
@@ -185,9 +189,9 @@ type :: lake
   integer :: lake_number ! ID number of this lake - this is also the index of this lake
                          ! in the list of lakes
   integer :: center_cell_index ! Coordinates of this lakes deepest point
-  real    :: lake_volume ! Current volume of this lake itself
-  real    :: secondary_lake_volume ! Volume of any subsumed sub-basins of this lake
-  real    :: unprocessed_water ! Water added to this lake that is yet to be added to its
+  real(dp)    :: lake_volume ! Current volume of this lake itself
+  real(dp)    :: secondary_lake_volume ! Volume of any subsumed sub-basins of this lake
+  real(dp)    :: unprocessed_water ! Water added to this lake that is yet to be added to its
                                ! volume for computational reasons
                                ! This will be dealt with at the end of the time-step
   integer :: current_cell_to_fill_index ! The current cell being filled
@@ -208,14 +212,14 @@ type :: lake
                                      ! case of a double merge
   logical :: use_additional_fields   ! Need to switch to additional fields due to a double merge
   ! Overflowing lake variables
-  real :: excess_water ! Water volume above the height of the outlet that needs to be drained off
+  real(dp) :: excess_water ! Water volume above the height of the outlet that needs to be drained off
   integer :: outflow_redirect_index ! Where (the HD model cell or lake) to place water being
                                     ! drained off in
   integer :: next_merge_target_index ! Used to determine the correct merge order in complex multi
                                      ! sub-basin merges
   logical :: local_redirect ! Should water drain back to the HD model (non-local) or back to the HD
                             ! model
-  real    :: lake_retention_coefficient ! Parameter determining how fast water above the outlet height
+  real(dp)    :: lake_retention_coefficient ! Parameter determining how fast water above the outlet height
                                         ! is drained off from this lake
   ! Subsumed lake variables
   integer :: primary_lake_number ! The lake that this lake should redirect its water to
@@ -268,13 +272,15 @@ subroutine initialiselake(this,center_cell_index_in,&
                           current_cell_to_fill_index_in, &
                           center_cell_coarse_index_in, &
                           lake_number_in,lake_volume_in,&
+                          unprocessed_water_in, &
                           lake_parameters_in,lake_fields_in)
   class(lake),intent(inout) :: this
   integer, intent(in) :: center_cell_index_in
   integer, intent(in) :: current_cell_to_fill_index_in
   integer, intent(in) :: center_cell_coarse_index_in
   integer, intent(in) :: lake_number_in
-  real, intent(in)    :: lake_volume_in
+  real(dp), intent(in)    :: lake_volume_in
+  real(dp), intent(in)    :: unprocessed_water_in
   type(lakeparameters), target, intent(in) :: lake_parameters_in
   type(lakefields), target, intent(inout) :: lake_fields_in
   integer :: i
@@ -286,7 +292,7 @@ subroutine initialiselake(this,center_cell_index_in,&
     this%center_cell_index = center_cell_index_in
     this%center_cell_coarse_index = center_cell_coarse_index_in
     this%current_cell_to_fill_index = current_cell_to_fill_index_in
-    this%unprocessed_water = 0.0
+    this%unprocessed_water = unprocessed_water_in
     if (.not. allocated(this%filled_lake_cells)) then
       i = 0
       do
@@ -336,10 +342,10 @@ subroutine initialiselakeparameters(this,lake_centers_in, &
                                     coarse_cell_numbers_on_fine_grid_in)
   class(lakeparameters),intent(inout) :: this
   logical :: instant_throughflow_in
-  real :: lake_retention_coefficient_in
+  real(dp) :: lake_retention_coefficient_in
   logical, pointer, dimension(:) :: lake_centers_in
-  real, pointer, dimension(:) :: connection_volume_thresholds_in
-  real, pointer, dimension(:) :: flood_volume_thresholds_in
+  real(dp), pointer, dimension(:) :: connection_volume_thresholds_in
+  real(dp), pointer, dimension(:) :: flood_volume_thresholds_in
   logical, pointer, dimension(:) :: flood_local_redirect_in
   logical, pointer, dimension(:) :: connect_local_redirect_in
   logical, pointer, dimension(:) :: additional_flood_local_redirect_in
@@ -397,7 +403,7 @@ subroutine initialiselakeparameters(this,lake_centers_in, &
     ! Set flood only flag
     allocate(this%flood_only(ncells_in))
     this%flood_only(:) = .false.
-    where (this%connection_volume_thresholds == -1.0)
+    where (this%connection_volume_thresholds == -1.0_dp)
       this%flood_only = .true.
     else where
       this%flood_only = .false.
@@ -463,8 +469,8 @@ function lakeparametersconstructor(lake_centers_in, &
                                    coarse_cell_numbers_on_fine_grid_in) result(constructor)
   type(lakeparameters), pointer :: constructor
   logical, pointer, dimension(:), intent(in) :: lake_centers_in
-  real, pointer, dimension(:), intent(in) :: connection_volume_thresholds_in
-  real, pointer, dimension(:), intent(in) :: flood_volume_thresholds_in
+  real(dp), pointer, dimension(:), intent(in) :: connection_volume_thresholds_in
+  real(dp), pointer, dimension(:), intent(in) :: flood_volume_thresholds_in
   logical, pointer, dimension(:), intent(in) :: flood_local_redirect_in
   logical, pointer, dimension(:), intent(in) :: connect_local_redirect_in
   logical, pointer, dimension(:), intent(in) :: additional_flood_local_redirect_in
@@ -481,7 +487,7 @@ function lakeparametersconstructor(lake_centers_in, &
   integer, intent(in) :: ncells_in
   integer, intent(in) :: ncells_coarse_in
   logical, intent(in) :: instant_throughflow_in
-  real, intent(in) :: lake_retention_coefficient_in
+  real(dp), intent(in) :: lake_retention_coefficient_in
   integer, pointer, dimension(:), intent(in), optional :: &
     coarse_cell_numbers_on_fine_grid_in
     allocate(constructor)
@@ -575,11 +581,11 @@ subroutine initialiselakefields(this,lake_parameters)
       allocate(this%lake_numbers(lake_parameters%ncells))
       this%lake_numbers(:) = 0
       allocate(this%water_to_lakes(lake_parameters%ncells_coarse))
-      this%water_to_lakes(:) = 0.0
+      this%water_to_lakes(:) = 0.0_dp
       allocate(this%lake_water_from_ocean(lake_parameters%ncells_coarse))
-      this%lake_water_from_ocean(:) = 0.0
+      this%lake_water_from_ocean(:) = 0.0_dp
       allocate(this%water_to_hd(lake_parameters%ncells_coarse))
-      this%water_to_hd(:) = 0.0
+      this%water_to_hd(:) = 0.0_dp
       allocate(cells_with_lakes_index_temp(lake_parameters%ncells_coarse))
       number_of_cells_containing_lakes = 0
       scale_factor = lake_parameters%ncells/lake_parameters%ncells_coarse
@@ -631,6 +637,7 @@ subroutine initialiselakeprognostics(this,lake_parameters_in,lake_fields_in)
   integer :: center_cell_coarse_index
   integer :: lake_number
   integer :: i
+    this%total_lake_volume = 0.0_dp
     allocate(lakes_temp(lake_parameters_in%ncells))
     lake_number = 0
     do i=1,lake_parameters_in%ncells
@@ -639,7 +646,7 @@ subroutine initialiselakeprognostics(this,lake_parameters_in,lake_fields_in)
         lake_number = lake_number + 1
         lake_temp => lake(lake_parameters_in,lake_fields_in,&
                           i,i,center_cell_coarse_index, &
-                          lake_number,0.0)
+                          lake_number,0.0_dp,0.0_dp)
         lakes_temp(lake_number) = lakepointer(lake_temp)
         lake_fields_in%lake_numbers(i) = lake_number
       end if
@@ -676,7 +683,8 @@ subroutine initialisefillinglake(this,lake_parameters_in,lake_fields_in,center_c
                                  current_cell_to_fill_index_in, &
                                  center_cell_coarse_index_in, &
                                  lake_number_in, &
-                                 lake_volume_in)
+                                 lake_volume_in, &
+                                 unprocessed_water_in)
   class(lake) :: this
   type(lakeparameters), intent(in) :: lake_parameters_in
   type(lakefields), intent(inout) :: lake_fields_in
@@ -684,12 +692,14 @@ subroutine initialisefillinglake(this,lake_parameters_in,lake_fields_in,center_c
   integer, intent(in) :: current_cell_to_fill_index_in
   integer, intent(in) :: center_cell_coarse_index_in
   integer, intent(in) :: lake_number_in
-  real,    intent(in) :: lake_volume_in
+  real(dp),    intent(in) :: lake_volume_in
+  real(dp),    intent(in) :: unprocessed_water_in
     call this%initialiselake(center_cell_index_in, &
                              current_cell_to_fill_index_in, &
                              center_cell_coarse_index_in, &
                              lake_number_in, &
                              lake_volume_in, &
+                             unprocessed_water_in, &
                              lake_parameters_in, &
                              lake_fields_in)
     this%lake_type = filling_lake_type
@@ -705,7 +715,7 @@ function lakeconstructor(lake_parameters_in,lake_fields_in,center_cell_index_in,
                          current_cell_to_fill_index_in, &
                          center_cell_coarse_index_in, &
                          lake_number_in, &
-                         lake_volume_in) result(constructor)
+                         lake_volume_in,unprocessed_water_in) result(constructor)
   type(lake), pointer :: constructor
   type(lakeparameters), intent(in) :: lake_parameters_in
   type(lakefields), intent(inout) :: lake_fields_in
@@ -713,7 +723,8 @@ function lakeconstructor(lake_parameters_in,lake_fields_in,center_cell_index_in,
   integer, intent(in) :: current_cell_to_fill_index_in
   integer, intent(in) :: center_cell_coarse_index_in
   integer, intent(in) :: lake_number_in
-  real,    intent(in) :: lake_volume_in
+  real(dp),    intent(in) :: lake_volume_in
+  real(dp),    intent(in) :: unprocessed_water_in
   allocate(constructor)
   call constructor%initialisefillinglake(lake_parameters_in, &
                                          lake_fields_in, &
@@ -721,7 +732,8 @@ function lakeconstructor(lake_parameters_in,lake_fields_in,center_cell_index_in,
                                          current_cell_to_fill_index_in, &
                                          center_cell_coarse_index_in, &
                                          lake_number_in, &
-                                         lake_volume_in)
+                                         lake_volume_in, &
+                                         unprocessed_water_in)
 end function lakeconstructor
 
 ! Disable filling lake values when using another type of lake
@@ -740,23 +752,26 @@ subroutine initialiseoverflowinglake(this,outflow_redirect_index_in, &
                                      current_cell_to_fill_index_in, &
                                      center_cell_coarse_index_in, &
                                      next_merge_target_index_in, &
-                                     lake_number_in,lake_volume_in)
+                                     lake_number_in,lake_volume_in, &
+                                     unprocessed_water_in)
   class(lake) :: this
   integer, intent(in) :: outflow_redirect_index_in
   logical, intent(in) :: local_redirect_in
-  real, intent(in)    :: lake_retention_coefficient_in
+  real(dp), intent(in)    :: lake_retention_coefficient_in
   integer, intent(in) :: center_cell_index_in
   integer, intent(in) :: current_cell_to_fill_index_in
   integer, intent(in) :: center_cell_coarse_index_in
   integer, intent(in) :: next_merge_target_index_in
   integer, intent(in) :: lake_number_in
-  real,    intent(in) :: lake_volume_in
+  real(dp),    intent(in) :: lake_volume_in
+  real(dp),    intent(in) :: unprocessed_water_in
   type(lakeparameters), intent(in) :: lake_parameters_in
   type(lakefields), intent(inout) :: lake_fields_in
     call this%initialiselake(center_cell_index_in, &
                              current_cell_to_fill_index_in, &
                              center_cell_coarse_index_in, &
                              lake_number_in,lake_volume_in, &
+                             unprocessed_water_in, &
                              lake_parameters_in, &
                              lake_fields_in)
     this%lake_type = overflowing_lake_type
@@ -764,7 +779,7 @@ subroutine initialiseoverflowinglake(this,outflow_redirect_index_in, &
     this%next_merge_target_index = next_merge_target_index_in
     this%local_redirect = local_redirect_in
     this%lake_retention_coefficient = lake_retention_coefficient_in
-    this%excess_water = 0.0
+    this%excess_water = 0.0_dp
     call this%set_filling_lake_parameter_to_null_values()
     call this%set_subsumed_lake_parameter_to_null_values()
 end subroutine initialiseoverflowinglake
@@ -776,7 +791,7 @@ subroutine set_overflowing_lake_parameter_to_null_values(this)
     this%next_merge_target_index = 0
     this%local_redirect = .false.
     this%lake_retention_coefficient = 0
-    this%excess_water = 0.0
+    this%excess_water = 0.0_dp
 end subroutine set_overflowing_lake_parameter_to_null_values
 
 ! Reinitialise this lake object as a subsumed lake
@@ -785,7 +800,8 @@ subroutine initialisesubsumedlake(this,lake_parameters_in,lake_fields_in, &
                                   current_cell_to_fill_index_in, &
                                   center_cell_coarse_index_in, &
                                   lake_number_in,&
-                                  lake_volume_in)
+                                  lake_volume_in,&
+                                  unprocessed_water_in)
   class(lake) :: this
   type(lakeparameters), intent(in) :: lake_parameters_in
   type(lakefields), intent(inout) :: lake_fields_in
@@ -794,11 +810,13 @@ subroutine initialisesubsumedlake(this,lake_parameters_in,lake_fields_in, &
   integer, intent(in) :: current_cell_to_fill_index_in
   integer, intent(in) :: center_cell_coarse_index_in
   integer, intent(in) :: lake_number_in
-  real,    intent(in) :: lake_volume_in
+  real(dp),    intent(in) :: lake_volume_in
+  real(dp),    intent(in) :: unprocessed_water_in
     call this%initialiselake(center_cell_index_in, &
                              current_cell_to_fill_index_in, &
                              center_cell_coarse_index_in, &
                              lake_number_in,lake_volume_in, &
+                             unprocessed_water_in, &
                              lake_parameters_in,lake_fields_in)
     this%lake_type = subsumed_lake_type
     this%primary_lake_number = primary_lake_number_in
@@ -817,15 +835,15 @@ subroutine setup_lakes(lake_parameters,lake_prognostics,lake_fields,initial_wate
   type(lakeparameters), intent(in) :: lake_parameters
   type(lakeprognostics), intent(inout) :: lake_prognostics
   type(lakefields), intent(inout) :: lake_fields
-  real, pointer, dimension(:), intent(in) :: initial_water_to_lake_centers
+  real(dp), pointer, dimension(:), intent(in) :: initial_water_to_lake_centers
   type(lake), pointer :: working_lake
-  real :: initial_water_to_lake_center
+  real(dp) :: initial_water_to_lake_center
   integer :: lake_index
   integer :: i
     do i=1,lake_parameters%ncells
       if(lake_parameters%lake_centers(i)) then
         initial_water_to_lake_center = initial_water_to_lake_centers(i)
-        if(initial_water_to_lake_center > 0.0) then
+        if(initial_water_to_lake_center > 0.0_dp) then
           lake_index = lake_fields%lake_numbers(i)
           working_lake => lake_prognostics%lakes(lake_index)%lake_pointer
           call working_lake%add_water(initial_water_to_lake_center)
@@ -849,28 +867,30 @@ subroutine run_lakes(lake_parameters,lake_prognostics,lake_fields)
   integer :: i,j
   integer :: num_basins_in_cell
   integer :: basin_number
-  real :: share_to_each_lake
+  real(dp) :: share_to_each_lake
   type(lake), pointer :: working_lake
-    lake_fields%water_to_hd = 0.0
-    lake_fields%lake_water_from_ocean = 0.0
+    lake_fields%water_to_hd(:) = 0.0_dp
+    lake_fields%lake_water_from_ocean(:) = 0.0_dp
     do i = 1,size(lake_fields%cells_with_lakes_index)
       index = lake_fields%cells_with_lakes_index(i)
-      if (lake_fields%water_to_lakes(index) > 0.0) then
+      if (lake_fields%water_to_lakes(index) > 0.0_dp) then
         basin_number = lake_parameters%basin_numbers(index)
         num_basins_in_cell = &
           size(lake_parameters%basins(basin_number)%basin_indices)
-        share_to_each_lake = lake_fields%water_to_lakes(index)/num_basins_in_cell
+        share_to_each_lake = lake_fields%water_to_lakes(index)/ &
+                             real(num_basins_in_cell,dp)
         do j = 1,num_basins_in_cell
           basin_center_index = lake_parameters%basins(basin_number)%basin_indices(j)
           lake_index = lake_fields%lake_numbers(basin_center_index)
           working_lake => lake_prognostics%lakes(lake_index)%lake_pointer
           call working_lake%add_water(share_to_each_lake)
         end do
-      else if (lake_fields%water_to_lakes(index) < 0.0) then
+      else if (lake_fields%water_to_lakes(index) < 0.0_dp) then
         basin_number = lake_parameters%basin_numbers(index)
         num_basins_in_cell = \
           size(lake_parameters%basins(basin_number)%basin_indices)
-        share_to_each_lake = -1.0*lake_fields%water_to_lakes(index)/num_basins_in_cell
+        share_to_each_lake = -1.0_dp*lake_fields%water_to_lakes(index)/ &
+                             real(num_basins_in_cell)
         do j = 1,num_basins_in_cell
           basin_center_index = lake_parameters%basins(basin_number)%basin_indices(j)
           lake_index = lake_fields%lake_numbers(basin_center_index)
@@ -881,10 +901,10 @@ subroutine run_lakes(lake_parameters,lake_prognostics,lake_fields)
     end do
     do i = 1,size(lake_prognostics%lakes)
       working_lake => lake_prognostics%lakes(i)%lake_pointer
-      if (working_lake%unprocessed_water > 0.0) then
-          call working_lake%add_water(0.0)
+      if (working_lake%unprocessed_water > 0.0_dp) then
+          call working_lake%add_water(0.0_dp)
       end if
-      if (working_lake%lake_volume < 0.0) then
+      if (working_lake%lake_volume < 0.0_dp) then
         call working_lake%release_negative_water()
       end if
       if (working_lake%lake_type == overflowing_lake_type) then
@@ -904,7 +924,7 @@ end subroutine run_lakes
 ! already allocted to this lake) to this lakes primary lake
 recursive subroutine add_water(this,inflow)
   class(lake), target, intent(inout) :: this
-  real, intent(in) :: inflow
+  real(dp), intent(in) :: inflow
   type(lake),  pointer :: other_lake
   integer :: target_cell_index
   integer :: merge_type
@@ -912,11 +932,11 @@ recursive subroutine add_water(this,inflow)
   logical :: filled
   logical :: merge_possible
   logical :: already_merged
-  real :: inflow_local
+  real(dp) :: inflow_local
     if (this%lake_type == filling_lake_type) then
       inflow_local = inflow + this%unprocessed_water
-      this%unprocessed_water = 0.0
-      do while (inflow_local > 0.0)
+      this%unprocessed_water = 0.0_dp
+      do while (inflow_local > 0.0_dp)
         filled = this%fill_current_cell(inflow_local)
         if(filled) then
           merge_type = this%get_merge_type()
@@ -966,7 +986,7 @@ recursive subroutine add_water(this,inflow)
       end do
     else if (this%lake_type == overflowing_lake_type) then
       inflow_local = inflow + this%unprocessed_water
-      this%unprocessed_water = 0.0
+      this%unprocessed_water = 0.0_dp
       if (this%local_redirect) then
         other_lake_number  = this%lake_fields%lake_numbers(this%outflow_redirect_index)
         other_lake => &
@@ -981,7 +1001,7 @@ recursive subroutine add_water(this,inflow)
       end if
     else if (this%lake_type == subsumed_lake_type) then
       inflow_local = inflow + this%unprocessed_water
-      this%unprocessed_water = 0.0
+      this%unprocessed_water = 0.0_dp
       other_lake => this%lake_fields%other_lakes(this%primary_lake_number)%lake_pointer
       call other_lake%add_water(inflow_local)
     end if
@@ -1002,26 +1022,27 @@ end subroutine add_water
 subroutine remove_water(this,outflow)
   class(lake), target, intent(inout) :: this
   class(lake), pointer :: other_lake
-  real :: outflow
-  real :: outflow_local
-  real :: new_outflow
+  real(dp) :: outflow
+  real(dp) :: outflow_local
+  real(dp) :: new_outflow
   logical :: drained
   integer :: merge_type
     if (this%lake_type == filling_lake_type) then
       if (outflow <= this%unprocessed_water) then
         this%unprocessed_water = this%unprocessed_water - outflow
+        return
       end if
       outflow_local = outflow - this%unprocessed_water
-      this%unprocessed_water = 0.0
-      do while (outflow_local > 0.0)
-        outflow_local = this%drain_current_cell(outflow,drained)
+      this%unprocessed_water = 0.0_dp
+      do while (outflow_local > 0.0_dp)
+        outflow_local = this%drain_current_cell(outflow_local,drained)
         if (drained) then
           call this%rollback_filling_cell()
           merge_type = get_merge_type(this)
           if (merge_type == primary_merge .or. merge_type == double_merge) then
-            new_outflow = outflow_local/2.0
-            call this%rollback_primary_merge(new_outflow)
+            new_outflow = outflow_local/2.0_dp
             outflow_local = outflow_local - new_outflow
+            call this%rollback_primary_merge(new_outflow)
           end if
         end if
       end do
@@ -1031,11 +1052,12 @@ subroutine remove_water(this,outflow)
         return
       end if
       outflow_local = outflow - this%unprocessed_water
-      this%unprocessed_water = 0.0
+      this%unprocessed_water = 0.0_dp
       if (outflow_local <= this%excess_water) then
         this%excess_water = this%excess_water - outflow_local
+        return
       end if
-      outflow_local = this%excess_water - outflow_local
+      outflow_local =  outflow_local - this%excess_water
       this%excess_water = 0
       if (this%lake_parameters%flood_only(this%current_cell_to_fill_index) .or. &
           this%lake_volume <= &
@@ -1046,9 +1068,9 @@ subroutine remove_water(this,outflow)
       merge_type = this%get_merge_type()
       if (merge_type == double_merge) then
         if (this%primary_merge_completed) then
-            new_outflow = outflow_local/2.0
-            call this%rollback_primary_merge(new_outflow)
+            new_outflow = outflow_local/2.0_dp
             outflow_local = outflow_local - new_outflow
+            call this%rollback_primary_merge(new_outflow)
         end if
       end if
       this%primary_merge_completed = .false.
@@ -1060,7 +1082,7 @@ subroutine remove_water(this,outflow)
         return
       end if
       outflow_local = outflow - this%unprocessed_water
-      this%unprocessed_water = 0.0
+      this%unprocessed_water = 0.0_dp
       other_lake => this%lake_fields%other_lakes(this%primary_lake_number)%lake_pointer
       call other_lake%remove_water(outflow_local)
     end if
@@ -1070,7 +1092,7 @@ end subroutine remove_water
 ! infinite loops
 subroutine store_water(this,inflow)
   class(lake), target, intent(inout) :: this
-  real, intent(in) :: inflow
+  real(dp), intent(in) :: inflow
     this%unprocessed_water = this%unprocessed_water + inflow
 end subroutine store_water
 
@@ -1080,7 +1102,7 @@ subroutine release_negative_water(this)
     this%lake_fields%lake_water_from_ocean(this%center_cell_coarse_index) = &
       this%lake_fields%lake_water_from_ocean(this%center_cell_coarse_index) - &
       this%lake_volume
-    this%lake_volume = 0.0
+    this%lake_volume = 0.0_dp
 end subroutine
 
 ! Perform a merge as initiated by another lake. Change this lake to a subsumed lake,
@@ -1090,7 +1112,9 @@ subroutine accept_merge(this,redirect_coords_index)
   class(lake), intent(inout) :: this
   integer, intent(in) :: redirect_coords_index
   integer :: lake_type
+  real(dp) :: excess_water
     lake_type = this%lake_type
+    excess_water = this%excess_water
     this%lake_fields%completed_lake_cells(this%current_cell_to_fill_index) = .true.
     call this%initialisesubsumedlake(this%lake_parameters, &
                                      this%lake_fields, &
@@ -1098,9 +1122,10 @@ subroutine accept_merge(this,redirect_coords_index)
                                      this%center_cell_index, &
                                      this%current_cell_to_fill_index, &
                                      this%center_cell_coarse_index, &
-                                     this%lake_number,this%lake_volume)
+                                     this%lake_number,this%lake_volume, &
+                                     this%unprocessed_water)
     if (lake_type == overflowing_lake_type) then
-        call this%store_water(this%excess_water)
+        call this%store_water(excess_water)
     end if
 end subroutine accept_merge
 
@@ -1116,7 +1141,8 @@ subroutine accept_split(this)
                                     this%center_cell_index, &
                                     this%current_cell_to_fill_index, &
                                     this%center_cell_coarse_index, &
-                                    this%lake_number,this%lake_volume)
+                                    this%lake_number,this%lake_volume, &
+                                    this%unprocessed_water)
 end subroutine
 
 ! Change this filling lake to an overflowing lake
@@ -1143,21 +1169,22 @@ subroutine change_to_overflowing_lake(this,merge_type)
                                         this%center_cell_coarse_index, &
                                         target_cell_index, &
                                         this%lake_number, &
-                                        this%lake_volume)
+                                        this%lake_volume, &
+                                        this%unprocessed_water)
 end subroutine change_to_overflowing_lake
 
 ! Drain water above the height of the outlet from this overflowing lake
 ! Water is drained at a rate determined by the lake retention coefficient
 subroutine drain_excess_water(this)
   class(lake), intent(inout) :: this
-  real :: flow
-    if (this%excess_water > 0.0) then
+  real(dp) :: flow
+    if (this%excess_water > 0.0_dp) then
       this%excess_water = this%excess_water + this%unprocessed_water
-      this%unprocessed_water = 0.0
+      this%unprocessed_water = 0.0_dp
       flow = (this%excess_water+ &
               this%lake_volume+ &
               this%secondary_lake_volume)/ &
-             (this%lake_retention_coefficient + 1.0)
+             (this%lake_retention_coefficient + 1.0_dp)
       flow = min(flow,this%excess_water)
       this%lake_fields%water_to_hd(this%outflow_redirect_index) = &
            this%lake_fields%water_to_hd(this%outflow_redirect_index)+flow
@@ -1170,10 +1197,10 @@ end subroutine drain_excess_water
 !and if it is then also return the leftover water after filling it
 function fill_current_cell(this,inflow) result(filled)
   class(lake), intent(inout) :: this
-  real, intent(inout) :: inflow
+  real(dp), intent(inout) :: inflow
   logical :: filled
-  real :: new_lake_volume
-  real :: maximum_new_lake_volume
+  real(dp) :: new_lake_volume
+  real(dp) :: maximum_new_lake_volume
     new_lake_volume = inflow + this%lake_volume
     if (this%lake_fields%completed_lake_cells(this%current_cell_to_fill_index) .or. &
         this%lake_parameters%flood_only(this%current_cell_to_fill_index)) then
@@ -1185,7 +1212,7 @@ function fill_current_cell(this,inflow) result(filled)
     end if
     if (new_lake_volume <= maximum_new_lake_volume) then
       this%lake_volume = new_lake_volume
-      inflow = 0.0
+      inflow = 0.0_dp
       filled = .false.
     else
       inflow = new_lake_volume - maximum_new_lake_volume
@@ -1200,14 +1227,14 @@ end function fill_current_cell
 ! If so indicate it this with the drained flag and return any leftover outflow
 function drain_current_cell(this,outflow,drained) result(outflow_out)
   class(lake), intent(inout) :: this
-  real :: outflow
-  real :: outflow_out
-  real :: new_lake_volume
-  real :: minimum_new_lake_volume
+  real(dp) :: outflow
+  real(dp) :: outflow_out
+  real(dp) :: new_lake_volume
+  real(dp) :: minimum_new_lake_volume
   logical, intent(out) :: drained
     if (this%filled_lake_cell_index == 0) then
       this%lake_volume = this%lake_volume - outflow
-      outflow_out = 0.0
+      outflow_out = 0.0_dp
       drained = .false.
       return
     end if
@@ -1223,7 +1250,7 @@ function drain_current_cell(this,outflow,drained) result(outflow_out)
     if (new_lake_volume >= minimum_new_lake_volume) then
       this%lake_volume = new_lake_volume
       drained = .false.
-      outflow_out = 0.0
+      outflow_out = 0.0_dp
     else
       this%lake_volume = minimum_new_lake_volume
       drained = .true.
@@ -1358,7 +1385,7 @@ subroutine rollback_primary_merge(this,other_lake_outflow)
   class(lake), intent(inout) :: this
   class(lake), pointer :: other_lake
   integer :: other_lake_number
-  real :: other_lake_outflow
+  real(dp) :: other_lake_outflow
   integer :: target_cell_index
     call this%get_primary_merge_coords(target_cell_index)
     other_lake_number = this%lake_fields%lake_numbers(target_cell_index)
@@ -1380,7 +1407,8 @@ subroutine change_overflowing_lake_to_filling_lake(this)
                                     this%center_cell_index, &
                                     this%current_cell_to_fill_index, &
                                     this%center_cell_coarse_index, &
-                                    this%lake_number,this%lake_volume)
+                                    this%lake_number,this%lake_volume, &
+                                    this%unprocessed_water)
     this%primary_merge_completed = .true.
     this%use_additional_fields = use_additional_fields
 end subroutine change_overflowing_lake_to_filling_lake
@@ -1392,7 +1420,8 @@ subroutine change_subsumed_lake_to_filling_lake(this)
                                     this%center_cell_index, &
                                     this%current_cell_to_fill_index, &
                                     this%center_cell_coarse_index, &
-                                    this%lake_number,this%lake_volume)
+                                    this%lake_number,this%lake_volume, &
+                                    this%unprocessed_water)
     this%primary_merge_completed = .false.
     this%use_additional_fields = .false.
 end subroutine change_subsumed_lake_to_filling_lake
@@ -1560,13 +1589,13 @@ function calculate_diagnostic_lake_volumes(lake_parameters,&
   type(lakeparameters), intent(in) :: lake_parameters
   type(lakeprognostics), intent(inout) :: lake_prognostics
   type(lakefields), intent(inout) :: lake_fields
-  real, dimension(:), pointer :: diagnostic_lake_volumes
-  real, dimension(:), allocatable :: lake_volumes_by_lake_number
+  real(dp), dimension(:), pointer :: diagnostic_lake_volumes
+  real(dp), dimension(:), allocatable :: lake_volumes_by_lake_number
   type(lake), pointer :: working_lake
   integer :: i
   integer :: original_lake_index,lake_number
     allocate(diagnostic_lake_volumes(lake_parameters%ncells))
-    diagnostic_lake_volumes(:) = 0.0
+    diagnostic_lake_volumes(:) = 0.0_dp
     allocate(lake_volumes_by_lake_number(size(lake_prognostics%lakes)))
     do i = 1,size(lake_prognostics%lakes)
       working_lake => lake_prognostics%lakes(i)%lake_pointer
@@ -1585,5 +1614,50 @@ function calculate_diagnostic_lake_volumes(lake_parameters,&
       end if
     end do
 end function calculate_diagnostic_lake_volumes
+
+subroutine check_water_budget(lake_prognostics,lake_fields)
+  type(lakeprognostics), intent(inout) :: lake_prognostics
+  type(lakefields), intent(inout) :: lake_fields
+  type(lake), pointer :: working_lake
+  real(dp) :: new_total_lake_volume
+  real(dp) :: change_in_total_lake_volume,total_inflow_minus_outflow,difference
+  real(dp) :: total_water_to_lakes
+  real(dp) :: tolerance
+  integer :: i
+  character*64 :: number_as_string
+    new_total_lake_volume = 0.0_dp
+    do i = 1,size(lake_prognostics%lakes)
+      working_lake => lake_prognostics%lakes(i)%lake_pointer
+      new_total_lake_volume = new_total_lake_volume + &
+                              working_lake%unprocessed_water + &
+                              working_lake%lake_volume
+      if (working_lake%lake_type == overflowing_lake_type) then
+        new_total_lake_volume = new_total_lake_volume + &
+                                working_lake%excess_water
+      end if
+    end do
+    change_in_total_lake_volume = new_total_lake_volume - &
+                                  lake_prognostics%total_lake_volume
+    total_water_to_lakes = sum(lake_fields%water_to_lakes)
+    total_inflow_minus_outflow = total_water_to_lakes + &
+                                 sum(lake_fields%lake_water_from_ocean) - &
+                                 sum(lake_fields%water_to_hd)
+    difference = change_in_total_lake_volume - total_inflow_minus_outflow
+    tolerance = 5.0e-16_dp*max(abs(total_water_to_lakes),abs(new_total_lake_volume))
+    if (abs(difference) > tolerance) then
+      write(*,*) "*** Lake Water Budget ***"
+      write(number_as_string,*) sum(lake_fields%water_to_lakes)
+      write(*,*) "Total water to lakes" // trim(number_as_string)
+      write(number_as_string,*) new_total_lake_volume
+      write(*,*) "Total lake volume: " // trim(number_as_string)
+      write(number_as_string,*) total_inflow_minus_outflow
+      write(*,*) "Total inflow - outflow: " // trim(number_as_string)
+      write(number_as_string,*) change_in_total_lake_volume
+      write(*,*) "Change in lake volume: " // trim(number_as_string)
+      write(number_as_string,*) difference
+      write(*,*) "Difference: " // trim(number_as_string)
+    end if
+    lake_prognostics%total_lake_volume = new_total_lake_volume
+end subroutine check_water_budget
 
 end module icosohedral_lake_model_mod

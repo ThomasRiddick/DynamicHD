@@ -157,7 +157,7 @@ function handle_event(prognostic_fields::PrognosticFields,
   local lake_water_from_ocean::Field{Float64}
   if using_lakes
     lake_water_input::Field{Float64},lake_water_from_ocean =
-      water_from_lakes(prognostic_fields)
+      water_from_lakes(prognostic_fields,river_parameters.step_length)
     for_all(river_parameters.grid) do coords::Coords
       cell_lake_water_input::Float64 = lake_water_input(coords)
       if river_parameters.cascade_flag(coords)
@@ -215,7 +215,8 @@ function handle_event(prognostic_fields::PrognosticFields,
                                get(river_fields.river_inflow,coords) +
                                get(river_fields.runoff,coords) +
                                get(river_fields.drainage,coords) -
-                               get(river_fields.lake_evaporation,coords))
+                               get(river_fields.lake_evaporation,coords),
+                               river_parameters.step_length)
                 set!(river_fields.water_to_ocean,coords,
                      -1.0*get(lake_water_from_ocean,coords))
                 set!(river_fields.river_inflow,coords,0.0)
@@ -226,11 +227,12 @@ function handle_event(prognostic_fields::PrognosticFields,
   return prognostic_fields
 end
 
-function water_to_lakes(prognostic_fields::PrognosticFields,coords::Coords,inflow::Float64)
+function water_to_lakes(prognostic_fields::PrognosticFields,coords::Coords,inflow::Float64,
+                        step_length::Float64)
   throw(UserError())
 end
 
-function water_from_lakes(prognostic_fields::PrognosticFields)
+function water_from_lakes(prognostic_fields::PrognosticFields,step_length::Float64)
   throw(UserError())
 end
 

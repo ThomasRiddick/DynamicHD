@@ -7,7 +7,7 @@ module latlon_hd_model_interface_mod
 
   type(prognostics), target :: global_prognostics
   logical :: write_output
-  real :: global_step_length = 86400.0
+  real(dp) :: global_step_length = 86400.0_dp
 
   contains
 
@@ -17,7 +17,7 @@ module latlon_hd_model_interface_mod
     character(len = *) :: river_params_filename
     character(len = *) :: hd_start_filename
     character(len = *), optional :: lake_model_ctl_filename
-    real, pointer, dimension(:,:) :: initial_spillover_to_rivers
+    real(dp), pointer, dimension(:,:) :: initial_spillover_to_rivers
     type(riverparameters), pointer :: river_parameters
     type(riverprognosticfields), pointer :: river_fields
       river_parameters => read_river_parameters(river_params_filename)
@@ -40,8 +40,8 @@ module latlon_hd_model_interface_mod
     type(riverparameters), intent(in) :: river_parameters
     type(lakeparameters), pointer, optional, intent(in) :: lake_parameters
     type(riverprognosticfields), pointer, optional, intent(inout) :: river_fields
-    real, pointer, dimension(:,:),optional, intent(in) :: initial_spillover_to_rivers
-    real, pointer, dimension(:,:),optional, intent(in) :: initial_water_to_lake_centers
+    real(dp), pointer, dimension(:,:),optional, intent(in) :: initial_spillover_to_rivers
+    real(dp), pointer, dimension(:,:),optional, intent(in) :: initial_water_to_lake_centers
       global_prognostics = prognostics(using_lakes,river_parameters,river_fields)
       if (using_lakes) then
         call init_lake_model_test(lake_parameters,initial_water_to_lake_centers, &
@@ -53,10 +53,10 @@ module latlon_hd_model_interface_mod
 
   subroutine run_hd_model(timesteps,runoffs,drainages,lake_evaporation)
     integer, intent(in) :: timesteps
-    real   ,dimension(:,:,:) :: runoffs
-    real   ,dimension(:,:,:) :: drainages
-    real   ,dimension(:,:,:), optional :: lake_evaporation
-    real   ,dimension(:,:,:), allocatable :: lake_evaporation_local
+    real(dp)   ,dimension(:,:,:) :: runoffs
+    real(dp)   ,dimension(:,:,:) :: drainages
+    real(dp)   ,dimension(:,:,:), optional :: lake_evaporation
+    real(dp)   ,dimension(:,:,:), allocatable :: lake_evaporation_local
     integer :: i
       allocate(lake_evaporation_local,mold=runoffs)
       if (present(lake_evaporation)) then

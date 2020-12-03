@@ -16,10 +16,10 @@ function read_grid_information(river_params_filename) &
   character(len = max_name_length) :: river_params_filename
   type(gridinformation) :: grid_information
   integer :: ncells
-  real,pointer,dimension(:) :: clat
-  real,pointer,dimension(:) :: clon
-  real,pointer,dimension(:,:) :: clat_bounds
-  real,pointer,dimension(:,:) :: clon_bounds
+  real(dp),pointer,dimension(:) :: clat
+  real(dp),pointer,dimension(:) :: clon
+  real(dp),pointer,dimension(:,:) :: clat_bounds
+  real(dp),pointer,dimension(:,:) :: clon_bounds
   integer :: ncid
   integer, dimension(2) :: dimids
   integer :: varid
@@ -52,17 +52,17 @@ end function read_grid_information
 function read_river_parameters(river_params_filename,step_length,day_length) &
     result(river_parameters)
   character(len = max_name_length) :: river_params_filename
-  real :: step_length
-  real :: day_length
+  real(dp) :: step_length
+  real(dp) :: day_length
   type(riverparameters), pointer :: river_parameters
   integer, pointer, dimension(:) :: next_cell_index
-  real, pointer, dimension(:)    :: temporary_real_array
+  real(dp), pointer, dimension(:)    :: temporary_real_array
   integer, pointer, dimension(:) :: river_reservoir_nums
   integer, pointer, dimension(:) :: overland_reservoir_nums
   integer, pointer, dimension(:) :: base_reservoir_nums
-  real, pointer, dimension(:) :: river_retention_coefficients
-  real, pointer, dimension(:) :: overland_retention_coefficients
-  real, pointer, dimension(:) :: base_retention_coefficients
+  real(dp), pointer, dimension(:) :: river_retention_coefficients
+  real(dp), pointer, dimension(:) :: overland_retention_coefficients
+  real(dp), pointer, dimension(:) :: base_retention_coefficients
   integer, pointer, dimension(:) :: landsea_mask_int
   logical, pointer, dimension(:) :: landsea_mask
   integer, dimension(1) :: dimids
@@ -133,10 +133,10 @@ function load_river_initial_values(hd_start_filename) &
     result(river_prognostic_fields)
   character(len = max_name_length) :: hd_start_filename
   type(riverprognosticfields), pointer :: river_prognostic_fields
-  real, pointer,     dimension(:) :: river_inflow
-  real, pointer,     dimension(:,:) :: base_flow_reservoirs
-  real, pointer,    dimension(:,:) :: overland_flow_reservoirs
-  real, pointer,     dimension(:,:) :: river_flow_reservoirs
+  real(dp), pointer,     dimension(:) :: river_inflow
+  real(dp), pointer,     dimension(:,:) :: base_flow_reservoirs
+  real(dp), pointer,    dimension(:,:) :: overland_flow_reservoirs
+  real(dp), pointer,     dimension(:,:) :: river_flow_reservoirs
   integer, dimension(2) :: dimids
   integer :: ncells
   integer :: ncid,varid
@@ -160,7 +160,7 @@ function load_river_initial_values(hd_start_filename) &
     call check_return_code(nf90_get_var(ncid,varid,river_flow_reservoirs))
 
     allocate(river_inflow(ncells))
-    river_inflow(:) = 0.0
+    river_inflow(:) = 0.0_dp
 
     call check_return_code(nf90_close(ncid))
 
@@ -201,8 +201,8 @@ function load_drainages_fields(drainages_filename,first_timestep,last_timestep,&
     result(drainages)
   character(len = max_name_length) :: drainages_filename
   type(riverparameters), intent(in) :: river_parameters
-  real, pointer, dimension(:,:) :: drainages
-  real, pointer, dimension(:) :: drainages_on_timeslice
+  real(dp), pointer, dimension(:,:) :: drainages
+  real(dp), pointer, dimension(:) :: drainages_on_timeslice
   integer :: first_timestep, last_timestep
   integer :: ncells
   integer :: ncid,varid
@@ -228,8 +228,8 @@ function load_runoff_fields(runoffs_filename,first_timestep,last_timestep, &
                             river_parameters) &
     result(runoffs)
   character(len = max_name_length) :: runoffs_filename
-  real, pointer, dimension(:,:) :: runoffs
-  real, pointer, dimension(:) :: runoffs_on_timeslice
+  real(dp), pointer, dimension(:,:) :: runoffs
+  real(dp), pointer, dimension(:) :: runoffs_on_timeslice
   type(riverparameters), intent(in) :: river_parameters
   integer :: ncells
   integer :: ncid,varid
@@ -257,7 +257,7 @@ subroutine write_river_flow_field(working_directory,river_parameters,&
                                   grid_information)
   character(len = *), intent(in) :: working_directory
   type(riverparameters), pointer,intent(in) :: river_parameters
-  real, pointer, dimension(:),intent(in) :: river_flow_field
+  real(dp), pointer, dimension(:),intent(in) :: river_flow_field
   integer,intent(in) :: timestep
   type(gridinformation), intent(in) :: grid_information
   integer :: ncid,varid

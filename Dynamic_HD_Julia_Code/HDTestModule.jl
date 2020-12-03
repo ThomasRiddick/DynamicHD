@@ -41,7 +41,7 @@ using MergeTypesModule
                                      overland_retention_coefficients,
                                      base_retention_coefficients,
                                      landsea_mask,
-                                     grid)
+                                     grid,1.0,1.0)
   drainage::Field{Float64} = LatLonField{Float64}(river_parameters.grid,Float64[ 1.0 1.0 1.0 1.0
                                                                                  1.0 1.0 1.0 1.0
                                                                                  1.0 1.0 0.0 1.0
@@ -110,7 +110,7 @@ end
                                      overland_retention_coefficients,
                                      base_retention_coefficients,
                                      landsea_mask,
-                                     grid)
+                                     grid,1.0,1.0)
   lake_grid = LatLonGrid(9,9,true)
   lake_centers::Field{Bool} = LatLonField{Bool}(lake_grid,
                                                 Bool[ false false false false false false false false false
@@ -427,7 +427,7 @@ end
                                      overland_retention_coefficients,
                                      base_retention_coefficients,
                                      landsea_mask,
-                                     grid)
+                                     grid,1.0,1.0)
   lake_grid = LatLonGrid(20,20,true)
   lake_centers::Field{Bool} = LatLonField{Bool}(lake_grid,
     Bool[ false false false false false false false false false false false false false false false false #=
@@ -1159,7 +1159,7 @@ end
                                      overland_retention_coefficients,
                                      base_retention_coefficients,
                                      landsea_mask,
-                                     grid)
+                                     grid,1.0,1.0)
   lake_grid = LatLonGrid(20,20,true)
   lake_centers::Field{Bool} = LatLonField{Bool}(lake_grid,
     Bool[ false false false false false false false false false false false false false false false false #=
@@ -2034,7 +2034,7 @@ end
                                      overland_retention_coefficients,
                                      base_retention_coefficients,
                                      landsea_mask,
-                                     grid)
+                                     grid,1.0,1.0)
   mapping_to_coarse_grid::Array{Int64,1} =
     vec(Int64[1 1 1 1 1 2 2 2 2 2 3 3 3 3 3 4 4 4 4 4 #=
            =# 1 1 1 1 1 2 2 2 2 2 3 3 3 3 3 4 4 4 4 4 #=
@@ -2530,7 +2530,7 @@ end
                                      overland_retention_coefficients,
                                      base_retention_coefficients,
                                      landsea_mask,
-                                     grid)
+                                     grid,1.0,1.0)
   mapping_to_coarse_grid::Array{Int64,1} =
     vec(Int64[1 1 1 1 1 2 2 2 2 2 3 3 3 3 3 4 4 4 4 4 #=
            =# 1 1 1 1 1 2 2 2 2 2 3 3 3 3 3 4 4 4 4 4 #=
@@ -3166,7 +3166,7 @@ end
                                      overland_retention_coefficients,
                                      base_retention_coefficients,
                                      landsea_mask,
-                                     grid)
+                                     grid,1.0,1.0)
   mapping_to_coarse_grid::Array{Int64,1} =
     vec(Int64[ 1,2,3,4,5, #=
             =# 6,7,8,9,10,     11,12,13,14,15, #=

@@ -5,13 +5,13 @@ use latlon_lake_model_interface_mod
 implicit none
 
 type, public :: riverparameters
-  real, pointer, dimension(:,:) :: rdirs
+  real(dp), pointer, dimension(:,:) :: rdirs
   integer, pointer, dimension(:,:) :: river_reservoir_nums
   integer, pointer, dimension(:,:) :: overland_reservoir_nums
   integer, pointer, dimension(:,:) :: base_reservoir_nums
-  real, pointer, dimension(:,:) :: river_retention_coefficients
-  real, pointer, dimension(:,:) :: overland_retention_coefficients
-  real, pointer, dimension(:,:) :: base_retention_coefficients
+  real(dp), pointer, dimension(:,:) :: river_retention_coefficients
+  real(dp), pointer, dimension(:,:) :: overland_retention_coefficients
+  real(dp), pointer, dimension(:,:) :: base_retention_coefficients
   logical, pointer, dimension(:,:) :: landsea_mask
   logical, pointer, dimension(:,:) :: cascade_flag
   integer :: nlat,nlon
@@ -25,14 +25,14 @@ interface riverparameters
 end interface
 
 type, public :: riverprognosticfields
-  real, pointer,     dimension(:,:)   :: runoff
-  real, pointer,     dimension(:,:)   :: drainage
-  real, pointer,     dimension(:,:)   :: lake_evaporation
-  real, pointer,     dimension(:,:)   :: river_inflow
-  real, pointer,     dimension(:,:,:)   :: base_flow_reservoirs
-  real, pointer,     dimension(:,:,:)   :: overland_flow_reservoirs
-  real, pointer,     dimension(:,:,:) :: river_flow_reservoirs
-  real, allocatable, dimension(:,:)   :: water_to_ocean
+  real(dp), pointer,     dimension(:,:)   :: runoff
+  real(dp), pointer,     dimension(:,:)   :: drainage
+  real(dp), pointer,     dimension(:,:)   :: lake_evaporation
+  real(dp), pointer,     dimension(:,:)   :: river_inflow
+  real(dp), pointer,     dimension(:,:,:)   :: base_flow_reservoirs
+  real(dp), pointer,     dimension(:,:,:)   :: overland_flow_reservoirs
+  real(dp), pointer,     dimension(:,:,:) :: river_flow_reservoirs
+  real(dp), allocatable, dimension(:,:)   :: water_to_ocean
   contains
     procedure :: initialiseriverprognosticfields
     procedure :: riverprognosticfieldsdestructor
@@ -44,10 +44,10 @@ interface riverprognosticfields
 end interface
 
 type riverdiagnosticfields
-  real, pointer, dimension(:,:) :: runoff_to_rivers
-  real, pointer, dimension(:,:) :: drainage_to_rivers
-  real, pointer, dimension(:,:) :: river_outflow
-  real, pointer, dimension(:,:) :: flow_in
+  real(dp), pointer, dimension(:,:) :: runoff_to_rivers
+  real(dp), pointer, dimension(:,:) :: drainage_to_rivers
+  real(dp), pointer, dimension(:,:) :: river_outflow
+  real(dp), pointer, dimension(:,:) :: flow_in
   contains
     procedure :: initialiseriverdiagnosticfields
     procedure :: riverdiagnosticfieldsdestructor
@@ -58,7 +58,7 @@ interface riverdiagnosticfields
 end interface
 
 type riverdiagnosticoutputfields
-  real, allocatable, dimension(:,:) :: cumulative_river_flow
+  real(dp), allocatable, dimension(:,:) :: cumulative_river_flow
   contains
     procedure :: initialiseriverdiagnosticoutputfields
     procedure :: riverdiagnosticoutputfieldsdestructor
@@ -94,13 +94,13 @@ subroutine initialiseriverparameters(this,rdirs_in,river_reservoir_nums_in, &
                                      base_retention_coefficients_in, &
                                      landsea_mask_in)
   class(riverparameters) :: this
-  real, pointer, dimension(:,:) :: rdirs_in
+  real(dp), pointer, dimension(:,:) :: rdirs_in
   integer, pointer, dimension(:,:) :: river_reservoir_nums_in
   integer, pointer, dimension(:,:) :: overland_reservoir_nums_in
   integer, pointer, dimension(:,:) :: base_reservoir_nums_in
-  real, pointer, dimension(:,:) :: river_retention_coefficients_in
-  real, pointer, dimension(:,:) :: overland_retention_coefficients_in
-  real, pointer, dimension(:,:) :: base_retention_coefficients_in
+  real(dp), pointer, dimension(:,:) :: river_retention_coefficients_in
+  real(dp), pointer, dimension(:,:) :: overland_retention_coefficients_in
+  real(dp), pointer, dimension(:,:) :: base_retention_coefficients_in
   logical, pointer, dimension(:,:) :: landsea_mask_in
     this%rdirs => rdirs_in
     this%river_reservoir_nums => river_reservoir_nums_in
@@ -127,13 +127,13 @@ function riverparametersconstructor(rdirs_in,river_reservoir_nums_in, &
                                     base_retention_coefficients_in, &
                                     landsea_mask_in) result(constructor)
   type(riverparameters), pointer :: constructor
-  real, pointer, dimension(:,:), intent(in) :: rdirs_in
+  real(dp), pointer, dimension(:,:), intent(in) :: rdirs_in
   integer, pointer, dimension(:,:), intent(in) :: river_reservoir_nums_in
   integer, pointer, dimension(:,:), intent(in) :: overland_reservoir_nums_in
   integer, pointer, dimension(:,:), intent(in) :: base_reservoir_nums_in
-  real, pointer, dimension(:,:), intent(in) :: river_retention_coefficients_in
-  real, pointer, dimension(:,:), intent(in) :: overland_retention_coefficients_in
-  real, pointer, dimension(:,:), intent(in) :: base_retention_coefficients_in
+  real(dp), pointer, dimension(:,:), intent(in) :: river_retention_coefficients_in
+  real(dp), pointer, dimension(:,:), intent(in) :: overland_retention_coefficients_in
+  real(dp), pointer, dimension(:,:), intent(in) :: base_retention_coefficients_in
   logical, pointer, dimension(:,:), intent(in) :: landsea_mask_in
     allocate(constructor)
     call constructor%initialiseriverparameters(rdirs_in,river_reservoir_nums_in, &
@@ -163,10 +163,10 @@ subroutine initialiseriverprognosticfields(this,river_inflow_in, &
                                            overland_flow_reservoirs_in, &
                                            river_flow_reservoirs_in)
   class(riverprognosticfields) :: this
-  real, pointer, dimension(:,:)   :: river_inflow_in
-  real, pointer, dimension(:,:,:)   :: base_flow_reservoirs_in
-  real, pointer, dimension(:,:,:)   :: overland_flow_reservoirs_in
-  real, pointer, dimension(:,:,:) :: river_flow_reservoirs_in
+  real(dp), pointer, dimension(:,:)   :: river_inflow_in
+  real(dp), pointer, dimension(:,:,:)   :: base_flow_reservoirs_in
+  real(dp), pointer, dimension(:,:,:)   :: overland_flow_reservoirs_in
+  real(dp), pointer, dimension(:,:,:) :: river_flow_reservoirs_in
     allocate(this%runoff,mold=river_inflow_in)
     allocate(this%drainage,mold=river_inflow_in)
     allocate(this%lake_evaporation,mold=river_inflow_in)
@@ -198,10 +198,10 @@ function riverprognosticfieldsconstructor(river_inflow_in, &
                                           overland_flow_reservoirs_in, &
                                           river_flow_reservoirs_in) &
     result(constructor)
-  real, pointer, dimension(:,:)   :: river_inflow_in
-  real, pointer, dimension(:,:,:)   :: base_flow_reservoirs_in
-  real, pointer, dimension(:,:,:)   :: overland_flow_reservoirs_in
-  real, pointer, dimension(:,:,:) :: river_flow_reservoirs_in
+  real(dp), pointer, dimension(:,:)   :: river_inflow_in
+  real(dp), pointer, dimension(:,:,:)   :: base_flow_reservoirs_in
+  real(dp), pointer, dimension(:,:,:)   :: overland_flow_reservoirs_in
+  real(dp), pointer, dimension(:,:,:) :: river_flow_reservoirs_in
   type(riverprognosticfields), pointer :: constructor
     allocate(constructor)
     call constructor%initialiseriverprognosticfields(river_inflow_in, &
@@ -213,10 +213,10 @@ end function riverprognosticfieldsconstructor
 function riverprognosticfieldsgridonlyconstructor(nlat,nlon,nres_b,nres_o,nres_r) &
     result(constructor)
   integer, intent(in) :: nlat,nlon,nres_b,nres_o,nres_r
-  real, pointer, dimension(:,:)   :: river_inflow_in
-  real, pointer, dimension(:,:,:)   :: base_flow_reservoirs_in
-  real, pointer, dimension(:,:,:)   :: overland_flow_reservoirs_in
-  real, pointer, dimension(:,:,:) :: river_flow_reservoirs_in
+  real(dp), pointer, dimension(:,:)   :: river_inflow_in
+  real(dp), pointer, dimension(:,:,:)   :: base_flow_reservoirs_in
+  real(dp), pointer, dimension(:,:,:)   :: overland_flow_reservoirs_in
+  real(dp), pointer, dimension(:,:,:) :: river_flow_reservoirs_in
   type(riverprognosticfields), pointer :: constructor
     allocate(river_inflow_in(nlat,nlon))
     allocate(base_flow_reservoirs_in(nlat,nlon,nres_b))
@@ -240,10 +240,10 @@ subroutine initialiseriverdiagnosticfields(this,river_parameters)
     allocate(this%drainage_to_rivers(river_parameters%nlat,river_parameters%nlon))
     allocate(this%river_outflow(river_parameters%nlat,river_parameters%nlon))
     allocate(this%flow_in(river_parameters%nlat,river_parameters%nlon))
-    this%runoff_to_rivers = 0.0
-    this%drainage_to_rivers = 0.0
-    this%river_outflow = 0.0
-    this%flow_in = 0.0
+    this%runoff_to_rivers = 0.0_dp
+    this%drainage_to_rivers = 0.0_dp
+    this%river_outflow = 0.0_dp
+    this%flow_in = 0.0_dp
 end subroutine initialiseriverdiagnosticfields
 
 function riverdiagnosticfieldsconstructor(river_parameters) result(constructor)
@@ -264,7 +264,7 @@ subroutine initialiseriverdiagnosticoutputfields(this,river_parameters)
   class(riverdiagnosticoutputfields) :: this
   type(riverparameters), intent(in) :: river_parameters
     allocate(this%cumulative_river_flow(river_parameters%nlat,river_parameters%nlon))
-    this%cumulative_river_flow = 0.0
+    this%cumulative_river_flow = 0.0_dp
 end subroutine initialiseriverdiagnosticoutputfields
 
 function riverdiagnosticoutputfieldsconstructor(river_parameters) result(constructor)
@@ -324,8 +324,8 @@ end subroutine prognosticsdestructor
 
 subroutine set_runoff_and_drainage(prognostic_fields,runoff,drainage)
   type(prognostics), intent(inout) :: prognostic_fields
-  real   ,dimension(:,:) :: runoff
-  real   ,dimension(:,:) :: drainage
+  real(dp)   ,dimension(:,:) :: runoff
+  real(dp)   ,dimension(:,:) :: drainage
     prognostic_fields%river_fields%runoff = runoff
     prognostic_fields%river_fields%drainage = drainage
 end subroutine set_runoff_and_drainage
@@ -366,7 +366,7 @@ subroutine run_hd(prognostic_fields)
                  prognostic_fields%river_parameters%cascade_flag, &
                  prognostic_fields%river_parameters%nlat, &
                  prognostic_fields%river_parameters%nlon)
-    prognostic_fields%river_fields%river_inflow(:,:) = 0.0
+    prognostic_fields%river_fields%river_inflow(:,:) = 0.0_dp
     prognostic_fields%river_diagnostic_fields%flow_in(:,:) =  &
         prognostic_fields%river_diagnostic_fields%river_outflow(:,:) + &
         prognostic_fields%river_diagnostic_fields%runoff_to_rivers(:,:) + &
@@ -376,19 +376,19 @@ subroutine run_hd(prognostic_fields)
                prognostic_fields%river_fields%river_inflow, &
                prognostic_fields%river_parameters%nlat, &
                prognostic_fields%river_parameters%nlon)
-    prognostic_fields%river_diagnostic_fields%river_outflow(:,:) = 0.0
-    prognostic_fields%river_diagnostic_fields%runoff_to_rivers(:,:) = 0.0
-    prognostic_fields%river_diagnostic_fields%drainage_to_rivers(:,:) = 0.0
-    where (prognostic_fields%river_parameters%rdirs == -1.0 .or. &
-           prognostic_fields%river_parameters%rdirs ==  0.0 .or. &
-           prognostic_fields%river_parameters%rdirs ==  5.0)
+    prognostic_fields%river_diagnostic_fields%river_outflow(:,:) = 0.0_dp
+    prognostic_fields%river_diagnostic_fields%runoff_to_rivers(:,:) = 0.0_dp
+    prognostic_fields%river_diagnostic_fields%drainage_to_rivers(:,:) = 0.0_dp
+    where (prognostic_fields%river_parameters%rdirs == -1.0_dp .or. &
+           prognostic_fields%river_parameters%rdirs ==  0.0_dp .or. &
+           prognostic_fields%river_parameters%rdirs ==  5.0_dp)
         prognostic_fields%river_fields%water_to_ocean = &
               prognostic_fields%river_fields%river_inflow + &
               prognostic_fields%river_fields%runoff + &
               prognostic_fields%river_fields%drainage
-        prognostic_fields%river_fields%river_inflow = 0.0
+        prognostic_fields%river_fields%river_inflow = 0.0_dp
     else where
-        prognostic_fields%river_fields%water_to_ocean = 0.0
+        prognostic_fields%river_fields%water_to_ocean = 0.0_dp
     end where
     if (prognostic_fields%using_lakes) then
       where(prognostic_fields%river_parameters%rdirs == -2.0)
@@ -397,13 +397,13 @@ subroutine run_hd(prognostic_fields)
             prognostic_fields%river_fields%runoff + &
             prognostic_fields%river_fields%drainage - &
             prognostic_fields%river_fields%lake_evaporation
-        prognostic_fields%river_fields%river_inflow = 0.0
+        prognostic_fields%river_fields%river_inflow = 0.0_dp
         prognostic_fields%river_fields%water_to_ocean = &
-          -1.0*prognostic_fields%lake_interface_fields%lake_water_from_ocean
+          -1.0_dp*prognostic_fields%lake_interface_fields%lake_water_from_ocean
       end where
     end if
-    prognostic_fields%river_fields%runoff(:,:) = 0.0
-    prognostic_fields%river_fields%drainage(:,:) = 0.0
+    prognostic_fields%river_fields%runoff(:,:) = 0.0_dp
+    prognostic_fields%river_fields%drainage(:,:) = 0.0_dp
     if (prognostic_fields%using_lakes) then
       call run_lake_model(prognostic_fields%lake_interface_fields)
     end if
@@ -411,16 +411,16 @@ end subroutine run_hd
 
 subroutine cascade(reservoirs,inflow,outflow,retention_coefficients, &
                    reservoir_nums,cascade_flag,nlat,nlon)
-  real,    pointer, dimension(:,:), intent(in) :: inflow
-  real,    pointer, dimension(:,:), intent(in) :: retention_coefficients
+  real(dp),    pointer, dimension(:,:), intent(in) :: inflow
+  real(dp),    pointer, dimension(:,:), intent(in) :: retention_coefficients
   integer, pointer, dimension(:,:), intent(in) :: reservoir_nums
   logical, pointer, dimension(:,:), intent(in) :: cascade_flag
-  real,    pointer, dimension(:,:,:), intent(inout) :: reservoirs
-  real,    pointer, dimension(:,:), intent(inout) :: outflow
+  real(dp),    pointer, dimension(:,:,:), intent(inout) :: reservoirs
+  real(dp),    pointer, dimension(:,:), intent(inout) :: outflow
   integer, intent(in) :: nlat,nlon
   integer :: i,j,n
-  real :: flow
-  real :: new_reservoir_value
+  real(dp) :: flow
+  real(dp) :: new_reservoir_value
     do j=1,nlon
       do i=1,nlat
         if (cascade_flag(i,j)) then
@@ -437,40 +437,40 @@ subroutine cascade(reservoirs,inflow,outflow,retention_coefficients, &
 end subroutine cascade
 
 subroutine route(flow_directions,flow_in,flow_out,nlat,nlon)
-  real, pointer, dimension(:,:) :: flow_directions
-  real, pointer, dimension(:,:) :: flow_in
-  real, pointer, dimension(:,:) :: flow_out
+  real(dp), pointer, dimension(:,:) :: flow_directions
+  real(dp), pointer, dimension(:,:) :: flow_in
+  real(dp), pointer, dimension(:,:) :: flow_out
   integer, intent(in) :: nlat,nlon
-  real :: flow_in_local
-  real :: flow_direction
+  real(dp) :: flow_in_local
+  real(dp) :: flow_direction
   integer :: i,j
   integer :: new_j,new_i
     do j=1,nlon
       do i=1,nlat
         flow_in_local = flow_in(i,j)
-        if (flow_in_local /= 0.0) then
+        if (flow_in_local /= 0.0_dp) then
           flow_direction = flow_directions(i,j)
-          if (flow_direction == 5.0 .or. flow_direction == -2.0 .or. &
-              flow_direction == -1.0 .or. flow_direction == 0.0) then
+          if (flow_direction == 5.0_dp .or. flow_direction == -2.0_dp .or. &
+              flow_direction == -1.0_dp .or. flow_direction == 0.0_dp) then
             flow_in_local = flow_out(i,j) + flow_in_local
             flow_out(i,j) = flow_in_local
           else
-            if (flow_direction == 1.0 .or. &
-                flow_direction == 4.0 .or. &
-                flow_direction == 7.0) then
+            if (flow_direction == 1.0_dp .or. &
+                flow_direction == 4.0_dp .or. &
+                flow_direction == 7.0_dp) then
               new_j = j - 1
               if (new_j == 0) new_j = nlon
-            else if(flow_direction == 3.0 .or. &
-                    flow_direction == 6.0 .or. &
-                    flow_direction == 9.0) then
+            else if(flow_direction == 3.0_dp .or. &
+                    flow_direction == 6.0_dp .or. &
+                    flow_direction == 9.0_dp) then
               new_j = j + 1
               if (new_j == nlon + 1) new_j = 1
             else
               new_j = j
             end if
-            if (flow_direction <= 3.0) then
+            if (flow_direction <= 3.0_dp) then
               new_i = i + 1
-            else if (flow_direction <= 6.0) then
+            else if (flow_direction <= 6.0_dp) then
               new_i = i
             else
               new_i = i - 1
@@ -484,26 +484,26 @@ end subroutine route
 
 subroutine set_drainage(prognostic_fields,drainage)
   type(prognostics), intent(inout) :: prognostic_fields
-  real, allocatable, dimension(:,:) :: drainage
+  real(dp), allocatable, dimension(:,:) :: drainage
     prognostic_fields%river_fields%drainage = drainage
 end subroutine set_drainage
 
 subroutine set_runoff(prognostic_fields,runoff)
   type(prognostics), intent(inout) :: prognostic_fields
-  real, allocatable, dimension(:,:) :: runoff
+  real(dp), allocatable, dimension(:,:) :: runoff
     prognostic_fields%river_fields%runoff = runoff
 end subroutine set_runoff
 
 subroutine set_lake_evaporation(prognostic_fields,lake_evaporation)
   type(prognostics), intent(inout) :: prognostic_fields
-  real, dimension(:,:) :: lake_evaporation
+  real(dp), dimension(:,:) :: lake_evaporation
     prognostic_fields%river_fields%lake_evaporation = lake_evaporation
 end subroutine set_lake_evaporation
 
 subroutine distribute_spillover(prognostic_fields, &
                                 initial_spillover_to_rivers)
   type(prognostics), intent(inout) :: prognostic_fields
-  real, pointer, dimension(:,:), intent(in) :: initial_spillover_to_rivers
+  real(dp), pointer, dimension(:,:), intent(in) :: initial_spillover_to_rivers
     where (prognostic_fields%river_parameters%cascade_flag &
            .and. initial_spillover_to_rivers > 0)
       prognostic_fields%river_fields%river_inflow =  &
@@ -601,7 +601,7 @@ end subroutine distribute_spillover
 !                       reset_cumulative_river_flow::ResetCumulativeriverFlow)
 !   river_diagnostic_output_fields::riverdiagnosticoutputfields =
 !     get_river_diagnostic_output_fields(prognostic_fields)
-!   fill!(river_diagnostic_output_fields.cumulative_river_flow,0.0)
+!   fill!(river_diagnostic_output_fields.cumulative_river_flow,0.0_dp)
 !   return prognostic_fields
 ! end
 
@@ -616,7 +616,7 @@ end subroutine distribute_spillover
 !     get_river_diagnostic_output_fields(prognostic_fields)
 !   river_parameters::riverparameters = get_river_parameters(prognostic_fields)
 !   mean_river_flow::Field{Float64} =
-!       Field{Float64}(river_parameters.grid,0.0)
+!       Field{Float64}(river_parameters.grid,0.0_dp)
 !   for_all(river_parameters.grid) do coords::Coords
 !     set!(mean_river_flow,coords,
 !          river_diagnostic_output_fields.cumulative_river_flow(coords)/

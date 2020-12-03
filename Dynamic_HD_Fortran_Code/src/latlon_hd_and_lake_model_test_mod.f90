@@ -19,16 +19,16 @@ subroutine testHdModel
    integer,dimension(:,:), pointer :: river_reservoir_nums
    integer,dimension(:,:), pointer :: overland_reservoir_nums
    integer,dimension(:,:), pointer :: base_reservoir_nums
-   real   ,dimension(:,:), pointer :: river_retention_coefficients
-   real   ,dimension(:,:), pointer :: overland_retention_coefficients
-   real   ,dimension(:,:), pointer :: base_retention_coefficients
+   real(dp)   ,dimension(:,:), pointer :: river_retention_coefficients
+   real(dp)   ,dimension(:,:), pointer :: overland_retention_coefficients
+   real(dp)   ,dimension(:,:), pointer :: base_retention_coefficients
    logical,dimension(:,:), pointer :: landsea_mask
-   real   ,dimension(:,:), allocatable :: drainage
-   real   ,dimension(:,:,:), allocatable :: drainages
-   real   ,dimension(:,:,:), allocatable :: runoffs
-   real   ,dimension(:,:), allocatable :: expected_water_to_ocean
-   real   ,dimension(:,:), allocatable :: expected_river_inflow
-   real   ,dimension(:,:), pointer :: flow_directions
+   real(dp)   ,dimension(:,:), allocatable :: drainage
+   real(dp)   ,dimension(:,:,:), allocatable :: drainages
+   real(dp)   ,dimension(:,:,:), allocatable :: runoffs
+   real(dp)   ,dimension(:,:), allocatable :: expected_water_to_ocean
+   real(dp)   ,dimension(:,:), allocatable :: expected_river_inflow
+   real(dp)   ,dimension(:,:), pointer :: flow_directions
    type(prognostics), pointer :: global_prognostics_ptr
    integer :: timesteps, i
       timesteps = 200
@@ -117,17 +117,17 @@ subroutine testLakeModel1
    type(lakefields), pointer :: lake_fields_out
    type(lakeprognostics), pointer :: lake_prognostics_out
    type(lakepointer) :: working_lake_ptr
-   real   ,dimension(:,:), pointer :: flow_directions
+   real(dp)   ,dimension(:,:), pointer :: flow_directions
    integer,dimension(:,:), pointer :: river_reservoir_nums
    integer,dimension(:,:), pointer :: overland_reservoir_nums
    integer,dimension(:,:), pointer :: base_reservoir_nums
-   real,dimension(:,:), pointer :: river_retention_coefficients
-   real,dimension(:,:), pointer :: overland_retention_coefficients
-   real,dimension(:,:), pointer :: base_retention_coefficients
+   real(dp),dimension(:,:), pointer :: river_retention_coefficients
+   real(dp),dimension(:,:), pointer :: overland_retention_coefficients
+   real(dp),dimension(:,:), pointer :: base_retention_coefficients
    logical,dimension(:,:), pointer :: landsea_mask
    logical,dimension(:,:), pointer :: lake_centers
-   real,dimension(:,:), pointer :: connection_volume_thresholds
-   real,dimension(:,:), pointer :: flood_volume_thresholds
+   real(dp),dimension(:,:), pointer :: connection_volume_thresholds
+   real(dp),dimension(:,:), pointer :: flood_volume_thresholds
    logical,dimension(:,:), pointer :: flood_local_redirect
    logical,dimension(:,:), pointer :: connect_local_redirect
    logical,dimension(:,:), pointer :: additional_flood_local_redirect
@@ -149,31 +149,33 @@ subroutine testLakeModel1
    integer,dimension(:,:), pointer :: additional_flood_redirect_lon_index
    integer,dimension(:,:), pointer :: additional_connect_redirect_lat_index
    integer,dimension(:,:), pointer :: additional_connect_redirect_lon_index
-   real,dimension(:,:), pointer :: drainage
-   real,dimension(:,:,:), pointer :: drainages
-   real,dimension(:,:), pointer :: runoff
-   real,dimension(:,:,:), pointer :: runoffs
-   real, pointer, dimension(:,:) :: initial_spillover_to_rivers
-   real, pointer, dimension(:,:) :: initial_water_to_lake_centers
-   real,dimension(:,:), pointer :: expected_river_inflow
-   real,dimension(:,:), pointer :: expected_water_to_ocean
-   real,dimension(:,:), pointer :: expected_water_to_hd
+   real(dp),dimension(:,:), pointer :: drainage
+   real(dp),dimension(:,:,:), pointer :: drainages
+   real(dp),dimension(:,:), pointer :: runoff
+   real(dp),dimension(:,:,:), pointer :: runoffs
+   real(dp), pointer, dimension(:,:) :: initial_spillover_to_rivers
+   real(dp), pointer, dimension(:,:) :: initial_water_to_lake_centers
+   real(dp),dimension(:,:), pointer :: expected_river_inflow
+   real(dp),dimension(:,:), pointer :: expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: expected_water_to_hd
    integer,dimension(:,:), pointer :: expected_lake_numbers
    integer,dimension(:,:), pointer :: expected_lake_types
-   real,dimension(:), pointer :: expected_lake_volumes
-   real, dimension(:,:), pointer :: expected_diagnostic_lake_volumes
+   real(dp),dimension(:), pointer :: expected_lake_volumes
+   real(dp), dimension(:,:), pointer :: expected_diagnostic_lake_volumes
    integer,dimension(:,:), pointer :: lake_types
    integer :: no_merge_mtype,connection_merge_not_set_flood_merge_as_secondary
-   real,dimension(:), pointer :: lake_volumes
-   real, dimension(:,:), pointer :: diagnostic_lake_volumes
+   real(dp),dimension(:), pointer :: lake_volumes
+   real(dp), dimension(:,:), pointer :: diagnostic_lake_volumes
+   real(dp) :: step_length
    integer :: nlat,nlon
    integer :: nlat_coarse,nlon_coarse
    integer :: timesteps
    integer :: lake_number
    integer :: i,j
    logical :: instant_throughflow_local
-   real :: lake_retention_coefficient_local
+   real(dp) :: lake_retention_coefficient_local
    integer :: lake_type
+      step_length = 86400.0_dp
       no_merge_mtype = 0
       connection_merge_not_set_flood_merge_as_secondary = 10
       timesteps = 1000
@@ -466,8 +468,8 @@ subroutine testLakeModel1
       allocate(drainages(nlat_coarse,nlon_coarse,timesteps))
       allocate(runoffs(nlat_coarse,nlon_coarse,timesteps))
       do i = 1,timesteps
-        drainages(:,:,i) = drainage(:,:)
-        runoffs(:,:,i) = runoff(:,:)
+        drainages(:,:,i) = drainage(:,:)/step_length
+        runoffs(:,:,i) = runoff(:,:)/step_length
       end do
       allocate(initial_spillover_to_rivers(nlat_coarse,nlon_coarse))
       initial_spillover_to_rivers(:,:) = 0.0
@@ -479,18 +481,21 @@ subroutine testLakeModel1
          4.0, 0.0, 14.0, &
          0.0, 0.0,  0.0 /), &
          (/nlon_coarse,nlat_coarse/)))
+      expected_river_inflow = expected_river_inflow/step_length
       allocate(expected_water_to_ocean(nlat_coarse,nlon_coarse))
       expected_water_to_ocean = transpose(reshape((/ &
           0.0, 0.0,  0.0, &
          0.0, 0.0,  0.0, &
          0.0, 0.0, 16.0 /), &
          (/nlon_coarse,nlat_coarse/)))
+      expected_water_to_ocean = expected_water_to_ocean/86400.0_dp
       allocate(expected_water_to_hd(nlat_coarse,nlon_coarse))
       expected_water_to_hd = transpose(reshape((/ &
           0.0, 0.0, 10.0, &
          0.0, 0.0,  0.0, &
          0.0, 0.0,  0.0 /), &
          (/nlon_coarse,nlat_coarse/)))
+      expected_water_to_hd = expected_water_to_hd/86400.0_dp
       allocate(expected_lake_numbers(nlat,nlon))
       expected_lake_numbers = transpose(reshape((/ &
              0,    0,    0,    1,    0,    0,    0,    0,    0, &
@@ -564,9 +569,9 @@ subroutine testLakeModel1
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      call assert_equals(expected_river_inflow,river_fields%river_inflow,3,3,0.00001)
-      call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,3,3,0.00001)
-      call assert_equals(expected_water_to_hd,lake_fields_out%water_to_hd,3,3,0.00001)
+      call assert_equals(expected_river_inflow,river_fields%river_inflow,3,3,0.0000000001_dp)
+      call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,3,3,0.0000000001_dp)
+      call assert_equals(expected_water_to_hd,lake_fields_out%water_to_hd,3,3,0.00001_dp)
       call assert_equals(expected_lake_numbers,lake_fields_out%lake_numbers,9,9)
       call assert_equals(expected_lake_types,lake_types,9,9)
       call assert_equals(expected_diagnostic_lake_volumes,diagnostic_lake_volumes,9,9)
@@ -601,17 +606,17 @@ subroutine testLakeModel2
   type(lakefields), pointer :: lake_fields_out
   type(lakeprognostics), pointer :: lake_prognostics_out
   type(lakepointer) :: working_lake_ptr
-  real   ,dimension(:,:), pointer :: flow_directions
+  real(dp)   ,dimension(:,:), pointer :: flow_directions
   integer,dimension(:,:), pointer :: river_reservoir_nums
   integer,dimension(:,:), pointer :: overland_reservoir_nums
   integer,dimension(:,:), pointer :: base_reservoir_nums
-  real,dimension(:,:), pointer :: river_retention_coefficients
-  real,dimension(:,:), pointer :: overland_retention_coefficients
-  real,dimension(:,:), pointer :: base_retention_coefficients
+  real(dp),dimension(:,:), pointer :: river_retention_coefficients
+  real(dp),dimension(:,:), pointer :: overland_retention_coefficients
+  real(dp),dimension(:,:), pointer :: base_retention_coefficients
   logical,dimension(:,:), pointer :: landsea_mask
   logical,dimension(:,:), pointer :: lake_centers
-  real,dimension(:,:), pointer :: connection_volume_thresholds
-  real,dimension(:,:), pointer :: flood_volume_thresholds
+  real(dp),dimension(:,:), pointer :: connection_volume_thresholds
+  real(dp),dimension(:,:), pointer :: flood_volume_thresholds
   logical,dimension(:,:), pointer :: flood_local_redirect
   logical,dimension(:,:), pointer :: connect_local_redirect
   logical,dimension(:,:), pointer :: additional_flood_local_redirect
@@ -633,33 +638,35 @@ subroutine testLakeModel2
   integer,dimension(:,:), pointer :: additional_flood_redirect_lon_index
   integer,dimension(:,:), pointer :: additional_connect_redirect_lat_index
   integer,dimension(:,:), pointer :: additional_connect_redirect_lon_index
-  real,dimension(:,:), pointer :: drainage
-  real,dimension(:,:,:), pointer :: drainages
-  real,dimension(:,:), pointer :: runoff
-  real,dimension(:,:,:), pointer :: runoffs
-  real, pointer, dimension(:,:) :: initial_spillover_to_rivers
-  real, pointer, dimension(:,:) :: initial_water_to_lake_centers
-  real,dimension(:,:), pointer :: expected_river_inflow
-  real,dimension(:,:), pointer :: expected_water_to_ocean
-  real,dimension(:,:), pointer :: expected_water_to_hd
+  real(dp),dimension(:,:), pointer :: drainage
+  real(dp),dimension(:,:,:), pointer :: drainages
+  real(dp),dimension(:,:), pointer :: runoff
+  real(dp),dimension(:,:,:), pointer :: runoffs
+  real(dp), pointer, dimension(:,:) :: initial_spillover_to_rivers
+  real(dp), pointer, dimension(:,:) :: initial_water_to_lake_centers
+  real(dp),dimension(:,:), pointer :: expected_river_inflow
+  real(dp),dimension(:,:), pointer :: expected_water_to_ocean
+  real(dp),dimension(:,:), pointer :: expected_water_to_hd
   integer,dimension(:,:), pointer :: expected_lake_numbers
   integer,dimension(:,:), pointer :: expected_lake_types
-  real,dimension(:), pointer :: expected_lake_volumes
-  real,dimension(:,:), pointer :: expected_diagnostic_lake_volumes
+  real(dp),dimension(:), pointer :: expected_lake_volumes
+  real(dp),dimension(:,:), pointer :: expected_diagnostic_lake_volumes
   integer,dimension(:,:), pointer :: lake_types
   integer :: no_merge_mtype
   integer :: connection_merge_not_set_flood_merge_as_primary
   integer :: connection_merge_not_set_flood_merge_as_secondary
-  real,dimension(:), pointer :: lake_volumes
-  real, dimension(:,:), pointer :: diagnostic_lake_volumes
+  real(dp),dimension(:), pointer :: lake_volumes
+  real(dp), dimension(:,:), pointer :: diagnostic_lake_volumes
+  real(dp) :: step_length
   integer :: nlat,nlon
   integer :: nlat_coarse,nlon_coarse
   integer :: timesteps
   integer :: lake_number
   integer :: i,j
   logical :: instant_throughflow_local
-  real :: lake_retention_coefficient_local
+  real(dp) :: lake_retention_coefficient_local
   integer :: lake_type
+    step_length = 86400.0_dp
     no_merge_mtype = 0
     connection_merge_not_set_flood_merge_as_primary = 9
     connection_merge_not_set_flood_merge_as_secondary = 10
@@ -1337,8 +1344,8 @@ subroutine testLakeModel2
     allocate(drainages(nlat_coarse,nlon_coarse,timesteps))
     allocate(runoffs(nlat_coarse,nlon_coarse,timesteps))
     do i = 1,timesteps
-      drainages(:,:,i) = drainage(:,:)
-      runoffs(:,:,i) = runoff(:,:)
+      drainages(:,:,i) = drainage(:,:)/step_length
+      runoffs(:,:,i) = runoff(:,:)/step_length
     end do
     allocate(initial_spillover_to_rivers(nlat_coarse,nlon_coarse))
     initial_spillover_to_rivers(:,:) = 0.0
@@ -1351,6 +1358,7 @@ subroutine testLakeModel2
        0.0, 2.0, 0.0, 0.0, &
        0.0, 0.0, 0.0, 0.0 /), &
        (/nlon_coarse,nlat_coarse/)))
+    expected_river_inflow = expected_river_inflow/step_length
     allocate(expected_water_to_ocean(nlat_coarse,nlon_coarse))
     expected_water_to_ocean = transpose(reshape((/ &
         0.0, 0.0, 0.0, 0.0, &
@@ -1358,6 +1366,7 @@ subroutine testLakeModel2
        0.0, 0.0, 0.0, 0.0, &
        0.0, 6.0, 0.0, 22.0 /), &
        (/nlon_coarse,nlat_coarse/)))
+    expected_water_to_ocean = expected_water_to_ocean/step_length
     allocate(expected_water_to_hd(nlat_coarse,nlon_coarse))
     expected_water_to_hd = transpose(reshape((/ &
         0.0, 0.0, 0.0,  0.0, &
@@ -1365,6 +1374,7 @@ subroutine testLakeModel2
        0.0, 0.0, 0.0,  0.0, &
        0.0, 2.0, 0.0, 18.0 /), &
        (/nlon_coarse,nlat_coarse/)))
+    expected_water_to_hd = expected_water_to_hd/step_length
     allocate(expected_lake_numbers(nlat,nlon))
     expected_lake_numbers = transpose(reshape((/ &
        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
@@ -1492,9 +1502,9 @@ subroutine testLakeModel2
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
     call assert_equals(expected_river_inflow,river_fields%river_inflow,&
-                       nlat_coarse,nlon_coarse)
-    call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,4,4,0.00001)
-    call assert_equals(expected_water_to_hd,lake_fields_out%water_to_hd,4,4,0.00001)
+                       nlat_coarse,nlon_coarse,0.0000000001_dp)
+    call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,4,4,0.0000000001_dp)
+    call assert_equals(expected_water_to_hd,lake_fields_out%water_to_hd,4,4,0.0000000001_dp)
     call assert_equals(expected_lake_numbers,lake_fields_out%lake_numbers,20,20)
     call assert_equals(expected_lake_types,lake_types,20,20)
     call assert_equals(expected_diagnostic_lake_volumes,diagnostic_lake_volumes,20,20)
@@ -1529,17 +1539,17 @@ subroutine testLakeModel3
   type(lakefields), pointer :: lake_fields_out
   type(lakeprognostics), pointer :: lake_prognostics_out
   type(lakepointer) :: working_lake_ptr
-  real   ,dimension(:,:), pointer :: flow_directions
+  real(dp)   ,dimension(:,:), pointer :: flow_directions
   integer,dimension(:,:), pointer :: river_reservoir_nums
   integer,dimension(:,:), pointer :: overland_reservoir_nums
   integer,dimension(:,:), pointer :: base_reservoir_nums
-  real,dimension(:,:), pointer :: river_retention_coefficients
-  real,dimension(:,:), pointer :: overland_retention_coefficients
-  real,dimension(:,:), pointer :: base_retention_coefficients
+  real(dp),dimension(:,:), pointer :: river_retention_coefficients
+  real(dp),dimension(:,:), pointer :: overland_retention_coefficients
+  real(dp),dimension(:,:), pointer :: base_retention_coefficients
   logical,dimension(:,:), pointer :: landsea_mask
   logical,dimension(:,:), pointer :: lake_centers
-  real,dimension(:,:), pointer :: connection_volume_thresholds
-  real,dimension(:,:), pointer :: flood_volume_thresholds
+  real(dp),dimension(:,:), pointer :: connection_volume_thresholds
+  real(dp),dimension(:,:), pointer :: flood_volume_thresholds
   logical,dimension(:,:), pointer :: flood_local_redirect
   logical,dimension(:,:), pointer :: connect_local_redirect
   logical,dimension(:,:), pointer :: additional_flood_local_redirect
@@ -1561,44 +1571,46 @@ subroutine testLakeModel3
   integer,dimension(:,:), pointer :: additional_flood_redirect_lon_index
   integer,dimension(:,:), pointer :: additional_connect_redirect_lat_index
   integer,dimension(:,:), pointer :: additional_connect_redirect_lon_index
-  real,dimension(:,:), pointer :: drainage
-  real,dimension(:,:,:), pointer :: drainages
-  real,dimension(:,:,:), pointer :: drainages_copy
-  real,dimension(:,:), pointer :: runoff
-  real,dimension(:,:,:), pointer :: runoffs
-  real,dimension(:,:,:), pointer :: runoffs_copy
-  real,dimension(:,:), pointer :: evaporation
-  real,dimension(:,:,:), pointer :: evaporations
-  real,dimension(:,:,:), pointer :: evaporations_set_two
-  real, pointer, dimension(:,:) :: initial_spillover_to_rivers
-  real, pointer, dimension(:,:) :: initial_water_to_lake_centers
-  real,dimension(:,:), pointer :: expected_river_inflow
-  real,dimension(:,:), pointer :: expected_water_to_ocean
-  real,dimension(:,:), pointer :: expected_water_to_hd
+  real(dp),dimension(:,:), pointer :: drainage
+  real(dp),dimension(:,:,:), pointer :: drainages
+  real(dp),dimension(:,:,:), pointer :: drainages_copy
+  real(dp),dimension(:,:), pointer :: runoff
+  real(dp),dimension(:,:,:), pointer :: runoffs
+  real(dp),dimension(:,:,:), pointer :: runoffs_copy
+  real(dp),dimension(:,:), pointer :: evaporation
+  real(dp),dimension(:,:,:), pointer :: evaporations
+  real(dp),dimension(:,:,:), pointer :: evaporations_set_two
+  real(dp), pointer, dimension(:,:) :: initial_spillover_to_rivers
+  real(dp), pointer, dimension(:,:) :: initial_water_to_lake_centers
+  real(dp),dimension(:,:), pointer :: expected_river_inflow
+  real(dp),dimension(:,:), pointer :: expected_water_to_ocean
+  real(dp),dimension(:,:), pointer :: expected_water_to_hd
   integer,dimension(:,:), pointer :: expected_lake_numbers
   integer,dimension(:,:), pointer :: expected_lake_types
-  real,dimension(:), pointer :: expected_lake_volumes
-  real,dimension(:,:), pointer :: expected_diagnostic_lake_volumes
-  real,dimension(:,:), pointer :: expected_intermediate_diagnostic_lake_volumes
-  real,dimension(:,:), pointer :: expected_intermediate_river_inflow
-  real,dimension(:,:), pointer :: expected_intermediate_water_to_ocean
-  real,dimension(:,:), pointer :: expected_intermediate_water_to_hd
+  real(dp),dimension(:), pointer :: expected_lake_volumes
+  real(dp),dimension(:,:), pointer :: expected_diagnostic_lake_volumes
+  real(dp),dimension(:,:), pointer :: expected_intermediate_diagnostic_lake_volumes
+  real(dp),dimension(:,:), pointer :: expected_intermediate_river_inflow
+  real(dp),dimension(:,:), pointer :: expected_intermediate_water_to_ocean
+  real(dp),dimension(:,:), pointer :: expected_intermediate_water_to_hd
   integer,dimension(:,:), pointer :: expected_intermediate_lake_numbers
   integer,dimension(:,:), pointer :: expected_intermediate_lake_types
-  real,dimension(:), pointer :: expected_intermediate_lake_volumes
+  real(dp),dimension(:), pointer :: expected_intermediate_lake_volumes
   integer,dimension(:,:), pointer :: lake_types
   integer :: no_merge_mtype
   integer :: connection_merge_not_set_flood_merge_as_primary
   integer :: connection_merge_not_set_flood_merge_as_secondary
-  real,dimension(:), pointer :: lake_volumes
-  real, dimension(:,:), pointer :: diagnostic_lake_volumes
+  real(dp),dimension(:), pointer :: lake_volumes
+  real(dp), dimension(:,:), pointer :: diagnostic_lake_volumes
+  real(dp) :: step_length
   integer :: nlat,nlon
   integer :: nlat_coarse,nlon_coarse
   integer :: lake_number
   integer :: i,j
   logical :: instant_throughflow_local
-  real :: lake_retention_coefficient_local
+  real(dp) :: lake_retention_coefficient_local
   integer :: lake_type
+      step_length = 86400.0_dp
       no_merge_mtype = 0
       connection_merge_not_set_flood_merge_as_primary = 9
       connection_merge_not_set_flood_merge_as_secondary = 10
@@ -2275,19 +2287,19 @@ subroutine testLakeModel3
       allocate(drainages(4,4,5000))
       allocate(runoffs(4,4,5000))
       do i = 1,5000
-        drainages(:,:,i) = drainage(:,:)
-        runoffs(:,:,i) = runoff(:,:)
+        drainages(:,:,i) = drainage(:,:)/step_length
+        runoffs(:,:,i) = runoff(:,:)/step_length
       end do
       allocate(evaporation(4,4))
       evaporation(:,:) = 0.0
       allocate(evaporations(4,4,5000))
       do i = 1,5000
-        evaporations(:,:,i) = evaporation(:,:)
+        evaporations(:,:,i) = evaporation(:,:)/step_length
       end do
       evaporation(:,:) = 100.0
       allocate(evaporations_set_two(4,4,5000))
       do i = 1,5000
-        evaporations_set_two(:,:,i) = evaporation(:,:)
+        evaporations_set_two(:,:,i) = evaporation(:,:)/step_length
       end do
       allocate(initial_spillover_to_rivers(4,4))
       initial_spillover_to_rivers(:,:) = 0.0
@@ -2300,6 +2312,7 @@ subroutine testLakeModel3
          0.0, 2.0, 0.0, 0.0, &
          0.0, 0.0, 0.0, 0.0 /), &
          (/4,4/)))
+      expected_river_inflow(:,:) = expected_river_inflow(:,:)/step_length
       allocate(expected_water_to_ocean(4,4))
       expected_water_to_ocean = transpose(reshape((/ &
           -96.0,   0.0,   0.0,   0.0, &
@@ -2307,6 +2320,7 @@ subroutine testLakeModel3
          0.0,   0.0,   0.0, -94.0, &
          -98.0,   4.0,   0.0,   4.0 /), &
          (/4,4/)))
+      expected_water_to_ocean(:,:) = expected_water_to_ocean(:,:)/step_length
       allocate(expected_water_to_hd(4,4))
       expected_water_to_hd = transpose(reshape((/ &
           0.0, 0.0, 0.0, 0.0, &
@@ -2314,6 +2328,7 @@ subroutine testLakeModel3
          0.0, 0.0, 0.0, 0.0, &
          0.0, 0.0, 0.0, 0.0 /), &
          (/4,4/)))
+      expected_water_to_hd(:,:) = expected_water_to_hd(:,:)/step_length
       allocate(expected_lake_numbers(20,20))
       expected_lake_numbers = transpose(reshape((/ &
           0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
@@ -2371,6 +2386,8 @@ subroutine testLakeModel3
          0.0, 2.0, 0.0, 0.0, &
          0.0, 0.0, 0.0, 0.0 /), &
          (/4,4/)))
+      expected_intermediate_river_inflow(:,:) = &
+        expected_intermediate_river_inflow(:,:)/step_length
       allocate(expected_intermediate_water_to_ocean(4,4))
       expected_intermediate_water_to_ocean = transpose(reshape((/ &
           0.0, 0.0, 0.0, 0.0, &
@@ -2378,6 +2395,8 @@ subroutine testLakeModel3
          0.0, 0.0, 0.0, 0.0, &
          0.0, 6.0, 0.0, 22.0 /), &
          (/4,4/)))
+      expected_intermediate_water_to_ocean(:,:) = &
+        expected_intermediate_water_to_ocean(:,:)/step_length
       allocate(expected_intermediate_water_to_hd(4,4))
       expected_intermediate_water_to_hd = transpose(reshape((/ &
           0.0, 0.0, 0.0,  0.0, &
@@ -2385,6 +2404,8 @@ subroutine testLakeModel3
          0.0, 0.0, 0.0,  0.0, &
          0.0, 2.0, 0.0, 18.0 /), &
          (/4,4/)))
+      expected_intermediate_water_to_hd(:,:) = &
+        expected_intermediate_water_to_hd(:,:)/step_length
       allocate(expected_intermediate_lake_numbers(20,20))
       expected_intermediate_lake_numbers = transpose(reshape((/ &
           0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
@@ -2516,9 +2537,9 @@ subroutine testLakeModel3
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
       call assert_equals(expected_intermediate_river_inflow,river_fields%river_inflow,&
-                         4,4)
-      call assert_equals(expected_intermediate_water_to_ocean,river_fields%water_to_ocean,4,4,0.00001)
-      call assert_equals(expected_intermediate_water_to_hd,lake_fields_out%water_to_hd,4,4,0.00001)
+                         4,4,0.0000000001_dp)
+      call assert_equals(expected_intermediate_water_to_ocean,river_fields%water_to_ocean,4,4,0.00001_dp)
+      call assert_equals(expected_intermediate_water_to_hd,lake_fields_out%water_to_hd,4,4,0.00001_dp)
       call assert_equals(expected_intermediate_lake_numbers,lake_fields_out%lake_numbers,20,20)
       call assert_equals(expected_intermediate_lake_types,lake_types,20,20)
       call assert_equals(expected_intermediate_diagnostic_lake_volumes,diagnostic_lake_volumes,20,20)
@@ -2553,12 +2574,12 @@ subroutine testLakeModel3
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
       call assert_equals(expected_river_inflow,river_fields%river_inflow,&
-                         4,4)
-      call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,4,4,0.00001)
-      call assert_equals(expected_water_to_hd,lake_fields_out%water_to_hd,4,4,0.00001)
+                         4,4,0.0000000001_dp)
+      call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,4,4,0.00001_dp)
+      call assert_equals(expected_water_to_hd,lake_fields_out%water_to_hd,4,4,0.00001_dp)
       call assert_equals(expected_lake_numbers,lake_fields_out%lake_numbers,20,20)
       call assert_equals(expected_lake_types,lake_types,20,20)
-      call assert_equals(expected_diagnostic_lake_volumes,diagnostic_lake_volumes,20,20,0.00001)
+      call assert_equals(expected_diagnostic_lake_volumes,diagnostic_lake_volumes,20,20,0.00001_dp)
       call assert_equals(expected_lake_volumes,lake_volumes,6)
       deallocate(lake_volumes)
       deallocate(drainage)

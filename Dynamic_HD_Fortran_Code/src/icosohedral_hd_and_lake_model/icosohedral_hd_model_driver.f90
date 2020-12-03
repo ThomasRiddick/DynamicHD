@@ -9,9 +9,9 @@ program icosohedral_hd_model_driver
   use parameters_mod
   implicit none
 
-  real   ,dimension(:,:), allocatable :: runoffs !Runoff forcing
-  real   ,dimension(:,:), allocatable :: drainages !Drainage forcing
-  real   ,dimension(:,:), allocatable :: evaporations !Evaporation forcing
+  real(dp)   ,dimension(:,:), allocatable :: runoffs !Runoff forcing
+  real(dp)   ,dimension(:,:), allocatable :: drainages !Drainage forcing
+  real(dp)   ,dimension(:,:), allocatable :: evaporations !Evaporation forcing
 
   integer :: timesteps !the number of time steps to run
   integer :: middle_timestep ! the timestep half way through
@@ -50,7 +50,7 @@ program icosohedral_hd_model_driver
 
     !Initialise the hd model
     call init_hd_model(river_params_filename,hd_start_filename,using_lakes,&
-                       lake_model_ctl_filename,86400.0,86400.0)
+                       lake_model_ctl_filename,86400.0_dp,86400.0_dp)
     ! Preparing some toy forcing for a technical demonstration
     ! For the first half of the run-time a constant level of runoff and drainage
     ! for the second half of run-time continue these but add in a very high
@@ -60,10 +60,11 @@ program icosohedral_hd_model_driver
     allocate(drainages(ncells,timesteps))
     allocate(evaporations(ncells,timesteps))
     middle_timestep = timesteps/2
-    runoffs(:,:) = 100.0*0.0000000227*86400.0*2.6*10000000000.0
-    drainages(:,:) = 100.0*0.0000000227*86400.0*2.6*10000000000.0
+    runoffs(:,:) = 100.0_dp*0.0000000227_dp*86400.0_dp*2.6*10000000000.0_dp
+    drainages(:,:) = 100.0_dp*0.0000000227_dp*86400.0_dp*2.6*10000000000.0_dp
     evaporations(:,1:middle_timestep) = 0.0
-    evaporations(:,middle_timestep+1:timesteps) = 100000.0*0.0000000227*86400.0*2.6*10000000000.0
+    evaporations(:,middle_timestep+1:timesteps) = &
+      100000.0_dp*0.0000000227_dp*86400.0_dp*2.6_dp*10000000000.0_dp
     ! Run the hd model
     call run_hd_model(timesteps,drainages,runoffs,evaporations,working_directory)
     ! Free memory
