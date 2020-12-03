@@ -1615,6 +1615,8 @@ function calculate_diagnostic_lake_volumes(lake_parameters,&
     end do
 end function calculate_diagnostic_lake_volumes
 
+!Check the lake models internal water budget is balance to within a floating
+!point error - if not print out information
 subroutine check_water_budget(lake_prognostics,lake_fields)
   type(lakeprognostics), intent(inout) :: lake_prognostics
   type(lakefields), intent(inout) :: lake_fields
