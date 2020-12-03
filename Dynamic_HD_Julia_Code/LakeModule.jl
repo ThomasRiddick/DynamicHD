@@ -1260,11 +1260,13 @@ function handle_event(prognostic_fields::RiverAndLakePrognosticFields,
   end
   change_in_total_lake_volume::Float64 = new_total_lake_volume -
                                          lake_diagnostic_variables.total_lake_volume
-  total_inflow_minus_outflow::Float64 = sum(lake_fields.water_to_lakes) +
+  total_water_to_lakes::Float64 = sum(lake_fields.water_to_lakes)
+  total_inflow_minus_outflow::Float64 = total_water_to_lakes +
                                         sum(lake_fields.lake_water_from_ocean) -
                                         sum(lake_fields.water_to_hd)
   difference::Float64 = change_in_total_lake_volume - total_inflow_minus_outflow
-  if ! isapprox(difference,0,atol=0.1)
+  tolerance::Float64 = 10e-16*max(new_total_lake_volume, total_water_to_lakes)
+  if ! isapprox(difference,0,atol=tolerance)
     println("*** Lake Water Budget ***")
     println("Total lake volume: $(new_total_lake_volume)")
     println("Total inflow - outflow: $(total_inflow_minus_outflow)")

@@ -2007,10 +2007,10 @@ end
 @testset "Lake model tests 4" begin
   grid = UnstructuredGrid(16)
   flow_directions =  UnstructuredDirectionIndicators(UnstructuredField{Int64}(grid,
-                                                     vec(Int64[-2  1  7  8 #=
-                                                             =# 6 -2 -2 12 #=
-                                                            =# 10 14 16 -2 #=
-                                                            =# -2  0 16  0 ])))
+                                                     vec(Int64[-4  1  7  8 #=
+                                                             =# 6 -4 -4 12 #=
+                                                            =# 10 14 16 -4 #=
+                                                            =# -4 -1 16 -1 ])))
   river_reservoir_nums = UnstructuredField{Int64}(grid,5)
   overland_reservoir_nums = UnstructuredField{Int64}(grid,1)
   base_reservoir_nums = UnstructuredField{Int64}(grid,1)
@@ -2503,10 +2503,10 @@ end
 @testset "Lake model tests 5" begin
   grid = UnstructuredGrid(16)
   flow_directions =  UnstructuredDirectionIndicators(UnstructuredField{Int64}(grid,
-                                                     vec(Int64[-2  1  7  8 #=
-                                                             =# 6 -2 -2 12 #=
-                                                            =# 10 14 16 -2 #=
-                                                            =# -2  0 16  0 ])))
+                                                     vec(Int64[-4  1  7  8 #=
+                                                             =# 6 -4 -4 12 #=
+                                                            =# 10 14 16 -4 #=
+                                                            =# -4 -1 16 -1 ])))
   river_reservoir_nums = UnstructuredField{Int64}(grid,5)
   overland_reservoir_nums = UnstructuredField{Int64}(grid,1)
   base_reservoir_nums = UnstructuredField{Int64}(grid,1)
@@ -3139,12 +3139,12 @@ end
   grid = UnstructuredGrid(80)
   flow_directions =  UnstructuredDirectionIndicators(UnstructuredField{Int64}(grid,
                                                      vec(Int64[ 8,13,13,13,19, #=
-                                                             =# 8,8,24,24,13, 13,13,-2,13,13, #=
+                                                             =# 8,8,24,24,13, 13,13,-4,13,13, #=
                                                              =# 13,36,36,37,37, 8,24,24,64,45, #=
                                                              =# 45,45,49,49,13, 13,30,52,55,55, #=
                                                              =# 55,55,55,37,38, 61,61,64,64,64, #=
-                                                             =# 64,64,64,-2,49, 30,54,55,55,0, #=
-                                                             =# 55,55,38,38,59, 63,64,64,-2,64, #=
+                                                             =# 64,64,64,-4,49, 30,54,55,55,-1, #=
+                                                             =# 55,55,38,38,59, 63,64,64,-4,64, #=
                                                              =# 38,49,52,55,55, 55,55,56,58,58, #=
                                                              =# 64,64,68,71,71 ])))
   river_reservoir_nums = UnstructuredField{Int64}(grid,5)

@@ -488,14 +488,14 @@ subroutine testLakeModel1
          0.0, 0.0,  0.0, &
          0.0, 0.0, 16.0 /), &
          (/nlon_coarse,nlat_coarse/)))
-      expected_water_to_ocean = expected_water_to_ocean/86400.0_dp
+      expected_water_to_ocean = expected_water_to_ocean/step_length
       allocate(expected_water_to_hd(nlat_coarse,nlon_coarse))
       expected_water_to_hd = transpose(reshape((/ &
           0.0, 0.0, 10.0, &
          0.0, 0.0,  0.0, &
          0.0, 0.0,  0.0 /), &
          (/nlon_coarse,nlat_coarse/)))
-      expected_water_to_hd = expected_water_to_hd/86400.0_dp
+      expected_water_to_hd = expected_water_to_hd/step_length
       allocate(expected_lake_numbers(nlat,nlon))
       expected_lake_numbers = transpose(reshape((/ &
              0,    0,    0,    1,    0,    0,    0,    0,    0, &

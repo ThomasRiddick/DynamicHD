@@ -427,9 +427,12 @@ subroutine testLakeModel1
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      call assert_equals(expected_river_inflow,river_fields%river_inflow,9,0.00001_dp)
-      call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,9,0.00001_dp)
-      call assert_equals(expected_water_to_hd,lake_fields_out%water_to_hd,9,0.00001_dp)
+      call assert_equals(expected_river_inflow,river_fields%river_inflow,9,&
+                         0.0000000001_dp)
+      call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,9,&
+                         0.0000000001_dp)
+      call assert_equals(expected_water_to_hd,lake_fields_out%water_to_hd,9,&
+                         0.0000000001_dp)
       call assert_equals(expected_lake_numbers,lake_fields_out%lake_numbers,81)
       call assert_equals(expected_lake_types,lake_types,81)
       call assert_equals(expected_diagnostic_lake_volumes,diagnostic_lake_volumes,ncells)
@@ -1154,8 +1157,10 @@ subroutine testLakeModel2
                                                                    lake_fields_out)
     call assert_equals(expected_river_inflow,river_fields%river_inflow,&
                        ncells_coarse)
-    call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,16,0.00001_dp)
-    call assert_equals(expected_water_to_hd,lake_fields_out%water_to_hd,16,0.00001_dp)
+    call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,16,&
+                       0.0000000001_dp)
+    call assert_equals(expected_water_to_hd,lake_fields_out%water_to_hd,16,&
+                       0.0000000001_dp)
     call assert_equals(expected_lake_numbers,lake_fields_out%lake_numbers,400)
     call assert_equals(expected_lake_types,lake_types,400)
     call assert_equals(expected_diagnostic_lake_volumes,diagnostic_lake_volumes,ncells)
@@ -1978,8 +1983,10 @@ subroutine testLakeModel3
                                                                    lake_fields_out)
       call assert_equals(expected_intermediate_river_inflow,river_fields%river_inflow,&
                          16)
-      call assert_equals(expected_intermediate_water_to_ocean,river_fields%water_to_ocean,16,0.00001_dp)
-      call assert_equals(expected_intermediate_water_to_hd,lake_fields_out%water_to_hd,16,0.00001_dp)
+      call assert_equals(expected_intermediate_water_to_ocean,river_fields%water_to_ocean,16,&
+                         0.0000000001_dp)
+      call assert_equals(expected_intermediate_water_to_hd,lake_fields_out%water_to_hd,16,&
+                         0.0000000001_dp)
       call assert_equals(expected_intermediate_lake_numbers,lake_fields_out%lake_numbers,400)
       call assert_equals(expected_intermediate_lake_types,lake_types,400)
       call assert_equals(expected_intermediate_diagnostic_lake_volumes,diagnostic_lake_volumes,ncells)
@@ -2013,12 +2020,14 @@ subroutine testLakeModel3
                                                                    lake_fields_out)
       call assert_equals(expected_river_inflow,river_fields%river_inflow,&
                          16)
-      call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,16,0.00001_dp)
-      call assert_equals(expected_water_to_hd,lake_fields_out%water_to_hd,16,0.00001_dp)
+      call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,16,&
+                         0.0000000001_dp)
+      call assert_equals(expected_water_to_hd,lake_fields_out%water_to_hd,16,&
+                         0.0000000001_dp)
       call assert_equals(expected_lake_numbers,lake_fields_out%lake_numbers,400)
       call assert_equals(expected_lake_types,lake_types,400)
       call assert_equals(expected_diagnostic_lake_volumes,diagnostic_lake_volumes,ncells,&
-                         0.00001_dp)
+                         0.0000000001_dp)
       call assert_equals(expected_lake_volumes,lake_volumes,6)
       deallocate(lake_volumes)
       deallocate(drainage)
@@ -2468,11 +2477,11 @@ subroutine testLakeModel4
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
       call assert_equals(expected_intermediate_river_inflow,river_fields%river_inflow,&
-                         ncells_coarse,0.0001_dp)
+                         ncells_coarse,0.0000000001_dp)
       call assert_equals(expected_intermediate_water_to_ocean, &
-                         river_fields%water_to_ocean,ncells_coarse,0.0001_dp)
+                         river_fields%water_to_ocean,ncells_coarse,0.0000000001_dp)
       call assert_equals(expected_intermediate_water_to_hd, &
-                         lake_fields_out%water_to_hd,ncells_coarse,0.0001_dp)
+                         lake_fields_out%water_to_hd,ncells_coarse,0.0000000001_dp)
       call assert_equals(expected_intermediate_lake_numbers,lake_fields_out%lake_numbers,ncells)
       call assert_equals(expected_intermediate_lake_types,lake_types,ncells)
       call assert_equals(expected_intermediate_diagnostic_lake_volumes,diagnostic_lake_volumes,ncells)
@@ -2506,11 +2515,14 @@ subroutine testLakeModel4
                                                                    lake_fields_out)
       call assert_equals(expected_river_inflow,river_fields%river_inflow,&
                          ncells_coarse)
-      call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,ncells_coarse,0.00001_dp)
-      call assert_equals(expected_water_to_hd,lake_fields_out%water_to_hd,ncells_coarse,0.00001_dp)
+      call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,ncells_coarse,&
+                         0.0000000001_dp)
+      call assert_equals(expected_water_to_hd,lake_fields_out%water_to_hd,ncells_coarse,&
+                         0.0000000001_dp)
       call assert_equals(expected_lake_numbers,lake_fields_out%lake_numbers,ncells)
       call assert_equals(expected_lake_types,lake_types,ncells)
-      call assert_equals(expected_diagnostic_lake_volumes,diagnostic_lake_volumes,ncells,0.00001_dp)
+      call assert_equals(expected_diagnostic_lake_volumes,diagnostic_lake_volumes,ncells,&
+                         0.0000000001_dp)
       call assert_equals(expected_lake_volumes,lake_volumes,3)
       deallocate(lake_volumes)
       deallocate(drainage)
