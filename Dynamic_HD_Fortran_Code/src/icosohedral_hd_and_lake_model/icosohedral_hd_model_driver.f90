@@ -60,11 +60,11 @@ program icosohedral_hd_model_driver
     allocate(drainages(ncells,timesteps))
     allocate(evaporations(ncells,timesteps))
     middle_timestep = timesteps/2
-    runoffs(:,:) = 100.0_dp*0.0000000227_dp*86400.0_dp*2.6*10000000000.0_dp
-    drainages(:,:) = 100.0_dp*0.0000000227_dp*86400.0_dp*2.6*10000000000.0_dp
+    runoffs(:,:) = 100.0_dp*0.0000000227_dp*2.6*10000000000.0_dp
+    drainages(:,:) = 100.0_dp*0.0000000227_dp*2.6*10000000000.0_dp
     evaporations(:,1:middle_timestep) = 0.0
     evaporations(:,middle_timestep+1:timesteps) = &
-      100000.0_dp*0.0000000227_dp*86400.0_dp*2.6_dp*10000000000.0_dp
+      100000.0_dp*0.0000000227_dp*2.6_dp*10000000000.0_dp
     ! Run the hd model
     call run_hd_model(timesteps,drainages,runoffs,evaporations,working_directory)
     ! Free memory
