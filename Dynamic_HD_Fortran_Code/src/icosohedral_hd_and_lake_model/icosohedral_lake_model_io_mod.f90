@@ -13,6 +13,7 @@ implicit none
 character(len = max_name_length) :: lake_params_filename
 character(len = max_name_length) :: lake_start_filename
 real(dp) :: lake_retention_coefficient
+logical :: run_water_budget_check
 
 contains
 
@@ -41,16 +42,18 @@ subroutine add_offset(array,offset,exceptions)
 end subroutine
 
 ! Load the lake namelist
-subroutine config_lakes(lake_model_ctl_filename)
+subroutine config_lakes(lake_model_ctl_filename,run_water_budget_check_out)
   include 'lake_model_ctl.inc'
 
   character(len = max_name_length) :: lake_model_ctl_filename
+  logical, intent(out) :: run_water_budget_check_out
   integer :: unit_number
 
     write(*,*) "Reading namelist: " // trim(lake_model_ctl_filename)
     open(newunit=unit_number,file=lake_model_ctl_filename,status='old')
     read (unit=unit_number,nml=lake_model_ctl)
     close(unit_number)
+    run_water_budget_check_out = run_water_budget_check
 
 end subroutine config_lakes
 

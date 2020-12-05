@@ -32,6 +32,7 @@ type(lakeparameters), pointer ::  global_lake_parameters
 type(lakeprognostics), pointer :: global_lake_prognostics
 type(lakefields), pointer ::      global_lake_fields
 real(dp) :: global_step_length
+logical :: global_run_water_budget_check
 
 contains
 
@@ -71,7 +72,7 @@ subroutine init_lake_model(lake_model_ctl_filename,initial_spillover_to_rivers, 
   real(dp), pointer, dimension(:),intent(out) :: initial_spillover_to_rivers
   real(dp), pointer, dimension(:) :: initial_water_to_lake_centers
   real(dp) :: step_length
-    call config_lakes(lake_model_ctl_filename)
+    call config_lakes(lake_model_ctl_filename,global_run_water_budget_check)
     global_lake_parameters => read_lake_parameters(.true.)
     global_lake_fields => lakefields(global_lake_parameters)
     global_lake_prognostics => lakeprognostics(global_lake_parameters, &
@@ -81,6 +82,9 @@ subroutine init_lake_model(lake_model_ctl_filename,initial_spillover_to_rivers, 
                                     initial_spillover_to_rivers)
     call setup_lakes(global_lake_parameters,global_lake_prognostics, &
                      global_lake_fields, initial_water_to_lake_centers)
+    if (global_run_water_budget_check) then
+      call check_water_budget(global_lake_prognostics,global_lake_fields)
+    end if
     deallocate(initial_water_to_lake_centers)
 end subroutine init_lake_model
 
@@ -97,6 +101,8 @@ subroutine init_lake_model_test(lake_parameters,initial_water_to_lake_centers, &
     global_step_length = step_length
     call setup_lakes(global_lake_parameters,global_lake_prognostics, &
                      global_lake_fields, initial_water_to_lake_centers)
+    call check_water_budget(global_lake_prognostics,global_lake_fields)
+    global_run_water_budget_check = .true.
 end subroutine init_lake_model_test
 
 ! Free memory at the end of a run
@@ -110,19 +116,12 @@ subroutine clean_lake_model()
 end subroutine clean_lake_model
 
 ! Interface for the lake model to be used by the HD model code in this repo
-subroutine run_lake_model(lake_interface_fields,run_water_budget_check)
+subroutine run_lake_model(lake_interface_fields)
   type(lakeinterfaceprognosticfields), intent(inout) :: lake_interface_fields
-  logical,optional :: run_water_budget_check
-  logical :: run_water_budget_check_local
-    if (present(run_water_budget_check)) then
-      run_water_budget_check_local = run_water_budget_check
-    else
-      run_water_budget_check_local = .true.
-    end if
     global_lake_fields%water_to_lakes(:) = &
       lake_interface_fields%water_to_lakes(:)*global_step_length
     call run_lakes(global_lake_parameters,global_lake_prognostics,global_lake_fields)
-    if (run_water_budget_check_local) then
+    if (global_run_water_budget_check) then
       call check_water_budget(global_lake_prognostics,global_lake_fields)
     end if
     global_lake_fields%water_to_hd(:) = &
@@ -149,10 +148,10 @@ subroutine run_lake_model_jsbach(water_to_lakes_in,water_to_hd_out,water_from_oc
 end subroutine run_lake_model_jsbach
 
 ! Write a field of lake numbers out
-subroutine write_lake_numbers_field_interface(timestep,grid_information,working_directory)
+subroutine write_lake_numbers_field_interface(working_directory,timestep,grid_information)
   integer :: timestep
   type(gridinformation) :: grid_information
-  character(len = *), intent(in),optional :: working_directory
+  character(len = *), intent(in) :: working_directory
     call write_lake_numbers_field(working_directory,global_lake_parameters, &
                                   global_lake_fields,timestep,grid_information)
 end subroutine write_lake_numbers_field_interface
@@ -161,7 +160,7 @@ end subroutine write_lake_numbers_field_interface
 ! point in the lake
 subroutine write_diagnostic_lake_volumes_interface(working_directory,timestep,&
                                                    grid_information)
-  character(len = *), intent(in),optional :: working_directory
+  character(len = *), intent(in) :: working_directory
   integer :: timestep
   type(gridinformation) :: grid_information
     call write_diagnostic_lake_volumes(working_directory, &

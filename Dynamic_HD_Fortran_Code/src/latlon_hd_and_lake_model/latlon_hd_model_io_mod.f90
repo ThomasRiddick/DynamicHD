@@ -266,7 +266,9 @@ function load_runoff_fields(runoffs_filename,first_timestep,last_timestep, &
     call check_return_code(nf90_close(ncid))
 end function load_runoff_fields
 
-subroutine write_river_flow_field(river_parameters,river_flow_field,timestep)
+subroutine write_river_flow_field(working_directory,river_parameters,&
+                                  river_flow_field,timestep)
+  character(len = *), intent(in) :: working_directory
   type(riverparameters), pointer,intent(in) :: river_parameters
   real(dp), pointer, dimension(:,:),intent(in) :: river_flow_field
   integer,intent(in) :: timestep
@@ -276,7 +278,7 @@ subroutine write_river_flow_field(river_parameters,river_flow_field,timestep)
   integer, dimension(2) :: dimids
   character(len = max_name_length) :: filename
   character(len = 50) :: timestep_str
-    filename = 'river_model_results_'
+    filename = trim(working_directory) // '/river_model_results_'
     write (timestep_str,'(I0.3)') timestep
     filename = trim(filename) // trim(timestep_str) // '.nc'
     call check_return_code(nf90_create(filename,nf90_noclobber,ncid))

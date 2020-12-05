@@ -94,12 +94,11 @@ module icosohedral_hd_model_interface_mod
         call set_lake_evaporation(global_prognostics,lake_evaporation_local(:,i))
         call run_hd(global_prognostics)
         if ((i == 1 .or. i == timesteps .or. mod(i,10) == 0) .and. write_output) then
-          call write_river_flow_field(working_directory,&
+          call write_river_flow_field(working_directory_local,&
                                       global_prognostics%river_parameters,&
                                       global_prognostics%river_fields%river_inflow,i,&
                                       grid_information)
-          !call write_lake_numbers_field_interface(i,grid_information,working_directory)
-          call write_diagnostic_lake_volumes_interface(working_directory,i,&
+          call write_diagnostic_lake_volumes_interface(working_directory_local,i,&
                                                        grid_information)
         end if
       end do

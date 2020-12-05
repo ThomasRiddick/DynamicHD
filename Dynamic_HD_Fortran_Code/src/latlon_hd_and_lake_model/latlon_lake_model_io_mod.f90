@@ -9,6 +9,7 @@ implicit none
 character(len = max_name_length) :: lake_params_filename
 character(len = max_name_length) :: lake_start_filename
 real(dp) :: lake_retention_coefficient
+logical :: run_water_budget_check
 
 contains
 
@@ -34,16 +35,19 @@ subroutine add_offset(array,offset,exceptions)
     end where
 end subroutine
 
-subroutine config_lakes(lake_model_ctl_filename)
+subroutine config_lakes(lake_model_ctl_filename,&
+                        run_water_budget_check_out)
   include 'lake_model_ctl.inc'
 
   character(len = max_name_length) :: lake_model_ctl_filename
+  logical, intent(out) :: run_water_budget_check_out
   integer :: unit_number
 
     write(*,*) "Reading namelist: " // trim(lake_model_ctl_filename)
     open(newunit=unit_number,file=lake_model_ctl_filename,status='old')
     read (unit=unit_number,nml=lake_model_ctl)
     close(unit_number)
+    run_water_budget_check_out = run_water_budget_check
 
 end subroutine config_lakes
 
@@ -368,18 +372,20 @@ subroutine write_lake_volumes_field(lake_volumes_filename,&
     call check_return_code(nf90_close(ncid))
 end subroutine write_lake_volumes_field
 
-subroutine write_lake_numbers_field(lake_parameters,lake_fields,timestep)
+subroutine write_lake_numbers_field(working_directory,lake_parameters,&
+                                    lake_fields,timestep)
   type(lakeparameters), pointer, intent(in) :: lake_parameters
   type(lakefields), pointer, intent(in) :: lake_fields
+  character(len = *), intent(in) :: working_directory
   integer, intent(in) :: timestep
   character(len = 50) :: timestep_str
   character(len = max_name_length) :: filename
   integer :: ncid,varid,lat_dimid,lon_dimid
   integer, dimension(2) :: dimids
     if(timestep == -1) then
-      filename = 'lake_model_results.nc'
+      filename = trim(working_directory) // 'lake_model_results.nc'
     else
-      filename = 'lake_model_results_'
+      filename = trim(working_directory) // 'lake_model_results_'
       write (timestep_str,'(I0.3)') timestep
       filename = trim(filename) // trim(timestep_str) // '.nc'
     end if
@@ -398,13 +404,15 @@ subroutine write_lake_numbers_field(lake_parameters,lake_fields,timestep)
     call check_return_code(nf90_close(ncid))
 end subroutine write_lake_numbers_field
 
-subroutine write_diagnostic_lake_volumes(lake_parameters, &
+subroutine write_diagnostic_lake_volumes(working_directory, &
+                                         lake_parameters, &
                                          lake_prognostics, &
                                          lake_fields, &
                                          timestep)
   type(lakeparameters), pointer, intent(in) :: lake_parameters
   type(lakeprognostics),pointer, intent(in) :: lake_prognostics
   type(lakefields), pointer, intent(in) :: lake_fields
+  character(len = *), intent(in) :: working_directory
   integer, intent(in) :: timestep
   character(len = 50) :: timestep_str
   character(len = max_name_length) :: filename
@@ -415,9 +423,9 @@ subroutine write_diagnostic_lake_volumes(lake_parameters, &
                                                                 lake_prognostics,&
                                                                 lake_fields)
     if(timestep == -1) then
-      filename = 'diagnostic_lake_volume_results.nc'
+      filename = trim(working_directory) // 'diagnostic_lake_volume_results.nc'
     else
-      filename = 'diagnostic_lake_volume_results_'
+      filename = trim(working_directory) // 'diagnostic_lake_volume_results_'
       write (timestep_str,'(I0.3)') timestep
       filename = trim(filename) // trim(timestep_str) // '.nc'
     end if
