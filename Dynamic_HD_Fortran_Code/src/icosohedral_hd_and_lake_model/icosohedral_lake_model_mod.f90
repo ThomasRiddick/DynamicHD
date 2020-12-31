@@ -622,6 +622,7 @@ subroutine lakefieldsdestructor(this)
   class(lakefields), intent(inout) :: this
     deallocate(this%completed_lake_cells)
     deallocate(this%lake_numbers)
+    deallocate(this%lake_water_from_ocean)
     deallocate(this%water_to_lakes)
     deallocate(this%water_to_hd)
     deallocate(this%cells_with_lakes_index)
@@ -1617,9 +1618,10 @@ end function calculate_diagnostic_lake_volumes
 
 !Check the lake models internal water budget is balance to within a floating
 !point error - if not print out information
-subroutine check_water_budget(lake_prognostics,lake_fields)
+subroutine check_water_budget(lake_prognostics,lake_fields,initial_water_to_lakes)
   type(lakeprognostics), intent(inout) :: lake_prognostics
   type(lakefields), intent(inout) :: lake_fields
+  real(dp), optional :: initial_water_to_lakes
   type(lake), pointer :: working_lake
   real(dp) :: new_total_lake_volume
   real(dp) :: change_in_total_lake_volume,total_inflow_minus_outflow,difference
@@ -1644,6 +1646,9 @@ subroutine check_water_budget(lake_prognostics,lake_fields)
     total_inflow_minus_outflow = total_water_to_lakes + &
                                  sum(lake_fields%lake_water_from_ocean) - &
                                  sum(lake_fields%water_to_hd)
+    if(present(initial_water_to_lakes)) then
+      total_inflow_minus_outflow = total_inflow_minus_outflow + initial_water_to_lakes
+    end if
     difference = change_in_total_lake_volume - total_inflow_minus_outflow
     tolerance = 5.0e-16_dp*max(abs(total_water_to_lakes),abs(new_total_lake_volume))
     if (abs(difference) > tolerance) then

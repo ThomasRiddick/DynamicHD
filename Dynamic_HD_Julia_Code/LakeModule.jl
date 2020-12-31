@@ -59,7 +59,11 @@ struct DistributeSpillover <: Event
   initial_spillover_to_rivers::Field{Float64}
 end
 
-struct CheckWaterBudget <: Event end
+struct CheckWaterBudget <: Event
+  total_initial_water_volume::Float64
+end
+
+CheckWaterBudget() = CheckWaterBudget(0.0)
 
 abstract type GridSpecificLakeParameters end
 
@@ -1259,7 +1263,9 @@ function handle_event(prognostic_fields::RiverAndLakePrognosticFields,
     end
   end
   change_in_total_lake_volume::Float64 = new_total_lake_volume -
-                                         lake_diagnostic_variables.total_lake_volume
+                                         lake_diagnostic_variables.total_lake_volume -
+                                         check_water_budget.
+                                         total_initial_water_volume
   total_water_to_lakes::Float64 = sum(lake_fields.water_to_lakes)
   total_inflow_minus_outflow::Float64 = total_water_to_lakes +
                                         sum(lake_fields.lake_water_from_ocean) -
@@ -1272,6 +1278,10 @@ function handle_event(prognostic_fields::RiverAndLakePrognosticFields,
     println("Total inflow - outflow: $(total_inflow_minus_outflow)")
     println("Change in lake volume: $(change_in_total_lake_volume)")
     println("Difference: $(difference)")
+    println(total_water_to_lakes)
+    println(sum(lake_fields.lake_water_from_ocean))
+    println(sum(lake_fields.water_to_hd))
+    println(lake_diagnostic_variables.total_lake_volume)
   end
   lake_diagnostic_variables.total_lake_volume = new_total_lake_volume
   return prognostic_fields

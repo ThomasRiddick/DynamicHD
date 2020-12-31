@@ -83,7 +83,8 @@ subroutine init_lake_model(lake_model_ctl_filename,initial_spillover_to_rivers, 
     call setup_lakes(global_lake_parameters,global_lake_prognostics, &
                      global_lake_fields, initial_water_to_lake_centers)
     if (global_run_water_budget_check) then
-      call check_water_budget(global_lake_prognostics,global_lake_fields)
+      call check_water_budget(global_lake_prognostics,global_lake_fields, &
+                              sum(initial_water_to_lake_centers))
     end if
     deallocate(initial_water_to_lake_centers)
 end subroutine init_lake_model

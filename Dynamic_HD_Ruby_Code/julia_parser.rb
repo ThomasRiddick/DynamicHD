@@ -18,12 +18,16 @@ class JuliaStatement
 end
 
 class JuliaParser
-  @@test_pattern=/^\s*@testset\s*"(\s*[\w\s\d]+)\s*"\s*begin\s*/
-  @@open_block_pattern=/^[^#]*begin\s*/
+  @@test_pattern=/^\s*@testset\s*"(\s*[\w\s\d]+)\s*"\s*begin(\s+|$)/
+  @@open_block_pattern=/^s\*begin(\s+|$)/
   @@if_pattern=/^\s*if\s+/
+  @@single_line_if_pattern=/^\s*if\s*.*\s*end(\s+|$)/
   @@close_block_pattern=/(?:^\s*|\s+)end(\s+|$)/
-  @@julia_loop_construct=/\s*for\s*(\w+)\s+in\s+(\d+\s)\s*+\s*(\d+\s)\s*^/
-  @@julia_numeric_loop_construct=/\s*for\s*(\w+)\s*=\s*(\d+)\s*:\s*(\d+)\s*^/
+  @@julia_loop_construct=/^\s*for\s+(\S+)\s+in\s+(\S+)\s*$/
+  @@julia_numeric_loop_construct=/^\s*for\s*(\S+)\s*=\s*(\d+)\s*:\s*(\d+)\s*$/
+  @@julia_open_construct=Regexp.union(@@test_pattern,@@open_block_pattern,
+                                      @@single_line_if_pattern,@@if_pattern,
+                                      @@julia_loop_construct,@@julia_numeric_loop_construct)
   @@julia_comment_line=/\s*#.*$/
   @@julia_double_field_definition=
     /\s*(\w+)(?:::(?:LatLon)?Field\{Float64\})?\s*=\s*LatLonField\{\s*Float64\s*\}\(.*,(.*)\).*$/
@@ -37,6 +41,8 @@ class JuliaParser
     /\s*(\w+)(?:::(?:LatLon)?Field\{Int64\})?\s*=\s*LatLonField\{\s*Int64\s*\}\([^)&]*($|&)/
   @@julia_initialised_bool_field_definition=
     /\s*(\w+)(?:::(?:LatLon)?Field\{Bool\})?\s*=\s*LatLonField\{\s*Bool\s*\}\([^)&]*($|&)/
+  @@julia_initialised_user_defined_type_field_definition=
+    /\s*(\w+)(?:::(?:LatLon)?Field\{\s*(?!(Bool|Int64|Float64)).*\})?\s*=\s*LatLonField\{\s*(?!(Bool|Int64|Float64)).*\s*\}\([^)&]*($|&)/
   @@julia_double_definition=/\s*\w+::Float64\s*=\s*(\d+\.d*)/
   @@julia_int_definition=/\s*\w+::Int64\s*=\s*(\d+)/
   @@julia_bool_definition=/\s*\w+::Bool\s*=\s*(true|false)/
@@ -74,17 +80,18 @@ class JuliaParser
     open_blocks=1
     loop do
       if close_block_match = @@close_block_pattern.match(text)
-        unless close_block_match.pre_match =~ @@open_block_pattern ||
-               close_block_match.pre_match =~ @@if_pattern then
+        unless close_block_match.pre_match =~ @@julia_open_construct then
           text=close_block_match.post_match
           open_blocks -= 1
           return text if open_blocks == 0
           next
         end
       end
-      if text =~ @@open_block_pattern || text =~ @@if_pattern
-          text=$'
+      if text =~ @@julia_open_construct
+        text=$'
+        if not ($& =~ @@single_line_if_pattern)
           open_blocks += 1
+        end
       end
     end
   end
@@ -94,7 +101,7 @@ class JuliaParser
       statements = Array.new
       sanitized_text = test.body.clone
       sanitized_text.gsub!(/#=\s*\n*\s*=#/," ")
-      sanitized_text.gsub!(/(.*)=\s*\n/,"//1=")
+      sanitized_text.gsub!(/(.*)=\s*\n/,"\\1=")
       # This is hardwired to convert to Fortran. Need redevelopment to be more
       # abstract as Base class should be general
       # Have also removed loop for the end of the loop as it wasn't work
@@ -110,6 +117,8 @@ class JuliaParser
                   when @@julia_initialised_double_field_definition then :double_initialised_array_definition
                   when @@julia_initialised_int_field_definition then :int_initialised_array_definition
                   when @@julia_initialised_bool_field_definition then :bool_initialised_array_definition
+                  when @@julia_initialised_user_defined_type_field_definition \
+                    then :user_defined_type_initialised_array_definition
                   when @@julia_double_field_definition then :double_array_definition
                   when @@julia_int_field_definition then :int_array_definition
                   when @@julia_bool_field_definition then :bool_array_definition
@@ -128,7 +137,7 @@ class JuliaParser
         case type
           when :double_initialised_array_definition,:int_initialised_array_definition,
                :bool_initialised_array_definition, :multi_line_julia_function_call,
-               :multi_line_assignment
+               :multi_line_assignment, :user_defined_type_initialised_array_definition
             contents += " &\n"
             while endline_match = sanitized_text.match(/\n/)
               sanitized_text=endline_match.post_match
@@ -176,6 +185,9 @@ class JuliaToFortranConverter < JuliaParser
         when :bool_initialised_array_definition
           fortran_definitions+=generate_array_definition(statement.content,type=:logical)
           fortran_statements +=convert_initialised_array(statement.content,type=:logical)
+        when :user_defined_type_initialised_array_definition
+          fortran_definitions+=generate_array_definition(statement.content,type=:user_defined)
+          fortran_statements +=convert_initialised_array(statement.content,type=:user_defined)
         when :double_array_definition
           fortran_definitions+=generate_array_definition(statement.content,type=:real)
           fortran_statements +=convert_uninitialised_array(statement.content,type=:real)
@@ -203,9 +215,9 @@ class JuliaToFortranConverter < JuliaParser
         when :multi_line_julia_function_call
           fortran_statements +="PROCESS BY HAND=>call "+statement.content.gsub(/true/,".True.").gsub(/false/,".False.").strip
         when :assignment
-          fortran_statements +="PROCESS BY HAND=>call "+statement.content.gsub(/true/,"True").gsub(/false/,"False").squeeze(" ").strip
+          fortran_statements +="PROCESS BY HAND=> "+statement.content.gsub(/true/,"True").gsub(/false/,"False").squeeze(" ").strip
         when :multi_line_assignment
-          fortran_statements +="PROCESS BY HAND=>call "+statement.content.gsub(/true/,"True").gsub(/false/,"False").
+          fortran_statements +="PROCESS BY HAND=>"+statement.content.gsub(/true/,"True").gsub(/false/,"False").
                                                         squeeze(" ").strip.gsub(/\n/,"\n         ")
         when :array_assignment
           fortran_statements +=statement.content.gsub(/true/,".True.").gsub(/false/,"False.").
@@ -226,6 +238,8 @@ class JuliaToFortranConverter < JuliaParser
                       when :real then @@julia_initialised_double_field_definition
                       when :integer then @@julia_initialised_int_field_definition
                       when :logical then @@julia_initialised_bool_field_definition
+                      when :user_defined \
+                        then @@julia_initialised_user_defined_type_field_definition
                     end
     case type
       when :real then array_statement.sub!("Float64[","")
@@ -234,8 +248,9 @@ class JuliaToFortranConverter < JuliaParser
     end
     array_statement.sub!(start_pattern,"allocate(\\1(x,y))\n      \\1 = transpose(reshape((/ &")
     array_statement.gsub!(/([\d.]+) /,"\\1, ")
-    array_statement.gsub!(/true/,".True.,")
-    array_statement.gsub!(/false/,".False.,")
+    array_statement.gsub!(/([\w.]+) /,"\\1, ")
+    array_statement.gsub!(/true,/,".True.,")
+    array_statement.gsub!(/false,/,".False.,")
     array_statement.sub!(/\]\)/,"/), &\n         (/y,x/)))")
     return array_statement
   end

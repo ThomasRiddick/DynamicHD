@@ -31,7 +31,7 @@ program latlon_hd_model_driver
     call get_command_argument(4,value=working_directory)
     if (num_args == 5) then
       using_lakes = .true.
-      call get_command_argument(4,value=lake_model_ctl_filename)
+      call get_command_argument(5,value=lake_model_ctl_filename)
     else
       using_lakes = .false.
       lake_model_ctl_filename = ""

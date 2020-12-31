@@ -423,9 +423,9 @@ subroutine write_diagnostic_lake_volumes(working_directory, &
                                                                 lake_prognostics,&
                                                                 lake_fields)
     if(timestep == -1) then
-      filename = trim(working_directory) // 'diagnostic_lake_volume_results.nc'
+      filename = trim(working_directory) // '/diagnostic_lake_volume_results.nc'
     else
-      filename = trim(working_directory) // 'diagnostic_lake_volume_results_'
+      filename = trim(working_directory) // '/diagnostic_lake_volume_results_'
       write (timestep_str,'(I0.3)') timestep
       filename = trim(filename) // trim(timestep_str) // '.nc'
     end if

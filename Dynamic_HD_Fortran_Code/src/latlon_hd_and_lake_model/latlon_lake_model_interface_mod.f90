@@ -53,16 +53,17 @@ subroutine initialiselakeinterfaceprognosticfields(this, &
     allocate(this%water_from_lakes(nlat_coarse,nlon_coarse))
     allocate(this%water_to_lakes(nlat_coarse,nlon_coarse))
     allocate(this%lake_water_from_ocean(nlat_coarse,nlon_coarse))
-    this%water_from_lakes = 0.0
-    this%water_to_lakes = 0.0
-    this%lake_water_from_ocean = 0.0
+    this%water_from_lakes = 0.0_dp
+    this%water_to_lakes = 0.0_dp
+    this%lake_water_from_ocean = 0.0_dp
 end subroutine initialiselakeinterfaceprognosticfields
 
 subroutine init_lake_model(lake_model_ctl_filename,initial_spillover_to_rivers, &
-                           step_length)
+                           lake_interface_fields,step_length)
   character(len = *) :: lake_model_ctl_filename
   real(dp), pointer, dimension(:,:),intent(out) :: initial_spillover_to_rivers
   real(dp), pointer, dimension(:,:) :: initial_water_to_lake_centers
+  type(lakeinterfaceprognosticfields), intent(inout) :: lake_interface_fields
   real(dp) :: step_length
     call config_lakes(lake_model_ctl_filename,global_run_water_budget_check)
     global_lake_parameters => read_lake_parameters(.true.)
@@ -75,27 +76,45 @@ subroutine init_lake_model(lake_model_ctl_filename,initial_spillover_to_rivers, 
                                   global_step_length)
     call setup_lakes(global_lake_parameters,global_lake_prognostics, &
                      global_lake_fields, initial_water_to_lake_centers)
+    call run_lakes(global_lake_parameters,global_lake_prognostics,global_lake_fields)
     if (global_run_water_budget_check) then
       call check_water_budget(global_lake_prognostics,global_lake_fields, &
                               sum(initial_water_to_lake_centers))
     end if
+    global_lake_fields%water_to_hd(:,:) = &
+      global_lake_fields%water_to_hd(:,:)/global_step_length
+    lake_interface_fields%water_from_lakes(:,:) = global_lake_fields%water_to_hd(:,:)
     deallocate(initial_water_to_lake_centers)
 end subroutine init_lake_model
 
 subroutine init_lake_model_test(lake_parameters,initial_water_to_lake_centers, &
-                                step_length)
+                                lake_interface_fields,step_length)
   type(lakeparameters), pointer :: lake_parameters
   real(dp), pointer, dimension(:,:), intent(in) :: initial_water_to_lake_centers
+  type(lakeinterfaceprognosticfields), intent(inout) :: lake_interface_fields
   real(dp) :: step_length
     global_lake_parameters => lake_parameters
+    if (associated(global_lake_fields)) then
+        call global_lake_fields%lakefieldsdestructor()
+        deallocate(global_lake_fields)
+    end if
     global_lake_fields => lakefields(global_lake_parameters)
+    if (associated(global_lake_prognostics)) then
+        call global_lake_prognostics%lakeprognosticsdestructor()
+        deallocate(global_lake_prognostics)
+    end if
     global_lake_prognostics => lakeprognostics(global_lake_parameters, &
                                                global_lake_fields)
     global_step_length = step_length
     call setup_lakes(global_lake_parameters,global_lake_prognostics, &
                      global_lake_fields, initial_water_to_lake_centers)
-    call check_water_budget(global_lake_prognostics,global_lake_fields)
+    call run_lakes(global_lake_parameters,global_lake_prognostics,global_lake_fields)
+    call check_water_budget(global_lake_prognostics,global_lake_fields, &
+                            sum(initial_water_to_lake_centers))
     global_run_water_budget_check = .true.
+    global_lake_fields%water_to_hd(:,:) = &
+      global_lake_fields%water_to_hd(:,:)/global_step_length
+    lake_interface_fields%water_from_lakes(:,:) = global_lake_fields%water_to_hd(:,:)
 end subroutine init_lake_model_test
 
 subroutine clean_lake_model()

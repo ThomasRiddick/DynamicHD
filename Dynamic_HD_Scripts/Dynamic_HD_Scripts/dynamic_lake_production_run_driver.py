@@ -239,12 +239,13 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                                              get_data(),
                                                                              dtype=np.float64),
                                                         minimum_depth_threshold=5.0)
-        orography_10min = filter_narrow_lakes(input_unfilled_orography=orography_10min,
-                                              input_filled_orography=orography_10min_filled,
-                                              interior_cell_min_masked_neighbors=5,
-                                              edge_cell_max_masked_neighbors=4,
-                                              max_range=5,
-                                              iterations=5)
+        orography_10min = dynamic_lake_operators.\
+            filter_narrow_lakes(input_unfilled_orography=orography_10min,
+                                input_filled_orography=orography_10min_filled,
+                                interior_cell_min_masked_neighbors=5,
+                                edge_cell_max_masked_neighbors=4,
+                                max_range=5,
+                                iterations=5)
         #Generate River Directions
         rdirs_10min = determine_river_directions.determine_river_directions(orography=orography_10min,
                                                                             lsmask=ls_mask_10min,

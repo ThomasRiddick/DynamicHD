@@ -296,7 +296,7 @@ subroutine initialiseprognostics(this,using_lakes,river_parameters,river_fields)
 end subroutine initialiseprognostics
 
 function prognosticsconstructor(using_lakes,river_parameters,river_fields) result(constructor)
-  type(prognostics), allocatable :: constructor
+  type(prognostics), pointer :: constructor
   type(riverparameters) :: river_parameters
   type(riverprognosticfields) :: river_fields
   logical :: using_lakes
@@ -339,6 +339,7 @@ subroutine run_hd(prognostic_fields)
             prognostic_fields%lake_interface_fields%water_from_lakes
       elsewhere
         prognostic_fields%river_diagnostic_fields%river_outflow = &
+            prognostic_fields%river_diagnostic_fields%river_outflow + &
             prognostic_fields%lake_interface_fields%water_from_lakes
       end where
     end if
@@ -452,8 +453,7 @@ subroutine route(flow_directions,flow_in,flow_out,nlat,nlon)
           flow_direction = flow_directions(i,j)
           if (flow_direction == 5.0_dp .or. flow_direction == -2.0_dp .or. &
               flow_direction == -1.0_dp .or. flow_direction == 0.0_dp) then
-            flow_in_local = flow_out(i,j) + flow_in_local
-            flow_out(i,j) = flow_in_local
+            flow_out(i,j) = flow_out(i,j) + flow_in_local
           else
             if (flow_direction == 1.0_dp .or. &
                 flow_direction == 4.0_dp .or. &
@@ -496,7 +496,7 @@ end subroutine set_runoff
 
 subroutine set_lake_evaporation(prognostic_fields,lake_evaporation)
   type(prognostics), intent(inout) :: prognostic_fields
-  real(dp), dimension(:,:) :: lake_evaporation
+  real(dp), allocatable, dimension(:,:) :: lake_evaporation
     prognostic_fields%river_fields%lake_evaporation = lake_evaporation
 end subroutine set_lake_evaporation
 

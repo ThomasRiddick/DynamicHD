@@ -5,7 +5,7 @@ module latlon_hd_model_interface_mod
 
   implicit none
 
-  type(prognostics), target :: global_prognostics
+  type(prognostics), pointer :: global_prognostics
   logical :: write_output
   real(dp) :: global_step_length = 86400.0_dp
 
@@ -22,11 +22,14 @@ module latlon_hd_model_interface_mod
     type(riverprognosticfields), pointer :: river_fields
       river_parameters => read_river_parameters(river_params_filename)
       river_fields => load_river_initial_values(hd_start_filename)
-      global_prognostics = prognostics(using_lakes,river_parameters,river_fields)
+      global_prognostics => prognostics(using_lakes,river_parameters,river_fields)
       if (using_lakes) then
         if ( .not. present(lake_model_ctl_filename)) stop
         call init_lake_model(lake_model_ctl_filename,initial_spillover_to_rivers, &
-                             global_step_length)
+                             global_prognostics%lake_interface_fields,global_step_length)
+        initial_spillover_to_rivers(:,:) = initial_spillover_to_rivers(:,:) + &
+          global_prognostics%lake_interface_fields%water_from_lakes(:,:)
+        global_prognostics%lake_interface_fields%water_from_lakes(:,:) = 0.0_dp
         call distribute_spillover(global_prognostics,initial_spillover_to_rivers)
         deallocate(initial_spillover_to_rivers)
       end if
@@ -40,25 +43,65 @@ module latlon_hd_model_interface_mod
     type(riverparameters), intent(in) :: river_parameters
     type(lakeparameters), pointer, optional, intent(in) :: lake_parameters
     type(riverprognosticfields), pointer, optional, intent(inout) :: river_fields
+    real(dp), pointer, dimension(:,:) :: initial_spillover_to_rivers_local
+    real(dp), pointer, dimension(:,:) :: initial_water_to_lake_centers_local
     real(dp), pointer, dimension(:,:),optional, intent(in) :: initial_spillover_to_rivers
     real(dp), pointer, dimension(:,:),optional, intent(in) :: initial_water_to_lake_centers
-      global_prognostics = prognostics(using_lakes,river_parameters,river_fields)
+      if(associated(global_prognostics)) then
+        if (using_lakes) then
+          call global_prognostics%lake_interface_fields%&
+               &lakeinterfaceprognosticfieldsdestructor()
+          deallocate(global_prognostics%lake_interface_fields)
+        end if
+        call global_prognostics%river_diagnostic_fields%riverdiagnosticfieldsdestructor()
+        deallocate(global_prognostics%river_diagnostic_fields)
+        call global_prognostics%river_diagnostic_output_fields%&
+                                &riverdiagnosticoutputfieldsdestructor()
+        deallocate(global_prognostics%river_diagnostic_output_fields)
+        deallocate(global_prognostics)
+      end if
+      global_prognostics => prognostics(using_lakes,river_parameters,river_fields)
       if (using_lakes) then
-        call init_lake_model_test(lake_parameters,initial_water_to_lake_centers, &
+        allocate(initial_water_to_lake_centers_local(lake_parameters%nlat, &
+                                                     lake_parameters%nlon))
+        if (present(initial_water_to_lake_centers)) then
+          initial_water_to_lake_centers_local(:,:) = &
+            initial_water_to_lake_centers(:,:)
+        else
+          initial_water_to_lake_centers_local(:,:) = 0.0_dp
+        end if
+        call init_lake_model_test(lake_parameters,initial_water_to_lake_centers_local, &
+                                  global_prognostics%lake_interface_fields, &
                                   global_step_length)
-        call distribute_spillover(global_prognostics,initial_spillover_to_rivers)
+        deallocate(initial_water_to_lake_centers_local)
+        allocate(initial_spillover_to_rivers_local(river_parameters%nlat, &
+                                                   river_parameters%nlon))
+        if (present(initial_spillover_to_rivers)) then
+          initial_spillover_to_rivers_local(:,:) = &
+            initial_spillover_to_rivers(:,:)/global_step_length
+        else
+          initial_spillover_to_rivers_local(:,:) = 0.0_dp
+        end if
+        initial_spillover_to_rivers_local(:,:) = initial_spillover_to_rivers_local(:,:) + &
+          global_prognostics%lake_interface_fields%water_from_lakes(:,:)
+        global_prognostics%lake_interface_fields%water_from_lakes(:,:) = 0.0_dp
+        call distribute_spillover(global_prognostics,initial_spillover_to_rivers_local)
+        deallocate(initial_spillover_to_rivers_local)
       end if
       write_output = .false.
   end subroutine init_hd_model_for_testing
 
-  subroutine run_hd_model(timesteps,runoffs,drainages,lake_evaporation,&
+  subroutine run_hd_model(timesteps,runoffs,drainages,lake_evaporations,&
                           working_directory)
     integer, intent(in) :: timesteps
     real(dp)   ,dimension(:,:,:) :: runoffs
     real(dp)   ,dimension(:,:,:) :: drainages
-    real(dp)   ,dimension(:,:,:), optional :: lake_evaporation
-    real(dp)   ,dimension(:,:,:), allocatable :: lake_evaporation_local
+    real(dp)   ,dimension(:,:,:), optional :: lake_evaporations
+    real(dp)   ,dimension(:,:,:), allocatable :: lake_evaporations_local
     character(len = *), intent(in),optional :: working_directory
+    real(dp)   ,dimension(:,:), allocatable :: runoff
+    real(dp)   ,dimension(:,:), allocatable :: drainage
+    real(dp)   ,dimension(:,:), allocatable :: evaporation
     integer :: i
     character(len = max_name_length) :: working_directory_local
       if (present(working_directory)) then
@@ -66,15 +109,24 @@ module latlon_hd_model_interface_mod
       else
         working_directory_local = ""
       end if
-      allocate(lake_evaporation_local,mold=runoffs)
-      if (present(lake_evaporation)) then
-        lake_evaporation_local(:,:,:) = lake_evaporation(:,:,:)
+      allocate(lake_evaporations_local,mold=runoffs)
+      if (present(lake_evaporations)) then
+        lake_evaporations_local(:,:,:) = lake_evaporations(:,:,:)
       else
-        lake_evaporation_local(:,:,:) = 0
+        lake_evaporations_local(:,:,:) = 0.0_dp
       end if
+      allocate(runoff(global_prognostics%river_parameters%nlat,&
+                      global_prognostics%river_parameters%nlon))
+      allocate(drainage(global_prognostics%river_parameters%nlat,&
+                        global_prognostics%river_parameters%nlon))
+      allocate(evaporation(global_prognostics%river_parameters%nlat,&
+                           global_prognostics%river_parameters%nlon))
       do i = 1,timesteps
-        call set_runoff_and_drainage(global_prognostics,runoffs(:,:,i),drainages(:,:,i))
-        call set_lake_evaporation(global_prognostics,lake_evaporation_local(:,:,i))
+        runoff(:,:) = runoffs(:,:,i)
+        drainage(:,:) = drainages(:,:,i)
+        evaporation(:,:) = lake_evaporations_local(:,:,i)
+        call set_runoff_and_drainage(global_prognostics,runoff,drainage)
+        call set_lake_evaporation(global_prognostics,evaporation)
         call run_hd(global_prognostics)
         if ((i == 1 .or. i == timesteps .or. mod(i,365) == 0) .and. write_output) then
           call write_river_flow_field(working_directory_local, &
@@ -83,6 +135,10 @@ module latlon_hd_model_interface_mod
           call write_diagnostic_lake_volumes_interface(working_directory_local,i)
         end if
       end do
+      deallocate(lake_evaporations_local)
+      deallocate(runoff)
+      deallocate(drainage)
+      deallocate(evaporation)
   end subroutine
 
   function get_global_prognostics() result(value)
@@ -92,6 +148,7 @@ module latlon_hd_model_interface_mod
 
   subroutine clean_hd_model
     call global_prognostics%prognosticsdestructor()
+    deallocate(global_prognostics)
   end subroutine clean_hd_model
 
 end module latlon_hd_model_interface_mod

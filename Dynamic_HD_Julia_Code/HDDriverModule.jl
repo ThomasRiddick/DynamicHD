@@ -45,6 +45,8 @@ function drive_hd_model_with_or_without_lakes(prognostic_fields::PrognosticField
       # This must go after the initial lake run as the lake run
       # will reset the water to hd.
       handle_event(hsm,distribute_spillover)
+      handle_event(hsm,CheckWaterBudget(sum(initial_water_to_lake_centers)+
+                                        sum(initial_spillover_to_rivers)))
     end
   end
   for i in 1:timesteps
