@@ -43,10 +43,11 @@ program latlon_hd_model_driver
     allocate(runoffs(360,720,timesteps))
     allocate(drainages(360,720,timesteps))
     allocate(evaporations(360,720,timesteps))
-    runoffs = 1.0_dp
-    drainages = 1.0_dp
+    runoffs = 100.0_dp*0.0000000227_dp*2.6*10000000000.0_dp*20480.0_dp/259200.0_dp
+    drainages = 100.0_dp*0.0000000227_dp*2.6*10000000000.0_dp*20480.0_dp/259200.0_dp
     evaporations(:,:,1:middle_timestep) = 0.0
-    evaporations(:,:,middle_timestep+1:timesteps) = 5.0
+    evaporations(:,:,middle_timestep+1:timesteps) = 1000000.0_dp*0.0000000227_dp*2.6* &
+                 10000000000.0_dp*20480.0_dp/259200.0_dp
     call run_hd_model(timesteps,drainages,runoffs,evaporations,working_directory)
     call clean_hd_model()
     if (using_lakes) call clean_lake_model()

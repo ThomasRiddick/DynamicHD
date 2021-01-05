@@ -1,6 +1,7 @@
 RM := rm -rf
 USE_NAG := False
 USE_INTEL := False
+FLAGS := -DUSE_LOGGING
 ifeq ($(shell uname -s),Darwin)
 GFORTRAN :=  /usr/local/Cellar/gcc/10.2.0/bin/gfortran-10
 NAGFORTRAN :=  /usr/local/bin/nagfor
@@ -74,49 +75,49 @@ compile_only: $(OBJS) $(USER_OBJS)
 
 Dynamic_HD_Fortran_Code: $(OBJS) $(TEST_OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
-	$(FORTRAN) -o "Dynamic_HD_Fortran_Exec" $(OBJS) $(TEST_OBJS) $(USER_OBJS) $(LIBS)
+	$(FORTRAN) -o "Dynamic_HD_Fortran_Exec" $(OBJS) $(TEST_OBJS) $(USER_OBJS) $(LIBS) $(FLAGS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
 COTAT_Plus_LatLon_To_Icon_Simple_Interface_Code: $(OBJS) $(COTAT_PLUS_LATLON_TO_ICON_SIMPLE_INTERFACE_OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
-	$(FORTRAN) -o "COTAT_Plus_LatLon_To_Icon_Fortran_Exec" $(OBJS) $(COTAT_PLUS_LATLON_TO_ICON_SIMPLE_INTERFACE_OBJS) $(USER_OBJS) $(LIBS)
+	$(FORTRAN) -o "COTAT_Plus_LatLon_To_Icon_Fortran_Exec" $(OBJS) $(COTAT_PLUS_LATLON_TO_ICON_SIMPLE_INTERFACE_OBJS) $(USER_OBJS) $(LIBS) $(FLAGS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
 LatLon_Icon_Loop_Breaker_Simple_Interface_Code: $(OBJS) $(LATLON_TO_ICON_LOOP_BREAKER_SIMPLE_INTERFACE_OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
-	$(FORTRAN) -o "LatLon_To_Icon_Loop_Breaker_Fortran_Exec" $(OBJS) $(LATLON_TO_ICON_LOOP_BREAKER_SIMPLE_INTERFACE_OBJS) $(USER_OBJS) $(LIBS)
+	$(FORTRAN) -o "LatLon_To_Icon_Loop_Breaker_Fortran_Exec" $(OBJS) $(LATLON_TO_ICON_LOOP_BREAKER_SIMPLE_INTERFACE_OBJS) $(USER_OBJS) $(LIBS) $(FLAGS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
 Icon_To_LatLon_Landsea_Downscaler_Simple_Interface: $(OBJS) $(ICON_TO_LATLON_LANDSEA_DOWNSCALER_SIMPLE_INTERFACE_OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
-	$(FORTRAN) -o "Icon_To_LatLon_Landsea_Downscaler_Simple_Interface" $(OBJS) $(ICON_TO_LATLON_LANDSEA_DOWNSCALER_SIMPLE_INTERFACE_OBJS) $(USER_OBJS) $(LIBS)
+	$(FORTRAN) -o "Icon_To_LatLon_Landsea_Downscaler_Simple_Interface" $(OBJS) $(ICON_TO_LATLON_LANDSEA_DOWNSCALER_SIMPLE_INTERFACE_OBJS) $(USER_OBJS) $(LIBS) $(FLAGS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
 LatLon_To_Icon_Cross_Grid_Mapper_Simple_Interface: $(OBJS) $(LATLON_TO_ICON_CROSS_GRID_MAPPER_SIMPLE_INTERFACE_OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
-	$(FORTRAN) -o "LatLon_To_Icon_Cross_Grid_Mapper_Simple_Interface" $(OBJS) $(LATLON_TO_ICON_CROSS_GRID_MAPPER_SIMPLE_INTERFACE_OBJS) $(USER_OBJS) $(LIBS)
+	$(FORTRAN) -o "LatLon_To_Icon_Cross_Grid_Mapper_Simple_Interface" $(OBJS) $(LATLON_TO_ICON_CROSS_GRID_MAPPER_SIMPLE_INTERFACE_OBJS) $(USER_OBJS) $(LIBS) $(FLAGS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
 Accumulate_Flow_Icon_Simple_Interface: $(OBJS) $(ACCUMULATE_FLOW_ICON_SIMPLE_INTERFACE_OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
-	$(FORTRAN) -o "Accumulate_Flow_Icon_Simple_Interface_Exec" $(OBJS) $(ACCUMULATE_FLOW_ICON_SIMPLE_INTERFACE_OBJS) $(USER_OBJS) $(LIBS)
+	$(FORTRAN) -o "Accumulate_Flow_Icon_Simple_Interface_Exec" $(OBJS) $(ACCUMULATE_FLOW_ICON_SIMPLE_INTERFACE_OBJS) $(USER_OBJS) $(LIBS) $(FLAGS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
 LatLon_Lake_Model_Driver_Code: $(OBJS) $(LATLON_HD_AND_LAKE_MODEL_OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
-	$(FORTRAN) -o "LatLon_Lake_Model_Driver_Exec" $(OBJS) $(LATLON_HD_AND_LAKE_MODEL_OBJS) $(USER_OBJS) $(LIBS)
+	$(FORTRAN) -o "LatLon_Lake_Model_Driver_Exec" $(OBJS) $(LATLON_HD_AND_LAKE_MODEL_OBJS) $(USER_OBJS) $(LIBS) $(FLAGS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
 Icosohedral_Lake_Model_Driver_Code: $(OBJS) $(ICOSOHEDRAL_HD_AND_LAKE_MODEL_OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
-	$(FORTRAN) -o "Icosohedral_Lake_Model_Driver_Exec" $(OBJS) $(ICOSOHEDRAL_HD_AND_LAKE_MODEL_OBJS) $(USER_OBJS) $(LIBS)
+	$(FORTRAN) -o "Icosohedral_Lake_Model_Driver_Exec" $(OBJS) $(ICOSOHEDRAL_HD_AND_LAKE_MODEL_OBJS) $(USER_OBJS) $(LIBS) $(FLAGS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 

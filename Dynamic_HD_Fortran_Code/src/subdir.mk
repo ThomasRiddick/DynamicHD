@@ -30,6 +30,7 @@ $(FRUIT_LOC)/fruit.f90 \
 ../src/parameters_mod.f90 \
 ../src/accumulate_flow_mod.f90 \
 ../src/accumulate_flow_test_mod.f90 \
+../src/latlon_hd_and_lake_model/latlon_lake_logger_mod.f90 \
 ../src/latlon_hd_and_lake_model/latlon_lake_model_mod.f90 \
 ../src/latlon_hd_and_lake_model/latlon_lake_model_interface_mod.f90 \
 ../src/latlon_hd_and_lake_model/latlon_lake_model_io_mod.f90 \
@@ -104,6 +105,7 @@ LATLON_TO_ICON_CROSS_GRID_MAPPER_SIMPLE_INTERFACE_OBJS += \
 LATLON_HD_AND_LAKE_MODEL_OBJS += \
 ./src/parameters_mod.o \
 ./src/check_return_code_netcdf_mod.o \
+./src/latlon_hd_and_lake_model/latlon_lake_logger_mod.o \
 ./src/latlon_hd_and_lake_model/latlon_lake_model_mod.o \
 ./src/latlon_hd_and_lake_model/latlon_lake_model_interface_mod.o \
 ./src/latlon_hd_and_lake_model/latlon_lake_model_io_mod.o \
@@ -136,6 +138,7 @@ TEST_OBJS += \
 ./src/accumulate_flow_test_mod.o \
 ./src/parameters_mod.o \
 ./src/check_return_code_netcdf_mod.o \
+./src/latlon_hd_and_lake_model/latlon_lake_logger_mod.o \
 ./src/latlon_hd_and_lake_model/latlon_lake_model_mod.o \
 ./src/latlon_hd_and_lake_model/latlon_lake_model_interface_mod.o \
 ./src/latlon_hd_and_lake_model/latlon_lake_model_io_mod.o \
@@ -191,6 +194,7 @@ MODS += \
 ./check_return_code_netcdf_mod.mod \
 ./parameters_mod.mod \
 ./latlon_hd_model_mod.mod \
+./latlon_lake_logger_mod.mod \
 ./latlon_lake_model_mod.mod \
 ./latlon_lake_model_interface_mod.mod \
 ./latlon_lake_model_io_mod.mod \
@@ -219,14 +223,14 @@ ifeq ($(FORTRAN),$(GFORTRAN))
 src/fruit.o: $(FRUIT_LOC)/fruit.f90
 	@echo 'Building file: $<'
 	@echo 'Invoking: GNU Fortran Compiler'
-	$(FORTRAN) -funderscoring -cpp -O0 -g -Wall -c -fmessage-length=0 -fPIC -o "$@" "$<"
+	$(FORTRAN) -funderscoring -cpp -O0 -g -Wall -c -fmessage-length=0 -fPIC -o "$@" "$<" $(FLAGS)
 	@echo 'Finished building: $<'
 	@echo ' '
 else
 src/fruit.o: $(FRUIT_LOC)/fruit.f90
 	@echo 'Building file: $<'
 	@echo 'Invoking: NAG Fortran Compiler'
-	$(FORTRAN) -O0 -g -c -o "$@" "$<"
+	$(FORTRAN) -O0 -g -c -o "$@" "$<" $(FLAGS)
 	@echo 'Finished building: $<'
 	@echo ' '
 endif
@@ -237,21 +241,21 @@ ifeq ($(FORTRAN),$(GFORTRAN))
 src/%.o: ../src/%.f90
 	@echo 'Building file: $<'
 	@echo 'Invoking: GNU Fortran Compiler'
-	$(FORTRAN) -funderscoring -cpp -O0 -g -Wall -c -fmessage-length=0 -fPIC -o "$@" "$<" "-I ../include" "-I $(NETCDF_F)/include"
+	$(FORTRAN) -funderscoring -cpp -O0 -g -Wall -c -fmessage-length=0 -fPIC -o "$@" "$<" "-I ../include" "-I $(NETCDF_F)/include" $(FLAGS)
 	@echo 'Finished building: $<'
 	@echo ' '
 else ifeq ($(FORTRAN),$(INTELFORTRAN))
 src/%.o: ../src/%.f90
 	@echo 'Invoking: Intel Fortran Compiler'
 	@echo 'Building file: $<'
-	$(FORTRAN) -O0 -fpp -g -c -o "$@" "$<" -I ../include -I $(NETCDF_F)/include
+	$(FORTRAN) -O0 -fpp -g -c -o "$@" "$<" -I ../include -I $(NETCDF_F)/include $(FLAGS)
 	@echo 'Finished building: $<'
 	@echo ' '
 else
 src/%.o: ../src/%.f90
 	@echo 'Invoking: NAG Fortran Compiler'
 	@echo 'Building file: $<'
-	$(FORTRAN) -O0 -fpp -g -c -o "$@" "$<" -I ../include -I $(NETCDF_F)/include
+	$(FORTRAN) -O0 -fpp -g -c -o "$@" "$<" -I ../include -I $(NETCDF_F)/include $(FLAGS)
 	@echo 'Finished building: $<'
 	@echo ' '
 endif
@@ -326,7 +330,9 @@ src/latlon_hd_and_lake_model/latlon_hd_model_interface_mod.o: ../src/latlon_hd_a
 
 src/latlon_hd_and_lake_model/latlon_hd_model_io_mod.o: ../src/latlon_hd_and_lake_model/latlon_hd_model_io_mod.f90 src/latlon_hd_and_lake_model/latlon_hd_model_mod.o
 
-src/latlon_hd_and_lake_model/latlon_lake_model_mod.o: ../src/latlon_hd_and_lake_model/latlon_lake_model_mod.f90
+src/latlon_hd_and_lake_model/atlon_lake_logger_mod.o: ../src/latlon_hd_and_lake_model/latlon_lake_logger_mod.f90
+
+src/latlon_hd_and_lake_model/latlon_lake_model_mod.o: ../src/latlon_hd_and_lake_model/latlon_lake_model_mod.f90 src/latlon_hd_and_lake_model/latlon_lake_logger_mod.o
 
 src/latlon_hd_and_lake_model/latlon_lake_model_interface_mod.o: ../src/latlon_hd_and_lake_model/latlon_lake_model_interface_mod.f90 src/latlon_hd_and_lake_model/latlon_lake_model_mod.o src/latlon_hd_and_lake_model/latlon_lake_model_io_mod.o
 

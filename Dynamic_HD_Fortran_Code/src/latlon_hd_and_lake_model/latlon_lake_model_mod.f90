@@ -1,5 +1,9 @@
 module latlon_lake_model_mod
 
+#ifdef USE_LOGGING
+  use latlon_lake_logger_mod
+#endif
+
 implicit none
 
 integer,parameter :: dp = selected_real_kind(12)
@@ -845,6 +849,9 @@ subroutine setup_lakes(lake_parameters,lake_prognostics,lake_fields,initial_wate
   real(dp) :: initial_water_to_lake_center
   integer :: lake_index
   integer :: i,j
+#ifdef USE_LOGGING
+    call setup_logger
+#endif
     do j=1,lake_parameters%nlon
       do i=1,lake_parameters%nlat
         if(lake_parameters%lake_centers(i,j)) then
@@ -871,6 +878,9 @@ subroutine run_lakes(lake_parameters,lake_prognostics,lake_fields)
   integer :: basin_number
   real(dp) :: share_to_each_lake
   type(lake), pointer :: working_lake
+#ifdef USE_LOGGING
+    call increment_timestep_wrapper
+#endif
     lake_fields%water_to_hd(:,:) = 0.0_dp
     lake_fields%lake_water_from_ocean(:,:) = 0.0_dp
     do i = 1,size(lake_fields%cells_with_lakes_lat)
@@ -929,6 +939,10 @@ recursive subroutine add_water(this,inflow)
   logical :: merge_possible
   logical :: already_merged
   real(dp) :: inflow_local
+#ifdef USE_LOGGING
+    call log_process_wrapper(this%lake_number,this%center_cell_lat, &
+                             this%center_cell_lon,this%lake_volume)
+#endif
     if (this%lake_type == filling_lake_type) then
       inflow_local = inflow + this%unprocessed_water
       this%unprocessed_water = 0.0_dp
@@ -1012,6 +1026,10 @@ subroutine remove_water(this,outflow)
   real(dp) :: new_outflow
   logical :: drained
   integer :: merge_type
+#ifdef USE_LOGGING
+    call log_process_wrapper(this%lake_number,this%center_cell_lat, &
+                             this%center_cell_lon,this%lake_volume)
+#endif
     if (this%lake_type == filling_lake_type) then
       if (outflow <= this%unprocessed_water) then
         this%unprocessed_water = this%unprocessed_water - outflow
