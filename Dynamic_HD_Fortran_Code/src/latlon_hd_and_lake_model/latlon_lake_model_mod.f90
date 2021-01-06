@@ -941,7 +941,8 @@ recursive subroutine add_water(this,inflow)
   real(dp) :: inflow_local
 #ifdef USE_LOGGING
     call log_process_wrapper(this%lake_number,this%center_cell_lat, &
-                             this%center_cell_lon,this%lake_volume)
+                             this%center_cell_lon,this%lake_volume,&
+                             "add_water")
 #endif
     if (this%lake_type == filling_lake_type) then
       inflow_local = inflow + this%unprocessed_water
@@ -1028,7 +1029,7 @@ subroutine remove_water(this,outflow)
   integer :: merge_type
 #ifdef USE_LOGGING
     call log_process_wrapper(this%lake_number,this%center_cell_lat, &
-                             this%center_cell_lon,this%lake_volume)
+                             this%center_cell_lon,this%lake_volume,"remove_water")
 #endif
     if (this%lake_type == filling_lake_type) then
       if (outflow <= this%unprocessed_water) then
