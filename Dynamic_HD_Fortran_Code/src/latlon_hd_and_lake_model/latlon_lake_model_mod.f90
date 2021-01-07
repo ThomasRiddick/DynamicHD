@@ -999,8 +999,7 @@ recursive subroutine add_water(this,inflow)
                 else if (merge_type == double_merge) then
                   this%primary_merge_completed = .true.
                 else
-                  write(*,*) "Lake model logic broken"
-                  call exit(1)
+                  stop "Lake model logic broken!"
                 end if
               end if
               if (merge_type /= double_merge) exit
