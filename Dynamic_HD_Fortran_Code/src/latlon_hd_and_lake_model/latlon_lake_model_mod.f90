@@ -996,6 +996,11 @@ recursive subroutine add_water(this,inflow)
                   call this%perform_secondary_merge()
                   call this%store_water(inflow_local)
                   return
+                else if (merge_type == double_merge) then
+                  this%primary_merge_completed = .true.
+                else
+                  write(*,*) "Lake model logic broken"
+                  call exit(1)
                 end if
               end if
               if (merge_type /= double_merge) exit
@@ -1057,6 +1062,8 @@ subroutine remove_water(this,outflow)
             new_outflow = outflow_local/2.0_dp
             outflow_local = outflow_local - new_outflow
             call this%rollback_primary_merge(new_outflow)
+            this%primary_merge_completed = .false.
+            this%use_additional_fields = .false.
           end if
         end if
       end do

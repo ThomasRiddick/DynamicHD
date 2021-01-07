@@ -474,6 +474,10 @@ function handle_event(lake::FillingLake,add_water::AddWater)
               subsumed_lake = handle_event(subsumed_lake,
                                              StoreWater(inflow))
               return subsumed_lake
+            elseif merge_type == double_merge
+              lake.filling_lake_variables.primary_merge_completed = true
+            else
+              throw(UserError("Lake model logic broken!"))
             end
           end
           if merge_type != double_merge
@@ -503,6 +507,8 @@ function handle_event(lake::FillingLake,remove_water::RemoveWater)
         new_outflow::Float64 = outflow/2.0
         rollback_primary_merge(lake,new_outflow)
         outflow -= new_outflow
+        lake.filling_lake_variables.primary_merge_completed = false
+        lake.filling_lake_variables.use_additional_fields = false
       end
     end
   end
