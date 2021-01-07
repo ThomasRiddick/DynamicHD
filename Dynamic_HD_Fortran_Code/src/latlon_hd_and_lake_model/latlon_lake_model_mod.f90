@@ -880,6 +880,15 @@ subroutine run_lakes(lake_parameters,lake_prognostics,lake_fields)
   type(lake), pointer :: working_lake
 #ifdef USE_LOGGING
     call increment_timestep_wrapper
+    if (is_logging()) then
+      call create_info_dump_wrapper(lake_fields%water_to_lakes,&
+                                    calculate_lake_volumes(lake_parameters,&
+                                                           lake_prognostics),&
+                                    lake_parameters%nlat,&
+                                    lake_parameters%nlon,&
+                                    lake_parameters%nlat_coarse, &
+                                    lake_parameters%nlon_coarse)
+    end if
 #endif
     lake_fields%water_to_hd(:,:) = 0.0_dp
     lake_fields%lake_water_from_ocean(:,:) = 0.0_dp
@@ -941,8 +950,8 @@ recursive subroutine add_water(this,inflow)
   real(dp) :: inflow_local
 #ifdef USE_LOGGING
     call log_process_wrapper(this%lake_number,this%center_cell_lat, &
-                             this%center_cell_lon,this%lake_volume,&
-                             "add_water")
+                             this%center_cell_lon,this%lake_type,&
+                             this%lake_volume,"add_water")
 #endif
     if (this%lake_type == filling_lake_type) then
       inflow_local = inflow + this%unprocessed_water
@@ -1029,7 +1038,8 @@ subroutine remove_water(this,outflow)
   integer :: merge_type
 #ifdef USE_LOGGING
     call log_process_wrapper(this%lake_number,this%center_cell_lat, &
-                             this%center_cell_lon,this%lake_volume,"remove_water")
+                             this%center_cell_lon,this%lake_type,&
+                             this%lake_volume,"remove_water")
 #endif
     if (this%lake_type == filling_lake_type) then
       if (outflow <= this%unprocessed_water) then
@@ -1663,6 +1673,31 @@ recursive function find_true_primary_lake(this) result(true_primary_lake)
         true_primary_lake => this
     end if
 end function find_true_primary_lake
+
+function calculate_lake_volumes(lake_parameters,&
+                                lake_prognostics) result(lake_volumes)
+  type(lakeparameters) :: lake_parameters
+  type(lakeprognostics) :: lake_prognostics
+  real(dp), dimension(:,:), pointer :: lake_volumes
+  type(lake), pointer :: working_lake
+  real(dp) :: lake_overflow
+  integer :: i
+      allocate(lake_volumes(lake_parameters%nlat,&
+                            lake_parameters%nlon))
+      lake_volumes(:,:) = 0.0_dp
+      do i = 1,size(lake_prognostics%lakes)
+        working_lake => lake_prognostics%lakes(i)%lake_pointer
+        if(working_lake%lake_type == overflowing_lake_type) then
+          lake_overflow = working_lake%excess_water
+        else
+          lake_overflow = 0.0_dp
+        end if
+        lake_volumes(working_lake%center_cell_lat,&
+                     working_lake%center_cell_lon) = working_lake%lake_volume + &
+                                                     working_lake%unprocessed_water + &
+                                                     lake_overflow
+      end do
+end function calculate_lake_volumes
 
 function calculate_diagnostic_lake_volumes(lake_parameters,&
                                            lake_prognostics,&

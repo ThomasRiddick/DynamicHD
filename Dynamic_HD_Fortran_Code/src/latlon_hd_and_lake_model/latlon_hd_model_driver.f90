@@ -53,5 +53,6 @@ program latlon_hd_model_driver
     if (using_lakes) call clean_lake_model()
     deallocate(runoffs)
     deallocate(drainages)
+    deallocate(evaporations)
 
 end program latlon_hd_model_driver
