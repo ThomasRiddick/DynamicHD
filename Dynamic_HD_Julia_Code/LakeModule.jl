@@ -476,8 +476,6 @@ function handle_event(lake::FillingLake,add_water::AddWater)
               return subsumed_lake
             elseif merge_type == double_merge
               lake.filling_lake_variables.primary_merge_completed = true
-            else
-              throw(UserError("Lake model logic broken!"))
             end
           end
           if merge_type != double_merge
