@@ -53,6 +53,7 @@ class Field(object):
     logical_or
     logical_and
     dilate
+    extract_data
     """
 
     def __init__(self,input_field,grid='HD',**grid_kwargs):
@@ -341,6 +342,10 @@ class Field(object):
                                             structure=structure,
                                             border_value=0)
             self.data = self.grid.remove_wrapping_halo(temp_data)
+
+    def extract_data(section_coords,field_name,data_type,language):
+        return self.grid.extract_data(self.data,section_coords,field_name,
+                                      data_type,language)
 
 
 class Orography(Field):

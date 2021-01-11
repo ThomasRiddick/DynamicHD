@@ -12,6 +12,7 @@ from abc import ABCMeta, abstractmethod
 import f2py_manager as f2py_mg
 import os.path as path
 import warnings
+import re
 from context import fortran_source_path
 
 class Grid(object):
@@ -42,6 +43,8 @@ class Grid(object):
     get_coordinates
     find_all_local_minima
     get_npoints
+    extract_data
+    convert_data_to_code
     """
 
     __metaclass__ = ABCMeta
@@ -320,6 +323,14 @@ class Grid(object):
 
     @abstractmethod
     def remove_wrapping_halo(self):
+        pass
+
+    @abstractmethod
+    def extract_data(self,data,section_coords,field_name,data_type,language):
+        pass
+
+    @abstractmethod
+    def convert_data_to_code(data_section,field_name,data_type,language):
         pass
 
 class LatLongGrid(Grid):
@@ -887,6 +898,39 @@ class LatLongGrid(Grid):
 
     def remove_wrapping_halo(self,data_with_halo):
         return data_with_halo[:,1:-1]
+
+    def extract_data(self,data,section_coords,field_name,data_type,language):
+        data_section = data[section_coords["min_lat"]:
+                            section_coords["max_lat"],
+                            section_coords["min_lon"]:
+                            section_coords["max_lon"]]
+        return self.convert_data_to_code(data_section,field_name,data_type,language)
+
+    def convert_data_to_code(data_section,field_name,data_type,language):
+        data_as_string = np.array_to_string(data_section,
+                                            separator="," if language == "Fortran" else None)
+        julia_data_types = { "integer":"Int64","double":"Float64"}
+        formats_for_languages = {
+                                "Fortran": lambda data_as_string,field_name,data_type:
+                                "allocate({field_name}({nlat},{nlon}))\n"
+                                "{field_name} = transpose(reshape((/ &\n"
+                                "{data_as_string} /), &"
+                                "(/{nlon},{nlat}/)))".format(field_name=field_name,
+                                                             data_as_string=data_as_string,
+                                                             nlat=data_section.shape[0],
+                                                             nlon=data_section.shape[1]),
+                                "Julia": lambda data_as_string,field_name,data_type:
+                                "{field_name}::Field{data_type} ="
+                                "LatLonField{data_type}(TYPE_grid,\n"
+                                "{data_type}[ {data_as_string} ])".\
+                                format(field_name=field_name,
+                                       data_as_string=data_as_string,
+                                       data_type=julia_data_types[data_type])
+                                }
+        data_as_code = formats_for_languages[language](data_as_string,field_name,data_type)
+        if language == "Fortran":
+            re.sub("\n","& \n",data_as_code,count=0)
+        return data_as_code
 
 def makeGrid(grid_type,**kwargs):
     """Factory function that creates an object of the correct grid type given a keyword

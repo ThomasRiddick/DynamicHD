@@ -239,7 +239,7 @@ class NetCDF4FileIOHelper(IOHelper):
             dataset.createDimension("latitude",nlat)
             dataset.createDimension("longitude",nlong)
             if field.get_data().dtype == np.bool:
-                field.set_data(field.get_data().astype(np.int64))
+                field.set_data(field.get_data().astype(np.int32))
                 data_was_bool=True
             field_values = dataset.createVariable(fieldname,field.get_data().dtype,
                                                   ('latitude','longitude'))
