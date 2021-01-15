@@ -1099,7 +1099,7 @@ subroutine remove_water(this,outflow)
       call this%remove_water(outflow_local)
     else if (this%lake_type == subsumed_lake_type) then
       if (outflow <= this%unprocessed_water) then
-        this%unprocessed_water = outflow - this%unprocessed_water
+        this%unprocessed_water = this%unprocessed_water - outflow
         return
       end if
       outflow_local = outflow - this%unprocessed_water
@@ -1774,15 +1774,21 @@ subroutine check_water_budget(lake_prognostics,lake_fields,initial_water_to_lake
     tolerance = 5.0e-14_dp*max(abs(total_water_to_lakes),abs(new_total_lake_volume))
     if (abs(difference) > tolerance) then
       write(*,*) "*** Lake Water Budget ***"
-      write(number_as_string,*) sum(lake_fields%water_to_lakes)
+      write(number_as_string,'(E21.14)') total_water_to_lakes
       write(*,*) "Total water to lakes" // trim(number_as_string)
-      write(number_as_string,*) new_total_lake_volume
+      write(number_as_string,'(E21.14)') sum(lake_fields%water_to_hd)
+      write(*,*) "Total water to hd" // trim(number_as_string)
+      write(number_as_string,'(E21.14)') sum(lake_fields%lake_water_from_ocean)
+      write(*,*) "Total lake water from ocean" // trim(number_as_string)
+      write(number_as_string,'(E21.14)') lake_prognostics%total_lake_volume
+      write(*,*) "Previous total lake volume: " // trim(number_as_string)
+      write(number_as_string,'(E21.14)') new_total_lake_volume
       write(*,*) "Total lake volume: " // trim(number_as_string)
-      write(number_as_string,*) total_inflow_minus_outflow
+      write(number_as_string,'(E21.14)') total_inflow_minus_outflow
       write(*,*) "Total inflow - outflow: " // trim(number_as_string)
-      write(number_as_string,*) change_in_total_lake_volume
+      write(number_as_string,'(E21.14)') change_in_total_lake_volume
       write(*,*) "Change in lake volume: " // trim(number_as_string)
-      write(number_as_string,*) difference
+      write(number_as_string,'(E21.14)') difference
       write(*,*) "Difference: " // trim(number_as_string)
     end if
     lake_prognostics%total_lake_volume = new_total_lake_volume

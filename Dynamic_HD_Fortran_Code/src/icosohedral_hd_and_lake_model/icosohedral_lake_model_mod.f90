@@ -1079,7 +1079,7 @@ subroutine remove_water(this,outflow)
       call this%remove_water(outflow_local)
     else if (this%lake_type == subsumed_lake_type) then
       if (outflow <= this%unprocessed_water) then
-        this%unprocessed_water = outflow - this%unprocessed_water
+        this%unprocessed_water = this%unprocessed_water - outflow
         return
       end if
       outflow_local = outflow - this%unprocessed_water

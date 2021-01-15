@@ -8,9 +8,9 @@ implicit none
 integer,parameter,private :: dp = selected_real_kind(12)
 
 integer, parameter :: print_interval = 1000
-integer, parameter :: first_logging_timestep = 9950
+integer, parameter :: first_logging_timestep = 99999
 integer, parameter :: maximum_output_per_timestep = 10000
-integer, parameter :: info_dump_timestep = 10955
+integer, parameter :: info_dump_timestep = 99999
 
 type latlon_lake_logger
   integer :: timestep

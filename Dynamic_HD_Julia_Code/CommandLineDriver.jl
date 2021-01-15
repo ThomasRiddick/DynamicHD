@@ -76,7 +76,7 @@ function main()
     runoffs_copy = deepcopy(runoffs)
     lake_evaporations_copy = deepcopy(lake_evaporations)
     if args["hd-init-file"] != nothing
-      river_fields = load_river_initial_values(args["hd-init-file"],river_parameters)
+      river_fields = load_river_initial_values(args["hd-init-file"],grid,river_parameters)
     end
     if args["lake-init-file"] != nothing
       initial_water_to_lake_centers::LatLonField{Float64},
