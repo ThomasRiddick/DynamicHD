@@ -72,6 +72,7 @@ class Dynamic_HD_Drivers(object):
         lakemask_path_extension= 'lakemasks'
         lake_parameter_file_extension = 'lakeparafiles'
         basin_catchment_numbers_file_extension = 'basin_catchment_numbers'
+        lake_bathymetry_file_extension = 'lakebath'
         cotat_plus_parameters_path_extension = path.join(parameter_path_extension,'cotat_plus')
         orography_upscaling_parameters_path_extension = path.join(parameter_path_extension,
                                                                   'orography_upscaling')
@@ -164,6 +165,7 @@ class Dynamic_HD_Drivers(object):
                                                      lake_and_hd_params_log_file_extension)
         self.generated_lake_and_hd_params_log_path = path.join(self.lake_and_hd_params_log_path,
                                                                'generated','lake_and_hd_params_')
+        self.lake_bathymetry_filepath = path.join(data_dir,lake_bathymetry_file_extension)
         self.hd_grid_filepath = path.join(self.grids_path,"hdmodel2d_griddes")
         self.half_degree_grid_filepath = path.join(self.grids_path,"grid_0_5.txt")
         self.ten_minute_grid_filepath = path.join(self.grids_path,"grid_10min.txt")
