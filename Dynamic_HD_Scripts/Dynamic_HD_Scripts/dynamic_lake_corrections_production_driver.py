@@ -31,10 +31,10 @@ class Dynamic_Lake_Correction_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Driver
                                                   "orog_corrs_field_ICE5G_and_tarasov_upscaled_"
                                                   "srtm30plus_north_america_only_data_ALG4_sinkless"
                                                   "_glcc_olson_lsmask_0k_20170517_003802_g.nc")
-        input_bathymetry_file=
-        input_bathymetry_fieldname=
-        lake_mask_file=
-        lake_mask_fieldname=
+        input_bathymetry_file=join(self.lake_bathymetry_filepath,"NOAA_great_lakes_bathymetry.nc")
+        input_bathymetry_fieldname="Band1"
+        lake_mask_file=join(self.lakemask_filepath,"NOAA_great_lakes_mask.nc")
+        lake_mask_fieldname="lakemask"
         intermediary_orography_filename = self.generated_orography_filepath +\
                                                 "intermediary_" + file_label + '.nc'
         second_intermediary_orography_filename = self.generated_orography_filepath +\
@@ -135,9 +135,12 @@ class Dynamic_Lake_Correction_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Driver
         dynamic_lake_operators.add_lake_bathymetry_driver(input_orography_file=
                                                           third_intermediary_orography_filename,
                                                           input_orography_fieldname="Topo",
+                                                          input_bathymetry_file=
                                                           input_bathymetry_file,
+                                                          input_bathymetry_fieldname=
                                                           input_bathymetry_fieldname,
-                                                          lake_mask_file,
+                                                          lake_mask_file=lake_mask_file,
+                                                          lake_mask_fieldname=
                                                           lake_mask_fieldname,
                                                           output_orography_file=
                                                           output_0k_ice5g_orog_filename,

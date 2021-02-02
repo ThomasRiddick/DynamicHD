@@ -524,6 +524,7 @@ def add_lake_bathymetry_driver(input_orography_file,
   lake_mask = iodriver.advanced_field_loader(lake_mask_file,
                                              field_type='Generic',
                                              fieldname=lake_mask_fieldname)
+  lake_mask.change_dtype(np.bool)
   output_orography = add_lake_bathymetry(input_orography,
                                          input_bathymetry,
                                          lake_mask)
