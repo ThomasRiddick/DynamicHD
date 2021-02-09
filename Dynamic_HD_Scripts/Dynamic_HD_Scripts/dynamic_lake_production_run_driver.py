@@ -51,8 +51,9 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         self.present_day_base_orography_filename=present_day_base_orography_filepath
         self.glacier_mask_filename=glacier_mask_filepath
         self.tarasov_based_orog_correction=True
-        self.python_config_filename=path.join(self.ancillary_data_path,
-                                              "dynamic_lake_production_driver.cfg")
+        if self.ancillary_data_path is not None:
+            self.python_config_filename=path.join(self.ancillary_data_path,
+                                                  "dynamic_lake_production_driver.cfg")
 
     def _read_and_validate_config(self):
         """Reads and checks format of config file
@@ -120,6 +121,56 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         if not config.has_option("general_options","print_timing_information"):
             config.set("general_options","print_timing_information","False")
         return config
+
+    def trial_run_for_present_day(self):
+        super(Dynamic_Lake_Production_Run_Drivers,self).__init__()
+        file_label = self._generate_file_label()
+        self.original_orography_filename=path.join(self.orography_path,"Ice6g_c_VM5a_10min_0k.nc")
+        self.original_ls_mask_filename=path.join(self.ls_masks_path,"generated",
+                                                 "ls_mask_no_intermediaries_lake_corrections_driver_20200726_181304_grid.nc")
+        self.output_hdparas_filepath="/Users/thomasriddick/Documents/data/temp/hdpara_{0}_pd.nc".format(file_label)
+        self.output_hdstart_filepath="/Users/thomasriddick/Documents/data/temp/hdstart_{0}_pd.nc".format(file_label)
+        self.ancillary_data_path="/Users/thomasriddick/Documents/data/HDancillarydata_lakes"
+        self.working_directory_path="/Users/thomasriddick/Documents/data/temp/temp_workdir_pd"
+        self.output_lakeparas_filepath = "/Users/thomasriddick/Documents/data/temp/lakeparas_{0}_pd.nc".format(file_label)
+        self.output_lakestart_filepath = "/Users/thomasriddick/Documents/data/temp/lakestart_{0}_pd.nc".format(file_label)
+        self.input_water_to_redistribute_filepath="/Users/thomasriddick/Documents/data/laketestdata/lake_volumes_pmt0531_Tom_41091231.nc"
+        self.python_config_filename=path.join(self.ancillary_data_path,
+                                              "dynamic_lake_production_driver.cfg")
+        self.tarasov_based_orog_correction=True
+        self.glacier_mask_filename==path.join(self.orography_path,"Ice6g_c_VM5a_10min_0k.nc")
+        self.present_day_base_orography_filename=path.join(self.orography_path,
+                                                           "Ice6g_c_VM5a_10min_0k.nc")
+        self.compile_paragen_and_hdfile()
+        self.no_intermediaries_dynamic_lake_driver()
+        return (self.output_hdparas_filepath,self.output_hdstart_filepath,
+                self.output_lakeparas_filepath,self.output_lakestart_filepath)
+
+    def trial_run_for_mid_deglaciation(self):
+        super(Dynamic_Lake_Production_Run_Drivers,self).__init__()
+        file_label = self._generate_file_label()
+        self.original_orography_filename=("/Users/thomasriddick/Documents/data/HDdata/orographys/generated/"
+                                          "updated_orog__extracted_for_0k_prepare_basins_from_glac1D_20210205_135817_1250.nc")
+        self.original_ls_mask_filename=("/Users/thomasriddick/Documents/data/laketestdata/"
+                                        "ls_mask_prepare_basins_from_glac1D_20201123_200519_1250_grid.nc")
+        self.output_hdparas_filepath="/Users/thomasriddick/Documents/data/temp/hdpara_{0}_deglac.nc".format(file_label)
+        self.output_hdstart_filepath="/Users/thomasriddick/Documents/data/temp/hdstart_{0}_deglac.nc".format(file_label)
+        self.ancillary_data_path="/Users/thomasriddick/Documents/data/HDancillarydata_lakes"
+        self.working_directory_path="/Users/thomasriddick/Documents/data/temp/temp_workdir_lake_deglac"
+        self.output_lakeparas_filepath = "/Users/thomasriddick/Documents/data/temp/lakeparas_{0}_deglac.nc".format(file_label)
+        self.output_lakestart_filepath = "/Users/thomasriddick/Documents/data/temp/lakestart_{0}_deglac.nc".format(file_label)
+        self.input_water_to_redistribute_filepath="/Users/thomasriddick/Documents/data/laketestdata/lake_volumes_pmt0531_Tom_41091231.nc"
+        self.python_config_filename=path.join(self.ancillary_data_path,
+                                              "dynamic_lake_production_driver.cfg")
+        self.tarasov_based_orog_correction=True
+        self.glacier_mask_filename=("/Users/thomasriddick/Documents/"
+                                    "data/transient_sim_data/1/GLAC1D_ICEM_10min_1250.nc")
+        self.present_day_base_orography_filename=("/Users/thomasriddick/Documents/data/HDdata/orographys/generated/"
+                                                  "updated_orog__extracted_for_1250prepare_basins_from_glac1D_20210205_135817_1250.nc")
+        self.compile_paragen_and_hdfile()
+        self.no_intermediaries_dynamic_lake_driver()
+        return (self.output_hdparas_filepath,self.output_hdstart_filepath,
+                self.output_lakeparas_filepath,self.output_lakestart_filepath)
 
     def no_intermediaries_dynamic_lake_driver(self):
         """Generates necessary files for runing a dynamic lake model

@@ -578,9 +578,9 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
                                               output_filtered_working_orog_filename,
                                               output_unfilled_orography_fieldname=
                                               "Topo",
-                                              interior_cell_min_masked_neighbors=6,
+                                              interior_cell_min_masked_neighbors=5,
                                               edge_cell_max_masked_neighbors=4,
-                                              max_range=4,
+                                              max_range=5,
                                               iterations=5)
         working_orog_sinkless_field = iodriver.advanced_field_loader(output_working_orog_sinkless_filename,
                                                               fieldname="Topo",
@@ -647,9 +647,9 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
 
     def prepare_basins_from_glac1D(self):
       overarching_file_label = self._generate_file_label()
-      timesteps_to_use = [ 950,1000,1050,1100,1150,1200,1250,1300,1350,
-                          1400,1450,1500,1550,1600,1650,1700,1750,1800]
-      #timesteps_to_use = [1200]
+      # timesteps_to_use = [ 950,1000,1050,1100,1150,1200,1250,1300,1350,
+      #                     1400,1450,1500,1550,1600,1650,1700,1750,1800]
+      timesteps_to_use = [1250]
       timestep_for_0k = 2600
       glac_1d_topo_filename = join(self.orography_path,
                                    "GLAC1D_Top01_surf.nc")
