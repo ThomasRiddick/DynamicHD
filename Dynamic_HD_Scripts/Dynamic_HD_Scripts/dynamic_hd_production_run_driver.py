@@ -508,7 +508,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         ls_mask_30min = field.RiverDirections(rdirs_30min.get_lsmask(),grid='HD')
         #Fill HD orography for parameter generation
         if print_timing_info:
-            time_before_sink_filling = timer()
+            time_before_coarse_sink_filling = timer()
         truesinks = Field(np.empty((1,1),dtype=np.int32),grid='HD')
         fill_sinks_wrapper.fill_sinks_cpp_func(orography_array=np.ascontiguousarray(orography_30min.get_data(), #@UndefinedVariable
                                                                                     dtype=np.float64),
@@ -643,13 +643,13 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                 format(time_before_upscaling - time_before_10min_post_processing)
             print "Upscaling:            {: 6.2f}s".\
                 format(time_before_30min_post_processing_one - time_before_upscaling)
-            print "Post Processing:      {: 6.2f}s".\
+            print "Post Processing (II): {: 6.2f}s".\
                 format(time_before_loop_breaker -
                         time_before_30min_post_processing_one)
             print "Loop Breaker:         {: 6.2f}s".\
-                format(time_before_sink_filling - time_before_loop_breaker)
-            print "Sink Filling:         {: 6.2f}s".\
-                format(time_before_parameter_generation - time_before_sink_filling)
+                format(time_before_coarse_sink_filling - time_before_loop_breaker)
+            print "Sink Filling (II):    {: 6.2f}s".\
+                format(time_before_parameter_generation - time_before_coarse_sink_filling)
             print "Parameter Generation: {: 6.2f}s".\
                 format(time_before_30min_post_processing_two -
                         time_before_parameter_generation)

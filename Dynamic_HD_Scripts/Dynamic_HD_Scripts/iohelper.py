@@ -252,6 +252,45 @@ class NetCDF4FileIOHelper(IOHelper):
             os.remove(filename)
 
     @classmethod
+    def write_fields(self, filename, fields,griddescfile=None,fieldnames=None):
+        """Write a field to a given target NetCDF4 file
+
+        Arguments:
+        filename: full path of the netcdf file to write to
+        fields: A list of Field (or Field subclass object); fields to write
+        griddescfile (optional): string; full path to the grid description metadata
+            to add to file written out. Nothing is added if this is
+            set to None
+        fieldnames: A list of strings; name of the output fields to create and write to
+        Returns:nothing
+        """
+
+        nlat,nlong = fields[0].get_grid().get_grid_dimensions()
+        if fieldnames is None:
+            fieldnames = ['field_value']*len(fields)
+        print "Writing output to {0}".format(filename)
+        if griddescfile is not None:
+            output_filename=filename
+            filename=path.splitext(filename)[0] + '_temp' + path.splitext(filename)[1]
+        with netCDF4.Dataset(filename,mode='w',format='NETCDF4') as dataset:
+            dataset.createDimension("latitude",nlat)
+            dataset.createDimension("longitude",nlong)
+            for field,fieldname in zip(fields,fieldnames):
+                data_was_bool = False
+                if field.get_data().dtype == np.bool:
+                    field.set_data(field.get_data().astype(np.int32))
+                    data_was_bool=True
+                field_values = dataset.createVariable(fieldname,field.get_data().dtype,
+                                                      ('latitude','longitude'))
+                field_values[:,:] = field.get_data()
+                if data_was_bool:
+                    field.set_data(field.get_data().astype(np.bool))
+        if griddescfile is not None:
+            cdo_instance = cdo.Cdo()
+            cdo_instance.setgrid(griddescfile,input=filename,output=output_filename)
+            os.remove(filename)
+
+    @classmethod
     def copy_and_append_time_dimension_to_netcdf_dataset(self,dataset_in,dataset_out):
         """Make a copy of a input dataset while adding in an extra time dimension
 

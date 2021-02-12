@@ -14,8 +14,10 @@ import ConfigParser
 import numpy as np
 import utilities
 import field
+import grid
 import libs.fill_sinks_wrapper as fill_sinks_wrapper
 import libs.lake_operators_wrapper as lake_operators_wrapper  #@UnresolvedImport
+import libs.evaluate_basins_wrapper as evaluate_basins_wrapper
 from timeit import default_timer as timer
 import cdo
 import argparse
@@ -120,6 +122,45 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
             config.set("general_options","generate_flow_parameters","True")
         if not config.has_option("general_options","print_timing_information"):
             config.set("general_options","print_timing_information","False")
+        if not config.has_section("output_fieldname_options"):
+            config.add_section("output_fieldname_options")
+        if not config.has_option("output_fieldname_options","output_10min_corrected_orog_fieldname"):
+            config.set("output_fieldname_options","output_10min_corrected_orog_fieldname")
+        if not config.has_option("output_fieldname_options","output_10min_rdirs_fieldname"):
+            config.set("output_fieldname_options","output_10min_rdirs_fieldname")
+        if not config.has_option("output_fieldname_options","output_10min_flow_to_cell"):
+            config.set("output_fieldname_options","output_10min_flow_to_cell")
+        if not config.has_option("output_fieldname_options","output_10min_flow_to_river_mouths"):
+            config.set("output_fieldname_options","output_10min_flow_to_river_mouths")
+        if not config.has_option("output_fieldname_options","output_10min_catchments"):
+            config.set("output_fieldname_options","output_10min_catchments")
+        if not config.has_option("output_fieldname_options","output_30min_pre_loop_removal_rdirs"):
+            config.set("output_fieldname_options","output_30min_pre_loop_removal_rdirs")
+        if not config.has_option("output_fieldname_options",
+                                 "output_30min_pre_loop_removal_flow_to_cell"):
+            config.set("output_fieldname_options","output_30min_pre_loop_removal_flow_to_cell")
+        if not config.has_option("output_fieldname_options",
+                                 "output_30min_pre_loop_removal_flow_to_river_mouth"):
+            config.set("output_fieldname_options",
+                       "output_30min_pre_loop_removal_flow_to_river_mouth")
+        if not config.has_option("output_fieldname_options",
+                                 "output_30min_pre_loop_removal_catchments"):
+            config.set("output_fieldname_options",
+                       "output_30min_pre_loop_removal_catchments")
+        if not config.has_option("output_fieldname_options","output_30min_rdirs"):
+            config.set("output_fieldname_options","output_30min_rdirs")
+        if not config.has_option("output_fieldname_options","output_30min_unfilled_orog"):
+            config.set("output_fieldname_options","output_30min_unfilled_orog")
+        if not config.has_option("output_fieldname_options","output_30min_filled_orog"):
+            config.set("output_fieldname_options","output_30min_filled_orog")
+        if not config.has_option("output_fieldname_options","output_30min_ls_mask"):
+            config.set("output_fieldname_options","output_30min_ls_mask")
+        if not config.has_option("output_fieldname_options","output_30min_flow_to_cell"):
+            config.set("output_fieldname_options","output_30min_flow_to_cell")
+        if not config.has_option("output_fieldname_options","output_30min_flow_to_river_mouths"):
+            config.set("output_fieldname_options","output_30min_flow_to_river_mouths")
+        if not config.has_option("output_fieldname_options","output_30min_catchments"):
+            config.set("output_fieldname_options","output_30min_catchments")
         return config
 
     def trial_run_for_present_day(self):
@@ -229,6 +270,8 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         orography_uncorrected_10min = orography_10min.copy()
         orography_10min.add(orography_corrections_10min)
         truesinks = field.Field(np.empty((1,1),dtype=np.int32),grid='HD')
+        if print_timing_info:
+            time_before_glacier_mask_application = timer()
         if self.glacier_mask_filename:
             glacier_mask_10min = iodriver.advanced_field_loader(self.glacier_mask_filename,
                                                                 fieldname=config.get("input_fieldname_options",
@@ -261,8 +304,8 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
             iodriver.advanced_field_writer(path.join(self.working_directory_path,
                                                        "10min_corrected_orog.nc"),
                                            orography_10min,
-                                           fieldname="z")#config.get("output_fieldname_options",
-                                                     #           "output_10min_corrected_orog_fieldname"))
+                                           fieldname=config.get("output_fieldname_options",
+                                                                "output_10min_corrected_orog_fieldname"))
         #Generate orography with filled sinks
         if print_timing_info:
             time_before_sink_filling = timer()
@@ -281,6 +324,8 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                                                     dtype=np.int32),
                                                add_slope = False,epsilon = 0.0)
         #Filter unfilled orography
+        if print_timing_info:
+            time_before_filtering = timer()
         orography_10min = \
           field.Field(np.ascontiguousarray(orography_10min.get_data(),
                                            dtype=np.float64),
@@ -298,6 +343,8 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                 max_range=5,
                                 iterations=5)
         #Generate River Directions
+        if print_timing_info:
+            time_before_rdir_generation = timer()
         rdirs_10min = determine_river_directions.determine_river_directions(orography=orography_10min,
                                                                             lsmask=ls_mask_10min,
                                                                             truesinks=None,
@@ -308,8 +355,8 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
             iodriver.advanced_field_writer(path.join(self.working_directory_path,
                                                      "10min_rdirs.nc"),
                                            rdirs_10min,
-                                           fieldname="rdirs")#config.get("output_fieldname_options",
-                                                             #   "output_10min_rdirs_fieldname")
+                                           fieldname=config.get("output_fieldname_options",
+                                                                "output_10min_rdirs_fieldname"))
         #Run post processing
         if print_timing_info:
             time_before_10min_post_processing = timer()
@@ -337,20 +384,20 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
             iodriver.advanced_field_writer(path.join(self.working_directory_path,
                                                        "10min_flowtocell.nc"),
                                            flowtocell_10min,
-                                           fieldname="acc")#config.get("output_fieldname_options",
-                                                        #        "output_10min_flow_to_cell"))
+                                           fieldname=config.get("output_fieldname_options",
+                                                                "output_10min_flow_to_cell"))
         if config.getboolean("output_options","output_fine_flowtorivermouths"):
             iodriver.advanced_field_writer(path.join(self.working_directory_path,
                                                        "10min_flowtorivermouths.nc"),
                                            flowtorivermouths_10min,
-                                           fieldname="accrm")#config.get("output_fieldname_options",
-                                                              #"output_10min_flow_to_river_mouths"))
+                                           fieldname=config.get("output_fieldname_options",
+                                                                "output_10min_flow_to_river_mouths"))
         if config.getboolean("output_options","output_fine_catchments"):
             iodriver.advanced_field_writer(path.join(self.working_directory_path,
                                                        "10min_catchments.nc"),
                                            catchments_10min,
-                                           fieldname="catch")#config.get("output_fieldname_options",
-                                                      #          "output_10min_catchments"))
+                                           fieldname=config.get("output_fieldname_options",
+                                                                "output_10min_catchments"))
         #Run Upscaling
         if print_timing_info:
             time_before_upscaling = timer()
@@ -363,8 +410,8 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
             iodriver.advanced_field_writer(path.join(self.working_directory_path,
                                                        "30min_pre_loop_removal_rdirs.nc"),
                                            rdirs_30min,
-                                           fieldname="rdirs")#config.get("output_fieldname_options",
-                                                     #           "output_30min_pre_loop_removal_rdirs"))
+                                           fieldname=config.get("output_fieldname_options",
+                                                                "output_30min_pre_loop_removal_rdirs"))
         #Post processing
         if print_timing_info:
             time_before_30min_post_processing_one = timer()
@@ -390,20 +437,20 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
             iodriver.advanced_field_writer(path.join(self.working_directory_path,
                                                      "30min_pre_loop_removal_flowtocell.nc"),
                                            flowtocell_30min,
-                                           fieldname="acc")#config.get("output_fieldname_options",
-                                                     #           "output_30min_pre_loop_removal_flow_to_cell"))
+                                           fieldname=config.get("output_fieldname_options",
+                                                                "output_30min_pre_loop_removal_flow_to_cell"))
         if config.getboolean("output_options","output_pre_loop_removal_course_flowtorivermouths"):
             iodriver.advanced_field_writer(path.join(self.working_directory_path,
                                                        "30min_pre_loop_removal_flowtorivermouths.nc"),
                                              flowtorivermouths_30min,
-                                             fieldname="accrm")#config.get("output_fieldname_options",
-                                                               #   "output_30min_pre_loop_removal_flow_to_river_mouth"))
+                                             fieldname=config.get("output_fieldname_options",
+                                                                  "output_30min_pre_loop_removal_flow_to_river_mouth"))
         if config.getboolean("output_options","output_pre_loop_removal_course_catchments"):
             iodriver.advanced_field_writer(path.join(self.working_directory_path,
                                                        "30min_pre_loop_removal_catchments.nc"),
                                              catchments_30min,
-                                             fieldname="catch")#config.get("output_fieldname_options",
-                                                       #           "output_30min_pre_loop_removal_catchments"))
+                                             fieldname=config.get("output_fieldname_options",
+                                                                  "output_30min_pre_loop_removal_catchments"))
         #Run Loop Breaker
         if print_timing_info:
             time_before_loop_breaker = timer()
@@ -424,8 +471,8 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
             iodriver.advanced_field_writer(path.join(self.working_directory_path,
                                                        "30min_rdirs.nc"),
                                              rdirs_30min,
-                                             fieldname="rdirs")#config.get("output_fieldname_options",
-                                                        #          "output_30min_rdirs"))
+                                             fieldname=config.get("output_fieldname_options",
+                                                                  "output_30min_rdirs"))
         #Upscale the orography to the HD grid for calculating the flow parameters
         orography_30min= utilities.upscale_field(orography_10min,"HD","Sum",{},
                                                  scalenumbers=True)
@@ -433,13 +480,13 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
             iodriver.advanced_field_writer(path.join(self.working_directory_path,
                                                        "30min_unfilled_orog.nc"),
                                              orography_30min,
-                                             fieldname="z")#config.get("output_fieldname_options",
-                                                        #          "output_30min_unfilled_orog"))
+                                             fieldname=config.get("output_fieldname_options",
+                                                                  "output_30min_unfilled_orog"))
         #Extract HD ls mask from river directions
         ls_mask_30min = field.RiverDirections(rdirs_30min.get_lsmask(),grid='HD')
         #Fill HD orography for parameter generation
         if print_timing_info:
-            time_before_sink_filling = timer()
+            time_before_coarse_sink_filling = timer()
         truesinks = field.Field(np.empty((1,1),dtype=np.int32),grid='HD')
         fill_sinks_wrapper.fill_sinks_cpp_func(orography_array=np.ascontiguousarray(orography_30min.get_data(), #@UndefinedVariable
                                                                                     dtype=np.float64),
@@ -457,8 +504,8 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
             iodriver.advanced_field_writer(path.join(self.working_directory_path,
                                                        "30min_filled_orog.nc"),
                                              orography_30min,
-                                             fieldname="z")#config.get("output_fieldname_options",
-                                                        #          "output_30min_filled_orog"))
+                                             fieldname=config.get("output_fieldname_options",
+                                                                  "output_30min_filled_orog"))
         #Transform any necessary field into the necessary format and save ready for parameter generation
         if print_timing_info:
             time_before_parameter_generation = timer()
@@ -469,19 +516,19 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         #rdirs_30min.rotate_field_by_a_hundred_and_eighty_degrees()
         iodriver.advanced_field_writer(transformed_course_rdirs_filename,
                                          rdirs_30min,
-                                         fieldname="rdirs")#config.get("output_fieldname_options",
-                                                   #           "output_30min_rdirs"))
+                                         fieldname=config.get("output_fieldname_options",
+                                                              "output_30min_rdirs"))
         #orography_30min.rotate_field_by_a_hundred_and_eighty_degrees()
         iodriver.advanced_field_writer(transformed_HD_filled_orography_filename,
                                          orography_30min,
-                                         fieldname="z")#config.get("output_fieldname_options",
-                                                   #           "output_30min_orography"))
+                                         fieldname=config.get("output_fieldname_options",
+                                                              "output_30min_filled_orog"))
         #ls_mask_30min.rotate_field_by_a_hundred_and_eighty_degrees()
         ls_mask_30min.invert_data()
         iodriver.advanced_field_writer(transformed_HD_ls_mask_filename,
                                        ls_mask_30min,
-                                       fieldname="lsm")#config.get("output_fieldname_options",
-                                                       #     "output_30min_ls_mask"))
+                                       fieldname=config.get("output_fieldname_options",
+                                                            "output_30min_ls_mask"))
         #If required generate flow parameters and create a hdparas.file otherwise
         #use a river direction file with coordinates as the hdparas.file
         if config.getboolean("general_options","generate_flow_parameters"):
@@ -550,144 +597,255 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
             iodriver.advanced_field_writer(path.join(self.working_directory_path,
                                                        "30min_flowtocell.nc"),
                                            flowtocell_30min,
-                                           fieldname="acc")#config.get("output_fieldname_options",
-                                                      #          "output_30min_flow_to_cell"))
+                                           fieldname=config.get("output_fieldname_options",
+                                                                "output_30min_flow_to_cell"))
         if config.getboolean("output_options","output_course_flowtorivermouths"):
             iodriver.advanced_field_writer(path.join(self.working_directory_path,
                                                      "30min_flowtorivermouths.nc"),
                                            flowtorivermouths_30min,
-                                           fieldname="accrm")#config.get("output_fieldname_options",
-                                                     #           "output_30min_flow_to_river_mouths"))
+                                           fieldname=config.get("output_fieldname_options",
+                                                                "output_30min_flow_to_river_mouths"))
         if config.getboolean("output_options","output_course_catchments"):
             iodriver.advanced_field_writer(path.join(self.working_directory_path,
                                                        "30min_catchments.nc"),
                                            catchments_30min,
-                                           fieldname="catch")#config.get("output_fieldname_options",
-                                                             #   "output_30min_catchments"))
-        minima_filename = path.join(self.working_directory_path,
-                                    "minima_temp.nc")
-        temp_10min_orog_filename = path.join(self.working_directory_path,
-                                             "10min_orog_temp.nc")
+                                           fieldname=config.get("output_fieldname_options",
+                                                                "output_30min_catchments"))
         cell_areas_filename_10min = path.join(self.ancillary_data_path,
                                               "10min_grid_area_default_R.nc")
-        temp_10min_rdirs_filename = path.join(self.working_directory_path,
-                                              "10min_rdirs_temp.nc")
-        temp_30min_rdirs_filename = path.join(self.working_directory_path,
-                                              "30min_rdirs_temp.nc")
-        temp_10min_catchments_filename = path.join(self.working_directory_path,
-                                                   "10min_catchments_temp.nc")
-        temp_30min_catchments_filename = path.join(self.working_directory_path,
-                                                   "30min_catchments_temp.nc")
         temp_basin_catchment_numbers_filename = path.join(self.working_directory_path,
                                                           "basin_catchment_numbers_temp.nc")
         output_lakestart_dirname = path.dirname(self.output_lakestart_filepath)
-        output_water_redistributed_to_lakes_file = path.join(output_lakestart_dirname,
+        output_water_redistributed_to_lakes_file = path.join(self.working_directory_path,
                                                              "water_to_lakes.nc")
-        output_water_redistributed_to_rivers_file = path.join(output_lakestart_dirname,
+        output_water_redistributed_to_rivers_file = path.join(self.working_directory_path,
                                                              "water_to_rivers.nc")
-        iodriver.advanced_field_writer(temp_10min_orog_filename,orography_10min,
-                                       fieldname="Topo")
-        iodriver.advanced_field_writer(temp_10min_catchments_filename,catchments_10min,
-                                       fieldname="catchments")
-        iodriver.advanced_field_writer(temp_30min_catchments_filename,catchments_30min,
-                                       fieldname="catchments")
-        iodriver.advanced_field_writer(temp_10min_rdirs_filename,rdirs_10min,
-                                       "FDIR")
-        iodriver.advanced_field_writer(temp_30min_rdirs_filename,rdirs_30min,
-                                       "FDIR")
+        if print_timing_info:
+            time_before_basin_evaluation = timer()
         #Generate Minima
-        utilities.advanced_extract_true_sinks_from_rdirs(rdirs_filename=
-                                                         temp_10min_rdirs_filename,
-                                                         truesinks_filename=
-                                                         minima_filename,
-                                                         rdirs_fieldname="FDIR",
-                                                         truesinks_fieldname="minima")
-        dynamic_lake_operators.\
-          advanced_basin_evaluation_driver(input_minima_file=
-                                           minima_filename,
-                                           input_minima_fieldname="minima",
-                                           input_raw_orography_file=temp_10min_orog_filename,
-                                           input_raw_orography_fieldname="Topo",
-                                           input_corrected_orography_file=temp_10min_orog_filename,
-                                           input_corrected_orography_fieldname="Topo",
-                                           input_cell_areas_file= cell_areas_filename_10min,
-                                           input_cell_areas_fieldname="cell_area",
-                                           input_prior_fine_rdirs_file=temp_10min_rdirs_filename,
-                                           input_prior_fine_rdirs_fieldname="FDIR",
-                                           input_prior_fine_catchments_file=
-                                           temp_10min_catchments_filename,
-                                           input_prior_fine_catchments_fieldname="catchments",
-                                           input_coarse_catchment_nums_file=
-                                           temp_30min_catchments_filename,
-                                           input_coarse_catchment_nums_fieldname="catchments",
-                                           input_coarse_rdirs_file=
-                                           temp_30min_rdirs_filename,
-                                           input_coarse_rdirs_fieldname="FDIR",
-                                           combined_output_filename=
-                                           self.output_lakeparas_filepath,
-                                           output_filepath=self.working_directory_path,
-                                           output_filelabel="temp",
-                                           output_basin_catchment_nums_filepath=
-                                           temp_basin_catchment_numbers_filename)
-        dynamic_lake_operators.\
-            advanced_water_redistribution_driver(input_lake_numbers_file=
-                                                 temp_basin_catchment_numbers_filename,
-                                                 input_lake_numbers_fieldname=
-                                                 "basin_catchment_numbers",
-                                                 input_lake_centers_file=
-                                                 minima_filename,
-                                                 input_lake_centers_fieldname=
-                                                 "minima",
-                                                 input_water_to_redistribute_file=
-                                                 self.input_water_to_redistribute_filepath,
-                                                 input_water_to_redistribute_fieldname=
-                                                 "lake_field",
-                                                 output_water_redistributed_to_lakes_file=
-                                                 output_water_redistributed_to_lakes_file,
-                                                 output_water_redistributed_to_lakes_fieldname=
-                                                 "water_redistributed_to_lakes",
-                                                 output_water_redistributed_to_rivers_file=
-                                                 output_water_redistributed_to_rivers_file,
-                                                 output_water_redistributed_to_rivers_fieldname=
-                                                 "water_redistributed_to_rivers",
-                                                 coarse_grid_type="HD")
+        minima = field.Field(rdirs_10min.extract_truesinks(),grid=rdirs_10min.get_grid())
+        #Run Basin Evaluation
+        input_cell_areas = iodriver.advanced_field_loader(cell_areas_filename_10min,
+                                                          field_type='Generic',
+                                                          fieldname="cell_area")
+        fine_grid = orography_10min.get_grid()
+        fine_shape = orography_10min.get_data().shape
+        connection_volume_thresholds = field.Field(np.zeros(fine_shape,dtype=np.float64,order='C'),fine_grid)
+        flood_volume_thresholds = field.Field(np.zeros(fine_shape,dtype=np.float64,order='C'),fine_grid)
+        flood_next_cell_lat_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
+        flood_next_cell_lon_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
+        connect_next_cell_lat_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
+        connect_next_cell_lon_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
+        flood_force_merge_lat_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
+        flood_force_merge_lon_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
+        connect_force_merge_lat_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
+        connect_force_merge_lon_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
+        flood_redirect_lat_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
+        flood_redirect_lon_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
+        connect_redirect_lat_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
+        connect_redirect_lon_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
+        additional_flood_redirect_lat_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
+        additional_flood_redirect_lon_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
+        additional_connect_redirect_lat_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
+        additional_connect_redirect_lon_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
+        flood_local_redirect = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
+        connect_local_redirect = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
+        additional_flood_local_redirect = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
+        additional_connect_local_redirect = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
+        merge_points = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
+        basin_catchment_numbers = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
+        evaluate_basins_wrapper.evaluate_basins(minima_in_int=
+                                                np.ascontiguousarray(minima.get_data(),dtype=np.int32),
+                                                raw_orography_in=
+                                                np.ascontiguousarray(orography_10min.get_data(),
+                                                                     dtype=np.float64),
+                                                corrected_orography_in=
+                                                np.ascontiguousarray(orography_10min.get_data(),
+                                                                     dtype=np.float64),
+                                                cell_areas_in=
+                                                np.ascontiguousarray(input_cell_areas.get_data(),
+                                                                     dtype=np.float64),
+                                                connection_volume_thresholds_in=
+                                                connection_volume_thresholds.get_data(),
+                                                flood_volume_thresholds_in=
+                                                flood_volume_thresholds.get_data(),
+                                                prior_fine_rdirs_in=
+                                                np.ascontiguousarray(rdirs_10min.get_data(),
+                                                                     dtype=np.float64),
+                                                prior_coarse_rdirs_in=
+                                                np.ascontiguousarray(rdirs_30min.get_data(),
+                                                                     dtype=np.float64),
+                                                prior_fine_catchments_in=
+                                                np.ascontiguousarray(catchments_10min.get_data(),
+                                                                     dtype=np.int32),
+                                                coarse_catchment_nums_in=
+                                                np.ascontiguousarray(catchments_30min.get_data(),
+                                                                     dtype=np.int32),
+                                                flood_next_cell_lat_index_in=
+                                                flood_next_cell_lat_index.get_data(),
+                                                flood_next_cell_lon_index_in=
+                                                flood_next_cell_lon_index.get_data(),
+                                                connect_next_cell_lat_index_in=
+                                                connect_next_cell_lat_index.get_data(),
+                                                connect_next_cell_lon_index_in=
+                                                connect_next_cell_lon_index.get_data(),
+                                                flood_force_merge_lat_index_in=
+                                                flood_force_merge_lat_index.get_data(),
+                                                flood_force_merge_lon_index_in=
+                                                flood_force_merge_lon_index.get_data(),
+                                                connect_force_merge_lat_index_in=
+                                                connect_force_merge_lat_index.get_data(),
+                                                connect_force_merge_lon_index_in=
+                                                connect_force_merge_lon_index.get_data(),
+                                                flood_redirect_lat_index_in=
+                                                flood_redirect_lat_index.get_data(),
+                                                flood_redirect_lon_index_in=
+                                                flood_redirect_lon_index.get_data(),
+                                                connect_redirect_lat_index_in=
+                                                connect_redirect_lat_index.get_data(),
+                                                connect_redirect_lon_index_in=
+                                                connect_redirect_lon_index.get_data(),
+                                                additional_flood_redirect_lat_index_in=
+                                                additional_flood_redirect_lat_index.get_data(),
+                                                additional_flood_redirect_lon_index_in=
+                                                additional_flood_redirect_lon_index.get_data(),
+                                                additional_connect_redirect_lat_index_in=
+                                                additional_connect_redirect_lat_index.get_data(),
+                                                additional_connect_redirect_lon_index_in=
+                                                additional_connect_redirect_lon_index.get_data(),
+                                                flood_local_redirect_out_int=
+                                                flood_local_redirect.get_data(),
+                                                connect_local_redirect_out_int=
+                                                connect_local_redirect.get_data(),
+                                                additional_flood_local_redirect_out_int=
+                                                additional_flood_local_redirect.get_data(),
+                                                additional_connect_local_redirect_out_int=
+                                                additional_connect_local_redirect.get_data(),
+                                                merge_points_out_int=
+                                                merge_points.get_data(),
+                                                basin_catchment_numbers_in=
+                                                basin_catchment_numbers.get_data())
+        fields_to_write = [connection_volume_thresholds,
+                           flood_volume_thresholds,
+                           flood_next_cell_lat_index,
+                           flood_next_cell_lon_index,
+                           connect_next_cell_lat_index,
+                           connect_next_cell_lon_index,
+                           flood_force_merge_lat_index,
+                           flood_force_merge_lon_index,
+                           connect_force_merge_lat_index,
+                           connect_force_merge_lon_index,
+                           flood_redirect_lat_index,
+                           flood_redirect_lon_index,
+                           connect_redirect_lat_index,
+                           connect_redirect_lon_index,
+                           additional_flood_redirect_lat_index,
+                           additional_flood_redirect_lon_index,
+                           additional_connect_redirect_lat_index,
+                           additional_connect_redirect_lon_index,
+                           flood_local_redirect,
+                           connect_local_redirect,
+                           additional_flood_local_redirect,
+                           additional_connect_local_redirect,
+                           merge_points,minima]
+        fieldnames_for_fields_to_write = ['connection_volume_thresholds',
+                                          'flood_volume_thresholds',
+                                          'flood_next_cell_lat_index',
+                                          'flood_next_cell_lon_index',
+                                          'connect_next_cell_lat_index',
+                                          'connect_next_cell_lon_index',
+                                          'flood_force_merge_lat_index',
+                                          'flood_force_merge_lon_index',
+                                          'connect_force_merge_lat_index',
+                                          'connect_force_merge_lon_index',
+                                          'flood_redirect_lat_index',
+                                          'flood_redirect_lon_index',
+                                          'connect_redirect_lat_index',
+                                          'connect_redirect_lon_index',
+                                          'additional_flood_redirect_lat_index',
+                                          'additional_flood_redirect_lon_index',
+                                          'additional_connect_redirect_lat_index',
+                                          'additional_connect_redirect_lon_index',
+                                          'flood_local_redirect',
+                                          'connect_local_redirect',
+                                          'additional_flood_local_redirect',
+                                          'additional_connect_local_redirect',
+                                          'merge_points','lake_centers']
+        iodriver.advanced_field_writer(self.output_lakeparas_filepath,
+                                       fields_to_write,
+                                       fieldname=fieldnames_for_fields_to_write)
+        #Write out basins maps
+        iodriver.advanced_field_writer(temp_basin_catchment_numbers_filename,
+                                       basin_catchment_numbers,
+                                       fieldname="basin_catchment_numbers")
+        #Redistribute water
+        if print_timing_info:
+            time_before_water_redistribution = timer()
+        water_to_redistribute = \
+        iodriver.advanced_field_loader(self.input_water_to_redistribute_filepath,
+                                       field_type='Generic',
+                                       fieldname="lake_field")
+        fine_grid = basin_catchment_numbers.get_grid()
+        fine_shape = basin_catchment_numbers.get_data().shape
+        coarse_grid = grid.makeGrid('HD')
+        water_redistributed_to_lakes = field.Field(np.zeros(fine_shape,dtype=np.float64,order='C'),
+                                                 fine_grid)
+        water_redistributed_to_rivers = field.Field(coarse_grid.create_empty_field(np.float64),coarse_grid)
+        lake_operators_wrapper.redistribute_water(np.ascontiguousarray(basin_catchment_numbers.get_data(),
+                                                dtype=np.int32),
+                                                np.ascontiguousarray(minima.get_data(),
+                                                dtype=np.int32),
+                                                np.ascontiguousarray(water_to_redistribute.get_data(),
+                                                dtype=np.float64),
+                                                water_redistributed_to_lakes.get_data(),
+                                                water_redistributed_to_rivers.get_data())
+        iodriver.advanced_field_writer(output_water_redistributed_to_lakes_file,
+                                       water_redistributed_to_lakes,
+                                       fieldname="water_redistributed_to_lakes")
+        iodriver.advanced_field_writer(output_water_redistributed_to_rivers_file,
+                                       water_redistributed_to_rivers,
+                                       fieldname="water_redistributed_to_rivers")
         cdo_inst = cdo.Cdo()
         cdo_inst.merge(input=" ".join([output_water_redistributed_to_lakes_file,
                                        output_water_redistributed_to_rivers_file]),
                        output=self.output_lakestart_filepath)
         os.remove(output_water_redistributed_to_lakes_file)
         os.remove(output_water_redistributed_to_rivers_file)
-        os.remove(temp_10min_orog_filename)
-        os.remove(temp_10min_rdirs_filename)
-        os.remove(temp_30min_rdirs_filename)
-        os.remove(temp_10min_catchments_filename)
-        os.remove(temp_30min_catchments_filename)
-        os.remove(minima_filename)
-        # if print_timing_info:
-        #     end_time = timer()
-        #     print "---- Timing info ----"
-        #     print "Initial setup:        {: 6.2f}s".\
-        #         format(time_before_sink_filling - start_time)
-        #     print "River Carving:        {: 6.2f}s".\
-        #         format(time_before_10min_post_processing - time_before_sink_filling)
-        #     print "Post Processing:      {: 6.2f}s".\
-        #         format(time_before_upscaling - time_before_10min_post_processing)
-        #     print "Upscaling:            {: 6.2f}s".\
-        #         format(time_before_30min_post_processing_one - time_before_upscaling)
-        #     print "Post Processing:      {: 6.2f}s".\
-        #         format(time_before_loop_breaker -
-        #                 time_before_30min_post_processing_one)
-        #     print "Loop Breaker:         {: 6.2f}s".\
-        #         format(time_before_sink_filling - time_before_loop_breaker)
-        #     print "Sink Filling:         {: 6.2f}s".\
-        #         format(time_before_parameter_generation - time_before_sink_filling)
-        #     print "Parameter Generation: {: 6.2f}s".\
-        #         format(time_before_30min_post_processing_two -
-        #                 time_before_parameter_generation)
-        #     print "Post Processing:      {: 6.2f}s".\
-        #         format(end_time - time_before_30min_post_processing_two)
-        #     print "Total:                {: 6.2f}s".\
-        #         format(end_time-start_time)
+        if print_timing_info:
+            end_time = timer()
+            print "---- Timing info ----"
+            print "Initial setup:         {: 6.2f}s".\
+                format(time_before_glacier_mask_application - start_time)
+            print "Glacier Mask Addition: {: 6.2f}s".\
+                format(time_before_sink_filling - time_before_glacier_mask_application)
+            print "Sink Filling:          {: 6.2f}s".\
+                format(time_before_filtering - time_before_sink_filling)
+            print "Filtering:             {: 6.2f}s".\
+                format(time_before_rdir_generation - time_before_filtering)
+            print "River Direction Gen.:  {: 6.2f}s".\
+                format(time_before_10min_post_processing - time_before_rdir_generation)
+            print "Post Processing:       {: 6.2f}s".\
+                format(time_before_upscaling - time_before_10min_post_processing)
+            print "Upscaling:             {: 6.2f}s".\
+                format(time_before_30min_post_processing_one - time_before_upscaling)
+            print "Post Processing (II):  {: 6.2f}s".\
+                format(time_before_loop_breaker -
+                        time_before_30min_post_processing_one)
+            print "Loop Breaker:          {: 6.2f}s".\
+                format(time_before_coarse_sink_filling - time_before_loop_breaker)
+            print "Sink Filling (II):     {: 6.2f}s".\
+                format(time_before_parameter_generation - time_before_coarse_sink_filling)
+            print "Parameter Generation:  {: 6.2f}s".\
+                format(time_before_30min_post_processing_two -
+                        time_before_parameter_generation)
+            print "Post Processing:       {: 6.2f}s".\
+                format(time_before_basin_evaluation - time_before_30min_post_processing_two)
+            print "Basin Evaluation:      {: 6.2f}s".\
+                format(time_before_water_redistribution - time_before_basin_evaluation)
+            print "Water Redistribution:  {: 6.2f}s".\
+                format(end_time-time_before_water_redistribution)
+            print "Total:                 {: 6.2f}s".\
+                format(end_time-start_time)
 
 def setup_and_run_dynamic_hd_para_and_lake_gen_from_command_line_arguments(args):
     """Setup and run a dynamic hd production run from the command line arguments passed in by main"""

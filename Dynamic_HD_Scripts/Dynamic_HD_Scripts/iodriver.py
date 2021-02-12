@@ -6,6 +6,7 @@ Created on Dec 4, 2017
 @author: thomasriddick
 '''
 import dynamic_hd
+import iohelper
 import re
 import os
 import math
@@ -227,13 +228,22 @@ def advanced_field_writer(target_filename,field,fieldname='field_value',clobber=
         raise RuntimeError("Target file {} already exists and clobbering is not set".
                            format(target_filename))
     temp_filename=None
+    if (isinstance(field,list)):
+      fields = field
+      field = fields[0]
+      fieldnames = fieldname
+      multiple_fields = True
+    else:
+      multiple_fields = False
     threshold_for_using_xarray = 500000000
     if (field.get_grid().get_npoints() > threshold_for_using_xarray and
         field.grid.lon_points is not None and field.grid.lat_points is not None):
-        data_array = field.to_data_array()
-        dataset = xarray.Dataset({fieldname:data_array})
-        print "Writing output to {0}".format(target_filename)
-        dataset.to_netcdf(target_filename)
+      if multiple_fields:
+        RuntimeError("Cannot write multiple fields using x-array")
+      data_array = field.to_data_array()
+      dataset = xarray.Dataset({fieldname:data_array})
+      print "Writing output to {0}".format(target_filename)
+      dataset.to_netcdf(target_filename)
     else:
       try:
         if (field.grid.lon_points is not None and
@@ -253,11 +263,18 @@ def advanced_field_writer(target_filename,field,fieldname='field_value',clobber=
                             "yinc = {}".format(math.copysign(180.0/field.grid.nlat,
                                                              field.grid.lat_points[1]-
                                                              field.grid.lat_points[0]))]])
-        dynamic_hd.write_field(filename=target_filename,
-                               field=field,
-                               file_type=dynamic_hd.get_file_extension(target_filename),
-                               griddescfile=temp_filename,
-                               fieldname=fieldname)
+        if not multiple_fields:
+          dynamic_hd.write_field(filename=target_filename,
+                                 field=field,
+                                 file_type=dynamic_hd.get_file_extension(target_filename),
+                                 griddescfile=temp_filename,
+                                 fieldname=fieldname)
+        else:
+          iohelper.NetCDF4FileIOHelper.\
+            write_fields(filename=target_filename,
+                         fields=fields,
+                         griddescfile=temp_filename,
+                         fieldnames=fieldnames)
       finally:
         if temp_filename:
           os.remove(temp_filename)

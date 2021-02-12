@@ -37,6 +37,7 @@ class Test_Dynamic_HD_Production_Run_Drivers(unittest.TestCase):
         self.cdo_instance = cdo.Cdo()
         self.temp_dirs = [os.path.join(data_dir,'temp','temp_workdir_lake_deglac'),
                           os.path.join(data_dir,'temp','temp_workdir_pd')]
+        self.clean_up()
         for temp_dir in self.temp_dirs:
             try:
                 os.stat(temp_dir)
@@ -45,6 +46,9 @@ class Test_Dynamic_HD_Production_Run_Drivers(unittest.TestCase):
 
     def tearDown(self):
         """Unit test tear down function"""
+        self.clean_up()
+
+    def clean_up(self):
         files_to_remove = ["paragen/bas_k.dat","paragen/global.inp","paragen/over_k.dat",
                            "paragen/over_vel.dat","paragen/riv_k.dat",
                            "paragen/riv_vel.dat","paragen/soil_partab.txt",
