@@ -110,6 +110,12 @@ class f2py_manager(object):
                     runtime_library_dirs=["/usr/local/Cellar/gcc/10.2.0/lib/gcc/10","/usr/local/opt/libevent/lib","/usr/local/Cellar/open-mpi/4.0.5/lib"]
                     libraries=["mpi_usempif08","mpi_usempi_ignore_tkr","mpi_mpifh","mpi"]
                     extra_compile_args=["-Wl,-flat_namespace -Wl,-commons,use_dylibs"]
+            elif socket.gethostname() and params.use_mpi:
+                extra_include_dirs=["/sw/rhel6-x64/mpi/openmpi-2.0.2p2_hpcx-nag62/include"]
+                library_dirs=["/sw/rhel6-x64/mpi/openmpi-2.0.2p2_hpcx-nag62/lib"]
+                runtime_library_dirs=["/sw/rhel6-x64/mpi/openmpi-2.0.2p2_hpcx-nag62/lib"]
+                libraries=["mpi_usempif08","mpi_usempi_ignore_tkr","mpi_mpifh","mpi"]
+                extra_compile_args=["-Wl,-pthread"]
             include_path = ast.literal_eval(params.include_path)
             include_path.extend(extra_include_dirs)
             ext = npdistutils_core.Extension(name=params.module_name,
