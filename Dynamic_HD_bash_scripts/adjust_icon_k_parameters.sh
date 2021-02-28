@@ -9,6 +9,11 @@ if [[ ${resolution} == 'r2b8' ]]; then
   arf_k_adjustment_thres=0.1
   new_alf_k=4.82
   alf_k_adjustment_thres=8.0
+elif [[ ${resolution} == 'r2b4' ]]; then
+  new_arf_k=0.25
+  arf_k_adjustment_thres=1.0
+  new_alf_k=45.3
+  alf_k_adjustment_thres=200.0
 else
   exit 1
 fi
