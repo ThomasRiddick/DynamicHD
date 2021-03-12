@@ -118,7 +118,8 @@ def renumber_catchments_by_size(catchments,loop_logfile=None):
     f2py_mngr = f2py_manager.f2py_manager(path.join(fortran_source_path,
                                                     "mod_compute_catchments.f90"),
                                           func_name="relabel_catchments")
-    catch_nums, counts = np.unique(catchments,return_counts=True)
+    catch_nums = np.arange(np.amax(catchments)+1)
+    counts = np.bincount(catchments.flatten())
     catchments_sizes = np.empty(len(catch_nums),
                                 dtype=[('catch_nums',int),
                                        ('new_catch_nums',int),
@@ -138,7 +139,7 @@ def renumber_catchments_by_size(catchments,loop_logfile=None):
             f.next()
             loops = [int(line.strip()) for line in f]
         #-1 to account for differing array offset between Fortran and python
-        loops = [str(old_to_new_label_map[old_loop_num-1])+'\n' for old_loop_num in loops]
+        loops = [str(old_to_new_label_map[old_loop_num])+'\n' for old_loop_num in loops]
         with open(loop_logfile,'w') as f:
             f.write('Loops found in catchments:\n')
             f.writelines(loops)

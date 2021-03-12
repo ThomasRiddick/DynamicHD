@@ -361,7 +361,7 @@ INTEGER :: i,j !counters
  DO i=1,nlong
   DO j=1,nlat
     IF (catchments(i,j) /= 0) THEN
-        catchments(i,j) = old_to_new_label_map(catchments(i,j))
+        catchments(i,j) = old_to_new_label_map(catchments(i,j)+1)
     END IF
   END DO
  END DO

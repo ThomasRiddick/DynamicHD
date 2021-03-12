@@ -17,6 +17,7 @@ import flow_to_grid_cell as ftgc
 from os.path import join
 import os.path as path
 import time
+import connect_coarse_lake_catchments as cclc
 
 class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
     '''
@@ -989,6 +990,34 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
                                            output_filepath=self.lake_parameter_file_path,
                                            output_filelabel=file_label)
 
+    def connect_catchments_for_glac1D(self):
+      coarse_catchments_filepath = ("/Users/thomasriddick/Documents/data/HDdata/catchmentmaps/"
+                                    "catchmentmap_prepare_basins_from_glac1D_"
+                                    "20210205_151552_1250_30mins.nc")
+      lake_parameters_filepath = ("/Users/thomasriddick/Documents/data/HDdata/lakeparafiles/"
+                                  "lakeparas_prepare_basins_from_glac1D_20210205_151552_1250.nc")
+      river_directions_filepath = ("/Users/thomasriddick/Documents/data/HDdata/rdirs/generated/"
+                                   "updated_RFDs_prepare_basins_from_glac1D_20210205_151552_1250_30min_with_depressions.nc")
+      basin_numbers_filepath = ("/Users/thomasriddick/Documents/data/HDdata/basin_catchment_numbers/"
+                                "basin_catchment_numbers_prepare_basins_from_glac1D"
+                                "_20210205_151552_1250.nc")
+      connected_coarse_catchments_out_filename = ("/Users/thomasriddick/Documents/data/temp/"
+                                                  "catchment_1250.nc")
+      coarse_catchments_fieldname = "catchments"
+      connected_coarse_catchments_out_fieldname = "catchments"
+      basin_catchment_numbers_fieldname = "basin_catchment_numbers"
+      river_directions_fieldname = "FDIR"
+      cclc.connect_coarse_lake_catchments_driver(coarse_catchments_filepath,
+                                                 lake_parameters_filepath,
+                                                 basin_numbers_filepath,
+                                                 river_directions_filepath,
+                                                 connected_coarse_catchments_out_filename,
+                                                 coarse_catchments_fieldname,
+                                                 connected_coarse_catchments_out_fieldname,
+                                                 basin_catchment_numbers_fieldname,
+                                                 river_directions_fieldname)
+
+
 def main():
     """Select the revelant runs to make
 
@@ -1005,8 +1034,9 @@ def main():
     #lake_drivers.evaluate_ICE6G_lgm_basins()
     # end = time.time()
     # print(end - start)
-    lake_drivers.prepare_basins_from_glac1D()
+    #lake_drivers.prepare_basins_from_glac1D()
     #lake_drivers.extract_lake_volumes_from_glac1D_basins()
+    lake_drivers.connect_catchments_for_glac1D()
 
 if __name__ == '__main__':
     main()

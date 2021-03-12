@@ -343,7 +343,7 @@ class Field(object):
                                             border_value=0)
             self.data = self.grid.remove_wrapping_halo(temp_data)
 
-    def extract_data(section_coords,field_name,data_type,language):
+    def extract_data(self,section_coords,field_name,data_type,language):
         return self.grid.extract_data(self.data,section_coords,field_name,
                                       data_type,language)
 

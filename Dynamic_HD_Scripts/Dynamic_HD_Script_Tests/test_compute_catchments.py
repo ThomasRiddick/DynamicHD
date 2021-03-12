@@ -22,7 +22,7 @@ class RelabelCatchmentTestCase(unittest.TestCase):
                                     [1,2,3,3,5],
                                     [2,3,6,5,7],
                                     [2,8,3,9,7]],order='F',dtype=np.int32)
-    old_to_new_label_map = np.array([140,78, 29,
+    old_to_new_label_map = np.array([0,140,78, 29,
                                       39,44,392,
                                       12, 3,-11])
     expected_results = np.array([[140,78,29,29,29],

@@ -901,15 +901,20 @@ class LatLongGrid(Grid):
 
     def extract_data(self,data,section_coords,field_name,data_type,language):
         data_section = data[section_coords["min_lat"]:
-                            section_coords["max_lat"],
+                            section_coords["max_lat"]+1,
                             section_coords["min_lon"]:
-                            section_coords["max_lon"]]
+                            section_coords["max_lon"]+1]
         return self.convert_data_to_code(data_section,field_name,data_type,language)
 
-    def convert_data_to_code(data_section,field_name,data_type,language):
-        data_as_string = np.array_to_string(data_section,
-                                            separator="," if language == "Fortran" else None)
+    def convert_data_to_code(self,data_section,field_name,data_type,language):
+        np.set_printoptions(precision=3,threshold=np.inf)
+        data_as_string = np.array2string(data_section,
+                                         separator="," if (language == "Fortran" or
+                                                           language == "Python") else None,
+                                         max_line_width=1000)
+        np.set_printoptions(precision=8,threshold=1000)
         julia_data_types = { "integer":"Int64","double":"Float64"}
+        python_data_types = { "integer":"np.int64","double":"np.float64"}
         formats_for_languages = {
                                 "Fortran": lambda data_as_string,field_name,data_type:
                                 "allocate({field_name}({nlat},{nlon}))\n"
@@ -925,12 +930,18 @@ class LatLongGrid(Grid):
                                 "{data_type}[ {data_as_string} ])".\
                                 format(field_name=field_name,
                                        data_as_string=data_as_string,
-                                       data_type=julia_data_types[data_type])
-                                }
+                                       data_type=julia_data_types[data_type]),
+                                "Python": lambda data_as_string,field_name,data_type:
+                                "{field_name} =  np.asarray("
+                                "{data_as_string},\n"
+                                "dtype=np.{data_type}, order='C')".\
+                                format(field_name=field_name,
+                                       data_as_string=data_as_string,
+                                       data_type=python_data_types[data_type])}
         data_as_code = formats_for_languages[language](data_as_string,field_name,data_type)
         if language == "Fortran":
-            re.sub("\n","& \n",data_as_code,count=0)
-        return data_as_code
+            data_as_code = re.sub("],","&",data_as_code,count=0)
+        return "\n" + data_as_code + "\n"
 
 def makeGrid(grid_type,**kwargs):
     """Factory function that creates an object of the correct grid type given a keyword
