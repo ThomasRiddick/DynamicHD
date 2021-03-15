@@ -3666,19 +3666,12 @@ class LakePlots(Plots):
                                            basin_catchment_num_file_basename,
                                            lake_data_file_basename,
                                            glacier_data_file_basename,
-                                           flip_river_data=False,
-                                           flip_mask=False,
-                                           flip_catchment_nums=False,
-                                           flip_lake_data=False,
-                                           flip_glacier_mask=False,
-                                           rotate_lsmask=False,
-                                           rotate_catchment_nums=False,
-                                           rotate_lake_data=False,
-                                           rotate_glacier_mask=False,
-                                           minflowcutoff=1000000000000.0,
-                                           lake_grid_type='LatLong10min',
-                                           lake_grid_kwargs={},
-                                           river_grid_type='HD',**river_grid_kwargs):
+                                           river_flow_fieldname,
+                                           lsmask_fieldname,
+                                           basin_catchment_num_fieldname,
+                                           lake_data_fieldname,
+                                           glacier_fieldname,
+                                           minflowcutoff=1000000000000.0):
     """Help produce a map of river flow, lakes and potential lakes"""
     fig = plt.figure()
     plt.subplot(111)
@@ -3687,37 +3680,32 @@ class LakePlots(Plots):
     norm = mpl.colors.BoundaryNorm(bounds,cmap.N)
     plt.title('Cells with cumulative flow greater than or equal to {0}'.format(minflowcutoff))
     ims = []
-    for time in range(950,1850,3):
-      timeslice = int(math.floor(time/50.0)*50)
+    for time in range(15990,15900,-10):
+      mpiesm_time = 3000 + 16000 - time
       ims.append([self.TwoColourRiverAndLakeAnimationHelperSliceGenerator(cmap=cmap,norm=norm,
                                                                           river_flow_filename=
-                                                                          river_flow_file_basename+"_"+str(time)+".nc",
+                                                                          river_flow_file_basename.replace("DATETIME",str(mpiesm_time)),
                                                                           lsmask_filename=
-                                                                          lsmask_file_basename+"_"+str(timeslice)+".nc",
+                                                                          lsmask_file_basename.replace("DATETIME",str(time)),
                                                                           basin_catchment_num_filename=
-                                                                          (basin_catchment_num_file_basename+
-                                                                           "_"+str(timeslice)+".nc"),
+                                                                          basin_catchment_num_file_basename.replace("DATETIME",str(time)),
                                                                           lake_data_filename=
-                                                                          lake_data_file_basename+"_"+str(time)+".nc",
+                                                                          lake_data_file_basename.replace("DATETIME",str(mpiesm_time)),
                                                                           glacier_data_filename=
-                                                                          glacier_data_file_basename+"_"+str(timeslice)+".nc",
-                                                                          flip_river_data=flip_river_data,
-                                                                          flip_mask=flip_mask,
-                                                                          flip_catchment_nums=flip_catchment_nums,
-                                                                          flip_lake_data=flip_lake_data,
-                                                                          flip_glacier_mask=flip_glacier_mask,
-                                                                          rotate_lsmask=rotate_lsmask,
-                                                                          rotate_catchment_nums=rotate_catchment_nums,
-                                                                          rotate_lake_data=rotate_lake_data,
-                                                                          rotate_glacier_mask=rotate_glacier_mask,
-                                                                          minflowcutoff=minflowcutoff,
-                                                                          lake_grid_type=lake_grid_type,
-                                                                          lake_kwargs=lake_grid_kwargs,
-                                                                          river_grid_type=river_grid_type)])
+                                                                          glacier_data_file_basename.replace("DATETIME",str(time)),
+                                                                          river_flow_fieldname=river_flow_fieldname,
+                                                                          lsmask_fieldname=lsmask_fieldname,
+                                                                          basin_catchment_num_fieldname=
+                                                                          basin_catchment_num_fieldname,
+                                                                          lake_data_fieldname=
+                                                                          lake_data_fieldname,
+                                                                          glacier_fieldname=
+                                                                          glacier_fieldname,
+                                                                          minflowcutoff=minflowcutoff)])
     anim = animation.ArtistAnimation(fig,ims,interval=200,blit=False,repeat_delay=500)
-    #plt.show()
-    writer = animation.writers['ffmpeg'](fps=10,bitrate=1800)
-    anim.save('/Users/thomasriddick/Desktop/im2.mp4',writer=writer,dpi=1000)
+    plt.show()
+    #writer = animation.writers['ffmpeg'](fps=10,bitrate=1800)
+    #anim.save('/Users/thomasriddick/Desktop/im2.mp4',writer=writer,dpi=1000)
 
   def TwoColourRiverAndLakeAnimationHelperSliceGenerator(self,cmap,norm,
                                                          river_flow_filename,
@@ -3725,68 +3713,32 @@ class LakePlots(Plots):
                                                          basin_catchment_num_filename,
                                                          lake_data_filename,
                                                          glacier_data_filename,
-                                                         flip_river_data=False,
-                                                         flip_mask=False,
-                                                         flip_catchment_nums=False,
-                                                         flip_lake_data=False,
-                                                         flip_glacier_mask=False,
-                                                         rotate_lsmask=False,
-                                                         rotate_catchment_nums=False,
-                                                         rotate_lake_data=False,
-                                                         rotate_glacier_mask=False,
-                                                         minflowcutoff=1000000000000.0,
-                                                         lake_grid_type='LatLong10min',
-                                                         lake_kwargs={},
-                                                         river_grid_type='HD',**river_kwargs):
-    river_flow_object = dynamic_hd.load_field(river_flow_filename,
-                                              file_type=dynamic_hd.\
-                                                get_file_extension(river_flow_filename),
-                                              field_type='Generic',
-                                              grid_type=river_grid_type,**river_kwargs)
-    lsmask_field = dynamic_hd.load_field(lsmask_filename,
-                                         file_type=dynamic_hd.get_file_extension(lsmask_filename),
-                                         field_type='Generic',grid_type=lake_grid_type,
-                                         **lake_kwargs)
-    basin_catchment_nums_field = dynamic_hd.load_field(basin_catchment_num_filename,
-                                                       file_type=dynamic_hd.\
-                                                       get_file_extension\
-                                                       (basin_catchment_num_filename),
+                                                         river_flow_fieldname,
+                                                         lsmask_fieldname,
+                                                         basin_catchment_num_fieldname,
+                                                         lake_data_fieldname,
+                                                         glacier_fieldname,
+                                                         minflowcutoff=1000000000000.0):
+    river_flow_object = iodriver.advanced_field_loader(river_flow_filename,
+                                                       fieldname=river_flow_fieldname,
                                                        field_type='Generic',
-                                                       grid_type=lake_grid_type,
-                                                       **lake_kwargs)
-    lake_data_field = dynamic_hd.load_field(lake_data_filename,
-                                            file_type=dynamic_hd.\
-                                            get_file_extension(lake_data_filename),
-                                            field_type='Generic',
-                                            grid_type=lake_grid_type,
-                                            **lake_kwargs)
-    glacier_mask_field = dynamic_hd.load_field(glacier_data_filename,
-                                              file_type=dynamic_hd.\
-                                              get_file_extension(glacier_data_filename),
-                                              fieldname="ICEM",
-                                              field_type='Generic',
-                                              grid_type=lake_grid_type,
-                                              **lake_kwargs)
-    if flip_river_data:
-        river_flow_object.flip_data_ud()
-    if flip_mask:
-        lsmask_field.flip_data_ud()
-    if flip_catchment_nums:
-        basin_catchment_nums_field.flip_data_ud()
-    if flip_lake_data:
-        lake_data_field.flip_data_ud()
-    if flip_glacier_mask:
-        glacier_mask_field.flip_data_ud()
-    if rotate_catchment_nums:
-        basin_catchment_nums_field.rotate_field_by_a_hundred_and_eighty_degrees()
-    if rotate_lake_data:
-        lake_data_field.rotate_field_by_a_hundred_and_eighty_degrees()
-    if rotate_lsmask:
-        lsmask_field.rotate_field_by_a_hundred_and_eighty_degrees()
-    if rotate_glacier_mask:
-        glacier_mask_field.rotate_field_by_a_hundred_and_eighty_degrees()
+                                                       time_slice=0)
+    lsmask_field = iodriver.advanced_field_loader(lsmask_filename,
+                                                  fieldname=lsmask_fieldname,
+                                                  field_type='Generic')
+    # basin_catchment_nums_field = iodriver.advanced_field_loader(basin_catchment_num_filename,
+    #                                               fieldname=basin_catchment_num_fieldname,
+    #                                               field_type='Generic')
+    lake_data_field = iodriver.advanced_field_loader(lake_data_filename,
+                                                     fieldname=lake_data_fieldname,
+                                                     field_type='Generic',
+                                                     time_slice=0)
+    glacier_mask_field = iodriver.advanced_field_loader(glacier_data_filename,
+                                                        fieldname=glacier_fieldname,
+                                                        field_type='Generic')
+
     lsmask = lsmask_field.get_data()
-    basin_catchment_nums = basin_catchment_nums_field.get_data()
+    # basin_catchment_nums = basin_catchment_nums_field.get_data()
     river_flow = river_flow_object.get_data()
     rivers_and_lakes_field = copy.deepcopy(river_flow_object)
     rivers_and_lakes = rivers_and_lakes_field.get_data()
@@ -3795,10 +3747,9 @@ class LakePlots(Plots):
     rivers_and_lakes[river_flow < minflowcutoff] = 1
     rivers_and_lakes[river_flow >= minflowcutoff] = 2
     fine_rivers_and_lakes_field = utilities.downscale_ls_mask(rivers_and_lakes_field,
-                                                              lake_grid_type,
-                                                              **lake_kwargs)
+                                                              "LatLong10min")
     fine_rivers_and_lakes = fine_rivers_and_lakes_field.get_data()
-    fine_rivers_and_lakes[basin_catchment_nums > 0 ] = 3
+    # fine_rivers_and_lakes[basin_catchment_nums > 0 ] = 3
     fine_rivers_and_lakes[lake_data > 0] = 4
     fine_rivers_and_lakes[glacier_mask == 1] = 5
     fine_rivers_and_lakes[lsmask == 1] = 0
@@ -3809,10 +3760,6 @@ class LakePlots(Plots):
     timeinslice="18250"
     timeslice="1400"
     timeslice_creation_date_time="20190925_225029"
-    transient_run_path=\
-    "/Users/thomasriddick/Documents/data/temp/transient_sim_1/results_for_" + timeslice
-    #river_flow_filename=os.path.join(transient_run_path,"river_model_results_"
-    #                                 + timeinslice + ".nc")
     river_flow_filename="/Users/thomasriddick/Documents/data/temp/transient_sim_1/river_model_results_3650.nc"
     lsmask_filename=os.path.join(self.ls_masks_data_directory,'generated',
                                  "ls_mask_prepare_basins_from_glac1D_"
@@ -3822,8 +3769,6 @@ class LakePlots(Plots):
                                               "basin_catchment_numbers_prepare_basins"
                                               "_from_glac1D_" + timeslice_creation_date_time +
                                               "_" + timeslice + ".nc")
-    #lake_data_filename=os.path.join(transient_run_path,"lake_model_results_"
-    #                                + timeinslice + ".nc")
     lake_data_filename="/Users/thomasriddick/Documents/data/temp/transient_sim_1/lake_model_results_3650.nc"
     glacier_filename=os.path.join(self.glacier_data_directory,
                                   "GLAC1D_ICEM_10min_ts"+ timeslice+ ".nc")
@@ -3832,38 +3777,42 @@ class LakePlots(Plots):
                                          basin_catchment_num_filename,
                                          lake_data_filename,
                                          glacier_filename,
-                                         flip_river_data=False,flip_mask=False,
-                                         flip_catchment_num=False,flip_lake_data=False,
-                                         flip_glacier_mask=True,
-                                         rotate_lsmask=True,
-                                         rotate_glacier_mask=True,
+                                         river_flow_fieldname,
+                                         lsmask_fieldname,
+                                         basin_catchment_num_fieldname,
+                                         lake_data_fieldname,
+                                         glacier_fieldname,
                                          minflowcutoff=500000000.0,
                                          lake_grid_type='LatLong10min',
                                          river_grid_type='HD')
 
   def LakeAndRiverMaps(self):
-    transient_run_path=\
-    "/Users/thomasriddick/Documents/data/temp/transient_sim_1/results"
-    river_flow_file_basename="/Users/thomasriddick/Documents/data/temp/transient_sim_1/results/river_model_results_ts360"
-    lsmask_file_basename=("/Users/thomasriddick/Documents/data/transient_sim_data/1/"
-                          "10min_lsmask_pmu0178_merged")
-    basin_catchment_num_file_basename=("/Users/thomasriddick/Documents/data/transient_sim_data/1/"
-                                       "basin_catchment_numbers_prepare_basins_from_glac1D")
-    lake_data_file_basename="/Users/thomasriddick/Documents/data/temp/transient_sim_1/results/lake_model_results_ts360"
-    glacier_file_basename="/Users/thomasriddick/Documents/data/transient_sim_data/1/GLAC1D_ICEM_10min"
+    river_flow_file_basename=("/Users/thomasriddick/Documents/data/lake_transient_data/run_1/"
+                              "pmt0531_Tom_lake_16k_DATETIME01.01_hd_higres_ym.nc")
+    lsmask_file_basename=("/Users/thomasriddick/Documents/data/lake_transient_data/run_1/"
+                          "10min_slm_DATETIME.nc")
+    basin_catchment_num_file_basename=("/Users/thomasriddick/Documents/data/lake_transient_data/run_1/"
+                                       "dummy_DATETIME_dummy.nc")
+    lake_data_file_basename=("/Users/thomasriddick/Documents/data/lake_transient_data/run_1/"
+                             "pmt0531_Tom_lake_16k_DATETIME01.01_diagnostic_lake_volumes.nc")
+    glacier_file_basename=("/Users/thomasriddick/Documents/data/lake_transient_data/run_1/"
+                           "10min_glac_DATETIMEk.nc")
+    river_flow_fieldname = "friv"
+    lsmask_fieldname = "slm"
+    basin_catchment_num_fieldname = "dummy"
+    lake_data_fieldname = "diagnostic_lake_vol"
+    glacier_fieldname = "glac"
     self.TwoColourRiverAndLakeAnimationHelper(river_flow_file_basename,
                                               lsmask_file_basename,
                                               basin_catchment_num_file_basename,
                                               lake_data_file_basename,
                                               glacier_file_basename,
-                                              flip_river_data=False,flip_mask=False,
-                                              flip_catchment_num=False,flip_lake_data=False,
-                                              flip_glacier_mask=True,
-                                              rotate_lsmask=True,
-                                              rotate_glacier_mask=True,
-                                              minflowcutoff=500000000.0,
-                                              lake_grid_type='LatLong10min',
-                                              river_grid_type='HD')
+                                              river_flow_fieldname,
+                                              lsmask_fieldname,
+                                              basin_catchment_num_fieldname,
+                                              lake_data_fieldname,
+                                              glacier_fieldname,
+                                              minflowcutoff=500000000.0)
 
 def main():
     """Top level function; define some overarching options and which plots to create"""
