@@ -12,7 +12,7 @@ import os
 import re
 
 data_dir = "/Users/thomasriddick/Documents/data/HDdata"
-generated_file_pattern_201x = re.compile(r'(201[0-9]{5}_[0-9]{6})')
+generated_file_pattern_202x = re.compile(r'(202[0-9]{5}_[0-9]{6})')
 partial_date_pattern = re.compile(r'([_0-9]+)("|\') *$')
 directories_to_clean = ["catchmentmaps","flowmaps","flowparams",
                         "hdfiles/generated","hdrestartfiles/generated",
@@ -75,11 +75,11 @@ def prepare_data_cleanup():
                     else:
                         modified_line = line
                     while True:
-                        match = generated_file_pattern_201x.search(modified_line)
+                        match = generated_file_pattern_202x.search(modified_line)
                         if match:
                             creation_times_to_save.append(match.group(0))
                             modified_line = \
-                                generated_file_pattern_201x.sub("",modified_line,
+                                generated_file_pattern_202x.sub("",modified_line,
                                                                 count=1)
                         else:
                             break
@@ -91,7 +91,7 @@ def prepare_data_cleanup():
         for dirpath,unused_dirnames,filenames in os.walk(directory):
             for filename in filenames:
                 filepath = os.path.join(dirpath,filename)
-                match = generated_file_pattern_201x.search(filepath)
+                match = generated_file_pattern_202x.search(filepath)
                 if match:
                     if not (match.group(0) in creation_times_to_save):
                         new_filepath = os.path.join(files_to_delete_directory,
