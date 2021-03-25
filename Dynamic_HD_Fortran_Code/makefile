@@ -3,10 +3,10 @@ USE_NAG := False
 USE_INTEL := False
 FLAGS := -DUSE_LOGGING
 ifeq ($(shell uname -s),Darwin)
-GFORTRAN :=  /usr/local/Cellar/gcc/10.2.0/bin/gfortran-10
+GFORTRAN :=  /usr/local/Cellar/gcc/10.2.0_3/bin/gfortran-10
 NAGFORTRAN :=  /usr/local/bin/nagfor
 EXT_SOURCE :=$(shell echo ${HOME} )/Documents/code/
-GFORTRAN_NETCDF_F := /usr/local/Cellar/netcdf/4.7.4_1
+GFORTRAN_NETCDF_F := /usr/local/Cellar/netcdf/4.7.4_2
 NETCDF_F_LIB :=libnetcdff.dylib
 else ifeq ($(shell hostname -d),hpc.dkrz.de)
 GFORTRAN := $(shell which gfortran)
@@ -67,7 +67,7 @@ endif
 # Add inputs and outputs from these tool invocations to the build variables
 
 # All Target
-all: Dynamic_HD_Fortran_Code COTAT_Plus_LatLon_To_Icon_Simple_Interface_Code LatLon_Lake_Model_Driver_Code Icon_To_LatLon_Landsea_Downscaler_Simple_Interface LatLon_Icon_Loop_Breaker_Simple_Interface_Code LatLon_To_Icon_Cross_Grid_Mapper_Simple_Interface Accumulate_Flow_Icon_Simple_Interface Icosohedral_Lake_Model_Driver_Code
+all: Dynamic_HD_Fortran_Code COTAT_Plus_LatLon_To_Icon_Simple_Interface_Code LatLon_Lake_Model_Driver_Code Icon_To_LatLon_Landsea_Downscaler_Simple_Interface LatLon_Icon_Loop_Breaker_Simple_Interface_Code LatLon_To_Icon_Cross_Grid_Mapper_Simple_Interface Accumulate_Flow_Icon_Simple_Interface Icosohedral_Lake_Model_Driver_Code LatLon_Lake_Number_Retrieval_Driver_Code
 
 # Tool invocations
 tools_only: $(OBJS) $(USER_OBJS) COTAT_Plus_LatLon_To_Icon_Simple_Interface_Code Icon_To_LatLon_Landsea_Downscaler_Simple_Interface LatLon_Icon_Loop_Breaker_Simple_Interface_Code LatLon_To_Icon_Cross_Grid_Mapper_Simple_Interface Accumulate_Flow_Icon_Simple_Interface
@@ -115,6 +115,12 @@ LatLon_Lake_Model_Driver_Code: $(OBJS) $(LATLON_HD_AND_LAKE_MODEL_OBJS) $(USER_O
 	@echo 'Finished building target: $@'
 	@echo ' '
 
+LatLon_Lake_Number_Retrieval_Driver_Code: $(OBJS) $(LATLON_LAKE_NUMBER_RETRIEVAL_OBJS) $(USER_OBJS)
+	@echo 'Building target: $@'
+	$(FORTRAN) -o "LatLon_Lake_Number_Retrieval_Driver_Exec" $(OBJS) $(LATLON_LAKE_NUMBER_RETRIEVAL_OBJS) $(USER_OBJS) $(LIBS) $(FLAGS)
+	@echo 'Finished building target: $@'
+	@echo ' '
+
 Icosohedral_Lake_Model_Driver_Code: $(OBJS) $(ICOSOHEDRAL_HD_AND_LAKE_MODEL_OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	$(FORTRAN) -o "Icosohedral_Lake_Model_Driver_Exec" $(OBJS) $(ICOSOHEDRAL_HD_AND_LAKE_MODEL_OBJS) $(USER_OBJS) $(LIBS) $(FLAGS)
@@ -135,6 +141,7 @@ clean:
 	-$(RM) LatLon_To_Icon_Loop_Breaker_Fortran_Exec
 	-$(RM) LatLon_To_Icon_Cross_Grid_Mapper_Simple_Interface
 	-$(RM) Icosohedral_Lake_Model_Driver_Exec
+	-$(RM) LatLon_Lake_Number_Retrieval_Driver_Exec
 	-$(RM) $(MODS)
 	-@echo ' '
 

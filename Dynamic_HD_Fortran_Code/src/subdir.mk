@@ -38,6 +38,7 @@ $(FRUIT_LOC)/fruit.f90 \
 ../src/latlon_hd_and_lake_model/latlon_hd_model_interface_mod.f90 \
 ../src/latlon_hd_and_lake_model/latlon_hd_model_mod.f90 \
 ../src/latlon_hd_and_lake_model/latlon_hd_model_driver.f90 \
+../src/latlon_hd_and_lake_model/latlon_lake_model_retrieve_lake_numbers.f90 \
 ../src/latlon_hd_and_lake_model_test_mod.f90 \
 ../src/icosohedral_hd_and_lake_model_test_mod.f90 \
 ../src/cotat_plus_latlon_to_icon_simple_interface.f90 \
@@ -113,6 +114,19 @@ LATLON_HD_AND_LAKE_MODEL_OBJS += \
 ./src/latlon_hd_and_lake_model/latlon_hd_model_io_mod.o \
 ./src/latlon_hd_and_lake_model/latlon_hd_model_interface_mod.o \
 ./src/latlon_hd_and_lake_model/latlon_hd_model_driver.o
+
+LATLON_LAKE_NUMBER_RETRIEVAL_OBJS += \
+./src/parameters_mod.o \
+./src/check_return_code_netcdf_mod.o \
+./src/latlon_hd_and_lake_model/latlon_lake_logger_mod.o \
+./src/latlon_hd_and_lake_model/latlon_lake_model_mod.o \
+./src/latlon_hd_and_lake_model/latlon_lake_model_interface_mod.o \
+./src/latlon_hd_and_lake_model/latlon_lake_model_io_mod.o \
+./src/latlon_hd_and_lake_model/latlon_hd_model_mod.o \
+./src/latlon_hd_and_lake_model/latlon_hd_model_io_mod.o \
+./src/latlon_hd_and_lake_model/latlon_hd_model_interface_mod.o \
+./src/latlon_hd_and_lake_model/latlon_lake_model_retrieve_lake_numbers.o \
+./src/latlon_hd_and_lake_model/latlon_lake_model_lake_number_retrieval_driver.o
 
 ICOSOHEDRAL_HD_AND_LAKE_MODEL_OBJS += \
 ./src/parameters_mod.o \
@@ -198,6 +212,7 @@ MODS += \
 ./latlon_lake_model_mod.mod \
 ./latlon_lake_model_interface_mod.mod \
 ./latlon_lake_model_io_mod.mod \
+./latlon_lake_model_retrieve_lake_numbers.mod \
 ./latlon_hd_model_io_mod.mod \
 ./latlon_hd_model_interface_mod.mod \
 ./latlon_hd_model_driver.mod \
@@ -337,6 +352,10 @@ src/latlon_hd_and_lake_model/latlon_lake_model_mod.o: ../src/latlon_hd_and_lake_
 src/latlon_hd_and_lake_model/latlon_lake_model_interface_mod.o: ../src/latlon_hd_and_lake_model/latlon_lake_model_interface_mod.f90 src/latlon_hd_and_lake_model/latlon_lake_model_mod.o src/latlon_hd_and_lake_model/latlon_lake_model_io_mod.o
 
 src/latlon_hd_and_lake_model/latlon_lake_model_io_mod.o: ../src/latlon_hd_and_lake_model/latlon_lake_model_io_mod.f90   src/latlon_hd_and_lake_model/latlon_lake_model_mod.o src/parameters_mod.o src/check_return_code_netcdf_mod.o
+
+src/latlon_hd_and_lake_model/latlon_lake_model_retrieve_lake_numbers.o: ../src/latlon_hd_and_lake_model/latlon_lake_model_retrieve_lake_numbers.f90 src/latlon_hd_and_lake_model/latlon_lake_model_mod.o src/latlon_hd_and_lake_model/latlon_lake_model_io_mod.o src/parameters_mod.o
+
+src/latlon_hd_and_lake_model/latlon_lake_model_lake_number_retrieval_driver.o: ../src/latlon_hd_and_lake_model/latlon_lake_model_lake_number_retrieval_driver.f90 src/latlon_hd_and_lake_model/latlon_lake_model_retrieve_lake_numbers.o src/parameters_mod.o
 
 src/latlon_hd_and_lake_model/latlon_hd_model_mod.o: ../src/latlon_hd_and_lake_model/latlon_hd_model_mod.f90 src/latlon_hd_and_lake_model/latlon_lake_model_interface_mod.o
 

@@ -1439,6 +1439,17 @@ contains
         end if
         call teardown
 
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testLakeNumberRetrieval"
+        call set_unit_name('Retreive lake numbers')
+        call run_test_case(testLakeNumberRetrieval,'Retrieve lake numbers from lake parameters')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","Lake Number Retrieval Test")
+        else
+            call case_passed_xml("test_something","Lake Number Retrieval Test")
+        end if
+        call teardown
+
     end subroutine latlon_hd_and_lake_model_all_tests
 
     subroutine icosohedral_hd_and_lake_model_all_tests

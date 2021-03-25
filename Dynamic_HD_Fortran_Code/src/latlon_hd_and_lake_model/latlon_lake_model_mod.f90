@@ -162,6 +162,7 @@ type :: lake
     procedure :: accept_split
     procedure :: drain_current_cell
     procedure :: release_negative_water
+    procedure :: generate_lake_numbers
     !Filling lake procedures
     procedure :: initialisefillinglake
     procedure :: perform_primary_merge
@@ -239,6 +240,19 @@ subroutine initialiselake(this,center_cell_lat_in,center_cell_lon_in, &
       this%lake_fields%completed_lake_cells(:,:) = .false.
     end if
 end subroutine initialiselake
+
+subroutine generate_lake_numbers(this)
+  class(lake),intent(inout) :: this
+  integer :: i
+  integer :: merge_type
+    i = 0
+    do
+      merge_type = this%get_merge_type()
+      if (merge_type == secondary_merge .or. merge_type == double_merge) exit
+      call this%update_filling_cell(.false.)
+      i = i + 1
+    end do
+end subroutine generate_lake_numbers
 
 function basinlistconstructor(basin_lats_in,basin_lons_in) &
     result(constructor)
@@ -1793,5 +1807,15 @@ subroutine check_water_budget(lake_prognostics,lake_fields,initial_water_to_lake
     end if
     lake_prognostics%total_lake_volume = new_total_lake_volume
 end subroutine check_water_budget
+
+subroutine run_lake_number_retrieval(lake_prognostics)
+  type(lakeprognostics), intent(inout) :: lake_prognostics
+  type(lake), pointer :: working_lake
+  integer :: i
+    do i = 1,size(lake_prognostics%lakes)
+      working_lake => lake_prognostics%lakes(i)%lake_pointer
+      call working_lake%generate_lake_numbers()
+    end do
+end subroutine run_lake_number_retrieval
 
 end module latlon_lake_model_mod

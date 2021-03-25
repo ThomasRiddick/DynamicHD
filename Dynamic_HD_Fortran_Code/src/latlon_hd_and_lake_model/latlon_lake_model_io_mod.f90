@@ -13,6 +13,11 @@ logical :: run_water_budget_check
 
 contains
 
+subroutine set_lake_parameters_filename(lake_params_filename_in)
+    character(len = max_name_length) :: lake_params_filename_in
+      lake_params_filename = lake_params_filename_in
+end subroutine set_lake_parameters_filename
+
 subroutine add_offset(array,offset,exceptions)
   integer, dimension(:,:), intent(inout) :: array
   integer, intent(in) :: offset
@@ -384,6 +389,8 @@ subroutine write_lake_numbers_field(working_directory,lake_parameters,&
   integer, dimension(2) :: dimids
     if(timestep == -1) then
       filename = trim(working_directory) // 'lake_model_results.nc'
+    else if (timestep == -2) then !Use working directory variable to hold a filename
+      filename = trim(working_directory)
     else
       filename = trim(working_directory) // 'lake_model_results_'
       write (timestep_str,'(I0.3)') timestep
