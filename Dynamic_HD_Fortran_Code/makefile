@@ -3,7 +3,7 @@ USE_NAG := False
 USE_INTEL := False
 FLAGS := -DUSE_LOGGING
 ifeq ($(shell uname -s),Darwin)
-GFORTRAN :=  /usr/local/Cellar/gcc/10.2.0/bin/gfortran-10
+GFORTRAN :=  /usr/local/Cellar/gcc/10.2.0_3/bin/gfortran-10
 NAGFORTRAN :=  /usr/local/bin/nagfor
 EXT_SOURCE :=$(shell echo ${HOME} )/Documents/code/
 GFORTRAN_NETCDF_F := /usr/local/Cellar/netcdf/4.7.4_1

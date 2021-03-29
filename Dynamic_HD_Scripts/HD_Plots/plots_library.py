@@ -148,13 +148,13 @@ class HDOutputPlots(Plots):
                           self._calculate_total_water_in_restart("/Users/thomasriddick/Documents/data/temp/hdrestart_1977.nc")
         days_in_year = 365.0
         inflow_per_meter_squared = 0.02
-        print "Total water entering HD model: {0}".format(np.sum(lsmask_times_area,dtype=np.float128)*days_in_year*inflow_per_meter_squared)
-        print "Total discharge into oceans: {0}".format(total_discharge)
-        print "Total change in water in reservoirs: {0}".format(change_in_water)
-        print "Total discharge - total inflow: {0}: ".format((total_discharge - days_in_year*\
-                                                             np.sum(lsmask_times_area,dtype=np.float128)*inflow_per_meter_squared))
-        print "(Total discharge - total inflow) + change in reservoirs: {0}".format((total_discharge - days_in_year*np.sum(lsmask_times_area,dtype=np.float128)*inflow_per_meter_squared)+ change_in_water)
-        print "(Total discharge - total inflow) + change in reservoirs/Change in Reservoirs: {0}".format(((total_discharge - days_in_year*np.sum(lsmask_times_area,dtype=np.float128)*inflow_per_meter_squared)+ change_in_water)/change_in_water)
+        print("Total water entering HD model: {0}".format(np.sum(lsmask_times_area,dtype=np.float128)*days_in_year*inflow_per_meter_squared))
+        print("Total discharge into oceans: {0}".format(total_discharge))
+        print("Total change in water in reservoirs: {0}".format(change_in_water))
+        print("Total discharge - total inflow: {0}: ".format((total_discharge - days_in_year*\
+                                                             np.sum(lsmask_times_area,dtype=np.float128)*inflow_per_meter_squared)))
+        print("(Total discharge - total inflow) + change in reservoirs: {0}".format((total_discharge - days_in_year*np.sum(lsmask_times_area,dtype=np.float128)*inflow_per_meter_squared)+ change_in_water))
+        print("(Total discharge - total inflow) + change in reservoirs/Change in Reservoirs: {0}".format(((total_discharge - days_in_year*np.sum(lsmask_times_area,dtype=np.float128)*inflow_per_meter_squared)+ change_in_water)/change_in_water))
 
     def _calculate_total_water_in_restart(self,restart_filename):
         total_water = 0.0
@@ -309,7 +309,7 @@ class HDOutputPlots(Plots):
                                                                               num_timeslices=365,grid_type="T106")
         ax.plot(days,lost_discharge,label="Lost discharge")
         ax.legend()
-        print total_discharge_info
+        print(total_discharge_info)
 
     def plot_comparison_using_1990_rainfall_data_adding_back_to_discharge(self):
         ax = plt.subplots(1, 1, figsize=(12, 9))[1]
@@ -372,7 +372,7 @@ class HDOutputPlots(Plots):
                                                                                              "upscaled_rdirs_ten_minute_data_from_virna_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_20170113_135934_upscaled_updated_transf.nc"),
                                                                                 num_timeslices=365,lost_discharge=lost_discharge,label="Dynamic HD using 1 cycle spin-up as basis+ lost discharge")
         ax.legend()
-        print total_discharge_info
+        print(total_discharge_info)
 
 class CoupledRunOutputPlots(HDOutputPlots):
     """A class for plotting the output of coupled runs"""
@@ -1063,7 +1063,7 @@ class OutflowPlots(Plots):
             if select_only_rivers_in == "North America":
                 if(pair[0].get_lat() > 156 or pair[0].get_lon() > 260):
                     continue
-            print "Ref Point: " + str(pair[0]) + "Matches: " + str(pair[1])
+            print("Ref Point: " + str(pair[0]) + "Matches: " + str(pair[1]))
             if rivers_to_plot is not None:
                 if not (pair[0].get_lat(),pair[0].get_lon()) in rivers_to_plot:
                     continue
@@ -1206,14 +1206,14 @@ class OutflowPlots(Plots):
             elif ref_orog_filename or data_orog_original_scale_filename:
                 raise UserWarning("No orography plot generated, require both a reference orography"
                                   " and a data orography to generate an orography plot")
-        print "Unresolved Conflicts: "
+        print("Unresolved Conflicts: ")
         for conflict in unresolved_conflicts:
-            print " Conflict:"
+            print(" Conflict:")
             for pair in conflict:
-                print "  Ref Point" + str(pair[0]) + "Matches" + str(pair[1])
+                print("  Ref Point" + str(pair[0]) + "Matches" + str(pair[1]))
         for temp_file in temp_file_list:
             if os.path.basename(temp_file).startswith("temp_"):
-                print "Deleting File: {0}".format(temp_file)
+                print("Deleting File: {0}".format(temp_file))
                 os.remove(temp_file)
         if return_simple_catchment_and_flowmap_plotters and plot_simple_catchment_and_flowmap_plots:
             return simple_catchment_and_flowmap_plotters
@@ -1880,7 +1880,7 @@ class FlowMapPlots(Plots):
         if lsmask is not None:
             flowmap[lsmask == 1] = 0
         cmap = mpl.colors.ListedColormap(['blue','peru','black'])
-        bounds = range(4)
+        bounds = list(range(4))
         norm = mpl.colors.BoundaryNorm(bounds,cmap.N)
         plt.imshow(flowmap,cmap=cmap,norm=norm,interpolation="none")
         plt.title('Cells with cumulative flow greater than or equal to {0}'.format(minflowcutoff))
@@ -2477,7 +2477,7 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                     continue
             else:
                 alt_color = False
-            print "Ref Point: " + str(pair[0]) + "Matches: " + str(pair[1])
+            print("Ref Point: " + str(pair[0]) + "Matches: " + str(pair[1]))
             image_array = fmp_pts.add_selected_catchment_to_existing_plot(image_array,data_catchment_field,
                                                                           ref_catchment_field,data_catchment_field,
                                                                           flowmap_data_field, ref_rdirs_field,
@@ -2502,7 +2502,7 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                      second_ls_mask=True if extra_lsmask_filename else False)
         for temp_file in temp_file_list:
             if os.path.basename(temp_file).startswith("temp_"):
-                print "Deleting File: {0}".format(temp_file)
+                print("Deleting File: {0}".format(temp_file))
                 os.remove(temp_file)
 
     def Upscaled_Rdirs_vs_Corrected_HD_Rdirs_ICE5G_data_ALG4_corr_orog_downscaled_ls_mask_0k_FlowMap_comparison(self):
@@ -3389,7 +3389,7 @@ class Ice5GComparisonPlots(OrographyPlots):
     def __init__(self,save,use_old_data=False,color_palette_to_use='default'):
         """Class constructor. Sets filename (to point to either old or new data)"""
         super(Ice5GComparisonPlots,self).__init__(save,color_palette_to_use)
-        print "Comparing the Modern and LGM Ice-5G 5-minute resolution orography datasets"
+        print("Comparing the Modern and LGM Ice-5G 5-minute resolution orography datasets")
 
         if use_old_data:
             #The data Uwe gave me; this is possibly an older version
@@ -3424,7 +3424,7 @@ class Ice5GComparisonPlots(OrographyPlots):
         pts.remove_ticks()
         #if self.save:
             #plt.savefig('something')
-        print "Line contour plot created"
+        print("Line contour plot created")
 
     def plotFilled(self):
         """Filled contour plot comparing the Modern and LGM Ice-5G 5-minute resolution orography datasets"""
@@ -3441,7 +3441,7 @@ class Ice5GComparisonPlots(OrographyPlots):
         cbar.ax.set_ylabel('Orography difference in meters')
         #if self.save:
             #plt.savefig('something')
-        print "Filled contour plot created"
+        print("Filled contour plot created")
 
     def plotCombined(self):
         """Basic combined plot"""
@@ -3475,8 +3475,8 @@ class Ice5GComparisonPlots(OrographyPlots):
                      hatches=['\\'],hold=True)
         ufartists,uflabels = ufcntr.legend_elements() #@UnusedVariable
         ofartists,oflabels = ofcntr.legend_elements() #@UnusedVariable
-        uflabels=[u'Difference $\\leq {0}$'.format(minc)]
-        oflabels=[u'${0} <$ Difference'.format(maxc)]
+        uflabels=['Difference $\\leq {0}$'.format(minc)]
+        oflabels=['${0} <$ Difference'.format(maxc)]
         artists = ufartists + ofartists
         labels  = uflabels + oflabels
         plt.title(title)
@@ -3489,7 +3489,7 @@ class Ice5GComparisonPlots(OrographyPlots):
                   bbox_to_anchor=(0.5,-0.025),fancybox=True,ncol=2)
         #if self.save:
             #plt.savefig('something')
-        print "Combined plot created"
+        print("Combined plot created")
 
 class LakePlots(Plots):
 
@@ -3655,7 +3655,7 @@ class LakePlots(Plots):
     fine_rivers_and_lakes[glacier_mask == 1] = 5
     fine_rivers_and_lakes[lsmask == 1] = 0
     cmap = mpl.colors.ListedColormap(['blue','peru','black','green','red','white'])
-    bounds = range(7)
+    bounds = list(range(7))
     norm = mpl.colors.BoundaryNorm(bounds,cmap.N)
     plt.imshow(fine_rivers_and_lakes,cmap=cmap,norm=norm,interpolation="none")
     plt.title('Cells with cumulative flow greater than or equal to {0}'.format(minflowcutoff))
@@ -3671,17 +3671,24 @@ class LakePlots(Plots):
                                            basin_catchment_num_fieldname,
                                            lake_data_fieldname,
                                            glacier_fieldname,
-                                           minflowcutoff=1000000000000.0):
+                                           catchment_nums_file_basename=None,
+                                           catchment_nums_fieldname=None,
+                                           rdirs_file_basename=None,
+                                           rdirs_fieldname=None,
+                                           minflowcutoff=1000000000000.0,
+                                           zoomed=False,
+                                           zoom_section_bounds={}):
     """Help produce a map of river flow, lakes and potential lakes"""
     fig = plt.figure()
     plt.subplot(111)
-    cmap = mpl.colors.ListedColormap(['blue','peru','black','green','red','white'])
-    bounds = range(7)
+    cmap = mpl.colors.ListedColormap(['darkblue','peru','black','cyan','blue','white','purple','darkred','slategray'])
+    bounds = list(range(10))
     norm = mpl.colors.BoundaryNorm(bounds,cmap.N)
-    plt.title('Cells with cumulative flow greater than or equal to {0}'.format(minflowcutoff))
+    plt.title('Lakes and rivers with flow greater than {0} m3/s'.format(minflowcutoff))
     ims = []
-    for time in range(15990,15900,-10):
+    for time in range(15990,11000,-10):
       mpiesm_time = 3000 + 16000 - time
+      date_text = fig.text(0.4,0.075,"{} YBP".format(time))
       ims.append([self.TwoColourRiverAndLakeAnimationHelperSliceGenerator(cmap=cmap,norm=norm,
                                                                           river_flow_filename=
                                                                           river_flow_file_basename.replace("DATETIME",str(mpiesm_time)),
@@ -3701,11 +3708,25 @@ class LakePlots(Plots):
                                                                           lake_data_fieldname,
                                                                           glacier_fieldname=
                                                                           glacier_fieldname,
-                                                                          minflowcutoff=minflowcutoff)])
+                                                                          catchment_nums_filename=
+                                                                          catchment_nums_file_basename.replace("DATETIME",str(time)) if
+                                                                          catchment_nums_file_basename is not None else None,
+                                                                          catchment_nums_fieldname=
+                                                                          catchment_nums_fieldname,
+                                                                          rdirs_filename=
+                                                                          rdirs_file_basename.replace("DATETIME",str(time)) if
+                                                                          rdirs_file_basename is not None else None,
+                                                                          rdirs_fieldname=
+                                                                          rdirs_fieldname,
+                                                                          minflowcutoff=minflowcutoff,
+                                                                          zoomed=zoomed,
+                                                                          zoom_section_bounds=
+                                                                          zoom_section_bounds),
+                                                                          date_text])
     anim = animation.ArtistAnimation(fig,ims,interval=200,blit=False,repeat_delay=500)
-    plt.show()
-    #writer = animation.writers['ffmpeg'](fps=10,bitrate=1800)
-    #anim.save('/Users/thomasriddick/Desktop/im2.mp4',writer=writer,dpi=1000)
+    #plt.show()
+    writer = animation.writers['ffmpeg'](fps=7,bitrate=1800)
+    anim.save('/Users/thomasriddick/Desktop/deglac.mp4',writer=writer,dpi=1000)
 
   def TwoColourRiverAndLakeAnimationHelperSliceGenerator(self,cmap,norm,
                                                          river_flow_filename,
@@ -3718,27 +3739,40 @@ class LakePlots(Plots):
                                                          basin_catchment_num_fieldname,
                                                          lake_data_fieldname,
                                                          glacier_fieldname,
-                                                         minflowcutoff=1000000000000.0):
+                                                         catchment_nums_filename=None,
+                                                         catchment_nums_fieldname=None,
+                                                         rdirs_filename=None,
+                                                         rdirs_fieldname=None,
+                                                         minflowcutoff=1000000000000.0,
+                                                         zoomed=False,
+                                                         zoom_section_bounds={}):
     river_flow_object = iodriver.advanced_field_loader(river_flow_filename,
                                                        fieldname=river_flow_fieldname,
                                                        field_type='Generic',
-                                                       time_slice=0)
+                                                       time_slice=5)
     lsmask_field = iodriver.advanced_field_loader(lsmask_filename,
                                                   fieldname=lsmask_fieldname,
                                                   field_type='Generic')
-    # basin_catchment_nums_field = iodriver.advanced_field_loader(basin_catchment_num_filename,
-    #                                               fieldname=basin_catchment_num_fieldname,
-    #                                               field_type='Generic')
+    basin_catchment_nums_field = iodriver.advanced_field_loader(basin_catchment_num_filename,
+                                                  fieldname=basin_catchment_num_fieldname,
+                                                  field_type='Generic')
     lake_data_field = iodriver.advanced_field_loader(lake_data_filename,
                                                      fieldname=lake_data_fieldname,
                                                      field_type='Generic',
-                                                     time_slice=0)
+                                                     time_slice=5)
     glacier_mask_field = iodriver.advanced_field_loader(glacier_data_filename,
                                                         fieldname=glacier_fieldname,
                                                         field_type='Generic')
-
+    if catchment_nums_filename is not None:
+      catchment_nums_field = iodriver.advanced_field_loader(catchment_nums_filename,
+                                                            fieldname=catchment_nums_fieldname,
+                                                            field_type='Generic')
+    if rdirs_filename is not None:
+      rdirs_field = iodriver.advanced_field_loader(rdirs_filename,
+                                                   fieldname=rdirs_fieldname,
+                                                   field_type='Generic')
     lsmask = lsmask_field.get_data()
-    # basin_catchment_nums = basin_catchment_nums_field.get_data()
+    basin_catchment_nums = basin_catchment_nums_field.get_data()
     river_flow = river_flow_object.get_data()
     rivers_and_lakes_field = copy.deepcopy(river_flow_object)
     rivers_and_lakes = rivers_and_lakes_field.get_data()
@@ -3749,11 +3783,41 @@ class LakePlots(Plots):
     fine_rivers_and_lakes_field = utilities.downscale_ls_mask(rivers_and_lakes_field,
                                                               "LatLong10min")
     fine_rivers_and_lakes = fine_rivers_and_lakes_field.get_data()
-    # fine_rivers_and_lakes[basin_catchment_nums > 0 ] = 3
+    if (rdirs_filename is not None) and (catchment_nums_filename is not None):
+        ocean_basin_catchments = pts.find_ocean_basin_catchments(rdirs_field,catchment_nums_field,areas=[{'min_lat':70,
+                                                                                                          'max_lat':115,
+                                                                                                          'min_lon':195,
+                                                                                                          'max_lon':265},
+                                                                                                          {'min_lat':110,
+                                                                                                          'max_lat':135,
+                                                                                                          'min_lon':162,
+                                                                                                          'max_lon':196},
+                                                                                                          {'min_lat':15,
+                                                                                                          'max_lat':50,
+                                                                                                          'min_lon':0,
+                                                                                                          'max_lon':175}])
+        fine_ocean_basin_catchments_field = utilities.downscale_ls_mask(ocean_basin_catchments,
+                                                                        "LatLong10min")
+        fine_ocean_basin_catchments= fine_ocean_basin_catchments_field.get_data()
+        fine_rivers_and_lakes[np.logical_and(fine_rivers_and_lakes == 1,
+                                             fine_ocean_basin_catchments == 1)] = 6
+        fine_rivers_and_lakes[np.logical_and(fine_rivers_and_lakes == 1,
+                                             fine_ocean_basin_catchments == 2)] = 7
+        fine_rivers_and_lakes[np.logical_and(fine_rivers_and_lakes == 1,
+                                             fine_ocean_basin_catchments == 3)] = 8
+    fine_rivers_and_lakes[basin_catchment_nums > 0 ] = 3
     fine_rivers_and_lakes[lake_data > 0] = 4
     fine_rivers_and_lakes[glacier_mask == 1] = 5
     fine_rivers_and_lakes[lsmask == 1] = 0
-    im = plt.imshow(fine_rivers_and_lakes,cmap=cmap,norm=norm,interpolation="none")
+
+    if zoomed:
+        im = plt.imshow(fine_rivers_and_lakes[zoom_section_bounds["min_lat"]:
+                                              zoom_section_bounds["max_lat"]+1,
+                                              zoom_section_bounds["min_lon"]:
+                                              zoom_section_bounds["max_lon"]+1],
+                        cmap=cmap,norm=norm,interpolation="none")
+    else:
+        im = plt.imshow(fine_rivers_and_lakes,cmap=cmap,norm=norm,interpolation="none")
     return im
 
   def LakeAndRiverMap(self):
@@ -3792,16 +3856,22 @@ class LakePlots(Plots):
     lsmask_file_basename=("/Users/thomasriddick/Documents/data/lake_transient_data/run_1/"
                           "10min_slm_DATETIME.nc")
     basin_catchment_num_file_basename=("/Users/thomasriddick/Documents/data/lake_transient_data/run_1/"
-                                       "dummy_DATETIME_dummy.nc")
+                                       "lake_numbers_DATETIME.nc")
     lake_data_file_basename=("/Users/thomasriddick/Documents/data/lake_transient_data/run_1/"
                              "pmt0531_Tom_lake_16k_DATETIME01.01_diagnostic_lake_volumes.nc")
     glacier_file_basename=("/Users/thomasriddick/Documents/data/lake_transient_data/run_1/"
                            "10min_glac_DATETIMEk.nc")
+    rdirs_file_basename=("/Users/thomasriddick/Documents/data/lake_transient_data/run_1/"
+                         "hdpara_DATETIMEk.nc")
+    catchment_nums_file_basename=("/Users/thomasriddick/Documents/data/lake_transient_data/run_1/"
+                                  "connected_catchments_DATETIME.nc")
     river_flow_fieldname = "friv"
     lsmask_fieldname = "slm"
-    basin_catchment_num_fieldname = "dummy"
+    basin_catchment_num_fieldname = "lake_number"
     lake_data_fieldname = "diagnostic_lake_vol"
     glacier_fieldname = "glac"
+    rdirs_fieldname="FDIR"
+    catchment_nums_fieldname="catchments"
     self.TwoColourRiverAndLakeAnimationHelper(river_flow_file_basename,
                                               lsmask_file_basename,
                                               basin_catchment_num_file_basename,
@@ -3812,7 +3882,20 @@ class LakePlots(Plots):
                                               basin_catchment_num_fieldname,
                                               lake_data_fieldname,
                                               glacier_fieldname,
-                                              minflowcutoff=500000000.0)
+                                              catchment_nums_file_basename=
+                                              catchment_nums_file_basename,
+                                              catchment_nums_fieldname=
+                                              catchment_nums_fieldname,
+                                              rdirs_file_basename=
+                                              rdirs_file_basename,
+                                              rdirs_fieldname=
+                                              rdirs_fieldname,
+                                              minflowcutoff=1000.0,
+                                              zoomed=False,
+                                              zoom_section_bounds={"min_lat":50,
+                                                                   "max_lat":500,
+                                                                   "min_lon":100,
+                                                                   "max_lon":800})
 
 def main():
     """Top level function; define some overarching options and which plots to create"""
