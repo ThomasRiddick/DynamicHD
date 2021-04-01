@@ -8,8 +8,8 @@ Created on Dec 15, 2015
 import numpy as np
 import argparse
 import os
-import iohelper
-import field as fld
+from Dynamic_HD_Scripts import iohelper
+from Dynamic_HD_Scripts import field as fld
 
 def generate_flow_directions_from_orography(orography):
     """Generates flow direction from a given orography field object.

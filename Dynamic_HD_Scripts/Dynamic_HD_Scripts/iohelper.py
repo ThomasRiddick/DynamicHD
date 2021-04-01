@@ -5,18 +5,18 @@ Created on Jan 13, 2016
 @author: thomasriddick
 '''
 
-import grid as gd
+from Dynamic_HD_Scripts import grid as gd
 import numpy as np
 import scipy.io as scipyio
 from abc import ABCMeta, abstractmethod
 import netCDF4
-import f2py_manager as f2py_mg
+from Dynamic_HD_Scripts import f2py_manager as f2py_mg
 import os.path as path
 import os
 import cdo
-from context import fortran_source_path
+from Dynamic_HD_Scripts.context import fortran_source_path
 
-class IOHelper(object):
+class IOHelper(object, metaclass=ABCMeta):
     """Parent class for classes that load and write different types of file.
 
     Public methods (all abstract):
@@ -25,8 +25,6 @@ class IOHelper(object):
 
     Implementations of this class should make all their members class methods
     """
-
-    __metaclass__ = ABCMeta
 
     @abstractmethod
     def load_field(self,filename,unmask=True,timeslice=None,
@@ -98,7 +96,7 @@ class TextFileIOHelper(IOHelper):
         the dimension of the given grid.
         """
 
-        print "Reading input from {0}".format(filename)
+        print("Reading input from {0}".format(filename))
         grid = gd.makeGrid(grid_type,**grid_kwargs)
         return np.loadtxt(filename,np.float64).reshape(grid.get_grid_dimensions())
 
@@ -118,7 +116,7 @@ class TextFileIOHelper(IOHelper):
         Write a field out such that it could be loaded by the load_field function above
         """
 
-        print "Writing output to {0}".format(filename)
+        print("Writing output to {0}".format(filename))
         np.savetxt(filename, field.get_data())
 
 class NetCDF4FileIOHelper(IOHelper):
@@ -160,7 +158,7 @@ class NetCDF4FileIOHelper(IOHelper):
 
         if not check_for_grid_info:
             grid = gd.makeGrid(grid_type,**grid_kwargs)
-        print "Reading input from {0}".format(filename)
+        print("Reading input from {0}".format(filename))
         with netCDF4.Dataset(filename,mode='r',format='NETCDF4') as dataset:
             if check_for_grid_info:
                 latitudes = None
@@ -230,7 +228,7 @@ class NetCDF4FileIOHelper(IOHelper):
         nlat,nlong = field.get_grid().get_grid_dimensions()
         if fieldname is None:
             fieldname = 'field_value'
-        print "Writing output to {0}".format(filename)
+        print("Writing output to {0}".format(filename))
         if griddescfile is not None:
             output_filename=filename
             filename=path.splitext(filename)[0] + '_temp' + path.splitext(filename)[1]
@@ -268,7 +266,7 @@ class NetCDF4FileIOHelper(IOHelper):
         nlat,nlong = fields[0].get_grid().get_grid_dimensions()
         if fieldnames is None:
             fieldnames = ['field_value']*len(fields)
-        print "Writing output to {0}".format(filename)
+        print("Writing output to {0}".format(filename))
         if griddescfile is not None:
             output_filename=filename
             filename=path.splitext(filename)[0] + '_temp' + path.splitext(filename)[1]
@@ -300,7 +298,7 @@ class NetCDF4FileIOHelper(IOHelper):
             object to while adding a time dimension
         """
 
-        for dim_name,dim_obj in dataset_in.dimensions.iteritems():
+        for dim_name,dim_obj in dataset_in.dimensions.items():
             dataset_out.createDimension(dim_name,len(dim_obj)
                                         if not dim_obj.isunlimited() else None)
         dataset_out.createDimension('time',None)
@@ -308,7 +306,7 @@ class NetCDF4FileIOHelper(IOHelper):
         times.units = "years since 0001-01-01 00:00:00.0"
         times.calendar = "proleptic_gregorian"
         times[0] = np.array([0.0])
-        for var_name, var_obj in dataset_in.variables.iteritems():
+        for var_name, var_obj in dataset_in.variables.items():
             new_var = dataset_out.createVariable(var_name,var_obj.datatype,var_obj.dimensions
                                                  if (len(var_obj.dimensions) <= 1
                                                      or var_name == 'AREA') else
@@ -340,7 +338,7 @@ class NetCDF4FileIOHelper(IOHelper):
                                " already present in the dataset")
         var_obj[1:] = var_obj[:]
         var_obj[0] = slicetime
-        for var_name, var_obj in main_dataset.variables.iteritems():
+        for var_name, var_obj in main_dataset.variables.items():
             if var_name == 'time' or var_name == 'AREA':
                 continue
             if  len(var_obj.dimensions) > 1:
@@ -382,7 +380,7 @@ class SciPyFortranFileIOHelper(IOHelper):
 
         grid = gd.makeGrid(grid_type,**grid_kwargs)
         with scipyio.FortranFile(filename,mode='r') as f: #@UndefinedVariable:
-            print "Reading input from {0}".format(filename)
+            print("Reading input from {0}".format(filename))
             return f.read_record(self.data_type).reshape(grid.get_grid_dimensions())
 
     @classmethod
@@ -399,7 +397,7 @@ class SciPyFortranFileIOHelper(IOHelper):
         """
 
         with scipyio.FortranFile(filename,mode='w') as f: #@UndefinedVariable
-            print "Writing output to {0}".format(filename)
+            print("Writing output to {0}".format(filename))
             f.write_record(field.get_data())
 
 class SciPyFortranFileIOHelperInt(SciPyFortranFileIOHelper):
@@ -443,7 +441,7 @@ class F2PyFortranFileIOHelper(IOHelper):
         """
 
         grid = gd.makeGrid(grid_type,**grid_kwargs)
-        print "Reading input from {0}".format(filename)
+        print("Reading input from {0}".format(filename))
         mgnr = f2py_mg.f2py_manager(path.join(fortran_source_path,
                                               "mod_topo_io.f90"), func_name="read_topo")
         data = mgnr.run_current_function_or_subroutine(filename,*grid.get_grid_dimensions())
@@ -468,7 +466,7 @@ class F2PyFortranFileIOHelper(IOHelper):
         method is reversed for consistency.
         """
 
-        print "Writing output to {0}".format(filename)
+        print("Writing output to {0}".format(filename))
         mgnr = f2py_mg.f2py_manager(path.join(fortran_source_path,
                                               "mod_topo_io.f90"), func_name="write_topo")
         #reverse the manipulation in the load_field method

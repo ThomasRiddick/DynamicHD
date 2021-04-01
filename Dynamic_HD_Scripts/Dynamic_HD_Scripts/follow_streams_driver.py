@@ -5,7 +5,7 @@ Created on Feb 12, 2020
 '''
 
 import numpy as np
-import field
+from Dynamic_HD_Scripts import field
 import Dynamic_HD_Scripts.libs.follow_streams_wrapper \
        as follow_streams_wrapper
 

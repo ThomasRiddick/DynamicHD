@@ -5,8 +5,8 @@ Created on Dec 4, 2017
 
 @author: thomasriddick
 '''
-import dynamic_hd
-import iohelper
+from Dynamic_HD_Scripts import dynamic_hd
+from Dynamic_HD_Scripts import iohelper
 import re
 import os
 import math
@@ -75,7 +75,7 @@ class Grid_Descriptions(object):
             with them (indicating they have been found) (True) or not (False)
         """
 
-        for gd in vars(self).values():
+        for gd in list(vars(self).values()):
             if not gd.check_pattern_was_found():
                 return False
         return True
@@ -87,7 +87,7 @@ class Grid_Descriptions(object):
         Returns: Nothing
         """
 
-        for varname,grid_desc_oj in vars(self).iteritems():
+        for varname,grid_desc_oj in vars(self).items():
             self.__dict__[varname] = grid_desc_oj.get_value()
 
 
@@ -156,7 +156,7 @@ def advanced_field_loader(filename,time_slice=None,grid_desc_file=None,grid_desc
                               'lat_inc'  :Grid_Description(grid_desc_lat_inc)}
         with open(grid_desc_file,'r') as f:
             for line in f:
-                for varname,grid_desc in grid_desc_patterns.iteritems():
+                for varname,grid_desc in grid_desc_patterns.items():
                     match_for_pattern = None
                     match_for_pattern = grid_desc.pattern.match(line)
                     if match_for_pattern:
@@ -242,7 +242,7 @@ def advanced_field_writer(target_filename,field,fieldname='field_value',clobber=
         RuntimeError("Cannot write multiple fields using x-array")
       data_array = field.to_data_array()
       dataset = xarray.Dataset({fieldname:data_array})
-      print "Writing output to {0}".format(target_filename)
+      print("Writing output to {0}".format(target_filename))
       dataset.to_netcdf(target_filename)
     else:
       try:

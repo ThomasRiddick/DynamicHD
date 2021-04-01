@@ -9,13 +9,13 @@ Created on Jan 13, 2016
 import numpy as np
 import scipy.ndimage as ndi
 from abc import ABCMeta, abstractmethod
-import f2py_manager as f2py_mg
+from Dynamic_HD_Scripts import f2py_manager as f2py_mg
 import os.path as path
 import warnings
 import re
-from context import fortran_source_path
+from Dynamic_HD_Scripts.context import fortran_source_path
 
-class Grid(object):
+class Grid(object, metaclass=ABCMeta):
     """Parent class for classes that store and manipulate specific grid types
 
     Public methods (all abstract):
@@ -46,8 +46,6 @@ class Grid(object):
     extract_data
     convert_data_to_code
     """
-
-    __metaclass__ = ABCMeta
     nlat = 1
     nlong = 1
 
@@ -684,7 +682,7 @@ class LatLongGrid(Grid):
             else:
                 #Regenerate the lontitudinal points to avoid cumulative rounding errors
                 self.lon_points = np.linspace(0.0,360-interval,num=nlon)
-        return np.roll(data,nlon/2,axis=1)
+        return np.roll(data,nlon//2,axis=1)
 
     def find_area_minima(self,data,area_corner_coords_list,area_size):
         """Find the minimum for each of a set of (multigrid point) rectangles of a regular size
@@ -721,7 +719,7 @@ class LatLongGrid(Grid):
         """
 
         coords_org_format = data.nonzero()
-        return zip(coords_org_format[0],coords_org_format[1])
+        return list(zip(coords_org_format[0],coords_org_format[1]))
 
     def flag_point(self,data,coords):
         """Flag the point at the supplied coordinates as True (or equivalently 1)
@@ -970,7 +968,7 @@ def makeGrid(grid_type,**kwargs):
                  'T63':{'type':LatLongGrid,'params':{'nlat':96,'nlong':192}},
                  'T106':{'type':LatLongGrid,'params':{'nlat':160,'nlong':320}}}
     grid_types = {'LatLong':LatLongGrid}
-    if grid_type in shortcuts.keys():
+    if grid_type in list(shortcuts.keys()):
         underlying_grid_type = shortcuts[grid_type]['type']
         if len(kwargs) > 0:
             warnings.warn("{0} is a shortcut for grid type {1} with set params; "
