@@ -8,7 +8,7 @@ Created on Apr 24, 2016
 import unittest
 import numpy as np
 
-import match_river_mouths as mtch_rm
+from . import match_river_mouths as mtch_rm
 
 class ConflictResolverTests(unittest.TestCase):
     
@@ -96,7 +96,7 @@ class ConflictResolverTests(unittest.TestCase):
                 add_to_allowed_configurations([],0,self.test_possible_pairings_for_all_idnums_two_possiblities)
         self.assertEqual(7, len(result), "Not producing correct set of possible configurations for"
                                          " the case of two pairs of river mouths")
-        for configuration,expected_configuration in (zip(result,self.two_possibilities_expected_results)):
+        for configuration,expected_configuration in (list(zip(result,self.two_possibilities_expected_results))):
             for item,expectation in zip(configuration,expected_configuration):
                 if item is None or expectation is None:
                     self.assertIs(item,None)
@@ -120,7 +120,7 @@ class ConflictResolverTests(unittest.TestCase):
     
     def testGeneratePossibleInconflictPairings(self):
         result = mtch_rm.ConflictResolver.generate_possible_inconflict_pairings(self.test_conflict)
-        for configuration,expected_configuration in (zip(result,self.two_possibilities_expected_results)):
+        for configuration,expected_configuration in (list(zip(result,self.two_possibilities_expected_results))):
             for item,expectation in zip(configuration,expected_configuration):
                 if item is None or expectation is None:
                     self.assertIs(item,None)

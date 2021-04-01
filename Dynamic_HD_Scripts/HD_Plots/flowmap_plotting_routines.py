@@ -8,8 +8,8 @@ import numpy as np
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-import plotting_tools as pts
-import river_comparison_plotting_routines as rc_pts
+from . import plotting_tools as pts
+from . import river_comparison_plotting_routines as rc_pts
 
 def make_basic_flowmap_comparison_plot(ax,flowmap_ref_field,flowmap_data_field,minflowcutoff,
                                        first_datasource_name,second_datasource_name,lsmask=None,
@@ -51,7 +51,7 @@ def make_basic_flowmap_comparison_plot(ax,flowmap_ref_field,flowmap_data_field,m
         cmap = mpl.colors.ListedColormap(['blue','peru','black','white','purple'])
     else:
         cmap = mpl.colors.ListedColormap(colors.basic_flowmap_comparison_plot_colors)
-    bounds = range(6)
+    bounds = list(range(6))
     norm = mpl.colors.BoundaryNorm(bounds,cmap.N)
     ax.imshow(flowmap_ref_field,cmap=cmap,norm=norm,interpolation='none',rasterized=True)
     if add_title:
@@ -154,7 +154,7 @@ def plot_composite_image(ax,image,minflowcutoff,first_datasource_name,second_dat
                     flowmap_and_catchments_colors_single_color_flowmap
             cmap = mpl.colors.ListedColormap(flowmap_and_catchment_colors)
             color_list = flowmap_and_catchment_colors
-            bounds = range(8) if not plot_glaciers else range(9)
+            bounds = list(range(8)) if not plot_glaciers else list(range(9))
             image[image == 2] = 1
             image[(image == 3) | (image == 4)] = 2
             image[image > 4] = image[image > 4] - 2
@@ -171,7 +171,7 @@ def plot_composite_image(ax,image,minflowcutoff,first_datasource_name,second_dat
                     flowmap_and_catchment_colors = colors.flowmap_and_catchments_colors
             cmap = mpl.colors.ListedColormap(flowmap_and_catchment_colors)
             color_list = flowmap_and_catchment_colors
-            bounds = range(10) if not plot_glaciers else range(11)
+            bounds = list(range(10)) if not plot_glaciers else list(range(11))
     else:
         image[image == -1] = 10
         color_list = ['lightblue','peru','black','blue','purple','red',
@@ -179,7 +179,7 @@ def plot_composite_image(ax,image,minflowcutoff,first_datasource_name,second_dat
         if plot_glaciers:
             color_list += ['white']
         cmap = mpl.colors.ListedColormap(color_list)
-        bounds = range(11) if not plot_glaciers else range(12)
+        bounds = list(range(11)) if not plot_glaciers else list(range(12))
     if second_ls_mask:
         image[image > 1] = image[image > 1] + 1
         image[image == -3] = 2
@@ -199,7 +199,7 @@ def plot_composite_image(ax,image,minflowcutoff,first_datasource_name,second_dat
           color_list[1:1] = extra_sea
           color_list[3:3] = extra_land
           extra_colors = 2
-        bounds = range(len(bounds)+ extra_colors)
+        bounds = list(range(len(bounds)+ extra_colors))
         cmap = mpl.colors.ListedColormap(color_list)
     norm = mpl.colors.BoundaryNorm(bounds,cmap.N)
     ax.imshow(image,cmap=cmap,norm=norm,interpolation='none',rasterized=True)
@@ -233,11 +233,11 @@ def plot_composite_image(ax,image,minflowcutoff,first_datasource_name,second_dat
     cax = dvdr.append_axes("right", size=0.2, pad=0.05)
     if use_only_one_common_catchment_label:
         if plot_glaciers:
-            adjusted_bounds = (range(num_colors)[:-4]
+            adjusted_bounds = (list(range(num_colors))[:-4]
                                 + [num_colors-4-2.0/3,num_colors-4-1.0/3,
                                    num_colors-4,num_colors-3])
         else:
-            adjusted_bounds = (range(num_colors)[:-3]
+            adjusted_bounds = (list(range(num_colors))[:-3]
                                + [num_colors-3-2.0/3,num_colors-3-1.0/3,num_colors-3])
         norm = mpl.colors.BoundaryNorm(adjusted_bounds,cmap.N)
         cb = mpl.colorbar.ColorbarBase(cax,cmap=cmap,norm=norm,boundaries=adjusted_bounds,

@@ -11,8 +11,8 @@ from matplotlib.widgets import Slider,Button,RadioButtons,CheckButtons
 import matplotlib.gridspec as gridspec
 from matplotlib.ticker import FuncFormatter
 import matplotlib.pyplot as plt
-import river_comparison_plotting_routines as rc_pts
-import plotting_tools as pts
+from . import river_comparison_plotting_routines as rc_pts
+from . import plotting_tools as pts
 import numpy as np
 import math
 
