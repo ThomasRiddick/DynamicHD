@@ -5,8 +5,8 @@ Created on Dec 4, 2017
 
 @author: thomasriddick
 '''
-from Dynamic_HD_Scripts import dynamic_hd
-from Dynamic_HD_Scripts import iohelper
+from . import dynamic_hd
+from . import iohelper
 import re
 import os
 import math

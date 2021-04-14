@@ -7,7 +7,7 @@ Created on Jan 11, 2018
 @author: thomasriddick
 '''
 
-from context import workspace_dir
+from .context import workspace_dir
 import os
 import re
 

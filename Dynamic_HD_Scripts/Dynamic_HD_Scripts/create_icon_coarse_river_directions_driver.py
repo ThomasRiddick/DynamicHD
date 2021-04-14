@@ -22,7 +22,7 @@ import os.path as path
 import warnings
 import configparser
 from flow_to_grid_cell import create_hypothetical_river_paths_map
-from . import libs.fill_sinks_wrapper as fill_sinks_wrapper
+from libs import fill_sinks_wrapper
 
 class Icon_Coarse_River_Directions_Creation_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
     """Drivers for running a productions run of the ICON coarse river direction creation code"""

@@ -5,16 +5,16 @@ Created on Jan 13, 2016
 @author: thomasriddick
 '''
 
-from Dynamic_HD_Scripts import grid as gd
+from . import grid as gd
 import numpy as np
 import scipy.io as scipyio
 from abc import ABCMeta, abstractmethod
 import netCDF4
-from Dynamic_HD_Scripts import f2py_manager as f2py_mg
+from . import f2py_manager as f2py_mg
 import os.path as path
 import os
 import cdo
-from Dynamic_HD_Scripts.context import fortran_source_path
+from .context import fortran_source_path
 
 class IOHelper(object, metaclass=ABCMeta):
     """Parent class for classes that load and write different types of file.

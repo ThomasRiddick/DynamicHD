@@ -4,21 +4,21 @@ Created on Apr 5, 2016
 @author: thomasriddick
 '''
 
-from Dynamic_HD_Scripts import dynamic_hd
+from . import dynamic_hd
 import numpy as np
-from Dynamic_HD_Scripts import field
-from Dynamic_HD_Scripts import grid
-from Dynamic_HD_Scripts import f2py_manager
+from . import field
+from . import grid
+from . import f2py_manager
 import os.path as path
 import re
 import copy
 import netCDF4
 import shutil
 import cdo
-from Dynamic_HD_Scripts import iodriver
-from Dynamic_HD_Scripts import follow_streams_driver
-from Dynamic_HD_Scripts.context import fortran_source_path
-from Dynamic_HD_Scripts.field import makeField
+from . import iodriver
+from . import follow_streams_driver
+from .context import fortran_source_path
+from .field import makeField
 
 def create_30sec_lgm_orography_from_highres_present_day_and_low_res_pair(input_lgm_low_res_orog,
                                                                          input_present_day_low_res_orog,

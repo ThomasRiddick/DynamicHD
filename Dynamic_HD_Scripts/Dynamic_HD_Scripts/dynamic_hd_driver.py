@@ -20,8 +20,8 @@ from . import grid
 from . import field
 from . import river_mouth_marking_driver
 from . import create_connected_lsmask_driver as cc_lsmask_driver
-from context import bash_scripts_path
-from context import private_bash_scripts_path
+from .context import bash_scripts_path
+from .context import private_bash_scripts_path
 import shutil
 from . import cotat_plus_driver
 from . import loop_breaker_driver

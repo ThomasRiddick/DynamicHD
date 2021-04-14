@@ -4,8 +4,8 @@ Created on March 23, 2018
 @author: thomasriddick
 '''
 from . import iodriver
-from . import libs.lake_operators_wrapper as lake_operators_wrapper  #@UnresolvedImport
-from . import libs.evaluate_basins_wrapper as evaluate_basins_wrapper
+from .libs import lake_operators_wrapper
+from .libs import evaluate_basins_wrapper
 import numpy as np
 from . import field
 from . import grid

@@ -9,10 +9,10 @@ Created on Mar 14, 2016
 
 from . import dynamic_hd
 import numpy as np
-from . import libs.fill_sinks_wrapper as fill_sinks_wrapper #@UnresolvedImportError
-from . import libs.fill_sinks_wrapper_low_mem as fill_sinks_wrapper_low_mem #@UnresolvedImportError
+from .libs import fill_sinks_wrapper
+from .libs import fill_sinks_wrapper_low_mem
 from . import iodriver
-from Dynamic_HD_Scripts.field import Field
+from .field import Field
 from . import field
 
 def generate_orography_with_sinks_filled(input_orography_filename,output_orography_filename,

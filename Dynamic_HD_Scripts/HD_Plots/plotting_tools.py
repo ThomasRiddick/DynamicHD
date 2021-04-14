@@ -9,8 +9,8 @@ Created on Feb 5, 2016
 import matplotlib.pyplot as plt
 import numpy as np
 import math
-import Dynamic_HD_Scripts.grid as grid
-import Dynamic_HD_Scripts.field as field
+from ../Dynamic_HD_Scripts import grid
+from ../Dynamic_HD_Scripts import field
 
 
 class OrogCoordFormatter(object):

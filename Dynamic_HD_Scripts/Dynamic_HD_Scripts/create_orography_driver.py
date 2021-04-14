@@ -4,7 +4,7 @@ Created on May 23, 2020
 
 @author: thomasriddick
 '''
-from . import libs.create_orography_wrapper as create_orography_wrapper
+from .libs import create_orography_wrapper
 from . import iodriver
 from . import field
 import numpy as np

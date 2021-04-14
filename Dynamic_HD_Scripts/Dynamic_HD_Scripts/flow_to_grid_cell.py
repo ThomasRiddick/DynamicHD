@@ -13,7 +13,7 @@ from . import dynamic_hd
 from . import field
 from . import iodriver
 import os.path as path
-from context import fortran_source_path
+from .context import fortran_source_path
 
 def create_hypothetical_river_paths_map(riv_dirs,lsmask=None,use_f2py_func=True,
                                         use_f2py_sparse_iterator=False,nlat=360,nlong=720,

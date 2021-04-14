@@ -5,8 +5,8 @@ Created on July 29, 2020
 @author: thomasriddick
 '''
 import numpy as np
-from . import libs.create_connected_lsmask_wrapper as create_connected_lsmask_wrapper
-from . import libs.lake_operators_wrapper as lake_operators_wrapper
+from .libs import create_connected_lsmask_wrapper
+from .libs import lake_operators_wrapper
 from . import compute_catchments as cc
 from . import determine_river_directions
 from . import field

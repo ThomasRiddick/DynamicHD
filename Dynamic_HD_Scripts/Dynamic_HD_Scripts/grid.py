@@ -9,11 +9,11 @@ Created on Jan 13, 2016
 import numpy as np
 import scipy.ndimage as ndi
 from abc import ABCMeta, abstractmethod
-from Dynamic_HD_Scripts import f2py_manager as f2py_mg
+from . import f2py_manager as f2py_mg
 import os.path as path
 import warnings
 import re
-from Dynamic_HD_Scripts.context import fortran_source_path
+from .context import fortran_source_path
 
 class Grid(object, metaclass=ABCMeta):
     """Parent class for classes that store and manipulate specific grid types

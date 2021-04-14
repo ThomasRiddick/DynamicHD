@@ -15,7 +15,7 @@ import re
 import shutil
 from numpy.distutils import core as distutils_core
 from subprocess import CalledProcessError
-from Dynamic_HD_Scripts.context import shared_object_path, bin_path,build_path
+from .context import shared_object_path, bin_path,build_path
 from sys import platform
 
 class f2py_manager(object):

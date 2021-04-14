@@ -7,8 +7,7 @@ Created on March 17, 2019
 from . import field
 from . import iodriver
 import numpy as np
-from . import libs.determine_river_directions_wrapper \
-       as determine_river_directions_wrapper
+from .libs import determine_river_directions_wrapper
 
 def determine_river_directions(orography,lsmask,truesinks=None,
                                always_flow_to_sea=True,

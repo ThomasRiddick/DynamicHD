@@ -5,10 +5,10 @@ Created on Apr 18, 2017
 '''
 
 from . import dynamic_hd
-from dynamic_hd import get_file_extension
+from .dynamic_hd import get_file_extension
 import numpy as np
 from . import field
-from . import libs.upscale_orography_wrapper as upscale_orography_wrapper  #@UnresolvedImport
+from .libs import upscale_orography_wrapper
 import configparser
 import gc
 from . import iodriver

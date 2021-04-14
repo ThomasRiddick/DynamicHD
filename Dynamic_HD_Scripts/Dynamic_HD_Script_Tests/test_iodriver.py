@@ -7,12 +7,12 @@ Created on Dec 7, 2017
 '''
 
 import unittest
-import Dynamic_HD_Scripts.iodriver as iodriver
+from ../Dynamic_HD_Scripts import iodriver
 from context import data_dir
 from os.path import join
 import os
 import textwrap
-import Dynamic_HD_Scripts.field as field
+from ../Dynamic_HD_Scripts import field
 import numpy as np
 
 

@@ -15,13 +15,13 @@ from . import field
 import configparser
 import shutil
 from timeit import default_timer as timer
-from libs import fill_sinks_wrapper as fill_sinks_wrapper
+from .libs import fill_sinks_wrapper
 from . import dynamic_hd_driver as dyn_hd_dr
 from . import compute_catchments as comp_catchs
-from Dynamic_HD_Scripts.field import Field, RiverDirections
-from flow_to_grid_cell import create_hypothetical_river_paths_map
-from cotat_plus_driver import run_cotat_plus
-from loop_breaker_driver import run_loop_breaker
+from .Dynamic_HD_Scripts.field import Field, RiverDirections
+from .flow_to_grid_cell import create_hypothetical_river_paths_map
+from .cotat_plus_driver import run_cotat_plus
+from .loop_breaker_driver import run_loop_breaker
 
 class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
     """A class with methods used for running a production run of the dynamic HD generation code"""

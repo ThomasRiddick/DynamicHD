@@ -6,7 +6,7 @@ Created on Jan 14, 2016
 @author: thomasriddick
 '''
 
-from Dynamic_HD_Scripts import grid as gd
+from . import grid as gd
 import sys
 import numpy as np
 import warnings

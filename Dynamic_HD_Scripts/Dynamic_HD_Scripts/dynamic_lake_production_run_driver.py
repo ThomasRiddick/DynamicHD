@@ -15,9 +15,9 @@ import numpy as np
 from . import utilities
 from . import field
 from . import grid
-from . import libs.fill_sinks_wrapper as fill_sinks_wrapper
-from . import libs.lake_operators_wrapper as lake_operators_wrapper  #@UnresolvedImport
-from . import libs.evaluate_basins_wrapper as evaluate_basins_wrapper
+from .libs import fill_sinks_wrapper
+from .libs import lake_operators_wrapper
+from .libs import evaluate_basins_wrapper
 from timeit import default_timer as timer
 import cdo
 import argparse

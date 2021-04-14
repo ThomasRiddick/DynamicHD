@@ -5,8 +5,7 @@ Created on February 10, 2020
 @author: thomasriddick
 '''
 import unittest
-import Dynamic_HD_Scripts.libs.follow_streams_wrapper \
-       as follow_streams_wrapper
+from ../Dynamic_HD_Scripts/libs import follow_streams_wrapper
 import numpy as np
 
 class TestFollowStreamsDriver(unittest.TestCase):

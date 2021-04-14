@@ -8,15 +8,15 @@ Created on Dec 15, 2015
 
 import unittest
 import numpy as np
-import Dynamic_HD_Scripts.dynamic_hd as dynamic_hd
-import Dynamic_HD_Scripts.iohelper as iohelper
-import Dynamic_HD_Scripts.grid as gd
+from ../Dynamic_HD_Scripts import dynamic_hd
+from ../Dynamic_HD_Scripts import iohelper
+from ../Dynamic_HD_Scripts import grid as gd
 import sys
 import scipy.io as scipyio
 import os
-import Dynamic_HD_Scripts.field as fld
-import Dynamic_HD_Scripts.f2py_manager as f2py_manager
-from context import fortran_source_path,data_dir
+from ../Dynamic_HD_Scripts import field as fld
+from ../Dynamic_HD_Scripts import f2py_manager
+from .context import fortran_source_path,data_dir
 
 class MainTestCase(unittest.TestCase):
     """Test top-level functions of the dynamic HD scripts with real and hypothetical data"""

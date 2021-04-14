@@ -14,8 +14,8 @@ from . import field
 import warnings
 import os.path as path
 from . import iodriver
-from libs import compute_catchments_wrapper as cc_ccp_wrap
-from context import fortran_source_path
+from .libs import compute_catchments_wrapper as cc_ccp_wrap
+from .context import fortran_source_path
 
 def compute_catchments_cpp(field,loop_logfile):
     """Compute the unordered catchments on all grid points using c++ code

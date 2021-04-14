@@ -6,8 +6,8 @@ Created on Mar 3, 2021
 
 import unittest
 import numpy as np
-import Dynamic_HD_Scripts.connect_coarse_lake_catchments as cclc
-import Dynamic_HD_Scripts.field as field
+from ../Dynamic_HD_Scripts import connect_coarse_lake_catchments as cclc
+from ../Dynamic_HD_Scripts import field
 
 def compare_nested_dictionaries(dictx,dicty):
     if not set(dictx.keys()) == set(dicty.keys()):

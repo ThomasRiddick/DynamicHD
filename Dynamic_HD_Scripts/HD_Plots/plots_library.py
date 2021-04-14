@@ -8,28 +8,28 @@ Created on Jan 29, 2016
 @author: thomasriddick
 '''
 
-from color_palette import ColorPalette #@UnresolvedImport
+from .color_palette import ColorPalette #@UnresolvedImport
 import datetime
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
-import Dynamic_HD_Scripts.iohelper as iohlpr
-import Dynamic_HD_Scripts.iodriver as iodriver
+from ./Dynamic_HD_Scripts import iohelper as iohlpr
+from ./Dynamic_HD_Scripts import iodriver
 import textwrap
 import os.path
 import math
 import copy
-import plotting_tools as pts
-import match_river_mouths as mtch_rm
-from Dynamic_HD_Scripts import dynamic_hd
-from Dynamic_HD_Scripts import utilities
-from Dynamic_HD_Scripts import field
-from Dynamic_HD_Scripts import grid
+from . import plotting_tools as pts
+from . import match_river_mouths as mtch_rm
+from ../Dynamic_HD_Scripts import dynamic_hd
+from ../Dynamic_HD_Scripts import utilities
+from ../Dynamic_HD_Scripts import field
+from ../Dynamic_HD_Scripts import grid
 from netCDF4 import Dataset
 from matplotlib import gridspec
-import river_comparison_plotting_routines as rc_pts
-import flowmap_plotting_routines as fmp_pts #@UnresolvedImport
-from interactive_plotting_routines import Interactive_Plots
+from . import river_comparison_plotting_routines as rc_pts
+from . import flowmap_plotting_routines as fmp_pts #@UnresolvedImport
+from .interactive_plotting_routines import Interactive_Plots
 import matplotlib.gridspec as gridspec
 import matplotlib.animation as animation
 

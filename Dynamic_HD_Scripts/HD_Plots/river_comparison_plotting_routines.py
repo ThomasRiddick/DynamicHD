@@ -9,7 +9,7 @@ Created on Jul 21, 2016
 
 import numpy as np
 import matplotlib.cm as cm
-import plotting_tools as pts
+from . import plotting_tools as pts
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import re
@@ -581,8 +581,8 @@ def add_catchment_and_outflow_to_river(catchments,outflows,sink_outflow_to_remap
     original_outflow_coords = sink_outflow_to_remap[0]
     new_outflow_coords = sink_outflow_to_remap[1]
     print("Moving outflow from point lat={0}, lon={1} to point lat={2}, lon={3}"\
-        " and relabeling catchment accordingly".format(original_outflow_coords[0],original_outflow_coords[1],
-                                                       new_outflow_coords[0],new_outflow_coords[1]))
+          " and relabeling catchment accordingly".format(original_outflow_coords[0],original_outflow_coords[1],
+                                                         new_outflow_coords[0],new_outflow_coords[1]))
 
     if processing_mod_type == 'Sink':
         outflows.set_data(pts.move_outflow(outflows.get_data(), original_outflow_coords, new_outflow_coords,

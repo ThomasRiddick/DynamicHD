@@ -4,7 +4,7 @@ Created on Mar 2, 2017
 @author: thomasriddick
 '''
 
-from plots_library import (Plots,HDparameterPlots,HDOutputPlots,OutflowPlots, #@UnusedImport
+from .plots_library import (Plots,HDparameterPlots,HDOutputPlots,OutflowPlots, #@UnusedImport
                            FlowMapPlots,FlowMapPlotsWithCatchments,OrographyPlots, #@UnusedImport
                            SimpleOrographyPlots, Ice5GComparisonPlots) #@UnusedImport
 import os
@@ -16,8 +16,8 @@ from matplotlib import gridspec
 from matplotlib import rcParams
 import numpy as np
 from netCDF4 import Dataset
-from Dynamic_HD_Scripts import dynamic_hd
-from Dynamic_HD_Scripts import utilities
+from ../Dynamic_HD_Scripts import dynamic_hd
+from ../Dynamic_HD_Scripts import utilities
 from . import river_comparison_plotting_routines as rc_pts
 
 class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):

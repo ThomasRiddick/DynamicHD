@@ -8,7 +8,7 @@ Created on Oct 18, 2016
 
 from . import f2py_manager
 import os.path as path
-from context import fortran_project_source_path,fortran_project_object_path,fortran_project_include_path
+from .context import fortran_project_source_path,fortran_project_object_path,fortran_project_include_path
 from . import field
 import numpy as np
 from . import grid

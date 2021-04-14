@@ -7,9 +7,9 @@ Created on Oct 30, 2016
 
 import unittest
 import numpy as np
-import Dynamic_HD_Scripts.field as field
-import Dynamic_HD_Scripts.loop_breaker_driver as loop_breaker_driver
-import Dynamic_HD_Scripts.context as scripts_context
+from ../Dynamic_HD_Scripts import field
+from ../Dynamic_HD_Scripts import loop_breaker_driver
+from ../Dynamic_HD_Scripts import context as scripts_context
 from . import context
 import subprocess
 import re
@@ -17,15 +17,15 @@ from matplotlib.compat.subprocess import CalledProcessError
 
 class Test(unittest.TestCase):
     """Unit test object"""
-    
+
     show_output = False
-    
+
     course_rdirs = np.array([[6,1,6,6,1],
                              [8,4,4,8,7],
                              [1,-1,5,0,6],
                              [2,4,9,8,8],
                              [9,6,8,7,6]],dtype=np.float64)
-    
+
     course_cumulative_flow = np.array([[0,0,1,0,0],
                                        [0,2,1,0,1],
                                        [0,0,1,0,0],
@@ -76,11 +76,11 @@ class Test(unittest.TestCase):
     def testUsingSmallGrid(self):
         """
         Test using a small 5 by 5 grid as the course grid, 15 by 15 fine grid
-        
+
         Same data was used in FRUIT unit testing
         """
 
-        course_rdirs_field = field.makeField(self.course_rdirs, 
+        course_rdirs_field = field.makeField(self.course_rdirs,
                                              field_type='RiverDirections',
                                              grid_type='LatLong',nlat=5,nlong=5)
         course_cumulative_flow_field = field.makeField(self.course_cumulative_flow,
@@ -88,7 +88,7 @@ class Test(unittest.TestCase):
                                                        grid_type='LatLong',nlat=5,nlong=5)
         course_catchments_field = field.makeField(self.course_catchments,
                                                   field_type='Generic',
-                                                  grid_type='LatLong',nlat=15,nlong=15) 
+                                                  grid_type='LatLong',nlat=15,nlong=15)
         fine_rdirs_field = field.makeField(self.fine_rdirs,
                                            field_type='RiverDirections',
                                            grid_type='LatLong',nlat=15,nlong=15)
@@ -96,14 +96,14 @@ class Test(unittest.TestCase):
                                                      field_type='CumulativeFlow',
                                                      grid_type='LatLong',nlat=15,nlong=15)
         updated_output_course_river_directions =\
-            loop_breaker_driver.run_loop_breaker(course_rdirs_field, course_cumulative_flow_field, 
-                                                 course_catchments_field, fine_rdirs_field, 
-                                                 fine_cumulative_flow_field, self.loop_nums_list, 
+            loop_breaker_driver.run_loop_breaker(course_rdirs_field, course_cumulative_flow_field,
+                                                 course_catchments_field, fine_rdirs_field,
+                                                 fine_cumulative_flow_field, self.loop_nums_list,
                                                  course_grid_type='LatLong',nlat=5,nlong=5)
-        np.testing.assert_array_equal(updated_output_course_river_directions.get_data(), self.expected_results, 
+        np.testing.assert_array_equal(updated_output_course_river_directions.get_data(), self.expected_results,
                                       "Testing the loop breaking code with a small test grid doesn't give"
                                       " expected results")
-        
+
     def testForMemoryLeaksWithValgrind(self):
         """Use Valgrind to find any new memory leaks that are occuring"""
         try:
