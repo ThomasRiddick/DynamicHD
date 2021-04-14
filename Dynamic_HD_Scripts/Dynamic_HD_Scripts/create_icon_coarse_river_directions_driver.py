@@ -8,21 +8,21 @@ Created on March 3, 2020
 @author: thomasriddick
 '''
 
-import dynamic_hd_driver as dyn_hd_dr
-import compute_catchments as comp_catchs
-import field
-import dynamic_hd
-import iodriver
-import utilities
+from . import dynamic_hd_driver as dyn_hd_dr
+from . import compute_catchments as comp_catchs
+from . import field
+from . import dynamic_hd
+from . import iodriver
+from . import utilities
 import tempfile
 import argparse
 import numpy as np
 import os
 import os.path as path
 import warnings
-import ConfigParser
+import configparser
 from flow_to_grid_cell import create_hypothetical_river_paths_map
-import libs.fill_sinks_wrapper as fill_sinks_wrapper
+from . import libs.fill_sinks_wrapper as fill_sinks_wrapper
 
 class Icon_Coarse_River_Directions_Creation_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
     """Drivers for running a productions run of the ICON coarse river direction creation code"""
@@ -72,8 +72,8 @@ class Icon_Coarse_River_Directions_Creation_Drivers(dyn_hd_dr.Dynamic_HD_Drivers
         """
 
         valid_config = True
-        config = ConfigParser.ConfigParser()
-        print "Read python driver options from file {0}".format(self.python_config_filename)
+        config = configparser.ConfigParser()
+        print("Read python driver options from file {0}".format(self.python_config_filename))
         config.read(self.python_config_filename)
         valid_config = valid_config \
             if config.has_section("input_options") else False

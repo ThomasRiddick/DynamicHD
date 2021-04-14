@@ -41,7 +41,7 @@ class Test(unittest.TestCase):
                                                                     "orographys",
                                                                     "ice5g_v1_2_00_0k_10min.nc"),
                                                       adjust_orientation=True)
-        self.assertEquals(loaded_field.data[231][0],-1425.0,"Field data has not been loaded and"
+        self.assertEqual(loaded_field.data[231][0],-1425.0,"Field data has not been loaded and"
                                                           " oriented properly")
         self.assertAlmostEqual(loaded_field.grid.lon_points[0],-179.91666667,msg="Field data grid is"
                                                                                  " not correctly"
@@ -57,7 +57,7 @@ class Test(unittest.TestCase):
                                                                     "orographys",
                                                                     "ice5g_v1_2_00_0k_10min.nc"),
                                                       adjust_orientation=False)
-        self.assertEquals(loaded_field.data[231][0],-2367.0,"Field data has not been loaded and"
+        self.assertEqual(loaded_field.data[231][0],-2367.0,"Field data has not been loaded and"
                                                             " oriented properly")
         self.assertAlmostEqual(loaded_field.grid.lon_points[0],0.0,msg="Field data grid is"
                                                                        " not correctly"
@@ -77,7 +77,7 @@ class Test(unittest.TestCase):
                                                                     "20160714_121938.nc"),
                                                       grid_desc="global_0.5",
                                                       adjust_orientation=True)
-        self.assertEquals(loaded_field.data[62][157],14149.0,"Field data has not been loaded and"
+        self.assertEqual(loaded_field.data[62][157],14149.0,"Field data has not been loaded and"
                                                             " oriented properly")
         self.assertAlmostEqual(loaded_field.grid.lon_points[0],-179.75,msg="Field data grid is"
                                                                           " not correctly"
@@ -97,7 +97,7 @@ class Test(unittest.TestCase):
                                                                     "20160714_121938.nc"),
                                                       grid_desc="r0.5x0.5",
                                                       adjust_orientation=True)
-        self.assertEquals(loaded_field.data[62][517],14149.0,"Field data has not been loaded and"
+        self.assertEqual(loaded_field.data[62][517],14149.0,"Field data has not been loaded and"
                                                             " oriented properly")
         self.assertAlmostEqual(loaded_field.grid.lon_points[0],-179.75,msg="Field data grid is"
                                                                           " not correctly"
@@ -117,7 +117,7 @@ class Test(unittest.TestCase):
                                                                     "20160714_121938.nc"),
                                                       grid_desc="r0.5x0.5",
                                                       adjust_orientation=False)
-        self.assertEquals(loaded_field.data[62][157],14149.0,"Field data has not been loaded and"
+        self.assertEqual(loaded_field.data[62][157],14149.0,"Field data has not been loaded and"
                                                             " oriented properly")
         self.assertAlmostEqual(loaded_field.grid.lon_points[0],0.0,msg="Field data grid is"
                                                                        " not correctly"
@@ -150,7 +150,7 @@ class Test(unittest.TestCase):
                                                                     "20160714_121938.nc"),
                                                       grid_desc_file=self.half_degree_grid_desc,
                                                       adjust_orientation=True)
-        self.assertEquals(loaded_field.data[62][157],14149.0,"Field data has not been loaded and"
+        self.assertEqual(loaded_field.data[62][157],14149.0,"Field data has not been loaded and"
                                                              " oriented properly")
         self.assertAlmostEqual(loaded_field.grid.lon_points[0],-179.75,msg="Field data grid is"
                                                                           " not correctly"
@@ -184,7 +184,7 @@ class Test(unittest.TestCase):
                                                                     "_corrs_20171015_031541.nc"),
                                                       grid_desc_file=self.ten_minute_grid_desc,
                                                       adjust_orientation=True)
-        self.assertEquals(loaded_field.data[45][713],399,"Field data has not been loaded and"
+        self.assertEqual(loaded_field.data[45][713],399,"Field data has not been loaded and"
                                                              " oriented properly")
         self.assertAlmostEqual(loaded_field.grid.lon_points[0],-179.916666667,msg="Field data grid is"
                                                                                   " not correctly"
@@ -218,7 +218,7 @@ class Test(unittest.TestCase):
                                                                     "_corrs_20171015_031541.nc"),
                                                       grid_desc_file=self.ten_minute_grid_desc,
                                                       adjust_orientation=False)
-        self.assertEquals(loaded_field.data[45][1793],399,"Field data has not been loaded and"
+        self.assertEqual(loaded_field.data[45][1793],399,"Field data has not been loaded and"
                                                              " oriented properly")
         self.assertAlmostEqual(loaded_field.grid.lon_points[0],0.0,msg="Field data grid is"
                                                                                   " not correctly"
@@ -335,10 +335,10 @@ class Test(unittest.TestCase):
         loaded_field = iodriver.advanced_field_loader(os.path.join(self.directory,"advancedfieldwritingandloadingtest.nc"),
                                                       fieldname='test_field')
         np.testing.assert_array_equal(example_field.get_data(),loaded_field.get_data())
-        self.assertEquals(loaded_field.data[20,20],1.5)
-        self.assertEquals(loaded_field.data[200,20],2.5)
-        self.assertEquals(loaded_field.data[20,200],3.5)
-        self.assertEquals(loaded_field.data[200,200],4.5)
+        self.assertEqual(loaded_field.data[20,20],1.5)
+        self.assertEqual(loaded_field.data[200,20],2.5)
+        self.assertEqual(loaded_field.data[20,200],3.5)
+        self.assertEqual(loaded_field.data[200,200],4.5)
 
     def testFieldWritingAndLoadingWithLatLongNoClobber(self):
         example_field = field.makeEmptyField('Generic',dtype=np.float64,grid_type='HD')
@@ -353,7 +353,7 @@ class Test(unittest.TestCase):
                                                "advancedfieldwritingandloadingtest.nc"),
                                        example_field,fieldname='test_field',
                                        clobber=True)
-        with self.assertRaisesRegexp(RuntimeError,r"Target file /Users/thomasriddick/Documents/data/temp/advancedfieldwritingandloadingtest.nc already exists and clobbering is not set"):
+        with self.assertRaisesRegex(RuntimeError,r"Target file /Users/thomasriddick/Documents/data/temp/advancedfieldwritingandloadingtest.nc already exists and clobbering is not set"):
           iodriver.advanced_field_writer(os.path.join(self.directory,
                                          "advancedfieldwritingandloadingtest.nc"),
                                          example_field,fieldname='test_field',

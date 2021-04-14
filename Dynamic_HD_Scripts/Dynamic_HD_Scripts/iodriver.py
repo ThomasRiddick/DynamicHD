@@ -87,7 +87,7 @@ class Grid_Descriptions(object):
         Returns: Nothing
         """
 
-        for varname,grid_desc_oj in vars(self).items():
+        for varname,grid_desc_oj in list(vars(self).items()):
             self.__dict__[varname] = grid_desc_oj.get_value()
 
 
@@ -156,7 +156,7 @@ def advanced_field_loader(filename,time_slice=None,grid_desc_file=None,grid_desc
                               'lat_inc'  :Grid_Description(grid_desc_lat_inc)}
         with open(grid_desc_file,'r') as f:
             for line in f:
-                for varname,grid_desc in grid_desc_patterns.items():
+                for varname,grid_desc in list(grid_desc_patterns.items()):
                     match_for_pattern = None
                     match_for_pattern = grid_desc.pattern.match(line)
                     if match_for_pattern:

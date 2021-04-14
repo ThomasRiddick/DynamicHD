@@ -3,12 +3,12 @@ Created on March 23, 2018
 
 @author: thomasriddick
 '''
-import iodriver
-import libs.lake_operators_wrapper as lake_operators_wrapper  #@UnresolvedImport
-import libs.evaluate_basins_wrapper as evaluate_basins_wrapper
+from . import iodriver
+from . import libs.lake_operators_wrapper as lake_operators_wrapper  #@UnresolvedImport
+from . import libs.evaluate_basins_wrapper as evaluate_basins_wrapper
 import numpy as np
-import field
-import grid
+from . import field
+from . import grid
 import os
 import os.path as path
 import cdo
@@ -539,7 +539,7 @@ def filter_narrow_lakes(input_unfilled_orography,
                         max_range=5,
                         iterations=5):
   unfilled_orography = input_unfilled_orography.copy()
-  for _ in xrange(iterations):
+  for _ in range(iterations):
     lake_mask = unfilled_orography.equal_to(input_filled_orography)
     lake_mask.invert_data()
     number_of_lake_neighbors = lake_mask.get_number_of_masked_neighbors()

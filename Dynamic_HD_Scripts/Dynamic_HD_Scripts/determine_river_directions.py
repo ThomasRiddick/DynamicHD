@@ -4,10 +4,10 @@ Created on March 17, 2019
 @author: thomasriddick
 '''
 
-import field
-import iodriver
+from . import field
+from . import iodriver
 import numpy as np
-import libs.determine_river_directions_wrapper \
+from . import libs.determine_river_directions_wrapper \
        as determine_river_directions_wrapper
 
 def determine_river_directions(orography,lsmask,truesinks=None,

@@ -6,7 +6,7 @@ Created on Jan 14, 2018
 
 import configparser
 import sys
-import config_layouts
+from . import config_layouts
 import inspect
 
 class SetupValidator(object):
@@ -34,7 +34,7 @@ class SetupValidator(object):
         nothing
         """
 
-        print "Reading {0}".format(configuration_filepath)
+        print("Reading {0}".format(configuration_filepath))
         self.config.read(configuration_filepath)
 
     def process_config(self):
@@ -68,7 +68,7 @@ class SetupValidator(object):
         return self.config
 
     def validate_inputs_fields(self,required_input_fields,optional_input_fields):
-        for input_field_section,section_input_fields in required_input_fields.items():
+        for input_field_section,section_input_fields in list(required_input_fields.items()):
             if not self.config.has_section(input_field_section):
                 raise RuntimeError("Missing required section {0}".\
                                    format(input_field_section))
@@ -80,7 +80,7 @@ class SetupValidator(object):
                     if not condition(self.config.get(input_field_section,input_field.name)):
                         raise RuntimeError("Condition {0} not met for field {1}".\
                                            format(condition,input_field.name))
-        for input_field_section,section_input_fields in optional_input_fields.items():
+        for input_field_section,section_input_fields in list(optional_input_fields.items()):
             if self.config.has_section(input_field_section):
                 for input_field in section_input_fields:
                     if self.config.has_option(input_field_section,input_field.name):
@@ -96,8 +96,8 @@ class SetupValidator(object):
     def check_for_unused_fields(self,required_input_fields,optional_input_fields):
         for section in self.config.sections():
             for option in self.config.options(section):
-                section_in_required_fields = section in required_input_fields.keys()
-                section_in_optional_fields = section in optional_input_fields.keys()
+                section_in_required_fields = section in list(required_input_fields.keys())
+                section_in_optional_fields = section in list(optional_input_fields.keys())
                 if section_in_required_fields and section_in_optional_fields:
                     if (option not in [field.name for field in
                                        required_input_fields[section]] and
@@ -127,12 +127,12 @@ class SetupValidator(object):
                                 format(config_layout_instance.get_operation_name(),
                                        config_layout_instance.get_subtitle())
                 output_str += '\n ;Required Sections'
-                for key in config_layout_instance.required_input_fields.keys():
+                for key in list(config_layout_instance.required_input_fields.keys()):
                     output_str += "\n[{0}]".format(key)
                     output_str += '\n ;Required Fields'
                     for value in config_layout_instance.required_input_fields[key]:
                         output_str +=  "\n    " + value.str_with_prefilling(config_layout)
-                    if key in config_layout_instance.optional_input_fields.keys():
+                    if key in list(config_layout_instance.optional_input_fields.keys()):
                         output_str += '\n ;Optional Fields'
                         for value in config_layout_instance.optional_input_fields[key]:
                             output_str +=  "\n    " + value.str_with_prefilling(config_layout)

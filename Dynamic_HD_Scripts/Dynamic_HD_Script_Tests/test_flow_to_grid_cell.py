@@ -131,10 +131,8 @@ class CreateHypotheticalRiverPathsMap(unittest.TestCase):
                                       self.expected_paths_map_when_using_mask,
                                       "Paths map created using land-sea mask doesn't match expectation")
 
-class MainTestCaseHelper(object):
+class MainTestCaseHelper(object, metaclass=ABCMeta):
     """Helper class defining test helpers for the iterator"""
-
-    __metaclass__ = ABCMeta
 
     flow_dirs =  np.array([[ 0,0,0,0,0,0 ],
                            [ 3,1,4,4,4,4 ],

@@ -11,15 +11,15 @@ import Dynamic_HD_Scripts.field as field
 
 def compare_nested_dictionaries(dictx,dicty):
     if not set(dictx.keys()) == set(dicty.keys()):
-        print "Difference in keys {}".format(set(dictx.keys()) - set(dicty.keys()))
+        print("Difference in keys {}".format(set(dictx.keys()) - set(dicty.keys())))
         return False
-    for key,value in dictx.items():
+    for key,value in list(dictx.items()):
         if value:
             if not compare_nested_dictionaries(value,dicty[key]):
                 return False
         else:
             if dicty[key]:
-                print "Second dictionary not empty when first is"
+                print("Second dictionary not empty when first is")
                 return False
     return True
 
@@ -30,17 +30,17 @@ class TestCatchmentNodes(unittest.TestCase):
 
     def testAddSuperCatchment(self):
         self.catchment_node.add_supercatchment(99,cclc.CatchmentNode(89))
-        self.assertEquals(self.catchment_node.supercatchment_num,99)
-        self.assertEquals(self.catchment_node.supercatchment_obj.supercatchment_num,89)
+        self.assertEqual(self.catchment_node.supercatchment_num,99)
+        self.assertEqual(self.catchment_node.supercatchment_obj.supercatchment_num,89)
 
     def testAddSubCatchment(self):
         self.catchment_node.add_subcatchment(11,cclc.CatchmentNode(111))
         self.catchment_node.add_subcatchment(21,cclc.CatchmentNode(211))
         self.catchment_node.add_subcatchment(31,cclc.CatchmentNode(311))
         self.assertEqual(set(self.catchment_node.subcatchments.keys()),set([11,21,31]))
-        self.assertEquals(self.catchment_node.subcatchments[11].supercatchment_num,111)
-        self.assertEquals(self.catchment_node.subcatchments[21].supercatchment_num,211)
-        self.assertEquals(self.catchment_node.subcatchments[31].supercatchment_num,311)
+        self.assertEqual(self.catchment_node.subcatchments[11].supercatchment_num,111)
+        self.assertEqual(self.catchment_node.subcatchments[21].supercatchment_num,211)
+        self.assertEqual(self.catchment_node.subcatchments[31].supercatchment_num,311)
 
     def testAllSubCatchmentNumbers(self):
         subcatchment_obj = cclc.CatchmentNode()

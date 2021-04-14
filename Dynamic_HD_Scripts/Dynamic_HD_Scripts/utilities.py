@@ -317,7 +317,7 @@ def prepare_hdrestart_file(dataset_inout,rflow_res_num,ref_rflow_res_num,
     unchanged.
     """
 
-    for var_name,var_obj in dataset_inout.variables.items():
+    for var_name,var_obj in list(dataset_inout.variables.items()):
         if var_name == 'lat' or var_name == 'lon':
             continue
         reservoir_field = makeField(np.array(var_obj),'ReservoirSize',grid_type,**grid_kwargs)

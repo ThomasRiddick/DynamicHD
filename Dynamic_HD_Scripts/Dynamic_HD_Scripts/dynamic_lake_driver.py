@@ -3,21 +3,21 @@ Created on Dec 4, 2017
 
 @author: thomasriddick
 '''
-import determine_river_directions
-import dynamic_hd_driver
-import dynamic_lake_operators
-import fill_sinks_driver
-import iodriver
-import field
+from . import determine_river_directions
+from . import dynamic_hd_driver
+from . import dynamic_lake_operators
+from . import fill_sinks_driver
+from . import iodriver
+from . import field
 import numpy as np
-import utilities
-import extract_lake_volumes
-import compute_catchments as cc
-import flow_to_grid_cell as ftgc
+from . import utilities
+from . import extract_lake_volumes
+from . import compute_catchments as cc
+from . import flow_to_grid_cell as ftgc
 from os.path import join
 import os.path as path
 import time
-import connect_coarse_lake_catchments as cclc
+from . import connect_coarse_lake_catchments as cclc
 
 class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
     '''
@@ -346,10 +346,10 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
                                                                 minima_fieldname,
                                                                 minima_reduced_filename_21k,
                                                                 minima_fieldname)
-        print "minima filename: " + minima_reduced_filename_21k
-        print "minima fieldname" + minima_fieldname
-        print "ice6g_21k_filename" + ice6g_21k_filename
-        print "output21k_orog_filename" + output_21k_ice6g_orog_filename
+        print("minima filename: " + minima_reduced_filename_21k)
+        print("minima fieldname" + minima_fieldname)
+        print("ice6g_21k_filename" + ice6g_21k_filename)
+        print("output21k_orog_filename" + output_21k_ice6g_orog_filename)
 
     def prepare_orography(self,orography_filename,orography_fieldname,timestep,
                           orography_0k_filename,orography_0k_fieldname,timestep_0k,
@@ -530,7 +530,7 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
                                                            "Topo",
                                                            orography_corrections_fieldname=
                                                            "orog")
-        print "Time for initial setup: " + str(time.time() - tstart)
+        print("Time for initial setup: " + str(time.time() - tstart))
         utilities.advanced_rebase_orography_driver(orography_filename=
                                                    working_orog_filename,
                                                    present_day_base_orography_filename=
@@ -616,10 +616,10 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
                                                                 minima_fieldname,
                                                                 minima_reduced_filename_working_orog,
                                                                 minima_fieldname)
-        print "minima filename: " + minima_reduced_filename_working_orog
-        print "minima fieldname: " + minima_fieldname
-        print "timestep{}_filename: ".format(timestep) + working_orog_filename
-        print "timestep{}_orog_filename:".format(timestep) + output_working_orog_filename
+        print("minima filename: " + minima_reduced_filename_working_orog)
+        print("minima fieldname: " + minima_fieldname)
+        print("timestep{}_filename: ".format(timestep) + working_orog_filename)
+        print("timestep{}_orog_filename:".format(timestep) + output_working_orog_filename)
         improved_sinkless_orog = iodriver.advanced_field_loader(output_working_orog_sinkless_improved_filename,
                                                                 fieldname="Topo",adjust_orientation=True)
         lake_orog = iodriver.advanced_field_loader(output_filtered_working_orog_filename,

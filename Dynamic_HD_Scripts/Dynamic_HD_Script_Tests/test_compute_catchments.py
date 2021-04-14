@@ -76,7 +76,7 @@ class RelabelCatchmentTestCase(unittest.TestCase):
         cc.renumber_catchments_by_size(input_catchments,
                                        self.loop_logfile)
         with open(self.loop_logfile,'r') as f:
-            f.next()
+            next(f)
             new_loops_list = [loop.strip() for loop in f]
         np.testing.assert_array_equal(new_loops_list,
                                       self.loop_list_expected_results)
@@ -327,7 +327,7 @@ class follow_river(unittest.TestCase):
                                                           3,3)
         #load and check the loop
         with open(self.loop_logfile) as f:
-            f.next()
+            next(f)
             loops = [int(line.strip()) for line in f]
         self.assertListEqual(loops,[-18],
                              "Circular flow diagnostic information is not being produced correctly")
@@ -342,7 +342,7 @@ class follow_river(unittest.TestCase):
                                                           3,3)
         #load and check the loop
         with open(self.loop_logfile) as f:
-            f.next()
+            next(f)
             loops = [int(line.strip()) for line in f]
         self.assertListEqual(loops,[-18],
                              "Circular flow diagnostic information is not being produced correctly")

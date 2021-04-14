@@ -4,9 +4,9 @@ Created on May 23, 2020
 
 @author: thomasriddick
 '''
-import libs.create_orography_wrapper as create_orography_wrapper
-import iodriver
-import field
+from . import libs.create_orography_wrapper as create_orography_wrapper
+from . import iodriver
+from . import field
 import numpy as np
 
 def advanced_orography_creation_driver(landsea_mask_filename,

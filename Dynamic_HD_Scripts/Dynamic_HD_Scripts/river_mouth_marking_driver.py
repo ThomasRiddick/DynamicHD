@@ -7,9 +7,9 @@ Created on Apr 18, 2016
 @author: thomasriddick
 '''
 
-import dynamic_hd
-import field
-import iodriver
+from . import dynamic_hd
+from . import field
+from . import iodriver
 
 def advanced_river_mouth_marking_driver(input_river_directions_filename,
                                         output_river_directions_filename,

@@ -6,15 +6,15 @@ Created on Oct 18, 2016
 @author: thomasriddick
 '''
 
-import f2py_manager
+from . import f2py_manager
 import os.path as path
 from context import fortran_project_source_path,fortran_project_object_path,fortran_project_include_path
-import field
+from . import field
 import numpy as np
-import grid
-import dynamic_hd
-import iodriver
-import coordinate_scaling_utilities
+from . import grid
+from . import dynamic_hd
+from . import iodriver
+from . import coordinate_scaling_utilities
 
 def run_cotat_plus(fine_rdirs_field,fine_total_cumulative_flow_field,cotat_plus_parameters_filepath,
                    course_grid_type,**course_grid_kwargs):

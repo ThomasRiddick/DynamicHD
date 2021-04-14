@@ -8,11 +8,11 @@ Created on May 28, 2016
 '''
 
 import numpy as np
-import field
-import dynamic_hd
-import libs.create_connected_lsmask_wrapper as cc_lsmask_wrapper #@UnresolvedImport
+from . import field
+from . import dynamic_hd
+from . import libs.create_connected_lsmask_wrapper as cc_lsmask_wrapper #@UnresolvedImport
 import re
-import iodriver
+from . import iodriver
 
 def advanced_connected_lsmask_creation_driver(input_lsmask_filename,
                                               output_lsmask_filename,
@@ -37,7 +37,7 @@ def advanced_connected_lsmask_creation_driver(input_lsmask_filename,
         input_ls_seedpts = field.makeEmptyField('Generic',np.int32)
     if input_ls_seed_points_list_filename:
         points_list = []
-        print "Reading input from {0}".format(input_ls_seed_points_list_filename)
+        print("Reading input from {0}".format(input_ls_seed_points_list_filename))
         comment_line_pattern = re.compile(r"^ *#.*$")
         with open(input_ls_seed_points_list_filename) as f:
             if f.readline().strip() != 'LatLong':
@@ -116,7 +116,7 @@ def drive_connected_lsmask_creation(input_lsmask_filename,
         input_ls_seedpts = field.makeEmptyField('Generic',np.int32,grid_type,**grid_kwargs)
     if input_ls_seed_points_list_filename:
         points_list = []
-        print "Reading input from {0}".format(input_ls_seed_points_list_filename)
+        print("Reading input from {0}".format(input_ls_seed_points_list_filename))
         comment_line_pattern = re.compile(r"^ *#.*$")
         with open(input_ls_seed_points_list_filename) as f:
             if f.readline().strip() != grid_type:

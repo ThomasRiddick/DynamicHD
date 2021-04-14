@@ -5,26 +5,26 @@ Created on April 1, 2020
 '''
 import re
 import os
-import determine_river_directions
-import dynamic_hd_driver as dyn_hd_dr
-import dynamic_lake_operators
-import iodriver
+from . import determine_river_directions
+from . import dynamic_hd_driver as dyn_hd_dr
+from . import dynamic_lake_operators
+from . import iodriver
 import os.path as path
-import ConfigParser
+import configparser
 import numpy as np
-import utilities
-import field
-import grid
-import libs.fill_sinks_wrapper as fill_sinks_wrapper
-import libs.lake_operators_wrapper as lake_operators_wrapper  #@UnresolvedImport
-import libs.evaluate_basins_wrapper as evaluate_basins_wrapper
+from . import utilities
+from . import field
+from . import grid
+from . import libs.fill_sinks_wrapper as fill_sinks_wrapper
+from . import libs.lake_operators_wrapper as lake_operators_wrapper  #@UnresolvedImport
+from . import libs.evaluate_basins_wrapper as evaluate_basins_wrapper
 from timeit import default_timer as timer
 import cdo
 import argparse
-from flow_to_grid_cell import create_hypothetical_river_paths_map
-import compute_catchments as comp_catchs
-from cotat_plus_driver import run_cotat_plus
-from loop_breaker_driver import run_loop_breaker
+from .flow_to_grid_cell import create_hypothetical_river_paths_map
+from . import compute_catchments as comp_catchs
+from .cotat_plus_driver import run_cotat_plus
+from .loop_breaker_driver import run_loop_breaker
 
 class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
     """A class with methods used for running a production run of the dynamic HD and Lake generation code"""
@@ -65,8 +65,8 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         """
 
         valid_config = True
-        config = ConfigParser.ConfigParser()
-        print "Read python driver options from file {0}".format(self.python_config_filename)
+        config = configparser.ConfigParser()
+        print("Read python driver options from file {0}".format(self.python_config_filename))
         config.read(self.python_config_filename)
         valid_config = valid_config \
             if config.has_section("output_options") else False
@@ -462,7 +462,7 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                    " is invalid")
             for line in f:
                 loop_nums_list.append(int(line.strip()))
-        print 'Removing loops from catchments: ' + ", ".join(str(value) for value in loop_nums_list)
+        print('Removing loops from catchments: ' + ", ".join(str(value) for value in loop_nums_list))
         rdirs_30min = run_loop_breaker(rdirs_30min,flowtocell_30min,
                                        catchments_30min,rdirs_10min,
                                        flowtocell_10min,loop_nums_list,
@@ -813,39 +813,39 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         os.remove(output_water_redistributed_to_rivers_file)
         if print_timing_info:
             end_time = timer()
-            print "---- Timing info ----"
-            print "Initial setup:         {: 6.2f}s".\
-                format(time_before_glacier_mask_application - start_time)
-            print "Glacier Mask Addition: {: 6.2f}s".\
-                format(time_before_sink_filling - time_before_glacier_mask_application)
-            print "Sink Filling:          {: 6.2f}s".\
-                format(time_before_filtering - time_before_sink_filling)
-            print "Filtering:             {: 6.2f}s".\
-                format(time_before_rdir_generation - time_before_filtering)
-            print "River Direction Gen.:  {: 6.2f}s".\
-                format(time_before_10min_post_processing - time_before_rdir_generation)
-            print "Post Processing:       {: 6.2f}s".\
-                format(time_before_upscaling - time_before_10min_post_processing)
-            print "Upscaling:             {: 6.2f}s".\
-                format(time_before_30min_post_processing_one - time_before_upscaling)
-            print "Post Processing (II):  {: 6.2f}s".\
+            print("---- Timing info ----")
+            print("Initial setup:         {: 6.2f}s".\
+                format(time_before_glacier_mask_application - start_time))
+            print("Glacier Mask Addition: {: 6.2f}s".\
+                format(time_before_sink_filling - time_before_glacier_mask_application))
+            print("Sink Filling:          {: 6.2f}s".\
+                format(time_before_filtering - time_before_sink_filling))
+            print("Filtering:             {: 6.2f}s".\
+                format(time_before_rdir_generation - time_before_filtering))
+            print("River Direction Gen.:  {: 6.2f}s".\
+                format(time_before_10min_post_processing - time_before_rdir_generation))
+            print("Post Processing:       {: 6.2f}s".\
+                format(time_before_upscaling - time_before_10min_post_processing))
+            print("Upscaling:             {: 6.2f}s".\
+                format(time_before_30min_post_processing_one - time_before_upscaling))
+            print("Post Processing (II):  {: 6.2f}s".\
                 format(time_before_loop_breaker -
-                        time_before_30min_post_processing_one)
-            print "Loop Breaker:          {: 6.2f}s".\
-                format(time_before_coarse_sink_filling - time_before_loop_breaker)
-            print "Sink Filling (II):     {: 6.2f}s".\
-                format(time_before_parameter_generation - time_before_coarse_sink_filling)
-            print "Parameter Generation:  {: 6.2f}s".\
+                        time_before_30min_post_processing_one))
+            print("Loop Breaker:          {: 6.2f}s".\
+                format(time_before_coarse_sink_filling - time_before_loop_breaker))
+            print("Sink Filling (II):     {: 6.2f}s".\
+                format(time_before_parameter_generation - time_before_coarse_sink_filling))
+            print("Parameter Generation:  {: 6.2f}s".\
                 format(time_before_30min_post_processing_two -
-                        time_before_parameter_generation)
-            print "Post Processing:       {: 6.2f}s".\
-                format(time_before_basin_evaluation - time_before_30min_post_processing_two)
-            print "Basin Evaluation:      {: 6.2f}s".\
-                format(time_before_water_redistribution - time_before_basin_evaluation)
-            print "Water Redistribution:  {: 6.2f}s".\
-                format(end_time-time_before_water_redistribution)
-            print "Total:                 {: 6.2f}s".\
-                format(end_time-start_time)
+                        time_before_parameter_generation))
+            print("Post Processing:       {: 6.2f}s".\
+                format(time_before_basin_evaluation - time_before_30min_post_processing_two))
+            print("Basin Evaluation:      {: 6.2f}s".\
+                format(time_before_water_redistribution - time_before_basin_evaluation))
+            print("Water Redistribution:  {: 6.2f}s".\
+                format(end_time-time_before_water_redistribution))
+            print("Total:                 {: 6.2f}s".\
+                format(end_time-start_time))
 
 def setup_and_run_dynamic_hd_para_and_lake_gen_from_command_line_arguments(args):
     """Setup and run a dynamic hd production run from the command line arguments passed in by main"""

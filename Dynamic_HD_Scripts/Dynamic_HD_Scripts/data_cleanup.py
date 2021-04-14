@@ -97,7 +97,7 @@ def prepare_data_cleanup():
                         new_filepath = os.path.join(files_to_delete_directory,
                                                     os.path.relpath(filepath,
                                                                     data_dir))
-                        print "Moving: {0}".format(filepath)
+                        print("Moving: {0}".format(filepath))
                         os.rename(filepath,new_filepath)
 
 if __name__ == '__main__':

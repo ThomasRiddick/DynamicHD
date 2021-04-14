@@ -7,7 +7,7 @@ Created on Apr 13, 2017
 import unittest
 import numpy as np
 import Dynamic_HD_Scripts.libs.upscale_orography_wrapper as upscale_orography_wrapper #@UnresolvedImport
-from __builtin__ import False
+from builtins import False
 
 class Test(unittest.TestCase):
 

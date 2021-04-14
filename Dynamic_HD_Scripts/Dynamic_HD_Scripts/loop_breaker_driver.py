@@ -6,12 +6,12 @@ Created on Oct 30, 2016
 @author: thomasriddick
 '''
 
-import f2py_manager
-import field
+from . import f2py_manager
+from . import field
 import os.path as path
 from context import fortran_project_source_path,fortran_project_object_path,fortran_project_include_path
 import numpy as np
-import dynamic_hd
+from . import dynamic_hd
 import re
 
 def run_loop_breaker(course_rdirs,course_cumulative_flow,course_catchments,fine_rdirs_field,
@@ -51,7 +51,7 @@ def run_loop_breaker(course_rdirs,course_cumulative_flow,course_catchments,fine_
                                           include_path=fortran_project_include_path)
     loop_nums_list_array = np.asarray(loop_nums_list)
     if len(loop_nums_list) == 0:
-        print "List of loops to remove is empty!"
+        print("List of loops to remove is empty!")
         return course_rdirs
     course_rdirs_field_raw = course_rdirs.get_data().astype(np.int32,order='F')
     f2py_mngr.run_current_function_or_subroutine(course_rdirs_field_raw,
@@ -130,7 +130,7 @@ def loop_breaker_driver(input_course_rdirs_filepath,input_course_cumulative_flow
                                " is invalid")
         for line in f:
             loop_nums_list.append(int(line.strip()))
-    print 'Removing loops from catchments: ' + ", ".join(str(value) for value in loop_nums_list)
+    print('Removing loops from catchments: ' + ", ".join(str(value) for value in loop_nums_list))
     output_course_rdirs_field = run_loop_breaker(input_course_rdirs_field,course_cumulative_flow_field,
                                                  course_catchments_field,fine_rdirs_field,
                                                  fine_cumulative_flow_field,loop_nums_list,

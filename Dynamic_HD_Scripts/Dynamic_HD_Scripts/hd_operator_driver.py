@@ -5,16 +5,16 @@ Created on Feb 2, 2018
 '''
 
 import argparse
-import setup_validator
-import cotat_plus_driver
-import upscale_orography_driver
-import fill_sinks_driver
-import compute_catchments
-import create_connected_lsmask_driver
-import create_orography_driver
-import determine_river_directions
-import utilities
-import flow_to_grid_cell
+from . import setup_validator
+from . import cotat_plus_driver
+from . import upscale_orography_driver
+from . import fill_sinks_driver
+from . import compute_catchments
+from . import create_connected_lsmask_driver
+from . import create_orography_driver
+from . import determine_river_directions
+from . import utilities
+from . import flow_to_grid_cell
 
 def get_option_if_defined(config,section,option):
     return (config.get(section,option)

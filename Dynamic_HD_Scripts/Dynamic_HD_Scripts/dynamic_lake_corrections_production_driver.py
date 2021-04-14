@@ -1,14 +1,14 @@
-import dynamic_hd_driver as dyn_hd_dr
-import determine_river_directions
-import dynamic_hd_driver
-import dynamic_lake_operators
-import fill_sinks_driver
-import iodriver
-import field
+from . import dynamic_hd_driver as dyn_hd_dr
+from . import determine_river_directions
+from . import dynamic_hd_driver
+from . import dynamic_lake_operators
+from . import fill_sinks_driver
+from . import iodriver
+from . import field
 import numpy as np
-import utilities
-import compute_catchments as cc
-import flow_to_grid_cell as ftgc
+from . import utilities
+from . import compute_catchments as cc
+from . import flow_to_grid_cell as ftgc
 from os.path import join
 import os.path as path
 import time
@@ -157,7 +157,7 @@ class Dynamic_Lake_Correction_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Driver
                                                            "Topo",
                                                            orography_corrections_fieldname=
                                                            "orog")
-        print "Time for initial setup: " + str(time.time() - tstart)
+        print("Time for initial setup: " + str(time.time() - tstart))
 
 def main():
     """Select the revelant runs to make

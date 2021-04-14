@@ -7,14 +7,14 @@ Created on Feb 9, 2016
 @author: thomasriddick
 '''
 
-import f2py_manager
-import dynamic_hd
+from . import f2py_manager
+from . import dynamic_hd
 import numpy as np
-import field
+from . import field
 import warnings
 import os.path as path
-import iodriver
-import libs.compute_catchments_wrapper as cc_ccp_wrap
+from . import iodriver
+from libs import compute_catchments_wrapper as cc_ccp_wrap
 from context import fortran_source_path
 
 def compute_catchments_cpp(field,loop_logfile):
@@ -33,7 +33,7 @@ def compute_catchments_cpp(field,loop_logfile):
     is based on a queue structure
     """
 
-    print "Writing circular flow log file to {0}".format(loop_logfile)
+    print("Writing circular flow log file to {0}".format(loop_logfile))
     catchments = np.empty(shape=field.shape,dtype=np.int32)
     cc_ccp_wrap.compute_catchments_cpp(catchments,
                                        np.ascontiguousarray(field,dtype=np.float64),
@@ -63,7 +63,7 @@ def compute_catchments(field,loop_logfile,circ_flow_check_period=1000):
                                                      "mod_compute_catchments.f90"),
                                           func_name="compute_catchments")
     field = np.swapaxes(np.asarray(field,dtype=np.int64),0,1)
-    print "Writing circular flow log file to {0}".format(loop_logfile)
+    print("Writing circular flow log file to {0}".format(loop_logfile))
     catchment_types,catchments = \
         f2py_mngr.run_current_function_or_subroutine(field,
                                                      circ_flow_check_period,
@@ -95,10 +95,10 @@ def check_catchment_types(catchment_types,logfile=None):
         if count > 0:
             warnings.warn("{0} detected!".format(name))
     output = output.rstrip('\n')
-    print output
+    print(output)
     if logfile:
         with open(logfile,'w') as f:
-            print "Logging catchment type counts in file {0}".format(logfile)
+            print("Logging catchment type counts in file {0}".format(logfile))
             f.write(output)
 
 def renumber_catchments_by_size(catchments,loop_logfile=None):
@@ -136,7 +136,7 @@ def renumber_catchments_by_size(catchments,loop_logfile=None):
                                                  old_to_new_label_map)
     if loop_logfile is not None:
         with open(loop_logfile,'r') as f:
-            f.next()
+            next(f)
             loops = [int(line.strip()) for line in f]
         #-1 to account for differing array offset between Fortran and python
         loops = [str(old_to_new_label_map[old_loop_num])+'\n' for old_loop_num in loops]

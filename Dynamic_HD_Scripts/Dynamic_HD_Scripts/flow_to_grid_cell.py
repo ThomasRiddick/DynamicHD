@@ -7,11 +7,11 @@ Created on Jan 20, 2016
 @author: thomasriddick
 '''
 
-import f2py_manager as f2py_mg
+from . import f2py_manager as f2py_mg
 import numpy as np
-import dynamic_hd
-import field
-import iodriver
+from . import dynamic_hd
+from . import field
+from . import iodriver
 import os.path as path
 from context import fortran_source_path
 
@@ -67,7 +67,7 @@ def create_hypothetical_river_paths_map(riv_dirs,lsmask=None,use_f2py_func=True,
         iterate_paths_map_function = iterate_paths_map
     while iterate_paths_map_function(riv_dirs,paths_map,nlat,nlong):
         remaining_points = paths_map.size - np.count_nonzero(paths_map)
-        print "Remaining points to process: {0}".format(remaining_points)
+        print("Remaining points to process: {0}".format(remaining_points))
         if use_f2py_sparse_iterator and remaining_points/float(paths_map.size) < sparse_fraction:
             f2py_sparse_iterator = f2py_mg.f2py_manager(path.join(fortran_source_path,
                                                                   'mod_iterate_paths_map.f90'),

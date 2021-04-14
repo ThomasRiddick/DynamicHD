@@ -298,7 +298,7 @@ class NetCDF4FileIOHelper(IOHelper):
             object to while adding a time dimension
         """
 
-        for dim_name,dim_obj in dataset_in.dimensions.items():
+        for dim_name,dim_obj in list(dataset_in.dimensions.items()):
             dataset_out.createDimension(dim_name,len(dim_obj)
                                         if not dim_obj.isunlimited() else None)
         dataset_out.createDimension('time',None)
@@ -306,7 +306,7 @@ class NetCDF4FileIOHelper(IOHelper):
         times.units = "years since 0001-01-01 00:00:00.0"
         times.calendar = "proleptic_gregorian"
         times[0] = np.array([0.0])
-        for var_name, var_obj in dataset_in.variables.items():
+        for var_name, var_obj in list(dataset_in.variables.items()):
             new_var = dataset_out.createVariable(var_name,var_obj.datatype,var_obj.dimensions
                                                  if (len(var_obj.dimensions) <= 1
                                                      or var_name == 'AREA') else
@@ -338,7 +338,7 @@ class NetCDF4FileIOHelper(IOHelper):
                                " already present in the dataset")
         var_obj[1:] = var_obj[:]
         var_obj[0] = slicetime
-        for var_name, var_obj in main_dataset.variables.items():
+        for var_name, var_obj in list(main_dataset.variables.items()):
             if var_name == 'time' or var_name == 'AREA':
                 continue
             if  len(var_obj.dimensions) > 1:

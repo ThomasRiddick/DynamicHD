@@ -10,7 +10,7 @@ import numpy as np
 import Dynamic_HD_Scripts.field as field
 import Dynamic_HD_Scripts.loop_breaker_driver as loop_breaker_driver
 import Dynamic_HD_Scripts.context as scripts_context
-import context
+from . import context
 import subprocess
 import re
 from matplotlib.compat.subprocess import CalledProcessError
@@ -118,7 +118,7 @@ class Test(unittest.TestCase):
         direct_mem_loss_match = re.search(r'definitely lost: ([,0-9]*)',valgrind_output)
         indirect_mem_loss_match = re.search(r'indirectly lost: ([,0-9]*)',valgrind_output)
         if self.show_output:
-            print valgrind_output
+            print(valgrind_output)
         direct_mem_loss = int(direct_mem_loss_match.group(1).replace(',',''))
         indirect_mem_loss = int(indirect_mem_loss_match.group(1).replace(',',''))
         # 80 byte loss is a known problem that occurs sometimes related to using valgrind in python

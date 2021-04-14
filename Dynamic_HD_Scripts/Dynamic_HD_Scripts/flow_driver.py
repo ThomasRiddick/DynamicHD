@@ -3,7 +3,7 @@ Created on Feb 12, 2018
 
 @author: thomasriddick
 '''
-import f2py_manager
+from . import f2py_manager
 import os.path as path
 from context import fortran_project_source_path,fortran_project_object_path,fortran_project_include_path
 
