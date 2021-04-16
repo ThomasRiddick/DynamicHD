@@ -83,6 +83,7 @@ class f2py_manager(object):
             import shutil
             import argparse
             import ast
+            import socket
             parser = argparse.ArgumentParser(add_help=False)
             parser.add_argument("--build-path",required=True)
             parser.add_argument("--module-name",required=True)
@@ -110,13 +111,15 @@ class f2py_manager(object):
                     runtime_library_dirs=["/usr/local/Cellar/gcc/10.2.0/lib/gcc/10","/usr/local/opt/libevent/lib","/usr/local/Cellar/open-mpi/4.0.5/lib"]
                     libraries=["mpi_usempif08","mpi_usempi_ignore_tkr","mpi_mpifh","mpi"]
                     extra_compile_args=["-Wl,-flat_namespace -Wl,-commons,use_dylibs"]
-            elif (".".join(socket.getfqdn().split('.')[1:]) ==  "hpc.dkrz.de")
-                    and params.use_mpi:
-                extra_include_dirs=["/sw/rhel6-x64/mpi/openmpi-1.8.4-gcc62/include"]
-                library_dirs=["/sw/rhel6-x64/mpi/openmpi-1.8.4-gcc62/lib"]
-                runtime_library_dirs=[""]
+            elif ((".".join(socket.getfqdn().split('.')[1:]) ==  "hpc.dkrz.de")
+                  and params.use_mpi):
+                extra_include_dirs=["/home/mpim/m300468/conda-envs/dyhdenv/include"
+                                    "/home/mpim/m300468/conda-envs/dyhdenv/include"
+                                    "/home/mpim/m300468/conda-envs/dyhdenv/lib"]
+                library_dirs=["/home/mpim/m300468/conda-envs/dyhdenv/lib"]
+                runtime_library_dirs=["/home/mpim/m300468/conda-envs/dyhdenv/lib"]
                 libraries=["mpi_usempif08","mpi_usempi_ignore_tkr","mpi_mpifh","mpi"]
-                extra_compile_args=["-Wl,-pthread"]
+                extra_compile_args=[]
             include_path = ast.literal_eval(params.include_path)
             include_path.extend(extra_include_dirs)
             ext = npdistutils_core.Extension(name=params.module_name,

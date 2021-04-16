@@ -726,7 +726,7 @@ if __name__ == '__main__':
             args = parse_arguments()
             setup_and_run_dynamic_hd_para_gen_from_command_line_arguments(args)
         else:
-            process_manager = ProcessManager()
+            process_manager = ProcessManager(comm)
             process_manager.wait_for_commands()
     else:
         #Parse arguments and then run
