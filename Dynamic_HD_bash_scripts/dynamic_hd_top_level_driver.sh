@@ -297,6 +297,9 @@ fi
 #Setup correct python path
 export PYTHONPATH=${source_directory}/Dynamic_HD_Scripts:${PYTHONPATH}
 
+#Set Open MPI Fortran compiler
+export OMPI_FC=/sw/rhel6-x64/gcc/gcc-6.2.0/bin/gfortran
+
 #Compile C++ and Fortran Code if this is the first timestep
 if $compilation_required ; then
 	echo "Compiling C++ code" 1>&2
@@ -364,7 +367,7 @@ if ! ${compile_only} ; then
 	#Run
 	echo "Running Dynamic HD Code" 1>&2
 	setup_end_time=$(date +%s%N)
-	mpiexec -n 4 python2.7 ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/dynamic_hd_production_run_driver.py ${input_orography_filepath} ${input_ls_mask_filepath} ${present_day_base_orography_filepath} ${glacier_mask_filepath} ${output_hdpara_filepath} ${ancillary_data_directory} ${working_directory} ${output_hdstart_filepath}
+	mpiexec -n 24 python2.7 ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/dynamic_hd_production_run_driver.py ${input_orography_filepath} ${input_ls_mask_filepath} ${present_day_base_orography_filepath} ${glacier_mask_filepath} ${output_hdpara_filepath} ${ancillary_data_directory} ${working_directory} ${output_hdstart_filepath}
 	computation_end_time=$(date +%s%N)
 
 	#Delete paragen directory if it exists
