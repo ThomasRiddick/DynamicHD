@@ -311,7 +311,7 @@ if $compilation_required ; then
 	mkdir -p ${source_directory}/Dynamic_HD_Fortran_Code/Release/src
 	cd ${source_directory}/Dynamic_HD_Fortran_Code/Release
 	make -f ../makefile clean
-	make -f ../makefile compile_only
+	make -f ../makefile compile_only USE_MPI=True
 	cd - 2>&1 > /dev/null
 fi
 
@@ -359,6 +359,8 @@ if $compilation_required; then
 fi
 
 if ! ${compile_only} ; then
+	#Set enviromental variable
+  export USE_MPI_IN_PYTHON=true
 	#Run
 	echo "Running Dynamic HD Code" 1>&2
 	setup_end_time=$(date +%s%N)

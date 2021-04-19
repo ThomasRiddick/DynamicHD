@@ -24,6 +24,7 @@ from cotat_plus_driver import run_cotat_plus
 from loop_breaker_driver import run_loop_breaker
 from process_manager import ProcessManager
 from process_manager import using_mpi
+from process_manager import MPICommands
 from mpi4py import MPI
 
 class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
@@ -725,6 +726,9 @@ if __name__ == '__main__':
             #Parse arguments and then run
             args = parse_arguments()
             setup_and_run_dynamic_hd_para_gen_from_command_line_arguments(args)
+            #Tell other processes to exit
+            command = MPICommands.EXIT
+            comm.bcast(command, root=0)
         else:
             process_manager = ProcessManager(comm)
             process_manager.wait_for_commands()
