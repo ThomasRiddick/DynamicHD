@@ -43,6 +43,7 @@ function main()
   timesteps = args["timesteps"]
   grid = LatLonGrid(360,720,true)
   lake_grid = LatLonGrid(1080,2160,true)
+  surface_model_grid = LatLonGrid(48,96,true)
   river_parameters = load_river_parameters(args["hd-para-file"],grid)
   local drainages::Array{Field{Float64},1}
   local runoffs::Array{Field{Float64},1}
@@ -71,7 +72,7 @@ function main()
     lake_evaporations = repeat(lake_evaporation,12*51)
   end
   if args["lake-para-file"] != nothing
-    lake_parameters = load_lake_parameters(args["lake-para-file"],lake_grid,grid)
+    lake_parameters = load_lake_parameters(args["lake-para-file"],lake_grid,grid,surface_model_grid)
     drainages_copy = deepcopy(drainages)
     runoffs_copy = deepcopy(runoffs)
     lake_evaporations_copy = deepcopy(lake_evaporations)

@@ -19,6 +19,7 @@ import Base.show
 import Base.round
 import Base.convert
 import Base.sum
+import Base.Broadcast
 using InteractiveUtils
 
 abstract type Field{T} end
@@ -43,11 +44,11 @@ function +(lfield::Field,rfield::Field)
   throw(UserError())
 end
 
-function *(lfield::Field,value::T) where {T}
+function *(lfield::Field,value::T) where {T<:Number}
   throw(UserError())
 end
 
-function /(lfield::Field,value::T) where {T}
+function /(lfield::Field,value::T) where {T<:Number}
   throw(UserError())
 end
 
@@ -57,6 +58,12 @@ end
 
 function sum(field::Field)
   throw(UserError())
+end
+
+# This could be done by overloading broadcast but this is overcomplicated
+# Assumes result is fractional and hence returns a field of floating point numbers
+function elementwise_divide(lfield::Field{T},rfield::Field{T}) where {T}
+  return Field{Float64}(lfield.grid,lfield.data./rfield.data)::Field{Float64}
 end
 
 # This could be done by overloading broadcast but this is overcomplicated
@@ -215,11 +222,11 @@ function +(lfield::LatLonField{T},rfield::LatLonField{T}) where {T}
   return LatLonField{T}(lfield.grid,lfield.data + rfield.data)
 end
 
-function *(lfield::Field,value::T) where {T}
+function *(lfield::Field,value::T) where {T<:Number}
   return LatLonField{T}(lfield.grid,lfield.data * value)
 end
 
-function /(lfield::Field,value::T) where {T}
+function /(lfield::Field,value::T) where {T<:Number}
   return LatLonField{T}(lfield.grid,lfield.data / value)
 end
 
@@ -285,11 +292,11 @@ function +(lfield::UnstructuredField{T},rfield::UnstructuredField{T}) where {T}
   return UnstructuredField{T}(lfield.grid,lfield.data + rfield.data)
 end
 
-function *(lfield::UnstructuredField,value::T) where {T}
+function *(lfield::UnstructuredField,value::T) where {T<:Number}
   return UnstructuredField{T}(lfield.grid,lfield.data * value)
 end
 
-function /(lfield::UnstructuredField,value::T) where {T}
+function /(lfield::UnstructuredField,value::T) where {T<:Number}
   return UnstructuredField{T}(lfield.grid,lfield.data / value)
 end
 
