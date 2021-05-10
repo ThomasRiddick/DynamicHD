@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "Running Version 3.7 of the ICON HD Parameters Generation Code"
+echo "Running Version 3.8 of the ICON HD Parameters Generation Code"
 
 #Define module loading function
 function load_module
@@ -261,6 +261,8 @@ export PYTHONPATH=${source_directory}/Dynamic_HD_Scripts:${PYTHONPATH}
 
 #Compile C++ and Fortran Code if this is the first timestep
 if $compilation_required ; then
+  echo "C++ source directory"
+  echo ${source_directory}/Dynamic_HD_Cpp_Code
 	echo "Compiling C++ code" 1>&2
 	mkdir -p ${source_directory}/Dynamic_HD_Cpp_Code/Release
 	mkdir -p ${source_directory}/Dynamic_HD_Cpp_Code/Release/src
@@ -268,6 +270,8 @@ if $compilation_required ; then
 	make -f ../makefile clean
 	make -f ../makefile tools_only
 	cd - 2>&1 > /dev/null
+  echo "Fortran source directory"
+  echo ${source_directory}/Dynamic_HD_Fortran_Code
 	echo "Compiling Fortran code" 1>&2
 	mkdir -p ${source_directory}/Dynamic_HD_Fortran_Code/Release
 	mkdir -p ${source_directory}/Dynamic_HD_Fortran_Code/Release/src
