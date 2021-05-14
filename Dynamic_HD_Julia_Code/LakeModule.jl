@@ -197,8 +197,6 @@ struct LakeFields
     water_to_hd = Field{Float64}(lake_parameters.hd_grid,0.0)
     lake_water_from_ocean = Field{Float64}(lake_parameters.hd_grid,0.0)
     number_lake_cells = Field{Int64}(lake_parameters.surface_model_grid,0)
-    #For the moment a cell with a lake is defined as a connected cell or a flood cell and
-    #not just a flooded cell (which would be preferable)
     cells_with_lakes::Vector{Coords} = Vector{Coords}[]
     for_all(lake_parameters.hd_grid) do coords::Coords
       contains_lake::Bool = false
@@ -584,7 +582,7 @@ function handle_event(lake::OverflowingLake,remove_water::RemoveWater)
     set!(lake_fields.number_lake_cells,surface_model_coords,
          lake_fields.number_lake_cells(surface_model_coords) - 1)
   else
-    set!(lake_fields.flooded_lake_cells,lake_variables.current_cell_to_fill,false)
+    set!(lake_fields.connected_lake_cells,lake_variables.current_cell_to_fill,false)
   end
   lake_as_filling_lake::FillingLake = change_to_filling_lake(lake)
   merge_type::SimpleMergeTypes = get_merge_type(lake)
