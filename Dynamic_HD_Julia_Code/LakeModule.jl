@@ -182,6 +182,7 @@ struct LakeFields
   connected_lake_cells::Field{Bool}
   flooded_lake_cells::Field{Bool}
   lake_numbers::Field{Int64}
+  buried_lake_numbers::Field{Int64}
   water_to_lakes::Field{Float64}
   water_to_hd::Field{Float64}
   lake_water_from_ocean::Field{Float64}
@@ -191,6 +192,7 @@ struct LakeFields
     connected_lake_cells = Field{Bool}(lake_parameters.grid,false)
     flooded_lake_cells = Field{Bool}(lake_parameters.grid,false)
     lake_numbers = Field{Int64}(lake_parameters.grid,0)
+    buried_lake_numbers = Field{Int64}(lake_parameters.grid,0)
     water_to_lakes = Field{Float64}(lake_parameters.hd_grid,0.0)
     water_to_hd = Field{Float64}(lake_parameters.hd_grid,0.0)
     lake_water_from_ocean = Field{Float64}(lake_parameters.hd_grid,0.0)
@@ -209,8 +211,8 @@ struct LakeFields
       end
     end
     new(connected_lake_cells,flooded_lake_cells,
-        lake_numbers,water_to_lakes,water_to_hd,lake_water_from_ocean,
-        number_lake_cells,cells_with_lakes)
+        lake_numbers,buried_lake_numbers,water_to_lakes,water_to_hd,
+        lake_water_from_ocean,number_lake_cells,cells_with_lakes)
   end
 end
 
@@ -961,6 +963,11 @@ function update_filling_cell(lake::FillingLake)
   else
     new_coords = get_connect_next_cell_coords(lake_parameters,coords)
   end
+  old_lake_number::Int64 = lake_fields.lake_numbers(new_coords)
+  if old_lake_number != 0 &&
+     old_lake_number != lake_variables.lake_number
+     set!(lake_fields.buried_lake_numbers,new_coords,old_lake_number)
+  end
   set!(lake_fields.lake_numbers,new_coords,lake_variables.lake_number)
   if ! (lake_fields.connected_lake_cells(coords) ||
         lake_parameters.flood_only(coords))
@@ -986,8 +993,11 @@ function rollback_filling_cell(lake::FillingLake)
   coords::Coords = lake_variables.current_cell_to_fill
   new_coords::Coords = lake_variables.previous_cell_to_fill
   if lake_parameters.flood_only(coords) ||
-     ! lake_fields.flooded_lake_cells(coords)
+     ! lake_fields.connected_lake_cells(coords)
     set!(lake_fields.lake_numbers,coords,0)
+  elseif lake_fields.buried_lake_numbers(coords) != 0
+    set!(lake_fields.lake_numbers,coords,lake_fields.buried_lake_numbers(coords))
+    set!(lake_fields.buried_lake_numbers,coords,0)
   end
   if ! (lake_fields.flooded_lake_cells(new_coords) ||
         lake_parameters.flood_only(new_coords))
