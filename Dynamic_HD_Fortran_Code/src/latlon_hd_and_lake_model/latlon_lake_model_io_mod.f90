@@ -89,16 +89,21 @@ function read_lake_parameters(instant_throughflow)&
   integer, pointer, dimension(:,:) :: additional_flood_redirect_lon_index
   integer, pointer, dimension(:,:) :: additional_connect_redirect_lat_index
   integer, pointer, dimension(:,:) :: additional_connect_redirect_lon_index
+  integer, pointer, dimension(:,:) :: corresponding_surface_cell_lat_index
+  integer, pointer, dimension(:,:) :: corresponding_surface_cell_lon_index
   integer, allocatable, dimension(:,:) :: temp_integer_array
   real(dp),    allocatable, dimension(:,:) :: temp_real_array
   integer :: nlat,nlon
   integer :: nlat_coarse,nlon_coarse
+  integer :: nlat_surface_model,nlon_surface_model
   integer :: ncid
   integer :: varid,dimid
 
     write(*,*) "Loading lake parameters from file: " // trim(lake_params_filename)
     nlat_coarse = 360
     nlon_coarse = 720
+    nlat_surface_model = 1
+    nlon_surface_model = 1
 
     call check_return_code(nf90_open(lake_params_filename,nf90_nowrite,ncid))
 
@@ -242,6 +247,18 @@ function read_lake_parameters(instant_throughflow)&
     additional_connect_redirect_lon_index  = transpose(temp_integer_array)
     call add_offset(additional_connect_redirect_lon_index,1,(/-1/))
 
+    call check_return_code(nf90_inq_varid(ncid,'corresponding_surface_cell_lat_index',varid))
+    call check_return_code(nf90_get_var(ncid, varid,temp_integer_array))
+    allocate(corresponding_surface_cell_lat_index(nlat,nlon))
+    corresponding_surface_cell_lat_index  = transpose(temp_integer_array)
+    call add_offset(corresponding_surface_cell_lat_index,1,(/-1/))
+
+    call check_return_code(nf90_inq_varid(ncid,'corresponding_surface_cell_lon_index',varid))
+    call check_return_code(nf90_get_var(ncid, varid,temp_integer_array))
+    allocate(corresponding_surface_cell_lon_index(nlat,nlon))
+    corresponding_surface_cell_lon_index  = transpose(temp_integer_array)
+    call add_offset(corresponding_surface_cell_lon_index,1,(/-1/))
+
     call check_return_code(nf90_inq_varid(ncid,'merge_points',varid))
     call check_return_code(nf90_get_var(ncid, varid,temp_integer_array))
     allocate(merge_points(nlat,nlon))
@@ -312,8 +329,11 @@ function read_lake_parameters(instant_throughflow)&
                                       additional_flood_redirect_lon_index, &
                                       additional_connect_redirect_lat_index, &
                                       additional_connect_redirect_lon_index, &
+                                      corresponding_surface_cell_lat_index, &
+                                      corresponding_surface_cell_lon_index, &
                                       nlat,nlon, &
                                       nlat_coarse,nlon_coarse, &
+                                      nlat_surface_model,nlon_surface_model, &
                                       instant_throughflow, &
                                       lake_retention_coefficient)
     deallocate(temp_integer_array)
