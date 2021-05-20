@@ -195,7 +195,8 @@ def connect_coarse_lake_catchments(coarse_catchments,lake_centers,basin_catchmen
                     break
         overflow_catchments.get_data()[tuple(lake_center_coords)] = overflow_catchment
     #specific to latlon grid
-    sink_points_array = np.argwhere(river_directions.get_data() == 5)
+    sink_points_array = np.argwhere(np.logical_or(river_directions.get_data() == 5,
+                                                  river_directions.get_data() == -2))
     sink_points_list = [sink_points_array[i,:].tolist()
                          for i in range(sink_points_array.shape[0])]
     catchment_trees = CatchmentTrees()

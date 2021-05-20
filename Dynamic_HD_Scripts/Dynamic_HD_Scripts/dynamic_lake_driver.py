@@ -1017,6 +1017,35 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
                                                  basin_catchment_numbers_fieldname,
                                                  river_directions_fieldname)
 
+    def connect_catchments_for_transient_run(self):
+      base_filepath = "/Users/thomasriddick/Documents/data/lake_transient_data/run_1"
+      dates = range(15990,10950,-10)
+      for date in dates:
+        river_directions_filepath = ("{0}/hdpara_{1}k.nc".format(base_filepath,date))
+        coarse_catchments_filepath = ("{0}/catchments_{1}.nc".format(base_filepath,date))
+        coarse_catchments_fieldname = "catchments"
+        cc.advanced_main(filename=river_directions_filepath,
+                         fieldname="FDIR",
+                         output_filename=coarse_catchments_filepath,
+                         output_fieldname="catchments",
+                         loop_logfile=("{0}/loops_log_{1}.txt".format(base_filepath,date)),
+                         use_cpp_alg=True)
+        lake_parameters_filepath = ("{0}/lakepara_{1}k.nc".format(base_filepath,date))
+        basin_numbers_filepath = ("{0}/lake_numbers_{1}.nc".format(base_filepath,date))
+        connected_coarse_catchments_out_filename = ("{0}/connected_catchments_{1}.nc".\
+                                                    format(base_filepath,date))
+        connected_coarse_catchments_out_fieldname = "catchments"
+        basin_catchment_numbers_fieldname = "lake_number"
+        river_directions_fieldname = "FDIR"
+        cclc.connect_coarse_lake_catchments_driver(coarse_catchments_filepath,
+                                                   lake_parameters_filepath,
+                                                   basin_numbers_filepath,
+                                                   river_directions_filepath,
+                                                   connected_coarse_catchments_out_filename,
+                                                   coarse_catchments_fieldname,
+                                                   connected_coarse_catchments_out_fieldname,
+                                                   basin_catchment_numbers_fieldname,
+                                                   river_directions_fieldname)
 
 def main():
     """Select the revelant runs to make
@@ -1036,7 +1065,8 @@ def main():
     # print(end - start)
     #lake_drivers.prepare_basins_from_glac1D()
     #lake_drivers.extract_lake_volumes_from_glac1D_basins()
-    lake_drivers.connect_catchments_for_glac1D()
+    #lake_drivers.connect_catchments_for_glac1D()
+    lake_drivers.connect_catchments_for_transient_run()
 
 if __name__ == '__main__':
     main()
