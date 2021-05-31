@@ -257,6 +257,8 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
             config.set("general_options","generate_flow_parameters","True")
         if not config.has_option("general_options","print_timing_information"):
             config.set("general_options","print_timing_information","False")
+        if not config.has_optoin("general_options","use_grid_information"):
+            config.set("general_options","use_grid_information","True")
         return config
 
     def no_intermediaries_ten_minute_data_ALG4_no_true_sinks_plus_upscale_rdirs_driver(self):
@@ -268,6 +270,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
 
         config = self._read_and_validate_config()
         print_timing_info = config.getboolean("general_options","print_timing_information")
+        use_grid_info = config.getboolean("general_options","use_grid_information")
         if print_timing_info:
             start_time = timer()
         base_hd_restart_file = path.join(self.ancillary_data_path,"hd_restart_from_hd_file_ten_minute_data_from_virna_"
@@ -294,63 +297,96 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         ls_mask_10min_fieldname = config.get("input_fieldname_options",
                                              "input_landsea_mask_fieldname")
         ls_mask_10min_fieldname = ls_mask_10min_fieldname if ls_mask_10min_fieldname else None
-        ls_mask_10min = dynamic_hd.load_field(self.original_ls_mask_filename,
-                                              file_type=\
-                                              dynamic_hd.get_file_extension(self.original_ls_mask_filename),
-                                              field_type='Generic',
-                                              fieldname=ls_mask_10min_fieldname,
-                                              unmask=False,
-                                              timeslice=None,
-                                              grid_type='LatLong10min')
+        if use_grid_info:
+            ls_mask_10min =  iodriver.advanced_field_loader(self.original_ls_mask_filename,
+                                                            fieldname=ls_mask_10min_fieldname,
+                                                            field_type='Generic')
+        else:
+            ls_mask_10min = dynamic_hd.load_field(self.original_ls_mask_filename,
+                                                  file_type=\
+                                                  dynamic_hd.get_file_extension(self.original_ls_mask_filename),
+                                                  field_type='Generic',
+                                                  fieldname=ls_mask_10min_fieldname,
+                                                  unmask=False,
+                                                  timeslice=None,
+                                                  grid_type='LatLong10min')
         ls_mask_10min.change_dtype(np.int32)
         #Add corrections to orography
         orography_10min_fieldname = config.get("input_fieldname_options",
                                                "input_orography_fieldname")
         orography_10min_fieldname = orography_10min_fieldname if orography_10min_fieldname else None
-        orography_10min = dynamic_hd.load_field(self.original_orography_filename,
-                                                file_type=dynamic_hd.\
-                                                get_file_extension(self.original_orography_filename),
-                                                fieldname=orography_10min_fieldname,
-                                                field_type='Orography', grid_type="LatLong10min")
+        if use_grid_info:
+            orography_10min = iodriver.advanced_field_loader(self.original_orography_filename,
+                                                             fieldname=orography_10min_fieldname,
+                                                             field_type='Orography')
+        else:
+            orography_10min = dynamic_hd.load_field(self.original_orography_filename,
+                                                    file_type=dynamic_hd.\
+                                                    get_file_extension(self.original_orography_filename),
+                                                    fieldname=orography_10min_fieldname,
+                                                    field_type='Orography', grid_type="LatLong10min")
         if self.present_day_base_orography_filename:
             present_day_base_orography_fieldname = config.get("input_fieldname_options",
                                                               "input_base_present_day_orography_fieldname")
             present_day_base_orography_fieldname = present_day_base_orography_fieldname if \
                                                    present_day_base_orography_fieldname else None
-            present_day_base_orography = \
-            dynamic_hd.load_field(self.present_day_base_orography_filename,
-                                  file_type=dynamic_hd.\
-                                  get_file_extension(self.present_day_base_orography_filename),
-                                  field_type='Orography',
-                                  fieldname=present_day_base_orography_fieldname,
-                                  grid_type="LatLong10min")
-            present_day_reference_orography = \
-            dynamic_hd.load_field(present_day_reference_orography_filename,
-                                  file_type=dynamic_hd.\
-                                  get_file_extension(present_day_reference_orography_filename),
-                                  field_type='Orography',
-                                  grid_type="LatLong10min")
+            if use_grid_info:
+                present_day_base_orography = \
+                iodriver.advanced_field_loader(self.present_day_base_orography_filename,
+                                               field_type='Orography',
+                                               fieldname=present_day_base_orography_fieldname)
+            else:
+                present_day_base_orography = \
+                dynamic_hd.load_field(self.present_day_base_orography_filename,
+                                      file_type=dynamic_hd.\
+                                      get_file_extension(self.present_day_base_orography_filename),
+                                      field_type='Orography',
+                                      fieldname=present_day_base_orography_fieldname,
+                                      grid_type="LatLong10min")
+            if use_grid_info:
+                present_day_reference_orography = \
+               iodriver.advanced_field_loader(present_day_reference_orography_filename,
+                                              field_type='Orography',
+                                              fieldname='orog')
+            else:
+                present_day_reference_orography = \
+                dynamic_hd.load_field(present_day_reference_orography_filename,
+                                      file_type=dynamic_hd.\
+                                      get_file_extension(present_day_reference_orography_filename),
+                                      field_type='Orography',
+                                      grid_type="LatLong10min")
             orography_10min = utilities.rebase_orography(orography=orography_10min,
                                                          present_day_base_orography=\
                                                          present_day_base_orography,
                                                          present_day_reference_orography=\
                                                          present_day_reference_orography)
-        orography_corrections_10min =  dynamic_hd.load_field(orography_corrections_filename,
-                                                             file_type=dynamic_hd.\
-                                                             get_file_extension(orography_corrections_filename),
-                                                             field_type='Orography', grid_type="LatLong10min")
+        if use_grid_info:
+            orography_corrections_10min =  iodriver.advanced_field_loader(orography_corrections_filename,
+                                                                          field_type='Orography',
+                                                                          fieldname="field_value")
+        else:
+            orography_corrections_10min =  dynamic_hd.load_field(orography_corrections_filename,
+                                                                 file_type=dynamic_hd.\
+                                                                 get_file_extension(orography_corrections_filename),
+                                                                 field_type='Orography', grid_type="LatLong10min")
         orography_uncorrected_10min = orography_10min.copy()
         orography_10min.add(orography_corrections_10min)
         if self.glacier_mask_filename:
             glacier_mask_10min_fieldname = config.get("input_fieldname_options",
                                                 "input_glacier_mask_fieldname")
             glacier_mask_10min_fieldname = glacier_mask_10min_fieldname if glacier_mask_10min_fieldname else 'sftgif'
-            glacier_mask_10min = dynamic_hd.load_field(self.glacier_mask_filename,
-                                                       file_type=dynamic_hd.\
-                                                       get_file_extension(self.glacier_mask_filename),
-                                                       fieldname=glacier_mask_10min_fieldname,
-                                                       field_type='Orography',
-                                                       unmask=True,grid_type="LatLong10min")
+            if use_grid_info:
+                glacier_mask_10min = \
+                    iodriver.advanced_field_loader(self.glacier_mask_filename,
+                                                   fieldname=glacier_mask_10min_fieldname,
+                                                   field_type='Orography')
+            else:
+                glacier_mask_10min = dynamic_hd.load_field(self.glacier_mask_filename,
+                                                           file_type=dynamic_hd.\
+                                                           get_file_extension(self.glacier_mask_filename),
+                                                           fieldname=glacier_mask_10min_fieldname,
+                                                           field_type='Orography',
+                                                           unmask=True,grid_type="LatLong10min")
             orography_10min = utilities.\
             replace_corrected_orography_with_original_for_glaciated_grid_points(input_corrected_orography=\
                                                                                 orography_10min,
@@ -359,10 +395,17 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                                                 input_glacier_mask=
                                                                                 glacier_mask_10min)
         if config.getboolean("output_options","output_corrected_orog"):
-            dynamic_hd.write_field(path.join(self.working_directory_path,
-                                             "10min_corrected_orog.nc"),
-                                   orography_10min,
-                                   file_type=".nc")
+            if use_grid_info:
+                iodriver.advanced_field_writer(path.join(self.working_directory_path,
+                                                         "10min_corrected_orog.nc"),
+                                               orography_10min,
+                                               fieldname=config.get("output_fieldname_options",
+                                                                    "output_10min_corrected_orog_fieldname"))
+            else:
+                dynamic_hd.write_field(path.join(self.working_directory_path,
+                                                 "10min_corrected_orog.nc"),
+                                       orography_10min,
+                                       file_type=".nc")
         #Fill sinks
         if print_timing_info:
             time_before_river_carving = timer()
@@ -390,15 +433,29 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                catchment_nums_in = catchment_10min.get_data(),
                                                prefer_non_diagonal_initial_dirs = False)
         if config.getboolean("output_options","output_fine_rdirs"):
-            dynamic_hd.write_field(path.join(self.working_directory_path,
-                                             "10min_rdirs.nc"),
-                                   rdirs_10min,
-                                   file_type=".nc")
+            if use_grid_info:
+                iodriver.advanced_field_writer(path.join(self.working_directory_path,
+                                                         "10min_rdirs.nc"),
+                                               rdirs_10min,
+                                               fieldname=config.get("output_fieldname_options",
+                                                                    "output_10min_rdirs_fieldname"))
+            else:
+                dynamic_hd.write_field(path.join(self.working_directory_path,
+                                                 "10min_rdirs.nc"),
+                                       rdirs_10min,
+                                       file_type=".nc")
         if config.getboolean("output_options","output_fine_catchments"):
-            dynamic_hd.write_field(path.join(self.working_directory_path,
-                                             "10min_catchments.nc"),
-                                   catchment_10min,
-                                   file_type=".nc")
+            if use_grid_info:
+                iodriver.advanced_field_writer(path.join(self.working_directory_path,
+                                                         "10min_catchments.nc"),
+                                               catchment_10min,
+                                               fieldname=config.get("output_fieldname_options",
+                                                                    "output_10min_catchments_fieldname"))
+            else:
+                dynamic_hd.write_field(path.join(self.working_directory_path,
+                                                 "10min_catchments.nc"),
+                                       catchment_10min,
+                                       file_type=".nc")
         #Run post processing
         if print_timing_info:
             time_before_10min_post_processing = timer()
@@ -417,15 +474,29 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                                                   get_data()),
                                                   'Generic','LatLong10min')
         if config.getboolean("output_options","output_fine_flowtocell"):
-            dynamic_hd.write_field(path.join(self.working_directory_path,
-                                             "10min_flowtocell.nc"),
-                                   flowtocell_10min,
-                                   file_type=".nc")
+            if use_grid_info:
+                iodriver.advanced_field_writer(path.join(self.working_directory_path,
+                                                         "10min_flowtocell.nc"),
+                                               flowtocell_10min,
+                                               fieldname=config.get("output_fieldname_options",
+                                                                    "output_10min_flowtocell_fieldname"))
+            else:
+                dynamic_hd.write_field(path.join(self.working_directory_path,
+                                                 "10min_flowtocell.nc"),
+                                       flowtocell_10min,
+                                       file_type=".nc")
         if config.getboolean("output_options","output_fine_flowtorivermouths"):
-            dynamic_hd.write_field(path.join(self.working_directory_path,
-                                             "10min_flowtorivermouths.nc"),
-                                   flowtorivermouths_10min,
-                                   file_type=".nc")
+            if use_grid_info:
+                iodriver.advanced_field_writer(path.join(self.working_directory_path,
+                                                         "10min_flowtorivermouths.nc"),
+                                               flowtorivermouths_10min,
+                                               fieldname=config.get("output_fieldname_options",
+                                                                    "output_10min_flowtorivermouths_fieldname"))
+            else:
+                dynamic_hd.write_field(path.join(self.working_directory_path,
+                                                 "10min_flowtorivermouths.nc"),
+                                       flowtorivermouths_10min,
+                                       file_type=".nc")
         #Run Upscaling
         if print_timing_info:
             time_before_upscaling = timer()
@@ -435,10 +506,17 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         rdirs_30min = run_cotat_plus(rdirs_10min, flowtocell_10min,
                                       cotat_plus_parameters_filename,'HD')
         if config.getboolean("output_options","output_pre_loop_removal_course_rdirs"):
-            dynamic_hd.write_field(path.join(self.working_directory_path,
-                                             "30min_pre_loop_removal_rdirs.nc"),
-                                   rdirs_30min,
-                                   file_type=".nc")
+            if use_grid_info:
+                iodriver.advanced_field_writer(path.join(self.working_directory_path,
+                                                         "30min_pre_loop_removal_rdirs.nc"),
+                                               rdirs_30min,
+                                               fieldname=config.get("output_fieldname_options",
+                                                                    "output_30min_pre_loop_removal_rdirs_fieldname"))
+            else:
+                dynamic_hd.write_field(path.join(self.working_directory_path,
+                                                 "30min_pre_loop_removal_rdirs.nc"),
+                                       rdirs_30min,
+                                       file_type=".nc")
         #Post processing
         if print_timing_info:
             time_before_30min_post_processing_one = timer()
@@ -461,20 +539,44 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                                                   get_data()),
                                                   'Generic','HD')
         if config.getboolean("output_options","output_pre_loop_removal_course_flowtocell"):
-            dynamic_hd.write_field(path.join(self.working_directory_path,
-                                             "30min_pre_loop_removal_flowtocell.nc"),
-                                   flowtocell_30min,
-                                   file_type=".nc")
+            if use_grid_info:
+                iodriver.advanced_field_writer(path.join(self.working_directory_path,
+                                                         "30min_pre_loop_removal_flowtocell.nc"),
+                                               flowtocell_30min,
+                                               fieldname=config.get("output_fieldname_options",
+                                                                    "output_30min_pre_loop_removal_"
+                                                                    "flowtocell_fieldname"))
+            else:
+                dynamic_hd.write_field(path.join(self.working_directory_path,
+                                                 "30min_pre_loop_removal_flowtocell.nc"),
+                                       flowtocell_30min,
+                                       file_type=".nc")
         if config.getboolean("output_options","output_pre_loop_removal_course_flowtorivermouths"):
-            dynamic_hd.write_field(path.join(self.working_directory_path,
-                                             "30min_pre_loop_removal_flowtorivermouths.nc"),
-                                   flowtorivermouths_30min,
-                                   file_type=".nc")
+            if use_grid_info:
+                iodriver.advanced_field_writer(path.join(self.working_directory_path,
+                                                         "30min_pre_loop_removal_flowtorivermouths.nc"),
+                                               flowtorivermouths_30min,
+                                               fieldname=config.get("output_fieldname_options",
+                                                                    "output_30min_pre_loop_removal_"
+                                                                    "flowtorivermouths_fieldname"))
+            else:
+                dynamic_hd.write_field(path.join(self.working_directory_path,
+                                                 "30min_pre_loop_removal_flowtorivermouths.nc"),
+                                       flowtorivermouths_30min,
+                                       file_type=".nc")
         if config.getboolean("output_options","output_pre_loop_removal_course_catchments"):
-            dynamic_hd.write_field(path.join(self.working_directory_path,
-                                             "30min_pre_loop_removal_catchments.nc"),
-                                   catchments_30min,
-                                   file_type=".nc")
+            if use_grid_info:
+                iodriver.advanced_field_writer(path.join(self.working_directory_path,
+                                                         "30min_pre_loop_removal_catchments.nc"),
+                                               catchments_30min,
+                                               fieldname=config.get("output_fieldname_options",
+                                                                    "output_30min_pre_loop_removal"
+                                                                    "_catchments_fieldname"))
+            else:
+                dynamic_hd.write_field(path.join(self.working_directory_path,
+                                                 "30min_pre_loop_removal_catchments.nc"),
+                                       catchments_30min,
+                                       file_type=".nc")
         #Run Loop Breaker
         if print_timing_info:
             time_before_loop_breaker = timer()
@@ -492,18 +594,32 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                        flowtocell_10min,loop_nums_list,
                                        course_grid_type="HD")
         if config.getboolean("output_options","output_course_rdirs"):
-            dynamic_hd.write_field(path.join(self.working_directory_path,
-                                             "30min_rdirs.nc"),
-                                   rdirs_30min,
-                                   file_type=".nc")
+            if use_grid_info:
+                iodriver.advanced_field_writer(path.join(self.working_directory_path,
+                                                         "30min_rdirs.nc"),
+                                               rdirs_30min,
+                                               fieldname=config.get("output_fieldname_options",
+                                                                    "output_30min_rdirs_fieldname"))
+            else:
+                dynamic_hd.write_field(path.join(self.working_directory_path,
+                                                 "30min_rdirs.nc"),
+                                       rdirs_30min,
+                                       file_type=".nc")
         #Upscale the orography to the HD grid for calculating the flow parameters
         orography_30min= utilities.upscale_field(orography_10min,"HD","Sum",{},
                                                  scalenumbers=True)
         if config.getboolean("output_options","output_course_unfilled_orog"):
-            dynamic_hd.write_field(path.join(self.working_directory_path,
-                                             "30min_unfilled_orog.nc"),
-                                   orography_30min,
-                                   file_type=".nc")
+            if use_grid_info:
+                iodriver.advanced_field_writer(path.join(self.working_directory_path,
+                                                         "30min_unfilled_orog.nc"),
+                                               orography_30min,
+                                               fieldname=config.get("output_fieldname_options",
+                                                                    "output_30min_unfilled_orog_fieldname"))
+            else:
+                dynamic_hd.write_field(path.join(self.working_directory_path,
+                                                 "30min_unfilled_orog.nc"),
+                                       orography_30min,
+                                       file_type=".nc")
         #Extract HD ls mask from river directions
         ls_mask_30min = field.RiverDirections(rdirs_30min.get_lsmask(),grid='HD')
         #Fill HD orography for parameter generation
@@ -523,10 +639,17 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                add_slope = False,
                                                epsilon = 0.0)
         if config.getboolean("output_options","output_course_filled_orog"):
-            dynamic_hd.write_field(path.join(self.working_directory_path,
-                                             "30min_filled_orog.nc"),
-                                   orography_30min,
-                                   file_type=".nc")
+            if use_grid_info:
+                iodriver.advanced_field_writer(path.join(self.working_directory_path,
+                                                         "30min_filled_orog.nc"),
+                                               orography_30min,
+                                               fieldname=config.get("output_fieldname_options",
+                                                                    "output_30min_filled_orog_fieldname"))
+            else:
+                dynamic_hd.write_field(path.join(self.working_directory_path,
+                                                 "30min_filled_orog.nc"),
+                                       orography_30min,
+                                       file_type=".nc")
         #Transform any necessary field into the necessary format and save ready for parameter generation
         if print_timing_info:
             time_before_parameter_generation = timer()
@@ -618,20 +741,41 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                                                   get_data()),
                                                   'Generic','HD')
         if config.getboolean("output_options","output_course_flowtocell"):
-            dynamic_hd.write_field(path.join(self.working_directory_path,
-                                             "30min_flowtocell.nc"),
-                                   flowtocell_30min,
-                                   file_type=".nc")
+            if use_grid_info:
+                iodriver.advanced_field_writer(path.join(self.working_directory_path,
+                                                         "30min_flowtocell.nc"),
+                                               flowtocell_30min,
+                                               fieldname=config.get("output_fieldname_options",
+                                                                    "output_30min_flowtocell_fieldname"))
+            else:
+                dynamic_hd.write_field(path.join(self.working_directory_path,
+                                                 "30min_flowtocell.nc"),
+                                       flowtocell_30min,
+                                       file_type=".nc")
         if config.getboolean("output_options","output_course_flowtorivermouths"):
-            dynamic_hd.write_field(path.join(self.working_directory_path,
-                                             "30min_flowtorivermouths.nc"),
-                                   flowtorivermouths_30min,
-                                   file_type=".nc")
+            if use_grid_info:
+                iodriver.advanced_field_writer(path.join(self.working_directory_path,
+                                                         "30min_flowtorivermouths.nc"),
+                                               flowtorivermouths_30min,
+                                               fieldname=config.get("output_fieldname_options",
+                                                                    "output_30min_flowtorivermouths_fieldname"))
+            else:
+                dynamic_hd.write_field(path.join(self.working_directory_path,
+                                                 "30min_flowtorivermouths.nc"),
+                                       flowtorivermouths_30min,
+                                       file_type=".nc")
         if config.getboolean("output_options","output_course_catchments"):
-            dynamic_hd.write_field(path.join(self.working_directory_path,
-                                             "30min_catchments.nc"),
-                                   catchments_30min,
-                                   file_type=".nc")
+            if use_grid_info:
+                iodriver.advanced_field_writer(path.join(self.working_directory_path,
+                                                         "30min_catchments.nc"),
+                                               catchments_30min,
+                                               fieldname=config.get("output_fieldname_options",
+                                                                    "output_30min_catchments_fieldname"))
+            else:
+                dynamic_hd.write_field(path.join(self.working_directory_path,
+                                                 "30min_catchments.nc"),
+                                       catchments_30min,
+                                       file_type=".nc")
         if print_timing_info:
             end_time = timer()
             print "---- Timing info ----"
