@@ -257,7 +257,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
             config.set("general_options","generate_flow_parameters","True")
         if not config.has_option("general_options","print_timing_information"):
             config.set("general_options","print_timing_information","False")
-        if not config.has_optoin("general_options","use_grid_information"):
+        if not config.has_option("general_options","use_grid_information"):
             config.set("general_options","use_grid_information","True")
         return config
 
