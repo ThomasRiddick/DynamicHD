@@ -17,6 +17,7 @@ import shutil
 from timeit import default_timer as timer
 import libs.fill_sinks_wrapper as fill_sinks_wrapper
 import dynamic_hd_driver as dyn_hd_dr
+import iodriver
 import compute_catchments as comp_catchs
 from Dynamic_HD_Scripts.field import Field, RiverDirections
 from flow_to_grid_cell import create_hypothetical_river_paths_map
