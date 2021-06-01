@@ -287,7 +287,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
             orography_corrections_filename = path.join(self.ancillary_data_path,
                                                        "orog_corrs_field_ICE5G_and_tarasov_upscaled_"
                                                        "srtm30plus_north_america_only_data_ALG4_sinkless"
-                                                       "_glcc_olson_lsmask_0k_20170517_003802.nc")
+                                                       "_glcc_olson_lsmask_0k_20170517_003802_with_grid.nc")
         else:
             #This is deprecated; don't use except for in unit testing. This file will NOT be present
             #in the folder provided for online running
@@ -400,7 +400,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                 iodriver.advanced_field_writer(path.join(self.working_directory_path,
                                                          "10min_corrected_orog.nc"),
                                                orography_10min,
-                                               fieldname=config.get("output_fieldname_options",
+                                               fieldname=config.get("output_options",
                                                                     "output_10min_corrected_orog_fieldname"))
             else:
                 dynamic_hd.write_field(path.join(self.working_directory_path,
@@ -438,7 +438,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                 iodriver.advanced_field_writer(path.join(self.working_directory_path,
                                                          "10min_rdirs.nc"),
                                                rdirs_10min,
-                                               fieldname=config.get("output_fieldname_options",
+                                               fieldname=config.get("output_options",
                                                                     "output_10min_rdirs_fieldname"))
             else:
                 dynamic_hd.write_field(path.join(self.working_directory_path,
@@ -450,7 +450,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                 iodriver.advanced_field_writer(path.join(self.working_directory_path,
                                                          "10min_catchments.nc"),
                                                catchment_10min,
-                                               fieldname=config.get("output_fieldname_options",
+                                               fieldname=config.get("output_options",
                                                                     "output_10min_catchments_fieldname"))
             else:
                 dynamic_hd.write_field(path.join(self.working_directory_path,
@@ -479,7 +479,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                 iodriver.advanced_field_writer(path.join(self.working_directory_path,
                                                          "10min_flowtocell.nc"),
                                                flowtocell_10min,
-                                               fieldname=config.get("output_fieldname_options",
+                                               fieldname=config.get("output_options",
                                                                     "output_10min_flowtocell_fieldname"))
             else:
                 dynamic_hd.write_field(path.join(self.working_directory_path,
@@ -491,7 +491,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                 iodriver.advanced_field_writer(path.join(self.working_directory_path,
                                                          "10min_flowtorivermouths.nc"),
                                                flowtorivermouths_10min,
-                                               fieldname=config.get("output_fieldname_options",
+                                               fieldname=config.get("output_options",
                                                                     "output_10min_flowtorivermouths_fieldname"))
             else:
                 dynamic_hd.write_field(path.join(self.working_directory_path,
@@ -511,7 +511,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                 iodriver.advanced_field_writer(path.join(self.working_directory_path,
                                                          "30min_pre_loop_removal_rdirs.nc"),
                                                rdirs_30min,
-                                               fieldname=config.get("output_fieldname_options",
+                                               fieldname=config.get("output_options",
                                                                     "output_30min_pre_loop_removal_rdirs_fieldname"))
             else:
                 dynamic_hd.write_field(path.join(self.working_directory_path,
@@ -544,7 +544,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                 iodriver.advanced_field_writer(path.join(self.working_directory_path,
                                                          "30min_pre_loop_removal_flowtocell.nc"),
                                                flowtocell_30min,
-                                               fieldname=config.get("output_fieldname_options",
+                                               fieldname=config.get("output_options",
                                                                     "output_30min_pre_loop_removal_"
                                                                     "flowtocell_fieldname"))
             else:
@@ -557,7 +557,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                 iodriver.advanced_field_writer(path.join(self.working_directory_path,
                                                          "30min_pre_loop_removal_flowtorivermouths.nc"),
                                                flowtorivermouths_30min,
-                                               fieldname=config.get("output_fieldname_options",
+                                               fieldname=config.get("output_options",
                                                                     "output_30min_pre_loop_removal_"
                                                                     "flowtorivermouths_fieldname"))
             else:
@@ -570,7 +570,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                 iodriver.advanced_field_writer(path.join(self.working_directory_path,
                                                          "30min_pre_loop_removal_catchments.nc"),
                                                catchments_30min,
-                                               fieldname=config.get("output_fieldname_options",
+                                               fieldname=config.get("output_options",
                                                                     "output_30min_pre_loop_removal"
                                                                     "_catchments_fieldname"))
             else:
@@ -599,7 +599,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                 iodriver.advanced_field_writer(path.join(self.working_directory_path,
                                                          "30min_rdirs.nc"),
                                                rdirs_30min,
-                                               fieldname=config.get("output_fieldname_options",
+                                               fieldname=config.get("output_options",
                                                                     "output_30min_rdirs_fieldname"))
             else:
                 dynamic_hd.write_field(path.join(self.working_directory_path,
@@ -614,7 +614,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                 iodriver.advanced_field_writer(path.join(self.working_directory_path,
                                                          "30min_unfilled_orog.nc"),
                                                orography_30min,
-                                               fieldname=config.get("output_fieldname_options",
+                                               fieldname=config.get("output_options",
                                                                     "output_30min_unfilled_orog_fieldname"))
             else:
                 dynamic_hd.write_field(path.join(self.working_directory_path,
@@ -644,7 +644,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                 iodriver.advanced_field_writer(path.join(self.working_directory_path,
                                                          "30min_filled_orog.nc"),
                                                orography_30min,
-                                               fieldname=config.get("output_fieldname_options",
+                                               fieldname=config.get("output_options",
                                                                     "output_30min_filled_orog_fieldname"))
             else:
                 dynamic_hd.write_field(path.join(self.working_directory_path,
@@ -746,7 +746,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                 iodriver.advanced_field_writer(path.join(self.working_directory_path,
                                                          "30min_flowtocell.nc"),
                                                flowtocell_30min,
-                                               fieldname=config.get("output_fieldname_options",
+                                               fieldname=config.get("output_options",
                                                                     "output_30min_flowtocell_fieldname"))
             else:
                 dynamic_hd.write_field(path.join(self.working_directory_path,
@@ -758,7 +758,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                 iodriver.advanced_field_writer(path.join(self.working_directory_path,
                                                          "30min_flowtorivermouths.nc"),
                                                flowtorivermouths_30min,
-                                               fieldname=config.get("output_fieldname_options",
+                                               fieldname=config.get("output_options",
                                                                     "output_30min_flowtorivermouths_fieldname"))
             else:
                 dynamic_hd.write_field(path.join(self.working_directory_path,
@@ -770,7 +770,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                 iodriver.advanced_field_writer(path.join(self.working_directory_path,
                                                          "30min_catchments.nc"),
                                                catchments_30min,
-                                               fieldname=config.get("output_fieldname_options",
+                                               fieldname=config.get("output_options",
                                                                     "output_30min_catchments_fieldname"))
             else:
                 dynamic_hd.write_field(path.join(self.working_directory_path,
