@@ -278,9 +278,9 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                  "output_30min_pre_loop_removal_flow_to_cell"):
             config.set("output_fieldname_options","output_30min_pre_loop_removal_flow_to_cell")
         if not config.has_option("output_fieldname_options",
-                                 "output_30min_pre_loop_removal_flow_to_river_mouth"):
+                                 "output_30min_pre_loop_removal_flow_to_river_mouths"):
             config.set("output_fieldname_options",
-                       "output_30min_pre_loop_removal_flow_to_river_mouth")
+                       "output_30min_pre_loop_removal_flow_to_river_mouths")
         if not config.has_option("output_fieldname_options",
                                  "output_30min_pre_loop_removal_catchments"):
             config.set("output_fieldname_options",
