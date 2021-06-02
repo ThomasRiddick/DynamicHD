@@ -24,19 +24,5 @@
 			],
 			"path": "."
 		}
-	],
-	"settings":
-	{
-		"project_environment":
-		{
-			"osx":
-			{
-				"env":
-				{
-					"JULIA_LOAD_PATH": "/Users/thomasriddick/Documents/workspace/Dynamic_HD_Code/Dynamic_HD_Julia_Code/:",
-					"PYTHONPATH": "/Users/thomasriddick/Documents/workspace/Dynamic_HD_Code/Dynamic_HD_Scripts"
-				}
-			}
-		}
-	}
+	]
 }

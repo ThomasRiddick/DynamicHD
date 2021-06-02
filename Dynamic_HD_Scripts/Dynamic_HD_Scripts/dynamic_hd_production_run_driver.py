@@ -196,6 +196,99 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         self.no_intermediaries_ten_minute_data_ALG4_no_true_sinks_plus_upscale_rdirs_driver()
         return self.output_hdparas_filepath,self.output_hdstart_filepath
 
+    def trial_run_using_ice6g_present_day_data_and_grid_info(self):
+        """Run a full trial using present day ICE6G data"""
+        super(Dynamic_HD_Production_Run_Drivers,self).__init__()
+        file_label = self._generate_file_label()
+        self.original_orography_filename=path.join(self.orography_path,
+                                                   "Ice6g_c_VM5a_10min_0k.nc")
+        self.original_ls_mask_filename=path.join(self.ls_masks_path,
+                                                 "10min_ice6g_lsmask_with_disconnected_point_removed_0k_with_grid.nc")
+        self.present_day_base_orography_filename=path.join(self.orography_path,
+                                                           "Ice6g_c_VM5a_10min_0k.nc")
+        self.glacier_mask_filename=path.join(self.orography_path,
+                                             "Ice6g_c_VM5a_10min_0k.nc")
+        self.output_hdparas_filepath="/Users/thomasriddick/Documents/data/temp/hdpara_{0}.nc".format(file_label)
+        self.ancillary_data_path="/Users/thomasriddick/Documents/data/HDancillarydata"
+        self.working_directory_path="/Users/thomasriddick/Documents/data/temp/temp_workdir_2017_data"
+        self.output_hdstart_filepath="/Users/thomasriddick/Documents/data/temp/hdstart_{0}.nc".format(file_label)
+        self.python_config_filename=path.join("/Users/thomasriddick/Documents/data/HDancillarydata_grid_info/"
+                                              "dynamic_hd_production_driver.cfg")
+        self.tarasov_based_orog_correction=True
+        self.compile_paragen_and_hdfile()
+        self.no_intermediaries_ten_minute_data_ALG4_no_true_sinks_plus_upscale_rdirs_driver()
+        return self.output_hdparas_filepath,self.output_hdstart_filepath
+
+    def trial_run_using_ice6g_lgm_day_data_and_grid_info(self):
+        """Run a full trial using LGM ICE6G data"""
+        super(Dynamic_HD_Production_Run_Drivers,self).__init__()
+        file_label = self._generate_file_label()
+        self.original_orography_filename=path.join(self.orography_path,
+                                                   "Ice6g_c_VM5a_10min_21k.nc")
+        self.original_ls_mask_filename=path.join(self.ls_masks_path,
+                                                 "10min_ice6g_lsmask_with_disconnected_point_removed_21k_with_grid.nc")
+        self.present_day_base_orography_filename=path.join(self.orography_path,
+                                                           "Ice6g_c_VM5a_10min_0k.nc")
+        self.glacier_mask_filename=path.join(self.orography_path,
+                                             "Ice6g_c_VM5a_10min_21k.nc")
+        self.output_hdparas_filepath="/Users/thomasriddick/Documents/data/temp/hdpara_{0}.nc".format(file_label)
+        self.ancillary_data_path="/Users/thomasriddick/Documents/data/HDancillarydata"
+        self.working_directory_path="/Users/thomasriddick/Documents/data/temp/temp_workdir_2017_data"
+        self.output_hdstart_filepath="/Users/thomasriddick/Documents/data/temp/hdstart_{0}.nc".format(file_label)
+        self.python_config_filename=path.join("/Users/thomasriddick/Documents/data/HDancillarydata_grid_info/"
+                                              "dynamic_hd_production_driver.cfg")
+        self.tarasov_based_orog_correction=True
+        self.compile_paragen_and_hdfile()
+        self.no_intermediaries_ten_minute_data_ALG4_no_true_sinks_plus_upscale_rdirs_driver()
+        return self.output_hdparas_filepath,self.output_hdstart_filepath
+
+    def trial_run_using_ice6g_present_day_data_with_specified_fieldnames_and_grid_info(self):
+        """Run a full trial using present day ICE6G data and specified fieldnames"""
+        super(Dynamic_HD_Production_Run_Drivers,self).__init__()
+        file_label = self._generate_file_label()
+        self.original_orography_filename=path.join(self.orography_path,
+                                                   "Ice6g_c_VM5a_10min_0k.nc")
+        self.original_ls_mask_filename=path.join(self.ls_masks_path,
+                                                 "10min_ice6g_lsmask_with_disconnected_point_removed_0k_with_grid.nc")
+        self.present_day_base_orography_filename=path.join(self.orography_path,
+                                                           "Ice6g_c_VM5a_10min_0k.nc")
+        self.glacier_mask_filename=path.join(self.orography_path,
+                                             "Ice6g_c_VM5a_10min_0k.nc")
+        self.output_hdparas_filepath="/Users/thomasriddick/Documents/data/temp/hdpara_{0}.nc".format(file_label)
+        self.ancillary_data_path="/Users/thomasriddick/Documents/data/HDancillarydata"
+        self.working_directory_path="/Users/thomasriddick/Documents/data/temp/temp_workdir_2017_data"
+        self.output_hdstart_filepath="/Users/thomasriddick/Documents/data/temp/hdstart_{0}.nc".format(file_label)
+        self.python_config_filename=path.join("/Users/thomasriddick/Documents/data/"
+                                              "HDancillarydata_specified_fieldnames_grid_info/"
+                                              "dynamic_hd_production_driver.cfg")
+        self.tarasov_based_orog_correction=True
+        self.compile_paragen_and_hdfile()
+        self.no_intermediaries_ten_minute_data_ALG4_no_true_sinks_plus_upscale_rdirs_driver()
+        return self.output_hdparas_filepath,self.output_hdstart_filepath
+
+    def trial_run_using_ice6g_lgm_day_data_with_specified_fieldnames_and_grid_info(self):
+        """Run a full trial using LGM ICE6G data and specified fieldnames"""
+        super(Dynamic_HD_Production_Run_Drivers,self).__init__()
+        file_label = self._generate_file_label()
+        self.original_orography_filename=path.join(self.orography_path,
+                                                   "Ice6g_c_VM5a_10min_21k.nc")
+        self.original_ls_mask_filename=path.join(self.ls_masks_path,
+                                                 "10min_ice6g_lsmask_with_disconnected_point_removed_21k_with_grid.nc")
+        self.present_day_base_orography_filename=path.join(self.orography_path,
+                                                           "Ice6g_c_VM5a_10min_0k.nc")
+        self.glacier_mask_filename=path.join(self.orography_path,
+                                             "Ice6g_c_VM5a_10min_21k.nc")
+        self.output_hdparas_filepath="/Users/thomasriddick/Documents/data/temp/hdpara_{0}.nc".format(file_label)
+        self.ancillary_data_path="/Users/thomasriddick/Documents/data/HDancillarydata"
+        self.working_directory_path="/Users/thomasriddick/Documents/data/temp/temp_workdir_2017_data"
+        self.output_hdstart_filepath="/Users/thomasriddick/Documents/data/temp/hdstart_{0}.nc".format(file_label)
+        self.python_config_filename=path.join("/Users/thomasriddick/Documents/data/"
+                                              "HDancillarydata_specified_fieldnames_grid_info/"
+                                              "dynamic_hd_production_driver.cfg")
+        self.tarasov_based_orog_correction=True
+        self.compile_paragen_and_hdfile()
+        self.no_intermediaries_ten_minute_data_ALG4_no_true_sinks_plus_upscale_rdirs_driver()
+        return self.output_hdparas_filepath,self.output_hdstart_filepath
 
     def _read_and_validate_config(self):
         """Reads and checks format of config file
@@ -455,8 +548,9 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         catchment_10min = Field(np.zeros(grid_dims_10min,dtype=np.int32,order='C'),grid='LatLong10min')
         next_cell_lat_index_in_10min = np.zeros(grid_dims_10min,dtype=np.int32,order='C')
         next_cell_lon_index_in_10min = np.zeros(grid_dims_10min,dtype=np.int32,order='C')
-        ls_mask_10min.flip_data_ud()
-        orography_10min.flip_data_ud()
+        if not use_grid_info:
+            ls_mask_10min.flip_data_ud()
+            orography_10min.flip_data_ud()
         fill_sinks_wrapper.fill_sinks_cpp_func(orography_array=np.ascontiguousarray(orography_10min.get_data(), #@UndefinedVariable
                                                                                     dtype=np.float64),
                                                method = 4,
@@ -697,19 +791,22 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         transformed_HD_filled_orography_filename = path.join(self.working_directory_path,"30minute_filled_orog_temp.nc")
         transformed_HD_ls_mask_filename = path.join(self.working_directory_path,"30minute_ls_mask_temp.nc")
         half_degree_grid_filepath = path.join(self.ancillary_data_path,"grid_0_5.txt")
-        rdirs_30min.rotate_field_by_a_hundred_and_eighty_degrees()
+        if not use_grid_info:
+            rdirs_30min.rotate_field_by_a_hundred_and_eighty_degrees()
         dynamic_hd.write_field(filename=transformed_course_rdirs_filename,
                                field=rdirs_30min,
                                file_type=\
                                dynamic_hd.get_file_extension(transformed_course_rdirs_filename),
                                griddescfile=half_degree_grid_filepath)
-        orography_30min.rotate_field_by_a_hundred_and_eighty_degrees()
+        if not use_grid_info:
+            orography_30min.rotate_field_by_a_hundred_and_eighty_degrees()
         dynamic_hd.write_field(filename=transformed_HD_filled_orography_filename,
                                field=orography_30min,
                                file_type=dynamic_hd.\
                                get_file_extension(transformed_HD_filled_orography_filename),
                                griddescfile=half_degree_grid_filepath)
-        ls_mask_30min.rotate_field_by_a_hundred_and_eighty_degrees()
+        if not use_grid_info:
+            ls_mask_30min.rotate_field_by_a_hundred_and_eighty_degrees()
         ls_mask_30min.invert_data()
         dynamic_hd.write_field(filename=transformed_HD_ls_mask_filename,
                                field=ls_mask_30min,

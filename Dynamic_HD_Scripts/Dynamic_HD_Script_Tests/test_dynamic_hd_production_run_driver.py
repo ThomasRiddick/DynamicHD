@@ -61,6 +61,24 @@ class Test_Dynamic_HD_Production_Run_Drivers(unittest.TestCase):
         files_to_remove = ["bas_k.dat","global.inp","over_k.dat","over_vel.dat","riv_k.dat",
                            "riv_vel.dat","soil_partab.txt","ddir.inp","hdpara.srv","over_n.dat",
                            "paragen.inp","riv_n.dat","slope.dat",os.path.join(self.temp_dir),"paragen"]
+        temp_dir = "/Users/thomasriddick/Documents/data/temp/temp_workdir_2017_data/"
+        further_files_to_remove = ["10min_catchments.nc","10min_corrected_orog.nc",
+                                   "10min_flow_to_river_mouths.nc","10min_flowtocell.nc",
+                                   "10min_flowtorivermouths.nc","10min_rdirs.nc",
+                                   "30min_catchments.nc","30min_filled_orog.nc",
+                                   "30min_flowtocell.nc","30min_flowtorivermouths.nc",
+                                   "30min_pre_loop_removal_catchments.nc",
+                                   "30min_pre_loop_removal_flowtocell.nc",
+                                   "30min_pre_loop_removal_flowtorivermouths.nc",
+                                   "30min_pre_loop_removal_rdirs.nc",
+                                   "30min_rdirs.nc","30min_unfilled_orog.nc",
+                                   "30minute_filled_orog_temp.dat",
+                                   "30minute_filled_orog_temp.nc",
+                                   "30minute_ls_mask_temp.dat","30minute_ls_mask_temp.nc",
+                                   "30minute_river_dirs_temp.dat","30minute_river_dirs_temp.nc",
+                                   "loops.log"]
+        files_to_remove.extend([os.path.join(temp_dir,file) for
+                                file in further_files_to_remove])
         for filename in files_to_remove:
             try:
                 os.remove(filename)
@@ -161,6 +179,66 @@ class Test_Dynamic_HD_Production_Run_Drivers(unittest.TestCase):
         """Run a trial using ICE6G LGM data with specified fieldnames"""
         output_hdparas_filepath,output_hdstart_filepath =\
             self.driver.trial_run_using_ice6g_lgm_day_data_with_specified_fieldnames()
+        hdpara_diff_out = self.cdo_instance.diff(input=[output_hdparas_filepath,
+                                                        self.hdpara_offline_run_result_for_comparison_ice6g_21k_data])
+        hdstart_diff_out  = self.cdo_instance.diff(input=[output_hdstart_filepath,
+                                                          self.hdstart_offline_run_result_for_comparison_ice6g_21k_data])
+        self.assertTrue(not hdpara_diff_out and hdpara_diff_out is not None,
+                        "Trial of production script doesn't produce expected"
+                        " hdpara file for ICE6G 21k")
+        self.assertTrue(not hdstart_diff_out and hdstart_diff_out is not None,
+                        "Trial of production script doesn't produce expected"
+                        " hdstart file for ICE6G 21k")
+
+    def testTrialUsingICE6GPresentDataAndGridInfo(self):
+        """Run a trial using ICE6G present day data"""
+        output_hdparas_filepath,output_hdstart_filepath =\
+            self.driver.trial_run_using_ice6g_present_day_data_and_grid_info()
+        hdpara_diff_out = self.cdo_instance.diff(input=[output_hdparas_filepath,
+                                                        self.hdpara_offline_run_result_for_comparison_ice6g_0k_data])
+        hdstart_diff_out  = self.cdo_instance.diff(input=[output_hdstart_filepath,
+                                                          self.hdstart_offline_run_result_for_comparison_ice6g_0k_data])
+        self.assertTrue(not hdpara_diff_out and hdpara_diff_out is not None,
+                        "Trial of production script doesn't produce expected"
+                        " hdpara file for ICE6G 0k")
+        self.assertTrue(not hdstart_diff_out and hdstart_diff_out is not None,
+                        "Trial of production script doesn't produce expected"
+                        " hdstart file for ICE6G 0k")
+
+    def testTrialUsingICE6GLGMDataAndGridInfo(self):
+        """Run a trial using ICE6G LGM day data"""
+        output_hdparas_filepath,output_hdstart_filepath =\
+            self.driver.trial_run_using_ice6g_lgm_day_data_and_grid_info()
+        hdpara_diff_out = self.cdo_instance.diff(input=[output_hdparas_filepath,
+                                                        self.hdpara_offline_run_result_for_comparison_ice6g_21k_data])
+        hdstart_diff_out  = self.cdo_instance.diff(input=[output_hdstart_filepath,
+                                                          self.hdstart_offline_run_result_for_comparison_ice6g_21k_data])
+        self.assertTrue(not hdpara_diff_out and hdpara_diff_out is not None,
+                        "Trial of production script doesn't produce expected"
+                        " hdpara file for ICE6G 21k")
+        self.assertTrue(not hdstart_diff_out and hdstart_diff_out is not None,
+                        "Trial of production script doesn't produce expected"
+                        " hdstart file for ICE6G 21k")
+
+    def testTrialUsingICE6GPresentDataWithSpecifiedFieldnamesAndGridInfo(self):
+        """Run a trial using ICE6G present day data with specified fieldnames"""
+        output_hdparas_filepath,output_hdstart_filepath =\
+            self.driver.trial_run_using_ice6g_present_day_data_with_specified_fieldnames_and_grid_info()
+        hdpara_diff_out = self.cdo_instance.diff(input=[output_hdparas_filepath,
+                                                        self.hdpara_offline_run_result_for_comparison_ice6g_0k_data])
+        hdstart_diff_out  = self.cdo_instance.diff(input=[output_hdstart_filepath,
+                                                          self.hdstart_offline_run_result_for_comparison_ice6g_0k_data])
+        self.assertTrue(not hdpara_diff_out and hdpara_diff_out is not None,
+                        "Trial of production script doesn't produce expected"
+                        " hdpara file for ICE6G 0k")
+        self.assertTrue(not hdstart_diff_out and hdstart_diff_out is not None,
+                        "Trial of production script doesn't produce expected"
+                        " hdstart file for ICE6G 0k")
+
+    def testTrialUsingICE6GLGMDataWithSpecifiedFieldnamesAndGridInfo(self):
+        """Run a trial using ICE6G LGM data with specified fieldnames"""
+        output_hdparas_filepath,output_hdstart_filepath =\
+            self.driver.trial_run_using_ice6g_lgm_day_data_with_specified_fieldnames_and_grid_info()
         hdpara_diff_out = self.cdo_instance.diff(input=[output_hdparas_filepath,
                                                         self.hdpara_offline_run_result_for_comparison_ice6g_21k_data])
         hdstart_diff_out  = self.cdo_instance.diff(input=[output_hdstart_filepath,
