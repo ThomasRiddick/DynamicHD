@@ -8,15 +8,15 @@ Created on Dec 15, 2015
 
 import unittest
 import numpy as np
-import Dynamic_HD_Scripts.dynamic_hd as dynamic_hd
-import Dynamic_HD_Scripts.iohelper as iohelper
-import Dynamic_HD_Scripts.grid as gd
+from Dynamic_HD_Scripts import dynamic_hd
+from Dynamic_HD_Scripts import iohelper
+from Dynamic_HD_Scripts import grid as gd
 import sys
 import scipy.io as scipyio
 import os
-import Dynamic_HD_Scripts.field as fld
-import Dynamic_HD_Scripts.f2py_manager as f2py_manager
-from context import fortran_source_path,data_dir
+from Dynamic_HD_Scripts import field as fld
+from Dynamic_HD_Scripts import f2py_manager
+from Dynamic_HD_Script_Tests.context import fortran_source_path,data_dir
 
 class MainTestCase(unittest.TestCase):
     """Test top-level functions of the dynamic HD scripts with real and hypothetical data"""
@@ -48,7 +48,7 @@ class MainTestCase(unittest.TestCase):
 
     def create_files(self,filesdict):
         """Creates files from a dictionary of file paths and fields"""
-        for filename,field in filesdict.iteritems():
+        for filename,field in list(filesdict.items()):
             try:
                 os.remove(filename)
             except:
@@ -76,17 +76,17 @@ class MainTestCase(unittest.TestCase):
     def testUsingCurrentOrography(self):
         """Test generating river flow directions from a Stefan's manually corrected 0.5 orography compared to a blank orography"""
         if self.printout:
-            print "Starting prepartion of real data test"
+            print("Starting prepartion of real data test")
         #setup the base orography as being 10E7 so there are changes everywhere
         base_test_orography = np.zeros((360,720),dtype=np.float64)
         base_test_orography.fill(1.0e+7)
         if self.printout:
-            print base_test_orography
+            print(base_test_orography)
         #setup the base river direction as being -999 to indicate missing data
         base_river_directions = np.zeros((360,720),dtype=np.int64)
         base_river_directions.fill(-999)
         if self.printout:
-            print base_river_directions
+            print(base_river_directions)
         filesdict = {"base_blank_orography":base_test_orography,
                      "base_blank_river_directions":base_river_directions}
         self.create_files(filesdict)
@@ -146,7 +146,7 @@ class MainTestCase(unittest.TestCase):
     def ComplexHypotheticalCaseTestHelper(self):
         """Setup common elments of a hypothetical test case on the HD grid"""
         if self.printout:
-            print "Starting preperation of hypothetical data test"
+            print("Starting preperation of hypothetical data test")
         #setup the base orography
         base_test_orography = np.zeros((360,720),dtype=np.float64)
         ygrad = 0.1
@@ -156,14 +156,14 @@ class MainTestCase(unittest.TestCase):
             for j in range(400,720):
                 base_test_orography[i,j] = 40.0 - (j-400)*0.1 - i*ygrad
         if self.printout:
-            print base_test_orography
+            print(base_test_orography)
         #add in some changes
         new_test_orography = np.copy(base_test_orography)
         for i in range(0,360):
             for j in range(400,720):
                 new_test_orography[i,j] = j*0.1 - i*ygrad
         if self.printout:
-            print new_test_orography
+            print(new_test_orography)
         #add in a band of orography in the corrected base orography to see if it
         #correctly appears where river directions have no been updated and doesn't
         #where they have been updated
@@ -174,7 +174,7 @@ class MainTestCase(unittest.TestCase):
         base_river_directions[:180,] = 4
         base_river_directions[180:,] = 6
         if self.printout:
-            print base_river_directions
+            print(base_river_directions)
         filesdict = {"base_test_orography":base_test_orography,
                       "new_test_orography":new_test_orography,
                       "base_river_directions":base_river_directions,
@@ -245,7 +245,7 @@ class MainTestCase(unittest.TestCase):
             for j in range(0,720):
                 base_test_orography[i,j] = xgrad*i + ygrad*j
         if self.printout:
-            print base_test_orography
+            print(base_test_orography)
         #add in some changes
         new_test_orography = np.copy(base_test_orography)
         for i in range(0,360):
@@ -255,7 +255,7 @@ class MainTestCase(unittest.TestCase):
                 new_test_orography[i,j] = 10*xgrad*i + 10*ygrad*j
         new_test_orography = new_test_orography + 57.0
         if self.printout:
-            print new_test_orography
+            print(new_test_orography)
         #add in a band of orography in the corrected base orography to see if it
         #correctly appears where river directions have no been updated and doesn't
         #where they have been updated
@@ -266,7 +266,7 @@ class MainTestCase(unittest.TestCase):
         base_river_directions[:180,] = 4
         base_river_directions[180:,] = 6
         if self.printout:
-            print base_river_directions
+            print(base_river_directions)
         filesdict = {"base_test_orography_gc":base_test_orography,
                       "new_test_orography_gc":new_test_orography,
                       "base_river_directions_gc":base_river_directions,
@@ -478,7 +478,7 @@ class fieldOperationTestCase(unittest.TestCase):
                                                            [3,2,1,3,2],
                                                            [6,1,4,6,5]])
 
-    empty_field = np.zeros((10,10),dtype=np.bool)
+    empty_field = np.zeros((10,10),dtype=np.bool_)
 
     flag_points_input = [(0,0),(2,0),(0,7),(2,2),(9,4),(5,9),(4,6),(9,9)]
 

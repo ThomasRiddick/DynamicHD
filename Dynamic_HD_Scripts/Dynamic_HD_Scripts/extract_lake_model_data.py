@@ -1,5 +1,5 @@
-import dynamic_hd_driver
-import iodriver
+from Dynamic_HD_Scripts import dynamic_hd_driver
+from Dynamic_HD_Scripts import iodriver
 import math
 
 class Lake_Data_Extractor(object):
@@ -26,16 +26,16 @@ class Lake_Data_Extractor(object):
                                  "max_lat":int(math.floor(section_coords["max_lat"]/scale_factor)),
                                  "min_lon":int(math.floor(section_coords["min_lon"]/scale_factor)),
                                  "max_lon":int(math.floor(section_coords["max_lon"]/scale_factor))}
-        print "Extracting section:"
-        print "min lat: {}".format(section_coords["min_lat"])
-        print "max lat: {}".format(section_coords["max_lat"])
-        print "min lon: {}".format(section_coords["min_lon"])
-        print "max lon: {}".format(section_coords["max_lon"])
-        print "Extracting course section:"
-        print "min lat: {}".format(coarse_section_coords["min_lat"])
-        print "max lat: {}".format(coarse_section_coords["max_lat"])
-        print "min lon: {}".format(coarse_section_coords["min_lon"])
-        print "max lon: {}".format(coarse_section_coords["max_lon"])
+        print("Extracting section:")
+        print("min lat: {}".format(section_coords["min_lat"]))
+        print("max lat: {}".format(section_coords["max_lat"]))
+        print("min lon: {}".format(section_coords["min_lon"]))
+        print("max lon: {}".format(section_coords["max_lon"]))
+        print("Extracting course section:")
+        print("min lat: {}".format(coarse_section_coords["min_lat"]))
+        print("max lat: {}".format(coarse_section_coords["max_lat"]))
+        print("min lon: {}".format(coarse_section_coords["min_lon"]))
+        print("max lon: {}".format(coarse_section_coords["max_lon"]))
         merge_points = iodriver.advanced_field_loader(lake_parameters_filepath,
                                                       field_type='Generic',
                                                       fieldname="merge_points")
@@ -244,11 +244,11 @@ class Lake_Data_Extractor(object):
             extract_data(coarse_section_coords,"landsea_mask","integer",
                          language)
         if write_to_text_file_filename:
-            print "Writing output to {}".format(write_to_text_file_filename)
+            print("Writing output to {}".format(write_to_text_file_filename))
             with open(write_to_text_file_filename, "w") as output_file:
                 output_file.write(extracted_data)
         else:
-            print extracted_data
+            print(extracted_data)
 
 def main():
     """Select the revelant runs to make

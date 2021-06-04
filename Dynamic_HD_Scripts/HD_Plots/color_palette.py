@@ -14,7 +14,7 @@ class ColorPalette(object):
 
     def initialize_default_palette(self):
         """Initialize the default color palette"""
-        print "Using default colors"
+        print("Using default colors")
         self.simple_catchment_and_flowmap_colors = ['blue','peru','white','black']
         self.create_colormap_colors = ['blue','peru','yellow','white','gray','red','black',
                                        'indigo','deepskyblue']
@@ -36,7 +36,7 @@ class ColorPalette(object):
 
     def initialize_gmd_paper_palette(self):
         """Initialize the color palette for the GMD paper"""
-        print "Using colors for GMD paper"
+        print("Using colors for GMD paper")
         self.initialize_default_palette()
         self.simple_catchment_and_flowmap_colors = ['lightblue','peru','grey','blue']
         self.create_colormap_colors = ['lightblue','peru','yellow','grey','white','red','black',

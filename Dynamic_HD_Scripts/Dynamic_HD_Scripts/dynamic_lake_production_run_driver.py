@@ -5,26 +5,26 @@ Created on April 1, 2020
 '''
 import re
 import os
-import determine_river_directions
-import dynamic_hd_driver as dyn_hd_dr
-import dynamic_lake_operators
-import iodriver
+from Dynamic_HD_Scripts import determine_river_directions
+from Dynamic_HD_Scripts import dynamic_hd_driver as dyn_hd_dr
+from Dynamic_HD_Scripts import dynamic_lake_operators
+from Dynamic_HD_Scripts import iodriver
 import os.path as path
-import ConfigParser
+import configparser
 import numpy as np
-import utilities
-import field
-import grid
-import libs.fill_sinks_wrapper as fill_sinks_wrapper
-import libs.lake_operators_wrapper as lake_operators_wrapper  #@UnresolvedImport
-import libs.evaluate_basins_wrapper as evaluate_basins_wrapper
+from Dynamic_HD_Scripts import utilities
+from Dynamic_HD_Scripts import field
+from Dynamic_HD_Scripts import grid
+from Dynamic_HD_Scripts.libs import fill_sinks_wrapper
+from Dynamic_HD_Scripts.libs import lake_operators_wrapper
+from Dynamic_HD_Scripts.libs import evaluate_basins_wrapper
 from timeit import default_timer as timer
 import cdo
 import argparse
-from flow_to_grid_cell import create_hypothetical_river_paths_map
-import compute_catchments as comp_catchs
-from cotat_plus_driver import run_cotat_plus
-from loop_breaker_driver import run_loop_breaker
+from Dynamic_HD_Scripts.flow_to_grid_cell import create_hypothetical_river_paths_map
+from Dynamic_HD_Scripts import compute_catchments as comp_catchs
+from Dynamic_HD_Scripts.cotat_plus_driver import run_cotat_plus
+from Dynamic_HD_Scripts.loop_breaker_driver import run_loop_breaker
 
 class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
     """A class with methods used for running a production run of the dynamic HD and Lake generation code"""
@@ -65,8 +65,8 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         """
 
         valid_config = True
-        config = ConfigParser.ConfigParser()
-        print "Read python driver options from file {0}".format(self.python_config_filename)
+        config = configparser.ConfigParser()
+        print("Read python driver options from file {0}".format(self.python_config_filename))
         config.read(self.python_config_filename)
         valid_config = valid_config \
             if config.has_section("output_options") else False
@@ -125,42 +125,42 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         if not config.has_section("output_fieldname_options"):
             config.add_section("output_fieldname_options")
         if not config.has_option("output_fieldname_options","output_10min_corrected_orog_fieldname"):
-            config.set("output_fieldname_options","output_10min_corrected_orog_fieldname")
+            config.set("output_fieldname_options","output_10min_corrected_orog_fieldname","corrected_orog")
         if not config.has_option("output_fieldname_options","output_10min_rdirs_fieldname"):
-            config.set("output_fieldname_options","output_10min_rdirs_fieldname")
+            config.set("output_fieldname_options","output_10min_rdirs_fieldname","rdirs")
         if not config.has_option("output_fieldname_options","output_10min_flow_to_cell"):
-            config.set("output_fieldname_options","output_10min_flow_to_cell")
+            config.set("output_fieldname_options","output_10min_flow_to_cell","cumulative_flow")
         if not config.has_option("output_fieldname_options","output_10min_flow_to_river_mouths"):
-            config.set("output_fieldname_options","output_10min_flow_to_river_mouths")
+            config.set("output_fieldname_options","output_10min_flow_to_river_mouths","cumulative_flow_to_ocean")
         if not config.has_option("output_fieldname_options","output_10min_catchments"):
-            config.set("output_fieldname_options","output_10min_catchments")
+            config.set("output_fieldname_options","output_10min_catchments","catchments")
         if not config.has_option("output_fieldname_options","output_30min_pre_loop_removal_rdirs"):
-            config.set("output_fieldname_options","output_30min_pre_loop_removal_rdirs")
+            config.set("output_fieldname_options","output_30min_pre_loop_removal_rdirs","rdirs")
         if not config.has_option("output_fieldname_options",
                                  "output_30min_pre_loop_removal_flow_to_cell"):
-            config.set("output_fieldname_options","output_30min_pre_loop_removal_flow_to_cell")
+            config.set("output_fieldname_options","output_30min_pre_loop_removal_flow_to_cell","cumulative_flow")
         if not config.has_option("output_fieldname_options",
                                  "output_30min_pre_loop_removal_flow_to_river_mouth"):
             config.set("output_fieldname_options",
-                       "output_30min_pre_loop_removal_flow_to_river_mouth")
+                       "output_30min_pre_loop_removal_flow_to_river_mouth","cumulative_flow_to_ocean")
         if not config.has_option("output_fieldname_options",
                                  "output_30min_pre_loop_removal_catchments"):
             config.set("output_fieldname_options",
-                       "output_30min_pre_loop_removal_catchments")
+                       "output_30min_pre_loop_removal_catchments","catchments")
         if not config.has_option("output_fieldname_options","output_30min_rdirs"):
-            config.set("output_fieldname_options","output_30min_rdirs")
+            config.set("output_fieldname_options","output_30min_rdirs","rdirs")
         if not config.has_option("output_fieldname_options","output_30min_unfilled_orog"):
-            config.set("output_fieldname_options","output_30min_unfilled_orog")
+            config.set("output_fieldname_options","output_30min_unfilled_orog","unfilled_orog")
         if not config.has_option("output_fieldname_options","output_30min_filled_orog"):
-            config.set("output_fieldname_options","output_30min_filled_orog")
+            config.set("output_fieldname_options","output_30min_filled_orog","filled_orog")
         if not config.has_option("output_fieldname_options","output_30min_ls_mask"):
-            config.set("output_fieldname_options","output_30min_ls_mask")
+            config.set("output_fieldname_options","output_30min_ls_mask","lsmask")
         if not config.has_option("output_fieldname_options","output_30min_flow_to_cell"):
-            config.set("output_fieldname_options","output_30min_flow_to_cell")
+            config.set("output_fieldname_options","output_30min_flow_to_cell","cumulative_flow")
         if not config.has_option("output_fieldname_options","output_30min_flow_to_river_mouths"):
-            config.set("output_fieldname_options","output_30min_flow_to_river_mouths")
+            config.set("output_fieldname_options","output_30min_flow_to_river_mouths","cumulative_flow_to_ocean")
         if not config.has_option("output_fieldname_options","output_30min_catchments"):
-            config.set("output_fieldname_options","output_30min_catchments")
+            config.set("output_fieldname_options","output_30min_catchments","catchments")
         return config
 
     def trial_run_for_present_day(self):
@@ -462,7 +462,7 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                    " is invalid")
             for line in f:
                 loop_nums_list.append(int(line.strip()))
-        print 'Removing loops from catchments: ' + ", ".join(str(value) for value in loop_nums_list)
+        print('Removing loops from catchments: ' + ", ".join(str(value) for value in loop_nums_list))
         rdirs_30min = run_loop_breaker(rdirs_30min,flowtocell_30min,
                                        catchments_30min,rdirs_10min,
                                        flowtocell_10min,loop_nums_list,
@@ -513,17 +513,12 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         transformed_HD_filled_orography_filename = path.join(self.working_directory_path,"30minute_filled_orog_temp.nc")
         transformed_HD_ls_mask_filename = path.join(self.working_directory_path,"30minute_ls_mask_temp.nc")
         half_degree_grid_filepath = path.join(self.ancillary_data_path,"grid_0_5.txt")
-        #rdirs_30min.rotate_field_by_a_hundred_and_eighty_degrees()
         iodriver.advanced_field_writer(transformed_course_rdirs_filename,
                                          rdirs_30min,
-                                         fieldname=config.get("output_fieldname_options",
-                                                              "output_30min_rdirs"))
-        #orography_30min.rotate_field_by_a_hundred_and_eighty_degrees()
+                                         fieldname="field_value")
         iodriver.advanced_field_writer(transformed_HD_filled_orography_filename,
                                          orography_30min,
-                                         fieldname=config.get("output_fieldname_options",
-                                                              "output_30min_filled_orog"))
-        #ls_mask_30min.rotate_field_by_a_hundred_and_eighty_degrees()
+                                         fieldname="field_value")
         ls_mask_30min.invert_data()
         iodriver.advanced_field_writer(transformed_HD_ls_mask_filename,
                                        ls_mask_30min,
@@ -813,39 +808,39 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         os.remove(output_water_redistributed_to_rivers_file)
         if print_timing_info:
             end_time = timer()
-            print "---- Timing info ----"
-            print "Initial setup:         {: 6.2f}s".\
-                format(time_before_glacier_mask_application - start_time)
-            print "Glacier Mask Addition: {: 6.2f}s".\
-                format(time_before_sink_filling - time_before_glacier_mask_application)
-            print "Sink Filling:          {: 6.2f}s".\
-                format(time_before_filtering - time_before_sink_filling)
-            print "Filtering:             {: 6.2f}s".\
-                format(time_before_rdir_generation - time_before_filtering)
-            print "River Direction Gen.:  {: 6.2f}s".\
-                format(time_before_10min_post_processing - time_before_rdir_generation)
-            print "Post Processing:       {: 6.2f}s".\
-                format(time_before_upscaling - time_before_10min_post_processing)
-            print "Upscaling:             {: 6.2f}s".\
-                format(time_before_30min_post_processing_one - time_before_upscaling)
-            print "Post Processing (II):  {: 6.2f}s".\
+            print("---- Timing info ----")
+            print("Initial setup:         {: 6.2f}s".\
+                format(time_before_glacier_mask_application - start_time))
+            print("Glacier Mask Addition: {: 6.2f}s".\
+                format(time_before_sink_filling - time_before_glacier_mask_application))
+            print("Sink Filling:          {: 6.2f}s".\
+                format(time_before_filtering - time_before_sink_filling))
+            print("Filtering:             {: 6.2f}s".\
+                format(time_before_rdir_generation - time_before_filtering))
+            print("River Direction Gen.:  {: 6.2f}s".\
+                format(time_before_10min_post_processing - time_before_rdir_generation))
+            print("Post Processing:       {: 6.2f}s".\
+                format(time_before_upscaling - time_before_10min_post_processing))
+            print("Upscaling:             {: 6.2f}s".\
+                format(time_before_30min_post_processing_one - time_before_upscaling))
+            print("Post Processing (II):  {: 6.2f}s".\
                 format(time_before_loop_breaker -
-                        time_before_30min_post_processing_one)
-            print "Loop Breaker:          {: 6.2f}s".\
-                format(time_before_coarse_sink_filling - time_before_loop_breaker)
-            print "Sink Filling (II):     {: 6.2f}s".\
-                format(time_before_parameter_generation - time_before_coarse_sink_filling)
-            print "Parameter Generation:  {: 6.2f}s".\
+                        time_before_30min_post_processing_one))
+            print("Loop Breaker:          {: 6.2f}s".\
+                format(time_before_coarse_sink_filling - time_before_loop_breaker))
+            print("Sink Filling (II):     {: 6.2f}s".\
+                format(time_before_parameter_generation - time_before_coarse_sink_filling))
+            print("Parameter Generation:  {: 6.2f}s".\
                 format(time_before_30min_post_processing_two -
-                        time_before_parameter_generation)
-            print "Post Processing:       {: 6.2f}s".\
-                format(time_before_basin_evaluation - time_before_30min_post_processing_two)
-            print "Basin Evaluation:      {: 6.2f}s".\
-                format(time_before_water_redistribution - time_before_basin_evaluation)
-            print "Water Redistribution:  {: 6.2f}s".\
-                format(end_time-time_before_water_redistribution)
-            print "Total:                 {: 6.2f}s".\
-                format(end_time-start_time)
+                        time_before_parameter_generation))
+            print("Post Processing:       {: 6.2f}s".\
+                format(time_before_basin_evaluation - time_before_30min_post_processing_two))
+            print("Basin Evaluation:      {: 6.2f}s".\
+                format(time_before_water_redistribution - time_before_basin_evaluation))
+            print("Water Redistribution:  {: 6.2f}s".\
+                format(end_time-time_before_water_redistribution))
+            print("Total:                 {: 6.2f}s".\
+                format(end_time-start_time))
 
 def setup_and_run_dynamic_hd_para_and_lake_gen_from_command_line_arguments(args):
     """Setup and run a dynamic hd production run from the command line arguments passed in by main"""

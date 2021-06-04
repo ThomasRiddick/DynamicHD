@@ -8,8 +8,8 @@ Created on Dec 15, 2015
 import numpy as np
 import argparse
 import os
-import iohelper
-import field as fld
+from Dynamic_HD_Scripts import iohelper
+from Dynamic_HD_Scripts import field as fld
 
 def generate_flow_directions_from_orography(orography):
     """Generates flow direction from a given orography field object.
@@ -105,9 +105,9 @@ def get_field_mask(field,grid_type,**grid_kwargs):
 def filter_kwargs(kwargs):
     """Seperate keyword arguments between grad_change_kwargs and grid_kwargs"""
     grad_change_kwargs_prefix='gc_'
-    grad_change_kwargs = {keyword: kwargs[keyword] for keyword in kwargs.keys()
+    grad_change_kwargs = {keyword: kwargs[keyword] for keyword in list(kwargs.keys())
                           if grad_change_kwargs_prefix in keyword}
-    grid_kwargs = {keyword: kwargs[keyword] for keyword in kwargs.keys()
+    grid_kwargs = {keyword: kwargs[keyword] for keyword in list(kwargs.keys())
                           if not grad_change_kwargs_prefix in keyword}
     return grid_kwargs, grad_change_kwargs
 

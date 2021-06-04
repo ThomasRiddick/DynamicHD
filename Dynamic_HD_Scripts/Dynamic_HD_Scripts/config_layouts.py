@@ -28,7 +28,7 @@ class InputField(object):
         for condition in self.conditions:
           if isinstance(condition,valid_option_helper):
             for ancestor in inspect.getmro(config_layout):
-              for key,value in condition.values_and_layouts.items():
+              for key,value in list(condition.values_and_layouts.items()):
                 if value == ancestor.__name__:
                   self.prefilled_option = key
         return self.__str__()
@@ -55,10 +55,10 @@ class valid_option_helper(Condition):
     self.values_and_layouts = values_and_layouts
 
   def __call__(self,value):
-    return (value in self.values_and_layouts.keys())
+    return (value in list(self.values_and_layouts.keys()))
 
   def __str__(self):
-    return "Valid options: " + ", ".join(self.values_and_layouts.keys())
+    return "Valid options: " + ", ".join(list(self.values_and_layouts.keys()))
 
 class check_extension_is_nc(Condition):
 
@@ -118,18 +118,16 @@ class CheckIfOptionalNetCDFFilepathHasFieldName(object):
         return True
 
 def add_new_fields(old_fields_and_sects,new_fields_and_sects):
-    for section,fields in new_fields_and_sects.items():
-        if section in old_fields_and_sects.keys():
+    for section,fields in list(new_fields_and_sects.items()):
+        if section in list(old_fields_and_sects.keys()):
             old_fields_and_sects[section].extend(fields)
         else:
             old_fields_and_sects[section] = fields
 
-class Config(object):
+class Config(object, metaclass=ABCMeta):
     '''
     classdocs
     '''
-
-    __metaclass__ = ABCMeta
     terminal_node = False
     driver_to_use = None
     required_input_fields = {}
@@ -233,7 +231,7 @@ class GenericConfig(Config):
           raise UserWarning("Non terminal nodes don't have operation names")
         else:
           generic_config_index = inspect.getmro(type(self)).index(GenericConfig)
-          for key,value in self.valid_operations_and_associated_layouts.items():
+          for key,value in list(self.valid_operations_and_associated_layouts.items()):
             if str(inspect.getmro(type(self))[generic_config_index-1].__name__) == value:
               return key
           raise UserWarning("Operation name for {0} not found".format(type(self).__name__))

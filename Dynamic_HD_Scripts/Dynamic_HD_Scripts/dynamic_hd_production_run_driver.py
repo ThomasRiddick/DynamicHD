@@ -9,20 +9,19 @@ import re
 import argparse
 import os.path as path
 import numpy as np
-import utilities
-import dynamic_hd
-import field
-import ConfigParser
+from Dynamic_HD_Scripts import utilities
+from Dynamic_HD_Scripts import dynamic_hd
+from Dynamic_HD_Scripts import field
+import configparser
 import shutil
 from timeit import default_timer as timer
-import libs.fill_sinks_wrapper as fill_sinks_wrapper
-import dynamic_hd_driver as dyn_hd_dr
-import iodriver
-import compute_catchments as comp_catchs
+from Dynamic_HD_Scripts.libs import fill_sinks_wrapper
+from Dynamic_HD_Scripts import dynamic_hd_driver as dyn_hd_dr
+from Dynamic_HD_Scripts import compute_catchments as comp_catchs
 from Dynamic_HD_Scripts.field import Field, RiverDirections
-from flow_to_grid_cell import create_hypothetical_river_paths_map
-from cotat_plus_driver import run_cotat_plus
-from loop_breaker_driver import run_loop_breaker
+from Dynamic_HD_Scripts.flow_to_grid_cell import create_hypothetical_river_paths_map
+from Dynamic_HD_Scripts.cotat_plus_driver import run_cotat_plus
+from Dynamic_HD_Scripts.loop_breaker_driver import run_loop_breaker
 
 class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
     """A class with methods used for running a production run of the dynamic HD generation code"""
@@ -298,8 +297,8 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         """
 
         valid_config = True
-        config = ConfigParser.ConfigParser()
-        print "Read python driver options from file {0}".format(self.python_config_filename)
+        config = configparser.ConfigParser()
+        print("Read python driver options from file {0}".format(self.python_config_filename))
         config.read(self.python_config_filename)
         valid_config = valid_config \
             if config.has_section("output_options") else False
@@ -722,7 +721,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                    " is invalid")
             for line in f:
                 loop_nums_list.append(int(line.strip()))
-        print 'Removing loops from catchments: ' + ", ".join(str(value) for value in loop_nums_list)
+        print('Removing loops from catchments: ' + ", ".join(str(value) for value in loop_nums_list))
         rdirs_30min = run_loop_breaker(rdirs_30min,flowtocell_30min,
                                        catchments_30min,rdirs_10min,
                                        flowtocell_10min,loop_nums_list,
@@ -915,29 +914,29 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                        file_type=".nc")
         if print_timing_info:
             end_time = timer()
-            print "---- Timing info ----"
-            print "Initial setup:        {: 6.2f}s".\
-                format(time_before_river_carving - start_time)
-            print "River Carving:        {: 6.2f}s".\
-                format(time_before_10min_post_processing - time_before_river_carving)
-            print "Post Processing:      {: 6.2f}s".\
-                format(time_before_upscaling - time_before_10min_post_processing)
-            print "Upscaling:            {: 6.2f}s".\
-                format(time_before_30min_post_processing_one - time_before_upscaling)
-            print "Post Processing (II): {: 6.2f}s".\
+            print("---- Timing info ----")
+            print("Initial setup:        {: 6.2f}s".\
+                format(time_before_river_carving - start_time))
+            print("River Carving:        {: 6.2f}s".\
+                format(time_before_10min_post_processing - time_before_river_carving))
+            print("Post Processing:      {: 6.2f}s".\
+                format(time_before_upscaling - time_before_10min_post_processing))
+            print("Upscaling:            {: 6.2f}s".\
+                format(time_before_30min_post_processing_one - time_before_upscaling))
+            print("Post Processing (II): {: 6.2f}s".\
                 format(time_before_loop_breaker -
-                        time_before_30min_post_processing_one)
-            print "Loop Breaker:         {: 6.2f}s".\
-                format(time_before_coarse_sink_filling - time_before_loop_breaker)
-            print "Sink Filling (II):    {: 6.2f}s".\
-                format(time_before_parameter_generation - time_before_coarse_sink_filling)
-            print "Parameter Generation: {: 6.2f}s".\
+                        time_before_30min_post_processing_one))
+            print("Loop Breaker:         {: 6.2f}s".\
+                format(time_before_coarse_sink_filling - time_before_loop_breaker))
+            print("Sink Filling (II):    {: 6.2f}s".\
+                format(time_before_parameter_generation - time_before_coarse_sink_filling))
+            print("Parameter Generation: {: 6.2f}s".\
                 format(time_before_30min_post_processing_two -
-                        time_before_parameter_generation)
-            print "Post Processing:      {: 6.2f}s".\
-                format(end_time - time_before_30min_post_processing_two)
-            print "Total:                {: 6.2f}s".\
-                format(end_time-start_time)
+                        time_before_parameter_generation))
+            print("Post Processing:      {: 6.2f}s".\
+                format(end_time - time_before_30min_post_processing_two))
+            print("Total:                {: 6.2f}s".\
+                format(end_time-start_time))
 
 def setup_and_run_dynamic_hd_para_gen_from_command_line_arguments(args):
     """Setup and run a dynamic hd production run from the command line arguments passed in by main"""

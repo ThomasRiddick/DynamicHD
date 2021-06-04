@@ -3,9 +3,9 @@ Created on Feb 12, 2018
 
 @author: thomasriddick
 '''
-import f2py_manager
+from Dynamic_HD_Scripts import f2py_manager
 import os.path as path
-from context import fortran_project_source_path,fortran_project_object_path,fortran_project_include_path
+from Dynamic_HD_Scripts.context import fortran_project_source_path,fortran_project_object_path,fortran_project_include_path
 
 def run_flow(input_fine_river_directions,input_fine_total_cumulative_flow,
              cotat_parameters_filepath,course_grid_type,
@@ -20,6 +20,6 @@ def run_flow(input_fine_river_directions,input_fine_total_cumulative_flow,
                                           func_name="flow_latlon_f2py_wrapper",
                                           additional_fortran_files=additional_fortran_filepaths,
                                           include_path=fortran_project_include_path)
-    
+
     output_course_river_directions_latlon_indices = f2py_mngr.\
         run_current_function_or_subroutine(),

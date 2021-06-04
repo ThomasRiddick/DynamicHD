@@ -4,12 +4,12 @@ Created on Mar 2, 2017
 @author: thomasriddick
 '''
 
-from plots_library import (Plots,HDparameterPlots,HDOutputPlots,OutflowPlots, #@UnusedImport
+from .plots_library import (Plots,HDparameterPlots,HDOutputPlots,OutflowPlots, #@UnusedImport
                            FlowMapPlots,FlowMapPlotsWithCatchments,OrographyPlots, #@UnusedImport
                            SimpleOrographyPlots, Ice5GComparisonPlots) #@UnusedImport
 import os
 import os.path as path
-import plotting_tools as pts
+from HD_Plots import plotting_tools as pts
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 from matplotlib import gridspec
@@ -18,7 +18,7 @@ import numpy as np
 from netCDF4 import Dataset
 from Dynamic_HD_Scripts import dynamic_hd
 from Dynamic_HD_Scripts import utilities
-import river_comparison_plotting_routines as rc_pts
+from HD_Plots import river_comparison_plotting_routines as rc_pts
 
 class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
     """Plots for GMD Paper"""
@@ -132,8 +132,8 @@ class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
         corr_data_plotter = plotters[0][1]
         plt.figure(figsize=(12,3))
         gs = gridspec.GridSpec(1,3)
-        print "Total cumulative flow threshold used for danube plot {0}".\
-            format(corr_data_plotter.get_flowtocell_threshold())
+        print("Total cumulative flow threshold used for danube plot {0}".\
+            format(corr_data_plotter.get_flowtocell_threshold()))
         #fig.suptitle('River catchment plus cells with a cumulative flow greater than {0}'.\
         #             format(corr_data_plotter.get_flowtocell_threshold()),fontsize=30)
         ax0 = plt.subplot(gs[0])
@@ -618,7 +618,7 @@ class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
                                                                                              "upscaled_rdirs_ten_minute_data_from_virna_0k_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_20170113_135934_upscaled_updated_transf.nc"),
                                                                                 num_timeslices=365,lost_discharge=lost_discharge,label="Dynamic HD using 1 cycle spin-up as basis+ lost discharge")
         ax.legend()
-        print total_discharge_info
+        print(total_discharge_info)
 
     def ocean_pem_plots_extended_present_day_vs_ice6g_rdirs(self):
         extended_present_day_rdirs_data_filename=os.path.join(self.river_discharge_output_data_path,

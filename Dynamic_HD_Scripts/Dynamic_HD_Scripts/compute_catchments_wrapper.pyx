@@ -19,7 +19,7 @@ def compute_catchments_cpp(np.ndarray[int,ndim=2,mode='c'] catchment_numbers_in,
 
     cdef int nlat_in,nlon_in
     nlat_in, nlon_in = catchment_numbers_in.shape[0],catchment_numbers_in.shape[1]
-    cdef string loop_log_filepath_c = string(bytes(loop_log_filepath))
+    cdef string loop_log_filepath_c = string(bytes(loop_log_filepath,'utf-8'))
     latlon_compute_catchments(&catchment_numbers_in[0,0],
                               &rdirs_in[0,0],
                               loop_log_filepath_c,

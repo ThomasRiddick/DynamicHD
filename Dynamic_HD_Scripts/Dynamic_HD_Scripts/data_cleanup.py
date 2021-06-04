@@ -7,7 +7,7 @@ Created on Jan 11, 2018
 @author: thomasriddick
 '''
 
-from context import workspace_dir
+from Dynamic_HD_Scripts.context import workspace_dir
 import os
 import re
 
@@ -97,7 +97,7 @@ def prepare_data_cleanup():
                         new_filepath = os.path.join(files_to_delete_directory,
                                                     os.path.relpath(filepath,
                                                                     data_dir))
-                        print "Moving: {0}".format(filepath)
+                        print("Moving: {0}".format(filepath))
                         os.rename(filepath,new_filepath)
 
 if __name__ == '__main__':

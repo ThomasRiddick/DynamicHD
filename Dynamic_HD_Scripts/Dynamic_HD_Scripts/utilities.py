@@ -4,20 +4,20 @@ Created on Apr 5, 2016
 @author: thomasriddick
 '''
 
-import dynamic_hd
+from Dynamic_HD_Scripts import dynamic_hd
 import numpy as np
-import field
-import grid
-import f2py_manager
+from Dynamic_HD_Scripts import field
+from Dynamic_HD_Scripts import grid
+from Dynamic_HD_Scripts import f2py_manager
 import os.path as path
 import re
 import copy
 import netCDF4
 import shutil
 import cdo
-import iodriver
-import follow_streams_driver
-from context import fortran_source_path
+from Dynamic_HD_Scripts import iodriver
+from Dynamic_HD_Scripts import follow_streams_driver
+from Dynamic_HD_Scripts.context import fortran_source_path
 from Dynamic_HD_Scripts.field import makeField
 
 def create_30sec_lgm_orography_from_highres_present_day_and_low_res_pair(input_lgm_low_res_orog,
@@ -317,7 +317,7 @@ def prepare_hdrestart_file(dataset_inout,rflow_res_num,ref_rflow_res_num,
     unchanged.
     """
 
-    for var_name,var_obj in dataset_inout.variables.iteritems():
+    for var_name,var_obj in list(dataset_inout.variables.items()):
         if var_name == 'lat' or var_name == 'lon':
             continue
         reservoir_field = makeField(np.array(var_obj),'ReservoirSize',grid_type,**grid_kwargs)
@@ -430,7 +430,7 @@ def prepare_hdrestart_file_driver(base_hdrestart_filename,output_hdrestart_filen
         ref_base_flow_res_num.flip_data_ud()
     #Deliberately avoid copying metadata
     shutil.copy(base_hdrestart_filename,output_hdrestart_filename)
-    print 'Writing output to: {0}'.format(output_hdrestart_filename)
+    print('Writing output to: {0}'.format(output_hdrestart_filename))
     with netCDF4.Dataset(output_hdrestart_filename,mode='a',format=netcdf_dataset_format) as dataset:
         dataset=prepare_hdrestart_file(dataset,rflow_res_num,ref_rflow_res_num,overland_flow_res_num,
                                        ref_overland_flow_res_num,base_flow_res_num,ref_base_flow_res_num,
@@ -777,8 +777,8 @@ def upscale_field(input_field,output_grid_type,method,output_grid_kwargs,scalenu
     if nlat_in % nlat_out != 0 or nlon_in % nlon_out != 0:
         raise RuntimeError('Incompatible input and output grid dimensions')
     scalingfactor = (nlat_out*1.0/nlat_in)*(nlon_out*1.0/nlon_in) if scalenumbers else 1
-    reshaped_data_array = input_field.get_data().reshape(nlat_out,nlat_in/nlat_out,
-                                                         nlon_out,nlon_in/nlon_out)
+    reshaped_data_array = input_field.get_data().reshape(nlat_out,nlat_in//nlat_out,
+                                                         nlon_out,nlon_in//nlon_out)
     return field.Field(reduction_op(reduction_op(reshaped_data_array,
                                                  axis=3),axis=1)*scalingfactor,output_grid)
 
@@ -940,10 +940,10 @@ def apply_modifications_to_truesinks_field(truesinks_field,
             points_to_add.append(tuple(int(coord)
                                        for coord in line.strip().split(",")))
     for point in points_to_remove:
-        print 'Removing true sink point at {0},{1}'.format(point[0],point[1])
+        print('Removing true sink point at {0},{1}'.format(point[0],point[1]))
         truesinks_field[point[0],point[1]] = False
     for point in points_to_add:
-        print 'Adding true sink point at {0},{1}'.format(point[0],point[1])
+        print('Adding true sink point at {0},{1}'.format(point[0],point[1]))
         truesinks_field[point[0],point[1]] = True
     return truesinks_field
 
@@ -967,8 +967,8 @@ def downscale_true_sink_points(input_fine_orography_field,input_course_truesinks
         raise RuntimeError('Cannot use the downscale true sink points function to perform an upscaling')
     if nlat_fine % nlat_course != 0 or nlon_fine % nlon_course !=0 :
         raise RuntimeError('Incompatible input and output grid dimensions')
-    scalingfactor_lat = nlat_fine / nlat_course
-    scalingfactor_lon = nlon_fine / nlon_course
+    scalingfactor_lat = nlat_fine // nlat_course
+    scalingfactor_lon = nlon_fine // nlon_course
     flagged_points_coords = input_course_truesinks_field.get_flagged_points_coords()
     flagged_points_coords_scaled=[]
     for coord_pair in flagged_points_coords:
@@ -1100,7 +1100,7 @@ def apply_orography_corrections(input_orography_filename,
     if rotate180lr:
         orography_field.rotate_field_by_a_hundred_and_eighty_degrees()
     for lat,lon,height in correction_list:
-        print "Correcting height of lat={0},lon={1} to {2} m".format(lat,lon,height)
+        print("Correcting height of lat={0},lon={1} to {2} m".format(lat,lon,height))
         orography_field.get_data()[lat,lon] = height
     #restore to original format so as not to disrupt downstream processing chain
     if flipud:
@@ -1207,8 +1207,8 @@ def downscale_ls_mask(input_course_ls_mask_field,fine_grid_type,**fine_grid_kwar
         raise RuntimeError('Cannot use the downscale ls mask function to perform an upscaling')
     if nlat_fine % nlat_course != 0 or nlon_fine % nlon_course !=0 :
         raise RuntimeError('Incompatible input and output grid dimensions')
-    scalingfactor_lat = nlat_fine / nlat_course
-    scalingfactor_lon = nlon_fine / nlon_course
+    scalingfactor_lat = nlat_fine // nlat_course
+    scalingfactor_lon = nlon_fine // nlon_course
     #this series of manipulations produces the required 'binary' upscaling
     #outer is the outer product
     output_fine_ls_mask_flatted = np.outer(input_course_ls_mask_field.get_data().flatten(order='F'),
@@ -1379,7 +1379,7 @@ def intelligent_orography_burning_driver(input_fine_orography_filename,
         input_fine_fmap_field.rotate_field_by_a_hundred_and_eighty_degrees
     output_course_orography = copy.deepcopy(input_course_orography_field)
     for region,threshold in zip(regions,thresholds):
-        print "Intelligently burning region: {0} \n using the threshold {1}".format(region,threshold)
+        print("Intelligently burning region: {0} \n using the threshold {1}".format(region,threshold))
         #This is modified by the intelligently burn orography field so need to make a
         #copy to pass in each time
         working_fine_orography_field = copy.deepcopy(input_fine_orography_field)
@@ -1392,15 +1392,15 @@ def intelligent_orography_burning_driver(input_fine_orography_filename,
         difference_in_orography_field = output_course_orography.get_data() - \
                                         input_course_orography_field.get_data()
         if np.count_nonzero(difference_in_orography_field) > change_print_out_limit:
-            print "Intelligent burning makes more than {0} changes to orography".\
-                format(change_print_out_limit)
+            print("Intelligent burning makes more than {0} changes to orography".\
+                format(change_print_out_limit))
         else:
             changes_in_orography_field = np.transpose(np.nonzero(difference_in_orography_field))
             for change in changes_in_orography_field:
-                print "Changing the height of cell nlat={0},nlon={1} from {2}m to {3}m".\
+                print("Changing the height of cell nlat={0},nlon={1} from {2}m to {3}m".\
                     format(change[0],change[1],
                            input_course_orography_field.get_data()[tuple(change.tolist())],
-                           output_course_orography.get_data()[tuple(change.tolist())])
+                           output_course_orography.get_data()[tuple(change.tolist())]))
         #re-use the input orography field as a intermediary value holder
         input_course_orography_field = copy.deepcopy(output_course_orography)
     if flipud:
@@ -1427,9 +1427,9 @@ def generate_regular_landsea_mask_from_gaussian_landsea_mask(input_gaussian_latl
     """
 
     cdo_instance = cdo.Cdo()
-    print "Generating regular land-sea mask from input gaussian mask: {0}"\
-    .format(input_gaussian_latlon_lsmask_filename)
-    print "Writing output to: {0}".format(output_regular_latlon_mask_filename)
+    print("Generating regular land-sea mask from input gaussian mask: {0}"\
+    .format(input_gaussian_latlon_lsmask_filename))
+    print("Writing output to: {0}".format(output_regular_latlon_mask_filename))
     cdo_instance.setname("field_value",
                          input=cdo_instance.remaplaf(regular_grid_spacing_file,
                                                      input=input_gaussian_latlon_lsmask_filename),
@@ -1452,8 +1452,8 @@ def generate_gaussian_landsea_mask(input_lsmask_filename,output_gaussian_latlon_
     """
 
     cdo_instance = cdo.Cdo()
-    print "Generate gaussian land-sea mask from input mask: {0}".format(input_lsmask_filename)
-    print "Writing output to: {0}".format(output_gaussian_latlon_mask_filename)
+    print("Generate gaussian land-sea mask from input mask: {0}".format(input_lsmask_filename))
+    print("Writing output to: {0}".format(output_gaussian_latlon_mask_filename))
     cdo_instance.remapnn('n{0}'.format(gaussian_grid_spacing),input=input_lsmask_filename,
                          output=output_gaussian_latlon_mask_filename)
 
@@ -1626,11 +1626,11 @@ def advanced_splice_rdirs_driver(rdirs_matching_ls_mask_filename,
 def remove_endorheic_basins(rdirs,catchments,rdirs_without_endorheic_basins,
                             replace_only_catchments=[],exclude_catchments=[]):
   if replace_only_catchments:
-    print "Only replacing catchments:"
-    print replace_only_catchments
+    print("Only replacing catchments:")
+    print(replace_only_catchments)
   if exclude_catchments:
-    print "Not replacing catchments"
-    print exclude_catchments
+    print("Not replacing catchments")
+    print(exclude_catchments)
   rdirs.remove_river_mouths()
   rdirs_without_endorheic_basins.remove_river_mouths()
   if replace_only_catchments:

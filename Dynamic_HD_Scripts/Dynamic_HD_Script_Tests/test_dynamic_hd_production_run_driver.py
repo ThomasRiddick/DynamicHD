@@ -9,7 +9,7 @@ import cdo
 import unittest
 import os
 from Dynamic_HD_Scripts.dynamic_hd_production_run_driver import Dynamic_HD_Production_Run_Drivers
-from context import data_dir
+from Dynamic_HD_Script_Tests.context import data_dir
 
 
 class Test_Dynamic_HD_Production_Run_Drivers(unittest.TestCase):

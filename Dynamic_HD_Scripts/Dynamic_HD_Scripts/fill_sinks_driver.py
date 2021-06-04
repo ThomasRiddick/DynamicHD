@@ -7,13 +7,13 @@ Created on Mar 14, 2016
 @author: thomasriddick
 '''
 
-import dynamic_hd
+from Dynamic_HD_Scripts import dynamic_hd
 import numpy as np
-import libs.fill_sinks_wrapper as fill_sinks_wrapper #@UnresolvedImportError
-import libs.fill_sinks_wrapper_low_mem as fill_sinks_wrapper_low_mem #@UnresolvedImportError
-import iodriver
+from Dynamic_HD_Scripts.libs import fill_sinks_wrapper
+from Dynamic_HD_Scripts.libs import fill_sinks_wrapper_low_mem
+from Dynamic_HD_Scripts import iodriver
 from Dynamic_HD_Scripts.field import Field
-import field
+from Dynamic_HD_Scripts import field
 
 def generate_orography_with_sinks_filled(input_orography_filename,output_orography_filename,
                                          ls_mask_filename=None,truesinks_filename=None,

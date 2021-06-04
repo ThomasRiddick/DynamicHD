@@ -4,11 +4,10 @@ Created on March 17, 2019
 @author: thomasriddick
 '''
 
-import field
-import iodriver
+from Dynamic_HD_Scripts import field
+from Dynamic_HD_Scripts import iodriver
 import numpy as np
-import libs.determine_river_directions_wrapper \
-       as determine_river_directions_wrapper
+from Dynamic_HD_Scripts.libs import determine_river_directions_wrapper
 
 def determine_river_directions(orography,lsmask,truesinks=None,
                                always_flow_to_sea=True,

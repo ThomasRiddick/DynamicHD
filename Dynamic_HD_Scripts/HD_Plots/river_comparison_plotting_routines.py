@@ -9,7 +9,7 @@ Created on Jul 21, 2016
 
 import numpy as np
 import matplotlib.cm as cm
-import plotting_tools as pts
+from HD_Plots import plotting_tools as pts
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import re
@@ -461,7 +461,7 @@ def create_colormap(field,num_colors=7,alternative_colors=False,colors=None):
     cmap = mpl.colors.ListedColormap(color_list[:num_colors])
     if alternative_colors:
         cmap = mpl.colors.ListedColormap(alternative_color_list[:num_colors])
-    bounds = range(num_colors+1)
+    bounds = list(range(num_colors+1))
     norm = mpl.colors.BoundaryNorm(bounds,cmap.N)
     return cmap,norm
 
@@ -551,7 +551,7 @@ def simple_catchment_and_flowmap_plot(ax,catchment_field,catchment_field_for_lsm
     working_catchment[flowtocell > flowtocell_threshold] = 4
     working_catchment_section = working_catchment[imin:imax,jmin:jmax]
     cmap_catch = mpl.colors.ListedColormap(colors.simple_catchment_and_flowmap_colors)
-    norm_catch = mpl.colors.BoundaryNorm(range(5),cmap_catch.N)
+    norm_catch = mpl.colors.BoundaryNorm(list(range(5)),cmap_catch.N)
     ax.imshow(working_catchment_section,interpolation='none',cmap=cmap_catch,norm=norm_catch,rasterized=True)
     if remove_ticks:
         pts.remove_ticks(ax)
@@ -580,9 +580,9 @@ def add_catchment_and_outflow_to_river(catchments,outflows,sink_outflow_to_remap
     """Moves given sink or river catchment and outflow to a given river outflow and relabel catchment accordingly"""
     original_outflow_coords = sink_outflow_to_remap[0]
     new_outflow_coords = sink_outflow_to_remap[1]
-    print "Moving outflow from point lat={0}, lon={1} to point lat={2}, lon={3}"\
-        " and relabeling catchment accordingly".format(original_outflow_coords[0],original_outflow_coords[1],
-                                                       new_outflow_coords[0],new_outflow_coords[1])
+    print("Moving outflow from point lat={0}, lon={1} to point lat={2}, lon={3}"\
+          " and relabeling catchment accordingly".format(original_outflow_coords[0],original_outflow_coords[1],
+                                                         new_outflow_coords[0],new_outflow_coords[1]))
 
     if processing_mod_type == 'Sink':
         outflows.set_data(pts.move_outflow(outflows.get_data(), original_outflow_coords, new_outflow_coords,
@@ -768,7 +768,7 @@ def simple_thresholded_data_only_flowmap(ax,data_flowmap,lsmask,threshold=75,gla
                    if colors is not None else
                   ['blue','peru','yellow','white','gray','red','black','indigo','deepskyblue'])
     cmap = mpl.colors.ListedColormap(color_list[:num_colors])
-    colors_bounds = range(num_colors+1)
+    colors_bounds = list(range(num_colors+1))
     norm = mpl.colors.BoundaryNorm(colors_bounds,cmap.N)
     ax.imshow(thresholded_data_flowmap_section,interpolation='none',cmap=cmap,norm=norm)
     #Assume HD Grid

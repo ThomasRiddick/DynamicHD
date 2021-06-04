@@ -5,16 +5,16 @@ Created on Feb 2, 2018
 '''
 
 import argparse
-import setup_validator
-import cotat_plus_driver
-import upscale_orography_driver
-import fill_sinks_driver
-import compute_catchments
-import create_connected_lsmask_driver
-import create_orography_driver
-import determine_river_directions
-import utilities
-import flow_to_grid_cell
+from Dynamic_HD_Scripts import setup_validator
+from Dynamic_HD_Scripts import cotat_plus_driver
+from Dynamic_HD_Scripts import upscale_orography_driver
+from Dynamic_HD_Scripts import fill_sinks_driver
+from Dynamic_HD_Scripts import compute_catchments
+from Dynamic_HD_Scripts import create_connected_lsmask_driver
+from Dynamic_HD_Scripts import create_orography_driver
+from Dynamic_HD_Scripts import determine_river_directions
+from Dynamic_HD_Scripts import utilities
+from Dynamic_HD_Scripts import flow_to_grid_cell
 
 def get_option_if_defined(config,section,option):
     return (config.get(section,option)

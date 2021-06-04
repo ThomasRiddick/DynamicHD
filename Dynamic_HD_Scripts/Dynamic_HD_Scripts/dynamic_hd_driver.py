@@ -8,26 +8,26 @@ Created on Feb 24, 2016
 import inspect
 import datetime
 import subprocess
-import dynamic_hd
+from Dynamic_HD_Scripts import dynamic_hd
 import os.path as path
-from matplotlib.compat.subprocess import CalledProcessError
-import flow_to_grid_cell
-import compute_catchments
-import fill_sinks_driver
-import upscale_orography_driver
-import utilities
-import grid
-import field
-import river_mouth_marking_driver
-import create_connected_lsmask_driver as cc_lsmask_driver
-from context import bash_scripts_path
-from context import private_bash_scripts_path
+from subprocess import CalledProcessError
+from Dynamic_HD_Scripts import flow_to_grid_cell
+from Dynamic_HD_Scripts import compute_catchments
+from Dynamic_HD_Scripts import fill_sinks_driver
+from Dynamic_HD_Scripts import upscale_orography_driver
+from Dynamic_HD_Scripts import utilities
+from Dynamic_HD_Scripts import grid
+from Dynamic_HD_Scripts import field
+from Dynamic_HD_Scripts import river_mouth_marking_driver
+from Dynamic_HD_Scripts import create_connected_lsmask_driver as cc_lsmask_driver
+from Dynamic_HD_Scripts.context import bash_scripts_path
+from Dynamic_HD_Scripts.context import private_bash_scripts_path
 import shutil
-import cotat_plus_driver
-import loop_breaker_driver
+from Dynamic_HD_Scripts import cotat_plus_driver
+from Dynamic_HD_Scripts import loop_breaker_driver
 import numpy as np
-import iohelper
-import iodriver
+from Dynamic_HD_Scripts import iohelper
+from Dynamic_HD_Scripts import iodriver
 import netCDF4
 
 class Dynamic_HD_Drivers(object):
@@ -217,13 +217,13 @@ class Dynamic_HD_Drivers(object):
         """
 
         try:
-            print subprocess.check_output([path.join(bash_scripts_path,
+            print(subprocess.check_output([path.join(bash_scripts_path,
                                                      "prepare_topography.sh"),
                                            orog_nc_file,
                                            grid_file,
                                            weights_file,
                                            output_file,
-                                           lsmask_file],stderr=subprocess.STDOUT)
+                                           lsmask_file],stderr=subprocess.STDOUT))
         except CalledProcessError as cperror:
             raise RuntimeError("Failure in called process {0}; return code {1}; output:\n{2}".format(cperror.cmd,
                                                                                                      cperror.returncode,
@@ -260,7 +260,7 @@ class Dynamic_HD_Drivers(object):
         if path.splitext(output_file)[1] != '.nc':
             raise UserWarning("Output filename doesn't have a netCDF extension as expected")
         try:
-            print subprocess.check_output([path.join(private_bash_scripts_path,
+            print(subprocess.check_output([path.join(private_bash_scripts_path,
                                                      "generate_output_file.sh"),
                                            path.join(bash_scripts_path,
                                                      "bin"),
@@ -271,7 +271,7 @@ class Dynamic_HD_Drivers(object):
                                            path.splitext(null_file)[0] + ".dat",
                                            path.splitext(area_spacing_file)[0] + ".dat",
                                            hd_grid_specs_file,output_file,paras_dir,
-                                           "true" if production_run else "false"])
+                                           "true" if production_run else "false"]))
         except CalledProcessError as cperror:
             raise RuntimeError("Failure in called process {0}; return code {1}; output:\n{2}".format(cperror.cmd,
                                                                                                      cperror.returncode,
@@ -335,7 +335,7 @@ class Dynamic_HD_Drivers(object):
         if path.splitext(orography_variance_file)[1] != '.dat':
             self._convert_data_file_type(orography_variance_file,'.dat','HD')
         try:
-            print subprocess.check_output([path.join(private_bash_scripts_path,
+            print(subprocess.check_output([path.join(private_bash_scripts_path,
                                                      "parameter_generation_driver.sh"),
                                            path.join(bash_scripts_path,
                                                      "bin"),
@@ -350,7 +350,7 @@ class Dynamic_HD_Drivers(object):
                                            path.splitext(orography_variance_file)[0] + ".dat",
                                            paragen_source_filepath,paragen_bin_file,output_dir,
                                            "true" if production_run else "false"],
-                                          stderr=subprocess.STDOUT)
+                                          stderr=subprocess.STDOUT))
         except CalledProcessError as cperror:
             raise RuntimeError("Failure in called process {0}; return code {1}; output:\n{2}".format(cperror.cmd,
                                                                                                      cperror.returncode,
@@ -367,14 +367,14 @@ class Dynamic_HD_Drivers(object):
         """
 
         try:
-            print subprocess.check_output([path.join(bash_scripts_path,
+            print(subprocess.check_output([path.join(bash_scripts_path,
                                                      "compile_paragen_and_hdfile.sh"),
                                            path.join(bash_scripts_path,
                                                      "bin"),
                                            path.join(private_bash_scripts_path,
                                                      "fortran"),
                                            path.join(private_bash_scripts_path,"fortran",
-                                                     "paragen.f"),"paragen"])
+                                                     "paragen.f"),"paragen"]))
         except CalledProcessError as cperror:
             raise RuntimeError("Failure in called process {0}; return code {1}; output:\n{2}".format(cperror.cmd,
                                                                                                      cperror.returncode,
@@ -709,7 +709,7 @@ class Dynamic_HD_Drivers(object):
         """
 
         if (not flip_ud) and (not rotate180lr) and (not invert_data):
-            print "Note: no transform specified, just adding grid parameters and then resaving file"
+            print("Note: no transform specified, just adding grid parameters and then resaving file")
         field = dynamic_hd.load_field(input_filename,
                                       file_type=dynamic_hd.get_file_extension(input_filename),
                                       field_type='Generic',unmask=False,timeslice=timeslice,
@@ -3322,7 +3322,7 @@ class GLAC_Data_Drivers(ICE5G_Data_Drivers):
         file_label = self._generate_file_label()
         combined_dataset_filename = self.generated_hd_file_path + "combined_" + file_label + '.nc'
         for i in range(260,-10,-10):
-            print "Adding slice {0}".format(i)
+            print("Adding slice {0}".format(i))
             timeslice_hdfile_label = self.generated_hd_file_path + "timeslice{0}_".format(i) + base_file_label + '.nc'
             self._add_timeslice_to_combined_dataset(first_timeslice=(i==260),
                                                     slicetime=-26000 + i*100,
@@ -3335,7 +3335,7 @@ class GLAC_Data_Drivers(ICE5G_Data_Drivers):
         combined_dataset_filename = self.generated_hd_file_path + "combined_" + base_file_label + '.nc'
         combined_restart_filename= self.generated_hd_restart_file_path + "combined_" + base_file_label + '.nc'
         for i in range(260,-10,-10):
-            print "Processing timeslice: {0}".format(i)
+            print("Processing timeslice: {0}".format(i))
             self._GLAC_data_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs(timeslice=i,
                                                                                          base_file_label=base_file_label)
             timeslice_hdfile_label = self.generated_hd_file_path + "timeslice{0}_".format(i) + base_file_label + '.nc'

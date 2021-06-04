@@ -9,20 +9,19 @@ Created on Oct 19, 2016
 
 import unittest
 import numpy as np
-import Dynamic_HD_Scripts.field as field
-import Dynamic_HD_Scripts.cotat_plus_driver as cotat_plus_driver
+from Dynamic_HD_Scripts import field
+from Dynamic_HD_Scripts import cotat_plus_driver
 import os
 import re
-from context import data_dir
+from Dynamic_HD_Script_Tests.context import data_dir,valgrind_path
 import textwrap
 import subprocess
-import context
-import Dynamic_HD_Scripts.context as scripts_context
-from matplotlib.compat.subprocess import CalledProcessError
+from Dynamic_HD_Scripts import context as scripts_context
+from subprocess import CalledProcessError
 
 class Test(unittest.TestCase):
     """Unit test object"""
-    
+
     show_output = False
 
     input_fine_river_directions_test_data = np.array([[-1,-1,-1, -1,0,4,   2,2,2, 2,2,2, 3,2,2],
@@ -58,15 +57,15 @@ class Test(unittest.TestCase):
                                                            [1,4,7, 1,5,6, 5,1,3, 1,2,11, 12,17,1],
                                                            [1,1,1, 1,1,1, 1,1,1, 4,8,9, 1,1,1]],
                                                           dtype=np.int64)
-    
+
     small_grid_expected_result = np.array([[-1,6,0,4,4],
                                            [0,4,4,8,5],
                                            [0,7,4,8,7],
                                            [8,4,7,4,7],
                                            [8,7,7,6,5]],dtype=np.int64)
-    
+
     directory = None
-    
+
     def setUp(self):
         """Unit test setup. Creates a temporary directory for results if necessary"""
         #create files
@@ -83,14 +82,14 @@ class Test(unittest.TestCase):
     def testUsingSmallGrid(self):
         """
         Test using a small 5 by 5 grid
-        
+
         Same data was used in FRUIT unit testing
         """
 
-        input_fine_river_directions_test_field = field.makeField(self.input_fine_river_directions_test_data, 
+        input_fine_river_directions_test_field = field.makeField(self.input_fine_river_directions_test_data,
                                                                  field_type='RiverDirections',
                                                                  grid_type='LatLong',nlat=15,nlong=15)
-        input_fine_total_cumulative_flow_test_field = field.makeField(self.input_fine_total_cumulative_flow_test_data, 
+        input_fine_total_cumulative_flow_test_field = field.makeField(self.input_fine_total_cumulative_flow_test_data,
                                                                       field_type='CumulativeFlow',
                                                                       grid_type='LatLong',nlat=15,nlong=15)
         cotat_params_text =\
@@ -104,20 +103,21 @@ class Test(unittest.TestCase):
         with open(self.cotat_params_file_path,'w') as f:
             f.write(textwrap.dedent(cotat_params_text))
         output_course_river_directions = \
-            cotat_plus_driver.run_cotat_plus(fine_rdirs_field=input_fine_river_directions_test_field, 
+            cotat_plus_driver.run_cotat_plus(fine_rdirs_field=input_fine_river_directions_test_field,
                                              fine_total_cumulative_flow_field=\
-                                             input_fine_total_cumulative_flow_test_field, 
-                                             cotat_plus_parameters_filepath=self.cotat_params_file_path, 
+                                             input_fine_total_cumulative_flow_test_field,
+                                             cotat_plus_parameters_filepath=self.cotat_params_file_path,
                                              course_grid_type='LatLong',nlat=5,nlong=5)
         np.testing.assert_array_equal(output_course_river_directions.get_data(),
                                       self.small_grid_expected_result,
                                       "Running scaling code over small 5 by 5 grid doesn't"
                                       " produce expected results")
-        
+
+    @unittest.skip("Valgrind not working at present")
     def testForMemoryLeaksWithValgrind(self):
         """Run valgrind to check no new memory leaks are occurring"""
         try:
-            valgrind_output =  subprocess.check_output([context.valgrind_path,'--leak-check=full',
+            valgrind_output =  subprocess.check_output([valgrind_path,'--leak-check=full',
                                                         scripts_context.fortran_project_executable_path],
                                                        stderr=subprocess.STDOUT,
                                                        cwd=scripts_context.fortran_project_include_path)
@@ -128,7 +128,7 @@ class Test(unittest.TestCase):
         direct_mem_loss_match = re.search(r'definitely lost: ([,0-9]*)',valgrind_output)
         indirect_mem_loss_match = re.search(r'indirectly lost: ([,0-9]*)',valgrind_output)
         if self.show_output:
-            print valgrind_output
+            print(valgrind_output)
         direct_mem_loss = int(direct_mem_loss_match.group(1).replace(',',''))
         indirect_mem_loss = int(indirect_mem_loss_match.group(1).replace(',',''))
         # 80 byte loss is a known problem that occurs sometimes related to using valgrind in python

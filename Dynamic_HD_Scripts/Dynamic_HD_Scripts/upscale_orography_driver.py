@@ -4,15 +4,15 @@ Created on Apr 18, 2017
 @author: thomasriddick
 '''
 
-import dynamic_hd
-from dynamic_hd import get_file_extension
+from Dynamic_HD_Scripts import dynamic_hd
+from Dynamic_HD_Scripts.dynamic_hd import get_file_extension
 import numpy as np
-import field
-import libs.upscale_orography_wrapper as upscale_orography_wrapper  #@UnresolvedImport
+from Dynamic_HD_Scripts import field
+from Dynamic_HD_Scripts.libs import upscale_orography_wrapper
 import configparser
 import gc
-import iodriver
-import coordinate_scaling_utilities
+from Dynamic_HD_Scripts import iodriver
+from Dynamic_HD_Scripts import coordinate_scaling_utilities
 
 def drive_orography_upscaling(input_fine_orography_file,output_course_orography_file,
                               landsea_file=None,true_sinks_file=None,
@@ -197,8 +197,8 @@ def read_and_validate_config(upscaling_parameters_filename):
     """
 
     config = configparser.ConfigParser()
-    print "Read orography upscaling options from file {0}".\
-        format(upscaling_parameters_filename)
+    print("Read orography upscaling options from file {0}".\
+        format(upscaling_parameters_filename))
     config.read(upscaling_parameters_filename)
     valid_config = True
     valid_config = valid_config \

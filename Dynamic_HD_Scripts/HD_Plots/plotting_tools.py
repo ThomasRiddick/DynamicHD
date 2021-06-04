@@ -9,7 +9,8 @@ Created on Feb 5, 2016
 import matplotlib.pyplot as plt
 import numpy as np
 import math
-import Dynamic_HD_Scripts.grid as grid
+from Dynamic_HD_Scripts import grid
+from Dynamic_HD_Scripts import field
 
 
 class OrogCoordFormatter(object):
@@ -86,7 +87,7 @@ def plot_catchments(catchments):
 def print_nums(ax,section,x_lims,y_lims):
     for lat in range(int(math.ceil(y_lims[1]))+1,int(math.ceil(y_lims[0]))):
         for lon in range(int(math.ceil(x_lims[0]))+1,int(math.ceil(x_lims[1]))):
-            if isinstance(section[lat,lon],basestring):
+            if isinstance(section[lat,lon],str):
                 continue
             try:
                 ax.text(lon,lat,"{:.0f}".format(section[lat,lon]),
@@ -193,20 +194,20 @@ def move_outflow(outflows,original_outflow_coords,new_outflow_coords,
     if original_outflow_coords != new_outflow_coords:
         if rdirs is not None:
             original_outflow_coords = tuple(map(sum,
-                                                zip(downstream_cell_map[int(rdirs[original_outflow_coords])
+                                                list(zip(downstream_cell_map[int(rdirs[original_outflow_coords])
                                                                             - 1],
-                                                    original_outflow_coords)))
-        print 'Old outflow at second point {0}'.format(outflows[new_outflow_coords])
+                                                    original_outflow_coords))))
+        print('Old outflow at second point {0}'.format(outflows[new_outflow_coords]))
         if flowmap is not None:
-            print 'Old outflow at first point {0}'.\
-                format(flowmap[original_outflow_coords])
+            print('Old outflow at first point {0}'.\
+                format(flowmap[original_outflow_coords]))
             outflows[new_outflow_coords] += flowmap[original_outflow_coords]
         else:
-            print 'Old outflow at first point {0}'.\
-                format(outflows[original_outflow_coords])
+            print('Old outflow at first point {0}'.\
+                format(outflows[original_outflow_coords]))
             outflows[new_outflow_coords] += outflows[original_outflow_coords]
             outflows[original_outflow_coords] = 0
-        print 'New outflow at second point {0}'.format(outflows[new_outflow_coords])
+        print('New outflow at second point {0}'.format(outflows[new_outflow_coords]))
     return outflows
 
 def calculate_lat_label(y_index,offset,scale_factor=1,precision=1):
@@ -244,4 +245,20 @@ def calculate_scale_factor(course_grid_type,course_grid_kwargs,fine_grid_type,fi
     fine_grid_nlat = grid.makeGrid(fine_grid_type,**fine_grid_kwargs).get_grid_dimensions()[0]
     course_grid_nlat = grid.makeGrid(course_grid_type,**course_grid_kwargs).get_grid_dimensions()[0]
     return fine_grid_nlat/course_grid_nlat
+
+def find_ocean_basin_catchments(rdirs,catchments,areas=[]):
+  ocean_catchments = catchments.copy()
+  ocean_basin_catchments = field.makeEmptyField("Generic",grid_type = catchments.get_grid(),dtype=np.int64)
+  ocean_catchments.get_data()[np.logical_not(np.logical_and(rdirs.get_data() == 0,
+                                                            catchments.get_data() != 0))] = 0
+  for i,area in enumerate(areas,1):
+    ocean_catchments_area =  ocean_catchments.get_data()[area['min_lat']:area['max_lat']+1,
+                                                         area['min_lon']:area['max_lon']+1]
+    ocean_catchment_list = np.unique(ocean_catchments_area)
+    for catchment in ocean_catchment_list:
+      if catchment == 0:
+        continue
+      ocean_basin_catchments.get_data()[catchments.get_data() == catchment] = i
+  return ocean_basin_catchments
+
 

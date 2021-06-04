@@ -27,10 +27,10 @@ if ! $no_modules ; then
   load_module anaconda3
 fi
 
-conda-env remove -n dyhdenv
+conda-env remove -n dyhdenv3
 conda config --add channels conda-forge
-conda create --yes -n dyhdenv python=2.7
-source activate dyhdenv
+conda create --yes -n dyhdenv3
+source activate dyhdenv3
 conda install --yes cdo netcdf4 numpy matplotlib xarray cython scipy python-cdo configparser
 conda list -e
 source deactivate

@@ -5,12 +5,12 @@ Created on July 29, 2020
 @author: thomasriddick
 '''
 import numpy as np
-import libs.create_connected_lsmask_wrapper as create_connected_lsmask_wrapper
-import libs.lake_operators_wrapper as lake_operators_wrapper
-import compute_catchments as cc
-import determine_river_directions
-import field
-import iodriver
+from Dynamic_HD_Scripts.libs import create_connected_lsmask_wrapper
+from Dynamic_HD_Scripts.libs import lake_operators_wrapper
+from Dynamic_HD_Scripts import compute_catchments as cc
+from Dynamic_HD_Scripts import determine_river_directions
+from Dynamic_HD_Scripts import field
+from Dynamic_HD_Scripts import iodriver
 import tempfile
 import os
 

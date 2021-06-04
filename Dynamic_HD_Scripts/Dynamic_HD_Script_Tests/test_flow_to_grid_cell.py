@@ -6,13 +6,12 @@ Created on Jan 20, 2016
 '''
 
 import unittest
-import Dynamic_HD_Scripts.flow_to_grid_cell as flow_to_grid_cell
+from Dynamic_HD_Scripts import flow_to_grid_cell
 import numpy as np
 from abc import ABCMeta, abstractmethod
-from _pyio import __metaclass__
-import Dynamic_HD_Scripts.f2py_manager as f2py_manager
+from Dynamic_HD_Scripts import f2py_manager
 import os
-from context import fortran_source_path
+from Dynamic_HD_Script_Tests.context import fortran_source_path
 
 class CreateHypotheticalRiverPathsMap(unittest.TestCase):
     """Tests of high level routine using small river directions maps"""
@@ -131,10 +130,8 @@ class CreateHypotheticalRiverPathsMap(unittest.TestCase):
                                       self.expected_paths_map_when_using_mask,
                                       "Paths map created using land-sea mask doesn't match expectation")
 
-class MainTestCaseHelper(object):
+class MainTestCaseHelper(object, metaclass=ABCMeta):
     """Helper class defining test helpers for the iterator"""
-
-    __metaclass__ = ABCMeta
 
     flow_dirs =  np.array([[ 0,0,0,0,0,0 ],
                            [ 3,1,4,4,4,4 ],

@@ -1,5 +1,5 @@
 '''
-Contains classes for generating interactive orography and riverflow comparison plots for 
+Contains classes for generating interactive orography and riverflow comparison plots for
 large range of individual catchments
 
 Created on Jul 21, 2016
@@ -11,8 +11,8 @@ from matplotlib.widgets import Slider,Button,RadioButtons,CheckButtons
 import matplotlib.gridspec as gridspec
 from matplotlib.ticker import FuncFormatter
 import matplotlib.pyplot as plt
-import river_comparison_plotting_routines as rc_pts
-import plotting_tools as pts
+from HD_Plots import river_comparison_plotting_routines as rc_pts
+from HD_Plots import plotting_tools as pts
 import numpy as np
 import math
 
@@ -23,7 +23,7 @@ class Interactive_Plots(object):
 
     def __init__(self):
         """Class constructor. Initialise permenant class members as required and set constants.
-        
+
         Arguments:
         None
         Returns:
@@ -76,14 +76,14 @@ class Interactive_Plots(object):
         self.rdirs_field = None
         self.super_fine_orog_field = None
         self.pair = None
-    
+
     def setup_plots(self,catchment_section,ref_orog_field,data_orog_original_scale_field,
                     ref_flowtocellfield,data_flowtocellfield,rdirs_field,super_fine_orog_field,
                     super_fine_data_flowtocellfield,pair,catchment_bounds,scale_factor,
                     ref_to_super_fine_scale_factor,ref_grid_offset_adjustment=0,
                     fine_grid_offset_adjustment=0,super_fine_grid_offset_adjustment=0):
         """Setup the set of interactive plots and bind on events to callbacks
-        
+
         Arguments:
         catchment_section
         ref_orog_field
@@ -108,7 +108,7 @@ class Interactive_Plots(object):
         self.data_orog_original_scale_field = data_orog_original_scale_field
         self.ref_flowtocellfield = ref_flowtocellfield
         self.data_flowtocellfield = data_flowtocellfield
-        self.rdirs_field = rdirs_field 
+        self.rdirs_field = rdirs_field
         self.super_fine_orog_field = super_fine_orog_field
         self.super_fine_data_flowtocellfield = super_fine_data_flowtocellfield
         self.pair = pair
@@ -200,7 +200,7 @@ class Interactive_Plots(object):
             return pts.calculate_lat_label(tick_val,offset,scale_factor=self.scale_factor)
         self.y_scaled_formatter_funcs.append(format_fn_y_scaled)
         ax2.yaxis.set_major_formatter(FuncFormatter(format_fn_y_scaled))
-        def format_fn_x_scaled(tick_val,tick_pos,offset=self.catchment_bounds[2] + 
+        def format_fn_x_scaled(tick_val,tick_pos,offset=self.catchment_bounds[2] +
                                fine_grid_offset_adjustment):
             return pts.calculate_lon_label(tick_val,offset,scale_factor=self.scale_factor)
         self.x_scaled_formatter_funcs.append(format_fn_x_scaled)
@@ -212,7 +212,7 @@ class Interactive_Plots(object):
         def format_fn_x_super_fine_scaled(tick_val,tick_pos,offset=self.catchment_bounds[2] +
                                           super_fine_grid_offset_adjustment):
             return pts.calculate_lon_label(tick_val,offset,
-                                           scale_factor=self.ref_to_super_fine_scale_factor) 
+                                           scale_factor=self.ref_to_super_fine_scale_factor)
         self.x_super_fine_scaled_formatter_funcs.append(format_fn_x_super_fine_scaled)
         plt.setp(ax2.xaxis.get_ticklabels(),rotation='vertical')
         ax3 = plt.subplot(gs[2,0])
@@ -268,7 +268,7 @@ class Interactive_Plots(object):
         num_levels_slider.on_changed(update)
         self.num_levels_sliders.append(num_levels_slider)
         fmap_threshold_slider.on_changed(update)
-        self.fmap_threshold_sliders.append(fmap_threshold_slider) 
+        self.fmap_threshold_sliders.append(fmap_threshold_slider)
         overlay_flowmap_buttons.on_clicked(update)
         self.overlay_flowmap_buttons_list.append(overlay_flowmap_buttons)
         overlay_flowmap_on_super_fine_orog_buttons.on_clicked(update)
@@ -301,16 +301,16 @@ class Interactive_Plots(object):
         self.match_left_scaling_callback_functions.append(match_left_scaling)
         self.match_right_scaling_callback_functions.append(match_right_scaling)
         self.match_catch_scaling_callback_functions.append(match_catch_scaling)
-        
+
 class Update(object):
-        
+
     def __init__(self,orog_plot_num,lat_offset,lon_offset,plots_object):
         self.orog_plot_num = orog_plot_num
         self.lat_offset = lat_offset
         self.lon_offset = lon_offset
         #give this a short name as it will be used very frequently
         self.po = plots_object
-            
+
     def __call__(self,dummy_input):
         if self.po.min_heights[self.orog_plot_num].val >= self.po.max_heights[self.orog_plot_num].val:
             self.po.max_heights[self.orog_plot_num].set_val(self.po.min_heights[self.orog_plot_num].val+0.01)
@@ -318,7 +318,7 @@ class Update(object):
         ref_xlim = ax_catch.get_xlim()
         ref_ylim = ax_catch.get_ylim()
         plt.cla()
-        rc_pts.plot_catchment(ax_catch, self.po.catchment_sections[self.orog_plot_num], 
+        rc_pts.plot_catchment(ax_catch, self.po.catchment_sections[self.orog_plot_num],
                               cax=None,legend=False,remove_ticks_flag=False,
                               format_coords=True,
                               lat_offset=self.lat_offset,
@@ -338,18 +338,18 @@ class Update(object):
         plt.cla()
         cax1 = plt.subplot(self.po.orog_gridspecs[self.orog_plot_num][0,1])
         alpha = 0.4 if self.po.overlay_flowmap_buttons_list[self.orog_plot_num].lines[0][0].get_visible() and\
-            (self.po.secondary_orog_radio_buttons_list[self.orog_plot_num].value_selected == 
+            (self.po.secondary_orog_radio_buttons_list[self.orog_plot_num].value_selected ==
             'Reference Scale Orography') else 1.0
         cmap_name = 'viridis' if self.po.linear_colors_buttons_list[self.orog_plot_num].lines[0][0].get_visible()\
                     else 'terrain'
-        if (self.po.secondary_orog_radio_buttons_list[self.orog_plot_num].value_selected == 
+        if (self.po.secondary_orog_radio_buttons_list[self.orog_plot_num].value_selected ==
             'Reference Scale Orography'):
             self.po.use_super_fine_orog_flags[self.orog_plot_num] = False
             rc_pts.plot_orography_section(ax,cax1,
                                           section=self.po.ref_orog_field_sections[self.orog_plot_num],
-                                          min_height=self.po.min_heights[self.orog_plot_num].val, 
-                                          max_height=self.po.max_heights[self.orog_plot_num].val, 
-                                          outflow_lat=self.po.orog_rmouth_coords[self.orog_plot_num][0], 
+                                          min_height=self.po.min_heights[self.orog_plot_num].val,
+                                          max_height=self.po.max_heights[self.orog_plot_num].val,
+                                          outflow_lat=self.po.orog_rmouth_coords[self.orog_plot_num][0],
                                           outflow_lon=self.po.orog_rmouth_coords[self.orog_plot_num][1],
                                           new_cb=False,num_levels=self.po.num_levels_sliders[self.orog_plot_num].val,
                                           plot_type=self.po.plot_type_radio_buttons_list[self.orog_plot_num].value_selected,
@@ -357,19 +357,19 @@ class Update(object):
                                           lat_offset=self.lat_offset, lon_offset=self.lon_offset)
             ax.yaxis.set_major_formatter(FuncFormatter(self.po.y_formatter_funcs[self.orog_plot_num]))
             ax.xaxis.set_major_formatter(FuncFormatter(self.po.x_formatter_funcs[self.orog_plot_num]))
-        elif (self.po.secondary_orog_radio_buttons_list[self.orog_plot_num].value_selected == 
+        elif (self.po.secondary_orog_radio_buttons_list[self.orog_plot_num].value_selected ==
             'Super Fine Scale Orography'):
             self.po.use_super_fine_orog_flags[self.orog_plot_num] = True
             rc_pts.plot_orography_section(ax,cax1,
                                           section=self.po.super_fine_orog_field_sections[self.orog_plot_num],
-                                          min_height=self.po.min_heights[self.orog_plot_num].val, 
-                                          max_height=self.po.max_heights[self.orog_plot_num].val, 
-                                          outflow_lat=self.po.orog_rmouth_coords[self.orog_plot_num][0], 
+                                          min_height=self.po.min_heights[self.orog_plot_num].val,
+                                          max_height=self.po.max_heights[self.orog_plot_num].val,
+                                          outflow_lat=self.po.orog_rmouth_coords[self.orog_plot_num][0],
                                           outflow_lon=self.po.orog_rmouth_coords[self.orog_plot_num][1],
                                           new_cb=False,num_levels=self.po.num_levels_sliders[self.orog_plot_num].val,
                                           plot_type=self.po.plot_type_radio_buttons_list[self.orog_plot_num].value_selected,
                                           alpha=alpha,cmap_name=cmap_name,
-                                          lat_offset=self.lat_offset*self.po.ref_to_super_fine_scale_factor, 
+                                          lat_offset=self.lat_offset*self.po.ref_to_super_fine_scale_factor,
                                           lon_offset=self.lon_offset*self.po.ref_to_super_fine_scale_factor)
             ax.yaxis.set_major_formatter(FuncFormatter(self.po.y_super_fine_scaled_formatter_funcs[self.orog_plot_num]))
             ax.xaxis.set_major_formatter(FuncFormatter(self.po.x_super_fine_scaled_formatter_funcs[self.orog_plot_num]))
@@ -380,12 +380,12 @@ class Update(object):
         data_xlim = ax2.get_xlim()
         data_ylim = ax2.get_ylim()
         plt.cla()
-        cax2 = plt.subplot(self.po.orog_gridspecs[self.orog_plot_num][0,4]) 
+        cax2 = plt.subplot(self.po.orog_gridspecs[self.orog_plot_num][0,4])
         rc_pts.plot_orography_section(ax2,cax2,
                                       section=self.po.data_orog_original_scale_field_sections[self.orog_plot_num],
-                                      min_height=self.po.min_heights[self.orog_plot_num].val, 
-                                      max_height=self.po.max_heights[self.orog_plot_num].val, 
-                                      outflow_lat=self.po.orog_rmouth_coords[self.orog_plot_num][0], 
+                                      min_height=self.po.min_heights[self.orog_plot_num].val,
+                                      max_height=self.po.max_heights[self.orog_plot_num].val,
+                                      outflow_lat=self.po.orog_rmouth_coords[self.orog_plot_num][0],
                                       outflow_lon=self.po.orog_rmouth_coords[self.orog_plot_num][1],
                                       new_cb=False,num_levels=self.po.num_levels_sliders[self.orog_plot_num].val,
                                       plot_type=self.po.plot_type_radio_buttons_list[self.orog_plot_num].value_selected,
@@ -414,7 +414,7 @@ class Update(object):
             if not self.po.use_super_fine_orog_flags[self.orog_plot_num]:
                 rc_pts.plot_flowmap(ax, section=catchment_rmap_section,reduced_map=True,cax=cax_fmap,interpolation='none',
                                     alternative_colors=True,remove_ticks_flag=False)
-            elif (len(self.po.super_fine_data_flowtocellfield_sections) != 0 and 
+            elif (len(self.po.super_fine_data_flowtocellfield_sections) != 0 and
                   self.po.overlay_flowmap_on_super_fine_orog_buttons_list[self.orog_plot_num].lines[0][0].get_visible()):
                 super_fine_catchment_rmap_section = rc_pts.select_rivermaps_section(self.po.super_fine_data_flowtocellfield_sections[self.orog_plot_num],
                                                                                     self.po.super_fine_data_flowtocellfield_sections[self.orog_plot_num],
@@ -437,7 +437,7 @@ class Update(object):
         else:
             cax_fmap.set_visible(False)
             ax13.set_visible(False)
-            
+
         fig.canvas.toolbar.push_current()
         if self.po.use_super_fine_orog_flags[self.orog_plot_num]:
             if not use_super_fine_orog_old:
@@ -456,7 +456,7 @@ class Update(object):
         if  (pts.calc_displayed_plot_size(ref_xlim,ref_ylim) < self.po.numbers_max_size and
              self.po.display_height_buttons_list[self.orog_plot_num].lines[0][0].get_visible()
              and not self.po.use_super_fine_orog_flags[self.orog_plot_num]):
-            pts.print_nums(ax,self.po.ref_orog_field_sections[self.orog_plot_num], 
+            pts.print_nums(ax,self.po.ref_orog_field_sections[self.orog_plot_num],
                            ref_xlim,ref_ylim)
             self.po.using_numbers_ref[self.orog_plot_num] = True
         else:
@@ -465,7 +465,7 @@ class Update(object):
         ax2.set_ylim(data_ylim,emit=False)
         if (pts.calc_displayed_plot_size(data_xlim,data_ylim) < self.po.numbers_max_size and
             self.po.display_height_buttons_list[self.orog_plot_num].lines[0][0].get_visible()):
-            pts.print_nums(ax2,self.po.data_orog_original_scale_field_sections[self.orog_plot_num], 
+            pts.print_nums(ax2,self.po.data_orog_original_scale_field_sections[self.orog_plot_num],
                            data_xlim,data_ylim)
             self.po.using_numbers_data[self.orog_plot_num] = True
         else:
@@ -480,13 +480,13 @@ class Update(object):
         ax_catch.callbacks.connect('xlim_changed',self.po.match_catch_scaling_callback_functions[self.orog_plot_num])
         ax_catch.callbacks.connect('ylim_changed',self.po.match_catch_scaling_callback_functions[self.orog_plot_num])
         fig.canvas.draw()
-        
+
 class Reset(object):
-    
+
     def __init__(self,orog_plot_num,plots_object):
         self.orog_plot_num = orog_plot_num
         self.po = plots_object
-                         
+
     def __call__(self,event):
         self.po.min_heights[self.orog_plot_num].reset()
         self.po.max_heights[self.orog_plot_num].reset()
@@ -497,7 +497,7 @@ class Reset(object):
         ax2 = plt.subplot(self.po.orog_gridspecs[self.orog_plot_num][0,3])
         ref_section = self.po.ref_orog_field_sections[self.orog_plot_num]
         data_section = self.po.data_orog_original_scale_field_sections[self.orog_plot_num]
-        if (self.po.using_numbers_data[self.orog_plot_num] or 
+        if (self.po.using_numbers_data[self.orog_plot_num] or
             self.po.using_numbers_ref[self.orog_plot_num]):
             self.po.update_funcs[self.orog_plot_num](None)
         ax_catch.set_xlim(-0.5,ref_section.shape[1]-0.5,emit=False)
@@ -513,13 +513,13 @@ class Reset(object):
             ax.set_ylim(ref_section.shape[0]-0.5,-0.5,emit=False)
         fig = plt.gcf()
         fig.canvas.draw()
-        
+
 class Match_Right_Scaling(object):
-        
+
     def __init__(self,orog_plot_num,plots_object):
         self.orog_plot_num = orog_plot_num
         self.po = plots_object
-                 
+
     def __call__(self,event):
         fig = plt.gcf()
         ax_catch = plt.subplot(self.po.orog_gridspecs[self.orog_plot_num][0,6])
@@ -536,32 +536,32 @@ class Match_Right_Scaling(object):
                            self.po.ref_orog_field_sections[self.orog_plot_num].shape[0] - 0.5),
                        max(ylim_scaled[1],-0.5))
         fig.canvas.toolbar.push_current()
-        if (self.po.secondary_orog_radio_buttons_list[self.orog_plot_num].value_selected == 
+        if (self.po.secondary_orog_radio_buttons_list[self.orog_plot_num].value_selected ==
             'Reference Scale Orography'):
             ax.set_xlim(xlim_scaled,emit=False)
             ax.set_ylim(ylim_scaled,emit=False)
-        elif (self.po.secondary_orog_radio_buttons_list[self.orog_plot_num].value_selected == 
+        elif (self.po.secondary_orog_radio_buttons_list[self.orog_plot_num].value_selected ==
             'Super Fine Scale Orography'):
-            xlim_scaled_to_super_fine = tuple(i*self.po.ref_to_super_fine_scale_factor/self.po.scale_factor 
+            xlim_scaled_to_super_fine = tuple(i*self.po.ref_to_super_fine_scale_factor/self.po.scale_factor
                                               for i in xlim)
-            ylim_scaled_to_super_fine = tuple(i*self.po.ref_to_super_fine_scale_factor/self.po.scale_factor 
-                                              for i in ylim) 
+            ylim_scaled_to_super_fine = tuple(i*self.po.ref_to_super_fine_scale_factor/self.po.scale_factor
+                                              for i in ylim)
             ax.set_xlim(xlim_scaled_to_super_fine,emit=False)
             ax.set_ylim(ylim_scaled_to_super_fine,emit=False)
         else:
             raise RuntimeError('Unknown radio button value selected!')
         ax_catch.set_xlim(xlim_scaled,emit=False)
         ax_catch.set_ylim(ylim_scaled,emit=False)
-        if (self.po.using_numbers_data[self.orog_plot_num] or 
+        if (self.po.using_numbers_data[self.orog_plot_num] or
             self.po.using_numbers_ref[self.orog_plot_num]  or
-            (pts.calc_displayed_plot_size(xlim_scaled,ylim_scaled) < self.po.numbers_max_size and 
+            (pts.calc_displayed_plot_size(xlim_scaled,ylim_scaled) < self.po.numbers_max_size and
             self.po.display_height_buttons_list[self.orog_plot_num].lines[0][0].get_visible())):
             self.po.update_funcs[self.orog_plot_num](None)
         fig.canvas.toolbar.push_current()
         fig.canvas.draw()
 
 class Match_Left_Scaling(object):
-    
+
     def __init__(self,orog_plot_num,plots_object):
         self.orog_plot_num = orog_plot_num
         self.po = plots_object
@@ -573,7 +573,7 @@ class Match_Left_Scaling(object):
         ax2 = plt.subplot(self.po.orog_gridspecs[self.orog_plot_num][0,3])
         xlim = ax.get_xlim()
         ylim = ax.get_ylim()
-        if (self.po.secondary_orog_radio_buttons_list[self.orog_plot_num].value_selected == 
+        if (self.po.secondary_orog_radio_buttons_list[self.orog_plot_num].value_selected ==
             'Super Fine Scale Orography'):
             xlim = tuple(round(i/self.po.ref_to_super_fine_scale_factor) for i in xlim)
             ylim = tuple(round(i/self.po.ref_to_super_fine_scale_factor) for i in ylim)
@@ -590,7 +590,7 @@ class Match_Left_Scaling(object):
         ax_catch.set_ylim(ylim,emit=False)
         ax2.set_xlim(xlim_scaled,emit=False)
         ax2.set_ylim(ylim_scaled,emit=False)
-        if (self.po.using_numbers_data[self.orog_plot_num] or 
+        if (self.po.using_numbers_data[self.orog_plot_num] or
             self.po.using_numbers_ref[self.orog_plot_num]  or
             (pts.calc_displayed_plot_size(xlim,ylim) < self.po.numbers_max_size and
              self.po.display_height_buttons_list[self.orog_plot_num].lines[0][0].get_visible())):
@@ -599,7 +599,7 @@ class Match_Left_Scaling(object):
         fig.canvas.draw()
 
 class Match_Catch_Scaling(object):
-            
+
     def __init__(self,orog_plot_num,plots_object):
         self.orog_plot_num = orog_plot_num
         self.po = plots_object
@@ -614,23 +614,23 @@ class Match_Catch_Scaling(object):
         xlim_scaled = tuple(i*self.po.scale_factor for i in xlim)
         ylim_scaled = tuple(i*self.po.scale_factor for i in ylim)
         fig.canvas.toolbar.push_current()
-        if (self.po.secondary_orog_radio_buttons_list[self.orog_plot_num].value_selected == 
+        if (self.po.secondary_orog_radio_buttons_list[self.orog_plot_num].value_selected ==
             'Reference Scale Orography'):
             ax.set_xlim(xlim,emit=False)
             ax.set_ylim(ylim,emit=False)
-        elif (self.po.secondary_orog_radio_buttons_list[self.orog_plot_num].value_selected == 
+        elif (self.po.secondary_orog_radio_buttons_list[self.orog_plot_num].value_selected ==
             'Super Fine Scale Orography'):
             xlim_scaled_to_super_fine = tuple(i*self.po.ref_to_super_fine_scale_factor for i in xlim)
-            ylim_scaled_to_super_fine = tuple(i*self.po.ref_to_super_fine_scale_factor for i in ylim) 
+            ylim_scaled_to_super_fine = tuple(i*self.po.ref_to_super_fine_scale_factor for i in ylim)
             ax.set_xlim(xlim_scaled_to_super_fine,emit=False)
             ax.set_ylim(ylim_scaled_to_super_fine,emit=False)
         else:
             raise RuntimeError('Unknown radio button value selected!')
         ax2.set_xlim(xlim_scaled,emit=False)
         ax2.set_ylim(ylim_scaled,emit=False)
-        if (self.po.using_numbers_data[self.orog_plot_num] or 
+        if (self.po.using_numbers_data[self.orog_plot_num] or
             self.po.using_numbers_ref[self.orog_plot_num]  or
-            (pts.calc_displayed_plot_size(xlim,ylim) < self.po.numbers_max_size and 
+            (pts.calc_displayed_plot_size(xlim,ylim) < self.po.numbers_max_size and
              self.po.display_height_buttons_list[self.orog_plot_num].lines[0][0].get_visible())):
             self.po.update_funcs[self.orog_plot_num](None)
         fig.canvas.toolbar.push_current()

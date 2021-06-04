@@ -13,9 +13,9 @@ import stat
 import socket
 import re
 import shutil
-from numpy.distutils import core as distutils_core
+from distutils import core as distutils_core
 from subprocess import CalledProcessError
-from context import shared_object_path, bin_path,build_path
+from Dynamic_HD_Scripts.context import shared_object_path, bin_path,build_path
 from sys import platform
 
 class f2py_manager(object):
@@ -69,7 +69,7 @@ class f2py_manager(object):
             raise RuntimeError("Fortran file {0} does not exist".format(self.fortran_file_name))
         self.fortran_module_name = os.path.basename(self.fortran_file_name).split('.')[0]
         self.shared_object_file_path = os.path.join(shared_object_path,
-                                                    self.fortran_module_name+'.so')
+                                                    self.fortran_module_name+'.cpython-39-darwin.so')
         self.sources = [self.fortran_file_name]
         if additional_fortran_files is not None:
             self.additional_fortran_files = additional_fortran_files
@@ -168,15 +168,15 @@ class f2py_manager(object):
         distutils_core.run_setup(self.wrapper_path,["build_ext",
                                                     "--build-lib={0}".format(shared_object_path),
                                                     "--build-temp={0}".format(os.path.join(build_path,
-                                                                                      self.fortran_module_name,
-                                                                                      "temp")),
+                                                                                           self.fortran_module_name,
+                                                                                           "temp")),
                                                     "--build-path={0}".format(build_path),
                                                     "--module-name={0}".format(self.fortran_module_name),
                                                     "--sources={0}".format(str(self.sources)),
                                                     "--include-path={0}".format(str(self.include_path)),
                                                     "--objects={0}".
                                                     format(str(self.additional_fortran_files))],
-                                 stop_after="run")
+                                                    stop_after="run")
         self.load_module()
 
     def check_for_changes(self):

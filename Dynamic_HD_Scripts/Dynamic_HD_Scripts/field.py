@@ -6,7 +6,7 @@ Created on Jan 14, 2016
 @author: thomasriddick
 '''
 
-import grid as gd
+from Dynamic_HD_Scripts import grid as gd
 import sys
 import numpy as np
 import warnings
@@ -336,7 +336,7 @@ class Field(object):
         return Field(np.logical_or(self.data,other_field.get_data()),grid=self.grid)
 
     def dilate(self,structure,iterations):
-        for _ in xrange(iterations):
+        for _ in range(iterations):
             temp_data = self.grid.add_wrapping_halo(self.data)
             temp_data = ndi.binary_dilation(temp_data,
                                             structure=structure,
