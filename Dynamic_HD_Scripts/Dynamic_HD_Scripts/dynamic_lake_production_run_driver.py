@@ -29,6 +29,10 @@ from Dynamic_HD_Scripts.loop_breaker_driver import run_loop_breaker
 class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
     """A class with methods used for running a production run of the dynamic HD and Lake generation code"""
 
+    #To prevent strange edge effects occuring this should be set to a large
+    #negative value (larger than any plausible negative height in the model)
+    ocean_floor_depth = -1.0E9
+
     def __init__(self,input_orography_filepath=None,input_ls_mask_filepath=None,
                  input_water_to_redistribute_filepath=None,
                  output_hdparas_filepath=None,output_lakeparas_filepath=None,
@@ -187,6 +191,31 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         return (self.output_hdparas_filepath,self.output_hdstart_filepath,
                 self.output_lakeparas_filepath,self.output_lakestart_filepath)
 
+    def trial_run_for_14440(self):
+        """Trial run using data from main topo scripting for 14440k"""
+        super(Dynamic_Lake_Production_Run_Drivers,self).__init__()
+        file_label = self._generate_file_label()
+        data_directory = "/Users/thomasriddick/Documents/data/laketestdata/files_for_14440_timeslice"
+        self.original_orography_filename=data_directory+ "/GLAC1D_Top01_surf_14440.nc"
+        self.original_ls_mask_filename=data_directory+"/landsea_14440k_inv.nc"
+        self.output_hdparas_filepath=("/Users/thomasriddick/Documents/data/temp/"
+                                      "temp_workdir_lake_14440/hdpara_{0}_14440.nc".format(file_label))
+        self.output_hdstart_filepath=("/Users/thomasriddick/Documents/data/temp/"
+                                      "temp_workdir_lake_14440/hdstart_{0}_14440.nc".format(file_label))
+        self.ancillary_data_path=("/Users/thomasriddick/Documents/data/laketestdata/"
+                                  "files_for_14440_timeslice/HDancillarydata_lakes")
+        self.working_directory_path="/Users/thomasriddick/Documents/data/temp/temp_workdir_lake_14440"
+        self.output_lakeparas_filepath = "/Users/thomasriddick/Documents/data/temp/temp_workdir_lake_14440/lakeparas_{0}_14440.nc".format(file_label)
+        self.output_lakestart_filepath = "/Users/thomasriddick/Documents/data/temp/temp_workdir_lake_14440/lakestart_{0}_14440.nc".format(file_label)
+        self.input_water_to_redistribute_filepath="/Users/thomasriddick/Documents/data/laketestdata/lake_volumes_pmt0531_Tom_41091231.nc"
+        self.python_config_filename=path.join(self.ancillary_data_path,
+                                              "dynamic_lake_production_driver.cfg")
+        self.tarasov_based_orog_correction=True
+        self.glacier_mask_filename=data_directory+"/glac01_14440.nc"
+        self.present_day_base_orography_filename=data_directory+"/GLAC1D_Top01_surf_0000.nc"
+        self.compile_paragen_and_hdfile()
+        self.no_intermediaries_dynamic_lake_driver()
+
     def trial_run_for_mid_deglaciation(self):
         super(Dynamic_Lake_Production_Run_Drivers,self).__init__()
         file_label = self._generate_file_label()
@@ -300,6 +329,8 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                    true_sinks_in = np.ascontiguousarray(truesinks.get_data(),
                                                                                         dtype=np.int32),
                                                    add_slope = False,epsilon = 0.0)
+        orography_10min.mask_field_with_external_mask(ls_mask_10min.get_data())
+        orography_10min.fill_mask(self.ocean_floor_depth)
         if config.getboolean("output_options","output_corrected_orog"):
             iodriver.advanced_field_writer(path.join(self.working_directory_path,
                                                        "10min_corrected_orog.nc"),
