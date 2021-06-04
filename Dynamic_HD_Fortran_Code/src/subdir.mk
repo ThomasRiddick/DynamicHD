@@ -359,7 +359,7 @@ src/latlon_hd_and_lake_model/latlon_lake_model_lake_number_retrieval_driver.o: .
 
 src/latlon_hd_and_lake_model/latlon_hd_model_mod.o: ../src/latlon_hd_and_lake_model/latlon_hd_model_mod.f90 src/latlon_hd_and_lake_model/latlon_lake_model_interface_mod.o
 
-src/latlon_hd_and_lake_model_test_mod.o: ../src/latlon_hd_and_lake_model_test_mod.f90 src/latlon_hd_and_lake_model/latlon_hd_model_interface_mod.o src/latlon_hd_and_lake_model/latlon_hd_model_mod.o
+src/latlon_hd_and_lake_model_test_mod.o: ../src/latlon_hd_and_lake_model_test_mod.f90 src/latlon_hd_and_lake_model/latlon_hd_model_interface_mod.o src/latlon_hd_and_lake_model/latlon_hd_model_mod.o src/latlon_hd_and_lake_model/latlon_lake_model_retrieve_lake_numbers.o
 
 src/icosohedral_hd_and_lake_model_test_mod.o: ../src/icosohedral_hd_and_lake_model_test_mod.f90 src/icosohedral_hd_and_lake_model/icosohedral_hd_model_interface_mod.o src/icosohedral_hd_and_lake_model/icosohedral_hd_model_mod.o
 

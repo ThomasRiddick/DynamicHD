@@ -1973,18 +1973,6 @@ class ETOPO1_Data_Drivers(Dynamic_HD_Drivers):
         super(ETOPO1_Data_Drivers,self).__init__()
         self.etopo1_data_filepath = path.join(self.orography_path,'ETOPO1_Ice_c_gmt4.nc')
 
-    def etopo1_data_all_points(self):
-        """Generate the naive river direction from the ETOPO data without sink filling"""
-        file_label = self._generate_file_label()
-        dynamic_hd.main(new_orography_file=self.etopo1_data_filepath,
-                        grid_type='LatLong1min',
-                        updated_RFD_file=self.generated_rdir_filepath + file_label + '.nc',
-                        recompute_changed_orography_only=False,
-                        recompute_significant_gradient_changes_only=False)
-        self._run_postprocessing(rdirs_filename=self.generated_rdir_filepath + file_label + '.nc',
-                                 output_file_label=file_label,
-                                 grid_type='LatLong1min')
-
     def etopo1_data_ALG4_sinkless(self):
         """Generate sinkless river directions from the ETOPO data using algorithm 4 of Barnes et al 2014"""
         file_label = self._generate_file_label()
@@ -2119,56 +2107,6 @@ class ICE5G_Data_Drivers(Dynamic_HD_Drivers):
                                    sea_level=0.0,
                                    grid_type='HD')
 
-    def ICE5G_as_HD_data_21k_0k_sig_grad_only_all_neighbours_driver(self):
-        """Generate river directions for LGM only where significant gradient changes have occurred"""
-        file_label = self._generate_file_label()
-        if not self.hd_data_helper_run:
-            self._ICE5G_as_HD_data_21k_0k_Helper()
-        dynamic_hd.main(new_orography_file=self.ice5g_0k_HD_filepath,
-                        grid_type = 'HD',
-                        base_orography_file=self.ice5g_21k_HD_filepath,
-                        base_RFD_file=self.base_RFD_filepath,
-                        updated_RFD_file=self.generated_rdir_filepath+file_label+'.nc',
-                        update_mask_file=self.generated_update_masks_filepath+file_label+'.nc',
-                        recompute_changed_orography_only=False,
-                        recompute_significant_gradient_changes_only=True,
-                        gc_absolute_tol=3)
-        self._run_postprocessing(rdirs_filename=self.generated_rdir_filepath+
-                                 file_label+'.nc',
-                                 output_file_label=file_label,grid_type='HD')
-
-    def ICE5G_as_HD_data_all_points_21k(self):
-        """Generate naive river directions for all points at LGM"""
-        file_label = self._generate_file_label()
-        if not self.hd_data_helper_run:
-            self._ICE5G_as_HD_data_21k_0k_Helper()
-        dynamic_hd.main(new_orography_file=self.ice5g_21k_HD_filepath,
-                        grid_type='HD',
-                        updated_RFD_file=self.generated_rdir_filepath + file_label+'.nc',
-                        recompute_changed_orography_only=False,
-                        recompute_significant_gradient_changes_only=False)
-        self._run_postprocessing(rdirs_filename=self.generated_rdir_filepath+
-                                 file_label+'.nc',
-                                 output_file_label=file_label,
-                                 ls_mask_filename=self.ice5g_21k_HD_lsmaskpath,
-                                 grid_type='HD')
-
-    def ICE5G_as_HD_data_all_points_0k(self):
-        """Generate naive river direction for all points at the present day"""
-        file_label = self._generate_file_label()
-        if not self.hd_data_helper_run:
-            self._ICE5G_as_HD_data_21k_0k_Helper()
-        dynamic_hd.main(new_orography_file=self.ice5g_0k_HD_filepath,
-                        grid_type='HD',
-                        updated_RFD_file=self.generated_rdir_filepath + file_label+'.nc',
-                        recompute_changed_orography_only=False,
-                        recompute_significant_gradient_changes_only=False)
-        self._run_postprocessing(rdirs_filename=self.generated_rdir_filepath+
-                                 file_label+'.nc',
-                                 output_file_label=file_label,
-                                 ls_mask_filename=self.ice5g_0k_HD_lsmaskpath,
-                                 grid_type='HD')
-
     def ICE5G_as_HD_data_ALG4_sinkless_all_points_0k(self):
         """Generate sinkless river direction for all points at the present day after upscaling ICE5G data to the HD grid"""
         file_label = self._generate_file_label()
@@ -2198,32 +2136,6 @@ class ICE5G_Data_Drivers(Dynamic_HD_Drivers):
                                  output_file_label=file_label,
                                  ls_mask_filename=self.ice5g_0k_HD_lsmaskpath,
                                  grid_type='HD')
-
-    def ICE5G_data_all_points_0k(self):
-        """Generate naive river directions using the ICE5G data for the present day"""
-        file_label = self._generate_file_label()
-        dynamic_hd.main(new_orography_file=path.join(self.orography_path,
-                                                     "ice5g_v1_2_00_0k_10min.nc"),
-                        grid_type='LatLong10min',
-                        updated_RFD_file=self.generated_rdir_filepath + file_label+'.nc',
-                        recompute_changed_orography_only=False,
-                        recompute_significant_gradient_changes_only=False)
-        self._run_postprocessing(rdirs_filename=self.generated_rdir_filepath+
-                                 file_label+'.nc',
-                                 output_file_label=file_label,grid_type='LatLong10min')
-
-    def ICE5G_data_all_points_21k(self):
-        """Generate naive river directions using the ICE5G data at the LGM"""
-        file_label = self._generate_file_label()
-        dynamic_hd.main(new_orography_file=path.join(self.orography_path,
-                                                     "ice5g_v1_2_21_0k_10min.nc"),
-                        grid_type='LatLong10min',
-                        updated_RFD_file=self.generated_rdir_filepath + file_label+'.nc',
-                        recompute_changed_orography_only=False,
-                        recompute_significant_gradient_changes_only=False)
-        self._run_postprocessing(rdirs_filename=self.generated_rdir_filepath+
-                                 file_label+'.nc',
-                                 output_file_label=file_label,grid_type='LatLong10min')
 
     def ICE5G_data_ALG4_sinkless_0k(self):
         """Generate sinkless river directions for the present day using the ICE5G data and a corrected orography"""

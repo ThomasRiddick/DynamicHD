@@ -22,6 +22,7 @@ from Dynamic_HD_Scripts.field import Field, RiverDirections
 from Dynamic_HD_Scripts.flow_to_grid_cell import create_hypothetical_river_paths_map
 from Dynamic_HD_Scripts.cotat_plus_driver import run_cotat_plus
 from Dynamic_HD_Scripts.loop_breaker_driver import run_loop_breaker
+from Dynamic_HD_Scripts import iodriver
 
 class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
     """A class with methods used for running a production run of the dynamic HD generation code"""
@@ -355,42 +356,52 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         if not config.has_section("output_fieldname_options"):
             config.add_section("output_fieldname_options")
         if not config.has_option("output_fieldname_options","output_10min_corrected_orog"):
-            config.set("output_fieldname_options","output_10min_corrected_orog")
+            config.set("output_fieldname_options","output_10min_corrected_orog","orog")
         if not config.has_option("output_fieldname_options","output_10min_rdirs"):
-            config.set("output_fieldname_options","output_10min_rdirs")
+            config.set("output_fieldname_options","output_10min_rdirs","rdirs")
         if not config.has_option("output_fieldname_options","output_10min_flow_to_cell"):
-            config.set("output_fieldname_options","output_10min_flow_to_cell")
+            config.set("output_fieldname_options","output_10min_flow_to_cell",
+                       "cumulative_flow")
         if not config.has_option("output_fieldname_options","output_10min_flow_to_river_mouths"):
-            config.set("output_fieldname_options","output_10min_flow_to_river_mouths")
+            config.set("output_fieldname_options","output_10min_flow_to_river_mouths",
+                       "cumulative_flow_to_ocean")
         if not config.has_option("output_fieldname_options","output_10min_catchments"):
-            config.set("output_fieldname_options","output_10min_catchments")
+            config.set("output_fieldname_options","output_10min_catchments",
+                       "catchments")
         if not config.has_option("output_fieldname_options","output_30min_pre_loop_removal_rdirs"):
-            config.set("output_fieldname_options","output_30min_pre_loop_removal_rdirs")
+            config.set("output_fieldname_options","output_30min_pre_loop_removal_rdirs",
+                       "rdirs")
         if not config.has_option("output_fieldname_options",
                                  "output_30min_pre_loop_removal_flow_to_cell"):
-            config.set("output_fieldname_options","output_30min_pre_loop_removal_flow_to_cell")
+            config.set("output_fieldname_options","output_30min_pre_loop_removal_flow_to_cell",
+                       "cumulative_flow")
         if not config.has_option("output_fieldname_options",
                                  "output_30min_pre_loop_removal_flow_to_river_mouths"):
             config.set("output_fieldname_options",
-                       "output_30min_pre_loop_removal_flow_to_river_mouths")
+                       "output_30min_pre_loop_removal_flow_to_river_mouths",
+                       "cumulative_flow_to_ocean")
         if not config.has_option("output_fieldname_options",
                                  "output_30min_pre_loop_removal_catchments"):
             config.set("output_fieldname_options",
-                       "output_30min_pre_loop_removal_catchments")
+                       "output_30min_pre_loop_removal_catchments",
+                       "catchments")
         if not config.has_option("output_fieldname_options","output_30min_rdirs"):
-            config.set("output_fieldname_options","output_30min_rdirs")
+            config.set("output_fieldname_options","output_30min_rdirs","rdirs")
         if not config.has_option("output_fieldname_options","output_30min_unfilled_orog"):
-            config.set("output_fieldname_options","output_30min_unfilled_orog")
+            config.set("output_fieldname_options","output_30min_unfilled_orog","orog")
         if not config.has_option("output_fieldname_options","output_30min_filled_orog"):
-            config.set("output_fieldname_options","output_30min_filled_orog")
+            config.set("output_fieldname_options","output_30min_filled_orog","orog")
         if not config.has_option("output_fieldname_options","output_30min_ls_mask"):
-            config.set("output_fieldname_options","output_30min_ls_mask")
+            config.set("output_fieldname_options","output_30min_ls_mask","lsmask")
         if not config.has_option("output_fieldname_options","output_30min_flow_to_cell"):
-            config.set("output_fieldname_options","output_30min_flow_to_cell")
+            config.set("output_fieldname_options","output_30min_flow_to_cell",
+                       "cumulative_flow")
         if not config.has_option("output_fieldname_options","output_30min_flow_to_river_mouths"):
-            config.set("output_fieldname_options","output_30min_flow_to_river_mouths")
+            config.set("output_fieldname_options","output_30min_flow_to_river_mouths",
+                       "cumulative_flow_to_ocean")
         if not config.has_option("output_fieldname_options","output_30min_catchments"):
-            config.set("output_fieldname_options","output_30min_catchments")
+            config.set("output_fieldname_options","output_30min_catchments",
+                       "catchments")
         return config
 
     def no_intermediaries_ten_minute_data_ALG4_no_true_sinks_plus_upscale_rdirs_driver(self):
