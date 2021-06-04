@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "Running Version 3.8 of the Dynamic Lake and HD Parameters Generation Code"
+echo "Running Version 3.9 of the Dynamic Lake and HD Parameters Generation Code"
 
 #Define module loading function
 function load_module
