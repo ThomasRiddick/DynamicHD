@@ -11,7 +11,7 @@ import numpy as np
 import copy
 import sys
 import re
-from ../Dynamic_HD_Scripts import dynamic_hd
+from Dynamic_HD_Scripts import dynamic_hd
 
 class Params(object):
 

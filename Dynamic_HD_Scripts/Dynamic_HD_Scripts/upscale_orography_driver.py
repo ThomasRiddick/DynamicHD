@@ -4,15 +4,15 @@ Created on Apr 18, 2017
 @author: thomasriddick
 '''
 
-from . import dynamic_hd
-from .dynamic_hd import get_file_extension
+from Dynamic_HD_Scripts import dynamic_hd
+from Dynamic_HD_Scripts.dynamic_hd import get_file_extension
 import numpy as np
-from . import field
-from .libs import upscale_orography_wrapper
+from Dynamic_HD_Scripts import field
+from Dynamic_HD_Scripts.libs import upscale_orography_wrapper
 import configparser
 import gc
-from . import iodriver
-from . import coordinate_scaling_utilities
+from Dynamic_HD_Scripts import iodriver
+from Dynamic_HD_Scripts import coordinate_scaling_utilities
 
 def drive_orography_upscaling(input_fine_orography_file,output_course_orography_file,
                               landsea_file=None,true_sinks_file=None,

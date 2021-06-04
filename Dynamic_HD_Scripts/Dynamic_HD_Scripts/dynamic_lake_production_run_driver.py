@@ -5,26 +5,26 @@ Created on April 1, 2020
 '''
 import re
 import os
-from . import determine_river_directions
-from . import dynamic_hd_driver as dyn_hd_dr
-from . import dynamic_lake_operators
-from . import iodriver
+from Dynamic_HD_Scripts import determine_river_directions
+from Dynamic_HD_Scripts import dynamic_hd_driver as dyn_hd_dr
+from Dynamic_HD_Scripts import dynamic_lake_operators
+from Dynamic_HD_Scripts import iodriver
 import os.path as path
 import configparser
 import numpy as np
-from . import utilities
-from . import field
-from . import grid
-from .libs import fill_sinks_wrapper
-from .libs import lake_operators_wrapper
-from .libs import evaluate_basins_wrapper
+from Dynamic_HD_Scripts import utilities
+from Dynamic_HD_Scripts import field
+from Dynamic_HD_Scripts import grid
+from Dynamic_HD_Scripts.libs import fill_sinks_wrapper
+from Dynamic_HD_Scripts.libs import lake_operators_wrapper
+from Dynamic_HD_Scripts.libs import evaluate_basins_wrapper
 from timeit import default_timer as timer
 import cdo
 import argparse
-from .flow_to_grid_cell import create_hypothetical_river_paths_map
-from . import compute_catchments as comp_catchs
-from .cotat_plus_driver import run_cotat_plus
-from .loop_breaker_driver import run_loop_breaker
+from Dynamic_HD_Scripts.flow_to_grid_cell import create_hypothetical_river_paths_map
+from Dynamic_HD_Scripts import compute_catchments as comp_catchs
+from Dynamic_HD_Scripts.cotat_plus_driver import run_cotat_plus
+from Dynamic_HD_Scripts.loop_breaker_driver import run_loop_breaker
 
 class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
     """A class with methods used for running a production run of the dynamic HD and Lake generation code"""
@@ -125,42 +125,42 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         if not config.has_section("output_fieldname_options"):
             config.add_section("output_fieldname_options")
         if not config.has_option("output_fieldname_options","output_10min_corrected_orog_fieldname"):
-            config.set("output_fieldname_options","output_10min_corrected_orog_fieldname")
+            config.set("output_fieldname_options","output_10min_corrected_orog_fieldname","corrected_orog")
         if not config.has_option("output_fieldname_options","output_10min_rdirs_fieldname"):
-            config.set("output_fieldname_options","output_10min_rdirs_fieldname")
+            config.set("output_fieldname_options","output_10min_rdirs_fieldname","rdirs")
         if not config.has_option("output_fieldname_options","output_10min_flow_to_cell"):
-            config.set("output_fieldname_options","output_10min_flow_to_cell")
+            config.set("output_fieldname_options","output_10min_flow_to_cell","cumulative_flow")
         if not config.has_option("output_fieldname_options","output_10min_flow_to_river_mouths"):
-            config.set("output_fieldname_options","output_10min_flow_to_river_mouths")
+            config.set("output_fieldname_options","output_10min_flow_to_river_mouths","cumulative_flow_to_ocean")
         if not config.has_option("output_fieldname_options","output_10min_catchments"):
-            config.set("output_fieldname_options","output_10min_catchments")
+            config.set("output_fieldname_options","output_10min_catchments","catchments")
         if not config.has_option("output_fieldname_options","output_30min_pre_loop_removal_rdirs"):
-            config.set("output_fieldname_options","output_30min_pre_loop_removal_rdirs")
+            config.set("output_fieldname_options","output_30min_pre_loop_removal_rdirs","rdirs")
         if not config.has_option("output_fieldname_options",
                                  "output_30min_pre_loop_removal_flow_to_cell"):
-            config.set("output_fieldname_options","output_30min_pre_loop_removal_flow_to_cell")
+            config.set("output_fieldname_options","output_30min_pre_loop_removal_flow_to_cell","cumulative_flow")
         if not config.has_option("output_fieldname_options",
                                  "output_30min_pre_loop_removal_flow_to_river_mouth"):
             config.set("output_fieldname_options",
-                       "output_30min_pre_loop_removal_flow_to_river_mouth")
+                       "output_30min_pre_loop_removal_flow_to_river_mouth","cumulative_flow_to_ocean")
         if not config.has_option("output_fieldname_options",
                                  "output_30min_pre_loop_removal_catchments"):
             config.set("output_fieldname_options",
-                       "output_30min_pre_loop_removal_catchments")
+                       "output_30min_pre_loop_removal_catchments","catchments")
         if not config.has_option("output_fieldname_options","output_30min_rdirs"):
-            config.set("output_fieldname_options","output_30min_rdirs")
+            config.set("output_fieldname_options","output_30min_rdirs","rdirs")
         if not config.has_option("output_fieldname_options","output_30min_unfilled_orog"):
-            config.set("output_fieldname_options","output_30min_unfilled_orog")
+            config.set("output_fieldname_options","output_30min_unfilled_orog","unfilled_orog")
         if not config.has_option("output_fieldname_options","output_30min_filled_orog"):
-            config.set("output_fieldname_options","output_30min_filled_orog")
+            config.set("output_fieldname_options","output_30min_filled_orog","filled_orog")
         if not config.has_option("output_fieldname_options","output_30min_ls_mask"):
-            config.set("output_fieldname_options","output_30min_ls_mask")
+            config.set("output_fieldname_options","output_30min_ls_mask","lsmask")
         if not config.has_option("output_fieldname_options","output_30min_flow_to_cell"):
-            config.set("output_fieldname_options","output_30min_flow_to_cell")
+            config.set("output_fieldname_options","output_30min_flow_to_cell","cumulative_flow")
         if not config.has_option("output_fieldname_options","output_30min_flow_to_river_mouths"):
-            config.set("output_fieldname_options","output_30min_flow_to_river_mouths")
+            config.set("output_fieldname_options","output_30min_flow_to_river_mouths","cumulative_flow_to_ocean")
         if not config.has_option("output_fieldname_options","output_30min_catchments"):
-            config.set("output_fieldname_options","output_30min_catchments")
+            config.set("output_fieldname_options","output_30min_catchments","catchments")
         return config
 
     def trial_run_for_present_day(self):
@@ -513,17 +513,12 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         transformed_HD_filled_orography_filename = path.join(self.working_directory_path,"30minute_filled_orog_temp.nc")
         transformed_HD_ls_mask_filename = path.join(self.working_directory_path,"30minute_ls_mask_temp.nc")
         half_degree_grid_filepath = path.join(self.ancillary_data_path,"grid_0_5.txt")
-        #rdirs_30min.rotate_field_by_a_hundred_and_eighty_degrees()
         iodriver.advanced_field_writer(transformed_course_rdirs_filename,
                                          rdirs_30min,
-                                         fieldname=config.get("output_fieldname_options",
-                                                              "output_30min_rdirs"))
-        #orography_30min.rotate_field_by_a_hundred_and_eighty_degrees()
+                                         fieldname="field_value")
         iodriver.advanced_field_writer(transformed_HD_filled_orography_filename,
                                          orography_30min,
-                                         fieldname=config.get("output_fieldname_options",
-                                                              "output_30min_filled_orog"))
-        #ls_mask_30min.rotate_field_by_a_hundred_and_eighty_degrees()
+                                         fieldname="field_value")
         ls_mask_30min.invert_data()
         iodriver.advanced_field_writer(transformed_HD_ls_mask_filename,
                                        ls_mask_30min,

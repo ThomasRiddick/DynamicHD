@@ -3,12 +3,12 @@ Created on March 23, 2018
 
 @author: thomasriddick
 '''
-from . import iodriver
-from .libs import lake_operators_wrapper
-from .libs import evaluate_basins_wrapper
+from Dynamic_HD_Scripts import iodriver
+from Dynamic_HD_Scripts.libs import lake_operators_wrapper
+from Dynamic_HD_Scripts.libs import evaluate_basins_wrapper
 import numpy as np
-from . import field
-from . import grid
+from Dynamic_HD_Scripts import field
+from Dynamic_HD_Scripts import grid
 import os
 import os.path as path
 import cdo
@@ -553,7 +553,7 @@ def filter_narrow_lakes(input_unfilled_orography,
       greater_than_or_equal_to_value(interior_cell_min_masked_neighbors)
     dilated_interior_cell_mask.dilate(np.array([[True,True,True],
                                         [True,True,True],
-                                        [True,True,True]],dtype=np.bool),
+                                        [True,True,True]],dtype=np.bool_),
                                        iterations=max_range)
     filtered_lake_mask = non_edge_cell_mask.logical_or(dilated_interior_cell_mask.\
                                                        logical_and(edge_cell_mask))

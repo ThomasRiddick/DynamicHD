@@ -8,7 +8,7 @@ Created on May 25, 2016
 
 import unittest
 import numpy as np
-from ../Dynamic_HD_Scripts/libs import create_connected_lsmask_wrapper as cc_lsmask_wrapper  #@UnresolvedImport
+from Dynamic_HD_Scripts.libs import create_connected_lsmask_wrapper as cc_lsmask_wrapper  #@UnresolvedImport
 
 class Test(unittest.TestCase):
     """Unit test object"""

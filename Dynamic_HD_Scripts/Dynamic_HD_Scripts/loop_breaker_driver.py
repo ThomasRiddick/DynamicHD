@@ -6,12 +6,12 @@ Created on Oct 30, 2016
 @author: thomasriddick
 '''
 
-from . import f2py_manager
-from . import field
+from Dynamic_HD_Scripts import f2py_manager
+from Dynamic_HD_Scripts import field
 import os.path as path
-from .context import fortran_project_source_path,fortran_project_object_path,fortran_project_include_path
+from Dynamic_HD_Scripts.context import fortran_project_source_path,fortran_project_object_path,fortran_project_include_path
 import numpy as np
-from . import dynamic_hd
+from Dynamic_HD_Scripts import dynamic_hd
 import re
 
 def run_loop_breaker(course_rdirs,course_cumulative_flow,course_catchments,fine_rdirs_field,

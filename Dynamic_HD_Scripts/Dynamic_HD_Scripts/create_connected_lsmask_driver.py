@@ -8,11 +8,11 @@ Created on May 28, 2016
 '''
 
 import numpy as np
-from . import field
-from . import dynamic_hd
-from .libs import create_connected_lsmask_wrapper as cc_lsmask_wrapper #@UnresolvedImport
+from Dynamic_HD_Scripts import field
+from Dynamic_HD_Scripts import dynamic_hd
+from Dynamic_HD_Scripts.libs import create_connected_lsmask_wrapper as cc_lsmask_wrapper #@UnresolvedImport
 import re
-from . import iodriver
+from Dynamic_HD_Scripts import iodriver
 
 def advanced_connected_lsmask_creation_driver(input_lsmask_filename,
                                               output_lsmask_filename,

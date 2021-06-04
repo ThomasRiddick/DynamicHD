@@ -9,11 +9,11 @@ Created on Jan 13, 2016
 import numpy as np
 import scipy.ndimage as ndi
 from abc import ABCMeta, abstractmethod
-from . import f2py_manager as f2py_mg
+from Dynamic_HD_Scripts import f2py_manager as f2py_mg
 import os.path as path
 import warnings
 import re
-from .context import fortran_source_path
+from Dynamic_HD_Scripts.context import fortran_source_path
 
 class Grid(object, metaclass=ABCMeta):
     """Parent class for classes that store and manipulate specific grid types
@@ -697,7 +697,7 @@ class LatLongGrid(Grid):
         position/cell of the points on the course grid.
         """
 
-        minima = np.zeros_like(data,dtype=np.bool)
+        minima = np.zeros_like(data,dtype=np.bool_)
         for area_corner_coords in area_corner_coords_list:
             area = data[area_corner_coords[0]:area_corner_coords[0]+area_size[0],
                         area_corner_coords[1]:area_corner_coords[1]+area_size[1]]

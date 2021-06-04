@@ -5,16 +5,16 @@ Created on Jan 13, 2016
 @author: thomasriddick
 '''
 
-from . import grid as gd
+from Dynamic_HD_Scripts import grid as gd
 import numpy as np
 import scipy.io as scipyio
 from abc import ABCMeta, abstractmethod
 import netCDF4
-from . import f2py_manager as f2py_mg
+from Dynamic_HD_Scripts import f2py_manager as f2py_mg
 import os.path as path
 import os
 import cdo
-from .context import fortran_source_path
+from Dynamic_HD_Scripts.context import fortran_source_path
 
 class IOHelper(object, metaclass=ABCMeta):
     """Parent class for classes that load and write different types of file.
@@ -236,14 +236,14 @@ class NetCDF4FileIOHelper(IOHelper):
         with netCDF4.Dataset(filename,mode='w',format='NETCDF4') as dataset:
             dataset.createDimension("latitude",nlat)
             dataset.createDimension("longitude",nlong)
-            if field.get_data().dtype == np.bool:
+            if field.get_data().dtype == np.bool_:
                 field.set_data(field.get_data().astype(np.int32))
                 data_was_bool=True
             field_values = dataset.createVariable(fieldname,field.get_data().dtype,
                                                   ('latitude','longitude'))
             field_values[:,:] = field.get_data()
         if data_was_bool:
-            field.set_data(field.get_data().astype(np.bool))
+            field.set_data(field.get_data().astype(np.bool_))
         if griddescfile is not None:
             cdo_instance = cdo.Cdo()
             cdo_instance.setgrid(griddescfile,input=filename,output=output_filename)
@@ -275,14 +275,14 @@ class NetCDF4FileIOHelper(IOHelper):
             dataset.createDimension("longitude",nlong)
             for field,fieldname in zip(fields,fieldnames):
                 data_was_bool = False
-                if field.get_data().dtype == np.bool:
+                if field.get_data().dtype == np.bool_:
                     field.set_data(field.get_data().astype(np.int32))
                     data_was_bool=True
                 field_values = dataset.createVariable(fieldname,field.get_data().dtype,
                                                       ('latitude','longitude'))
                 field_values[:,:] = field.get_data()
                 if data_was_bool:
-                    field.set_data(field.get_data().astype(np.bool))
+                    field.set_data(field.get_data().astype(np.bool_))
         if griddescfile is not None:
             cdo_instance = cdo.Cdo()
             cdo_instance.setgrid(griddescfile,input=filename,output=output_filename)

@@ -5,7 +5,7 @@ Created on May 9, 2020
 @author: thomasriddick
 '''
 
-from . import create_icon_coarse_river_directions_driver as cicrdd
+from Dynamic_HD_Scripts import create_icon_coarse_river_directions_driver as cicrdd
 import argparse
 
 def print_filenames_from_config(python_config_filename_in):

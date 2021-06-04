@@ -8,15 +8,15 @@ Created on Dec 15, 2015
 
 import unittest
 import numpy as np
-from ../Dynamic_HD_Scripts import dynamic_hd
-from ../Dynamic_HD_Scripts import iohelper
-from ../Dynamic_HD_Scripts import grid as gd
+from Dynamic_HD_Scripts import dynamic_hd
+from Dynamic_HD_Scripts import iohelper
+from Dynamic_HD_Scripts import grid as gd
 import sys
 import scipy.io as scipyio
 import os
-from ../Dynamic_HD_Scripts import field as fld
-from ../Dynamic_HD_Scripts import f2py_manager
-from .context import fortran_source_path,data_dir
+from Dynamic_HD_Scripts import field as fld
+from Dynamic_HD_Scripts import f2py_manager
+from Dynamic_HD_Script_Tests.context import fortran_source_path,data_dir
 
 class MainTestCase(unittest.TestCase):
     """Test top-level functions of the dynamic HD scripts with real and hypothetical data"""
@@ -478,7 +478,7 @@ class fieldOperationTestCase(unittest.TestCase):
                                                            [3,2,1,3,2],
                                                            [6,1,4,6,5]])
 
-    empty_field = np.zeros((10,10),dtype=np.bool)
+    empty_field = np.zeros((10,10),dtype=np.bool_)
 
     flag_points_input = [(0,0),(2,0),(0,7),(2,2),(9,4),(5,9),(4,6),(9,9)]
 

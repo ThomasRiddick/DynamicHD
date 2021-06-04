@@ -1,5 +1,5 @@
-from . import dynamic_hd_driver
-from . import iodriver
+from Dynamic_HD_Scripts import dynamic_hd_driver
+from Dynamic_HD_Scripts import iodriver
 import math
 
 class Lake_Data_Extractor(object):

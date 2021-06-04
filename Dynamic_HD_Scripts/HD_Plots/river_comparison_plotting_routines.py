@@ -9,7 +9,7 @@ Created on Jul 21, 2016
 
 import numpy as np
 import matplotlib.cm as cm
-from . import plotting_tools as pts
+from HD_Plots import plotting_tools as pts
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import re

@@ -3,21 +3,21 @@ Created on Dec 4, 2017
 
 @author: thomasriddick
 '''
-from . import determine_river_directions
-from . import dynamic_hd_driver
-from . import dynamic_lake_operators
-from . import fill_sinks_driver
-from . import iodriver
-from . import field
+from Dynamic_HD_Scripts import determine_river_directions
+from Dynamic_HD_Scripts import dynamic_hd_driver
+from Dynamic_HD_Scripts import dynamic_lake_operators
+from Dynamic_HD_Scripts import fill_sinks_driver
+from Dynamic_HD_Scripts import iodriver
+from Dynamic_HD_Scripts import field
 import numpy as np
-from . import utilities
-from . import extract_lake_volumes
-from . import compute_catchments as cc
-from . import flow_to_grid_cell as ftgc
+from Dynamic_HD_Scripts import utilities
+from Dynamic_HD_Scripts import extract_lake_volumes
+from Dynamic_HD_Scripts import compute_catchments as cc
+from Dynamic_HD_Scripts import flow_to_grid_cell as ftgc
 from os.path import join
 import os.path as path
 import time
-from . import connect_coarse_lake_catchments as cclc
+from Dynamic_HD_Scripts import connect_coarse_lake_catchments as cclc
 
 class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
     '''

@@ -5,7 +5,7 @@ Created on February 26, 2019
 @author: thomasriddick
 '''
 import unittest
-from ../Dynamic_HD_Scripts/libs import determine_river_directions_wrapper
+from Dynamic_HD_Scripts.libs import determine_river_directions_wrapper
 import numpy as np
 
 class TestRiverDirectionDeterminationDriver(unittest.TestCase):

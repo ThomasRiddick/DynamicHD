@@ -8,10 +8,10 @@ Created on May 2, 2016
 import unittest
 import numpy as np
 import os
-from ../Dynamic_HD_Scripts import utilities
-from ../Dynamic_HD_Scripts import field
-from .context import data_dir
-from ../Dynamic_HD_Scripts import dynamic_hd
+from Dynamic_HD_Scripts import utilities
+from Dynamic_HD_Scripts import field
+from Dynamic_HD_Script_Tests.context import data_dir
+from Dynamic_HD_Scripts import dynamic_hd
 
 class TestReservoirSizeInitialisation(unittest.TestCase):
     """Test the initialisation of the size of HD reservoirs"""

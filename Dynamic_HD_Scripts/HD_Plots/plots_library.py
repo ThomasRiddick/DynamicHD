@@ -8,28 +8,28 @@ Created on Jan 29, 2016
 @author: thomasriddick
 '''
 
-from .color_palette import ColorPalette #@UnresolvedImport
+from HD_Plots.color_palette import ColorPalette #@UnresolvedImport
 import datetime
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
-from ./Dynamic_HD_Scripts import iohelper as iohlpr
-from ./Dynamic_HD_Scripts import iodriver
+from Dynamic_HD_Scripts import iohelper as iohlpr
+from Dynamic_HD_Scripts import iodriver
 import textwrap
 import os.path
 import math
 import copy
-from . import plotting_tools as pts
-from . import match_river_mouths as mtch_rm
-from ../Dynamic_HD_Scripts import dynamic_hd
-from ../Dynamic_HD_Scripts import utilities
-from ../Dynamic_HD_Scripts import field
-from ../Dynamic_HD_Scripts import grid
+from HD_Plots import plotting_tools as pts
+from HD_Plots import match_river_mouths as mtch_rm
+from Dynamic_HD_Scripts import dynamic_hd
+from Dynamic_HD_Scripts import utilities
+from Dynamic_HD_Scripts import field
+from Dynamic_HD_Scripts import grid
 from netCDF4 import Dataset
 from matplotlib import gridspec
-from . import river_comparison_plotting_routines as rc_pts
-from . import flowmap_plotting_routines as fmp_pts #@UnresolvedImport
-from .interactive_plotting_routines import Interactive_Plots
+from HD_Plots import river_comparison_plotting_routines as rc_pts
+from HD_Plots import flowmap_plotting_routines as fmp_pts #@UnresolvedImport
+from HD_Plots.interactive_plotting_routines import Interactive_Plots
 import matplotlib.gridspec as gridspec
 import matplotlib.animation as animation
 
@@ -3686,8 +3686,11 @@ class LakePlots(Plots):
     norm = mpl.colors.BoundaryNorm(bounds,cmap.N)
     plt.title('Lakes and rivers with flow greater than {0} m3/s'.format(minflowcutoff))
     ims = []
+    #show_slices = [14600,13500,12800,12330,11500,11300]
+    show_slices = [15990]
     for time in range(15990,11000,-10):
       mpiesm_time = 3000 + 16000 - time
+      show_snapshot = True if time in show_slices else False
       date_text = fig.text(0.4,0.075,"{} YBP".format(time))
       ims.append([self.TwoColourRiverAndLakeAnimationHelperSliceGenerator(cmap=cmap,norm=norm,
                                                                           river_flow_filename=
@@ -3721,12 +3724,13 @@ class LakePlots(Plots):
                                                                           minflowcutoff=minflowcutoff,
                                                                           zoomed=zoomed,
                                                                           zoom_section_bounds=
-                                                                          zoom_section_bounds),
+                                                                          zoom_section_bounds,
+                                                                          show_snapshot=show_snapshot),
                                                                           date_text])
     anim = animation.ArtistAnimation(fig,ims,interval=200,blit=False,repeat_delay=500)
-    #plt.show()
-    writer = animation.writers['ffmpeg'](fps=7,bitrate=1800)
-    anim.save('/Users/thomasriddick/Desktop/deglac.mp4',writer=writer,dpi=1000)
+    plt.show()
+    #writer = animation.writers['ffmpeg'](fps=7,bitrate=1800)
+    #anim.save('/Users/thomasriddick/Desktop/deglac.mp4',writer=writer,dpi=1000)
 
   def TwoColourRiverAndLakeAnimationHelperSliceGenerator(self,cmap,norm,
                                                          river_flow_filename,
@@ -3745,7 +3749,8 @@ class LakePlots(Plots):
                                                          rdirs_fieldname=None,
                                                          minflowcutoff=1000000000000.0,
                                                          zoomed=False,
-                                                         zoom_section_bounds={}):
+                                                         zoom_section_bounds={},
+                                                         show_snapshot=False):
     river_flow_object = iodriver.advanced_field_loader(river_flow_filename,
                                                        fieldname=river_flow_fieldname,
                                                        field_type='Generic',
@@ -3809,7 +3814,8 @@ class LakePlots(Plots):
     fine_rivers_and_lakes[lake_data > 0] = 4
     fine_rivers_and_lakes[glacier_mask == 1] = 5
     fine_rivers_and_lakes[lsmask == 1] = 0
-
+    if show_snapshot:
+        plt.clf()
     if zoomed:
         im = plt.imshow(fine_rivers_and_lakes[zoom_section_bounds["min_lat"]:
                                               zoom_section_bounds["max_lat"]+1,
@@ -3818,6 +3824,8 @@ class LakePlots(Plots):
                         cmap=cmap,norm=norm,interpolation="none")
     else:
         im = plt.imshow(fine_rivers_and_lakes,cmap=cmap,norm=norm,interpolation="none")
+    if show_snapshot:
+        plt.show()
     return im
 
   def LakeAndRiverMap(self):
@@ -3891,7 +3899,7 @@ class LakePlots(Plots):
                                               rdirs_fieldname=
                                               rdirs_fieldname,
                                               minflowcutoff=1000.0,
-                                              zoomed=False,
+                                              zoomed=True,
                                               zoom_section_bounds={"min_lat":50,
                                                                    "max_lat":500,
                                                                    "min_lon":100,

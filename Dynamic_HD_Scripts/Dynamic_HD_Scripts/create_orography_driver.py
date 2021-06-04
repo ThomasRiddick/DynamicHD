@@ -4,9 +4,9 @@ Created on May 23, 2020
 
 @author: thomasriddick
 '''
-from .libs import create_orography_wrapper
-from . import iodriver
-from . import field
+from Dynamic_HD_Scripts.libs import create_orography_wrapper
+from Dynamic_HD_Scripts import iodriver
+from Dynamic_HD_Scripts import field
 import numpy as np
 
 def advanced_orography_creation_driver(landsea_mask_filename,

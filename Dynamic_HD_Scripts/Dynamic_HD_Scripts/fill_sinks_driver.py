@@ -7,13 +7,13 @@ Created on Mar 14, 2016
 @author: thomasriddick
 '''
 
-from . import dynamic_hd
+from Dynamic_HD_Scripts import dynamic_hd
 import numpy as np
-from .libs import fill_sinks_wrapper
-from .libs import fill_sinks_wrapper_low_mem
-from . import iodriver
-from .field import Field
-from . import field
+from Dynamic_HD_Scripts.libs import fill_sinks_wrapper
+from Dynamic_HD_Scripts.libs import fill_sinks_wrapper_low_mem
+from Dynamic_HD_Scripts import iodriver
+from Dynamic_HD_Scripts.field import Field
+from Dynamic_HD_Scripts import field
 
 def generate_orography_with_sinks_filled(input_orography_filename,output_orography_filename,
                                          ls_mask_filename=None,truesinks_filename=None,

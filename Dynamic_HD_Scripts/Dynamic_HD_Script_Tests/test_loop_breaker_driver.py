@@ -7,13 +7,13 @@ Created on Oct 30, 2016
 
 import unittest
 import numpy as np
-from ../Dynamic_HD_Scripts import field
-from ../Dynamic_HD_Scripts import loop_breaker_driver
-from ../Dynamic_HD_Scripts import context as scripts_context
-from . import context
+from Dynamic_HD_Scripts import field
+from Dynamic_HD_Scripts import loop_breaker_driver
+from Dynamic_HD_Scripts import context as scripts_context
+from Dynamic_HD_Script_Tests import context
 import subprocess
 import re
-from matplotlib.compat.subprocess import CalledProcessError
+from subprocess import CalledProcessError
 
 class Test(unittest.TestCase):
     """Unit test object"""
@@ -104,6 +104,7 @@ class Test(unittest.TestCase):
                                       "Testing the loop breaking code with a small test grid doesn't give"
                                       " expected results")
 
+    @unittest.skip("Valgrind not working")
     def testForMemoryLeaksWithValgrind(self):
         """Use Valgrind to find any new memory leaks that are occuring"""
         try:

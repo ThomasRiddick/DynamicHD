@@ -3,9 +3,9 @@ Created on Feb 12, 2018
 
 @author: thomasriddick
 '''
-from . import f2py_manager
+from Dynamic_HD_Scripts import f2py_manager
 import os.path as path
-from .context import fortran_project_source_path,fortran_project_object_path,fortran_project_include_path
+from Dynamic_HD_Scripts.context import fortran_project_source_path,fortran_project_object_path,fortran_project_include_path
 
 def run_flow(input_fine_river_directions,input_fine_total_cumulative_flow,
              cotat_parameters_filepath,course_grid_type,

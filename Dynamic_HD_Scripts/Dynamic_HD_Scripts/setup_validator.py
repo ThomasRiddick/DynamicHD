@@ -6,7 +6,7 @@ Created on Jan 14, 2018
 
 import configparser
 import sys
-from . import config_layouts
+from Dynamic_HD_Scripts import config_layouts
 import inspect
 
 class SetupValidator(object):

@@ -4,21 +4,21 @@ Created on Apr 5, 2016
 @author: thomasriddick
 '''
 
-from . import dynamic_hd
+from Dynamic_HD_Scripts import dynamic_hd
 import numpy as np
-from . import field
-from . import grid
-from . import f2py_manager
+from Dynamic_HD_Scripts import field
+from Dynamic_HD_Scripts import grid
+from Dynamic_HD_Scripts import f2py_manager
 import os.path as path
 import re
 import copy
 import netCDF4
 import shutil
 import cdo
-from . import iodriver
-from . import follow_streams_driver
-from .context import fortran_source_path
-from .field import makeField
+from Dynamic_HD_Scripts import iodriver
+from Dynamic_HD_Scripts import follow_streams_driver
+from Dynamic_HD_Scripts.context import fortran_source_path
+from Dynamic_HD_Scripts.field import makeField
 
 def create_30sec_lgm_orography_from_highres_present_day_and_low_res_pair(input_lgm_low_res_orog,
                                                                          input_present_day_low_res_orog,
@@ -777,8 +777,8 @@ def upscale_field(input_field,output_grid_type,method,output_grid_kwargs,scalenu
     if nlat_in % nlat_out != 0 or nlon_in % nlon_out != 0:
         raise RuntimeError('Incompatible input and output grid dimensions')
     scalingfactor = (nlat_out*1.0/nlat_in)*(nlon_out*1.0/nlon_in) if scalenumbers else 1
-    reshaped_data_array = input_field.get_data().reshape(nlat_out,nlat_in/nlat_out,
-                                                         nlon_out,nlon_in/nlon_out)
+    reshaped_data_array = input_field.get_data().reshape(nlat_out,nlat_in//nlat_out,
+                                                         nlon_out,nlon_in//nlon_out)
     return field.Field(reduction_op(reduction_op(reshaped_data_array,
                                                  axis=3),axis=1)*scalingfactor,output_grid)
 
@@ -967,8 +967,8 @@ def downscale_true_sink_points(input_fine_orography_field,input_course_truesinks
         raise RuntimeError('Cannot use the downscale true sink points function to perform an upscaling')
     if nlat_fine % nlat_course != 0 or nlon_fine % nlon_course !=0 :
         raise RuntimeError('Incompatible input and output grid dimensions')
-    scalingfactor_lat = nlat_fine / nlat_course
-    scalingfactor_lon = nlon_fine / nlon_course
+    scalingfactor_lat = nlat_fine // nlat_course
+    scalingfactor_lon = nlon_fine // nlon_course
     flagged_points_coords = input_course_truesinks_field.get_flagged_points_coords()
     flagged_points_coords_scaled=[]
     for coord_pair in flagged_points_coords:

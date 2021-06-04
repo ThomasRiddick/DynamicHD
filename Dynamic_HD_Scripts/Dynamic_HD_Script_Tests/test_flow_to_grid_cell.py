@@ -6,13 +6,12 @@ Created on Jan 20, 2016
 '''
 
 import unittest
-from ../Dynamic_HD_Scripts import flow_to_grid_cell
+from Dynamic_HD_Scripts import flow_to_grid_cell
 import numpy as np
 from abc import ABCMeta, abstractmethod
-from _pyio import __metaclass__
-from ../Dynamic_HD_Scripts import f2py_manager
+from Dynamic_HD_Scripts import f2py_manager
 import os
-from .context import fortran_source_path
+from Dynamic_HD_Script_Tests.context import fortran_source_path
 
 class CreateHypotheticalRiverPathsMap(unittest.TestCase):
     """Tests of high level routine using small river directions maps"""

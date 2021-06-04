@@ -8,26 +8,26 @@ Created on Feb 24, 2016
 import inspect
 import datetime
 import subprocess
-from . import dynamic_hd
+from Dynamic_HD_Scripts import dynamic_hd
 import os.path as path
-from matplotlib.compat.subprocess import CalledProcessError
-from . import flow_to_grid_cell
-from . import compute_catchments
-from . import fill_sinks_driver
-from . import upscale_orography_driver
-from . import utilities
-from . import grid
-from . import field
-from . import river_mouth_marking_driver
-from . import create_connected_lsmask_driver as cc_lsmask_driver
-from .context import bash_scripts_path
-from .context import private_bash_scripts_path
+from subprocess import CalledProcessError
+from Dynamic_HD_Scripts import flow_to_grid_cell
+from Dynamic_HD_Scripts import compute_catchments
+from Dynamic_HD_Scripts import fill_sinks_driver
+from Dynamic_HD_Scripts import upscale_orography_driver
+from Dynamic_HD_Scripts import utilities
+from Dynamic_HD_Scripts import grid
+from Dynamic_HD_Scripts import field
+from Dynamic_HD_Scripts import river_mouth_marking_driver
+from Dynamic_HD_Scripts import create_connected_lsmask_driver as cc_lsmask_driver
+from Dynamic_HD_Scripts.context import bash_scripts_path
+from Dynamic_HD_Scripts.context import private_bash_scripts_path
 import shutil
-from . import cotat_plus_driver
-from . import loop_breaker_driver
+from Dynamic_HD_Scripts import cotat_plus_driver
+from Dynamic_HD_Scripts import loop_breaker_driver
 import numpy as np
-from . import iohelper
-from . import iodriver
+from Dynamic_HD_Scripts import iohelper
+from Dynamic_HD_Scripts import iodriver
 import netCDF4
 
 class Dynamic_HD_Drivers(object):

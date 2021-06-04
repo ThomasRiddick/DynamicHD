@@ -8,12 +8,12 @@ Created on March 3, 2020
 @author: thomasriddick
 '''
 
-from . import dynamic_hd_driver as dyn_hd_dr
-from . import compute_catchments as comp_catchs
-from . import field
-from . import dynamic_hd
-from . import iodriver
-from . import utilities
+from Dynamic_HD_Scripts import dynamic_hd_driver as dyn_hd_dr
+from Dynamic_HD_Scripts import compute_catchments as comp_catchs
+from Dynamic_HD_Scripts import field
+from Dynamic_HD_Scripts import dynamic_hd
+from Dynamic_HD_Scripts import iodriver
+from Dynamic_HD_Scripts import utilities
 import tempfile
 import argparse
 import numpy as np
@@ -21,8 +21,8 @@ import os
 import os.path as path
 import warnings
 import configparser
-from flow_to_grid_cell import create_hypothetical_river_paths_map
-from libs import fill_sinks_wrapper
+from Dynamic_HD_Scripts.flow_to_grid_cell import create_hypothetical_river_paths_map
+from Dynamic_HD_Scripts.libs import fill_sinks_wrapper
 
 class Icon_Coarse_River_Directions_Creation_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
     """Drivers for running a productions run of the ICON coarse river direction creation code"""

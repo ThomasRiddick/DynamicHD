@@ -7,15 +7,15 @@ Created on Feb 9, 2016
 @author: thomasriddick
 '''
 
-from . import f2py_manager
-from . import dynamic_hd
+from Dynamic_HD_Scripts import f2py_manager
+from Dynamic_HD_Scripts import dynamic_hd
 import numpy as np
-from . import field
+from Dynamic_HD_Scripts import field
 import warnings
 import os.path as path
-from . import iodriver
-from .libs import compute_catchments_wrapper as cc_ccp_wrap
-from .context import fortran_source_path
+from Dynamic_HD_Scripts import iodriver
+from Dynamic_HD_Scripts.libs import compute_catchments_wrapper as cc_ccp_wrap
+from Dynamic_HD_Scripts.context import fortran_source_path
 
 def compute_catchments_cpp(field,loop_logfile):
     """Compute the unordered catchments on all grid points using c++ code

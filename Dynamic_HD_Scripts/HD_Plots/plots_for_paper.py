@@ -9,16 +9,16 @@ from .plots_library import (Plots,HDparameterPlots,HDOutputPlots,OutflowPlots, #
                            SimpleOrographyPlots, Ice5GComparisonPlots) #@UnusedImport
 import os
 import os.path as path
-from . import plotting_tools as pts
+from HD_Plots import plotting_tools as pts
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 from matplotlib import gridspec
 from matplotlib import rcParams
 import numpy as np
 from netCDF4 import Dataset
-from ../Dynamic_HD_Scripts import dynamic_hd
-from ../Dynamic_HD_Scripts import utilities
-from . import river_comparison_plotting_routines as rc_pts
+from Dynamic_HD_Scripts import dynamic_hd
+from Dynamic_HD_Scripts import utilities
+from HD_Plots import river_comparison_plotting_routines as rc_pts
 
 class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
     """Plots for GMD Paper"""
