@@ -6,8 +6,8 @@ Created on Mar 3, 2021
 
 import unittest
 import numpy as np
-from ../Dynamic_HD_Scripts import connect_coarse_lake_catchments as cclc
-from ../Dynamic_HD_Scripts import field
+from Dynamic_HD_Scripts import connect_coarse_lake_catchments as cclc
+from Dynamic_HD_Scripts import field
 
 def compare_nested_dictionaries(dictx,dicty):
     if not set(dictx.keys()) == set(dicty.keys()):
@@ -216,7 +216,7 @@ class TestConnectCoarseLakeCatchments(unittest.TestCase):
                                   [0,0,0, 0,0,0, 0,0,0, 0,0,0,10,0,0],
                                   [0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0],
 
-                                  [0,0,0,0,10,10,0,0,0, 0,0,0,0,0,10],
+                                  [0,0,0,0,10,0,0,0,0, 0,0,0,0,0,10],
                                   [0,0,0, 0,0,0,0,0,10, 0,0,0, 0,0,0],
                                   [0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0]],
                                   dtype=np.int32, order='C')
@@ -276,7 +276,7 @@ class TestConnectCoarseLakeCatchments(unittest.TestCase):
                                          [0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0],
                                          [0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0],
 
-                                         [0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,1],
+                                         [0,0,0, 0,14,0, 0,0,0, 0,0,0, 0,0,1],
                                          [0,0,0, 0,0,0, 0,0,4, 0,0,0, 0,0,0],
                                          [0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0]],
                                          dtype=np.int32, order='C')
@@ -298,7 +298,7 @@ class TestConnectCoarseLakeCatchments(unittest.TestCase):
 
                                          [0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,2],
                                          [0,0,0, 0,0,0, 0,0,3, 0,0,0, 0,0,0],
-                                         [0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0]],
+                                         [0,0,0, 0,4,0, 0,0,0, 0,0,0, 0,0,0]],
                                          dtype=np.int32, order='C')
         additional_flood_redirect_lat = np.asarray([[0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0],
                                                     [0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0],
@@ -356,7 +356,7 @@ class TestConnectCoarseLakeCatchments(unittest.TestCase):
                                      [0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0],
                                      [0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0],
 
-                                     [0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0],
+                                     [0,0,0, 0,1,0, 0,0,0, 0,0,0, 0,0,0],
                                      [0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0],
                                      [0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0]],
                                      dtype=np.int32, order='C')

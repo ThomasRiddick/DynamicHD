@@ -6,10 +6,10 @@ Created on February 13, 2021
 @author: thomasriddick
 '''
 from collections import Counter
-from . import iodriver
-from . import compute_catchments as cc
+from Dynamic_HD_Scripts import iodriver
+from Dynamic_HD_Scripts import compute_catchments as cc
 import numpy as np
-from . import field
+from Dynamic_HD_Scripts import field
 
 class CatchmentTrees(object):
 
@@ -34,7 +34,7 @@ class CatchmentTrees(object):
 
     def get_nested_dictionary_of_subcatchments(self):
         subcatchment_dict = {}
-        for catchment_num,catchment_obj in list(self.primary_catchments.items()):
+        for catchment_num,catchment_obj in self.primary_catchments.items():
            subcatchment_dict[catchment_num] = \
             catchment_obj.get_nested_dictionary_of_subcatchments()
         return  subcatchment_dict
@@ -65,7 +65,7 @@ class CatchmentNode(object):
     def get_nested_dictionary_of_subcatchments(self):
         subcatchment_dict = {}
         if self.subcatchments:
-            for catchment_num,catchment_obj in list(self.subcatchments.items()):
+            for catchment_num,catchment_obj in self.subcatchments.items():
                subcatchment_dict[catchment_num] = \
                 catchment_obj.get_nested_dictionary_of_subcatchments()
         return  subcatchment_dict
@@ -210,11 +210,11 @@ def connect_coarse_lake_catchments(coarse_catchments,lake_centers,basin_catchmen
             continue
         overflow_catchment_counters = Counter(overflow_catchment_list)
         highest_count = max(overflow_catchment_counters.values())
-        overflow_catchment = [ value for value,count in list(overflow_catchment_counters.items()) if count == highest_count][0]
+        overflow_catchment = [ value for value,count in overflow_catchment_counters.items() if count == highest_count][0]
         if sink_point_coarse_catchment == overflow_catchment:
             continue
         catchment_trees.add_link(sink_point_coarse_catchment,overflow_catchment)
-    for supercatchment_number,tree in list(catchment_trees.primary_catchments.items()):
+    for supercatchment_number,tree in catchment_trees.primary_catchments.items():
         for subcatchments_num in tree.get_all_subcatchment_nums():
             coarse_catchments.get_data()[subcatchments_num == coarse_catchments.get_data()] = \
                 supercatchment_number
