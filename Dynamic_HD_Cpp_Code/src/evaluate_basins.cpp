@@ -184,13 +184,13 @@ void latlon_evaluate_basins(bool* minima_in,
   int* additional_connect_redirect_lon_index_in_ext  = new int[(nlat_fine+2*scale_factor)*nlon_fine];
   fill_n(additional_connect_redirect_lon_index_in_ext,(nlat_fine+2*scale_factor)*nlon_fine,-1);
   bool* flood_local_redirect_in_ext  = new bool[(nlat_fine+2*scale_factor)*nlon_fine];
-  fill_n(flood_local_redirect_in_ext,(nlat_fine+2*scale_factor)*nlon_fine,-1);
+  fill_n(flood_local_redirect_in_ext,(nlat_fine+2*scale_factor)*nlon_fine,false);
   bool* connect_local_redirect_in_ext  = new bool[(nlat_fine+2*scale_factor)*nlon_fine];
-  fill_n(connect_local_redirect_in_ext,(nlat_fine+2*scale_factor)*nlon_fine,-1);
+  fill_n(connect_local_redirect_in_ext,(nlat_fine+2*scale_factor)*nlon_fine,false);
   bool* additional_flood_local_redirect_in_ext  = new bool[(nlat_fine+2*scale_factor)*nlon_fine];
-  fill_n(additional_flood_local_redirect_in_ext,(nlat_fine+2*scale_factor)*nlon_fine,-1);
+  fill_n(additional_flood_local_redirect_in_ext,(nlat_fine+2*scale_factor)*nlon_fine,false);
   bool* additional_connect_local_redirect_in_ext  = new bool[(nlat_fine+2*scale_factor)*nlon_fine];
-  fill_n(additional_connect_local_redirect_in_ext,(nlat_fine+2*scale_factor)*nlon_fine,-1);
+  fill_n(additional_connect_local_redirect_in_ext,(nlat_fine+2*scale_factor)*nlon_fine,false);
   int* basin_catchment_numbers_in_ext = nullptr;
   if (basin_catchment_numbers_in){
       basin_catchment_numbers_in_ext  = new int[(nlat_fine+2*scale_factor)*nlon_fine];

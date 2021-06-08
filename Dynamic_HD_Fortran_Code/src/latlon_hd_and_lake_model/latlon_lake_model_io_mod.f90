@@ -370,10 +370,10 @@ subroutine write_lake_volumes_field(lake_volumes_filename,&
     call check_return_code(nf90_create(lake_volumes_filename,nf90_noclobber,ncid))
     call check_return_code(nf90_def_dim(ncid, "lat",lake_parameters%nlat,lat_dimid))
     call check_return_code(nf90_def_dim(ncid, "lon",lake_parameters%nlon,lon_dimid))
-    dimids = (/lat_dimid,lon_dimid/)
+    dimids = (/lon_dimid,lat_dimid/)
     call check_return_code(nf90_def_var(ncid, "lake_field", nf90_real, dimids,varid))
     call check_return_code(nf90_enddef(ncid))
-    call check_return_code(nf90_put_var(ncid,varid,lake_volumes))
+    call check_return_code(nf90_put_var(ncid,varid,transpose(lake_volumes)))
     call check_return_code(nf90_close(ncid))
 end subroutine write_lake_volumes_field
 
@@ -401,13 +401,13 @@ subroutine write_lake_numbers_field(working_directory,lake_parameters,&
     call check_return_code(nf90_def_dim(ncid,"lon",lake_parameters%nlon,lon_dimid))
     ! call check_return_code(nf90_def_var(ncid,"lat",nf90_double,lat_dimid,lat_varid))
     ! call check_return_code(nf90_def_var(ncid,"lon",nf90_double,lon_dimid,lon_varid))
-    dimids = (/lat_dimid,lon_dimid/)
+    dimids = (/lon_dimid,lat_dimid/)
     call check_return_code(nf90_def_var(ncid,"lake_number",nf90_real,dimids,varid))
     ! call check_return_code(nf90_put_var(ncid,lat_varid,))
     ! call check_return_code(nf90_put_var(ncid,lon_varid,))
     call check_return_code(nf90_enddef(ncid))
     call check_return_code(nf90_put_var(ncid,varid,&
-                                        lake_fields%lake_numbers))
+                                        transpose(lake_fields%lake_numbers)))
     call check_return_code(nf90_close(ncid))
 end subroutine write_lake_numbers_field
 
@@ -439,10 +439,10 @@ subroutine write_diagnostic_lake_volumes(working_directory, &
     call check_return_code(nf90_create(filename,nf90_noclobber,ncid))
     call check_return_code(nf90_def_dim(ncid,"lat",lake_parameters%nlat,lat_dimid))
     call check_return_code(nf90_def_dim(ncid,"lon",lake_parameters%nlon,lon_dimid))
-    dimids = (/lat_dimid,lon_dimid/)
+    dimids = (/lon_dimid,lat_dimid/)
     call check_return_code(nf90_def_var(ncid,"diagnostic_lake_volume",nf90_real,dimids,varid))
     call check_return_code(nf90_enddef(ncid))
-    call check_return_code(nf90_put_var(ncid,varid,diagnostic_lake_volume))
+    call check_return_code(nf90_put_var(ncid,varid,transpose(diagnostic_lake_volume)))
     call check_return_code(nf90_close(ncid))
     deallocate(diagnostic_lake_volume)
 end subroutine write_diagnostic_lake_volumes

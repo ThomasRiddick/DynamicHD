@@ -5,11 +5,11 @@ Created on April 16, 2018
 @author: thomasriddick
 '''
 import unittest
-from ../Dynamic_HD_Scripts import field
-from ../Dynamic_HD_Scripts/libs import lake_operators_wrapper
-from ../Dynamic_HD_Scripts/libs import fill_sinks_wrapper
-from ../Dynamic_HD_Scripts/libs import evaluate_basins_wrapper
-from ../Dynamic_HD_Scripts import dynamic_lake_operators
+from Dynamic_HD_Scripts import field
+from Dynamic_HD_Scripts.libs import lake_operators_wrapper
+from Dynamic_HD_Scripts.libs import fill_sinks_wrapper
+from Dynamic_HD_Scripts.libs import evaluate_basins_wrapper
+from Dynamic_HD_Scripts import dynamic_lake_operators
 import numpy as np
 
 class TestNarrowLakeFilter(unittest.TestCase):
@@ -5135,13 +5135,17 @@ class TestConnectedAreaReduction(unittest.TestCase):
 
 class BasinEvaluationDriver(unittest.TestCase):
 
-  @unittest.skip("this test is currently broken")
   def testEvaluateBasinsOne(self):
     coarse_catchment_nums_in = np.array([[3,3,2,2],
                                          [3,3,2,2],
                                          [1,1,1,2],
                                          [1,1,1,1]],
                                          dtype=np.int32)
+    prior_coarse_rdirs_in = np.array([[5.0,5.0,5.0,5.0],
+                                      [5.0,5.0,5.0,5.0],
+                                      [5.0,5.0,5.0,5.0],
+                                      [5.0,5.0,5.0,5.0]],
+                                      dtype=np.float64)
     corrected_orography_in =\
     np.array([[10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0],
               [10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0, 2.0],
@@ -5270,6 +5274,8 @@ class BasinEvaluationDriver(unittest.TestCase):
                                          [2, 2, 5, 4, 3, 1, 4, 4, 4, 4, 7, 7, 7, 7,10, 9, 8, 6, 6, 2],
                                          [2, 2, 2, 0, 1, 1, 1, 4, 4, 4, 7, 7, 7, 7, 7, 0, 6, 6, 6, 2]],
                                          dtype=np.int32)
+    cell_areas_in = np.zeros((20,20),dtype=np.float64)
+    cell_areas_in.fill(1.0)
     connection_volume_thresholds_in = np.zeros((20,20),dtype=np.float64)
     connection_volume_thresholds_in.fill(0.0)
     flood_volume_thresholds_in = np.zeros((20,20),dtype=np.float64)
@@ -5304,6 +5310,18 @@ class BasinEvaluationDriver(unittest.TestCase):
     connect_local_redirect_in.fill(False)
     merge_points_in = np.zeros((20,20),dtype=np.int32)
     merge_points_in.fill(0)
+    additional_flood_redirect_lat_index_in = np.zeros((20,20),dtype=np.int32)
+    additional_flood_redirect_lat_index_in.fill(-1)
+    additional_flood_redirect_lon_index_in = np.zeros((20,20),dtype=np.int32)
+    additional_flood_redirect_lon_index_in.fill(-1)
+    additional_connect_redirect_lat_index_in = np.zeros((20,20),dtype=np.int32)
+    additional_connect_redirect_lat_index_in.fill(-1)
+    additional_connect_redirect_lon_index_in = np.zeros((20,20),dtype=np.int32)
+    additional_connect_redirect_lon_index_in.fill(-1)
+    additional_flood_local_redirect_in = np.zeros((20,20),dtype=np.int32)
+    additional_flood_local_redirect_in.fill(0)
+    additional_connect_local_redirect_in = np.zeros((20,20),dtype=np.int32)
+    additional_connect_local_redirect_in.fill(0)
     flood_volume_thresholds_expected_out =\
     np.array([[-1,  -1,   -1,   -1,   -1, -1,   -1, -1,  -1,  -1, -1, -1,   -1,   -1,   -1,  -1,   -1,  -1, -1,   -1],
       [-1,  -1,   -1,   -1,   -1, -1,   -1,    -1,  -1,  -1, -1, -1,   -1,   -1,   -1,  -1,   -1,  -1,     -1,   5.0],
@@ -5351,46 +5369,46 @@ class BasinEvaluationDriver(unittest.TestCase):
     flood_next_cell_lat_index_expected_out = \
     np.array([[-1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,  -1],
               [-1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,   3],
-              [2,  3,   5,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,   2,   2,   4,   5,  -1,  -1, -1,   1],
-              [-1,  4,   2,  -1,  -1,  7,  2,  -1,  -1,  -1, -1,  2,   5,   3,   9,   2,  -1,  -1, -1,  -1],
-              [-1,  3,   4,  -1,  -1,  6,  4,   5,   3,  -1, -1, -1,   7,   3,   4,   3,   6,  -1, -1,  -1],
-              [-1,  6,   5,   3,   6,  7, -1,   4,   4,  -1,  5,  6,   6,   6,   4,   8,   4,   3, -1,  -1],
-              [7,  6,   6,  -1,   5,  5,  6,   5,   5,  -1,  5,  5,   4,   8,   6,   6,   5,   5, -1,  -1],
-              [-1,  5,   7,  -1,  -1,  6, -1,   4,  -1,  -1, -1,  5,   6,   6,   8,   7,   5,  -1, -1,  -1],
+              [ 2,  3,   5,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,   2,   2,   4,   5,  -1,  -1, -1,   1],
+              [-1,  4,   2,  -1,  -1,  8,  2,  -1,  -1,  -1, -1,  2,   5,   3,   9,   2,  -1,  -1, -1,  -1],
+              [-1,  3,   4,  -1,  -1,  6,  4,   6,   3,  -1, -1, -1,   7,   3,   4,   3,   6,  -1, -1,  -1],
+              [-1,  6,   5,   3,   6,  7, -1,   4,   4,  -1,  5,  7,   6,   6,   4,   8,   4,   3, -1,  -1],
+              [ 7,  6,   6,  -1,   5,  5,  6,   5,   5,  -1,  5,  5,   4,   8,   6,   6,   5,   5, -1,  -1],
+              [-1,  6,   7,  -1,  -1,  6, -1,   4,  -1,  -1, -1,  5,   6,   6,   8,   7,   5,  -1, -1,  -1],
               [-1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1,  8,   7,   7,   8,   6,   7,  -1, -1,  -1],
               [-1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,   8,   9,  -1,  -1,  -1,  -1, -1,  -1],
               [-1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,  -1],
               [-1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,  -1],
               [-1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,  -1],
-              [-1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  14,  14,  13, 15,  -1],
+              [-1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  14,  14,  13, 16,  -1],
               [-1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  13,  14,  13, -1,  -1],
-              [-1, -1,  -1,  16,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,  -1],
+              [-1, -1,  -1,  17,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,  -1],
               [-1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,  -1],
               [-1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,  -1],
               [-1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,  -1],
               [-1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,  -1]],
               dtype=np.int32)
     flood_next_cell_lon_index_expected_out = \
-    np.array([[-1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,  -1],
-              [-1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,   1],
-              [19,  5,   2,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  15,  12,  16,   3,  -1,  -1, -1,  19],
-              [-1,  2,   2,  -1,  -1, 17,  1,  -1,  -1,  -1, -1, 13,  15,  12,  13,  14,  -1,  -1, -1,  -1],
-              [-1,  2,   1,  -1,  -1,  8,  5,   9,   6,  -1, -1, -1,  12,  13,  13,  14,  17,  -1, -1,  -1],
-              [-1,  2,   1,   5,   7,  5, -1,   6,   8,  -1, 14, 14,  10,  12,  14,  15,  15,  11, -1,  -1],
-              [2,  0,   1,  -1,   4,  5,  4,   7,   8,  -1, 10, 11,  12,  12,  13,  14,  16,  17, -1,  -1],
-              [-1,  3,   1,  -1,  -1,  6, -1,   7,  -1,  -1, -1, 12,  11,  15,  14,  13,   9,  -1, -1,  -1],
-              [-1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, 16,  11,  15,  13,  16,  16,  -1, -1,  -1],
-              [-1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  11,  12,  -1,  -1,  -1,  -1, -1,  -1],
-              [-1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,  -1],
-              [-1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,  -1],
-              [-1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,  -1],
-              [-1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  15,  16,  18, 15,  -1],
-              [-1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  16,  17,  17, -1,  -1],
-              [-1, -1,  -1,   4,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,  -1],
-              [-1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,  -1],
-              [-1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,  -1],
-              [-1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,  -1],
-              [-1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,  -1]],
+    np.array([[ -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,  -1],
+              [ -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,   1],
+              [ 19,  5,   2,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  15,  12,  16,   3,  -1,  -1, -1,  19],
+              [ -1,  2,   2,  -1,  -1, 18,  1,  -1,  -1,  -1, -1, 13,  15,  12,  13,  14,  -1,  -1, -1,  -1],
+              [ -1,  2,   1,  -1,  -1,  8,  5,  10,   6,  -1, -1, -1,  12,  13,  13,  14,  17,  -1, -1,  -1],
+              [ -1,  2,   1,   5,   7,  5, -1,   6,   8,  -1, 14, 14,  10,  12,  14,  15,  15,  11, -1,  -1],
+              [  2,  0,   1,  -1,   4,  5,  4,   7,   8,  -1, 10, 11,  12,  12,  13,  14,  16,  17, -1,  -1],
+              [ -1,  4,   1,  -1,  -1,  6, -1,   7,  -1,  -1, -1, 12,  11,  15,  14,  13,   9,  -1, -1,  -1],
+              [ -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, 16,  11,  15,  13,  16,  16,  -1, -1,  -1],
+              [ -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  11,  12,  -1,  -1,  -1,  -1, -1,  -1],
+              [ -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,  -1],
+              [ -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,  -1],
+              [ -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,  -1],
+              [ -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  15,  16,  18, 15,  -1],
+              [ -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  16,  17,  17, -1,  -1],
+              [ -1, -1,  -1,   3,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,  -1],
+              [ -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,  -1],
+              [ -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,  -1],
+              [ -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,  -1],
+              [ -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1, -1, -1,  -1,  -1,  -1,  -1,  -1,  -1, -1,  -1]],
               dtype=np.int32)
     connect_next_cell_lat_index_expected_out = \
     np.array([[-1, -1, -1, -1, -1,  -1,      -1,  -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
@@ -5524,6 +5542,18 @@ class BasinEvaluationDriver(unittest.TestCase):
               [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
               [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1]],
               dtype=np.int32)
+    additional_flood_redirect_lat_index_expected_out = np.zeros((20,20),dtype=np.int32)
+    additional_flood_redirect_lat_index_expected_out.fill(-1)
+    additional_flood_redirect_lon_index_expected_out = np.zeros((20,20),dtype=np.int32)
+    additional_flood_redirect_lon_index_expected_out.fill(-1)
+    additional_connect_redirect_lat_index_expected_out = np.zeros((20,20),dtype=np.int32)
+    additional_connect_redirect_lat_index_expected_out.fill(-1)
+    additional_connect_redirect_lon_index_expected_out = np.zeros((20,20),dtype=np.int32)
+    additional_connect_redirect_lon_index_expected_out.fill(-1)
+    additional_flood_local_redirect_expected_out = np.zeros((20,20),dtype=np.int32)
+    additional_flood_local_redirect_expected_out.fill(0)
+    additional_connect_local_redirect_expected_out = np.zeros((20,20),dtype=np.int32)
+    additional_connect_local_redirect_expected_out.fill(0)
     flood_local_redirect_expected_out =  \
     np.array([[False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,
               False,False,False,False],
@@ -5611,23 +5641,23 @@ class BasinEvaluationDriver(unittest.TestCase):
     merge_points_expected_out = \
      np.array([[0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0],
                [0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0],
-               [0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 7,0,0,0,0],
-               [0,0,0,0,0, 8,0,0,0,0,0,0,0,0,0, 0,0,0,0,0],
-               [0,0,0,0,0, 0,0,8,0,0,0,0,0,0,0, 0,0,0,0,0],
+               [0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 9,0,0,0,0],
+               [0,0,0,0,0, 10,0,0,0,0,0,0,0,0,0, 0,0,0,0,0],
+               [0,0,0,0,0, 0,0,10,0,0,0,0,0,0,0, 0,0,0,0,0],
 
-               [0,0,0,0,0, 0,0,0,0,0,0,8,0,0,0, 0,0,0,0,0],
+               [0,0,0,0,0, 0,0,0,0,0,0,10,0,0,0, 0,0,0,0,0],
                [0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0],
-               [0,8,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,7,0,0,0],
-               [0,0,0,0,0, 0,0,0,0,0,0,0,0,0,7, 0,0,0,0,0],
-               [0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0],
-
-               [0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0],
-               [0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0],
-               [0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0],
-               [0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,8,0],
+               [0,10,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,9,0,0,0],
+               [0,0,0,0,0, 0,0,0,0,0,0,0,0,0,9, 0,0,0,0,0],
                [0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0],
 
-               [0,0,0,8,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0],
+               [0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0],
+               [0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0],
+               [0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0],
+               [0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,10,0],
+               [0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0],
+
+               [0,0,0,10,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0],
                [0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0],
                [0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0],
                [0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0],
@@ -5636,13 +5666,13 @@ class BasinEvaluationDriver(unittest.TestCase):
     flood_force_merge_lat_index_expected_out = \
     np.array([[-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
               [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,   6, -1, -1, -1, -1],
+              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,   2, -1, -1, -1, -1],
               [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
               [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
               [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
               [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
               [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1,  6, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1,  7,  -1, -1, -1, -1, -1],
+              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1,  5,  -1, -1, -1, -1, -1],
               [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
               [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
               [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
@@ -5658,13 +5688,13 @@ class BasinEvaluationDriver(unittest.TestCase):
     flood_force_merge_lon_index_expected_out = \
     np.array([[-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
               [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,   2, -1, -1, -1, -1],
+              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,   0, -1, -1, -1, -1],
               [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
               [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
               [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
               [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1,  8, -1, -1, -1],
-              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, 12,  -1, -1, -1, -1, -1],
+              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1,  5, -1, -1, -1],
+              [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, 13,  -1, -1, -1, -1, -1],
               [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
               [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
               [-1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1],
@@ -5724,9 +5754,11 @@ class BasinEvaluationDriver(unittest.TestCase):
     evaluate_basins_wrapper.evaluate_basins(minima_in,
                                             raw_orography_in,
                                             corrected_orography_in,
+                                            cell_areas_in,
                                             connection_volume_thresholds_in,
                                             flood_volume_thresholds_in,
                                             prior_fine_rdirs_in,
+                                            prior_coarse_rdirs_in,
                                             prior_fine_catchments_in,
                                             coarse_catchment_nums_in,
                                             flood_next_cell_lat_index_in,
@@ -5741,44 +5773,61 @@ class BasinEvaluationDriver(unittest.TestCase):
                                             flood_redirect_lon_index_in,
                                             connect_redirect_lat_index_in,
                                             connect_redirect_lon_index_in,
+                                            additional_flood_redirect_lat_index_in,
+                                            additional_flood_redirect_lon_index_in,
+                                            additional_connect_redirect_lat_index_in,
+                                            additional_connect_redirect_lon_index_in,
                                             flood_local_redirect_in,
                                             connect_local_redirect_in,
+                                            additional_flood_local_redirect_in,
+                                            additional_connect_local_redirect_in,
                                             merge_points_in)
-    self.assertTrue(False)
-    # PROCESS BY HAND=>?np.testing.assert_array_equal.?EXPECT_TRUE(field<double>(flood_volume_thresholds_in,grid_params_in)
-    #           == field<double>(flood_volume_thresholds_expected_out,grid_params_in))
-    # PROCESS BY HAND=>?np.testing.assert_array_equal.?EXPECT_TRUE(field<double>(connection_volume_thresholds_in,grid_params_in)
-    #           == field<double>(connection_volume_thresholds_expected_out,grid_params_in))
-    # PROCESS BY HAND=>?np.testing.assert_array_equal.?EXPECT_TRUE(field<int>(flood_next_cell_lat_index_in,grid_params_in)
-    #           == field<int>(flood_next_cell_lat_index_expected_out,grid_params_in))
-    # PROCESS BY HAND=>?np.testing.assert_array_equal.?EXPECT_TRUE(field<int>(flood_next_cell_lon_index_in,grid_params_in)
-    #           == field<int>(flood_next_cell_lon_index_expected_out,grid_params_in))
-    # PROCESS BY HAND=>?np.testing.assert_array_equal.?EXPECT_TRUE(field<int>(connect_next_cell_lat_index_in,grid_params_in)
-    #           == field<int>(connect_next_cell_lat_index_expected_out,grid_params_in))
-    # PROCESS BY HAND=>?np.testing.assert_array_equal.?EXPECT_TRUE(field<int>(connect_next_cell_lon_index_in,grid_params_in)
-    #           == field<int>(connect_next_cell_lon_index_expected_out,grid_params_in))
-    # PROCESS BY HAND=>?np.testing.assert_array_equal.?EXPECT_TRUE(field<int>(flood_redirect_lat_index_in,grid_params_in)
-    #           == field<int>(flood_redirect_lat_index_expected_out,grid_params_in))
-    # PROCESS BY HAND=>?np.testing.assert_array_equal.?EXPECT_TRUE(field<int>(flood_redirect_lon_index_in,grid_params_in)
-    #           == field<int>(flood_redirect_lon_index_expected_out,grid_params_in))
-    # PROCESS BY HAND=>?np.testing.assert_array_equal.?EXPECT_TRUE(field<int>(connect_redirect_lat_index_in,grid_params_in)
-    #           == field<int>(connect_redirect_lat_index_expected_out,grid_params_in))
-    # PROCESS BY HAND=>?np.testing.assert_array_equal.?EXPECT_TRUE(field<int>(connect_redirect_lon_index_in,grid_params_in)
-    #           == field<int>(connect_redirect_lon_index_expected_out,grid_params_in))
-    # PROCESS BY HAND=>?np.testing.assert_array_equal.?EXPECT_TRUE(field<bool>(flood_local_redirect_in,grid_params_in)
-    #           == field<bool>(flood_local_redirect_expected_out,grid_params_in))
-    # PROCESS BY HAND=>?np.testing.assert_array_equal.?EXPECT_TRUE(field<bool>(connect_local_redirect_in,grid_params_in)
-    #           == field<bool>(connect_local_redirect_expected_out,grid_params_in))
-    # PROCESS BY HAND=>?np.testing.assert_array_equal.?EXPECT_TRUE(field<merge_types>(merge_points_in,grid_params_in)
-    #           == field<merge_types>(merge_points_expected_out,grid_params_in))
-    # PROCESS BY HAND=>?np.testing.assert_array_equal.?EXPECT_TRUE(field<int>(flood_force_merge_lat_index_in,grid_params_in)
-    #           == field<int>(flood_force_merge_lat_index_expected_out,grid_params_in))
-    # PROCESS BY HAND=>?np.testing.assert_array_equal.?EXPECT_TRUE(field<int>(flood_force_merge_lon_index_in,grid_params_in)
-    #           == field<int>(flood_force_merge_lon_index_expected_out,grid_params_in))
-    # PROCESS BY HAND=>?np.testing.assert_array_equal.?EXPECT_TRUE(field<int>(connect_force_merge_lat_index_in,grid_params_in)
-    #           == field<int>(connect_force_merge_lat_index_expected_out,grid_params_in))
-    # PROCESS BY HAND=>?np.testing.assert_array_equal.?EXPECT_TRUE(field<int>(connect_force_merge_lon_index_in,grid_params_in)
-    #           == field<int>(connect_force_merge_lon_index_expected_out,grid_params_in))
+    np.testing.assert_array_equal(flood_volume_thresholds_in,
+                                  flood_volume_thresholds_expected_out)
+    np.testing.assert_array_equal(connection_volume_thresholds_in,
+                                  connection_volume_thresholds_expected_out)
+    np.testing.assert_array_equal(flood_next_cell_lat_index_in,
+                                  flood_next_cell_lat_index_expected_out)
+    np.testing.assert_array_equal(flood_next_cell_lon_index_in,
+                                  flood_next_cell_lon_index_expected_out)
+    np.testing.assert_array_equal(connect_next_cell_lat_index_in,
+                                  connect_next_cell_lat_index_expected_out)
+    np.testing.assert_array_equal(connect_next_cell_lon_index_in,
+                                  connect_next_cell_lon_index_expected_out)
+    np.testing.assert_array_equal(flood_redirect_lat_index_in,
+                                  flood_redirect_lat_index_expected_out)
+    np.testing.assert_array_equal(flood_redirect_lon_index_in,
+                                  flood_redirect_lon_index_expected_out)
+    np.testing.assert_array_equal(connect_redirect_lat_index_in,
+                                  connect_redirect_lat_index_expected_out)
+    np.testing.assert_array_equal(connect_redirect_lon_index_in,
+                                  connect_redirect_lon_index_expected_out)
+    np.testing.assert_array_equal(flood_local_redirect_in,
+                                 flood_local_redirect_expected_out)
+    np.testing.assert_array_equal(connect_local_redirect_in,
+                                  connect_local_redirect_expected_out)
+    np.testing.assert_array_equal(merge_points_in,
+                                  merge_points_expected_out)
+    np.testing.assert_array_equal(flood_force_merge_lat_index_in,
+                                  flood_force_merge_lat_index_expected_out)
+    np.testing.assert_array_equal(flood_force_merge_lon_index_in,
+                                  flood_force_merge_lon_index_expected_out)
+    np.testing.assert_array_equal(connect_force_merge_lat_index_in,
+                                  connect_force_merge_lat_index_expected_out)
+    np.testing.assert_array_equal(connect_force_merge_lon_index_in,
+                                  connect_force_merge_lon_index_expected_out)
+    np.testing.assert_array_equal(additional_flood_redirect_lat_index_in,
+                                  additional_flood_redirect_lat_index_expected_out)
+    np.testing.assert_array_equal(additional_flood_redirect_lon_index_in,
+                                  additional_flood_redirect_lon_index_expected_out)
+    np.testing.assert_array_equal(additional_connect_redirect_lat_index_in,
+                                  additional_connect_redirect_lat_index_expected_out)
+    np.testing.assert_array_equal(additional_connect_redirect_lon_index_in,
+                                  additional_connect_redirect_lon_index_expected_out)
+    np.testing.assert_array_equal(additional_flood_local_redirect_in,
+                                  additional_flood_local_redirect_expected_out)
+    np.testing.assert_array_equal(additional_connect_local_redirect_in,
+                                  additional_connect_local_redirect_expected_out)
 
 class TestWaterRedistributionDriver(unittest.TestCase):
 
