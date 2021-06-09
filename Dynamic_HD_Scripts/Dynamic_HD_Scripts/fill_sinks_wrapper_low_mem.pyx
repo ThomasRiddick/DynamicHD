@@ -11,7 +11,7 @@ import numpy as np
 from libcpp cimport bool
 
 #Declare four versions of the C++ cython interface function for various optional argument combinations
-cdef extern from "fill_sinks.cpp":
+cdef extern from "drivers/fill_sinks.cpp":
     double* latlon_fill_sinks_cython_interface_low_mem(double* orography_in, int nlat, int nlon, int method,
                                                        bint use_ls_mask,int* landsea_in,
                                                        bint set_ls_as_no_data_flag, int use_true_sinks,

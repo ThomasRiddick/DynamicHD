@@ -3,7 +3,7 @@ import cython
 cimport numpy as np
 import numpy as np
 
-cdef extern from 'create_orography.cpp':
+cdef extern from 'drivers/create_orography.cpp':
     void create_orography_cython_wrapper(int* landsea_in_int,double* inclines_in,
                                          double* orography_in,double sea_level_in,
                                          int nlat_in,int nlon_in)

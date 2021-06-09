@@ -2,7 +2,7 @@ import cython
 cimport numpy as np
 import numpy as np
 
-cdef extern from 'follow_streams.cpp':
+cdef extern from 'drivers/follow_streams.cpp':
     void latlon_follow_streams_cython_wrapper(double* rdirs_in,int* cells_with_loop_in_int,
                                               int* downstream_cells_in_int,int nlat_in,int nlon_in)
 

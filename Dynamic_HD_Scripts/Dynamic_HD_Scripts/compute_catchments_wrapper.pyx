@@ -4,7 +4,7 @@ cimport numpy as np
 from libcpp.string cimport string
 import numpy as np
 
-cdef extern from 'compute_catchments.cpp':
+cdef extern from 'drivers/compute_catchments.cpp':
     void latlon_compute_catchments(int* catchment_numbers_in, double* rdirs_in,
                                    string loop_log_filepath,
                                    int nlat_in,int nlon_in)

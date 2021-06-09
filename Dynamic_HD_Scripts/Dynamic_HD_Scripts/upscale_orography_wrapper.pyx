@@ -5,7 +5,7 @@ cimport numpy as np
 import numpy as np
 from libcpp cimport bool
 
-cdef extern from 'upscale_orography.cpp':
+cdef extern from 'drivers/upscale_orography.cpp':
     void latlon_upscale_orography_cython_interface(double* orography_in, int nlat_fine, int nlon_fine,
                                                    double* orography_out, int nlat_course, int nlon_course,
                                                    int method, int* landsea_in,int* true_sinks_in,

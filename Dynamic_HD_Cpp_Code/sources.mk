@@ -21,4 +21,9 @@ C_DEPS :=
 SUBDIRS := \
 src \
 src/gtest \
+src/algorithms \
+src/base \
+src/command_line_drivers \
+src/drivers \
+src/testing \
 

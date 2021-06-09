@@ -5,7 +5,7 @@ cimport numpy as np
 import numpy as np
 from libcpp cimport bool
 
-cdef extern from 'evaluate_basins.cpp':
+cdef extern from 'drivers/evaluate_basins.cpp':
     void latlon_evaluate_basins_cython_wrapper(int* minima_in_int,
                                                double* raw_orography_in,
                                                double* corrected_orography_in,

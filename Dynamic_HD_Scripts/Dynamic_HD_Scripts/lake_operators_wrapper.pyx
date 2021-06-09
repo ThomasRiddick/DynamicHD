@@ -5,7 +5,7 @@ cimport numpy as np
 import numpy as np
 from libcpp cimport bool
 
-cdef extern from 'burn_carved_rivers.cpp':
+cdef extern from 'drivers/burn_carved_rivers.cpp':
     void latlon_burn_carved_rivers_cython_wrapper(double* orography_in,double* rdirs_in,
                                                   int* minima_in_int, int* lakemask_in_int,
                                                   int nlat_in,int nlon_in,
@@ -14,11 +14,11 @@ cdef extern from 'burn_carved_rivers.cpp':
                                                   double minimum_height_change_threshold_in,
                                                   int short_path_threshold_in,
                                                   double short_minimum_height_change_threshold_in)
-cdef extern from 'fill_lakes.cpp':
+cdef extern from 'drivers/fill_lakes.cpp':
     void latlon_fill_lakes_cython_wrapper(int* lake_minima_in_int,int* lake_mask_in_int,
                                           double* orography_in,int nlat_in, int nlon_in,
                                           bint use_highest_possible_lake_water_level_in_int)
-cdef extern from 'reduce_connected_areas_to_points.cpp':
+cdef extern from 'drivers/reduce_connected_areas_to_points.cpp':
     void latlon_reduce_connected_areas_to_points_cython_wrapper(int* areas_in_int,int nlat_in,int nlon_in,
                                                                 bint use_diagonals_in_int,
                                                                 double* orography_in,
@@ -26,7 +26,7 @@ cdef extern from 'reduce_connected_areas_to_points.cpp':
     void latlon_reduce_connected_areas_to_points_cython_wrapper(int* areas_in_int,int nlat_in,int nlon_in,
                                                                 bint use_diagonals_in_int)
 
-cdef extern from 'redistribute_water.cpp':
+cdef extern from 'drivers/redistribute_water.cpp':
     void latlon_redistribute_water_cython_wrapper(int* lake_numbers_in,
                                                   int* lake_centers_in_int,
                                                   double* water_to_redistribute_in,
@@ -35,7 +35,7 @@ cdef extern from 'redistribute_water.cpp':
                                                   int nlat_in, int nlon_in,
                                                   int coarse_nlat_in, int coarse_nlon_in)
 
-cdef extern from 'filter_out_shallow_lakes.cpp':
+cdef extern from 'drivers/filter_out_shallow_lakes.cpp':
     void latlon_filter_out_shallow_lakes(double* unfilled_orography,double* filled_orography,
                                          double minimum_depth_threshold,int nlat_in,int nlon_in)
 

@@ -8,7 +8,8 @@ clean :
 		./libs/fill_sinks_wrapper_low_mem.cpython-39-darwin.so ./libs/upscale_orography_wrapper.cpython-39-darwin.so ./libs/compute_catchments_wrapper.cpython-39-darwin.so \
 		./libs/mod_local_minima_finding_kernels.so ./libs/lake_operators_wrapper.cpython-39-darwin.so ./libs/evaluate_basins_wrapper.cpython-39-darwin.so \
 		./libs/determine_river_directions_wrapper.cpython-39-darwin.so \
-		./libs/create_orography_wrapper.cpython-39-darwin.so
+		./libs/create_orography_wrapper.cpython-39-darwin.so \
+		./libs/follow_streams_wrapper.cpython-39-darwin.so
 		-$(RM) ./libs/mod_local_minima_finding_kernels.so.dSYM \
 		./libs/mod_check_for_value.so.dSYM \
 		./libs/mod_res_size_init_kernel.so.dSYM \
@@ -23,3 +24,4 @@ clean :
     ./libs/determine_river_directions_wrapper.so.dSYM \
     ./libs/create_orography_wrapper.so.dSYM
 		-$(RM) ./libs/mod_iterate_paths_map.so
+		-$(RM) ./libs/__pycache__ __pycache__

@@ -3,7 +3,7 @@ import cython
 cimport numpy as np
 import numpy as np
 
-cdef extern from 'determine_river_directions.cpp':
+cdef extern from 'drivers/determine_river_directions.cpp':
     void latlon_determine_river_directions_cython_wrapper(double* rdirs_in,
                                                           double* orography_in,
                                                           int* land_sea_in_int,
