@@ -25,3 +25,5 @@ process_manager.pyc
 dynamic_lake_production_run_driver.pyc
 connect_coarse_lake_catchments.pyc
 *.pyc
+create_connected_lsmask_wrapper.cpp
+fill_sinks_wrapper.cpp

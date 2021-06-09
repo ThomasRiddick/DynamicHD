@@ -6,9 +6,9 @@ Created on April 16, 2018
 '''
 import unittest
 from Dynamic_HD_Scripts import field
-from Dynamic_HD_Scripts.libs import lake_operators_wrapper
-from Dynamic_HD_Scripts.libs import fill_sinks_wrapper
-from Dynamic_HD_Scripts.libs import evaluate_basins_wrapper
+from Dynamic_HD_Scripts.interface.cpp_interface.libs import lake_operators_wrapper
+from Dynamic_HD_Scripts.interface.cpp_interface.libs import fill_sinks_wrapper
+from Dynamic_HD_Scripts.interface.cpp_interface.libs import evaluate_basins_wrapper
 from Dynamic_HD_Scripts import dynamic_lake_operators
 import numpy as np
 

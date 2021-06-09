@@ -15,9 +15,12 @@ import numpy as np
 from Dynamic_HD_Scripts import utilities
 from Dynamic_HD_Scripts import field
 from Dynamic_HD_Scripts import grid
-from Dynamic_HD_Scripts.libs import fill_sinks_wrapper
-from Dynamic_HD_Scripts.libs import lake_operators_wrapper
-from Dynamic_HD_Scripts.libs import evaluate_basins_wrapper
+from Dynamic_HD_Scripts.interface.cpp_interface.libs \
+    import fill_sinks_wrapper
+from Dynamic_HD_Scripts.interface.cpp_interface.libs \
+    import lake_operators_wrapper
+from Dynamic_HD_Scripts.interface.cpp_interface.libs \
+    import evaluate_basins_wrapper
 from timeit import default_timer as timer
 import cdo
 import argparse

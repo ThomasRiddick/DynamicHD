@@ -9,7 +9,7 @@ Created on Mar 31, 2016
 
 import unittest
 import numpy as np
-from Dynamic_HD_Scripts.libs import fill_sinks_wrapper
+from Dynamic_HD_Scripts.interface.cpp_interface.libs import fill_sinks_wrapper
 
 
 class TestAlgorithmOne(unittest.TestCase):

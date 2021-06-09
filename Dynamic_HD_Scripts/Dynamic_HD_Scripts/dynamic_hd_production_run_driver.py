@@ -15,7 +15,7 @@ from Dynamic_HD_Scripts import field
 import configparser
 import shutil
 from timeit import default_timer as timer
-from Dynamic_HD_Scripts.libs import fill_sinks_wrapper
+from Dynamic_HD_Scripts.interface.cpp_interface.libs import fill_sinks_wrapper
 from Dynamic_HD_Scripts import dynamic_hd_driver as dyn_hd_dr
 from Dynamic_HD_Scripts import compute_catchments as comp_catchs
 from Dynamic_HD_Scripts.field import Field, RiverDirections

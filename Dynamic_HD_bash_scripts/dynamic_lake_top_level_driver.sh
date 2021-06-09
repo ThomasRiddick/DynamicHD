@@ -281,13 +281,13 @@ if ! $no_modules && ! $no_conda ; then
 fi
 
 if ! $no_conda ; then
-	if $compilation_required && conda info -e | grep -q "dyhdenv"; then
-		conda env remove --yes --name dyhdenv
+	if $compilation_required && conda info -e | grep -q "dyhdenv3"; then
+		conda env remove --yes --name dyhdenv3
 	fi
-	if ! conda info -e | grep -q "dyhdenv"; then
+	if ! conda info -e | grep -q "dyhdenv3"; then
 		${source_directory}/Dynamic_HD_bash_scripts/regenerate_conda_environment.sh $no_modules
 	fi
-	source activate dyhdenv
+	source activate dyhdenv3
 fi
 
 #Load a new version of gcc that doesn't have the polymorphic variable bug

@@ -4,8 +4,10 @@ Created on March 23, 2018
 @author: thomasriddick
 '''
 from Dynamic_HD_Scripts import iodriver
-from Dynamic_HD_Scripts.libs import lake_operators_wrapper
-from Dynamic_HD_Scripts.libs import evaluate_basins_wrapper
+from Dynamic_HD_Scripts.interface.cpp_interface.libs \
+    import lake_operators_wrapper
+from Dynamic_HD_Scripts.interface.cpp_interface.libs \
+    import evaluate_basins_wrapper
 import numpy as np
 from Dynamic_HD_Scripts import field
 from Dynamic_HD_Scripts import grid

@@ -14,7 +14,8 @@ from Dynamic_HD_Scripts import field
 import warnings
 import os.path as path
 from Dynamic_HD_Scripts import iodriver
-from Dynamic_HD_Scripts.libs import compute_catchments_wrapper as cc_ccp_wrap
+from Dynamic_HD_Scripts.interface.cpp_interface.libs \
+    import compute_catchments_wrapper as cc_ccp_wrap
 from Dynamic_HD_Scripts.context import fortran_source_path
 
 def compute_catchments_cpp(field,loop_logfile):

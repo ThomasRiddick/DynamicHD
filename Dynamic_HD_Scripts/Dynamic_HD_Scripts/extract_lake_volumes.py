@@ -5,8 +5,10 @@ Created on July 29, 2020
 @author: thomasriddick
 '''
 import numpy as np
-from Dynamic_HD_Scripts.libs import create_connected_lsmask_wrapper
-from Dynamic_HD_Scripts.libs import lake_operators_wrapper
+from Dynamic_HD_Scripts.interface.cpp_interface.libs \
+    import create_connected_lsmask_wrapper
+from Dynamic_HD_Scripts.interface.cpp_interface.libs \
+    import lake_operators_wrapper
 from Dynamic_HD_Scripts import compute_catchments as cc
 from Dynamic_HD_Scripts import determine_river_directions
 from Dynamic_HD_Scripts import field

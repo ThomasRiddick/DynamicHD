@@ -9,8 +9,10 @@ Created on Mar 14, 2016
 
 from Dynamic_HD_Scripts import dynamic_hd
 import numpy as np
-from Dynamic_HD_Scripts.libs import fill_sinks_wrapper
-from Dynamic_HD_Scripts.libs import fill_sinks_wrapper_low_mem
+from Dynamic_HD_Scripts.interface.cpp_interface.libs \
+    import fill_sinks_wrapper
+from Dynamic_HD_Scripts.interface.cpp_interface.libs \
+    import fill_sinks_wrapper_low_mem
 from Dynamic_HD_Scripts import iodriver
 from Dynamic_HD_Scripts.field import Field
 from Dynamic_HD_Scripts import field

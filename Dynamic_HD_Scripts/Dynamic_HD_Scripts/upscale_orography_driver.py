@@ -8,7 +8,8 @@ from Dynamic_HD_Scripts import dynamic_hd
 from Dynamic_HD_Scripts.dynamic_hd import get_file_extension
 import numpy as np
 from Dynamic_HD_Scripts import field
-from Dynamic_HD_Scripts.libs import upscale_orography_wrapper
+from Dynamic_HD_Scripts.interface.cpp_interface.libs \
+    import upscale_orography_wrapper
 import configparser
 import gc
 from Dynamic_HD_Scripts import iodriver
