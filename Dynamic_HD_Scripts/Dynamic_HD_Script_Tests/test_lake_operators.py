@@ -5,12 +5,12 @@ Created on April 16, 2018
 @author: thomasriddick
 '''
 import unittest
-from Dynamic_HD_Scripts import field
+import numpy as np
+from Dynamic_HD_Scripts.base import field
+from Dynamic_HD_Scripts.tools import dynamic_lake_operators
 from Dynamic_HD_Scripts.interface.cpp_interface.libs import lake_operators_wrapper
 from Dynamic_HD_Scripts.interface.cpp_interface.libs import fill_sinks_wrapper
 from Dynamic_HD_Scripts.interface.cpp_interface.libs import evaluate_basins_wrapper
-from Dynamic_HD_Scripts import dynamic_lake_operators
-import numpy as np
 
 class TestNarrowLakeFilter(unittest.TestCase):
 

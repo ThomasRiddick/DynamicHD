@@ -7,13 +7,13 @@ Created on Dec 7, 2017
 '''
 
 import unittest
-from Dynamic_HD_Scripts import iodriver
-from context import data_dir
-from os.path import join
-import os
-import textwrap
-from Dynamic_HD_Scripts import field
 import numpy as np
+import textwrap
+import os
+from os.path import join
+from Dynamic_HD_Scripts.base import iodriver
+from Dynamic_HD_Scripts.base import field
+from context import data_dir
 
 
 class Test(unittest.TestCase):

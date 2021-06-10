@@ -7,8 +7,16 @@
 		{
 			"file_exclude_patterns":
 			[
-				"Dynamic_HD_Scripts/Dynamic_HD_Scripts/fill_sinks_wrapper.cpp",
-				"Dynamic_HD_Scripts/Dynamic_HD_Scripts/upscale_orography_wrapper.cpp"
+				"Dynamic_HD_Scripts/Dynamic_HD_Scripts/interface/cpp_interface/compute_catchments_wrapper.cpp",
+				"Dynamic_HD_Scripts/Dynamic_HD_Scripts/interface/cpp_interface/create_connected_lsmask_wrapper.cpp",
+				"Dynamic_HD_Scripts/Dynamic_HD_Scripts/interface/cpp_interface/create_orography_wrapper.cpp",
+				"Dynamic_HD_Scripts/Dynamic_HD_Scripts/interface/cpp_interface/determine_river_directions_wrapper.cpp",
+				"Dynamic_HD_Scripts/Dynamic_HD_Scripts/interface/cpp_interface/evaluate_basins_wrapper.cpp",
+				"Dynamic_HD_Scripts/Dynamic_HD_Scripts/interface/cpp_interface/fill_sinks_wrapper.cpp",
+				"Dynamic_HD_Scripts/Dynamic_HD_Scripts/interface/cpp_interface/fill_sinks_wrapper_low_mem.cpp",
+				"Dynamic_HD_Scripts/Dynamic_HD_Scripts/interface/cpp_interface/follow_streams_wrapper.cpp",
+				"Dynamic_HD_Scripts/Dynamic_HD_Scripts/interface/cpp_interface/lake_operators_wrapper.cpp",
+				"Dynamic_HD_Scripts/Dynamic_HD_Scripts/interface/cpp_interface/upscale_orography_wrapper.cpp"
 			],
 			"folder_exclude_patterns":
 			[
@@ -16,8 +24,20 @@
 				"Dynamic_HD_Cpp_Code/docs",
 				"Dynamic_HD_Fortran_Code/Release",
 				"Dynamic_HD_bash_scripts/bin",
+				"Dynamic_HD_Scripts/Dynamic_HD_Scripts/__pycache__",
+				"Dynamic_HD_Scripts/Dynamic_HD_Script_Tests/__pycache__",
+				"Dynamic_HD_Scripts/HD_Plots/__pycache__",
+				"Dynamic_HD_Scripts/Dynamic_HD_Scripts/base/__pycache__",
+				"Dynamic_HD_Scripts/Dynamic_HD_Scripts/command_line_drivers/__pycache__",
+				"Dynamic_HD_Scripts/Dynamic_HD_Scripts/dynamic_hd_and_dynamic_lake_drivers/__pycache__",
+				"Dynamic_HD_Scripts/Dynamic_HD_Scripts/interface/cpp_interface/__pycache__",
+				"Dynamic_HD_Scripts/Dynamic_HD_Scripts/interface/fortran/__pycache__",
+				"Dynamic_HD_Scripts/Dynamic_HD_Scripts/tools/__pycache__",
+				"Dynamic_HD_Scripts/Dynamic_HD_Scripts/utilities/__pycache__",
 				"Dynamic_HD_Scripts/Dynamic_HD_Scripts/libs",
 				"Dynamic_HD_Scripts/Dynamic_HD_Scripts/build",
+				"Dynamic_HD_Scripts/Dynamic_HD_Scripts/interface/cpp_interface/build",
+				"Dynamic_HD_Scripts/Dynamic_HD_Scripts/interface/cpp_interface/libs",
 				"Dynamic_HD_Scripts/Dynamic_HD_Scripts/bin",
 				"Dynamic_HD_Fortran_Code/docs",
 				"Dynamic_HD_Fortran_Code/mods"

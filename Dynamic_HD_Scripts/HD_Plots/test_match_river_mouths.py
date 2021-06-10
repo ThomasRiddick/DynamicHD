@@ -8,7 +8,7 @@ Created on Apr 24, 2016
 import unittest
 import numpy as np
 
-from HD_Plots import match_river_mouths as mtch_rm
+from HD_Plots.utilities import match_river_mouths as mtch_rm
 
 class ConflictResolverTests(unittest.TestCase):
 

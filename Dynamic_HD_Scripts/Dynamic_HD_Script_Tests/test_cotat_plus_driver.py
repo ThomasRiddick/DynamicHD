@@ -9,15 +9,15 @@ Created on Oct 19, 2016
 
 import unittest
 import numpy as np
-from Dynamic_HD_Scripts import field
-from Dynamic_HD_Scripts import cotat_plus_driver
 import os
 import re
-from Dynamic_HD_Script_Tests.context import data_dir,valgrind_path
 import textwrap
 import subprocess
-from Dynamic_HD_Scripts import context as scripts_context
 from subprocess import CalledProcessError
+from Dynamic_HD_Scripts.base import field
+from Dynamic_HD_Scripts.tools import cotat_plus_driver
+from Dynamic_HD_Scripts import context as scripts_context
+from Dynamic_HD_Script_Tests.context import data_dir,valgrind_path
 
 class Test(unittest.TestCase):
     """Unit test object"""

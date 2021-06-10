@@ -8,14 +8,14 @@ Created on Dec 15, 2015
 
 import unittest
 import numpy as np
-from Dynamic_HD_Scripts import dynamic_hd
-from Dynamic_HD_Scripts import iohelper
-from Dynamic_HD_Scripts import grid as gd
 import sys
 import scipy.io as scipyio
 import os
-from Dynamic_HD_Scripts import field as fld
-from Dynamic_HD_Scripts import f2py_manager
+from Dynamic_HD_Scripts.base import iodriver
+from Dynamic_HD_Scripts.base import iohelper
+from Dynamic_HD_Scripts.base import grid as gd
+from Dynamic_HD_Scripts.base import field as fld
+from Dynamic_HD_Scripts.interface.fortran_interface import f2py_manager
 from Dynamic_HD_Script_Tests.context import fortran_source_path,data_dir
 
 class IOHelperTestCase(unittest.TestCase):
@@ -76,7 +76,7 @@ class IOHelperTestCase(unittest.TestCase):
         """Test the high level field loading function"""
         self.prep_fortran_file()
         field_instance = fld.Orography(self.field.reshape(360,720))
-        loaded_field_instance = dynamic_hd.load_field(self.fortran_test_file,'.datx', 'Orography', 'HD')
+        loaded_field_instance = iodriver.load_field(self.fortran_test_file,'.datx', 'Orography', 'HD')
         np.testing.assert_array_equal(loaded_field_instance.data,field_instance.data,"load_field function is loading incorrect data")
         self.assertEqual(type(field_instance),type(loaded_field_instance),"load_field function is producing the wrong type of object")
 

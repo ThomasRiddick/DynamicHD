@@ -7,13 +7,13 @@ Created on Oct 30, 2016
 
 import unittest
 import numpy as np
-from Dynamic_HD_Scripts import field
-from Dynamic_HD_Scripts import loop_breaker_driver
+import re
+import subprocess
+from subprocess import CalledProcessError
+from Dynamic_HD_Scripts.base import field
+from Dynamic_HD_Scripts.tools import loop_breaker_driver
 from Dynamic_HD_Scripts import context as scripts_context
 from Dynamic_HD_Script_Tests import context
-import subprocess
-import re
-from subprocess import CalledProcessError
 
 class Test(unittest.TestCase):
     """Unit test object"""

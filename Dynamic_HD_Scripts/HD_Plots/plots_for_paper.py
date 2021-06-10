@@ -7,18 +7,18 @@ Created on Mar 2, 2017
 from .plots_library import (Plots,HDparameterPlots,HDOutputPlots,OutflowPlots, #@UnusedImport
                            FlowMapPlots,FlowMapPlotsWithCatchments,OrographyPlots, #@UnusedImport
                            SimpleOrographyPlots, Ice5GComparisonPlots) #@UnusedImport
-import os
-import os.path as path
-from HD_Plots import plotting_tools as pts
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 from matplotlib import gridspec
 from matplotlib import rcParams
+import os
+import os.path as path
 import numpy as np
 from netCDF4 import Dataset
-from Dynamic_HD_Scripts import dynamic_hd
-from Dynamic_HD_Scripts import utilities
-from HD_Plots import river_comparison_plotting_routines as rc_pts
+from Dynamic_HD_Scripts.base import iodriver
+from Dynamic_HD_Scripts.utilities import utilities
+from HD_Plots.utilities import river_comparison_plotting_routines as rc_pts
+from HD_Plots.utilities import plotting_tools as pts
 
 class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
     """Plots for GMD Paper"""
@@ -868,99 +868,99 @@ class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
                                               "glac01_{}.nc".format(time_three))
         glac_mask_four_filename = os.path.join(self.orography_directory,
                                               "glac01_{}.nc".format(time_four))
-        flowmap_one = dynamic_hd.load_field(flowmap_one_filename,
-                                            file_type=dynamic_hd.get_file_extension(flowmap_one_filename),
+        flowmap_one = iodriver.load_field(flowmap_one_filename,
+                                          file_type=iodriver.get_file_extension(flowmap_one_filename),
+                                          field_type='Generic',
+                                          grid_type='HD').get_data()
+        lsmask_one = iodriver.load_field(lsmask_one_filename,
+                                         file_type=iodriver.get_file_extension(lsmask_one_filename),
+                                         field_type='Generic',
+                                         fieldname='FLAG',
+                                         grid_type='HD').get_data().astype(np.int32)
+        glac_mask_one = iodriver.load_field(glac_mask_one_filename,
+                                            file_type=iodriver.get_file_extension(glac_mask_one_filename),
                                             field_type='Generic',
-                                            grid_type='HD').get_data()
-        lsmask_one = dynamic_hd.load_field(lsmask_one_filename,
-                                           file_type=dynamic_hd.get_file_extension(lsmask_one_filename),
-                                           field_type='Generic',
-                                           fieldname='FLAG',
-                                           grid_type='HD').get_data().astype(np.int32)
-        glac_mask_one = dynamic_hd.load_field(glac_mask_one_filename,
-                                              file_type=dynamic_hd.get_file_extension(glac_mask_one_filename),
-                                              field_type='Generic',
-                                              fieldname='glac',
-                                              grid_type='LatLong10min')
+                                            fieldname='glac',
+                                            grid_type='LatLong10min')
         glac_mask_hd_one = utilities.upscale_field(glac_mask_one,"HD",'Sum',
                                                    output_grid_kwargs={},
                                                    scalenumbers=True)
         glac_mask_hd_one.flip_data_ud()
         glac_mask_hd_one.rotate_field_by_a_hundred_and_eighty_degrees()
         glac_mask_hd_one = glac_mask_hd_one.get_data()
-        catchments_one = dynamic_hd.load_field(catchments_one_filename,
-                                               file_type=dynamic_hd.get_file_extension(catchments_one_filename),
-                                               field_type='Generic',
-                                               grid_type='HD').get_data()
-        flowmap_two = dynamic_hd.load_field(flowmap_two_filename,
-                                            file_type=dynamic_hd.get_file_extension(flowmap_two_filename),
+        catchments_one = iodriver.load_field(catchments_one_filename,
+                                             file_type=iodriver.get_file_extension(catchments_one_filename),
+                                             field_type='Generic',
+                                             grid_type='HD').get_data()
+        flowmap_two = iodriver.load_field(flowmap_two_filename,
+                                          file_type=iodriver.get_file_extension(flowmap_two_filename),
+                                          field_type='Generic',
+                                          grid_type='HD').get_data()
+        lsmask_two = iodriver.load_field(lsmask_two_filename,
+                                         file_type=iodriver.get_file_extension(lsmask_two_filename),
+                                         field_type='Generic',
+                                         fieldname='FLAG',
+                                         grid_type='HD').get_data().astype(np.int32)
+        glac_mask_two = iodriver.load_field(glac_mask_two_filename,
+                                            file_type=iodriver.get_file_extension(glac_mask_two_filename),
                                             field_type='Generic',
-                                            grid_type='HD').get_data()
-        lsmask_two = dynamic_hd.load_field(lsmask_two_filename,
-                                           file_type=dynamic_hd.get_file_extension(lsmask_two_filename),
-                                           field_type='Generic',
-                                           fieldname='FLAG',
-                                           grid_type='HD').get_data().astype(np.int32)
-        glac_mask_two = dynamic_hd.load_field(glac_mask_two_filename,
-                                              file_type=dynamic_hd.get_file_extension(glac_mask_two_filename),
-                                              field_type='Generic',
-                                              fieldname='glac',
-                                              grid_type='LatLong10min')
+                                            fieldname='glac',
+                                            grid_type='LatLong10min')
         glac_mask_hd_two = utilities.upscale_field(glac_mask_two,"HD",'Sum',
                                                    output_grid_kwargs={},
                                                    scalenumbers=True)
         glac_mask_hd_two.flip_data_ud()
         glac_mask_hd_two.rotate_field_by_a_hundred_and_eighty_degrees()
         glac_mask_hd_two = glac_mask_hd_two.get_data()
-        catchments_two = dynamic_hd.load_field(catchments_two_filename,
-                                               file_type=dynamic_hd.get_file_extension(catchments_two_filename),
-                                               field_type='Generic',
-                                               grid_type='HD').get_data()
-        flowmap_three = dynamic_hd.load_field(flowmap_three_filename,
-                                            file_type=dynamic_hd.get_file_extension(flowmap_three_filename),
+        catchments_two = iodriver.load_field(catchments_two_filename,
+                                             file_type=iodriver.get_file_extension(catchments_two_filename),
+                                             field_type='Generic',
+                                             grid_type='HD').get_data()
+        flowmap_three = iodriver.load_field(flowmap_three_filename,
+                                            file_type=iodriver.get_file_extension(flowmap_three_filename),
                                             field_type='Generic',
                                             grid_type='HD').get_data()
-        lsmask_three = dynamic_hd.load_field(lsmask_three_filename,
-                                           file_type=dynamic_hd.get_file_extension(lsmask_three_filename),
+        lsmask_three = iodriver.load_field(lsmask_three_filename,
+                                           file_type=iodriver.get_file_extension(lsmask_three_filename),
                                            field_type='Generic',
                                            fieldname='FLAG',
                                            grid_type='HD').get_data().astype(np.int32)
-        glac_mask_three = dynamic_hd.load_field(glac_mask_three_filename,
-                                              file_type=dynamic_hd.get_file_extension(glac_mask_three_filename),
+        glac_mask_three = iodriver.load_field(glac_mask_three_filename,
+                                              file_type=iodriver.get_file_extension(glac_mask_three_filename),
                                               field_type='Generic',
                                               fieldname='glac',
                                               grid_type='LatLong10min')
         glac_mask_hd_three = utilities.upscale_field(glac_mask_three,"HD",'Sum',
-                                                   output_grid_kwargs={},
-                                                   scalenumbers=True)
+                                                     output_grid_kwargs={},
+                                                     scalenumbers=True)
         glac_mask_hd_three.flip_data_ud()
         glac_mask_hd_three.rotate_field_by_a_hundred_and_eighty_degrees()
         glac_mask_hd_three = glac_mask_hd_three.get_data()
-        catchments_three = dynamic_hd.load_field(catchments_three_filename,
-                                               file_type=dynamic_hd.get_file_extension(catchments_three_filename),
+        catchments_three = iodriver.load_field(catchments_three_filename,
+                                               file_type=iodriver.get_file_extension(catchments_three_filename),
                                                field_type='Generic',
                                                grid_type='HD').get_data()
-        flowmap_four = dynamic_hd.load_field(flowmap_four_filename,
-                                            file_type=dynamic_hd.get_file_extension(flowmap_four_filename),
+        flowmap_four = iodriver.load_field(flowmap_four_filename,
+                                            file_type=iodriver.get_file_extension(flowmap_four_filename),
                                             field_type='Generic',
                                             grid_type='HD').get_data()
-        lsmask_four = dynamic_hd.load_field(lsmask_four_filename,
-                                           file_type=dynamic_hd.get_file_extension(lsmask_four_filename),
+        lsmask_four = iodriver.load_field(lsmask_four_filename,
+                                           file_type=iodriver.get_file_extension(lsmask_four_filename),
                                            field_type='Generic',
                                            fieldname='FLAG',
                                            grid_type='HD').get_data().astype(np.int32)
-        glac_mask_four = dynamic_hd.load_field(glac_mask_four_filename,
-                                              file_type=dynamic_hd.get_file_extension(glac_mask_four_filename),
-                                              field_type='Generic',
-                                              fieldname='glac',
-                                              grid_type='LatLong10min')
+        glac_mask_four = iodriver.load_field(glac_mask_four_filename,
+                                             file_type=iodriver.get_file_extension(glac_mask_four_filename),
+                                             field_type='Generic',
+                                             fieldname='glac',
+                                             grid_type='LatLong10min')
         glac_mask_hd_four = utilities.upscale_field(glac_mask_four,"HD",'Sum',
-                                                   output_grid_kwargs={},
-                                                   scalenumbers=True)
-        catchments_four = dynamic_hd.load_field(catchments_four_filename,
-                                               file_type=dynamic_hd.get_file_extension(catchments_four_filename),
-                                               field_type='Generic',
-                                               grid_type='HD').get_data()
+                                                    output_grid_kwargs={},
+                                                    scalenumbers=True)
+        catchments_four = iodriver.load_field(catchments_four_filename,
+                                              file_type=iodriver.get_file_extension(catchments_four_filename),
+                                              field_type='Generic',
+                                              grid_type='HD').get_data()
         glac_mask_hd_four.flip_data_ud()
         glac_mask_hd_four.rotate_field_by_a_hundred_and_eighty_degrees()
         glac_mask_hd_four = glac_mask_hd_four.get_data()

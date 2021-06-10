@@ -1,9 +1,9 @@
 import cdo
 import unittest
 import os
-from Dynamic_HD_Scripts.dynamic_lake_production_run_driver import Dynamic_Lake_Production_Run_Drivers
+from Dynamic_HD_Scripts.dynamic_hd_and_dynamic_lake_drivers.dynamic_lake_production_run_driver \
+    import Dynamic_Lake_Production_Run_Drivers
 from Dynamic_HD_Script_Tests.context import data_dir
-
 
 class Test_Dynamic_HD_Production_Run_Drivers(unittest.TestCase):
     """Test creating hdpara and hdrestart files for production runs"""

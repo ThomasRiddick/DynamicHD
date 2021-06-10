@@ -5,9 +5,9 @@ Created on February 26, 2019
 @author: thomasriddick
 '''
 import unittest
+import numpy as np
 from Dynamic_HD_Scripts.interface.cpp_interface.libs \
     import determine_river_directions_wrapper
-import numpy as np
 
 class TestRiverDirectionDeterminationDriver(unittest.TestCase):
 

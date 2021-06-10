@@ -8,30 +8,29 @@ Created on Jan 29, 2016
 @author: thomasriddick
 '''
 
-from HD_Plots.color_palette import ColorPalette #@UnresolvedImport
-import datetime
-import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
-from Dynamic_HD_Scripts import iohelper as iohlpr
-from Dynamic_HD_Scripts import iodriver
+from matplotlib import gridspec
+import matplotlib.animation as animation
+import matplotlib.gridspec as gridspec
+import numpy as np
+import datetime
 import textwrap
 import os.path
 import math
 import copy
-from HD_Plots import plotting_tools as pts
-from HD_Plots import match_river_mouths as mtch_rm
-from Dynamic_HD_Scripts import dynamic_hd
-from Dynamic_HD_Scripts import utilities
-from Dynamic_HD_Scripts import field
-from Dynamic_HD_Scripts import grid
 from netCDF4 import Dataset
-from matplotlib import gridspec
-from HD_Plots import river_comparison_plotting_routines as rc_pts
-from HD_Plots import flowmap_plotting_routines as fmp_pts #@UnresolvedImport
-from HD_Plots.interactive_plotting_routines import Interactive_Plots
-import matplotlib.gridspec as gridspec
-import matplotlib.animation as animation
+from Dynamic_HD_Scripts.base import iodriver
+from Dynamic_HD_Scripts.base import iohelper as iohlpr
+from Dynamic_HD_Scripts.base import field
+from Dynamic_HD_Scripts.base import grid
+from Dynamic_HD_Scripts.utilities import utilities
+from HD_Plots.utilities import plotting_tools as pts
+from HD_Plots.utilities import match_river_mouths as mtch_rm
+from HD_Plots.utilities import river_comparison_plotting_routines as rc_pts
+from HD_Plots.utilities import flowmap_plotting_routines as fmp_pts #@UnresolvedImport
+from HD_Plots.utilities.interactive_plotting_routines import Interactive_Plots
+from HD_Plots.utilities.color_palette import ColorPalette #@UnresolvedImport
 
 global interactive_plots
 
@@ -82,16 +81,16 @@ class HDparameterPlots(Plots):
         self._flow_parameter_distribution_helper(hd_file)
 
     def _flow_parameter_distribution_helper(self,hd_file):
-        river_flow_k_param = dynamic_hd.load_field(filename=hd_file,
-                                                   file_type=dynamic_hd.\
-                                                   get_file_extension(hd_file),
-                                                   field_type="Generic", unmask=False,
-                                                   fieldname="ARF_K", grid_type="HD")
-        river_flow_n_param = dynamic_hd.load_field(filename=hd_file,
-                                                   file_type=dynamic_hd.\
-                                                   get_file_extension(hd_file),
-                                                   field_type="Generic", unmask=False,
-                                                   fieldname="ARF_N", grid_type="HD")
+        river_flow_k_param = iodriver.load_field(filename=hd_file,
+                                                 file_type=iodriver.\
+                                                 get_file_extension(hd_file),
+                                                 field_type="Generic", unmask=False,
+                                                 fieldname="ARF_K", grid_type="HD")
+        river_flow_n_param = iodriver.load_field(filename=hd_file,
+                                                 file_type=iodriver.\
+                                                 get_file_extension(hd_file),
+                                                 field_type="Generic", unmask=False,
+                                                 fieldname="ARF_N", grid_type="HD")
         river_flow_k_param.mask_field_with_external_mask(river_flow_n_param.get_data() < 5)
         values = river_flow_k_param.get_data()[np.ma.nonzero(river_flow_k_param.get_data())]
         fig = plt.figure()
@@ -122,21 +121,21 @@ class HDOutputPlots(Plots):
         self.river_discharge_output_data_path = '/Users/thomasriddick/Documents/data/HDoutput'
 
     def check_water_balance_of_1978_for_constant_forcing_of_0_01(self):
-        lsmask = dynamic_hd.load_field("/Users/thomasriddick/Documents/data/HDdata/lsmasks/generated/"
-                                       "ls_mask_ten_minute_data_from_virna_0k_ALG4_sinkless"
-                                       "_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_20170123_165707_HD_transf.nc",
-                                       ".nc",field_type='Generic',grid_type='HD')
-        cell_areas = dynamic_hd.load_field("/Users/thomasriddick/Documents/data/HDdata/"
-                                           "gridareasandspacings/hdcellareas.nc",".nc",
-                                           field_type='Generic',fieldname="cell_area",grid_type='HD')
+        lsmask = iodriver.load_field("/Users/thomasriddick/Documents/data/HDdata/lsmasks/generated/"
+                                     "ls_mask_ten_minute_data_from_virna_0k_ALG4_sinkless"
+                                     "_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_20170123_165707_HD_transf.nc",
+                                     ".nc",field_type='Generic',grid_type='HD')
+        cell_areas = iodriver.load_field("/Users/thomasriddick/Documents/data/HDdata/"
+                                         "gridareasandspacings/hdcellareas.nc",".nc",
+                                         field_type='Generic',fieldname="cell_area",grid_type='HD')
         #stage summation to reduce rounding errors
         five_day_discharges = []
         for j in range(73):
             for i in range(j*5,(j+1)*5):
-                discharge = dynamic_hd.load_field("/Users/thomasriddick/Documents/data/HDoutput/hd_N01_1978-01-02_hd_"
-                                                  "discharge_05__ten_minute_data_from_virna_0k_ALG4_sinkless_no_true_"
-                                                  "sinks_oceans_lsmask_plus_upscale_rdirs_20170123_165707.nc",
-                                                  ".nc",field_type='Generic',fieldname="disch",timeslice=i,grid_type='HD')
+                discharge = iodriver.load_field("/Users/thomasriddick/Documents/data/HDoutput/hd_N01_1978-01-02_hd_"
+                                                "discharge_05__ten_minute_data_from_virna_0k_ALG4_sinkless_no_true_"
+                                                "sinks_oceans_lsmask_plus_upscale_rdirs_20170123_165707.nc",
+                                                ".nc",field_type='Generic',fieldname="disch",timeslice=i,grid_type='HD')
                 discharge_times_area = discharge.get_data()*cell_areas.get_data()
                 if i == j*5:
                     five_day_discharges.append(np.sum(discharge_times_area,dtype=np.float128))
@@ -158,39 +157,39 @@ class HDOutputPlots(Plots):
 
     def _calculate_total_water_in_restart(self,restart_filename):
         total_water = 0.0
-        fgmem_field = dynamic_hd.load_field(restart_filename,
-                                            file_type=dynamic_hd.get_file_extension(restart_filename),
-                                            field_type="Generic",
-                                            unmask=False,
-                                            timeslice=None,
-                                            fieldname="FGMEM",
-                                            grid_type="HD")
+        fgmem_field = iodriver.load_field(restart_filename,
+                                          file_type=iodriver.get_file_extension(restart_filename),
+                                          field_type="Generic",
+                                          unmask=False,
+                                          timeslice=None,
+                                          fieldname="FGMEM",
+                                          grid_type="HD")
         total_water += np.sum(fgmem_field.get_data(),dtype=np.float128)
-        finfl_field = dynamic_hd.load_field(restart_filename,
-                                            file_type=dynamic_hd.get_file_extension(restart_filename),
-                                            field_type="Generic",
-                                            unmask=False,
-                                            timeslice=None,
-                                            fieldname="FINFL",
-                                            grid_type="HD")
+        finfl_field = iodriver.load_field(restart_filename,
+                                          file_type=iodriver.get_file_extension(restart_filename),
+                                          field_type="Generic",
+                                          unmask=False,
+                                          timeslice=None,
+                                          fieldname="FINFL",
+                                          grid_type="HD")
         total_water += np.sum(finfl_field.get_data(),dtype=np.float128)
-        flfmem_field = dynamic_hd.load_field(restart_filename,
-                                             file_type=dynamic_hd.get_file_extension(restart_filename),
-                                             field_type="Generic",
-                                             unmask=False,
-                                             timeslice=None,
-                                             fieldname="FLFMEM",
-                                             grid_type="HD")
+        flfmem_field = iodriver.load_field(restart_filename,
+                                           file_type=iodriver.get_file_extension(restart_filename),
+                                           field_type="Generic",
+                                           unmask=False,
+                                           timeslice=None,
+                                           fieldname="FLFMEM",
+                                           grid_type="HD")
         total_water += np.sum(flfmem_field.get_data(),dtype=np.float128)
         frfmem_fields = []
         for i in range(5):
-            frfmem_fields.append(dynamic_hd.load_field(restart_filename,
-                                                       file_type=dynamic_hd.get_file_extension(restart_filename),
-                                                       field_type="Generic",
-                                                       unmask=False,
-                                                       timeslice=None,
-                                                       fieldname="FRFMEM{0}".format(i+1),
-                                                       grid_type="HD"))
+            frfmem_fields.append(iodriver.load_field(restart_filename,
+                                                     file_type=iodriver.get_file_extension(restart_filename),
+                                                     field_type="Generic",
+                                                     unmask=False,
+                                                     timeslice=None,
+                                                     fieldname="FRFMEM{0}".format(i+1),
+                                                     grid_type="HD"))
             total_water += np.sum(frfmem_fields[-1].get_data(),dtype=np.float128)
         return total_water
 
@@ -198,27 +197,27 @@ class HDOutputPlots(Plots):
                                                        run_off_filepath,discharge_filepath,
                                                        cell_areas_filepath,num_timeslices,grid_type="HD"):
         if grid_type == "HD":
-            rdirs_ref = dynamic_hd.load_field(lsmask_source_ref_filepath,dynamic_hd.get_file_extension(lsmask_source_ref_filepath),
-                                              field_type='RiverDirections', unmask=True, grid_type='HD').get_data()
+            rdirs_ref = iodriver.load_field(lsmask_source_ref_filepath,iodriver.get_file_extension(lsmask_source_ref_filepath),
+                                            field_type='RiverDirections', unmask=True, grid_type='HD').get_data()
             lsmask_ref = (rdirs_ref <= 0).astype(np.int32)
-            rdirs_data = dynamic_hd.load_field(lsmask_source_data_filepath,dynamic_hd.get_file_extension(lsmask_source_data_filepath),
-                                               field_type='RiverDirections', unmask=True, grid_type='HD').get_data()
+            rdirs_data = iodriver.load_field(lsmask_source_data_filepath,iodriver.get_file_extension(lsmask_source_data_filepath),
+                                             field_type='RiverDirections', unmask=True, grid_type='HD').get_data()
             lsmask_data = (rdirs_data <= 0).astype(np.int32)
         else:
-            lsmask_ref = dynamic_hd.load_field(lsmask_source_ref_filepath,dynamic_hd.get_file_extension(lsmask_source_ref_filepath),
+            lsmask_ref = iodriver.load_field(lsmask_source_ref_filepath,iodriver.get_file_extension(lsmask_source_ref_filepath),
+                                             field_type='RiverDirections', unmask=True, fieldname='slm',grid_type=grid_type).get_data()
+            lsmask_data = iodriver.load_field(lsmask_source_data_filepath,iodriver.get_file_extension(lsmask_source_data_filepath),
                                               field_type='RiverDirections', unmask=True, fieldname='slm',grid_type=grid_type).get_data()
-            lsmask_data = dynamic_hd.load_field(lsmask_source_data_filepath,dynamic_hd.get_file_extension(lsmask_source_data_filepath),
-                                               field_type='RiverDirections', unmask=True, fieldname='slm',grid_type=grid_type).get_data()
-        cell_areas = dynamic_hd.load_field(cell_areas_filepath,dynamic_hd.get_file_extension(cell_areas_filepath),
-                                           field_type='Generic',unmask=True, fieldname='cell_area',grid_type=grid_type).get_data()
+        cell_areas = iodriver.load_field(cell_areas_filepath,iodriver.get_file_extension(cell_areas_filepath),
+                                         field_type='Generic',unmask=True, fieldname='cell_area',grid_type=grid_type).get_data()
         lost_discharge = []
         for timeslice in range(num_timeslices):
-            run_off_field = dynamic_hd.load_field(run_off_filepath, dynamic_hd.get_file_extension(run_off_filepath),
-                                                  field_type='Generic', unmask=True, timeslice=timeslice ,fieldname="var501", grid_type=grid_type).get_data()*\
+            run_off_field = iodriver.load_field(run_off_filepath, iodriver.get_file_extension(run_off_filepath),
+                                                field_type='Generic', unmask=True, timeslice=timeslice ,fieldname="var501", grid_type=grid_type).get_data()*\
+                                                cell_areas
+            discharge_field = iodriver.load_field(discharge_filepath,iodriver.get_file_extension(discharge_filepath),
+                                                  field_type='Generic', unmask=True, timeslice=timeslice, fieldname="var502", grid_type=grid_type).get_data()*\
                                                   cell_areas
-            discharge_field = dynamic_hd.load_field(discharge_filepath,dynamic_hd.get_file_extension(discharge_filepath),
-                                                    field_type='Generic', unmask=True, timeslice=timeslice, fieldname="var502", grid_type=grid_type).get_data()*\
-                                                    cell_areas
             mask_difference = lsmask_ref - lsmask_data
             run_off_field = run_off_field*mask_difference
             discharge_field = discharge_field*mask_difference
@@ -228,22 +227,22 @@ class HDOutputPlots(Plots):
     def _river_discharge_outflow_comparison_helper(self,ax,river_discharge_output_filepath,
                                                    rdirs_filepath,num_timeslices,lost_discharge=None,
                                                    label=None):
-        rdirs = dynamic_hd.load_field(rdirs_filepath,
-                                      file_type=\
-                                      dynamic_hd.get_file_extension(rdirs_filepath),
-                                      field_type='RiverDirections',
-                                      unmask=True,
-                                      grid_type='HD')
+        rdirs = iodriver.load_field(rdirs_filepath,
+                                    file_type=\
+                                    iodriver.get_file_extension(rdirs_filepath),
+                                    field_type='RiverDirections',
+                                    unmask=True,
+                                    grid_type='HD')
         daily_global_river_discharge_outflow = np.zeros((num_timeslices))
         for i in range(num_timeslices):
-            river_discharge = dynamic_hd.load_field(river_discharge_output_filepath,
-                                                    file_type=\
-                                                    dynamic_hd.get_file_extension(river_discharge_output_filepath),
-                                                    field_type='RiverDischarge',
-                                                    unmask=True,
-                                                    timeslice=i,
-                                                    fieldname='friv',
-                                                    grid_type='HD')
+            river_discharge = iodriver.load_field(river_discharge_output_filepath,
+                                                  file_type=\
+                                                  iodriver.get_file_extension(river_discharge_output_filepath),
+                                                  field_type='RiverDischarge',
+                                                  unmask=True,
+                                                  timeslice=i,
+                                                  fieldname='friv',
+                                                  grid_type='HD')
             river_discharge.set_non_outflow_points_to_zero(rdirs)
             daily_global_river_discharge_outflow[i] =river_discharge.sum_river_outflow()
         if lost_discharge is not None:
@@ -383,24 +382,24 @@ class CoupledRunOutputPlots(HDOutputPlots):
 
     def ice6g_rdirs_lgm_run_discharge_plot(self):
         """ """
-        cell_areas = dynamic_hd.load_field("/Users/thomasriddick/Documents/data/HDdata/"
-                                           "gridareasandspacings/hdcellareas.nc",".nc",
-                                           field_type='Generic',fieldname="cell_area",
-                                           grid_type='HD')
-        rdirs = dynamic_hd.load_field(os.path.join(self.rdirs_data_directory,
-                                                   "generated","upscaled",
-                                                   "upscaled_rdirs_ICE5G_21k_ALG4_sinkless"
-                                                   "_no_true_sinks_oceans_lsmask_plus_upscale"
-                                                   "_rdirs_tarasov_orog_corrs_generation_and_"
-                                                   "upscaling_20170615_174943_upscaled_updated"
-                                                   "_transf.nc"),
+        cell_areas = iodriver.load_field("/Users/thomasriddick/Documents/data/HDdata/"
+                                         "gridareasandspacings/hdcellareas.nc",".nc",
+                                         field_type='Generic',fieldname="cell_area",
+                                         grid_type='HD')
+        rdirs = iodriver.load_field(os.path.join(self.rdirs_data_directory,
+                                                 "generated","upscaled",
+                                                 "upscaled_rdirs_ICE5G_21k_ALG4_sinkless"
+                                                 "_no_true_sinks_oceans_lsmask_plus_upscale"
+                                                 "_rdirs_tarasov_orog_corrs_generation_and_"
+                                                 "upscaling_20170615_174943_upscaled_updated"
+                                                 "_transf.nc"),
                                       ".nc",field_type='Generic',grid_type='HD')
         outdata_data = None
         for time in range(120):
-            discharge = dynamic_hd.load_field(os.path.join(self.river_discharge_output_data_path,
-                                                           "rid0004_hd_higres_mon_79900101_79991231.nc"),
-                                              ".nc",field_type='Generic',fieldname="friv",timeslice=time,
-                                              grid_type='HD')
+            discharge = iodriver.load_field(os.path.join(self.river_discharge_output_data_path,
+                                                         "rid0004_hd_higres_mon_79900101_79991231.nc"),
+                                            ".nc",field_type='Generic',fieldname="friv",timeslice=time,
+                                            grid_type='HD')
             if not outdata_data:
                 outflow_data = discharge.get_data()
             else:
@@ -413,19 +412,19 @@ class CoupledRunOutputPlots(HDOutputPlots):
 
     def extended_present_day_rdirs_lgm_run_discharge_plot(self):
         """ """
-        cell_areas = dynamic_hd.load_field("/Users/thomasriddick/Documents/data/HDdata/"
-                                           "gridareasandspacings/hdcellareas.nc",".nc",
-                                           field_type='Generic',fieldname="cell_area",
-                                           grid_type='HD')
-        rdirs = dynamic_hd.load_field(os.path.join(self.rdirs_data_directory,
-                                                   "rivdir_vs_1_9_data_from_stefan.nc"),
-                                      ".nc",field_type='Generic',grid_type='HD')
+        cell_areas = iodriver.load_field("/Users/thomasriddick/Documents/data/HDdata/"
+                                         "gridareasandspacings/hdcellareas.nc",".nc",
+                                         field_type='Generic',fieldname="cell_area",
+                                         grid_type='HD')
+        rdirs = iodriver.load_field(os.path.join(self.rdirs_data_directory,
+                                                 "rivdir_vs_1_9_data_from_stefan.nc"),
+                                    ".nc",field_type='Generic',grid_type='HD')
         outdata_data = None
         for time in range(120):
-            discharge = dynamic_hd.load_field(os.path.join(self.river_discharge_output_data_path,
-                                                           "rid0003_hd_higres_mon_79900101_79991231.nc"),
-                                              ".nc",field_type='Generic',fieldname="friv",timeslice=time,
-                                              grid_type='HD')
+            discharge = iodriver.load_field(os.path.join(self.river_discharge_output_data_path,
+                                                         "rid0003_hd_higres_mon_79900101_79991231.nc"),
+                                            ".nc",field_type='Generic',fieldname="friv",timeslice=time,
+                                            grid_type='HD')
             if not outdata_data:
                 outflow_data = discharge.get_data()
             else:
@@ -970,14 +969,14 @@ class OutflowPlots(Plots):
                                        axis=1)
         temp_file_list = []
         if catchment_and_outflows_mods_list_filename:
-            ref_outflow_field = dynamic_hd.load_field(reference_rmouth_outflows_filename,
-                                                      file_type=dynamic_hd.\
-                                                      get_file_extension(reference_rmouth_outflows_filename),
-                                                      field_type='Generic', grid_type=grid_type,**grid_kwargs)
-            data_outflow_field = dynamic_hd.load_field(data_rmouth_outflows_filename,
-                                                       file_type=dynamic_hd.\
-                                                       get_file_extension(data_rmouth_outflows_filename),
-                                                       field_type='Generic', grid_type=grid_type,**grid_kwargs)
+            ref_outflow_field = iodriver.load_field(reference_rmouth_outflows_filename,
+                                                    file_type=iodriver.\
+                                                    get_file_extension(reference_rmouth_outflows_filename),
+                                                    field_type='Generic', grid_type=grid_type,**grid_kwargs)
+            data_outflow_field = iodriver.load_field(data_rmouth_outflows_filename,
+                                                     file_type=iodriver.\
+                                                     get_file_extension(data_rmouth_outflows_filename),
+                                                     field_type='Generic', grid_type=grid_type,**grid_kwargs)
             if flip_ref_field:
                 ref_outflow_field.flip_data_ud()
             if rotate_ref_field:
@@ -1023,14 +1022,14 @@ class OutflowPlots(Plots):
                                                        basename(reference_rmouth_outflows_filename))
             temp_file_list.append(reference_rmouth_outflows_filename)
             temp_file_list.append(data_rmouth_outflows_filename)
-            dynamic_hd.write_field(reference_rmouth_outflows_filename,
-                                   field=ref_outflow_field,
-                                   file_type=dynamic_hd.\
-                                   get_file_extension(reference_rmouth_outflows_filename))
-            dynamic_hd.write_field(data_rmouth_outflows_filename,
-                                   field=data_outflow_field,
-                                   file_type=dynamic_hd.\
-                                   get_file_extension(data_rmouth_outflows_filename))
+            iodriver.write_field(reference_rmouth_outflows_filename,
+                                 field=ref_outflow_field,
+                                 file_type=iodriver.\
+                                 get_file_extension(reference_rmouth_outflows_filename))
+            iodriver.write_field(data_rmouth_outflows_filename,
+                                 field=data_outflow_field,
+                                 file_type=iodriver.\
+                                 get_file_extension(data_rmouth_outflows_filename))
         matchedpairs, unresolved_conflicts  = mtch_rm.main(reference_rmouth_outflows_filename=\
                                                            reference_rmouth_outflows_filename,
                                                            data_rmouth_outflows_filename=\
@@ -1645,65 +1644,65 @@ class FlowMapPlots(Plots):
                                               "glac01_{}.nc".format(time_three))
         glac_mask_four_filename = os.path.join(self.orography_directory,
                                               "glac01_{}.nc".format(time_four))
-        flowmap_one = dynamic_hd.load_field(flowmap_one_filename,
-                                            file_type=dynamic_hd.get_file_extension(flowmap_one_filename),
+        flowmap_one = iodriver.load_field(flowmap_one_filename,
+                                          file_type=iodriver.get_file_extension(flowmap_one_filename),
+                                          field_type='Generic',
+                                          grid_type='HD').get_data()
+        lsmask_one = iodriver.load_field(lsmask_one_filename,
+                                         file_type=iodriver.get_file_extension(lsmask_one_filename),
+                                         field_type='Generic',
+                                         fieldname='FLAG',
+                                         grid_type='HD').get_data().astype(np.int32)
+        glac_mask_one = iodriver.load_field(glac_mask_one_filename,
+                                            file_type=iodriver.get_file_extension(glac_mask_one_filename),
                                             field_type='Generic',
-                                            grid_type='HD').get_data()
-        lsmask_one = dynamic_hd.load_field(lsmask_one_filename,
-                                           file_type=dynamic_hd.get_file_extension(lsmask_one_filename),
-                                           field_type='Generic',
-                                           fieldname='FLAG',
-                                           grid_type='HD').get_data().astype(np.int32)
-        glac_mask_one = dynamic_hd.load_field(glac_mask_one_filename,
-                                              file_type=dynamic_hd.get_file_extension(glac_mask_one_filename),
-                                              field_type='Generic',
-                                              fieldname='glac',
-                                              grid_type='LatLong10min')
+                                            fieldname='glac',
+                                            grid_type='LatLong10min')
         glac_mask_hd_one = utilities.upscale_field(glac_mask_one,"HD",'Sum',
                                                    output_grid_kwargs={},
                                                    scalenumbers=True)
         glac_mask_hd_one.flip_data_ud()
         glac_mask_hd_one.rotate_field_by_a_hundred_and_eighty_degrees()
         glac_mask_hd_one = glac_mask_hd_one.get_data()
-        catchments_one = dynamic_hd.load_field(catchments_one_filename,
-                                               file_type=dynamic_hd.get_file_extension(catchments_one_filename),
-                                               field_type='Generic',
-                                               grid_type='HD').get_data()
-        flowmap_two = dynamic_hd.load_field(flowmap_two_filename,
-                                            file_type=dynamic_hd.get_file_extension(flowmap_two_filename),
+        catchments_one = iodriver.load_field(catchments_one_filename,
+                                             file_type=iodriver.get_file_extension(catchments_one_filename),
+                                             field_type='Generic',
+                                             grid_type='HD').get_data()
+        flowmap_two = iodriver.load_field(flowmap_two_filename,
+                                          file_type=iodriver.get_file_extension(flowmap_two_filename),
+                                          field_type='Generic',
+                                          grid_type='HD').get_data()
+        lsmask_two = iodriver.load_field(lsmask_two_filename,
+                                         file_type=iodriver.get_file_extension(lsmask_two_filename),
+                                         field_type='Generic',
+                                         fieldname='FLAG',
+                                         grid_type='HD').get_data().astype(np.int32)
+        glac_mask_two = iodriver.load_field(glac_mask_two_filename,
+                                            file_type=iodriver.get_file_extension(glac_mask_two_filename),
                                             field_type='Generic',
-                                            grid_type='HD').get_data()
-        lsmask_two = dynamic_hd.load_field(lsmask_two_filename,
-                                           file_type=dynamic_hd.get_file_extension(lsmask_two_filename),
-                                           field_type='Generic',
-                                           fieldname='FLAG',
-                                           grid_type='HD').get_data().astype(np.int32)
-        glac_mask_two = dynamic_hd.load_field(glac_mask_two_filename,
-                                              file_type=dynamic_hd.get_file_extension(glac_mask_two_filename),
-                                              field_type='Generic',
-                                              fieldname='glac',
-                                              grid_type='LatLong10min')
+                                            fieldname='glac',
+                                            grid_type='LatLong10min')
         glac_mask_hd_two = utilities.upscale_field(glac_mask_two,"HD",'Sum',
                                                    output_grid_kwargs={},
                                                    scalenumbers=True)
         glac_mask_hd_two.flip_data_ud()
         glac_mask_hd_two.rotate_field_by_a_hundred_and_eighty_degrees()
         glac_mask_hd_two = glac_mask_hd_two.get_data()
-        catchments_two = dynamic_hd.load_field(catchments_two_filename,
-                                               file_type=dynamic_hd.get_file_extension(catchments_two_filename),
-                                               field_type='Generic',
-                                               grid_type='HD').get_data()
-        flowmap_three = dynamic_hd.load_field(flowmap_three_filename,
-                                            file_type=dynamic_hd.get_file_extension(flowmap_three_filename),
+        catchments_two = iodriver.load_field(catchments_two_filename,
+                                             file_type=iodriver.get_file_extension(catchments_two_filename),
+                                             field_type='Generic',
+                                             grid_type='HD').get_data()
+        flowmap_three = iodriver.load_field(flowmap_three_filename,
+                                            file_type=iodriver.get_file_extension(flowmap_three_filename),
                                             field_type='Generic',
                                             grid_type='HD').get_data()
-        lsmask_three = dynamic_hd.load_field(lsmask_three_filename,
-                                           file_type=dynamic_hd.get_file_extension(lsmask_three_filename),
+        lsmask_three = iodriver.load_field(lsmask_three_filename,
+                                           file_type=iodriver.get_file_extension(lsmask_three_filename),
                                            field_type='Generic',
                                            fieldname='FLAG',
                                            grid_type='HD').get_data().astype(np.int32)
-        glac_mask_three = dynamic_hd.load_field(glac_mask_three_filename,
-                                              file_type=dynamic_hd.get_file_extension(glac_mask_three_filename),
+        glac_mask_three = iodriver.load_field(glac_mask_three_filename,
+                                              file_type=iodriver.get_file_extension(glac_mask_three_filename),
                                               field_type='Generic',
                                               fieldname='glac',
                                               grid_type='LatLong10min')
@@ -1713,31 +1712,31 @@ class FlowMapPlots(Plots):
         glac_mask_hd_three.flip_data_ud()
         glac_mask_hd_three.rotate_field_by_a_hundred_and_eighty_degrees()
         glac_mask_hd_three = glac_mask_hd_three.get_data()
-        catchments_three = dynamic_hd.load_field(catchments_three_filename,
-                                               file_type=dynamic_hd.get_file_extension(catchments_three_filename),
+        catchments_three = iodriver.load_field(catchments_three_filename,
+                                               file_type=iodriver.get_file_extension(catchments_three_filename),
                                                field_type='Generic',
                                                grid_type='HD').get_data()
-        flowmap_four = dynamic_hd.load_field(flowmap_four_filename,
-                                            file_type=dynamic_hd.get_file_extension(flowmap_four_filename),
-                                            field_type='Generic',
-                                            grid_type='HD').get_data()
-        lsmask_four = dynamic_hd.load_field(lsmask_four_filename,
-                                           file_type=dynamic_hd.get_file_extension(lsmask_four_filename),
+        flowmap_four = iodriver.load_field(flowmap_four_filename,
+                                           file_type=iodriver.get_file_extension(flowmap_four_filename),
                                            field_type='Generic',
-                                           fieldname='FLAG',
-                                           grid_type='HD').get_data().astype(np.int32)
-        glac_mask_four = dynamic_hd.load_field(glac_mask_four_filename,
-                                              file_type=dynamic_hd.get_file_extension(glac_mask_four_filename),
-                                              field_type='Generic',
-                                              fieldname='glac',
-                                              grid_type='LatLong10min')
+                                           grid_type='HD').get_data()
+        lsmask_four = iodriver.load_field(lsmask_four_filename,
+                                          file_type=iodriver.get_file_extension(lsmask_four_filename),
+                                          field_type='Generic',
+                                          fieldname='FLAG',
+                                          grid_type='HD').get_data().astype(np.int32)
+        glac_mask_four = iodriver.load_field(glac_mask_four_filename,
+                                             file_type=iodriver.get_file_extension(glac_mask_four_filename),
+                                             field_type='Generic',
+                                             fieldname='glac',
+                                             grid_type='LatLong10min')
         glac_mask_hd_four = utilities.upscale_field(glac_mask_four,"HD",'Sum',
-                                                   output_grid_kwargs={},
-                                                   scalenumbers=True)
-        catchments_four = dynamic_hd.load_field(catchments_four_filename,
-                                               file_type=dynamic_hd.get_file_extension(catchments_four_filename),
-                                               field_type='Generic',
-                                               grid_type='HD').get_data()
+                                                    output_grid_kwargs={},
+                                                    scalenumbers=True)
+        catchments_four = iodriver.load_field(catchments_four_filename,
+                                              file_type=iodriver.get_file_extension(catchments_four_filename),
+                                              field_type='Generic',
+                                              grid_type='HD').get_data()
         glac_mask_hd_four.flip_data_ud()
         glac_mask_hd_four.rotate_field_by_a_hundred_and_eighty_degrees()
         glac_mask_hd_four = glac_mask_hd_four.get_data()
@@ -1790,10 +1789,10 @@ class FlowMapPlots(Plots):
 
     def SimpleFlowMapPlotHelper(self,filename,grid_type,log_max=4):
         """Help produce simple flow maps"""
-        flowmap_object = dynamic_hd.load_field(filename,
-                                               file_type=dynamic_hd.get_file_extension(filename),
-                                               field_type='Generic',
-                                               grid_type=grid_type)
+        flowmap_object = iodriver.load_field(filename,
+                                             file_type=iodriver.get_file_extension(filename),
+                                             field_type='Generic',
+                                             grid_type=grid_type)
         flowmap = flowmap_object.get_data()
         plt.figure()
         plt.subplot(111)
@@ -1820,18 +1819,18 @@ class FlowMapPlots(Plots):
                                          second_datasource_name="Data",
                                          add_title=True,**kwargs):
         """Help compare two two-colour flow maps"""
-        flowmap_ref_field = dynamic_hd.load_field(ref_filename,
-                                                  file_type=dynamic_hd.get_file_extension(ref_filename),
-                                                  field_type='Generic',
-                                                  grid_type=grid_type,**kwargs)
-        flowmap_data_field = dynamic_hd.load_field(data_filename,
-                                                   file_type=dynamic_hd.get_file_extension(data_filename),
-                                                   field_type='Generic',
-                                                   grid_type=grid_type,**kwargs)
+        flowmap_ref_field = iodriver.load_field(ref_filename,
+                                                file_type=iodriver.get_file_extension(ref_filename),
+                                                field_type='Generic',
+                                                grid_type=grid_type,**kwargs)
+        flowmap_data_field = iodriver.load_field(data_filename,
+                                                 file_type=iodriver.get_file_extension(data_filename),
+                                                 field_type='Generic',
+                                                 grid_type=grid_type,**kwargs)
         if lsmask_filename:
-            lsmask_field = dynamic_hd.load_field(lsmask_filename,
-                                                 file_type=dynamic_hd.get_file_extension(lsmask_filename),
-                                                 field_type='Generic', grid_type=grid_type,**kwargs)
+            lsmask_field = iodriver.load_field(lsmask_filename,
+                                               file_type=iodriver.get_file_extension(lsmask_filename),
+                                               field_type='Generic', grid_type=grid_type,**kwargs)
         if flip_data:
             flowmap_data_field.flip_data_ud()
         if rotate_data:
@@ -1860,13 +1859,13 @@ class FlowMapPlots(Plots):
                                    minflowcutoff=100,flip_data=False,flip_mask=False,
                                    **kwargs):
         """Help produce two colour flow maps"""
-        flowmap_object = dynamic_hd.load_field(filename,
-                                               file_type=dynamic_hd.get_file_extension(filename),
-                                               field_type='Generic',
-                                               grid_type=grid_type,**kwargs)
-        lsmask_field = dynamic_hd.load_field(lsmask_filename,
-                                             file_type=dynamic_hd.get_file_extension(lsmask_filename),
-                                             field_type='Generic', grid_type=grid_type,**kwargs)
+        flowmap_object = iodriver.load_field(filename,
+                                             file_type=iodriver.get_file_extension(filename),
+                                             field_type='Generic',
+                                             grid_type=grid_type,**kwargs)
+        lsmask_field = iodriver.load_field(lsmask_filename,
+                                           file_type=iodriver.get_file_extension(lsmask_filename),
+                                           field_type='Generic', grid_type=grid_type,**kwargs)
         if flip_data:
             flowmap_object.flip_data_ud()
         if flip_mask:
@@ -2236,47 +2235,47 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                                ref_catchment_filename)
         data_catchment_filepath = os.path.join(self.catchments_data_directory,
                                                data_catchment_filename)
-        flowmap_ref_field = dynamic_hd.load_field(ref_flowmaps_filepath,
-                                                  file_type=dynamic_hd.get_file_extension(ref_flowmaps_filepath),
-                                                  field_type='Generic',
-                                                  grid_type=grid_type,**grid_kwargs)
-        flowmap_data_field = dynamic_hd.load_field(data_flowmaps_filepath,
-                                                   file_type=dynamic_hd.get_file_extension(data_flowmaps_filepath),
+        flowmap_ref_field = iodriver.load_field(ref_flowmaps_filepath,
+                                                file_type=iodriver.get_file_extension(ref_flowmaps_filepath),
+                                                field_type='Generic',
+                                                grid_type=grid_type,**grid_kwargs)
+        flowmap_data_field = iodriver.load_field(data_flowmaps_filepath,
+                                                 file_type=iodriver.get_file_extension(data_flowmaps_filepath),
+                                                 field_type='Generic',
+                                                 grid_type=grid_type,**grid_kwargs)
+        data_catchment_field = iodriver.load_field(data_catchment_filepath,
+                                                   file_type=iodriver.get_file_extension(data_catchment_filepath),
                                                    field_type='Generic',
                                                    grid_type=grid_type,**grid_kwargs)
-        data_catchment_field = dynamic_hd.load_field(data_catchment_filepath,
-                                                     file_type=dynamic_hd.get_file_extension(data_catchment_filepath),
-                                                     field_type='Generic',
-                                                     grid_type=grid_type,**grid_kwargs)
-        ref_catchment_field = dynamic_hd.load_field(ref_catchment_filepath,
-                                                    file_type=dynamic_hd.get_file_extension(ref_catchment_filepath),
-                                                    field_type='Generic',
-                                                    grid_type=grid_type,**grid_kwargs)
+        ref_catchment_field = iodriver.load_field(ref_catchment_filepath,
+                                                  file_type=iodriver.get_file_extension(ref_catchment_filepath),
+                                                  field_type='Generic',
+                                                  grid_type=grid_type,**grid_kwargs)
         if data_rdirs_filename:
             data_rdirs_filepath =  os.path.join(self.rdirs_data_directory,
                                                 data_rdirs_filename)
         ref_rdirs_filepath = os.path.join(self.rdirs_data_directory,ref_rdirs_filename)
         if data_rdirs_filename:
-            data_rdirs_field = dynamic_hd.load_field(data_rdirs_filepath,
-                                                     file_type=dynamic_hd.get_file_extension(data_rdirs_filepath),
-                                                     field_type='Generic',
-                                                     grid_type=grid_type,**grid_kwargs)
+            data_rdirs_field = iodriver.load_field(data_rdirs_filepath,
+                                                   file_type=iodriver.get_file_extension(data_rdirs_filepath),
+                                                   field_type='Generic',
+                                                   grid_type=grid_type,**grid_kwargs)
         else:
             data_rdirs_field = None
-        ref_rdirs_field = dynamic_hd.load_field(ref_rdirs_filepath,
-                                                file_type=dynamic_hd.get_file_extension(ref_rdirs_filepath),
-                                                field_type='Generic',
-                                                grid_type=grid_type,**grid_kwargs)
+        ref_rdirs_field = iodriver.load_field(ref_rdirs_filepath,
+                                              file_type=iodriver.get_file_extension(ref_rdirs_filepath),
+                                              field_type='Generic',
+                                              grid_type=grid_type,**grid_kwargs)
         if lsmask_filename:
-            lsmask_field = dynamic_hd.load_field(lsmask_filename,
-                                                 file_type=dynamic_hd.get_file_extension(lsmask_filename),
-                                                 field_type='Generic', grid_type=grid_type,**grid_kwargs)
+            lsmask_field = iodriver.load_field(lsmask_filename,
+                                               file_type=iodriver.get_file_extension(lsmask_filename),
+                                               field_type='Generic', grid_type=grid_type,**grid_kwargs)
         if extra_lsmask_filename:
-            extra_lsmask_field = dynamic_hd.load_field(extra_lsmask_filename,
-                                                       file_type=dynamic_hd.
-                                                       get_file_extension(extra_lsmask_filename),
-                                                       field_type='Generic',
-                                                       grid_type=grid_type,**grid_kwargs)
+            extra_lsmask_field = iodriver.load_field(extra_lsmask_filename,
+                                                     file_type=iodriver.
+                                                     get_file_extension(extra_lsmask_filename),
+                                                     field_type='Generic',
+                                                     grid_type=grid_type,**grid_kwargs)
         if catchment_and_outflows_mods_list_filename:
             catchment_and_outflows_mods_list_filepath = os.path.join(self.catchment_and_outflows_mods_list_directory,
                                                                      catchment_and_outflows_mods_list_filename)
@@ -2287,13 +2286,13 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
             additional_truesink_matches_list_filepath = os.path.join(self.additional_truesink_matches_list_directory,
                                                                      additional_truesink_matches_list_filename)
         if glacier_mask_filename:
-            glacier_mask_field = dynamic_hd.load_field(glacier_mask_filename,
-                                                       file_type=dynamic_hd.\
-                                                       get_file_extension(glacier_mask_filename),
-                                                       fieldname='sftgif',
-                                                       field_type='Generic',
-                                                       grid_type=glacier_mask_grid_type,
-                                                       **glacier_mask_grid_kwargs)
+            glacier_mask_field = iodriver.load_field(glacier_mask_filename,
+                                                     file_type=iodriver.\
+                                                     get_file_extension(glacier_mask_filename),
+                                                     fieldname='sftgif',
+                                                     field_type='Generic',
+                                                     grid_type=glacier_mask_grid_type,
+                                                     **glacier_mask_grid_kwargs)
             if glacier_mask_grid_type != grid_type:
                 glacier_mask_field = utilities.upscale_field(glacier_mask_field,
                                                              output_grid_type=grid_type,
@@ -2375,14 +2374,14 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                                 glacier_mask=glacier_mask_field)
         temp_file_list = []
         if catchment_and_outflows_mods_list_filename:
-            ref_outflow_field = dynamic_hd.load_field(reference_rmouth_outflows_filename,
-                                                      file_type=dynamic_hd.\
-                                                      get_file_extension(reference_rmouth_outflows_filename),
-                                                      field_type='Generic', grid_type=grid_type,**grid_kwargs)
-            data_outflow_field = dynamic_hd.load_field(data_rmouth_outflows_filename,
-                                                       file_type=dynamic_hd.\
-                                                       get_file_extension(data_rmouth_outflows_filename),
-                                                       field_type='Generic', grid_type=grid_type,**grid_kwargs)
+            ref_outflow_field = iodriver.load_field(reference_rmouth_outflows_filename,
+                                                    file_type=iodriver.\
+                                                    get_file_extension(reference_rmouth_outflows_filename),
+                                                    field_type='Generic', grid_type=grid_type,**grid_kwargs)
+            data_outflow_field = iodriver.load_field(data_rmouth_outflows_filename,
+                                                     file_type=iodriver.\
+                                                     get_file_extension(data_rmouth_outflows_filename),
+                                                     field_type='Generic', grid_type=grid_type,**grid_kwargs)
             if flip_data:
                 data_outflow_field.flip_data_ud()
             if rotate_data:
@@ -2405,14 +2404,14 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                                        basename(reference_rmouth_outflows_filename))
             temp_file_list.append(reference_rmouth_outflows_filename)
             temp_file_list.append(data_rmouth_outflows_filename)
-            dynamic_hd.write_field(reference_rmouth_outflows_filename,
-                                   field=ref_outflow_field,
-                                   file_type=dynamic_hd.\
-                                   get_file_extension(reference_rmouth_outflows_filename))
-            dynamic_hd.write_field(data_rmouth_outflows_filename,
-                                   field=data_outflow_field,
-                                   file_type=dynamic_hd.\
-                                   get_file_extension(data_rmouth_outflows_filename))
+            iodriver.write_field(reference_rmouth_outflows_filename,
+                                 field=ref_outflow_field,
+                                 file_type=iodriver.\
+                                 get_file_extension(reference_rmouth_outflows_filename))
+            iodriver.write_field(data_rmouth_outflows_filename,
+                                 field=data_outflow_field,
+                                 file_type=iodriver.\
+                                 get_file_extension(data_rmouth_outflows_filename))
 
         matchedpairs,_  = mtch_rm.main(reference_rmouth_outflows_filename=\
                                        reference_rmouth_outflows_filename,
@@ -3588,35 +3587,35 @@ class LakePlots(Plots):
                                       lake_kwargs={},
                                       river_grid_type='HD',**river_kwargs):
     """Help produce a map of river flow, lakes and potential lakes"""
-    river_flow_object = dynamic_hd.load_field(river_flow_filename,
-                                              file_type=dynamic_hd.\
-                                                get_file_extension(river_flow_filename),
-                                              field_type='Generic',
-                                              grid_type=river_grid_type,**river_kwargs)
-    lsmask_field = dynamic_hd.load_field(lsmask_filename,
-                                         file_type=dynamic_hd.get_file_extension(lsmask_filename),
-                                         field_type='Generic',grid_type=lake_grid_type,
-                                         **lake_kwargs)
-    basin_catchment_nums_field = dynamic_hd.load_field(basin_catchment_num_filename,
-                                                       file_type=dynamic_hd.\
-                                                       get_file_extension\
-                                                       (basin_catchment_num_filename),
-                                                       field_type='Generic',
-                                                       grid_type=lake_grid_type,
-                                                       **lake_kwargs)
-    lake_data_field = dynamic_hd.load_field(lake_data_filename,
-                                            file_type=dynamic_hd.\
-                                            get_file_extension(lake_data_filename),
+    river_flow_object = iodriver.load_field(river_flow_filename,
+                                            file_type=iodriver.\
+                                              get_file_extension(river_flow_filename),
                                             field_type='Generic',
-                                            grid_type=lake_grid_type,
-                                            **lake_kwargs)
-    glacier_mask_field = dynamic_hd.load_field(glacier_data_filename,
-                                              file_type=dynamic_hd.\
-                                              get_file_extension(glacier_data_filename),
-                                              fieldname="ICEM",
-                                              field_type='Generic',
-                                              grid_type=lake_grid_type,
-                                              **lake_kwargs)
+                                            grid_type=river_grid_type,**river_kwargs)
+    lsmask_field = iodriver.load_field(lsmask_filename,
+                                       file_type=iodriver.get_file_extension(lsmask_filename),
+                                       field_type='Generic',grid_type=lake_grid_type,
+                                       **lake_kwargs)
+    basin_catchment_nums_field = iodriver.load_field(basin_catchment_num_filename,
+                                                     file_type=iodriver.\
+                                                     get_file_extension\
+                                                     (basin_catchment_num_filename),
+                                                     field_type='Generic',
+                                                     grid_type=lake_grid_type,
+                                                     **lake_kwargs)
+    lake_data_field = iodriver.load_field(lake_data_filename,
+                                          file_type=iodriver.\
+                                          get_file_extension(lake_data_filename),
+                                          field_type='Generic',
+                                          grid_type=lake_grid_type,
+                                          **lake_kwargs)
+    glacier_mask_field = iodriver.load_field(glacier_data_filename,
+                                             file_type=iodriver.\
+                                             get_file_extension(glacier_data_filename),
+                                             fieldname="ICEM",
+                                             field_type='Generic',
+                                             grid_type=lake_grid_type,
+                                             **lake_kwargs)
     if flip_river_data:
         river_flow_object.flip_data_ud()
     if flip_mask:

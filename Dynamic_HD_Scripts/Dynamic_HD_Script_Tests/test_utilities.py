@@ -8,10 +8,10 @@ Created on May 2, 2016
 import unittest
 import numpy as np
 import os
-from Dynamic_HD_Scripts import utilities
-from Dynamic_HD_Scripts import field
+from Dynamic_HD_Scripts.base import iodriver
+from Dynamic_HD_Scripts.base import field
+from Dynamic_HD_Scripts.utilities import utilities
 from Dynamic_HD_Script_Tests.context import data_dir
-from Dynamic_HD_Scripts import dynamic_hd
 
 class TestReservoirSizeInitialisation(unittest.TestCase):
     """Test the initialisation of the size of HD reservoirs"""
@@ -190,10 +190,10 @@ class TestOrogCorrectionFieldCreationAndApplication(unittest.TestCase):
 
     def testOrogCorrectionFieldCreation(self):
         """Test the creation of a field of relative orography corrections"""
-        dynamic_hd.write_field(self.directory + '/orog_corr_test_input_original_field.nc',
-                               field.Field(self.original_field_input,'LatLong',nlat=3,nlong=3),'.nc')
-        dynamic_hd.write_field(self.directory + '/orog_corr_test_input_corrected_field.nc',
-                               field.Field(self.corrected_field_input,'LatLong',nlat=3,nlong=3),'.nc')
+        iodriver.write_field(self.directory + '/orog_corr_test_input_original_field.nc',
+                             field.Field(self.original_field_input,'LatLong',nlat=3,nlong=3),'.nc')
+        iodriver.write_field(self.directory + '/orog_corr_test_input_corrected_field.nc',
+                             field.Field(self.corrected_field_input,'LatLong',nlat=3,nlong=3),'.nc')
         utilities.generate_orog_correction_field(original_orography_filename=\
                                                  self.directory + '/orog_corr_test_input_original_field.nc',
                                                  corrected_orography_filename=\
@@ -201,21 +201,21 @@ class TestOrogCorrectionFieldCreationAndApplication(unittest.TestCase):
                                                  orography_corrections_filename=\
                                                  self.directory + '/orog_corr_test_output_corrs.nc'
                                                  ,grid_type='LatLong',nlat=3,nlong=3)
-        corrs_in_file = dynamic_hd.load_field(self.directory + '/orog_corr_test_output_corrs.nc',
-                                              '.nc', 'Generic', True, timeslice=None, grid_type='LatLong',
-                                              nlat=3,nlong=3)
+        corrs_in_file = iodriver.load_field(self.directory + '/orog_corr_test_output_corrs.nc',
+                                            '.nc', 'Generic', True, timeslice=None, grid_type='LatLong',
+                                            nlat=3,nlong=3)
         np.testing.assert_array_almost_equal(corrs_in_file.get_data(), self.orog_correction_field_expected_result,
                                              decimal=12, err_msg="Generation of relative orography correction field"
                                              " doesn't produce expected result")
 
     def testOrogCorrectionFieldApplication(self):
         """Test the application of a field of relative orography corrections"""
-        dynamic_hd.write_field(self.directory + '/orog_corr_test_input_original_field.nc',
-                               field.Field(self.original_field_input,'LatLong',nlat=3,nlong=3),'.nc')
-        dynamic_hd.write_field(self.directory + '/orog_corr_test_input_original_field_copy.nc',
-                               field.Field(self.original_field_input,'LatLong',nlat=3,nlong=3),'.nc')
-        dynamic_hd.write_field(self.directory + '/orog_corr_test_input_corrected_field.nc',
-                               field.Field(self.corrected_field_input,'LatLong',nlat=3,nlong=3),'.nc')
+        iodriver.write_field(self.directory + '/orog_corr_test_input_original_field.nc',
+                             field.Field(self.original_field_input,'LatLong',nlat=3,nlong=3),'.nc')
+        iodriver.write_field(self.directory + '/orog_corr_test_input_original_field_copy.nc',
+                             field.Field(self.original_field_input,'LatLong',nlat=3,nlong=3),'.nc')
+        iodriver.write_field(self.directory + '/orog_corr_test_input_corrected_field.nc',
+                             field.Field(self.corrected_field_input,'LatLong',nlat=3,nlong=3),'.nc')
         utilities.generate_orog_correction_field(original_orography_filename=\
                                                  self.directory + '/orog_corr_test_input_original_field.nc',
                                                  corrected_orography_filename=\
@@ -229,9 +229,9 @@ class TestOrogCorrectionFieldCreationAndApplication(unittest.TestCase):
                                               corrected_orography_filename=\
                                               self.directory + '/orog_corr_test_output_corrected_field.nc',
                                               grid_type='LatLong',nlat=3,nlong=3)
-        corrs_in_file = dynamic_hd.load_field(self.directory + '/orog_corr_test_output_corrected_field.nc',
-                                              '.nc', 'Generic', True, timeslice=None, grid_type='LatLong',
-                                              nlat=3,nlong=3)
+        corrs_in_file = iodriver.load_field(self.directory + '/orog_corr_test_output_corrected_field.nc',
+                                            '.nc', 'Generic', True, timeslice=None, grid_type='LatLong',
+                                            nlat=3,nlong=3)
         np.testing.assert_array_equal(corrs_in_file.get_data(), self.corrected_field_input,
                                       "Generating then applying an orography correction field doesn't produce"
                                       " expected result")
@@ -571,24 +571,24 @@ class TestIntelligentBurning(unittest.TestCase):
                     "#Trial Regions \n"
                     "lat_min=2,lat_max=4,lon_min=2,lon_max=3,threshold=60 \n"
                     "lat_min=6,lat_max=6,lon_min=0,lon_max=5,threshold=113")
-        dynamic_hd.write_field(test_fine_orog_file,
-                               field.makeField(self.fine_orog_field,
-                                                     field_type='Orography',
-                                                     grid_type='LatLong',
-                                                     nlat=21,nlong=18),
-                               file_type=dynamic_hd.get_file_extension(test_fine_orog_file))
-        dynamic_hd.write_field(test_fine_fmap_file,
-                               field.makeField(self.fine_fmap_field,
-                                               field_type='CumulativeFlow',
-                                               grid_type='LatLong',
-                                               nlat=21,nlong=18),
-                               file_type=dynamic_hd.get_file_extension(test_fine_fmap_file))
-        dynamic_hd.write_field(test_course_orog_file,
-                               field.makeField(self.input_orog_field,
-                                               field_type='Orography',
-                                               grid_type='LatLong',
-                                               nlat=7,nlong=6),
-                               file_type=dynamic_hd.get_file_extension(test_course_orog_file))
+        iodriver.write_field(test_fine_orog_file,
+                             field.makeField(self.fine_orog_field,
+                                             field_type='Orography',
+                                             grid_type='LatLong',
+                                             nlat=21,nlong=18),
+                             file_type=iodriver.get_file_extension(test_fine_orog_file))
+        iodriver.write_field(test_fine_fmap_file,
+                             field.makeField(self.fine_fmap_field,
+                                             field_type='CumulativeFlow',
+                                             grid_type='LatLong',
+                                             nlat=21,nlong=18),
+                             file_type=iodriver.get_file_extension(test_fine_fmap_file))
+        iodriver.write_field(test_course_orog_file,
+                             field.makeField(self.input_orog_field,
+                                             field_type='Orography',
+                                             grid_type='LatLong',
+                                             nlat=7,nlong=6),
+                             file_type=iodriver.get_file_extension(test_course_orog_file))
         #run intelligent burning code
         utilities.intelligent_orography_burning_driver(input_fine_orography_filename=test_fine_orog_file,
                                                        input_course_orography_filename=test_course_orog_file,
@@ -600,10 +600,10 @@ class TestIntelligentBurning(unittest.TestCase):
                                                        fine_grid_kwargs={'nlat':21,'nlong':18},
                                                        **{'nlat':7,'nlong':6})
         #load results
-        loaded_results = dynamic_hd.load_field(test_course_output_orog_file,
-                                               file_type=\
-                                               dynamic_hd.get_file_extension(test_course_output_orog_file),
-                                               field_type='Generic', grid_type='LatLong',nlat=7,nlong=6)
+        loaded_results = iodriver.load_field(test_course_output_orog_file,
+                                             file_type=\
+                                             iodriver.get_file_extension(test_course_output_orog_file),
+                                             field_type='Generic', grid_type='LatLong',nlat=7,nlong=6)
         np.testing.assert_array_equal(loaded_results.get_data(),
                                       self.expected_orog_field_driver,
                                       "Testing the intelligent burning driver didn't produce the expected"
@@ -632,24 +632,24 @@ class TestIntelligentBurning(unittest.TestCase):
                     "#Trial Regions \n"
                     "lat_min=2,lat_max=4,lon_min=2,lon_max=3,threshold=60 \n"
                     "lat_min=6,lat_max=6,lon_min=0,lon_max=5,threshold=113")
-        dynamic_hd.write_field(test_fine_orog_file,
-                               field.makeField(self.fine_orog_field,
-                                                     field_type='Orography',
-                                                     grid_type='LatLong',
-                                                     nlat=21,nlong=18),
-                               file_type=dynamic_hd.get_file_extension(test_fine_orog_file))
-        dynamic_hd.write_field(test_fine_fmap_file,
-                               field.makeField(self.fine_fmap_field,
-                                               field_type='CumulativeFlow',
-                                               grid_type='LatLong',
-                                               nlat=21,nlong=18),
-                               file_type=dynamic_hd.get_file_extension(test_fine_fmap_file))
-        dynamic_hd.write_field(test_course_orog_file,
-                               field.makeField(self.input_orog_field_flipped_and_rotated,
-                                               field_type='Orography',
-                                               grid_type='LatLong',
-                                               nlat=7,nlong=6),
-                               file_type=dynamic_hd.get_file_extension(test_course_orog_file))
+        iodriver.write_field(test_fine_orog_file,
+                             field.makeField(self.fine_orog_field,
+                                             field_type='Orography',
+                                             grid_type='LatLong',
+                                             nlat=21,nlong=18),
+                             file_type=iodriver.get_file_extension(test_fine_orog_file))
+        iodriver.write_field(test_fine_fmap_file,
+                             field.makeField(self.fine_fmap_field,
+                                             field_type='CumulativeFlow',
+                                             grid_type='LatLong',
+                                             nlat=21,nlong=18),
+                             file_type=iodriver.get_file_extension(test_fine_fmap_file))
+        iodriver.write_field(test_course_orog_file,
+                             field.makeField(self.input_orog_field_flipped_and_rotated,
+                                             field_type='Orography',
+                                             grid_type='LatLong',
+                                             nlat=7,nlong=6),
+                             file_type=iodriver.get_file_extension(test_course_orog_file))
         #run intelligent burning code
         utilities.intelligent_orography_burning_driver(input_fine_orography_filename=test_fine_orog_file,
                                                        input_course_orography_filename=test_course_orog_file,
@@ -661,10 +661,10 @@ class TestIntelligentBurning(unittest.TestCase):
                                                        fine_grid_kwargs={'nlat':21,'nlong':18},
                                                        **{'nlat':7,'nlong':6})
         #load results
-        loaded_results = dynamic_hd.load_field(test_course_output_orog_file,
-                                               file_type=\
-                                               dynamic_hd.get_file_extension(test_course_output_orog_file),
-                                               field_type='Generic', grid_type='LatLong',nlat=7,nlong=6)
+        loaded_results = iodriver.load_field(test_course_output_orog_file,
+                                             file_type=\
+                                             iodriver.get_file_extension(test_course_output_orog_file),
+                                             field_type='Generic', grid_type='LatLong',nlat=7,nlong=6)
         np.testing.assert_array_equal(loaded_results.get_data(),
                                       self.expected_orog_field_driver_flipped_and_rotated,
                                       "Testing the intelligent burning driver didn't produce the expected"
