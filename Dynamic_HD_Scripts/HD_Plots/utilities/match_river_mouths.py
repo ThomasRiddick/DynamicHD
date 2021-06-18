@@ -14,8 +14,22 @@ import re
 from Dynamic_HD_Scripts.base import iodriver
 
 class Params(object):
+    """
+    Class to store the parameters of the river mouth matching code
+
+    Various predefined sets can be initialised
+    """
 
     def __init__(self, paramset='default'):
+        """
+        Constructor
+
+        Arguments:
+        paramset, string, optional: the set of parameters to initialise.
+        Returns:
+        Nothing
+        """
+
         {'default':self.init_default_params,
          'testing':self.init_testing_params,
          'area':self.init_area_params,
@@ -70,8 +84,10 @@ class Params(object):
         self.minflow = 100
 
 class RiverMouth(object):
+    """Class representing a river mouth, including coordinates,outflow (in num cells), an ID and matching params"""
 
     def __init__(self,lat,lon,outflow,idnum,params):
+        """Constructor"""
         self.lat = lat
         self.lon = lon
         self.outflow = outflow
@@ -80,6 +96,7 @@ class RiverMouth(object):
         self.rangesqrd = self.params.range**2
 
     def __str__(self):
+        """To string"""
         return "lat: {0}, lon: {1}, outflow: {2}, idnum: {3} ".format(self.lat,
                                                                      self.lon,
                                                                      self.outflow,
@@ -88,37 +105,47 @@ class RiverMouth(object):
     __repr__ = __str__
 
     def __eq__(self,rhs):
+        """Check equality to another RiverMouth object"""
         return self.lat==rhs.lat and self.lon == rhs.lon and \
                 self.outflow == rhs.outflow and self.idnum == rhs.idnum
 
     def get_coords(self):
+        """Get the coords as a tuple"""
         return (self.lat,self.lon)
 
     def get_lat(self):
+        """Lat getter"""
         return self.lat
 
     def get_lon(self):
+        """Lon getter"""
         return self.lon
 
     def get_outflow(self):
+        """Outflow getter"""
         return self.outflow
 
     def get_idnum(self):
+        """ID number getter"""
         return self.idnum
 
     def square_of_range_difference_from(self,x,y):
+        """Calculate the distance squared from a given point"""
         return (self.lat -x)**2 + (self.lon - y)**2
 
     def fraction_magnitude_difference_from(self,value):
+        """The fractional magnitude difference between this RiverMouths objects outflow and an input value"""
         return 2.0*abs(value - self.outflow)/(value + self.outflow)
 
     def is_within_range_of(self,x,y):
+        """Check if this RiverMouth is within allowed threshold a given set of coordinates"""
         if self.square_of_range_difference_from(x,y) <= self.rangesqrd:
                 return True
         else:
                 return False
 
     def has_similar_magnitude_to(self,value):
+        """check if the magnitude is within a certain threshold of a given value"""
         if (self.outflow/self.params.magnitude_tolerance_factor <= value) and \
             (value < self.outflow*self.params.magnitude_tolerance_factor):
             return True
@@ -126,9 +153,11 @@ class RiverMouth(object):
             return False
 
 class ConflictChecker(object):
+    """Functions to check candidate match pairs to see if they conflict with other candidates"""
 
     @classmethod
     def check_pair_sets_for_conflicts(cls,candidatepairs):
+        """Check the set formed by the first half of each pair, then that formed by the second for conflicts and combine results"""
         conflicts,conflict_free_pairs = cls.check_pair_set_for_conflicts(candidatepairs,0)
         additional_conflicts,conflict_free_pairs = \
             cls.check_pair_set_for_conflicts(conflict_free_pairs,1)
@@ -139,6 +168,7 @@ class ConflictChecker(object):
 
     @classmethod
     def check_pair_set_for_conflicts(cls,candidatepairs,pairindex):
+        """Check set formed by a given half of the list of candidate pairs for conflicts"""
         conflicts_list = []
         no_conflicts_list = []
         matchedcandidatesids  = np.array([cdt[pairindex].get_idnum() for cdt in candidatepairs])
@@ -210,7 +240,14 @@ class ConflictResolver(object):
 
     @classmethod
     def resolve_conflict(cls,conflict,params):
-        """Resolve an individual conflict"""
+        """Resolve an individual conflict
+
+        Arguments:
+        conflict, list: a list of pairs that are not mutable compatible
+        params: a river mouth matching params object with settings
+        Returns:
+        The optimal configuration (i.e. list of compatible pairs)
+        """
         allowed_configurations = cls.generate_possible_inconflict_pairings(conflict)
         best_config_score = sys.float_info.max
         for allowed_configuration in allowed_configurations:
@@ -262,12 +299,25 @@ class ConflictResolver(object):
 
     @classmethod
     def add_to_allowed_configurations(cls,allowed_configurations,refidnumindex,possible_pairings_for_all_idnums):
-        """Recursively expand a set of allowed configuration"""
+        """Recursively expand a set of allowed configuration
+
+        Arguments:
+        allowed_configurations,list: a list of lists of pair sets that are possible
+        refidnumindex: the index number to concentrate on in this recursion
+        possible_pairing_for_all_idnums: a complete list of possible pariings for each id number
+        Returns: an expanded list of list of pair sets that are possible
+        If the refidnumindex has been incremented beyond the end of the list then simply return
+        the input allowed_configurations. If there are no allowed configuration then add all of
+        the pairs for the current index number to the list. If allowed configuration exists but
+        we haven't iterate over all the idnums then add both the new possible pairings to each
+        configuration and a configuration where none of the new pairing are used
+        """
         if refidnumindex >= len(possible_pairings_for_all_idnums):
             return allowed_configurations
         if len(allowed_configurations) <= 0:
             for pairing in possible_pairings_for_all_idnums[refidnumindex]:
                 allowed_configurations.append([pairing])
+            allowed_configurations.append([None])
         else:
             newconfigurations = []
             for configuration in allowed_configurations:
