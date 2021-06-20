@@ -9,7 +9,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from HD_Plots.utilities import plotting_tools as pts
-from HD_Plots.utitlies import river_comparison_plotting_routines as rc_pts
+from HD_Plots.utilities import river_comparison_plotting_routines as rc_pts
 
 def make_basic_flowmap_comparison_plot(ax,flowmap_ref_field,flowmap_data_field,minflowcutoff,
                                        first_datasource_name,second_datasource_name,lsmask=None,

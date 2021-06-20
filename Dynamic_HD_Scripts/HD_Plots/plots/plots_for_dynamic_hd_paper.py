@@ -4,9 +4,7 @@ Created on Mar 2, 2017
 @author: thomasriddick
 '''
 
-from .plots_library import (Plots,HDparameterPlots,HDOutputPlots,OutflowPlots, #@UnusedImport
-                           FlowMapPlots,FlowMapPlotsWithCatchments,OrographyPlots, #@UnusedImport
-                           SimpleOrographyPlots, Ice5GComparisonPlots) #@UnusedImport
+
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 from matplotlib import gridspec
@@ -19,6 +17,9 @@ from Dynamic_HD_Scripts.base import iodriver
 from Dynamic_HD_Scripts.utilities import utilities
 from HD_Plots.utilities import river_comparison_plotting_routines as rc_pts
 from HD_Plots.utilities import plotting_tools as pts
+from HD_Plots.plots.plots_library import (Plots,HDparameterPlots,HDOutputPlots,OutflowPlots, #@UnusedImport
+                                    FlowMapPlots,FlowMapPlotsWithCatchments,OrographyPlots, #@UnusedImport
+                                    SimpleOrographyPlots, Ice5GComparisonPlots) #@UnusedImport
 
 class PlotsForGMDPaper(OutflowPlots,FlowMapPlotsWithCatchments,HDOutputPlots):
     """Plots for GMD Paper"""
