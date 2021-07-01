@@ -7,6 +7,7 @@ Created on Mar 18, 2017
 
 import re
 import argparse
+import os
 import os.path as path
 import numpy as np
 import configparser
@@ -28,7 +29,8 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
 
     def __init__(self,input_orography_filepath=None,input_ls_mask_filepath=None,output_hdparas_filepath=None,
                  ancillary_data_directory=None,working_directory=None,output_hdstart_filepath=None,
-                 present_day_base_orography_filepath=None,glacier_mask_filepath=None):
+                 present_day_base_orography_filepath=None,glacier_mask_filepath=None,
+                 non_standard_orog_correction_filename=None):
         """Class constructor.
 
         Deliberately does NOT call constructor of Dynamic_HD_Drivers so the many paths
@@ -44,9 +46,86 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         self.present_day_base_orography_filename=present_day_base_orography_filepath
         self.glacier_mask_filename=glacier_mask_filepath
         self.tarasov_based_orog_correction=True
+        self.non_standard_orog_correction_filename=non_standard_orog_correction_filename
         if self.ancillary_data_path is not None:
             self.python_config_filename=path.join(self.ancillary_data_path,
                                                   "dynamic_hd_production_driver.cfg")
+
+    def store_diagnostics(self,dest):
+        shutil.move(path.join(self.working_directory_path,"10min_corrected_orog.nc"),
+                    path.join(dest,"10min_corrected_orog.nc"))
+        shutil.move(path.join(self.working_directory_path,"10min_rdirs.nc"),
+                    path.join(dest,"10min_rdirs.nc"))
+        shutil.move(path.join(self.working_directory_path,"10min_catchments.nc"),
+                    path.join(dest,"10min_catchments.nc"))
+        shutil.move(path.join(self.working_directory_path,"10min_flowtorivermouths.nc"),
+                    path.join(dest,"10min_flowtorivermouths.nc"))
+        shutil.move(path.join(self.working_directory_path,"10min_flowtocell.nc"),
+                    path.join(dest,"10min_flowtocell.nc"))
+        shutil.move(path.join(self.working_directory_path,"30min_unfilled_orog.nc"),
+                    path.join(dest,"30min_unfilled_orog.nc"))
+        shutil.move(path.join(self.working_directory_path,"30min_rdirs.nc"),
+                    path.join(dest,"30min_rdirs.nc"))
+        shutil.move(path.join(self.working_directory_path,
+                            "30min_pre_loop_removal_rdirs.nc"),
+                    path.join(dest,"30min_pre_loop_removal_rdirs.nc"))
+        shutil.move(path.join(self.working_directory_path,
+                            "30min_pre_loop_removal_flowtorivermouths.nc"),
+                    path.join(dest,"30min_pre_loop_removal_flowtorivermouths.nc"))
+        shutil.move(path.join(self.working_directory_path,
+                            "30min_pre_loop_removal_flowtocell.nc"),
+                    path.join(dest,"30min_pre_loop_removal_flowtocell.nc"))
+        shutil.move(path.join(self.working_directory_path,
+                            "30min_pre_loop_removal_catchments.nc"),
+                    path.join(dest,"30min_pre_loop_removal_catchments.nc"))
+        shutil.move(path.join(self.working_directory_path,
+                            "30min_filled_orog.nc"),
+                    path.join(dest,"30min_filled_orog.nc"))
+        shutil.move(path.join(self.working_directory_path,
+                            "30min_flowtorivermouths.nc"),
+                    path.join(dest,"30min_flowtorivermouths.nc"))
+        shutil.move(path.join(self.working_directory_path,
+                            "30min_flowtocell.nc"),
+                    path.join(dest,"30min_flowtocell.nc"))
+        shutil.move(path.join(self.working_directory_path,
+                            "30min_catchments.nc"),
+                    path.join(dest,"30min_catchments.nc"))
+
+    def clean_work_dir(self):
+        os.remove(path.join(self.working_directory_path,"30minute_river_dirs_temp.nc"))
+        os.remove(path.join(self.working_directory_path,"30minute_filled_orog_temp.nc"))
+        os.remove(path.join(self.working_directory_path,"30minute_river_dirs_temp.dat"))
+        os.remove(path.join(self.working_directory_path,"30minute_ls_mask_temp.nc"))
+        os.remove(path.join(self.working_directory_path,"30minute_ls_mask_temp.dat"))
+        os.remove(path.join(self.working_directory_path,"30minute_filled_orog_temp.dat"))
+        os.remove(path.join(self.working_directory_path,"loops.log"))
+        os.remove(path.join(self.working_directory_path,"paragen",
+                            "soil_partab.txt"))
+        os.remove(path.join(self.working_directory_path,"paragen",
+                            "slope.dat"))
+        os.remove(path.join(self.working_directory_path,"paragen",
+                            "riv_vel.dat"))
+        os.remove(path.join(self.working_directory_path,"paragen",
+                            "riv_n.dat"))
+        os.remove(path.join(self.working_directory_path,"paragen",
+                            "riv_k.dat"))
+        os.remove(path.join(self.working_directory_path,"paragen",
+                            "paragen.inp"))
+        os.remove(path.join(self.working_directory_path,"paragen",
+                            "over_vel.dat"))
+        os.remove(path.join(self.working_directory_path,"paragen",
+                            "over_n.dat"))
+        os.remove(path.join(self.working_directory_path,"paragen",
+                            "over_k.dat"))
+        os.remove(path.join(self.working_directory_path,"paragen",
+                            "hdpara.srv"))
+        os.remove(path.join(self.working_directory_path,"paragen",
+                            "global.inp"))
+        os.remove(path.join(self.working_directory_path,"paragen",
+                            "ddir.inp"))
+        os.remove(path.join(self.working_directory_path,"paragen",
+                            "bas_k.dat"))
+        os.rmdir(path.join(self.working_directory_path,"paragen"))
 
     def trial_run_using_data_from_new_data_from_virna_2016_version(self):
         """Run a full trial using the 2016 version of the new data from Virna"""
@@ -61,6 +140,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         self.python_config_filename=path.join("/Users/thomasriddick/Documents/data/HDancillarydata/"
                                               "dynamic_hd_production_driver.cfg")
         self.tarasov_based_orog_correction=False
+        self.non_standard_orog_correction_filename=False
         self.compile_paragen_and_hdfile()
         self.no_intermediaries_ten_minute_data_ALG4_no_true_sinks_plus_upscale_rdirs_driver()
         return self.output_hdparas_filepath,self.output_hdstart_filepath
@@ -78,6 +158,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         self.python_config_filename=path.join("/Users/thomasriddick/Documents/data/HDancillarydata/"
                                               "dynamic_hd_production_driver.cfg")
         self.tarasov_based_orog_correction=False
+        self.non_standard_orog_correction_filename=False
         self.compile_paragen_and_hdfile()
         self.no_intermediaries_ten_minute_data_ALG4_no_true_sinks_plus_upscale_rdirs_driver()
         return self.output_hdparas_filepath,self.output_hdstart_filepath
@@ -97,6 +178,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         self.python_config_filename=path.join("/Users/thomasriddick/Documents/data/HDancillarydata/"
                                               "dynamic_hd_production_driver.cfg")
         self.tarasov_based_orog_correction=False
+        self.non_standard_orog_correction_filename=False
         self.compile_paragen_and_hdfile()
         self.no_intermediaries_ten_minute_data_ALG4_no_true_sinks_plus_upscale_rdirs_driver()
         return self.output_hdparas_filepath,self.output_hdstart_filepath
@@ -120,6 +202,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         self.python_config_filename=path.join("/Users/thomasriddick/Documents/data/HDancillarydata/"
                                               "dynamic_hd_production_driver.cfg")
         self.tarasov_based_orog_correction=True
+        self.non_standard_orog_correction_filename=False
         self.compile_paragen_and_hdfile()
         self.no_intermediaries_ten_minute_data_ALG4_no_true_sinks_plus_upscale_rdirs_driver()
         return self.output_hdparas_filepath,self.output_hdstart_filepath
@@ -143,6 +226,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         self.python_config_filename=path.join("/Users/thomasriddick/Documents/data/HDancillarydata/"
                                               "dynamic_hd_production_driver.cfg")
         self.tarasov_based_orog_correction=True
+        self.non_standard_orog_correction_filename=False
         self.compile_paragen_and_hdfile()
         self.no_intermediaries_ten_minute_data_ALG4_no_true_sinks_plus_upscale_rdirs_driver()
         return self.output_hdparas_filepath,self.output_hdstart_filepath
@@ -167,6 +251,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                               "HDancillarydata_specified_fieldnames/"
                                               "dynamic_hd_production_driver.cfg")
         self.tarasov_based_orog_correction=True
+        self.non_standard_orog_correction_filename=False
         self.compile_paragen_and_hdfile()
         self.no_intermediaries_ten_minute_data_ALG4_no_true_sinks_plus_upscale_rdirs_driver()
         return self.output_hdparas_filepath,self.output_hdstart_filepath
@@ -191,6 +276,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                               "HDancillarydata_specified_fieldnames/"
                                               "dynamic_hd_production_driver.cfg")
         self.tarasov_based_orog_correction=True
+        self.non_standard_orog_correction_filename=False
         self.compile_paragen_and_hdfile()
         self.no_intermediaries_ten_minute_data_ALG4_no_true_sinks_plus_upscale_rdirs_driver()
         return self.output_hdparas_filepath,self.output_hdstart_filepath
@@ -214,6 +300,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         self.python_config_filename=path.join("/Users/thomasriddick/Documents/data/HDancillarydata_grid_info/"
                                               "dynamic_hd_production_driver.cfg")
         self.tarasov_based_orog_correction=True
+        self.non_standard_orog_correction_filename=False
         self.compile_paragen_and_hdfile()
         self.no_intermediaries_ten_minute_data_ALG4_no_true_sinks_plus_upscale_rdirs_driver()
         return self.output_hdparas_filepath,self.output_hdstart_filepath
@@ -237,6 +324,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         self.python_config_filename=path.join("/Users/thomasriddick/Documents/data/HDancillarydata_grid_info/"
                                               "dynamic_hd_production_driver.cfg")
         self.tarasov_based_orog_correction=True
+        self.non_standard_orog_correction_filename=False
         self.compile_paragen_and_hdfile()
         self.no_intermediaries_ten_minute_data_ALG4_no_true_sinks_plus_upscale_rdirs_driver()
         return self.output_hdparas_filepath,self.output_hdstart_filepath
@@ -261,6 +349,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                               "HDancillarydata_specified_fieldnames_grid_info/"
                                               "dynamic_hd_production_driver.cfg")
         self.tarasov_based_orog_correction=True
+        self.non_standard_orog_correction_filename=False
         self.compile_paragen_and_hdfile()
         self.no_intermediaries_ten_minute_data_ALG4_no_true_sinks_plus_upscale_rdirs_driver()
         return self.output_hdparas_filepath,self.output_hdstart_filepath
@@ -285,6 +374,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                               "HDancillarydata_specified_fieldnames_grid_info/"
                                               "dynamic_hd_production_driver.cfg")
         self.tarasov_based_orog_correction=True
+        self.non_standard_orog_correction_filename=False
         self.compile_paragen_and_hdfile()
         self.no_intermediaries_ten_minute_data_ALG4_no_true_sinks_plus_upscale_rdirs_driver()
         return self.output_hdparas_filepath,self.output_hdstart_filepath
@@ -344,6 +434,8 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
             config.set("input_fieldname_options","input_glacier_mask_fieldname","")
         if not config.has_option("input_fieldname_options","input_base_present_day_orography_fieldname"):
             config.set("input_fieldname_options","input_base_present_day_orography_fieldname","")
+        if not config.has_option("input_fieldname_options","input_orography_corrections_fieldname"):
+            config.set("input_fieldname_options","input_orography_corrections_fieldname","")
         if not config.has_section("general_options"):
             config.add_section("general_options")
         if not config.has_option("general_options","generate_flow_parameters"):
@@ -424,7 +516,9 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         if self.present_day_base_orography_filename:
             present_day_reference_orography_filename = path.join(self.ancillary_data_path,
                                                                  "ice5g_v1_2_00_0k_10min.nc")
-        if self.tarasov_based_orog_correction:
+        if self.non_standard_orog_correction_filename is not None:
+            orography_corrections_filename = self.non_standard_orog_correction_filename
+        elif self.tarasov_based_orog_correction:
             orography_corrections_filename = path.join(self.ancillary_data_path,
                                                        "orog_corrs_field_ICE5G_and_tarasov_upscaled_"
                                                        "srtm30plus_north_america_only_data_ALG4_sinkless"
@@ -502,10 +596,16 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                          present_day_base_orography,
                                                          present_day_reference_orography=\
                                                          present_day_reference_orography)
+        orography_corrections_10min_fieldname = config.get("input_fieldname_options",
+                                                           "input_orography_corrections_fieldname")
+        orography_corrections_10min_fieldname = (orography_corrections_10min_fieldname if
+                                                 orography_corrections_10min_fieldname else 'field_value')
         if use_grid_info:
+            print(orography_corrections_10min_fieldname)
             orography_corrections_10min =  iodriver.advanced_field_loader(orography_corrections_filename,
                                                                           field_type='Orography',
-                                                                          fieldname="field_value")
+                                                                          fieldname=
+                                                                          orography_corrections_10min_fieldname)
         else:
             orography_corrections_10min =  iodriver.load_field(orography_corrections_filename,
                                                                file_type=iodriver.\

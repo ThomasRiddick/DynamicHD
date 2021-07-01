@@ -10,6 +10,7 @@ import configparser
 import numpy as np
 import cdo
 import argparse
+import shutil
 from timeit import default_timer as timer
 from Dynamic_HD_Scripts.base import field
 from Dynamic_HD_Scripts.base import grid
@@ -42,7 +43,8 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                  output_hdparas_filepath=None,output_lakeparas_filepath=None,
                  output_lakestart_filepath=None,ancillary_data_directory=None,
                  working_directory=None,output_hdstart_filepath=None,
-                 present_day_base_orography_filepath=None,glacier_mask_filepath=None):
+                 present_day_base_orography_filepath=None,glacier_mask_filepath=None,
+                 non_standard_orog_correction_filename=None):
         """Class constructor.
 
         Deliberately does NOT call constructor of Dynamic_HD_Drivers so the many paths
@@ -61,9 +63,90 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         self.present_day_base_orography_filename=present_day_base_orography_filepath
         self.glacier_mask_filename=glacier_mask_filepath
         self.tarasov_based_orog_correction=True
+        self.non_standard_orog_correction_filename=non_standard_orog_correction_filename
         if self.ancillary_data_path is not None:
             self.python_config_filename=path.join(self.ancillary_data_path,
                                                   "dynamic_lake_production_driver.cfg")
+
+    def store_diagnostics(self,dest):
+        shutil.move(path.join(self.working_directory_path,"10min_corrected_orog.nc"),
+                    path.join(dest,"10min_corrected_orog.nc"))
+        shutil.move(path.join(self.working_directory_path,"10min_rdirs.nc"),
+                    path.join(dest,"10min_rdirs.nc"))
+        shutil.move(path.join(self.working_directory_path,"10min_catchments.nc"),
+                    path.join(dest,"10min_catchments.nc"))
+        shutil.move(path.join(self.working_directory_path,"10min_flowtorivermouths.nc"),
+                    path.join(dest,"10min_flowtorivermouths.nc"))
+        shutil.move(path.join(self.working_directory_path,"10min_flowtocell.nc"),
+                    path.join(dest,"10min_flowtocell.nc"))
+        shutil.move(path.join(self.working_directory_path,"30min_unfilled_orog.nc"),
+                    path.join(dest,"30min_unfilled_orog.nc"))
+        shutil.move(path.join(self.working_directory_path,"30min_rdirs.nc"),
+                    path.join(dest,"30min_rdirs.nc"))
+        shutil.move(path.join(self.working_directory_path,
+                            "30min_pre_loop_removal_rdirs.nc"),
+                    path.join(dest,"30min_pre_loop_removal_rdirs.nc"))
+        shutil.move(path.join(self.working_directory_path,
+                            "30min_pre_loop_removal_flowtorivermouths.nc"),
+                    path.join(dest,"30min_pre_loop_removal_flowtorivermouths.nc"))
+        shutil.move(path.join(self.working_directory_path,
+                            "30min_pre_loop_removal_flowtocell.nc"),
+                    path.join(dest,"30min_pre_loop_removal_flowtocell.nc"))
+        shutil.move(path.join(self.working_directory_path,
+                            "30min_pre_loop_removal_catchments.nc"),
+                    path.join(dest,"30min_pre_loop_removal_catchments.nc"))
+        shutil.move(path.join(self.working_directory_path,
+                            "30min_filled_orog.nc"),
+                    path.join(dest,"30min_filled_orog.nc"))
+        shutil.move(path.join(self.working_directory_path,
+                            "30min_flowtorivermouths.nc"),
+                    path.join(dest,"30min_flowtorivermouths.nc"))
+        shutil.move(path.join(self.working_directory_path,
+                            "30min_flowtocell.nc"),
+                    path.join(dest,"30min_flowtocell.nc"))
+        shutil.move(path.join(self.working_directory_path,
+                            "30min_catchments.nc"),
+                    path.join(dest,"30min_catchments.nc"))
+        shutil.move(path.join(self.working_directory_path,
+                             "basin_catchment_numbers_temp.nc"),
+                    path.join(dest,"basin_catchment_numbers.nc"))
+
+    def clean_work_dir(self):
+        os.remove(path.join(self.working_directory_path,"30minute_river_dirs_temp.nc"))
+        os.remove(path.join(self.working_directory_path,"30minute_filled_orog_temp.nc"))
+        os.remove(path.join(self.working_directory_path,"30minute_river_dirs_temp.dat"))
+        os.remove(path.join(self.working_directory_path,"30minute_ls_mask_temp.nc"))
+        os.remove(path.join(self.working_directory_path,"30minute_ls_mask_temp.dat"))
+        os.remove(path.join(self.working_directory_path,"30minute_filled_orog_temp.dat"))
+        os.remove(path.join(self.working_directory_path,"loops_10min.log"))
+        os.remove(path.join(self.working_directory_path,"loops_30min.log"))
+        os.remove(path.join(self.working_directory_path,"paragen",
+                            "soil_partab.txt"))
+        os.remove(path.join(self.working_directory_path,"paragen",
+                            "slope.dat"))
+        os.remove(path.join(self.working_directory_path,"paragen",
+                            "riv_vel.dat"))
+        os.remove(path.join(self.working_directory_path,"paragen",
+                            "riv_n.dat"))
+        os.remove(path.join(self.working_directory_path,"paragen",
+                            "riv_k.dat"))
+        os.remove(path.join(self.working_directory_path,"paragen",
+                            "paragen.inp"))
+        os.remove(path.join(self.working_directory_path,"paragen",
+                            "over_vel.dat"))
+        os.remove(path.join(self.working_directory_path,"paragen",
+                            "over_n.dat"))
+        os.remove(path.join(self.working_directory_path,"paragen",
+                            "over_k.dat"))
+        os.remove(path.join(self.working_directory_path,"paragen",
+                            "hdpara.srv"))
+        os.remove(path.join(self.working_directory_path,"paragen",
+                            "global.inp"))
+        os.remove(path.join(self.working_directory_path,"paragen",
+                            "ddir.inp"))
+        os.remove(path.join(self.working_directory_path,"paragen",
+                            "bas_k.dat"))
+        os.rmdir(path.join(self.working_directory_path,"paragen"))
 
     def _read_and_validate_config(self):
         """Reads and checks format of config file
@@ -266,8 +349,11 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         if self.present_day_base_orography_filename:
             present_day_reference_orography_filename = path.join(self.ancillary_data_path,
                                                                  "ice5g_v1_2_00_0k_10min.nc")
-        orography_corrections_filename = path.join(self.ancillary_data_path,
-                                                   "ice5g_0k_lake_corrs_no_intermediaries_lake_corrections_driver_20200726_181304.nc")
+        if self.non_standard_orog_correction_filename is not None:
+            orography_corrections_filename = self.non_standard_orog_correction_filename
+        else:
+            orography_corrections_filename = path.join(self.ancillary_data_path,
+                                                       "ice5g_0k_lake_corrs_no_intermediaries_lake_corrections_driver_20200726_181304.nc")
         #Change ls mask to correct type
         ls_mask_10min = iodriver.advanced_field_loader(self.original_ls_mask_filename,
                                                        field_type='Generic',
