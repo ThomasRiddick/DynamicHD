@@ -27,6 +27,8 @@
 				"Dynamic_HD_Scripts/Dynamic_HD_Scripts/__pycache__",
 				"Dynamic_HD_Scripts/Dynamic_HD_Script_Tests/__pycache__",
 				"Dynamic_HD_Scripts/HD_Plots/__pycache__",
+				"Dynamic_HD_Scripts/HD_Plots/utilities/__pycache__",
+				"Dynamic_HD_Scripts/HD_Plots/plots/__pycache__",
 				"Dynamic_HD_Scripts/Dynamic_HD_Scripts/base/__pycache__",
 				"Dynamic_HD_Scripts/Dynamic_HD_Scripts/command_line_drivers/__pycache__",
 				"Dynamic_HD_Scripts/Dynamic_HD_Scripts/dynamic_hd_and_dynamic_lake_drivers/__pycache__",

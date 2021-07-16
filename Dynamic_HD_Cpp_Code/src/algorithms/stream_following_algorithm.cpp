@@ -22,6 +22,11 @@ void stream_following_algorithm::follow_stream_downstream(coords* coords_in) {
     (*downstream_cells)(next_cell_downstream) = true;
     next_cell_downstream = calculate_downstream_cell(next_cell_downstream);
   }
+  if(include_downstream_outflow) (*downstream_cells)(next_cell_downstream) = true;
+}
+
+void stream_following_algorithm::setup_flags(bool include_downstream_outflow_in){
+  include_downstream_outflow = include_downstream_outflow_in;
 }
 
 void stream_following_algorithm::setup_fields(bool* cells_with_loop_in,
@@ -49,5 +54,5 @@ coords* dir_based_rdirs_stream_following_algorithm::calculate_downstream_cell(co
 }
 
 bool dir_based_rdirs_stream_following_algorithm::is_outflow(coords* coords_in){
-  return ((*rdirs)(coords_in) == -1 || (*rdirs)(coords_in) == 0);
+  return ((*rdirs)(coords_in) == -1 || (*rdirs)(coords_in) == 0 || (*rdirs)(coords_in) == -2 );
 }

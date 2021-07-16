@@ -18,6 +18,7 @@ class stream_following_algorithm {
                                            delete _grid;}
     void follow_streams_downstream();
     void follow_stream_downstream(coords* coords_in);
+    void setup_flags(bool include_downstream_outflow_in);
     void setup_fields(bool* cells_with_loop,
                       bool* downstream_cells,
                       grid_params* grid_params_in);
@@ -28,6 +29,7 @@ class stream_following_algorithm {
     field<bool>* cells_with_loop = nullptr;
     grid* _grid = nullptr;
     grid_params* _grid_params = nullptr;
+    bool include_downstream_outflow = false;
 };
 
 class dir_based_rdirs_stream_following_algorithm : public stream_following_algorithm {

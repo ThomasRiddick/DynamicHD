@@ -34,6 +34,7 @@ class Params(object):
          'testing':self.init_testing_params,
          'area':self.init_area_params,
          'extensive':self.init_extensive_params,
+         'very_extensive':self.init_very_extensive_params,
          'area_extensive':self.init_area_extensive_params,
          'magnitude_extensive':self.init_magnitdue_extensive}[paramset]()
 
@@ -51,6 +52,10 @@ class Params(object):
     def init_extensive_params(self):
         self.init_default_params()
         self.minflow = 135
+
+    def init_very_extensive_params(self):
+        self.init_default_params()
+        self.minflow = 40
 
     def init_testing_params(self):
         self.max_complexity = 15
