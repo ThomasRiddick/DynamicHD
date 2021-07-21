@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "Running Version 3.9 of the ICON HD Parameters Generation Code"
+echo "Running Version 1.1 of the ICON HD Parameters Generation Code"
 
 #Define module loading function
 function load_module
@@ -253,7 +253,15 @@ fi
 
 #Load a new version of gcc that doesn't have the polymorphic variable bug
 if ! $no_modules ; then
-	load_module gcc/6.2.0
+	if [[ $(hostname -d) == "hpc.dkrz.de" ]]; then
+		load_module gcc/6.2.0
+	else
+		load_module gcc/6.3.0
+	fi
+fi
+
+if ! $no_modules ; then
+	load_module nco
 fi
 
 #Setup correct python path
@@ -295,10 +303,10 @@ fi
 
 #Setup cython interface between python and C++
 if $compilation_required; then
-	cd ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts
+	cd ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/interface/cpp_interface
 	echo "Compiling Cython Modules" 1>&2
-	python2.7 ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/setup_fill_sinks.py clean --all
-	python2.7 ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/setup_fill_sinks.py build_ext --inplace -f
+	python ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/interface/cpp_interface/setup_fill_sinks.py clean --all
+	python ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/interface/cpp_interface/setup_fill_sinks.py build_ext --inplace -f
 	cd - 2>&1 > /dev/null
 fi
 
@@ -332,7 +340,7 @@ rm -f cell_numbers_temp.nc
 #Run
 echo "Running ICON HD River Direction Generation Code" 1>&2
 echo "Generating LatLon to ICON Cross Grid Mapping" 1>&2
-ten_minute_orography_file_and_fieldname=$(python2.7 ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/icon_rdirs_creation_config_printer.py ${python_config_filepath} | sed '1d')
+ten_minute_orography_file_and_fieldname=$(python ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/utilities/icon_rdirs_creation_config_printer.py ${python_config_filepath} | sed '1d')
 ten_minute_orography_filepath=$(cut -d ' ' -f 1 <<< ${ten_minute_orography_file_and_fieldname})
 ten_minute_orography_fieldname=$(cut -d ' ' -f 2 <<< ${ten_minute_orography_file_and_fieldname})
 cell_numbers_filepath="cell_numbers_temp.nc"
@@ -347,7 +355,7 @@ ten_minute_accumulated_flow_filepath="ten_minute_accumulated_flow_temp.nc"
 icon_intermediate_catchments_filepath="icon_intermediate_catchments.nc"
 icon_intermediate_rdirs_filepath="icon_intermediate_rdirs.nc"
 icon_final_filepath="icon_final_rdirs.nc"
-python2.7 ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/create_icon_coarse_river_directions_driver.py ${true_sinks_argument} downscaled_ls_mask_temp_inverted.nc ${ten_minute_river_direction_filepath} ${ten_minute_catchments_filepath} ${ten_minute_accumulated_flow_filepath} ${python_config_filepath} ${working_directory}
+python ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/command_line_drivers/create_icon_coarse_river_directions_driver.py ${true_sinks_argument} downscaled_ls_mask_temp_inverted.nc ${ten_minute_river_direction_filepath} ${ten_minute_catchments_filepath} ${ten_minute_accumulated_flow_filepath} ${python_config_filepath} ${working_directory}
 while [[ $(grep -c "[0-9]" "${ten_minute_catchments_filepath%%.nc}_loops.log") -ne 0 ]]; do
 	echo "Loop found, edit river directions file ${ten_minute_river_direction_filepath}"
 	echo -e "Edited river direction filepath:"
@@ -360,7 +368,7 @@ while [[ $(grep -c "[0-9]" "${ten_minute_catchments_filepath%%.nc}_loops.log") -
 	rm -f ten_minute_catchments_temp.nc
 	rm -f ten_minute_accumulated_flow_temp.nc
 	rm -f ten_minute_catchments_temp_loops.log
-	python2.7 ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/create_icon_coarse_river_directions_driver.py -r ${ten_minute_river_direction_filepath} downscaled_ls_mask_temp_inverted.nc dummy.nc ${ten_minute_catchments_filepath} ${ten_minute_accumulated_flow_filepath} ${python_config_filepath} ${working_directory}
+	python ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/create_icon_coarse_river_directions_driver.py -r ${ten_minute_river_direction_filepath} downscaled_ls_mask_temp_inverted.nc dummy.nc ${ten_minute_catchments_filepath} ${ten_minute_accumulated_flow_filepath} ${python_config_filepath} ${working_directory}
 done
  ${source_directory}/Dynamic_HD_Fortran_Code/Release/COTAT_Plus_LatLon_To_Icon_Fortran_Exec ${ten_minute_river_direction_filepath}  ${ten_minute_accumulated_flow_filepath} ${grid_file} ${icon_intermediate_rdirs_filepath} "rdirs" "acc" "rdirs" ${cotat_params_file}
   ${source_directory}/Dynamic_HD_Cpp_Code/Release/Compute_Catchments_SI_Exec ${icon_intermediate_rdirs_filepath} ${icon_intermediate_catchments_filepath} ${grid_file} "rdirs" 1 ${icon_intermediate_catchments_filepath%%.nc}_loops_log.log 1

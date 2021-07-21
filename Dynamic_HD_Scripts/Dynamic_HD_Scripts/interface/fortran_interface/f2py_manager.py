@@ -7,6 +7,7 @@ Created on Jan 15, 2016
 
 import imp
 import os
+import sys
 import subprocess
 import textwrap
 import stat
@@ -68,8 +69,12 @@ class f2py_manager(object):
         if not os.path.isfile(self.fortran_file_name):
             raise RuntimeError("Fortran file {0} does not exist".format(self.fortran_file_name))
         self.fortran_module_name = os.path.basename(self.fortran_file_name).split('.')[0]
+        if sys.platform == "darwin":
+            cython_extension = '.cpython-39-darwin.so'
+        else:
+            cython_extension = '.cpython-39-x86_64-linux-gnu.so'
         self.shared_object_file_path = os.path.join(shared_object_path,
-                                                    self.fortran_module_name+'.cpython-39-darwin.so')
+                                                    self.fortran_module_name+cython_extension)
         self.sources = [self.fortran_file_name]
         if additional_fortran_files is not None:
             self.additional_fortran_files = additional_fortran_files
