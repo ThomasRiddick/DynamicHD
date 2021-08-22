@@ -392,7 +392,7 @@ class TestConnectCoarseLakeCatchments(unittest.TestCase):
                                                                 [1,1,4,1,1],
                                                                 [1,3,1,5,6]],
                                                                 dtype=np.int32, order='C')
-        connected_catchments = \
+        connected_catchments,reconnected_cumulative_flow = \
             cclc.connect_coarse_lake_catchments(field.Field(coarse_catchments,
                                                             grid="LatLong",nlat=5,nlong=5),
                                                 field.Field(lake_centers,
@@ -425,7 +425,7 @@ class TestConnectCoarseLakeCatchments(unittest.TestCase):
                                                             grid="LatLong",nlat=5,nlong=5))
         np.testing.assert_array_equal(connected_catchments.get_data(),
                                       expected_connected_catchments)
-        np.testing.assert_array_equal(cumulative_flow,
+        np.testing.assert_array_equal(reconnected_cumulative_flow.get_data(),
                                       reconnected_cumulative_flow_expected_out)
 
     def testConnectCoarseLakeCatchmentsTwo(self):
@@ -1422,7 +1422,7 @@ class TestConnectCoarseLakeCatchments(unittest.TestCase):
                                                        [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
                                                        [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]],
                                                        dtype=np.int64, order='C')
-        connected_coarse_lake_catchments = \
+        connected_coarse_lake_catchments,_ = \
           cclc.connect_coarse_lake_catchments(field.Field(coarse_catchments,
                                                           grid="LatLong",nlat=27,nlong=20),
                                               field.Field(lake_centers,

@@ -188,48 +188,9 @@ fi
 #Setup correct python path
 export PYTHONPATH=${source_directory}/Dynamic_HD_Scripts:${PYTHONPATH}
 
-#Compile C++ and Fortran Code if this is the first timestep
-if $compilation_required ; then
-	echo "Compiling C++ code" 1>&2
-	mkdir -p ${source_directory}/Dynamic_HD_Cpp_Code/Release
-	mkdir -p ${source_directory}/Dynamic_HD_Cpp_Code/Release/src
-	mkdir -p ${source_directory}/Dynamic_HD_Cpp_Code/Release/src/base
-	mkdir -p ${source_directory}/Dynamic_HD_Cpp_Code/Release/src/algorithms
-	mkdir -p ${source_directory}/Dynamic_HD_Cpp_Code/Release/src/drivers
-	mkdir -p ${source_directory}/Dynamic_HD_Cpp_Code/Release/src/testing
-	cd ${source_directory}/Dynamic_HD_Cpp_Code/Release
-	make -f ../makefile clean
-	make -f ../makefile compile_only
-	cd - 2>&1 > /dev/null
-	echo "Compiling Fortran code" 1>&2
-	mkdir -p ${source_directory}/Dynamic_HD_Fortran_Code/Release
-	mkdir -p ${source_directory}/Dynamic_HD_Fortran_Code/Release/src
-	cd ${source_directory}/Dynamic_HD_Fortran_Code/Release
-	make -f ../makefile clean
-	make -f ../makefile compile_only
-	cd - 2>&1 > /dev/null
-fi
+#Call compilation script
+${source_directory}/Dynamic_HD_bash_scripts/compile_dynamic_hd_code.sh ${compilation_required} false ${source_directory} . false "compile_only"
 
-# Clean shared libraries
-if $compilation_required; then
-	cd ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts
-		make -f makefile clean
-	cd - 2>&1 > /dev/null
-fi
-
-#Setup cython interface between python and C++
-if $compilation_required; then
-	cd ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts
-	echo "Compiling Cython Modules" 1>&2
-	python2.7 ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/setup_fill_sinks.py clean --all
-	python2.7 ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/setup_fill_sinks.py build_ext --inplace -f
-	cd - 2>&1 > /dev/null
-fi
-
-#Prepare bin directory for python code
-if $compilation_required; then
-	mkdir -p ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/bin
-fi
 
 #Prepare python script arguments
 if ! [[ -z ${hd_driver_config_filepath} ]]; then

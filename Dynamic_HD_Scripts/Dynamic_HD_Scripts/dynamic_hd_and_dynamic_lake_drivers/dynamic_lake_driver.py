@@ -15,8 +15,9 @@ from Dynamic_HD_Scripts.tools import compute_catchments as cc
 from Dynamic_HD_Scripts.tools import flow_to_grid_cell as ftgc
 from Dynamic_HD_Scripts.tools import connect_coarse_lake_catchments as cclc
 from Dynamic_HD_Scripts.tools import dynamic_lake_operators
+from Dynamic_HD_Scripts.tools import fill_sinks_driver
+from Dynamic_HD_Scripts.tools import river_mouth_marking_driver
 from Dynamic_HD_Scripts.utilities import utilities
-from Dynamic_HD_Scripts.dynamic_hd_and_dynamic_lake_drivers import fill_sinks_driver
 from Dynamic_HD_Scripts.dynamic_hd_and_dynamic_lake_drivers import dynamic_hd_driver
 
 class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
@@ -1018,34 +1019,60 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
                                                  river_directions_fieldname)
 
     def connect_catchments_for_transient_run(self):
-      base_filepath = "/Users/thomasriddick/Documents/data/lake_transient_data/run_1"
-      dates = range(15990,10950,-10)
+      base_filepath = "/Users/thomasriddick/Documents/data/lake_analysis_runs/lake_analysis_one_21_Jun_2021/lakes/results"
+      #dates = range(15990,11000,-10)
+      dates = range(11000,10990,-10)
       for date in dates:
-        river_directions_filepath = ("{0}/hdpara_{1}k.nc".format(base_filepath,date))
-        coarse_catchments_filepath = ("{0}/catchments_{1}.nc".format(base_filepath,date))
+        river_directions_filepath = ("{0}/diag_version_0_date_{1}/30min_rdirs.nc".format(base_filepath,date))
+        coarse_catchments_filepath = ("{0}/diag_version_0_date_{1}/30min_catchments.nc".format(base_filepath,date))
         coarse_catchments_fieldname = "catchments"
-        cc.advanced_main(filename=river_directions_filepath,
-                         fieldname="FDIR",
-                         output_filename=coarse_catchments_filepath,
-                         output_fieldname="catchments",
-                         loop_logfile=("{0}/loops_log_{1}.txt".format(base_filepath,date)),
-                         use_cpp_alg=True)
-        lake_parameters_filepath = ("{0}/lakepara_{1}k.nc".format(base_filepath,date))
-        basin_numbers_filepath = ("{0}/lake_numbers_{1}.nc".format(base_filepath,date))
-        connected_coarse_catchments_out_filename = ("{0}/connected_catchments_{1}.nc".\
+        # cc.advanced_main(filename=river_directions_filepath,
+        #                  fieldname="rdirs",
+        #                  output_filename=coarse_catchments_filepath,
+        #                  output_fieldname="catchments",
+        #                  loop_logfile=("{0}/loops_log_{1}.txt".format(base_filepath,date)),
+        #                  use_cpp_alg=True)
+        lake_parameters_filepath = ("{0}/lakeparas_version_0_date_{1}.nc".format(base_filepath,date))
+        basin_numbers_filepath = ("{0}/diag_version_0_date_{1}/basin_catchment_numbers.nc".format(base_filepath,date))
+        connected_coarse_catchments_out_filename = ("{0}/diag_version_0_date_{1}/30min_connected_catchments.nc".\
                                                     format(base_filepath,date))
         connected_coarse_catchments_out_fieldname = "catchments"
-        basin_catchment_numbers_fieldname = "lake_number"
-        river_directions_fieldname = "FDIR"
-        cclc.connect_coarse_lake_catchments_driver(coarse_catchments_filepath,
-                                                   lake_parameters_filepath,
-                                                   basin_numbers_filepath,
-                                                   river_directions_filepath,
-                                                   connected_coarse_catchments_out_filename,
-                                                   coarse_catchments_fieldname,
-                                                   connected_coarse_catchments_out_fieldname,
-                                                   basin_catchment_numbers_fieldname,
-                                                   river_directions_fieldname)
+        basin_catchment_numbers_fieldname = "basin_catchment_numbers"
+        river_directions_fieldname = "rdirs"
+        cumulative_flow_filename=("{0}/diag_version_0_date_{1}/30min_flowtocell.nc".format(base_filepath,date))
+        cumulative_flow_fieldname="cumulative_flow"
+        cumulative_flow_out_filename=("{0}/diag_version_0_date_{1}/30min"
+                                      "_flowtocell_connected.nc".format(base_filepath,date))
+        cumulative_flow_out_fieldname="cumulative_flow"
+        cumulative_river_mouth_flow_out_filename=("{0}/diag_version_0_date_{1}/"
+                                                  "30min_flowtorivermouths_connected.nc".format(base_filepath,date))
+        cumulative_river_mouth_flow_out_fieldname="cumulative_flow_to_ocean"
+        # cclc.connect_coarse_lake_catchments_driver(coarse_catchments_filepath,
+        #                                            lake_parameters_filepath,
+        #                                            basin_numbers_filepath,
+        #                                            river_directions_filepath,
+        #                                            connected_coarse_catchments_out_filename,
+        #                                            coarse_catchments_fieldname,
+        #                                            connected_coarse_catchments_out_fieldname,
+        #                                            basin_catchment_numbers_fieldname,
+        #                                            river_directions_fieldname,
+        #                                            cumulative_flow_filename,
+        #                                            cumulative_flow_out_filename,
+        #                                            cumulative_flow_fieldname,
+        #                                            cumulative_flow_out_fieldname)
+        river_mouth_marking_driver.\
+        advanced_flow_to_rivermouth_calculation_driver(input_river_directions_filename=
+                                                       river_directions_filepath,
+                                                       input_flow_to_cell_filename=
+                                                       cumulative_flow_out_filename,
+                                                       output_flow_to_river_mouths_filename=
+                                                       cumulative_river_mouth_flow_out_filename,
+                                                       input_river_directions_fieldname=
+                                                       river_directions_fieldname,
+                                                       input_flow_to_cell_fieldname=
+                                                       cumulative_flow_out_fieldname,
+                                                       output_flow_to_river_mouths_fieldname=
+                                                       cumulative_river_mouth_flow_out_fieldname)
 
 def main():
     """Select the revelant runs to make

@@ -30,6 +30,29 @@ def advanced_river_mouth_marking_driver(input_river_directions_filename,
                                    field=rdirs,
                                    fieldname=output_river_directions_fieldname)
 
+def advanced_flow_to_rivermouth_calculation_driver(input_river_directions_filename,
+                                                   input_flow_to_cell_filename,
+                                                   output_flow_to_river_mouths_filename,
+                                                   input_river_directions_fieldname,
+                                                   input_flow_to_cell_fieldname,
+                                                   output_flow_to_river_mouths_fieldname):
+    rdirs_field = iodriver.advanced_field_loader(input_river_directions_filename,
+                                                 field_type="RiverDirections",
+                                                 fieldname=input_river_directions_fieldname)
+    flowtocell_field = iodriver.advanced_field_loader(input_flow_to_cell_filename,
+                                                      field_type="CumulativeFlow",
+                                                      fieldname=input_flow_to_cell_fieldname)
+    rivermouth_field = field.makeField(rdirs_field.get_river_mouths(),'Generic',
+                                       grid_type=rdirs_field.get_grid())
+    flowtorivermouths_field = field.makeField(flowtocell_field.\
+                                              find_cumulative_flow_at_outlets(rivermouth_field.\
+                                                                              get_data()),
+                                              field_type="Generic",
+                                              grid_type=rdirs_field.get_grid())
+    iodriver.advanced_field_writer(output_flow_to_river_mouths_filename,
+                                   field=flowtorivermouths_field,
+                                   fieldname=output_flow_to_river_mouths_fieldname)
+
 
 def main(rdirs_filepath,updatedrdirs_filepath,lsmask_filepath=None,
          flowtocell_filepath=None,rivermouths_filepath=None,

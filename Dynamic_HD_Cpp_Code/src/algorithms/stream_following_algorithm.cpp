@@ -54,5 +54,6 @@ coords* dir_based_rdirs_stream_following_algorithm::calculate_downstream_cell(co
 }
 
 bool dir_based_rdirs_stream_following_algorithm::is_outflow(coords* coords_in){
-  return ((*rdirs)(coords_in) == -1 || (*rdirs)(coords_in) == 0 || (*rdirs)(coords_in) == -2 );
+  return ((*rdirs)(coords_in) == -1 || (*rdirs)(coords_in) == 0 || (*rdirs)(coords_in) == -2 ||
+          (*rdirs)(coords_in) == 5);
 }

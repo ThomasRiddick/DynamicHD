@@ -1,6 +1,7 @@
 '''
 Routines to connect coarse catchments ending in a terminal lake to
-the catchment that lake overflows into when full
+the catchment that lake overflows into when full. Also reconnects
+cumulative flows
 Created on February 13, 2021
 
 @author: thomasriddick
@@ -166,23 +167,24 @@ def connect_coarse_lake_catchments_driver(coarse_catchments_filepath,
                                                          field_type='Generic',
                                                          fieldname=\
                                                          cumulative_flow_fieldname)
-    catchments = connect_coarse_lake_catchments(coarse_catchments,lake_centers,basin_catchment_numbers,
-                                                flood_next_cell_index_lat,flood_next_cell_index_lon,
-                                                flood_redirect_lat,flood_redirect_lon,
-                                                additional_flood_redirect_lat,
-                                                additional_flood_redirect_lon,
-                                                local_redirect,additional_local_redirect,
-                                                merge_types,river_directions,scale_factor,
-                                                cumulative_flow=(cumulative_flow if cumulative_flow_filepath
-                                                                 is not None else None),
-                                                correct_cumulative_flow=(True if cumulative_flow_filepath
-                                                                 is not None else False))
+    catchments, corrected_cumulative_flow = \
+        connect_coarse_lake_catchments(coarse_catchments,lake_centers,basin_catchment_numbers,
+                                       flood_next_cell_index_lat,flood_next_cell_index_lon,
+                                       flood_redirect_lat,flood_redirect_lon,
+                                       additional_flood_redirect_lat,
+                                       additional_flood_redirect_lon,
+                                       local_redirect,additional_local_redirect,
+                                       merge_types,river_directions,scale_factor,
+                                       cumulative_flow=(cumulative_flow if cumulative_flow_filepath
+                                                        is not None else None),
+                                       correct_cumulative_flow=(True if cumulative_flow_filepath
+                                                                is not None else False))
     iodriver.advanced_field_writer(connected_coarse_catchments_out_filename,
                                    field=catchments,
                                    fieldname=connected_coarse_catchments_out_fieldname)
     if cumulative_flow_filepath is not None:
         iodriver.advanced_field_writer(connected_cumulative_flow_out_filepath,
-                                       field=cumulative_flow,
+                                       field=corrected_cumulative_flow,
                                        fieldname=connected_cumulative_flow_out_fieldname)
 
 
@@ -293,14 +295,18 @@ def connect_coarse_lake_catchments(coarse_catchments,lake_centers,basin_catchmen
         while catchment_trees.all_catchments:
             upstream_catchments = catchment_trees.pop_leaves()
             for upstream_catchment in upstream_catchments:
-                if np.any(np.logical_and(river_directions.get_data() == -2,
+                if np.any(np.logical_and(np.logical_or(river_directions.get_data() == 5,
+                                                       river_directions.get_data() == -2),
                                          old_coarse_catchments.get_data() == upstream_catchment)):
                     upstream_catchment_center = \
-                        tuple(np.argwhere(np.logical_and(river_directions.get_data() == -2,
+                        tuple(np.argwhere(np.logical_and(np.logical_or(river_directions.get_data() == 5,
+                                                                       river_directions.get_data() == -2),
                                           old_coarse_catchments.get_data() == upstream_catchment))[0,:].tolist())
                     update_cumulative_flow(upstream_catchment_center,
                                            (sink_point_cumulative_flow_redirect_lat.get_data()[upstream_catchment_center],
                                             sink_point_cumulative_flow_redirect_lon.get_data()[upstream_catchment_center]),
                                            cumulative_flow,river_directions)
+        return field.Field(cc.renumber_catchments_by_size(coarse_catchments.get_data()),type="Generic",
+                       grid=coarse_catchments.get_grid()),cumulative_flow
     return field.Field(cc.renumber_catchments_by_size(coarse_catchments.get_data()),type="Generic",
-                       grid=coarse_catchments.get_grid())
+                       grid=coarse_catchments.get_grid()),None

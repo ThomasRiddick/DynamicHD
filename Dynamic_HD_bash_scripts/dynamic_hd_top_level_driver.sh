@@ -31,20 +31,25 @@ perl -MCwd -e 'print Cwd::abs_path($ARGV[0]),qq<\n>' $relative_path
 }
 
 compile_only=false
+no_compile=false
 case ${1} in
 	-c | --compile)
-	compile_only=true
-	first_timestep=true
-	shift
-	ancillary_data_directory=${1}
-	if [[ $# -ne 1 ]]; then
-		echo "Wrong number of positional arguments ($# supplied)," 1>&2
-		echo "script only takes 1 in compilation mode"	1>&2
-	exit 1
-fi
-	;;
+		compile_only=true
+		first_timestep=true
+		shift
+		ancillary_data_directory=${1}
+		if [[ $# -ne 1 ]]; then
+			echo "Wrong number of positional arguments ($# supplied)," 1>&2
+			echo "script only takes 1 in compilation mode"	1>&2
+			exit 1
+		fi
+		;;
+	-n | --no-compile)
+		no_compile=true
+		shift
+		;;
 	*)
-  ;;
+  		;;
 esac
 
 if ! ${compile_only} ; then
@@ -258,6 +263,11 @@ else
 	compilation_required=false
 fi
 
+#Switch off compilation if no_compile option selected
+if $no_compile ; then
+	compilation_required=false
+fi
+
 #Setup conda environment
 echo "Setting up environment"
 if ! $no_modules ; then
@@ -296,70 +306,8 @@ fi
 #Setup correct python path
 export PYTHONPATH=${source_directory}/Dynamic_HD_Scripts:${PYTHONPATH}
 
-#Compile C++ and Fortran Code if this is the first timestep
-if $compilation_required ; then
-	echo "Compiling C++ code" 1>&2
-	mkdir -p ${source_directory}/Dynamic_HD_Cpp_Code/Release
-	mkdir -p ${source_directory}/Dynamic_HD_Cpp_Code/Release/src
-	mkdir -p ${source_directory}/Dynamic_HD_Cpp_Code/Release/src/base
-	mkdir -p ${source_directory}/Dynamic_HD_Cpp_Code/Release/src/algorithms
-	mkdir -p ${source_directory}/Dynamic_HD_Cpp_Code/Release/src/drivers
-	mkdir -p ${source_directory}/Dynamic_HD_Cpp_Code/Release/src/testing
-	cd ${source_directory}/Dynamic_HD_Cpp_Code/Release
-	make -f ../makefile clean
-	make -f ../makefile compile_only
-	cd - 2>&1 > /dev/null
-	echo "Compiling Fortran code" 1>&2
-	mkdir -p ${source_directory}/Dynamic_HD_Fortran_Code/Release
-	mkdir -p ${source_directory}/Dynamic_HD_Fortran_Code/Release/src
-	cd ${source_directory}/Dynamic_HD_Fortran_Code/Release
-	make -f ../makefile clean
-	make -f ../makefile compile_only
-	cd - 2>&1 > /dev/null
-fi
-
-# Clean shared libraries
-if $compilation_required; then
-	cd ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts
-		make -f makefile clean
-	cd - 2>&1 > /dev/null
-fi
-
-if ! ${compile_only} ; then
-	# Clean up paragen working directory if any
-	if [[ -d "${working_directory}/paragen" ]]; then
-		cd ${working_directory}/paragen
-		rm -f paragen.inp soil_partab.txt slope.dat riv_vel.dat riv_n.dat riv_k.dat over_vel.dat over_n.dat over_k.dat || true
-		rm -f hdpara.srv global.inp ddir.inp bas_k.dat || true
-		cd - 2>&1 > /dev/null
-		rmdir ${working_directory}/paragen
-	fi
-fi
-
-#Setup cython interface between python and C++
-if $compilation_required; then
-	cd ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts
-	echo "Compiling Cython Modules" 1>&2
-	python2.7 ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/setup_fill_sinks.py clean --all
-	python2.7 ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/setup_fill_sinks.py build_ext --inplace -f
-	cd - 2>&1 > /dev/null
-fi
-
-#Prepare bin directory for python code and bash code
-if $compilation_required; then
-	mkdir -p ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/bin
-	mkdir -p ${source_directory}/Dynamic_HD_bash_scripts/bin
-fi
-
-#Compile fortran code used called shell script wrappers
-if $compilation_required; then
-	if [[ -e "${source_directory}/Dynamic_HD_bash_scripts/parameter_generation_scripts/.git" ]]; then
-		echo "Compiling Fortran code called from shell script wrappers"
-		${source_directory}/Dynamic_HD_bash_scripts/compile_paragen_and_hdfile.sh ${source_directory}/Dynamic_HD_bash_scripts/bin ${source_directory}/Dynamic_HD_bash_scripts/parameter_generation_scripts/fortran ${source_directory}/Dynamic_HD_bash_scripts/parameter_generation_scripts/fortran/paragen.f paragen
-	else
-		echo "No parameter_generation_scripts submodule; this is an error if parameter generation is required but otherwise is not"
-	fi
-fi
+#Call compilation script
+${source_directory}/Dynamic_HD_bash_scripts/compile_dynamic_hd_code.sh ${compilation_required} ${compile_only} ${source_directory} ${working_directory} true "compile_only"
 
 if ! ${compile_only} ; then
 	#Run
