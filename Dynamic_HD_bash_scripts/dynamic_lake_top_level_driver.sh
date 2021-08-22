@@ -313,7 +313,7 @@ fi
 
 #Run
 echo "Running Dynamic HD Code" 1>&2
-python ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/dynamic_lake_production_run_driver.py ${input_orography_filepath} ${input_ls_mask_filepath} ${input_lake_volumes_filepath} ${present_day_base_orography_filepath} ${glacier_mask_filepath} ${working_directory}/hdpara_out_temp.nc ${output_lakepara_filepath} ${ancillary_data_directory} ${working_directory} ${output_lakestart_filepath} ${output_hdstart_argument}
+python ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/dynamic_hd_and_dynamic_lake_drivers/dynamic_lake_production_run_driver.py ${input_orography_filepath} ${input_ls_mask_filepath} ${input_lake_volumes_filepath} ${present_day_base_orography_filepath} ${glacier_mask_filepath} ${working_directory}/hdpara_out_temp.nc ${output_lakepara_filepath} ${ancillary_data_directory} ${working_directory} ${output_lakestart_filepath} ${output_hdstart_argument}
 
 #Change lake centers FDIR from 5 to -2
 ncap2 -s 'where(FDIR == 5.0) FDIR=-2.0' hdpara_out_temp.nc ${output_hdpara_filepath}
