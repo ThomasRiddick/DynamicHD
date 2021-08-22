@@ -203,4 +203,4 @@ fi
 
 #Run
 echo "Running HD Command Line Operator Code" 1>&2
-python2.7 ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/hd_operator_driver.py ${python_script_arguments}
+python ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/hd_operator_driver.py ${python_script_arguments}
