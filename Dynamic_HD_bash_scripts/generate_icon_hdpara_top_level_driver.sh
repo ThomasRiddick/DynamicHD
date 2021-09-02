@@ -323,7 +323,7 @@ while [[ $(grep -c "[0-9]" "${ten_minute_catchments_filepath%%.nc}_loops.log") -
 	rm -f ten_minute_catchments_temp.nc
 	rm -f ten_minute_accumulated_flow_temp.nc
 	rm -f ten_minute_catchments_temp_loops.log
-	python ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/create_icon_coarse_river_directions_driver.py -r ${ten_minute_river_direction_filepath} downscaled_ls_mask_temp_inverted.nc dummy.nc ${ten_minute_catchments_filepath} ${ten_minute_accumulated_flow_filepath} ${python_config_filepath} ${working_directory}
+	python ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/command_line_drivers/create_icon_coarse_river_directions_driver.py -r ${ten_minute_river_direction_filepath} downscaled_ls_mask_temp_inverted.nc dummy.nc ${ten_minute_catchments_filepath} ${ten_minute_accumulated_flow_filepath} ${python_config_filepath} ${working_directory}
 done
  ${source_directory}/Dynamic_HD_Fortran_Code/Release/COTAT_Plus_LatLon_To_Icon_Fortran_Exec ${ten_minute_river_direction_filepath}  ${ten_minute_accumulated_flow_filepath} ${grid_file} ${icon_intermediate_rdirs_filepath} "rdirs" "acc" "rdirs" ${cotat_params_file}
   ${source_directory}/Dynamic_HD_Cpp_Code/Release/Compute_Catchments_SI_Exec ${icon_intermediate_rdirs_filepath} ${icon_intermediate_catchments_filepath} ${grid_file} "rdirs" 1 ${icon_intermediate_catchments_filepath%%.nc}_loops_log.log 1
