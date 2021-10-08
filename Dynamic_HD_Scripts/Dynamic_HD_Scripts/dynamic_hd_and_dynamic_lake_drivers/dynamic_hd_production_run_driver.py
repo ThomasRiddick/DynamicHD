@@ -601,7 +601,6 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         orography_corrections_10min_fieldname = (orography_corrections_10min_fieldname if
                                                  orography_corrections_10min_fieldname else 'field_value')
         if use_grid_info:
-            print(orography_corrections_10min_fieldname)
             orography_corrections_10min =  iodriver.advanced_field_loader(orography_corrections_filename,
                                                                           field_type='Orography',
                                                                           fieldname=

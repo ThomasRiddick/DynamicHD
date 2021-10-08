@@ -21,6 +21,9 @@ from Dynamic_HD_Scripts.tools.cotat_plus_driver import run_cotat_plus
 from Dynamic_HD_Scripts.tools import dynamic_lake_operators
 from Dynamic_HD_Scripts.tools import compute_catchments as comp_catchs
 from Dynamic_HD_Scripts.tools.flow_to_grid_cell import create_hypothetical_river_paths_map
+from Dynamic_HD_Scripts.tools import extract_lake_volumes
+from Dynamic_HD_Scripts.tools import connect_coarse_lake_catchments as cclc
+from Dynamic_HD_Scripts.tools import river_mouth_marking_driver
 from Dynamic_HD_Scripts.utilities import utilities
 from Dynamic_HD_Scripts.dynamic_hd_and_dynamic_lake_drivers \
     import dynamic_hd_driver as dyn_hd_dr
@@ -110,6 +113,18 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         shutil.move(path.join(self.working_directory_path,
                              "basin_catchment_numbers_temp.nc"),
                     path.join(dest,"basin_catchment_numbers.nc"))
+        shutil.move(path.join(self.working_directory_path,
+                             "10min_lake_volumes.nc"),
+                    path.join(dest,"10min_lake_volumes.nc"))
+        shutil.move(path.join(self.working_directory_path,
+                             "30min_flowtocell_connected.nc"),
+                    path.join(dest,"30min_flowtocell_connected.nc"))
+        shutil.move(path.join(self.working_directory_path,
+                             "30min_connected_catchments.nc"),
+                    path.join(dest,"30min_connected_catchments.nc"))
+        shutil.move(path.join(self.working_directory_path,
+                             "30min_flowtorivermouths_connected.nc"),
+                    path.join(dest,"30min_flowtorivermouths_connected.nc"))
 
     def clean_work_dir(self):
         os.remove(path.join(self.working_directory_path,"30minute_river_dirs_temp.nc"))
@@ -894,6 +909,54 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         iodriver.advanced_field_writer(temp_basin_catchment_numbers_filename,
                                        basin_catchment_numbers,
                                        fieldname="basin_catchment_numbers")
+        #Run a couple of extra diagnostic -- needs further work to integrate
+        extract_lake_volumes.\
+            lake_volume_extraction_driver(self.output_lakeparas_filepath,
+                                          temp_basin_catchment_numbers_filename,
+                                          path.join(self.working_directory_path,
+                                                    "10min_lake_volumes.nc"))
+        river_directions_filepath = path.join(self.working_directory_path,"30min_rdirs.nc")
+        coarse_catchments_filepath = path.join(self.working_directory_path,"30min_catchments.nc")
+        coarse_catchments_fieldname = "catchments"
+        connected_coarse_catchments_out_filename = path.join(self.working_directory_path,
+                                                             "30min_connected_catchments.nc")
+        connected_coarse_catchments_out_fieldname = "catchments"
+        river_directions_fieldname = "rdirs"
+        cumulative_flow_filename=path.join(self.working_directory_path,
+                                           "30min_flowtocell.nc")
+        cumulative_flow_fieldname="cumulative_flow"
+        cumulative_flow_out_filename=path.join(self.working_directory_path,
+                                               "30min_flowtocell_connected.nc")
+        cumulative_flow_out_fieldname="cumulative_flow"
+        cumulative_river_mouth_flow_out_filename=path.join(self.working_directory_path,
+                                                           "30min_flowtorivermouths_connected.nc")
+        cumulative_river_mouth_flow_out_fieldname="cumulative_flow_to_ocean"
+        cclc.connect_coarse_lake_catchments_driver(coarse_catchments_filepath,
+                                                   self.output_lakeparas_filepath,
+                                                   temp_basin_catchment_numbers_filename,
+                                                   river_directions_filepath,
+                                                   connected_coarse_catchments_out_filename,
+                                                   coarse_catchments_fieldname,
+                                                   connected_coarse_catchments_out_fieldname,
+                                                   "basin_catchment_numbers",
+                                                   river_directions_fieldname,
+                                                   cumulative_flow_filename,
+                                                   cumulative_flow_out_filename,
+                                                   cumulative_flow_fieldname,
+                                                   cumulative_flow_out_fieldname)
+        river_mouth_marking_driver.\
+        advanced_flow_to_rivermouth_calculation_driver(input_river_directions_filename=
+                                                       river_directions_filepath,
+                                                       input_flow_to_cell_filename=
+                                                       cumulative_flow_out_filename,
+                                                       output_flow_to_river_mouths_filename=
+                                                       cumulative_river_mouth_flow_out_filename,
+                                                       input_river_directions_fieldname=
+                                                       river_directions_fieldname,
+                                                       input_flow_to_cell_fieldname=
+                                                       cumulative_flow_out_fieldname,
+                                                       output_flow_to_river_mouths_fieldname=
+                                                       cumulative_river_mouth_flow_out_fieldname)
         #Redistribute water
         if print_timing_info:
             time_before_water_redistribution = timer()

@@ -3,6 +3,7 @@ import argparse
 import shutil
 import os
 import warnings
+import pathlib
 from os.path import join
 from datetime import datetime
 from Dynamic_HD_Scripts.dynamic_hd_and_dynamic_lake_drivers.dynamic_lake_production_run_driver \
@@ -11,6 +12,8 @@ from Dynamic_HD_Scripts.dynamic_hd_and_dynamic_lake_drivers.dynamic_hd_productio
     import Dynamic_HD_Production_Run_Drivers
 from Dynamic_HD_Scripts.dynamic_hd_and_dynamic_lake_drivers.dynamic_lake_corrections_production_driver \
     import Dynamic_Lake_Correction_Production_Run_Drivers
+from Dynamic_HD_Scripts.dynamic_hd_and_dynamic_lake_drivers.dynamic_lake_corrections_production_driver \
+    import CorrectionTypes
 
 def replace_rightmost(s,oldvalue,newvalue):
     string_as_list = s.rsplit(oldvalue,1)
@@ -21,10 +24,11 @@ class Dynamic_Lake_Analysis_Run_Framework(object):
     ancillary_data_directory_match = re.compile(r"ancillary data directory:\s*(\S*)")
     present_day_base_orography_filepath_match = re.compile(r"present day base orography file:\s*(\S*)")
     base_corrections_filepath_match = re.compile(r"base corrections file:\s*(\S*)")
+    base_true_sinks_filepath_match = re.compile(r"base true sinks file:\s*(\S*)")
     orography_filepath_template_match = re.compile(r"orography file template:\s*(\S*)")
     landsea_mask_filepath_template_match = re.compile(r"landsea mask file template:\s*(\S*)")
     glacier_mask_filepath_template_match = re.compile(r"glacier mask file template:\s*(\S*)")
-    version_match = re.compile(r"Version\s(\d+)\s-")
+    version_match = re.compile(r"Version\s*(\d+)\s*-")
 
     def __init__(self,
                  base_directory,
@@ -32,6 +36,7 @@ class Dynamic_Lake_Analysis_Run_Framework(object):
                  ancillary_data_directory=None,
                  present_day_base_orography_filepath=None,
                  base_corrections_filepath=None,
+                 base_true_sinks_filepath=None,
                  orography_filepath_template=None,
                  landsea_mask_filepath_template=None,
                  glacier_mask_filepath_template=None,
@@ -80,6 +85,16 @@ class Dynamic_Lake_Analysis_Run_Framework(object):
         else:
             self.base_corrections_filepath =\
                 self.read_info(self.base_corrections_filepath_match,
+                               self.base_directory)
+        if base_true_sinks_filepath is not None:
+            self.base_true_sinks_filepath = base_true_sinks_filepath
+            if os.path.isfile(join(base_directory,"analysis_info.txt")):
+                self.replace_info(self.base_true_sinks_filepath_match,
+                                  base_true_sinks_filepath,
+                                  self.base_directory)
+        else:
+            self.base_true_sinks_filepath =\
+                self.read_info(self.base_true_sinks_filepath_match,
                                self.base_directory)
         if orography_filepath_template is not None:
             self.orography_filepath_template = orography_filepath_template
@@ -138,7 +153,8 @@ class Dynamic_Lake_Analysis_Run_Framework(object):
                                                                    output_hdstart_filepath=None,
                                                                    present_day_base_orography_filepath=
                                                                    self.present_day_base_orography_filepath,
-                                                                   glacier_mask_filepath=None)
+                                                                   glacier_mask_filepath=None,
+                                                                   non_standard_orog_correction_filename=None)
         self.dyn_hd_driver = Dynamic_HD_Production_Run_Drivers(input_orography_filepath=None,
                                                                input_ls_mask_filepath=None,
                                                                output_hdparas_filepath=None,
@@ -152,12 +168,13 @@ class Dynamic_Lake_Analysis_Run_Framework(object):
                                                                glacier_mask_filepath=None,
                                                                non_standard_orog_correction_filename=None)
         self.dyn_lake_correction_driver = \
-            Dynamic_Lake_Correction_Production_Run_Drivers()
+            Dynamic_Lake_Correction_Production_Run_Drivers(working_directory=join(self.base_directory,
+                                                                                  "corrections","work"))
         if self.setup_directory_structure:
-            self.corrections_version = 1
+            self.corrections_version = 0
         else:
             #Version should be in order but don't assume this
-            versions_temp = 0
+            version_temp = 0
             self.corrections_version = 0
             with open(join(base_directory,"versions.txt"),"r") as info_txt:
                 for line in info_txt:
@@ -165,7 +182,11 @@ class Dynamic_Lake_Analysis_Run_Framework(object):
                     if match:
                         version_temp = int(match.group(1))
                         if version_temp > self.corrections_version:
-                            self.corrections_version = versions_temp
+                            self.corrections_version = version_temp
+            self.corrections_file_for_current_version = join(self.corrections_directory,
+                                                             "correction_fields",
+                                                             "correction_field_version_{}.nc".\
+                                                             format(self.corrections_version))
 
     @staticmethod
     def read_info(required_match,base_directory):
@@ -220,14 +241,90 @@ class Dynamic_Lake_Analysis_Run_Framework(object):
                                       dates_to_run_in=None)
 
     def run_corrections_generation(self):
-        raise RuntimeError("Not yet operational!!!")
-        if self.apply_orography_corrections:
-            self.dyn_lake_correction_driver.apply_preliminary_tweaks()
+        if (not self.generate_lake_orography_corrections and
+            not self.apply_orography_tweaks):
+            warnings.warn("Running correction generation with invalid flags; "
+                          "function will have no effect")
+            return
+        self.corrections_version += 1
+        self.corrections_file_for_current_version = join(self.corrections_directory,
+                                                         "correction_fields",
+                                                         "correction_field_version_{}.nc".\
+                                                         format(self.corrections_version))
+        if os.path.exists(join(self.corrections_directory,"correction_sets",
+                               "corrections_set_version_{}.txt".\
+                               format(self.corrections_version))):
+            raise RuntimeError("Versioning error - next version number already exists!")
+        with open(join(self.corrections_directory,
+                       "working_correction_set.txt"),"r") as corrs_txt:
+            corrs_txt_data = corrs_txt.read()
+        with open(join(self.corrections_directory,"correction_sets",
+                       "corrections_set_version_{}.txt".\
+                       format(self.corrections_version)),"w") as corrs_txt_copy:
+            corrs_txt_copy.write("# Version {} - {}\n".format(self.corrections_version,
+                                                              datetime.now()))
+            corrs_txt_copy.write(corrs_txt_data)
+        with open(join(self.corrections_directory,
+                       "working_true_sinks_set.txt"),"r") as true_sinks_txt:
+            true_sinks_txt_data = true_sinks_txt.read()
+        with open(join(self.corrections_directory,"true_sinks_sets",
+                       "true_sinks_set_version_{}.txt".\
+                       format(self.corrections_version)),"w") as true_sinks_txt_copy:
+            true_sinks_txt_copy.write("# Version {} - {}\n".format(self.corrections_version,
+                                                                   datetime.now()))
+            true_sinks_txt_copy.write(true_sinks_txt_data)
+        with open(join(self.base_directory,"versions.txt"),"a") as versions_txt:
+            versions_txt.write("Version {} - {}\n".format(self.corrections_version,
+                                                          datetime.now()))
+        intermediate_processed_orography_corrections_filename = \
+                join(self.corrections_directory,"work",
+                     "intermediary_processed_orography_corrections.nc")
+        processed_orography_corrections_with_final_adjustments_filename = \
+                join(self.corrections_directory,"work",
+                     "processed_orography_corrections_with_final_adjustments.nc")
+        self.dyn_lake_correction_driver.clean_work_dir(partial_clean=False)
+        if self.generate_lake_orography_corrections:
+            unprocessed_orography_corrections_with_initial_adjustments_filename = \
+                join(self.corrections_directory,"work",
+                     "unprocessed_orography_with_initial_adjustments.nc")
+            true_sinks_filename = join(self.corrections_directory,"true_sinks_fields",
+                                       "true_sinks_field_version_{}.nc".\
+                                       format(self.corrections_version))
+            if os.path.exists(unprocessed_orography_corrections_with_initial_adjustments_filename):
+                os.remove(unprocessed_orography_corrections_with_initial_adjustments_filename)
+            if os.path.exists(intermediate_processed_orography_corrections_filename):
+                os.remove(intermediate_processed_orography_corrections_filename)
+            self.dyn_lake_correction_driver.prepare_true_sinks(self.base_true_sinks_filepath,
+                                                               true_sinks_filename,
+                                                               join(self.corrections_directory,
+                                                                    "working_true_sinks_set.txt"))
+            self.dyn_lake_correction_driver.apply_tweaks(self.base_corrections_filepath,
+                    unprocessed_orography_corrections_with_initial_adjustments_filename,
+                    join(self.corrections_directory,
+                        "working_correction_set.txt"),
+                    CorrectionTypes.PRELIMINARY)
             self.dyn_lake_correction_driver.\
-                no_intermediaries_lake_corrections_driver()
-            self.dyn_lake_correction_driver.apply_final_tweaks()
+                no_intermediaries_lake_corrections_driver(version=self.corrections_version,
+                    original_orog_corrections_filename=
+                    unprocessed_orography_corrections_with_initial_adjustments_filename,
+                    new_orography_corrections_filename=
+                    intermediate_processed_orography_corrections_filename,
+                    true_sinks_filename=true_sinks_filename)
+            self.dyn_lake_correction_driver.\
+                apply_tweaks(intermediate_processed_orography_corrections_filename,
+                             self.corrections_file_for_current_version,
+                             join(self.corrections_directory,
+                                  "working_correction_set.txt"),
+                             CorrectionTypes.FINAL)
+            self.dyn_lake_correction_driver.clean_work_dir(partial_clean=True)
         elif self.apply_orography_tweaks:
-            self.dyn_lake_correction_driver.apply_final_tweaks()
+            self.dyn_lake_correction_driver.apply_tweaks(intermediate_processed_orography_corrections_filename,
+                                                         self.corrections_file_for_current_version,
+                                                         join(self.corrections_directory,
+                                                              "working_correction_set.txt"),
+                                                         CorrectionTypes.FINAL)
+            self.dyn_lake_correction_driver.clean_work_dir(partial_clean=True)
+
 
     def run_slice(self,slice_time,force_run_all=False):
         slice_label = "version_{}_date_{}".format(self.corrections_version,
@@ -260,7 +357,8 @@ class Dynamic_Lake_Analysis_Run_Framework(object):
                      "results","hdstart_{}.nc".format(slice_label))
             self.dyn_lake_driver.glacier_mask_filename=glacier_mask_filepath
             self.dyn_lake_driver.non_standard_orog_correction_filename=\
-                self.base_corrections_filepath
+                (self.base_corrections_filepath if self.corrections_version == 0 else
+                 self.corrections_file_for_current_version)
             os.mkdir(join(self.lakes_directory,
                           "results","diag_{}".format(slice_label)))
             self.dyn_lake_driver.no_intermediaries_dynamic_lake_driver()
@@ -278,7 +376,8 @@ class Dynamic_Lake_Analysis_Run_Framework(object):
                              "results","hdstart_{}.nc".format(slice_label))
             self.dyn_hd_driver.glacier_mask_filename=glacier_mask_filepath
             self.dyn_hd_driver.non_standard_orog_correction_filename=\
-                self.base_corrections_filepath
+                (self.base_corrections_filepath if self.corrections_version == 0 else
+                 self.corrections_file_for_current_version)
             os.mkdir(join(self.rivers_directory,
                           "results","diag_{}".format(slice_label)))
             self.dyn_hd_driver.\
@@ -338,11 +437,15 @@ class Dynamic_Lake_Analysis_Run_Framework(object):
         os.mkdir(join(self.rivers_directory,"work"))
         os.mkdir(join(self.rivers_directory,"results"))
         os.mkdir(self.corrections_directory)
+        os.mkdir(join(self.corrections_directory,"work"))
         os.mkdir(join(self.corrections_directory,"correction_sets"))
         os.mkdir(join(self.corrections_directory,"correction_fields"))
+        os.mkdir(join(self.corrections_directory,"true_sinks_sets"))
+        os.mkdir(join(self.corrections_directory,"true_sinks_fields"))
         with open(join(self.base_directory,"analysis_info.txt"),"w") as info_txt:
             info_txt.write("Creation date: {}\n".format(datetime.now()))
             info_txt.write("base corrections file: {}\n".format(self.base_corrections_filepath))
+            info_txt.write("base true sinks file: {}\n".format(self.base_true_sinks_filepath))
             info_txt.write("ancillary data directory: {}\n".format(self.ancillary_data_directory))
             info_txt.write("present day base orography file: {}\n".\
                            format(self.present_day_base_orography_filepath))
@@ -353,10 +456,13 @@ class Dynamic_Lake_Analysis_Run_Framework(object):
             info_txt.write("glacier mask file template: {}\n".\
                            format(self.glacier_mask_filepath_template))
         with open(join(self.base_directory,"versions.txt"),"w") as versions_txt:
-            versions_txt.write("Version 1 - {}\n".format(datetime.now()))
+            versions_txt.write("Version 0 - {}\n".format(datetime.now()))
         with open(join(self.corrections_directory,
-                       "working_correction_set.txt"),"w") as corr_text:
-            corr_text.write("# Version 1\n")
+                       "working_correction_set.txt"),"w") as corrections_txt:
+            corrections_txt.write("# lat, lon, height")
+        with open(join(self.corrections_directory,
+                       "working_true_sinks_set.txt"),"w") as true_sinks_txt:
+            true_sinks_txt.write("# lat, lon, height")
 
     def clear_lake_results(self):
         for file in [ file for file in
@@ -414,6 +520,7 @@ def parse_arguments():
     parser.add_argument("-G",'--glacier-mask-filepath-template',
                         type=str)
     parser.add_argument("-c",'--base-corrections-filepath',type=str)
+    parser.add_argument("-u",'--base-true-sinks-filepath',type=str)
     parser.add_argument('-g','--generate-lake-orography-corrections',
                         action="store_true")
     parser.add_argument('-t','--apply-orography-tweaks',action="store_true")
@@ -435,13 +542,15 @@ def parse_arguments():
     parser.parse_args(namespace=args)
     if args.setup_directory_structure and (args.ancillary_data_directory is None or
                                            args.base_corrections_filepath is None or
+                                           args.base_true_sinks_filepath is None or
                                            args.present_day_base_orography_filepath is None or
                                            args.orography_filepath_template is None or
                                            args.landsea_mask_filepath_template is None or
                                            args.glacier_mask_filepath_template is None):
         parser.error("Option -s --setup-directory-structure requires "
                      "options -A --ancillary-data-directory, "
-                     "-C --base-corrections-filepath, "
+                     "-c --base-corrections-filepath, "
+                     "-u --base-true-sinks-filepath, "
                      "-P --present-day-base-orography-filepath, "
                      "-T --orography-filepath-template, "
                      "-L --landsea-mask-filepath-template and "
