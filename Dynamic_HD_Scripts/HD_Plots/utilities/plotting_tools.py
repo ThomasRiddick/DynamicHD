@@ -16,13 +16,25 @@ from Dynamic_HD_Scripts.base import field
 class OrogCoordFormatter(object):
     """Class that creates an object to call to give cursor position)"""
 
-    def __init__(self,xoffset,yoffset):
+    def __init__(self,xoffset,yoffset,add_latlon=False,
+                 scale_factor=1):
         self.xoffset = xoffset
         self.yoffset = yoffset
+        self.add_latlon = add_latlon
+        self.scale_factor = scale_factor
 
     def __call__(self,xpos,ypos):
-        return "Array Indices: x= {0} y= {1}".format(int(round(xpos+self.xoffset)),
-                                                     int(round(ypos+self.yoffset)))
+        if not self.add_latlon:
+            return "Array Indices: x= {0} y= {1}".format(int(round(xpos+self.xoffset)),
+                                                         int(round(ypos+self.yoffset)))
+        else:
+            return "Array Indices: x= {0} y= {1}, {2} {3}".\
+                format(int(round(xpos+self.xoffset)),
+                       int(round(ypos+self.yoffset)),
+                       calculate_lon_label(xpos,self.xoffset/self.scale_factor,
+                                           scale_factor=self.scale_factor).replace('$^{\circ}$',""),
+                       calculate_lat_label(ypos,self.yoffset/self.scale_factor,
+                                           scale_factor=self.scale_factor).replace('$^{\circ}$',""))
 
 class LonAxisFormatter(object):
     """Class that creates an object to call to give longitude axis tick labels"""

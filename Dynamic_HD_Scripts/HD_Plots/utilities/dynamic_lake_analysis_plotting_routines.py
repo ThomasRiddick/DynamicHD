@@ -54,7 +54,7 @@ class ZoomSettings():
 class InteractiveTimeslicePlots:
 
     zoom_button_colors = itertools.cycle(['grey','lightgray'])
-    height_range_text_match = re.compile("^\s*([0-9]*)\s*,\s*([0-9]*)\s*$")
+    height_range_text_match = re.compile("^\s*(-?[0-9]*)\s*,\s*(-?[0-9]*)\s*$")
 
     def __init__(self,colors,
                  configuration,
@@ -653,7 +653,9 @@ class InteractiveTimeslicePlots:
             pts.OrogCoordFormatter(xoffset=
                                    self.zoom_settings.zoomed_section_bounds["min_lon"]*scale_factor,
                                    yoffset=
-                                   self.zoom_settings.zoomed_section_bounds["min_lat"]*scale_factor)
+                                   self.zoom_settings.zoomed_section_bounds["min_lat"]*scale_factor,
+                                   add_latlon=True,
+                                   scale_factor=scale_factor)
 
 def find_highest_version(base_dir_template):
     split_string = base_dir_template.rsplit("VERSION_NUMBER",1)
