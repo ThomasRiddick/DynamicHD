@@ -278,12 +278,13 @@ function write_river_initial_values(hd_start_filepath::AbstractString,
   write_fields(river_parameters.grid,fields_to_write,hd_start_filepath,dims)
 end
 
-function load_lake_parameters(lake_para_filepath::AbstractString,grid::Grid,hd_grid::Grid)
+function load_lake_parameters(lake_para_filepath::AbstractString,grid::Grid,hd_grid::Grid,
+                              surface_model_grid::Grid)
   println("Loading: " * lake_para_filepath)
   file_handle::NcFile = NetCDF.open(lake_para_filepath)
   try
     grid_specific_lake_parameters::GridSpecificLakeParameters =
-      load_grid_specific_lake_parameters(file_handle,grid)
+      load_grid_specific_lake_parameters(file_handle,grid,surface_model_grid)
     lake_centers::Field{Bool} =
       load_field(file_handle,grid,"lake_centers",Bool)
     connection_volume_thresholds::Field{Float64} =
@@ -308,6 +309,7 @@ function load_lake_parameters(lake_para_filepath::AbstractString,grid::Grid,hd_g
                           additional_flood_local_redirect,
                           additional_connect_local_redirect,
                           merge_points,grid,hd_grid,
+                          surface_model_grid,
                           grid_specific_lake_parameters)
   finally
     NetCDF.close(file_handle)
@@ -320,7 +322,8 @@ function write_river_flow_field(river_parameters::RiverParameters,river_flow_fie
   write_field(river_parameters.grid,variable_name,river_flow_field,filepath)
 end
 
-function load_grid_specific_lake_parameters(file_handle::NcFile,grid::LatLonGrid)
+function load_grid_specific_lake_parameters(file_handle::NcFile,grid::LatLonGrid,
+                                            surface_model_grid::LatLonGrid)
   flood_next_cell_lat_index::Field{Int64} =
       load_field(file_handle,grid,"flood_next_cell_lat_index",Int64)
   flood_next_cell_lon_index::Field{Int64} =
@@ -353,6 +356,10 @@ function load_grid_specific_lake_parameters(file_handle::NcFile,grid::LatLonGrid
       load_field(file_handle,grid,"additional_connect_redirect_lat_index",Int64)
   additional_connect_redirect_lon_index::Field{Int64} =
       load_field(file_handle,grid,"additional_connect_redirect_lon_index",Int64)
+  corresponding_surface_cell_lat_index::Field{Int64} =
+      load_field(file_handle,surface_model_grid,"corresponding_surface_cell_lat_index",Int64)
+  corresponding_surface_cell_lon_index::Field{Int64} =
+      load_field(file_handle,surface_model_grid,"corresponding_surface_cell_lon_index",Int64)
   add_offset(flood_next_cell_lat_index,1,Int64[-1])
   add_offset(flood_next_cell_lon_index,1,Int64[-1])
   add_offset(connect_next_cell_lat_index,1,Int64[-1])
@@ -369,6 +376,8 @@ function load_grid_specific_lake_parameters(file_handle::NcFile,grid::LatLonGrid
   add_offset(additional_flood_redirect_lon_index,1,Int64[-1])
   add_offset(additional_connect_redirect_lat_index,1,Int64[-1])
   add_offset(additional_connect_redirect_lon_index,1,Int64[-1])
+  add_offset(corresponding_surface_cell_lat_index,1,Int64[-1])
+  add_offset(corresponding_surface_cell_lon_index,1,Int64[-1])
   return LatLonLakeParameters(flood_next_cell_lat_index,
                               flood_next_cell_lon_index,
                               connect_next_cell_lat_index,
@@ -384,10 +393,13 @@ function load_grid_specific_lake_parameters(file_handle::NcFile,grid::LatLonGrid
                               additional_flood_redirect_lat_index,
                               additional_flood_redirect_lon_index,
                               additional_connect_redirect_lat_index,
-                              additional_connect_redirect_lon_index)
+                              additional_connect_redirect_lon_index,
+                              corresponding_surface_cell_lat_index,
+                              corresponding_surface_cell_lon_index)
 end
 
-function load_grid_specific_lake_parameters(file_handle::NcFile,grid::UnstructuredGrid)
+function load_grid_specific_lake_parameters(file_handle::NcFile,grid::UnstructuredGrid,
+                                            surface_model_grid::UnstructuredGrid)
   flood_next_cell_index::Field{Int64} =
       load_field(file_handle,grid,"flood_next_cell_index",Int64)
   connect_next_cell_index::Field{Int64} =
@@ -404,6 +416,8 @@ function load_grid_specific_lake_parameters(file_handle::NcFile,grid::Unstructur
       load_field(file_handle,grid,"additional_flood_redirect_index",Int64)
   additional_connect_redirect_index::Field{Int64} =
       load_field(file_handle,grid,"additional_connect_redirect_index",Int64)
+  corresponding_surface_cell_index::Field{Int64} =
+      load_field(file_handle,surface_model_grid,"corresponding_surface_cell_index",Int64)
   return UnstructuredLakeParameters(flood_next_cell_index,
                                     connect_next_cell_index,
                                     flood_force_merge_index,
@@ -411,7 +425,8 @@ function load_grid_specific_lake_parameters(file_handle::NcFile,grid::Unstructur
                                     flood_redirect_index,
                                     connect_redirect_index,
                                     additional_flood_redirect_index,
-                                    additional_connect_redirect_index)
+                                    additional_connect_redirect_index,
+                                    corresponding_surface_cell_index)
 end
 
 function load_lake_initial_values(lake_start_filepath::AbstractString,

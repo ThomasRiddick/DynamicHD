@@ -50,6 +50,7 @@ function main()
   clat,clon,clat_bounds,clon_bounds = get_additional_grid_information(args["hd-para-file"])
   grid = UnstructuredGrid(ncells,clat,clon,clat_bounds,clon_bounds)
   lake_grid = UnstructuredGrid(ncells,clat,clon,clat_bounds,clon_bounds)
+  surface_model_grid = UnstructuredGrid(ncells,clat,clon,clat_bounds,clon_bounds)
   river_parameters = load_river_parameters(args["hd-para-file"],grid;
                                            day_length=86400.0,step_length=step_length)
   local drainages::Array{Field{Float64},1}
@@ -86,7 +87,7 @@ function main()
     lake_evaporations = vcat(lake_evaporations_none,lake_evaporations_high)
   end
   if args["lake-para-file"] != nothing
-    lake_parameters = load_lake_parameters(args["lake-para-file"],lake_grid,grid)
+    lake_parameters = load_lake_parameters(args["lake-para-file"],lake_grid,grid,surface_model_grid)
     drainages_copy = deepcopy(drainages)
     runoffs_copy = deepcopy(runoffs)
     if args["hd-init-file"] != nothing

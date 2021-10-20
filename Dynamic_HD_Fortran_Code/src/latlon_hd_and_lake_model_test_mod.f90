@@ -149,6 +149,8 @@ subroutine testLakeModel1
    integer,dimension(:,:), pointer :: additional_flood_redirect_lon_index
    integer,dimension(:,:), pointer :: additional_connect_redirect_lat_index
    integer,dimension(:,:), pointer :: additional_connect_redirect_lon_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
    real(dp),dimension(:,:), pointer :: drainage
    real(dp),dimension(:,:,:), pointer :: drainages
    real(dp),dimension(:,:), pointer :: runoff
@@ -162,13 +164,18 @@ subroutine testLakeModel1
    integer,dimension(:,:), pointer :: expected_lake_types
    real(dp),dimension(:), pointer :: expected_lake_volumes
    real(dp), dimension(:,:), pointer :: expected_diagnostic_lake_volumes
+   real(dp), dimension(:,:), pointer :: expected_lake_fractions
+   integer , dimension(:,:), pointer :: expected_number_lake_cells
+   integer , dimension(:,:), pointer :: expected_number_fine_grid_cells
    integer,dimension(:,:), pointer :: lake_types
    integer :: no_merge_mtype,connection_merge_not_set_flood_merge_as_secondary
    real(dp),dimension(:), pointer :: lake_volumes
    real(dp), dimension(:,:), pointer :: diagnostic_lake_volumes
+   real(dp), dimension(:,:), pointer :: lake_fractions
    real(dp) :: step_length
    integer :: nlat,nlon
    integer :: nlat_coarse,nlon_coarse
+   integer :: nlat_surface_model,nlon_surface_model
    integer :: timesteps
    integer :: lake_number
    integer :: i,j
@@ -183,6 +190,8 @@ subroutine testLakeModel1
       nlon = 9
       nlat_coarse = 3
       nlon_coarse = 3
+      nlat_surface_model = 3
+      nlon_surface_model = 3
       allocate(flow_directions(nlat_coarse,nlon_coarse))
       flow_directions = transpose(reshape((/ &
                                   -2,6,2, &
@@ -425,6 +434,30 @@ subroutine testLakeModel1
       additional_connect_redirect_lon_index(:,:) = 0
       instant_throughflow_local=.True.
       lake_retention_coefficient_local=0.1_dp
+      allocate(corresponding_surface_cell_lat_index(nlat,nlon))
+      corresponding_surface_cell_lat_index = transpose(reshape((/ &
+                                                           1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1, &
+                                                           2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2, &
+                                                           3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3 /), &
+         (/nlon,nlat/)))
+      allocate(corresponding_surface_cell_lon_index(nlat,nlon))
+      corresponding_surface_cell_lon_index = transpose(reshape((/ &
+                                                           1,1,1,2,2,2,3,3,3, &
+                                                           1,1,1,2,2,2,3,3,3, &
+                                                           1,1,1,2,2,2,3,3,3, &
+                                                           1,1,1,2,2,2,3,3,3, &
+                                                           1,1,1,2,2,2,3,3,3, &
+                                                           1,1,1,2,2,2,3,3,3, &
+                                                           1,1,1,2,2,2,3,3,3, &
+                                                           1,1,1,2,2,2,3,3,3, &
+                                                           1,1,1,2,2,2,3,3,3 /), &
+         (/nlon,nlat/)))
       lake_parameters => LakeParameters(lake_centers, &
                                         connection_volume_thresholds, &
                                         flood_volume_thresholds, &
@@ -449,8 +482,11 @@ subroutine testLakeModel1
                                         additional_flood_redirect_lon_index, &
                                         additional_connect_redirect_lat_index, &
                                         additional_connect_redirect_lon_index, &
+                                        corresponding_surface_cell_lat_index, &
+                                        corresponding_surface_cell_lon_index, &
                                         nlat,nlon, &
                                         nlat_coarse,nlon_coarse, &
+                                        nlat_surface_model,nlon_surface_model, &
                                         instant_throughflow_local, &
                                         lake_retention_coefficient_local)
       allocate(drainage(nlat_coarse,nlon_coarse))
@@ -532,6 +568,24 @@ subroutine testLakeModel1
                   0.0,  0.0,  0.0,   0.0, 0.0, 0.0, 0.0, 0.0,  0.0, &
                   0.0,  0.0,  0.0,   0.0, 0.0, 0.0, 0.0, 0.0,  0.0 /), &
                   (/nlon,nlat/)))
+      allocate(expected_lake_fractions(3,3))
+      expected_lake_fractions = transpose(reshape((/ &
+                 0.0,1.0/3.0,0.0, &
+                 0.2,    0.2,0.0, &
+                 0.0,    0.0,0.0 /), &
+                  (/3,3/)))
+      allocate(expected_number_lake_cells(3,3))
+      expected_number_lake_cells = transpose(reshape((/ &
+               0,2,0, &
+               3,3,0, &
+               0,0,0 /), &
+                  (/3,3/)))
+      allocate(expected_number_fine_grid_cells(3,3))
+      expected_number_fine_grid_cells = transpose(reshape((/ &
+               6,6,6, &
+              15,15,15, &
+               6,6,6 /), &
+                  (/3,3/)))
       allocate(expected_lake_volumes(1))
       expected_lake_volumes(1) = 80.0
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
@@ -569,6 +623,8 @@ subroutine testLakeModel1
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
+      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
       call assert_equals(expected_river_inflow,river_fields%river_inflow,3,3,0.0000000001_dp)
       call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,3,3,0.0000000001_dp)
       call assert_equals(expected_water_to_hd,lake_fields_out%water_to_hd,3,3,0.00001_dp)
@@ -576,6 +632,10 @@ subroutine testLakeModel1
       call assert_equals(expected_lake_types,lake_types,9,9)
       call assert_equals(expected_diagnostic_lake_volumes,diagnostic_lake_volumes,9,9)
       call assert_equals(expected_lake_volumes,lake_volumes,1)
+      call assert_equals(expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(expected_number_fine_grid_cells,lake_parameters%number_fine_grid_cells,3,3)
+      deallocate(lake_fractions)
       deallocate(lake_volumes)
       deallocate(drainage)
       deallocate(drainages)
@@ -591,6 +651,7 @@ subroutine testLakeModel1
       deallocate(expected_lake_types)
       deallocate(expected_lake_volumes)
       deallocate(expected_diagnostic_lake_volumes)
+      deallocate(expected_lake_fractions)
       deallocate(lake_types)
       call clean_lake_model()
       call clean_hd_model()
@@ -638,6 +699,8 @@ subroutine testLakeModel2
   integer,dimension(:,:), pointer :: additional_flood_redirect_lon_index
   integer,dimension(:,:), pointer :: additional_connect_redirect_lat_index
   integer,dimension(:,:), pointer :: additional_connect_redirect_lon_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
   real(dp),dimension(:,:), pointer :: drainage
   real(dp),dimension(:,:,:), pointer :: drainages
   real(dp),dimension(:,:), pointer :: runoff
@@ -651,15 +714,20 @@ subroutine testLakeModel2
   integer,dimension(:,:), pointer :: expected_lake_types
   real(dp),dimension(:), pointer :: expected_lake_volumes
   real(dp),dimension(:,:), pointer :: expected_diagnostic_lake_volumes
+  real(dp), dimension(:,:), pointer :: expected_lake_fractions
+  integer , dimension(:,:), pointer :: expected_number_lake_cells
+  integer , dimension(:,:), pointer :: expected_number_fine_grid_cells
   integer,dimension(:,:), pointer :: lake_types
   integer :: no_merge_mtype
   integer :: connection_merge_not_set_flood_merge_as_primary
   integer :: connection_merge_not_set_flood_merge_as_secondary
   real(dp),dimension(:), pointer :: lake_volumes
   real(dp), dimension(:,:), pointer :: diagnostic_lake_volumes
+  real(dp), dimension(:,:), pointer :: lake_fractions
   real(dp) :: step_length
   integer :: nlat,nlon
   integer :: nlat_coarse,nlon_coarse
+  integer :: nlat_surface_model,nlon_surface_model
   integer :: timesteps
   integer :: lake_number
   integer :: i,j
@@ -675,6 +743,8 @@ subroutine testLakeModel2
     nlon = 20
     nlat_coarse = 4
     nlon_coarse = 4
+    nlat_surface_model = 3
+    nlon_surface_model = 3
     allocate(flow_directions(nlat_coarse,nlon_coarse))
     flow_directions = transpose(reshape((/ -2, 4, 2, 2, &
                                             6,-2,-2, 2, &
@@ -1299,6 +1369,52 @@ subroutine testLakeModel2
     additional_connect_redirect_lon_index(:,:) = 0
     instant_throughflow_local=.True.
     lake_retention_coefficient_local=0.1_dp
+    allocate(corresponding_surface_cell_lat_index(nlat,nlon))
+    corresponding_surface_cell_lat_index = transpose(reshape((/ &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3 /), &
+         (/nlon,nlat/)))
+    allocate(corresponding_surface_cell_lon_index(nlat,nlon))
+    corresponding_surface_cell_lon_index = transpose(reshape((/ &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3 /), &
+         (/nlon,nlat/)))
     lake_parameters => LakeParameters(lake_centers, &
                                       connection_volume_thresholds, &
                                       flood_volume_thresholds, &
@@ -1323,8 +1439,11 @@ subroutine testLakeModel2
                                       additional_flood_redirect_lon_index, &
                                       additional_connect_redirect_lat_index, &
                                       additional_connect_redirect_lon_index, &
+                                      corresponding_surface_cell_lat_index, &
+                                      corresponding_surface_cell_lon_index, &
                                       nlat,nlon, &
                                       nlat_coarse,nlon_coarse, &
+                                      nlat_surface_model,nlon_surface_model, &
                                       instant_throughflow_local, &
                                       lake_retention_coefficient_local)
     allocate(drainage(nlat_coarse,nlon_coarse))
@@ -1464,6 +1583,24 @@ subroutine testLakeModel2
                    0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,    &
                    0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0 /), &
        (/nlon,nlat/)))
+    allocate(expected_lake_fractions(3,3))
+    expected_lake_fractions = transpose(reshape((/ &
+                0.380952,0.305556,0.404762, &
+                0.160714,0.229167,0.321429, &
+                0.0238095,0.0,0.0714286 /), &
+          (/3,3/)))
+    allocate(expected_number_lake_cells(3,3))
+    expected_number_lake_cells = transpose(reshape((/ &
+                16,11,17, &
+                9,11,18, &
+                1, 0, 3 /), &
+          (/3,3/)))
+    allocate(expected_number_fine_grid_cells(3,3))
+    expected_number_fine_grid_cells = transpose(reshape((/ &
+              42,36,42, &
+              56,48,56, &
+              42,36,42 /), &
+          (/3,3/)))
     allocate(expected_lake_volumes(6))
     expected_lake_volumes = (/46.0, 1.0, 38.0, 6.0, 340.0, 10.0/)
     call init_hd_model_for_testing(river_parameters,river_fields,.True., &
@@ -1501,6 +1638,8 @@ subroutine testLakeModel2
     diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
+    lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
     call assert_equals(expected_river_inflow,river_fields%river_inflow,&
                        nlat_coarse,nlon_coarse,0.0000000001_dp)
     call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,4,4,0.0000000001_dp)
@@ -1509,6 +1648,10 @@ subroutine testLakeModel2
     call assert_equals(expected_lake_types,lake_types,20,20)
     call assert_equals(expected_diagnostic_lake_volumes,diagnostic_lake_volumes,20,20)
     call assert_equals(expected_lake_volumes,lake_volumes,6)
+    call assert_equals(expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+    call assert_equals(expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+    call assert_equals(expected_number_fine_grid_cells,lake_parameters%number_fine_grid_cells,3,3)
+    deallocate(lake_fractions)
     deallocate(lake_volumes)
     deallocate(drainage)
     deallocate(drainages)
@@ -1524,6 +1667,7 @@ subroutine testLakeModel2
     deallocate(expected_lake_types)
     deallocate(expected_lake_volumes)
     deallocate(expected_diagnostic_lake_volumes)
+    deallocate(expected_lake_fractions)
     deallocate(lake_types)
     call clean_lake_model()
     call clean_hd_model()
@@ -1571,6 +1715,8 @@ subroutine testLakeModel3
   integer,dimension(:,:), pointer :: additional_flood_redirect_lon_index
   integer,dimension(:,:), pointer :: additional_connect_redirect_lat_index
   integer,dimension(:,:), pointer :: additional_connect_redirect_lon_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
   real(dp),dimension(:,:), pointer :: drainage
   real(dp),dimension(:,:,:), pointer :: drainages
   real(dp),dimension(:,:,:), pointer :: drainages_copy
@@ -1596,15 +1742,23 @@ subroutine testLakeModel3
   integer,dimension(:,:), pointer :: expected_intermediate_lake_numbers
   integer,dimension(:,:), pointer :: expected_intermediate_lake_types
   real(dp),dimension(:), pointer :: expected_intermediate_lake_volumes
+  real(dp), dimension(:,:), pointer :: expected_lake_fractions
+  integer, dimension(:,:), pointer :: expected_number_lake_cells
+  integer, dimension(:,:), pointer :: expected_number_fine_grid_cells
+  real(dp), dimension(:,:), pointer :: expected_intermediate_lake_fractions
+  integer , dimension(:,:), pointer :: expected_intermediate_number_lake_cells
+  integer , dimension(:,:), pointer :: expected_intermediate_number_fine_grid_cells
   integer,dimension(:,:), pointer :: lake_types
   integer :: no_merge_mtype
   integer :: connection_merge_not_set_flood_merge_as_primary
   integer :: connection_merge_not_set_flood_merge_as_secondary
   real(dp),dimension(:), pointer :: lake_volumes
   real(dp), dimension(:,:), pointer :: diagnostic_lake_volumes
+  real(dp), dimension(:,:), pointer :: lake_fractions
   real(dp) :: step_length
   integer :: nlat,nlon
   integer :: nlat_coarse,nlon_coarse
+  integer :: nlat_surface_model,nlon_surface_model
   integer :: lake_number
   integer :: i,j
   logical :: instant_throughflow_local
@@ -1618,6 +1772,8 @@ subroutine testLakeModel3
       nlon = 20
       nlat_coarse = 4
       nlon_coarse = 4
+      nlat_surface_model = 3
+      nlon_surface_model = 3
       allocate(flow_directions(nlat_coarse,nlon_coarse))
       flow_directions = transpose(reshape((/ -2, 4, 2, 2, &
                                               6,-2,-2, 2, &
@@ -2242,6 +2398,52 @@ subroutine testLakeModel3
       additional_connect_redirect_lon_index(:,:) = 0
       instant_throughflow_local=.True.
       lake_retention_coefficient_local=0.1_dp
+      allocate(corresponding_surface_cell_lat_index(nlat,nlon))
+      corresponding_surface_cell_lat_index = transpose(reshape((/ &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3 /), &
+         (/nlon,nlat/)))
+      allocate(corresponding_surface_cell_lon_index(nlat,nlon))
+      corresponding_surface_cell_lon_index = transpose(reshape((/ &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3 /), &
+         (/nlon,nlat/)))
       lake_parameters => LakeParameters(lake_centers, &
                                         connection_volume_thresholds, &
                                         flood_volume_thresholds, &
@@ -2266,8 +2468,11 @@ subroutine testLakeModel3
                                         additional_flood_redirect_lon_index, &
                                         additional_connect_redirect_lat_index, &
                                         additional_connect_redirect_lon_index, &
+                                        corresponding_surface_cell_lat_index, &
+                                        corresponding_surface_cell_lon_index, &
                                         nlat,nlon, &
                                         nlat_coarse,nlon_coarse, &
+                                        nlat_surface_model,nlon_surface_model, &
                                         instant_throughflow_local, &
                                         lake_retention_coefficient_local)
       allocate(drainage(4,4))
@@ -2379,6 +2584,24 @@ subroutine testLakeModel3
       expected_lake_volumes = (/0.0, 0.0, 0.0, 0.0, 0.0, 0.0/)
       allocate(expected_diagnostic_lake_volumes(20,20))
       expected_diagnostic_lake_volumes(:,:) = 0.0
+      allocate(expected_lake_fractions(3,3))
+      expected_lake_fractions = transpose(reshape((/ &
+                 0.0,0.0,0.0, &
+                 0.0,0.0,0.0, &
+                 0.0,0.0,0.0 /), &
+          (/3,3/)))
+      allocate(expected_number_lake_cells(3,3))
+      expected_number_lake_cells = transpose(reshape((/ &
+               0,0,0, &
+               0,0,0, &
+               0,0,0 /), &
+          (/3,3/)))
+      allocate(expected_number_fine_grid_cells(3,3))
+      expected_number_fine_grid_cells = transpose(reshape((/ &
+               42,36,42, &
+               56,48,56, &
+               42,36,42 /), &
+          (/3,3/)))
       allocate(expected_intermediate_river_inflow(4,4))
       expected_intermediate_river_inflow = transpose(reshape((/ &
           0.0, 0.0, 0.0, 0.0, &
@@ -2495,6 +2718,24 @@ subroutine testLakeModel3
                    0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,    &
                    0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0 /), &
        (/nlon,nlat/)))
+      allocate(expected_intermediate_lake_fractions(3,3))
+      expected_intermediate_lake_fractions = transpose(reshape((/ &
+                 0.380952,0.305556,0.404762, &
+                 0.160714,0.229167,0.321429, &
+                 0.0238095,0.0,0.0714286 /), &
+       (/3,3/)))
+      allocate(expected_intermediate_number_lake_cells(3,3))
+      expected_intermediate_number_lake_cells = transpose(reshape((/ &
+               16,11,17, &
+                9,11,18, &
+                1,0,3 /), &
+       (/3,3/)))
+      allocate(expected_intermediate_number_fine_grid_cells(3,3))
+      expected_intermediate_number_fine_grid_cells = transpose(reshape((/ &
+               42,36,42, &
+               56,48,56, &
+               42,36,42 /), &
+       (/3,3/)))
       allocate(expected_intermediate_lake_volumes(6))
       expected_intermediate_lake_volumes = (/46.0, 1.0, 38.0, 6.0, 340.0, 10.0/)
       allocate(runoffs_copy(4,4,5000))
@@ -2536,6 +2777,8 @@ subroutine testLakeModel3
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
+      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
       call assert_equals(expected_intermediate_river_inflow,river_fields%river_inflow,&
                          4,4,0.0000000001_dp)
       call assert_equals(expected_intermediate_water_to_ocean,river_fields%water_to_ocean,4,4,0.00001_dp)
@@ -2544,6 +2787,11 @@ subroutine testLakeModel3
       call assert_equals(expected_intermediate_lake_types,lake_types,20,20)
       call assert_equals(expected_intermediate_diagnostic_lake_volumes,diagnostic_lake_volumes,20,20)
       call assert_equals(expected_intermediate_lake_volumes,lake_volumes,6)
+      call assert_equals(expected_intermediate_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(expected_intermediate_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(expected_intermediate_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
+      deallocate(lake_fractions)
       call run_hd_model(5000,runoffs_copy,drainages_copy,evaporations_set_two)
       lake_prognostics_out => get_lake_prognostics()
       lake_fields_out => get_lake_fields()
@@ -2574,6 +2822,8 @@ subroutine testLakeModel3
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
+      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
       call assert_equals(expected_river_inflow,river_fields%river_inflow,&
                          4,4,0.0000000001_dp)
       call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,4,4,0.00001_dp)
@@ -2582,6 +2832,11 @@ subroutine testLakeModel3
       call assert_equals(expected_lake_types,lake_types,20,20)
       call assert_equals(expected_diagnostic_lake_volumes,diagnostic_lake_volumes,20,20,0.00001_dp)
       call assert_equals(expected_lake_volumes,lake_volumes,6)
+      call assert_equals(expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
+      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       deallocate(lake_volumes)
       deallocate(drainage)
@@ -2659,6 +2914,8 @@ subroutine testLakeModel4
    integer,dimension(:,:), pointer :: additional_flood_redirect_lon_index
    integer,dimension(:,:), pointer :: additional_connect_redirect_lat_index
    integer,dimension(:,:), pointer :: additional_connect_redirect_lon_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
    real(dp),dimension(:,:), pointer :: drainage
    real(dp),dimension(:,:), pointer :: runoff
    real(dp),dimension(:,:,:), pointer :: drainages
@@ -2673,6 +2930,9 @@ subroutine testLakeModel4
    integer,dimension(:,:), pointer :: expected_lake_numbers
    integer,dimension(:,:), pointer :: expected_lake_types
    real(dp),dimension(:), pointer :: expected_lake_volumes
+   real(dp), dimension(:,:), pointer :: expected_lake_fractions
+   integer , dimension(:,:), pointer :: expected_number_lake_cells
+   integer , dimension(:,:), pointer :: expected_number_fine_grid_cells
    real(dp),dimension(:,:), pointer :: expected_diagnostic_lake_volumes
    real(dp),dimension(:,:), pointer :: first_intermediate_expected_river_inflow
    real(dp),dimension(:,:), pointer :: first_intermediate_expected_water_to_ocean
@@ -2680,6 +2940,9 @@ subroutine testLakeModel4
    integer,dimension(:,:), pointer :: first_intermediate_expected_lake_numbers
    integer,dimension(:,:), pointer :: first_intermediate_expected_lake_types
    real(dp),dimension(:), pointer :: first_intermediate_expected_lake_volumes
+   real(dp), dimension(:,:), pointer :: first_intermediate_expected_lake_fractions
+   integer , dimension(:,:), pointer :: first_intermediate_expected_number_lake_cells
+   integer , dimension(:,:), pointer :: first_intermediate_expected_number_fine_grid_cells
    real(dp),dimension(:,:), pointer :: first_intermediate_expected_diagnostic_lake_volumes
    real(dp),dimension(:,:), pointer :: second_intermediate_expected_river_inflow
    real(dp),dimension(:,:), pointer :: second_intermediate_expected_water_to_ocean
@@ -2687,6 +2950,9 @@ subroutine testLakeModel4
    integer,dimension(:,:), pointer :: second_intermediate_expected_lake_numbers
    integer,dimension(:,:), pointer :: second_intermediate_expected_lake_types
    real(dp),dimension(:), pointer :: second_intermediate_expected_lake_volumes
+   real(dp), dimension(:,:), pointer :: second_intermediate_expected_lake_fractions
+   integer , dimension(:,:), pointer :: second_intermediate_expected_number_lake_cells
+   integer , dimension(:,:), pointer :: second_intermediate_expected_number_fine_grid_cells
    real(dp),dimension(:,:), pointer :: second_intermediate_expected_diagnostic_lake_volumes
    real(dp),dimension(:,:), pointer :: third_intermediate_expected_river_inflow
    real(dp),dimension(:,:), pointer :: third_intermediate_expected_water_to_ocean
@@ -2694,20 +2960,31 @@ subroutine testLakeModel4
    integer,dimension(:,:), pointer :: third_intermediate_expected_lake_numbers
    integer,dimension(:,:), pointer :: third_intermediate_expected_lake_types
    real(dp),dimension(:), pointer :: third_intermediate_expected_lake_volumes
+   real(dp), dimension(:,:), pointer :: third_intermediate_expected_lake_fractions
+   integer , dimension(:,:), pointer :: third_intermediate_expected_number_lake_cells
+   integer , dimension(:,:), pointer :: third_intermediate_expected_number_fine_grid_cells
    real(dp),dimension(:,:), pointer :: third_intermediate_expected_diagnostic_lake_volumes
    real(dp),dimension(:,:), pointer :: fourth_intermediate_expected_river_inflow
    real(dp),dimension(:,:), pointer :: fourth_intermediate_expected_water_to_ocean
    real(dp),dimension(:,:), pointer :: fourth_intermediate_expected_water_to_hd
+   real(dp), dimension(:,:), pointer :: fourth_intermediate_expected_lake_fractions
+   integer , dimension(:,:), pointer :: fourth_intermediate_expected_number_lake_cells
+   integer , dimension(:,:), pointer :: fourth_intermediate_expected_number_fine_grid_cells
    real(dp),dimension(:,:), pointer :: fifth_intermediate_expected_river_inflow
    real(dp),dimension(:,:), pointer :: fifth_intermediate_expected_water_to_ocean
    real(dp),dimension(:,:), pointer :: fifth_intermediate_expected_water_to_hd
+   real(dp), dimension(:,:), pointer :: fifth_intermediate_expected_lake_fractions
+   integer , dimension(:,:), pointer :: fifth_intermediate_expected_number_lake_cells
+   integer , dimension(:,:), pointer :: fifth_intermediate_expected_number_fine_grid_cells
    integer,dimension(:,:), pointer :: lake_types
    integer :: no_merge_mtype
    integer :: connection_merge_not_set_flood_merge_as_primary
    integer :: connection_merge_not_set_flood_merge_as_secondary
    real(dp),dimension(:), pointer :: lake_volumes
    real(dp), dimension(:,:), pointer :: diagnostic_lake_volumes
+   real(dp), dimension(:,:), pointer :: lake_fractions
    integer :: nlat_coarse,nlon_coarse
+   integer :: nlat_surface_model,nlon_surface_model
    integer :: nlat,nlon
    integer :: lake_number
    integer :: i,j
@@ -2719,6 +2996,8 @@ subroutine testLakeModel4
       connection_merge_not_set_flood_merge_as_secondary = 10
       nlat_coarse = 3
       nlon_coarse = 3
+      nlat_surface_model = 3
+      nlon_surface_model = 3
       seconds_per_day = 86400.0_dp
       allocate(flow_directions(nlat_coarse,nlon_coarse))
       flow_directions = transpose(reshape((/-2,6,2,&
@@ -2966,6 +3245,30 @@ subroutine testLakeModel4
       additional_connect_redirect_lon_index(:,:) = 0
       instant_throughflow_local=.True.
       lake_retention_coefficient_local=0.1_dp
+      allocate(corresponding_surface_cell_lat_index(nlat,nlon))
+      corresponding_surface_cell_lat_index = transpose(reshape((/ &
+                                                           1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1, &
+                                                           2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2, &
+                                                           3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3 /), &
+         (/nlon,nlat/)))
+      allocate(corresponding_surface_cell_lon_index(nlat,nlon))
+      corresponding_surface_cell_lon_index = transpose(reshape((/ &
+                                                           1,1,1,2,2,2,3,3,3, &
+                                                           1,1,1,2,2,2,3,3,3, &
+                                                           1,1,1,2,2,2,3,3,3, &
+                                                           1,1,1,2,2,2,3,3,3, &
+                                                           1,1,1,2,2,2,3,3,3, &
+                                                           1,1,1,2,2,2,3,3,3, &
+                                                           1,1,1,2,2,2,3,3,3, &
+                                                           1,1,1,2,2,2,3,3,3, &
+                                                           1,1,1,2,2,2,3,3,3 /), &
+         (/nlon,nlat/)))
       lake_parameters => LakeParameters(lake_centers, &
                                         connection_volume_thresholds, &
                                         flood_volume_thresholds, &
@@ -2990,8 +3293,11 @@ subroutine testLakeModel4
                                         additional_flood_redirect_lon_index, &
                                         additional_connect_redirect_lat_index, &
                                         additional_connect_redirect_lon_index, &
+                                        corresponding_surface_cell_lat_index, &
+                                        corresponding_surface_cell_lon_index, &
                                         nlat,nlon, &
                                         nlat_coarse,nlon_coarse, &
+                                        nlat_surface_model,nlon_surface_model, &
                                         instant_throughflow_local, &
                                         lake_retention_coefficient_local)
       allocate(drainage(nlat_coarse,nlon_coarse))
@@ -3071,6 +3377,24 @@ subroutine testLakeModel4
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0 /), &
          (/nlon,nlat/)))
+      allocate(expected_lake_fractions(3,3))
+      expected_lake_fractions = transpose(reshape((/ &
+                  0.0,1.0/3.0,0.0, &
+                 0.25,    0.25,0.0, &
+                 0.0,    0.0,0.0 /), &
+         (/3,3/)))
+      allocate(expected_number_lake_cells(3,3))
+      expected_number_lake_cells = transpose(reshape((/ &
+               0,2,0, &
+               3,3,0, &
+               0,0,0 /), &
+         (/3,3/)))
+      allocate(expected_number_fine_grid_cells(3,3))
+      expected_number_fine_grid_cells = transpose(reshape((/ &
+               6,6,6, &
+              12,12,12, &
+               9,9,9 /), &
+         (/3,3/)))
       allocate(expected_lake_volumes(1))
       expected_lake_volumes = (/ 432000.0 /)
 
@@ -3130,6 +3454,24 @@ subroutine testLakeModel4
          0.0,    0.0,    0.0,    0.0,   0.0,    0.0,    0.0,    0.0,    0.0, &
          0.0,    0.0,    0.0,    0.0,   0.0,    0.0,    0.0,    0.0,    0.0 /), &
          (/nlon,nlat/)))
+      allocate(first_intermediate_expected_lake_fractions(3,3))
+      first_intermediate_expected_lake_fractions = transpose(reshape((/ &
+                 0.0,0.0,0.0, &
+                 0.0,0.0,0.0, &
+                 0.0,0.0,0.0 /), &
+         (/3,3/)))
+      allocate(first_intermediate_expected_number_lake_cells(3,3))
+      first_intermediate_expected_number_lake_cells = transpose(reshape((/ &
+               0,0,0, &
+               0,0,0, &
+               0,0,0 /), &
+         (/3,3/)))
+      allocate(first_intermediate_expected_number_fine_grid_cells(3,3))
+      first_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
+               6,6,6, &
+              12,12,12, &
+               9,9,9 /), &
+         (/3,3/)))
       allocate(first_intermediate_expected_lake_volumes(1))
       first_intermediate_expected_lake_volumes = (/ 172800.0 /)
 
@@ -3189,6 +3531,24 @@ subroutine testLakeModel4
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0 /), &
          (/nlon,nlat/)))
+      allocate(second_intermediate_expected_lake_fractions(3,3))
+      second_intermediate_expected_lake_fractions = transpose(reshape((/ &
+                 0.0,0.0,0.0, &
+                 0.25,0.166667,0.0, &
+                 0.0,0.0,0.0 /), &
+         (/3,3/)))
+      allocate(second_intermediate_expected_number_lake_cells(3,3))
+      second_intermediate_expected_number_lake_cells =  transpose(reshape((/ &
+               0,0,0, &
+               3,2,0, &
+               0,0,0 /), &
+         (/3,3/)))
+      allocate(second_intermediate_expected_number_fine_grid_cells(3,3))
+      second_intermediate_expected_number_fine_grid_cells =  transpose(reshape((/ &
+               6,6,6, &
+              12,12,12, &
+               9,9,9 /), &
+         (/3,3/)))
       allocate(second_intermediate_expected_lake_volumes(1))
       second_intermediate_expected_lake_volumes = (/ 259200.0 /)
 
@@ -3248,6 +3608,25 @@ subroutine testLakeModel4
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0 /), &
          (/nlon,nlat/)))
+      allocate(third_intermediate_expected_lake_fractions(3,3))
+      third_intermediate_expected_lake_fractions = transpose(reshape((/ &
+                  0.0,0.0,0.0, &
+                 0.25,1.0/6.0,0.0, &
+                  0.0,0.0,0.0 /), &
+         (/3,3/)))
+      allocate(third_intermediate_expected_number_lake_cells(3,3))
+      third_intermediate_expected_number_lake_cells = transpose(reshape((/ &
+               0,0,0, &
+               3,2,0, &
+               0,0,0 /), &
+         (/3,3/)))
+      allocate(third_intermediate_expected_number_fine_grid_cells(3,3))
+      third_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
+               6,6,6, &
+              12,12,12, &
+               9,9,9 /), &
+         (/3,3/)))
+
       allocate(third_intermediate_expected_lake_volumes(1))
       third_intermediate_expected_lake_volumes = (/ 432000.0 /)
 
@@ -3271,6 +3650,24 @@ subroutine testLakeModel4
          (/nlon_coarse,nlat_coarse/)))
       fourth_intermediate_expected_water_to_hd = &
         fourth_intermediate_expected_water_to_hd/seconds_per_day
+      allocate(fourth_intermediate_expected_lake_fractions(3,3))
+      fourth_intermediate_expected_lake_fractions = transpose(reshape((/ &
+                 0.0,1.0/3.0,0.0, &
+                 0.25,0.25,0.0, &
+                 0.0, 0.0,0.0 /), &
+         (/3,3/)))
+      allocate(fourth_intermediate_expected_number_lake_cells(3,3))
+      fourth_intermediate_expected_number_lake_cells = transpose(reshape((/ &
+               0,2,0, &
+               3,3,0, &
+               0,0,0  /), &
+         (/3,3/)))
+      allocate(fourth_intermediate_expected_number_fine_grid_cells(3,3))
+      fourth_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
+               6,6,6, &
+              12,12,12, &
+               9,9,9  /), &
+         (/3,3/)))
       allocate(fifth_intermediate_expected_river_inflow(nlat_coarse,nlon_coarse))
       fifth_intermediate_expected_river_inflow = transpose(reshape((/ &
           0.0, 0.0, 0.0, &
@@ -3291,6 +3688,25 @@ subroutine testLakeModel4
          (/nlon_coarse,nlat_coarse/)))
       fifth_intermediate_expected_water_to_hd = &
         fifth_intermediate_expected_water_to_hd/seconds_per_day
+      allocate(fifth_intermediate_expected_lake_fractions(3,3))
+      fifth_intermediate_expected_lake_fractions = transpose(reshape((/ &
+                  0.0, 1.0/3.0,0.0, &
+                 0.25,0.25,   0.0, &
+                 0.0, 0.0,    0.0 /), &
+         (/3,3/)))
+      allocate(fifth_intermediate_expected_number_lake_cells(3,3))
+      fifth_intermediate_expected_number_lake_cells = transpose(reshape((/ &
+               0,2,0, &
+               3,3,0, &
+               0,0,0 /), &
+         (/3,3/)))
+      allocate(fifth_intermediate_expected_number_fine_grid_cells(3,3))
+      fifth_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
+               6,6,6, &
+              12,12,12, &
+               9,9,9 /), &
+         (/3,3/)))
+
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
                                      initial_water_to_lake_centers, &
@@ -3326,6 +3742,9 @@ subroutine testLakeModel4
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
+
+      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
       call assert_equals(first_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(first_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -3335,6 +3754,11 @@ subroutine testLakeModel4
       call assert_equals(first_intermediate_expected_lake_volumes,lake_volumes,1)
       call assert_equals(diagnostic_lake_volumes, &
                          first_intermediate_expected_diagnostic_lake_volumes,nlat,nlon)
+      call assert_equals(first_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(first_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(first_intermediate_expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
+      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
@@ -3369,6 +3793,8 @@ subroutine testLakeModel4
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
+      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
       call assert_equals(second_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(second_intermediate_expected_water_to_ocean,river_fields%water_to_ocean,&
                          3,3,0.00001_dp)
@@ -3379,6 +3805,11 @@ subroutine testLakeModel4
       call assert_equals(second_intermediate_expected_lake_volumes,lake_volumes,1)
       call assert_equals(diagnostic_lake_volumes,&
                          second_intermediate_expected_diagnostic_lake_volumes,nlat,nlon)
+      call assert_equals(second_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(second_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(second_intermediate_expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
+      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
 
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
@@ -3414,6 +3845,8 @@ subroutine testLakeModel4
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
+      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
       call assert_equals(third_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(third_intermediate_expected_water_to_ocean, &
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -3424,6 +3857,11 @@ subroutine testLakeModel4
       call assert_equals(third_intermediate_expected_lake_volumes,lake_volumes,1)
       call assert_equals(diagnostic_lake_volumes,&
                          third_intermediate_expected_diagnostic_lake_volumes,nlat,nlon)
+      call assert_equals(third_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(third_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(third_intermediate_expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
+      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
 
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
@@ -3459,6 +3897,8 @@ subroutine testLakeModel4
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
+      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
       call assert_equals(fourth_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(fourth_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -3467,6 +3907,11 @@ subroutine testLakeModel4
       call assert_equals(expected_lake_types,lake_types,nlat,nlon)
       call assert_equals(expected_lake_volumes,lake_volumes,1)
       call assert_equals(diagnostic_lake_volumes,expected_diagnostic_lake_volumes,nlat,nlon)
+      call assert_equals(fourth_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(fourth_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(fourth_intermediate_expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
+      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
 
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
@@ -3502,6 +3947,8 @@ subroutine testLakeModel4
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
+      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
       call assert_equals(fifth_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(fifth_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -3510,6 +3957,11 @@ subroutine testLakeModel4
       call assert_equals(expected_lake_types,lake_types,nlat,nlon)
       call assert_equals(expected_lake_volumes,lake_volumes,1)
       call assert_equals(diagnostic_lake_volumes,expected_diagnostic_lake_volumes,nlat,nlon)
+      call assert_equals(fifth_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(fifth_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(fifth_intermediate_expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
+      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
 
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
@@ -3545,6 +3997,8 @@ subroutine testLakeModel4
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
+      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
       call assert_equals(expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,3,3,0.00001_dp)
       call assert_equals(expected_water_to_hd,lake_fields_out%water_to_hd,3,3)
@@ -3552,6 +4006,11 @@ subroutine testLakeModel4
       call assert_equals(expected_lake_types,lake_types,nlat,nlon)
       call assert_equals(expected_lake_volumes,lake_volumes,1)
       call assert_equals(diagnostic_lake_volumes,expected_diagnostic_lake_volumes,nlat,nlon)
+      call assert_equals(expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
+      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       deallocate(lake_volumes)
       deallocate(drainage)
@@ -3646,6 +4105,8 @@ subroutine testLakeModel5
    integer,dimension(:,:), pointer :: additional_flood_redirect_lon_index
    integer,dimension(:,:), pointer :: additional_connect_redirect_lat_index
    integer,dimension(:,:), pointer :: additional_connect_redirect_lon_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
    real(dp),dimension(:,:), pointer :: runoff
    real(dp),dimension(:,:), pointer :: drainage
    real(dp),dimension(:,:), pointer :: evaporation
@@ -3660,6 +4121,9 @@ subroutine testLakeModel5
    integer,dimension(:,:), pointer :: expected_lake_numbers
    integer,dimension(:,:), pointer :: expected_lake_types
    real(dp),dimension(:), pointer :: expected_lake_volumes
+   real(dp), dimension(:,:), pointer :: expected_lake_fractions
+   integer , dimension(:,:), pointer :: expected_number_lake_cells
+   integer , dimension(:,:), pointer :: expected_number_fine_grid_cells
    real(dp),dimension(:,:), pointer :: expected_diagnostic_lake_volumes
    real(dp),dimension(:,:), pointer :: first_intermediate_expected_river_inflow
    real(dp),dimension(:,:), pointer :: first_intermediate_expected_water_to_ocean
@@ -3667,6 +4131,9 @@ subroutine testLakeModel5
    integer,dimension(:,:), pointer :: first_intermediate_expected_lake_numbers
    integer,dimension(:,:), pointer :: first_intermediate_expected_lake_types
    real(dp),dimension(:), pointer :: first_intermediate_expected_lake_volumes
+   real(dp), dimension(:,:), pointer :: first_intermediate_expected_lake_fractions
+   integer , dimension(:,:), pointer :: first_intermediate_expected_number_lake_cells
+   integer , dimension(:,:), pointer :: first_intermediate_expected_number_fine_grid_cells
    real(dp),dimension(:,:), pointer :: first_intermediate_expected_diagnostic_lake_volumes
    real(dp),dimension(:,:), pointer :: second_intermediate_expected_river_inflow
    real(dp),dimension(:,:), pointer :: second_intermediate_expected_water_to_ocean
@@ -3674,6 +4141,9 @@ subroutine testLakeModel5
    integer,dimension(:,:), pointer :: second_intermediate_expected_lake_numbers
    integer,dimension(:,:), pointer :: second_intermediate_expected_lake_types
    real(dp),dimension(:), pointer :: second_intermediate_expected_lake_volumes
+   real(dp), dimension(:,:), pointer :: second_intermediate_expected_lake_fractions
+   integer , dimension(:,:), pointer :: second_intermediate_expected_number_lake_cells
+   integer , dimension(:,:), pointer :: second_intermediate_expected_number_fine_grid_cells
    real(dp),dimension(:,:), pointer :: second_intermediate_expected_diagnostic_lake_volumes
    real(dp),dimension(:,:), pointer :: third_intermediate_expected_river_inflow
    real(dp),dimension(:,:), pointer :: third_intermediate_expected_water_to_ocean
@@ -3681,20 +4151,31 @@ subroutine testLakeModel5
    integer,dimension(:,:), pointer :: third_intermediate_expected_lake_numbers
    integer,dimension(:,:), pointer :: third_intermediate_expected_lake_types
    real(dp),dimension(:), pointer :: third_intermediate_expected_lake_volumes
+   real(dp), dimension(:,:), pointer :: third_intermediate_expected_lake_fractions
+   integer , dimension(:,:), pointer :: third_intermediate_expected_number_lake_cells
+   integer , dimension(:,:), pointer :: third_intermediate_expected_number_fine_grid_cells
    real(dp),dimension(:,:), pointer :: third_intermediate_expected_diagnostic_lake_volumes
    real(dp),dimension(:,:), pointer :: fourth_intermediate_expected_river_inflow
    real(dp),dimension(:,:), pointer :: fourth_intermediate_expected_water_to_ocean
    real(dp),dimension(:,:), pointer :: fourth_intermediate_expected_water_to_hd
+   real(dp), dimension(:,:), pointer :: fourth_intermediate_expected_lake_fractions
+   integer , dimension(:,:), pointer :: fourth_intermediate_expected_number_lake_cells
+   integer , dimension(:,:), pointer :: fourth_intermediate_expected_number_fine_grid_cells
    real(dp),dimension(:,:), pointer :: fifth_intermediate_expected_river_inflow
    real(dp),dimension(:,:), pointer :: fifth_intermediate_expected_water_to_ocean
    real(dp),dimension(:,:), pointer :: fifth_intermediate_expected_water_to_hd
+   real(dp), dimension(:,:), pointer :: fifth_intermediate_expected_lake_fractions
+   integer , dimension(:,:), pointer :: fifth_intermediate_expected_number_lake_cells
+   integer , dimension(:,:), pointer :: fifth_intermediate_expected_number_fine_grid_cells
    integer,dimension(:,:), pointer :: lake_types
    integer :: no_merge_mtype
    integer :: connection_merge_not_set_flood_merge_as_primary
    integer :: connection_merge_not_set_flood_merge_as_secondary
    real(dp),dimension(:), pointer :: lake_volumes
    real(dp), dimension(:,:), pointer :: diagnostic_lake_volumes
+   real(dp), dimension(:,:), pointer :: lake_fractions
    integer :: nlat_coarse,nlon_coarse
+   integer :: nlat_surface_model,nlon_surface_model
    integer :: nlat,nlon
    integer :: lake_number
    integer :: i,j
@@ -3706,6 +4187,8 @@ subroutine testLakeModel5
       connection_merge_not_set_flood_merge_as_secondary = 10
       nlat_coarse = 3
       nlon_coarse = 3
+      nlat_surface_model = 3
+      nlon_surface_model = 3
       seconds_per_day = 86400.0_dp
       allocate(flow_directions(nlat_coarse,nlon_coarse))
       flow_directions = transpose(reshape((/-2,6,2,&
@@ -3953,6 +4436,30 @@ subroutine testLakeModel5
       additional_connect_redirect_lon_index(:,:) = 0
       instant_throughflow_local=.True.
       lake_retention_coefficient_local=0.1_dp
+      allocate(corresponding_surface_cell_lat_index(nlat,nlon))
+      corresponding_surface_cell_lat_index = transpose(reshape((/ &
+                                                           1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1, &
+                                                           2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2, &
+                                                           3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3 /), &
+         (/nlon,nlat/)))
+      allocate(corresponding_surface_cell_lon_index(nlat,nlon))
+      corresponding_surface_cell_lon_index = transpose(reshape((/ &
+                                                           1,1,1,2,2,2,3,3,3, &
+                                                           1,1,1,2,2,2,3,3,3, &
+                                                           1,1,1,2,2,2,3,3,3, &
+                                                           1,1,1,2,2,2,3,3,3, &
+                                                           1,1,1,2,2,2,3,3,3, &
+                                                           1,1,1,2,2,2,3,3,3, &
+                                                           1,1,1,2,2,2,3,3,3, &
+                                                           1,1,1,2,2,2,3,3,3, &
+                                                           1,1,1,2,2,2,3,3,3 /), &
+         (/nlon,nlat/)))
       lake_parameters => LakeParameters(lake_centers, &
                                         connection_volume_thresholds, &
                                         flood_volume_thresholds, &
@@ -3977,8 +4484,11 @@ subroutine testLakeModel5
                                         additional_flood_redirect_lon_index, &
                                         additional_connect_redirect_lat_index, &
                                         additional_connect_redirect_lon_index, &
+                                        corresponding_surface_cell_lat_index, &
+                                        corresponding_surface_cell_lon_index, &
                                         nlat,nlon, &
                                         nlat_coarse,nlon_coarse, &
+                                        nlat_surface_model,nlon_surface_model, &
                                         instant_throughflow_local, &
                                         lake_retention_coefficient_local)
       allocate(runoff(nlat_coarse,nlon_coarse))
@@ -4058,6 +4568,24 @@ subroutine testLakeModel5
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0 /), &
          (/nlon,nlat/)))
+      allocate(expected_lake_fractions(3,3))
+      expected_lake_fractions = transpose(reshape((/ &
+                  0.0,1.0/3.0,0.0, &
+                 0.25,    0.25,0.0, &
+                 0.0,    0.0,0.0 /), &
+         (/3,3/)))
+      allocate(expected_number_lake_cells(3,3))
+      expected_number_lake_cells = transpose(reshape((/ &
+               0,2,0, &
+               3,3,0, &
+               0,0,0 /), &
+         (/3,3/)))
+      allocate(expected_number_fine_grid_cells(3,3))
+      expected_number_fine_grid_cells = transpose(reshape((/ &
+               6,6,6, &
+              12,12,12, &
+               9,9,9 /), &
+         (/3,3/)))
       allocate(expected_lake_volumes(1))
       expected_lake_volumes = (/ 432000.0 /)
 
@@ -4117,6 +4645,24 @@ subroutine testLakeModel5
          0.0,    0.0,    0.0,    0.0,   0.0,    0.0,    0.0,    0.0,    0.0, &
          0.0,    0.0,    0.0,    0.0,   0.0,    0.0,    0.0,    0.0,    0.0 /), &
          (/nlon,nlat/)))
+      allocate(first_intermediate_expected_lake_fractions(3,3))
+      first_intermediate_expected_lake_fractions = transpose(reshape((/ &
+                 0.0,0.0,0.0, &
+                 0.0,0.0,0.0, &
+                 0.0,0.0,0.0 /), &
+         (/3,3/)))
+      allocate(first_intermediate_expected_number_lake_cells(3,3))
+      first_intermediate_expected_number_lake_cells = transpose(reshape((/ &
+               0,0,0, &
+               0,0,0, &
+               0,0,0 /), &
+         (/3,3/)))
+      allocate(first_intermediate_expected_number_fine_grid_cells(3,3))
+      first_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
+               6,6,6, &
+              12,12,12, &
+               9,9,9 /), &
+         (/3,3/)))
       allocate(first_intermediate_expected_lake_volumes(1))
       first_intermediate_expected_lake_volumes = (/ 172800.0 /)
 
@@ -4176,6 +4722,24 @@ subroutine testLakeModel5
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0 /), &
          (/nlon,nlat/)))
+      allocate(second_intermediate_expected_lake_fractions(3,3))
+      second_intermediate_expected_lake_fractions = transpose(reshape((/ &
+                 0.0,0.0,0.0, &
+                 0.25,1.0/6.0,0.0, &
+                 0.0,0.0,0.0 /), &
+         (/3,3/)))
+      allocate(second_intermediate_expected_number_lake_cells(3,3))
+      second_intermediate_expected_number_lake_cells = transpose(reshape((/ &
+               0,0,0, &
+               3,2,0, &
+               0,0,0 /), &
+         (/3,3/)))
+      allocate(second_intermediate_expected_number_fine_grid_cells(3,3))
+      second_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
+               6,6,6, &
+              12,12,12, &
+               9,9,9 /), &
+         (/3,3/)))
       allocate(second_intermediate_expected_lake_volumes(1))
       second_intermediate_expected_lake_volumes = (/ 259200.0 /)
 
@@ -4235,6 +4799,25 @@ subroutine testLakeModel5
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0 /), &
          (/nlon,nlat/)))
+      allocate(third_intermediate_expected_lake_fractions(3,3))
+      third_intermediate_expected_lake_fractions= transpose(reshape((/ &
+                 0.0,0.0,0.0, &
+                 0.25,1.0/6.0,0.0, &
+                 0.0,0.0,0.0 /), &
+         (/3,3/)))
+      allocate(third_intermediate_expected_number_lake_cells(3,3))
+      third_intermediate_expected_number_lake_cells = transpose(reshape((/ &
+               0,0,0, &
+               3,2,0, &
+               0,0,0 /), &
+         (/3,3/)))
+      allocate(third_intermediate_expected_number_fine_grid_cells(3,3))
+      third_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
+               6,6,6, &
+              12,12,12, &
+               9,9,9 /), &
+         (/3,3/)))
+
       allocate(third_intermediate_expected_lake_volumes(1))
       third_intermediate_expected_lake_volumes = (/ 432000.0 /)
 
@@ -4258,6 +4841,24 @@ subroutine testLakeModel5
          (/nlon_coarse,nlat_coarse/)))
       fourth_intermediate_expected_water_to_hd = &
         fourth_intermediate_expected_water_to_hd/seconds_per_day
+      allocate(fourth_intermediate_expected_lake_fractions(3,3))
+      fourth_intermediate_expected_lake_fractions = transpose(reshape((/ &
+                 0.0,1.0/3.0,0.0, &
+                 0.25,0.25,0.0, &
+                 0.0,0.0,0.0  /), &
+         (/3,3/)))
+      allocate(fourth_intermediate_expected_number_lake_cells(3,3))
+      fourth_intermediate_expected_number_lake_cells = transpose(reshape((/ &
+               0,2,0, &
+               3,3,0, &
+               0,0,0  /), &
+         (/3,3/)))
+      allocate(fourth_intermediate_expected_number_fine_grid_cells(3,3))
+      fourth_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
+               6,6,6, &
+              12,12,12, &
+               9,9,9  /), &
+         (/3,3/)))
       allocate(fifth_intermediate_expected_river_inflow(nlat_coarse,nlon_coarse))
       fifth_intermediate_expected_river_inflow = transpose(reshape((/ &
           0.0, 0.0, 0.0, &
@@ -4278,7 +4879,24 @@ subroutine testLakeModel5
          (/nlon_coarse,nlat_coarse/)))
       fifth_intermediate_expected_water_to_hd = &
         fifth_intermediate_expected_water_to_hd/seconds_per_day
-
+      allocate(fifth_intermediate_expected_lake_fractions(3,3))
+      fifth_intermediate_expected_lake_fractions = transpose(reshape((/ &
+                 0.0,1.0/3.0,0.0, &
+                 0.25,    0.25,0.0, &
+                 0.0,    0.0,0.0  /), &
+         (/3,3/)))
+      allocate(fifth_intermediate_expected_number_lake_cells(3,3))
+      fifth_intermediate_expected_number_lake_cells = transpose(reshape((/ &
+               0,2,0, &
+               3,3,0, &
+               0,0,0  /), &
+         (/3,3/)))
+      allocate(fifth_intermediate_expected_number_fine_grid_cells(3,3))
+      fifth_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
+               6,6,6, &
+              12,12,12, &
+               9,9,9  /), &
+         (/3,3/)))
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
                                      initial_water_to_lake_centers, &
@@ -4314,6 +4932,8 @@ subroutine testLakeModel5
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
+      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
       call assert_equals(first_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(first_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -4324,6 +4944,11 @@ subroutine testLakeModel5
       call assert_equals(first_intermediate_expected_lake_volumes,lake_volumes,1)
       call assert_equals(diagnostic_lake_volumes,&
                          first_intermediate_expected_diagnostic_lake_volumes,nlat,nlon)
+      call assert_equals(first_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(first_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(first_intermediate_expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
+      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -4361,6 +4986,8 @@ subroutine testLakeModel5
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
+      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
       call assert_equals(second_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(second_intermediate_expected_water_to_ocean, &
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -4370,6 +4997,11 @@ subroutine testLakeModel5
       call assert_equals(second_intermediate_expected_lake_volumes,lake_volumes,1)
       call assert_equals(diagnostic_lake_volumes,&
                          second_intermediate_expected_diagnostic_lake_volumes,nlat,nlon)
+      call assert_equals(second_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(second_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(second_intermediate_expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
+      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -4407,6 +5039,8 @@ subroutine testLakeModel5
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
+      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
       call assert_equals(third_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(third_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -4417,6 +5051,11 @@ subroutine testLakeModel5
       call assert_equals(third_intermediate_expected_lake_volumes,lake_volumes,1)
       call assert_equals(diagnostic_lake_volumes,&
                          third_intermediate_expected_diagnostic_lake_volumes,nlat,nlon)
+      call assert_equals(third_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(third_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(third_intermediate_expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
+      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -4454,6 +5093,8 @@ subroutine testLakeModel5
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
+      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
       call assert_equals(fourth_intermediate_expected_river_inflow,&
                          river_fields%river_inflow,3,3)
       call assert_equals(fourth_intermediate_expected_water_to_ocean,&
@@ -4464,6 +5105,11 @@ subroutine testLakeModel5
       call assert_equals(expected_lake_types,lake_types,nlat,nlon)
       call assert_equals(expected_lake_volumes,lake_volumes,1)
       call assert_equals(diagnostic_lake_volumes,expected_diagnostic_lake_volumes,nlat,nlon)
+      call assert_equals(fourth_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(fourth_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(fourth_intermediate_expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
+      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -4501,6 +5147,8 @@ subroutine testLakeModel5
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
+      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
       call assert_equals(fifth_intermediate_expected_river_inflow,&
                          river_fields%river_inflow,3,3)
       call assert_equals(fifth_intermediate_expected_water_to_ocean,&
@@ -4510,6 +5158,11 @@ subroutine testLakeModel5
       call assert_equals(expected_lake_types,lake_types,nlat,nlon)
       call assert_equals(expected_lake_volumes,lake_volumes,1)
       call assert_equals(diagnostic_lake_volumes,expected_diagnostic_lake_volumes,nlat,nlon)
+      call assert_equals(fifth_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(fifth_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(fifth_intermediate_expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
+      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -4547,6 +5200,8 @@ subroutine testLakeModel5
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
+      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
       call assert_equals(expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,3,3,0.00001_dp)
       call assert_equals(expected_water_to_hd,lake_fields_out%water_to_hd,3,3)
@@ -4554,6 +5209,11 @@ subroutine testLakeModel5
       call assert_equals(expected_lake_types,lake_types,nlat,nlon)
       call assert_equals(expected_lake_volumes,lake_volumes,1)
       call assert_equals(diagnostic_lake_volumes,expected_diagnostic_lake_volumes,nlat,nlon)
+      call assert_equals(expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
+      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       deallocate(lake_volumes)
       deallocate(drainage)
@@ -4648,6 +5308,8 @@ subroutine testLakeModel6
    integer,dimension(:,:), pointer :: additional_flood_redirect_lon_index
    integer,dimension(:,:), pointer :: additional_connect_redirect_lat_index
    integer,dimension(:,:), pointer :: additional_connect_redirect_lon_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
    real(dp),dimension(:,:), pointer :: drainage
    real(dp),dimension(:,:), pointer :: drainage_two
    real(dp),dimension(:,:,:), pointer :: drainages
@@ -4663,6 +5325,9 @@ subroutine testLakeModel6
    integer,dimension(:,:), pointer :: expected_lake_numbers
    integer,dimension(:,:), pointer :: expected_lake_types
    real(dp),dimension(:), pointer :: expected_lake_volumes
+   real(dp), dimension(:,:), pointer :: expected_lake_fractions
+   integer , dimension(:,:), pointer :: expected_number_lake_cells
+   integer , dimension(:,:), pointer :: expected_number_fine_grid_cells
    real(dp),dimension(:,:), pointer :: expected_diagnostic_lake_volumes
    real(dp),dimension(:,:), pointer :: first_intermediate_expected_river_inflow
    real(dp),dimension(:,:), pointer :: first_intermediate_expected_water_to_ocean
@@ -4670,6 +5335,9 @@ subroutine testLakeModel6
    integer,dimension(:,:), pointer :: first_intermediate_expected_lake_numbers
    integer,dimension(:,:), pointer :: first_intermediate_expected_lake_types
    real(dp),dimension(:), pointer :: first_intermediate_expected_lake_volumes
+   real(dp), dimension(:,:), pointer :: first_intermediate_expected_lake_fractions
+   integer , dimension(:,:), pointer :: first_intermediate_expected_number_lake_cells
+   integer , dimension(:,:), pointer :: first_intermediate_expected_number_fine_grid_cells
    real(dp),dimension(:,:), pointer :: first_intermediate_expected_diagnostic_lake_volumes
    real(dp),dimension(:,:), pointer :: second_intermediate_expected_river_inflow
    real(dp),dimension(:,:), pointer :: second_intermediate_expected_water_to_ocean
@@ -4677,6 +5345,9 @@ subroutine testLakeModel6
    integer,dimension(:,:), pointer :: second_intermediate_expected_lake_numbers
    integer,dimension(:,:), pointer :: second_intermediate_expected_lake_types
    real(dp),dimension(:), pointer :: second_intermediate_expected_lake_volumes
+   real(dp), dimension(:,:), pointer :: second_intermediate_expected_lake_fractions
+   integer , dimension(:,:), pointer :: second_intermediate_expected_number_lake_cells
+   integer , dimension(:,:), pointer :: second_intermediate_expected_number_fine_grid_cells
    real(dp),dimension(:,:), pointer :: second_intermediate_expected_diagnostic_lake_volumes
    real(dp),dimension(:,:), pointer :: third_intermediate_expected_river_inflow
    real(dp),dimension(:,:), pointer :: third_intermediate_expected_water_to_ocean
@@ -4684,25 +5355,40 @@ subroutine testLakeModel6
    integer,dimension(:,:), pointer :: third_intermediate_expected_lake_numbers
    integer,dimension(:,:), pointer :: third_intermediate_expected_lake_types
    real(dp),dimension(:), pointer :: third_intermediate_expected_lake_volumes
+   real(dp), dimension(:,:), pointer :: third_intermediate_expected_lake_fractions
+   integer , dimension(:,:), pointer :: third_intermediate_expected_number_lake_cells
+   integer , dimension(:,:), pointer :: third_intermediate_expected_number_fine_grid_cells
    real(dp),dimension(:,:), pointer :: third_intermediate_expected_diagnostic_lake_volumes
    real(dp),dimension(:,:), pointer :: fourth_intermediate_expected_river_inflow
    real(dp),dimension(:,:), pointer :: fourth_intermediate_expected_water_to_ocean
    real(dp),dimension(:,:), pointer :: fourth_intermediate_expected_water_to_hd
+   real(dp), dimension(:,:), pointer :: fourth_intermediate_expected_lake_fractions
+   integer , dimension(:,:), pointer :: fourth_intermediate_expected_number_lake_cells
+   integer , dimension(:,:), pointer :: fourth_intermediate_expected_number_fine_grid_cells
    real(dp),dimension(:,:), pointer :: fifth_intermediate_expected_river_inflow
    real(dp),dimension(:,:), pointer :: fifth_intermediate_expected_water_to_ocean
    real(dp),dimension(:,:), pointer :: fifth_intermediate_expected_water_to_hd
+   real(dp), dimension(:,:), pointer :: fifth_intermediate_expected_lake_fractions
+   integer , dimension(:,:), pointer :: fifth_intermediate_expected_number_lake_cells
+   integer , dimension(:,:), pointer :: fifth_intermediate_expected_number_fine_grid_cells
    real(dp),dimension(:,:), pointer :: sixth_intermediate_expected_river_inflow
    real(dp),dimension(:,:), pointer :: sixth_intermediate_expected_water_to_ocean
    real(dp),dimension(:,:), pointer :: sixth_intermediate_expected_water_to_hd
    integer,dimension(:,:), pointer :: sixth_intermediate_expected_lake_numbers
    integer,dimension(:,:), pointer :: sixth_intermediate_expected_lake_types
    real(dp),dimension(:), pointer :: sixth_intermediate_expected_lake_volumes
+   real(dp), dimension(:,:), pointer :: sixth_intermediate_expected_lake_fractions
+   integer , dimension(:,:), pointer :: sixth_intermediate_expected_number_lake_cells
+   integer , dimension(:,:), pointer :: sixth_intermediate_expected_number_fine_grid_cells
    real(dp),dimension(:,:), pointer :: sixth_intermediate_expected_diagnostic_lake_volumes
    real(dp),dimension(:,:), pointer :: seven_intermediate_expected_river_inflow
    real(dp),dimension(:,:), pointer :: seven_intermediate_expected_water_to_ocean
    real(dp),dimension(:,:), pointer :: seven_intermediate_expected_water_to_hd
    integer,dimension(:,:), pointer :: seven_intermediate_expected_lake_numbers
    integer,dimension(:,:), pointer :: seven_intermediate_expected_lake_types
+   real(dp), dimension(:,:), pointer :: seven_intermediate_expected_lake_fractions
+   integer , dimension(:,:), pointer :: seven_intermediate_expected_number_lake_cells
+   integer , dimension(:,:), pointer :: seven_intermediate_expected_number_fine_grid_cells
    real(dp),dimension(:), pointer :: seven_intermediate_expected_lake_volumes
    real(dp),dimension(:,:), pointer :: seven_intermediate_expected_diagnostic_lake_volumes
    real(dp),dimension(:,:), pointer :: eight_intermediate_expected_river_inflow
@@ -4711,6 +5397,9 @@ subroutine testLakeModel6
    integer,dimension(:,:), pointer :: eight_intermediate_expected_lake_numbers
    integer,dimension(:,:), pointer :: eight_intermediate_expected_lake_types
    real(dp),dimension(:), pointer :: eight_intermediate_expected_lake_volumes
+   real(dp), dimension(:,:), pointer :: eight_intermediate_expected_lake_fractions
+   integer , dimension(:,:), pointer :: eight_intermediate_expected_number_lake_cells
+   integer , dimension(:,:), pointer :: eight_intermediate_expected_number_fine_grid_cells
    real(dp),dimension(:,:), pointer :: eight_intermediate_expected_diagnostic_lake_volumes
    real(dp),dimension(:,:), pointer :: nine_intermediate_expected_river_inflow
    real(dp),dimension(:,:), pointer :: nine_intermediate_expected_water_to_ocean
@@ -4718,6 +5407,9 @@ subroutine testLakeModel6
    integer,dimension(:,:), pointer :: nine_intermediate_expected_lake_numbers
    integer,dimension(:,:), pointer :: nine_intermediate_expected_lake_types
    real(dp),dimension(:), pointer :: nine_intermediate_expected_lake_volumes
+   real(dp), dimension(:,:), pointer :: nine_intermediate_expected_lake_fractions
+   integer , dimension(:,:), pointer :: nine_intermediate_expected_number_lake_cells
+   integer , dimension(:,:), pointer :: nine_intermediate_expected_number_fine_grid_cells
    real(dp),dimension(:,:), pointer :: nine_intermediate_expected_diagnostic_lake_volumes
    real(dp),dimension(:,:), pointer :: ten_intermediate_expected_river_inflow
    real(dp),dimension(:,:), pointer :: ten_intermediate_expected_water_to_ocean
@@ -4725,6 +5417,9 @@ subroutine testLakeModel6
    integer,dimension(:,:), pointer :: ten_intermediate_expected_lake_numbers
    integer,dimension(:,:), pointer :: ten_intermediate_expected_lake_types
    real(dp),dimension(:), pointer :: ten_intermediate_expected_lake_volumes
+   real(dp), dimension(:,:), pointer :: ten_intermediate_expected_lake_fractions
+   integer , dimension(:,:), pointer :: ten_intermediate_expected_number_lake_cells
+   integer , dimension(:,:), pointer :: ten_intermediate_expected_number_fine_grid_cells
    real(dp),dimension(:,:), pointer :: ten_intermediate_expected_diagnostic_lake_volumes
    real(dp),dimension(:,:), pointer :: eleven_intermediate_expected_river_inflow
    real(dp),dimension(:,:), pointer :: eleven_intermediate_expected_water_to_ocean
@@ -4732,6 +5427,9 @@ subroutine testLakeModel6
    integer,dimension(:,:), pointer :: eleven_intermediate_expected_lake_numbers
    integer,dimension(:,:), pointer :: eleven_intermediate_expected_lake_types
    real(dp),dimension(:), pointer :: eleven_intermediate_expected_lake_volumes
+   real(dp), dimension(:,:), pointer :: eleven_intermediate_expected_lake_fractions
+   integer , dimension(:,:), pointer :: eleven_intermediate_expected_number_lake_cells
+   integer , dimension(:,:), pointer :: eleven_intermediate_expected_number_fine_grid_cells
    real(dp),dimension(:,:), pointer :: eleven_intermediate_expected_diagnostic_lake_volumes
    real(dp),dimension(:,:), pointer :: twelve_intermediate_expected_river_inflow
    real(dp),dimension(:,:), pointer :: twelve_intermediate_expected_water_to_ocean
@@ -4739,6 +5437,9 @@ subroutine testLakeModel6
    integer,dimension(:,:), pointer :: twelve_intermediate_expected_lake_numbers
    integer,dimension(:,:), pointer :: twelve_intermediate_expected_lake_types
    real(dp),dimension(:), pointer :: twelve_intermediate_expected_lake_volumes
+   real(dp), dimension(:,:), pointer :: twelve_intermediate_expected_lake_fractions
+   integer , dimension(:,:), pointer :: twelve_intermediate_expected_number_lake_cells
+   integer , dimension(:,:), pointer :: twelve_intermediate_expected_number_fine_grid_cells
    real(dp),dimension(:,:), pointer :: twelve_intermediate_expected_diagnostic_lake_volumes
    integer,dimension(:,:), pointer :: lake_types
    integer :: no_merge_mtype
@@ -4746,7 +5447,9 @@ subroutine testLakeModel6
    integer :: connection_merge_not_set_flood_merge_as_secondary
    real(dp),dimension(:), pointer :: lake_volumes
    real(dp), dimension(:,:), pointer :: diagnostic_lake_volumes
+   real(dp), dimension(:,:), pointer :: lake_fractions
    integer :: nlat_coarse,nlon_coarse
+   integer :: nlat_surface_model,nlon_surface_model
    integer :: nlat,nlon
    integer :: lake_number
    integer :: i,j
@@ -4758,6 +5461,8 @@ subroutine testLakeModel6
       connection_merge_not_set_flood_merge_as_secondary = 10
       nlat_coarse = 3
       nlon_coarse = 3
+      nlat_surface_model = 3
+      nlon_surface_model = 3
       seconds_per_day = 86400.0_dp
       allocate(flow_directions(nlat_coarse,nlon_coarse))
       flow_directions = transpose(reshape((/-2,6,2,&
@@ -5005,6 +5710,30 @@ subroutine testLakeModel6
       additional_connect_redirect_lon_index(:,:) = 0
       instant_throughflow_local=.True.
       lake_retention_coefficient_local=0.1_dp
+      allocate(corresponding_surface_cell_lat_index(nlat,nlon))
+      corresponding_surface_cell_lat_index = transpose(reshape((/ &
+                                                           1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1, &
+                                                           2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2, &
+                                                           3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3 /), &
+         (/nlon,nlat/)))
+      allocate(corresponding_surface_cell_lon_index(nlat,nlon))
+      corresponding_surface_cell_lon_index = transpose(reshape((/ &
+                                                           1,1,1,2,2,2,3,3,3, &
+                                                           1,1,1,2,2,2,3,3,3, &
+                                                           1,1,1,2,2,2,3,3,3, &
+                                                           1,1,1,2,2,2,3,3,3, &
+                                                           1,1,1,2,2,2,3,3,3, &
+                                                           1,1,1,2,2,2,3,3,3, &
+                                                           1,1,1,2,2,2,3,3,3, &
+                                                           1,1,1,2,2,2,3,3,3, &
+                                                           1,1,1,2,2,2,3,3,3 /), &
+         (/nlon,nlat/)))
       lake_parameters => LakeParameters(lake_centers, &
                                         connection_volume_thresholds, &
                                         flood_volume_thresholds, &
@@ -5029,8 +5758,11 @@ subroutine testLakeModel6
                                         additional_flood_redirect_lon_index, &
                                         additional_connect_redirect_lat_index, &
                                         additional_connect_redirect_lon_index, &
+                                        corresponding_surface_cell_lat_index, &
+                                        corresponding_surface_cell_lon_index, &
                                         nlat,nlon, &
                                         nlat_coarse,nlon_coarse, &
+                                        nlat_surface_model,nlon_surface_model, &
                                         instant_throughflow_local, &
                                         lake_retention_coefficient_local)
       allocate(drainage(nlat_coarse,nlon_coarse))
@@ -5125,6 +5857,24 @@ subroutine testLakeModel6
          0,    0,    0,    0,    0,    0,    0,    0,    0, &
          0,    0,    0,    0,    0,    0,    0,    0,    0 /), &
          (/nlon,nlat/)))
+      allocate(expected_lake_fractions(3,3))
+      expected_lake_fractions = transpose(reshape((/ &
+                 0.0,0.0,0.0, &
+                 0.0,0.0,0.0, &
+                 0.0,0.0,0.0 /), &
+         (/3,3/)))
+      allocate(expected_number_lake_cells(3,3))
+      expected_number_lake_cells = transpose(reshape((/ &
+               0,0,0, &
+               0,0,0, &
+               0,0,0 /), &
+         (/3,3/)))
+      allocate(expected_number_fine_grid_cells(3,3))
+      expected_number_fine_grid_cells = transpose(reshape((/ &
+               6,6,6, &
+              12,12,12, &
+               9,9,9 /), &
+         (/3,3/)))
      allocate(expected_lake_volumes(1))
      expected_lake_volumes = (/ 0.0 /)
 
@@ -5184,6 +5934,24 @@ subroutine testLakeModel6
          0.0,    0.0,    0.0,    0.0,   0.0,    0.0,    0.0,    0.0,    0.0, &
          0.0,    0.0,    0.0,    0.0,   0.0,    0.0,    0.0,    0.0,    0.0 /), &
          (/nlon,nlat/)))
+      allocate(first_intermediate_expected_lake_fractions(3,3))
+      first_intermediate_expected_lake_fractions = transpose(reshape((/ &
+                 0.0,0.0,0.0, &
+                 0.0,0.0,0.0, &
+                 0.0,0.0,0.0 /), &
+         (/3,3/)))
+      allocate(first_intermediate_expected_number_lake_cells(3,3))
+      first_intermediate_expected_number_lake_cells = transpose(reshape((/ &
+               0,0,0, &
+               0,0,0, &
+               0,0,0 /), &
+         (/3,3/)))
+      allocate(first_intermediate_expected_number_fine_grid_cells(3,3))
+      first_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
+               6,6,6, &
+              12,12,12, &
+               9,9,9 /), &
+         (/3,3/)))
       allocate(first_intermediate_expected_lake_volumes(1))
       first_intermediate_expected_lake_volumes = (/ 172800.0 /)
 
@@ -5243,6 +6011,24 @@ subroutine testLakeModel6
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0 /), &
          (/nlon,nlat/)))
+      allocate(second_intermediate_expected_lake_fractions(3,3))
+      second_intermediate_expected_lake_fractions = transpose(reshape((/ &
+                0.0,0.0,0.0, &
+               0.25,1.0/6.0,0.0, &
+               0.0,0.0,0.0  /), &
+       (/3,3/)))
+      allocate(second_intermediate_expected_number_lake_cells(3,3))
+      second_intermediate_expected_number_lake_cells = transpose(reshape((/ &
+             0,0,0, &
+             3,2,0, &
+             0,0,0 /), &
+       (/3,3/)))
+      allocate(second_intermediate_expected_number_fine_grid_cells(3,3))
+      second_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
+             6,6,6, &
+            12,12,12, &
+             9,9,9  /), &
+       (/3,3/)))
       allocate(second_intermediate_expected_lake_volumes(1))
       second_intermediate_expected_lake_volumes = (/ 259200.0 /)
 
@@ -5302,6 +6088,24 @@ subroutine testLakeModel6
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0 /), &
          (/nlon,nlat/)))
+      allocate(third_intermediate_expected_lake_fractions(3,3))
+      third_intermediate_expected_lake_fractions = transpose(reshape((/ &
+               0.0,0.0,0.0, &
+               0.25,1.0/6.0,0.0, &
+               0.0,0.0,0.0 /), &
+       (/3,3/)))
+      allocate(third_intermediate_expected_number_lake_cells(3,3))
+      third_intermediate_expected_number_lake_cells = transpose(reshape((/ &
+             0,0,0, &
+             3,2,0, &
+             0,0,0 /), &
+       (/3,3/)))
+      allocate(third_intermediate_expected_number_fine_grid_cells(3,3))
+      third_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
+             6,6,6, &
+            12,12,12, &
+             9,9,9 /), &
+       (/3,3/)))
       allocate(third_intermediate_expected_lake_volumes(1))
       third_intermediate_expected_lake_volumes = (/ 432000.0 /)
 
@@ -5325,6 +6129,24 @@ subroutine testLakeModel6
          (/nlon_coarse,nlat_coarse/)))
       fourth_intermediate_expected_water_to_hd = &
         fourth_intermediate_expected_water_to_hd/seconds_per_day
+      allocate(fourth_intermediate_expected_lake_fractions(3,3))
+      fourth_intermediate_expected_lake_fractions = transpose(reshape((/ &
+                 0.0,1.0/3.0,0.0, &
+                 0.25,0.25,0.0, &
+                 0.0,0.0,0.0 /), &
+         (/3,3/)))
+      allocate(fourth_intermediate_expected_number_lake_cells(3,3))
+      fourth_intermediate_expected_number_lake_cells = transpose(reshape((/ &
+               0,2,0, &
+               3,3,0, &
+               0,0,0 /), &
+         (/3,3/)))
+      allocate(fourth_intermediate_expected_number_fine_grid_cells(3,3))
+      fourth_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
+               6,6,6, &
+              12,12,12, &
+               9,9,9 /), &
+         (/3,3/)))
       allocate(fifth_intermediate_expected_river_inflow(nlat_coarse,nlon_coarse))
       fifth_intermediate_expected_river_inflow = transpose(reshape((/ &
           0.0, 0.0, 0.0, &
@@ -5345,6 +6167,24 @@ subroutine testLakeModel6
          (/nlon_coarse,nlat_coarse/)))
       fifth_intermediate_expected_water_to_hd = &
         fifth_intermediate_expected_water_to_hd/seconds_per_day
+      allocate(fifth_intermediate_expected_lake_fractions(3,3))
+      fifth_intermediate_expected_lake_fractions = transpose(reshape((/ &
+                 0.0,1.0/3.0,0.0, &
+                 0.25,0.25,0.0, &
+                 0.0,0.0,0.0 /), &
+         (/3,3/)))
+      allocate(fifth_intermediate_expected_number_lake_cells(3,3))
+      fifth_intermediate_expected_number_lake_cells = transpose(reshape((/ &
+               0,2,0, &
+               3,3,0, &
+               0,0,0 /), &
+         (/3,3/)))
+      allocate(fifth_intermediate_expected_number_fine_grid_cells(3,3))
+      fifth_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
+               6,6,6, &
+              12,12,12, &
+               9,9,9 /), &
+         (/3,3/)))
       allocate(sixth_intermediate_expected_river_inflow(nlat_coarse,nlon_coarse))
       sixth_intermediate_expected_river_inflow = transpose(reshape((/ &
           0.0, 0.0, 0.0, &
@@ -5401,6 +6241,24 @@ subroutine testLakeModel6
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0 /), &
          (/nlon,nlat/)))
+      allocate(sixth_intermediate_expected_lake_fractions(3,3))
+      sixth_intermediate_expected_lake_fractions = transpose(reshape((/ &
+               0.0,1.0/3.0,0.0, &
+               0.25,0.25,0.0, &
+               0.0,0.0,0.0 /), &
+       (/3,3/)))
+      allocate(sixth_intermediate_expected_number_lake_cells(3,3))
+      sixth_intermediate_expected_number_lake_cells = transpose(reshape((/ &
+             0,2,0, &
+             3,3,0, &
+             0,0,0 /), &
+       (/3,3/)))
+      allocate(sixth_intermediate_expected_number_fine_grid_cells(3,3))
+      sixth_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
+             6,6,6, &
+            12,12,12, &
+             9,9,9 /), &
+       (/3,3/)))
       allocate(sixth_intermediate_expected_lake_volumes(1))
       sixth_intermediate_expected_lake_volumes = (/ 432000.0 /)
 
@@ -5460,6 +6318,24 @@ subroutine testLakeModel6
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0 /), &
          (/nlon,nlat/)))
+      allocate(seven_intermediate_expected_lake_fractions(3,3))
+      seven_intermediate_expected_lake_fractions = transpose(reshape((/ &
+               0.0,0.0,0.0, &
+               0.25,1.0/6.0,0.0, &
+               0.0,0.0,0.0 /), &
+       (/3,3/)))
+      allocate(seven_intermediate_expected_number_lake_cells(3,3))
+      seven_intermediate_expected_number_lake_cells = transpose(reshape((/ &
+             0,0,0, &
+             3,2,0, &
+             0,0,0 /), &
+       (/3,3/)))
+      allocate(seven_intermediate_expected_number_fine_grid_cells(3,3))
+      seven_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
+             6,6,6, &
+            12,12,12, &
+             9,9,9 /), &
+       (/3,3/)))
       allocate(seven_intermediate_expected_lake_volumes(1))
       seven_intermediate_expected_lake_volumes = (/ 345600.0 /)
 
@@ -5519,6 +6395,24 @@ subroutine testLakeModel6
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0 /), &
          (/nlon,nlat/)))
+      allocate(eight_intermediate_expected_lake_fractions(3,3))
+      eight_intermediate_expected_lake_fractions = transpose(reshape((/ &
+                 0.0,0.0,0.0, &
+                 0.25,1.0/6.0,0.0, &
+                 0.0,0.0,0.0 /), &
+         (/3,3/)))
+      allocate(eight_intermediate_expected_number_lake_cells(3,3))
+      eight_intermediate_expected_number_lake_cells = transpose(reshape((/ &
+               0,0,0, &
+               3,2,0, &
+               0,0,0 /), &
+         (/3,3/)))
+      allocate(eight_intermediate_expected_number_fine_grid_cells(3,3))
+      eight_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
+               6,6,6, &
+              12,12,12, &
+               9,9,9 /), &
+         (/3,3/)))
       allocate(eight_intermediate_expected_lake_volumes(1))
       eight_intermediate_expected_lake_volumes = (/ 259200.0 /)
 
@@ -5578,6 +6472,24 @@ subroutine testLakeModel6
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0 /), &
          (/nlon,nlat/)))
+      allocate(nine_intermediate_expected_lake_fractions(3,3))
+      nine_intermediate_expected_lake_fractions = transpose(reshape((/ &
+                 0.0,0.0,0.0, &
+                 0.25,1.0/6.0,0.0, &
+                 0.0,0.0,0.0 /), &
+         (/3,3/)))
+      allocate(nine_intermediate_expected_number_lake_cells(3,3))
+      nine_intermediate_expected_number_lake_cells = transpose(reshape((/ &
+               0,0,0, &
+               3,2,0, &
+               0,0,0 /), &
+         (/3,3/)))
+      allocate(nine_intermediate_expected_number_fine_grid_cells(3,3))
+      nine_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
+         6,6,6, &
+        12,12,12, &
+         9,9,9 /), &
+         (/3,3/)))
       allocate(nine_intermediate_expected_lake_volumes(1))
       nine_intermediate_expected_lake_volumes = (/ 172800.0 /)
 
@@ -5637,9 +6549,26 @@ subroutine testLakeModel6
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0 /), &
          (/nlon,nlat/)))
+      allocate(ten_intermediate_expected_lake_fractions(3,3))
+      ten_intermediate_expected_lake_fractions = transpose(reshape((/ &
+               0.0,0.0,0.0, &
+               0.0,0.0,0.0, &
+               0.0,0.0,0.0 /), &
+       (/3,3/)))
+      allocate(ten_intermediate_expected_number_lake_cells(3,3))
+      ten_intermediate_expected_number_lake_cells = transpose(reshape((/ &
+             0,0,0, &
+             0,0,0, &
+             0,0,0 /), &
+       (/3,3/)))
+      allocate(ten_intermediate_expected_number_fine_grid_cells(3,3))
+      ten_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
+             6,6,6, &
+            12,12,12, &
+             9,9,9 /), &
+       (/3,3/)))
       allocate(ten_intermediate_expected_lake_volumes(1))
       ten_intermediate_expected_lake_volumes = (/ 86400.0 /)
-
       allocate(eleven_intermediate_expected_river_inflow(nlat_coarse,nlon_coarse))
       eleven_intermediate_expected_river_inflow = transpose(reshape((/ &
           0.0,0.0,0.0,&
@@ -5696,6 +6625,24 @@ subroutine testLakeModel6
          0,    0,    0,    0,    0,    0,    0,    0,    0, &
          0,    0,    0,    0,    0,    0,    0,    0,    0 /), &
          (/nlon,nlat/)))
+      allocate(eleven_intermediate_expected_lake_fractions(3,3))
+      eleven_intermediate_expected_lake_fractions = transpose(reshape((/ &
+               0.0,0.0,0.0, &
+               0.0,0.0,0.0, &
+               0.0,0.0,0.0 /), &
+       (/3,3/)))
+      allocate(eleven_intermediate_expected_number_lake_cells(3,3))
+      eleven_intermediate_expected_number_lake_cells = transpose(reshape((/ &
+             0,0,0, &
+             0,0,0, &
+             0,0,0 /), &
+       (/3,3/)))
+      allocate(eleven_intermediate_expected_number_fine_grid_cells(3,3))
+      eleven_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
+             6,6,6, &
+            12,12,12, &
+             9,9,9 /), &
+       (/3,3/)))
       allocate(eleven_intermediate_expected_lake_volumes(1))
       eleven_intermediate_expected_lake_volumes = (/ 0.0 /)
 
@@ -5755,6 +6702,24 @@ subroutine testLakeModel6
          0,    0,    0,    0,    0,    0,    0,    0,    0, &
          0,    0,    0,    0,    0,    0,    0,    0,    0 /), &
          (/nlon,nlat/)))
+      allocate(twelve_intermediate_expected_lake_fractions(3,3))
+      twelve_intermediate_expected_lake_fractions = transpose(reshape((/ &
+               0.0,0.0,0.0, &
+               0.0,0.0,0.0, &
+               0.0,0.0,0.0 /), &
+       (/3,3/)))
+      allocate(twelve_intermediate_expected_number_lake_cells(3,3))
+      twelve_intermediate_expected_number_lake_cells = transpose(reshape((/ &
+             0,0,0, &
+             0,0,0, &
+             0,0,0 /), &
+       (/3,3/)))
+      allocate(twelve_intermediate_expected_number_fine_grid_cells(3,3))
+      twelve_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
+             6,6,6, &
+            12,12,12, &
+             9,9,9 /), &
+       (/3,3/)))
       allocate(twelve_intermediate_expected_lake_volumes(1))
       twelve_intermediate_expected_lake_volumes = (/ 0.0 /)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
@@ -5792,6 +6757,8 @@ subroutine testLakeModel6
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
+      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
       call assert_equals(first_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(first_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -5802,6 +6769,11 @@ subroutine testLakeModel6
       call assert_equals(first_intermediate_expected_lake_volumes,lake_volumes,1)
       call assert_equals(diagnostic_lake_volumes,&
                          first_intermediate_expected_diagnostic_lake_volumes,nlat,nlon)
+      call assert_equals(first_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(first_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(first_intermediate_expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
+      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -5839,6 +6811,8 @@ subroutine testLakeModel6
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
+      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
       call assert_equals(second_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(second_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -5849,6 +6823,11 @@ subroutine testLakeModel6
       call assert_equals(second_intermediate_expected_lake_volumes,lake_volumes,1)
       call assert_equals(diagnostic_lake_volumes,&
                          second_intermediate_expected_diagnostic_lake_volumes,nlat,nlon)
+      call assert_equals(second_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(second_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(second_intermediate_expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
+      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -5886,6 +6865,8 @@ subroutine testLakeModel6
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
+      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
       call assert_equals(third_intermediate_expected_river_inflow, river_fields%river_inflow,3,3)
       call assert_equals(third_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -5896,6 +6877,11 @@ subroutine testLakeModel6
       call assert_equals(third_intermediate_expected_lake_volumes,lake_volumes,1)
       call assert_equals(diagnostic_lake_volumes,&
                          third_intermediate_expected_diagnostic_lake_volumes,nlat,nlon)
+      call assert_equals(third_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(third_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(third_intermediate_expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
+      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -5933,6 +6919,8 @@ subroutine testLakeModel6
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
+      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
       call assert_equals(fourth_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(fourth_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -5943,6 +6931,11 @@ subroutine testLakeModel6
       call assert_equals(sixth_intermediate_expected_lake_volumes,lake_volumes,1)
       call assert_equals(diagnostic_lake_volumes,&
                          sixth_intermediate_expected_diagnostic_lake_volumes,nlat,nlon)
+      call assert_equals(fourth_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(fourth_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(fourth_intermediate_expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
+      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -5980,6 +6973,8 @@ subroutine testLakeModel6
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
+      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
       call assert_equals(fifth_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(fifth_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -5990,6 +6985,11 @@ subroutine testLakeModel6
       call assert_equals(sixth_intermediate_expected_lake_volumes,lake_volumes,1)
       call assert_equals(diagnostic_lake_volumes,&
                          sixth_intermediate_expected_diagnostic_lake_volumes,nlat,nlon)
+      call assert_equals(fifth_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(fifth_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(fifth_intermediate_expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
+      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -6027,6 +7027,8 @@ subroutine testLakeModel6
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
+      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
       call assert_equals(sixth_intermediate_expected_river_inflow,&
                          river_fields%river_inflow,3,3)
       call assert_equals(sixth_intermediate_expected_water_to_ocean,&
@@ -6038,6 +7040,11 @@ subroutine testLakeModel6
       call assert_equals(sixth_intermediate_expected_lake_volumes,lake_volumes,1)
       call assert_equals(diagnostic_lake_volumes,&
                          sixth_intermediate_expected_diagnostic_lake_volumes,nlat,nlon)
+      call assert_equals(sixth_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(sixth_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(sixth_intermediate_expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
+      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -6075,6 +7082,8 @@ subroutine testLakeModel6
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
+      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
       call assert_equals(sixth_intermediate_expected_river_inflow, river_fields%river_inflow,3,3)
       call assert_equals(sixth_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -6085,6 +7094,11 @@ subroutine testLakeModel6
       call assert_equals(sixth_intermediate_expected_lake_volumes,lake_volumes,1)
       call assert_equals(diagnostic_lake_volumes,&
                          sixth_intermediate_expected_diagnostic_lake_volumes,nlat,nlon)
+      call assert_equals(sixth_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(sixth_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(sixth_intermediate_expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
+      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -6122,6 +7136,8 @@ subroutine testLakeModel6
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
+      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
       call assert_equals(seven_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(seven_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -6132,6 +7148,11 @@ subroutine testLakeModel6
       call assert_equals(seven_intermediate_expected_lake_volumes,lake_volumes,1)
       call assert_equals(diagnostic_lake_volumes,&
                          seven_intermediate_expected_diagnostic_lake_volumes,nlat,nlon)
+      call assert_equals(seven_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(seven_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(seven_intermediate_expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
+      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -6169,6 +7190,8 @@ subroutine testLakeModel6
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
+      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
       call assert_equals(eight_intermediate_expected_river_inflow,&
                          river_fields%river_inflow,3,3)
       call assert_equals(eight_intermediate_expected_water_to_ocean,&
@@ -6180,6 +7203,10 @@ subroutine testLakeModel6
       call assert_equals(eight_intermediate_expected_lake_volumes,lake_volumes,1)
       call assert_equals(diagnostic_lake_volumes,&
                          eight_intermediate_expected_diagnostic_lake_volumes,nlat,nlon)
+      call assert_equals(eight_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(eight_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(eight_intermediate_expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -6217,6 +7244,8 @@ subroutine testLakeModel6
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
+      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
       call assert_equals(nine_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(nine_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -6227,6 +7256,10 @@ subroutine testLakeModel6
       call assert_equals(nine_intermediate_expected_lake_volumes,lake_volumes,1)
       call assert_equals(diagnostic_lake_volumes,&
                          nine_intermediate_expected_diagnostic_lake_volumes,nlat,nlon)
+      call assert_equals(nine_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(nine_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(nine_intermediate_expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -6264,6 +7297,8 @@ subroutine testLakeModel6
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
+      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
       call assert_equals(ten_intermediate_expected_river_inflow,&
                          river_fields%river_inflow,3,3)
       call assert_equals(ten_intermediate_expected_water_to_ocean,&
@@ -6275,6 +7310,10 @@ subroutine testLakeModel6
       call assert_equals(ten_intermediate_expected_lake_volumes,lake_volumes,1)
       call assert_equals(diagnostic_lake_volumes,&
                          ten_intermediate_expected_diagnostic_lake_volumes,nlat,nlon)
+      call assert_equals(ten_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(ten_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(ten_intermediate_expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -6312,6 +7351,8 @@ subroutine testLakeModel6
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
+      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
       call assert_equals(eleven_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(eleven_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -6323,6 +7364,10 @@ subroutine testLakeModel6
       call assert_equals(diagnostic_lake_volumes, &
                          eleven_intermediate_expected_diagnostic_lake_volumes,nlat,nlon,&
                          0.0000000000001_dp)
+      call assert_equals(eleven_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(eleven_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(eleven_intermediate_expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -6360,6 +7405,8 @@ subroutine testLakeModel6
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
+      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
       call assert_equals(twelve_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(twelve_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -6371,6 +7418,10 @@ subroutine testLakeModel6
       call assert_equals(diagnostic_lake_volumes,&
                          twelve_intermediate_expected_diagnostic_lake_volumes,nlat,nlon,&
                          0.0000000000001_dp)
+      call assert_equals(twelve_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(twelve_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(twelve_intermediate_expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -6408,6 +7459,8 @@ subroutine testLakeModel6
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
+      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
       call assert_equals(expected_river_inflow, river_fields%river_inflow,3,3)
       call assert_equals(expected_water_to_ocean,&
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -6417,6 +7470,10 @@ subroutine testLakeModel6
       call assert_equals(expected_lake_volumes,lake_volumes,1)
       call assert_equals(diagnostic_lake_volumes,expected_diagnostic_lake_volumes,nlat,nlon,&
                          0.0000000000001_dp)
+      call assert_equals(expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
       deallocate(diagnostic_lake_volumes)
       deallocate(lake_volumes)
       deallocate(drainage)
@@ -6561,6 +7618,8 @@ subroutine testLakeModel7
    integer,dimension(:,:), pointer :: additional_flood_redirect_lon_index
    integer,dimension(:,:), pointer :: additional_connect_redirect_lat_index
    integer,dimension(:,:), pointer :: additional_connect_redirect_lon_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
    real(dp),dimension(:,:,:), pointer :: drainages
    real(dp),dimension(:,:,:), pointer :: runoffs
    real(dp),dimension(:,:,:), pointer :: evaporations
@@ -6572,6 +7631,9 @@ subroutine testLakeModel7
    integer,dimension(:,:), pointer :: expected_lake_numbers
    integer,dimension(:,:), pointer :: expected_lake_types
    real(dp),dimension(:), pointer :: expected_lake_volumes
+   real(dp), dimension(:,:), pointer :: expected_lake_fractions
+   integer , dimension(:,:), pointer :: expected_number_lake_cells
+   integer , dimension(:,:), pointer :: expected_number_fine_grid_cells
    real(dp),dimension(:,:), pointer :: expected_diagnostic_lake_volumes
    real(dp),dimension(:,:), pointer :: first_intermediate_expected_river_inflow
    real(dp),dimension(:,:), pointer :: first_intermediate_expected_water_to_ocean
@@ -6579,6 +7641,9 @@ subroutine testLakeModel7
    integer,dimension(:,:), pointer :: first_intermediate_expected_lake_numbers
    integer,dimension(:,:), pointer :: first_intermediate_expected_lake_types
    real(dp),dimension(:), pointer :: first_intermediate_expected_lake_volumes
+   real(dp), dimension(:,:), pointer :: first_intermediate_expected_lake_fractions
+   integer , dimension(:,:), pointer :: first_intermediate_expected_number_lake_cells
+   integer , dimension(:,:), pointer :: first_intermediate_expected_number_fine_grid_cells
    real(dp),dimension(:,:), pointer :: first_intermediate_expected_diagnostic_lake_volumes
    real(dp),dimension(:,:), pointer :: second_intermediate_expected_river_inflow
    real(dp),dimension(:,:), pointer :: second_intermediate_expected_water_to_ocean
@@ -6586,6 +7651,9 @@ subroutine testLakeModel7
    integer,dimension(:,:), pointer :: second_intermediate_expected_lake_numbers
    integer,dimension(:,:), pointer :: second_intermediate_expected_lake_types
    real(dp),dimension(:), pointer :: second_intermediate_expected_lake_volumes
+   real(dp), dimension(:,:), pointer :: second_intermediate_expected_lake_fractions
+   integer , dimension(:,:), pointer :: second_intermediate_expected_number_lake_cells
+   integer , dimension(:,:), pointer :: second_intermediate_expected_number_fine_grid_cells
    real(dp),dimension(:,:), pointer :: second_intermediate_expected_diagnostic_lake_volumes
    integer,dimension(:,:), pointer :: lake_types
    integer :: no_merge_mtype
@@ -6593,7 +7661,9 @@ subroutine testLakeModel7
    integer :: connection_merge_not_set_flood_merge_as_secondary
    real(dp),dimension(:), pointer :: lake_volumes
    real(dp), dimension(:,:), pointer :: diagnostic_lake_volumes
+   real(dp), dimension(:,:), pointer :: lake_fractions
    integer :: nlat_coarse,nlon_coarse
+   integer :: nlat_surface_model,nlon_surface_model
    integer :: nlat,nlon
    integer :: lake_number
    integer :: i,j
@@ -6605,6 +7675,8 @@ subroutine testLakeModel7
       connection_merge_not_set_flood_merge_as_secondary = 10
       nlat_coarse = 3
       nlon_coarse = 3
+      nlat_surface_model = 3
+      nlon_surface_model = 3
       seconds_per_day = 86400.0_dp
       allocate(flow_directions(nlat_coarse,nlon_coarse))
       flow_directions = transpose(reshape((/-2,6,2,&
@@ -6852,6 +7924,30 @@ subroutine testLakeModel7
       additional_connect_redirect_lon_index(:,:) = 0
       instant_throughflow_local=.True.
       lake_retention_coefficient_local=0.1_dp
+      allocate(corresponding_surface_cell_lat_index(nlat,nlon))
+      corresponding_surface_cell_lat_index = transpose(reshape((/ &
+                                                           1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1, &
+                                                           2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2, &
+                                                           3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3 /), &
+         (/nlon,nlat/)))
+      allocate(corresponding_surface_cell_lon_index(nlat,nlon))
+      corresponding_surface_cell_lon_index = transpose(reshape((/ &
+                                                           1,1,1,2,2,2,3,3,3, &
+                                                           1,1,1,2,2,2,3,3,3, &
+                                                           1,1,1,2,2,2,3,3,3, &
+                                                           1,1,1,2,2,2,3,3,3, &
+                                                           1,1,1,2,2,2,3,3,3, &
+                                                           1,1,1,2,2,2,3,3,3, &
+                                                           1,1,1,2,2,2,3,3,3, &
+                                                           1,1,1,2,2,2,3,3,3, &
+                                                           1,1,1,2,2,2,3,3,3 /), &
+         (/nlon,nlat/)))
       lake_parameters => LakeParameters(lake_centers, &
                                         connection_volume_thresholds, &
                                         flood_volume_thresholds, &
@@ -6876,8 +7972,11 @@ subroutine testLakeModel7
                                         additional_flood_redirect_lon_index, &
                                         additional_connect_redirect_lat_index, &
                                         additional_connect_redirect_lon_index, &
+                                        corresponding_surface_cell_lat_index, &
+                                        corresponding_surface_cell_lon_index, &
                                         nlat,nlon, &
                                         nlat_coarse,nlon_coarse, &
+                                        nlat_surface_model,nlon_surface_model, &
                                         instant_throughflow_local, &
                                         lake_retention_coefficient_local)
       allocate(drainages(nlat_coarse,nlon_coarse,1000))
@@ -6960,6 +8059,25 @@ subroutine testLakeModel7
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0 /), &
          (/nlon,nlat/)))
+      allocate(expected_lake_fractions(3,3))
+      expected_lake_fractions = transpose(reshape((/ &
+                 0.0,1.0/3.0,0.0, &
+                 0.25,    0.25,0.0, &
+                 0.0,    0.0,0.0 /), &
+         (/3,3/)))
+      allocate(expected_number_lake_cells(3,3))
+      expected_number_lake_cells = transpose(reshape((/ &
+               0,2,0, &
+               3,3,0, &
+               0,0,0 /), &
+         (/3,3/)))
+      allocate(expected_number_fine_grid_cells(3,3))
+      expected_number_fine_grid_cells = transpose(reshape((/ &
+               6,6,6, &
+              12,12,12, &
+               9,9,9 /), &
+         (/3,3/)))
+
       allocate(expected_lake_volumes(1))
       expected_lake_volumes = (/ 432000.0 /)
 
@@ -7019,6 +8137,24 @@ subroutine testLakeModel7
          0.0,    0.0,    0.0,    0.0,   0.0,    0.0,    0.0,    0.0,    0.0, &
          0.0,    0.0,    0.0,    0.0,   0.0,    0.0,    0.0,    0.0,    0.0 /), &
          (/nlon,nlat/)))
+      allocate(first_intermediate_expected_lake_fractions(3,3))
+      first_intermediate_expected_lake_fractions = transpose(reshape((/ &
+               0.0,1.0/3.0,0.0, &
+               0.25,    0.25,0.0, &
+               0.0,    0.0,0.0 /), &
+       (/3,3/)))
+      allocate(first_intermediate_expected_number_lake_cells(3,3))
+      first_intermediate_expected_number_lake_cells = transpose(reshape((/ &
+             0,2,0, &
+             3,3,0, &
+             0,0,0 /), &
+       (/3,3/)))
+      allocate(first_intermediate_expected_number_fine_grid_cells(3,3))
+      first_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
+             6,6,6, &
+            12,12,12, &
+             9,9,9 /), &
+       (/3,3/)))
       allocate(first_intermediate_expected_lake_volumes(1))
       first_intermediate_expected_lake_volumes = (/ 432000.0 /)
 
@@ -7078,6 +8214,24 @@ subroutine testLakeModel7
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0 /), &
          (/nlon,nlat/)))
+      allocate(second_intermediate_expected_lake_fractions(3,3))
+      second_intermediate_expected_lake_fractions= transpose(reshape((/ &
+                 0.0,1.0/3.0,0.0, &
+                 0.25,    0.25,0.0, &
+                 0.0,    0.0,0.0 /), &
+         (/3,3/)))
+      allocate(second_intermediate_expected_number_lake_cells(3,3))
+      second_intermediate_expected_number_lake_cells= transpose(reshape((/ &
+               0,2,0, &
+               3,3,0, &
+               0,0,0 /), &
+         (/3,3/)))
+      allocate(second_intermediate_expected_number_fine_grid_cells(3,3))
+      second_intermediate_expected_number_fine_grid_cells= transpose(reshape((/ &
+               6,6,6, &
+              12,12,12, &
+               9,9,9 /), &
+         (/3,3/)))
       allocate(second_intermediate_expected_lake_volumes(1))
       second_intermediate_expected_lake_volumes = (/ 432000.0 /)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
@@ -7115,6 +8269,8 @@ subroutine testLakeModel7
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
+      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
       call assert_equals(first_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(first_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -7126,6 +8282,10 @@ subroutine testLakeModel7
       call assert_equals(first_intermediate_expected_lake_volumes,lake_volumes,1)
       call assert_equals(diagnostic_lake_volumes,&
                          first_intermediate_expected_diagnostic_lake_volumes,nlat,nlon)
+      call assert_equals(first_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(first_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(first_intermediate_expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -7163,6 +8323,8 @@ subroutine testLakeModel7
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
+      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
       call assert_equals(second_intermediate_expected_river_inflow,&
                          river_fields%river_inflow,3,3)
       call assert_equals(second_intermediate_expected_water_to_ocean,&
@@ -7176,6 +8338,10 @@ subroutine testLakeModel7
       call assert_equals(second_intermediate_expected_lake_volumes,lake_volumes,1)
       call assert_equals(diagnostic_lake_volumes,&
                          second_intermediate_expected_diagnostic_lake_volumes,nlat,nlon)
+      call assert_equals(second_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(second_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(second_intermediate_expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -7213,6 +8379,8 @@ subroutine testLakeModel7
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
+      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
       call assert_equals(expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,3,3,0.00001_dp)
       call assert_equals(expected_water_to_hd,lake_fields_out%water_to_hd,3,3)
@@ -7221,6 +8389,10 @@ subroutine testLakeModel7
       call assert_equals(expected_lake_volumes,lake_volumes,1)
       call assert_equals(diagnostic_lake_volumes,expected_diagnostic_lake_volumes,&
                          nlat,nlon)
+      call assert_equals(expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
       deallocate(diagnostic_lake_volumes)
       deallocate(lake_volumes)
       deallocate(drainages)
@@ -7296,6 +8468,8 @@ subroutine testLakeModel8
    integer,dimension(:,:), pointer :: additional_flood_redirect_lon_index
    integer,dimension(:,:), pointer :: additional_connect_redirect_lat_index
    integer,dimension(:,:), pointer :: additional_connect_redirect_lon_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
    real(dp),dimension(:,:), pointer :: drainage
    real(dp),dimension(:,:,:), pointer :: drainages
    real(dp),dimension(:,:), pointer :: runoff
@@ -7310,6 +8484,9 @@ subroutine testLakeModel8
    integer,dimension(:,:), pointer :: expected_lake_numbers
    integer,dimension(:,:), pointer :: expected_lake_types
    real(dp),dimension(:), pointer :: expected_lake_volumes
+   real(dp), dimension(:,:), pointer :: expected_lake_fractions
+   integer , dimension(:,:), pointer :: expected_number_lake_cells
+   integer , dimension(:,:), pointer :: expected_number_fine_grid_cells
    real(dp),dimension(:,:), pointer :: expected_diagnostic_lake_volumes
    real(dp),dimension(:,:), pointer :: first_intermediate_expected_river_inflow
    real(dp),dimension(:,:), pointer :: first_intermediate_expected_water_to_ocean
@@ -7317,6 +8494,9 @@ subroutine testLakeModel8
    integer,dimension(:,:), pointer :: first_intermediate_expected_lake_numbers
    integer,dimension(:,:), pointer :: first_intermediate_expected_lake_types
    real(dp),dimension(:), pointer :: first_intermediate_expected_lake_volumes
+   real(dp), dimension(:,:), pointer :: first_intermediate_expected_lake_fractions
+   integer , dimension(:,:), pointer :: first_intermediate_expected_number_lake_cells
+   integer , dimension(:,:), pointer :: first_intermediate_expected_number_fine_grid_cells
    real(dp),dimension(:,:), pointer :: first_intermediate_expected_diagnostic_lake_volumes
    real(dp),dimension(:,:), pointer :: second_intermediate_expected_river_inflow
    real(dp),dimension(:,:), pointer :: second_intermediate_expected_water_to_ocean
@@ -7324,6 +8504,9 @@ subroutine testLakeModel8
    integer,dimension(:,:), pointer :: second_intermediate_expected_lake_numbers
    integer,dimension(:,:), pointer :: second_intermediate_expected_lake_types
    real(dp),dimension(:), pointer :: second_intermediate_expected_lake_volumes
+   real(dp), dimension(:,:), pointer :: second_intermediate_expected_lake_fractions
+   integer , dimension(:,:), pointer :: second_intermediate_expected_number_lake_cells
+   integer , dimension(:,:), pointer :: second_intermediate_expected_number_fine_grid_cells
    real(dp),dimension(:,:), pointer :: second_intermediate_expected_diagnostic_lake_volumes
    real(dp),dimension(:,:), pointer :: third_intermediate_expected_river_inflow
    real(dp),dimension(:,:), pointer :: third_intermediate_expected_water_to_ocean
@@ -7331,6 +8514,9 @@ subroutine testLakeModel8
    integer,dimension(:,:), pointer :: third_intermediate_expected_lake_numbers
    integer,dimension(:,:), pointer :: third_intermediate_expected_lake_types
    real(dp),dimension(:), pointer :: third_intermediate_expected_lake_volumes
+   real(dp), dimension(:,:), pointer :: third_intermediate_expected_lake_fractions
+   integer , dimension(:,:), pointer :: third_intermediate_expected_number_lake_cells
+   integer , dimension(:,:), pointer :: third_intermediate_expected_number_fine_grid_cells
    real(dp),dimension(:,:), pointer :: third_intermediate_expected_diagnostic_lake_volumes
    integer,dimension(:,:), pointer :: lake_types
    integer :: no_merge_mtype
@@ -7338,8 +8524,10 @@ subroutine testLakeModel8
    integer :: connection_merge_not_set_flood_merge_as_secondary
    real(dp),dimension(:), pointer :: lake_volumes
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
+   real(dp), dimension(:,:), pointer :: lake_fractions
    integer,dimension(:,:), pointer :: merge_points
    integer :: nlat_coarse, nlon_coarse
+   integer :: nlat_surface_model,nlon_surface_model
    integer :: nlat,nlon
    integer :: lake_number
    integer :: i,j
@@ -7352,6 +8540,8 @@ subroutine testLakeModel8
       connection_merge_not_set_flood_merge_as_secondary = 10
       nlat_coarse = 4
       nlon_coarse = 4
+      nlat_surface_model = 3
+      nlon_surface_model = 3
       allocate(flow_directions(nlat_coarse,nlon_coarse))
       flow_directions = transpose(reshape((/-2,4,2,2,&
                                             6,-2,-2,2,&
@@ -8001,6 +9191,52 @@ subroutine testLakeModel8
       additional_connect_redirect_lon_index(:,:) = 0
       instant_throughflow_local=.True.
       lake_retention_coefficient_local=0.1_dp
+      allocate(corresponding_surface_cell_lat_index(nlat,nlon))
+      corresponding_surface_cell_lat_index = transpose(reshape((/ &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3 /), &
+         (/nlon,nlat/)))
+      allocate(corresponding_surface_cell_lon_index(nlat,nlon))
+      corresponding_surface_cell_lon_index = transpose(reshape((/ &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3 /), &
+         (/nlon,nlat/)))
       lake_parameters => LakeParameters(lake_centers, &
                                         connection_volume_thresholds, &
                                         flood_volume_thresholds, &
@@ -8025,8 +9261,11 @@ subroutine testLakeModel8
                                         additional_flood_redirect_lon_index, &
                                         additional_connect_redirect_lat_index, &
                                         additional_connect_redirect_lon_index, &
+                                        corresponding_surface_cell_lat_index, &
+                                        corresponding_surface_cell_lon_index, &
                                         nlat,nlon, &
                                         nlat_coarse,nlon_coarse, &
+                                        nlat_surface_model,nlon_surface_model, &
                                         instant_throughflow_local, &
                                         lake_retention_coefficient_local)
       allocate(drainage(4,4))
@@ -8187,6 +9426,24 @@ subroutine testLakeModel8
          0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,       0.0,    &
           0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0 /), &
          (/nlon,nlat/)))
+      allocate(expected_lake_fractions(3,3))
+      expected_lake_fractions = transpose(reshape((/ &
+                 0.357143,0.305556,0.404762, &
+                 0.160714,0.229167,0.25, &
+                 0.0,0.0,0.0 /), &
+         (/3,3/)))
+      allocate(expected_number_lake_cells(3,3))
+      expected_number_lake_cells = transpose(reshape((/ &
+               15,11,17, &
+                9,11,14, &
+                0,0,0 /), &
+         (/3,3/)))
+      allocate(expected_number_fine_grid_cells(3,3))
+      expected_number_fine_grid_cells = transpose(reshape((/ &
+               42,36,42, &
+               56,48,56, &
+              42,36,42 /), &
+         (/3,3/)))
       allocate(expected_lake_volumes(6))
       expected_lake_volumes = (/46.0, 0.0, 38.0, 6.0, 340.0, 0.0 /)
       allocate(first_intermediate_expected_river_inflow(nlat_coarse,nlon_coarse))
@@ -8281,6 +9538,24 @@ subroutine testLakeModel8
          0, 0, 0, 0, 0, 0, 0, 0, 0, 0,   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
          0, 0, 0, 0, 0, 0, 0, 0, 0, 0,   0, 0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
          (/nlon,nlat/)))
+      allocate(first_intermediate_expected_lake_fractions(3,3))
+      first_intermediate_expected_lake_fractions = transpose(reshape((/ &
+                 0.0,0.0,0.0, &
+                 0.0,0.0,0.0, &
+                 0.0,0.0,0.0 /), &
+         (/3,3/)))
+      allocate(first_intermediate_expected_number_lake_cells(3,3))
+      first_intermediate_expected_number_lake_cells = transpose(reshape((/ &
+                0, 0, 0, &
+                0, 0, 0, &
+                0, 0, 0  /), &
+         (/3,3/)))
+      allocate(first_intermediate_expected_number_fine_grid_cells(3,3))
+      first_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
+               42,36,42, &
+               56,48,56, &
+              42,36,42  /), &
+         (/3,3/)))
       allocate(first_intermediate_expected_lake_volumes(6))
       first_intermediate_expected_lake_volumes = (/ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 /)
       allocate(second_intermediate_expected_river_inflow(nlat_coarse,nlon_coarse))
@@ -8395,6 +9670,24 @@ subroutine testLakeModel8
          0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,&
             0.0,   0.0,   0.0,    0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0  /), &
          (/nlon,nlat/)))
+      allocate(second_intermediate_expected_lake_fractions(3,3))
+      second_intermediate_expected_lake_fractions = transpose(reshape((/ &
+               4.0/21.0,0.0,1.0/21.0, &
+               5.0/56.0,0.0,0.0, &
+               0.0,0.0,0.0 /), &
+       (/3,3/)))
+      allocate(second_intermediate_expected_number_lake_cells(3,3))
+      second_intermediate_expected_number_lake_cells = transpose(reshape((/ &
+              8,0,2, &
+              5,0,0, &
+              0,0,0 /), &
+       (/3,3/)))
+      allocate(second_intermediate_expected_number_fine_grid_cells(3,3))
+      second_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
+             42,36,42, &
+             56,48,56, &
+            42,36,42 /), &
+       (/3,3/)))
       allocate(second_intermediate_expected_lake_volumes(6))
       second_intermediate_expected_lake_volumes = (/46.0, 0.0, 0.0, 0.0, 0.0, 0.0 /)
       allocate(third_intermediate_expected_river_inflow(nlat_coarse,nlon_coarse))
@@ -8509,6 +9802,24 @@ subroutine testLakeModel8
          0.0,     0.0,    0.0,   0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,   0.0,   0.0,   0.0,&
             0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0  /), &
          (/nlon,nlat/)))
+      allocate(third_intermediate_expected_lake_fractions(3,3))
+      third_intermediate_expected_lake_fractions = transpose(reshape((/ &
+               0.285714,0.166667,0.0714286, &
+               0.160714,0.125,   0.0178571, &
+               0.0,0.0,0.0 /), &
+       (/3,3/)))
+      allocate(third_intermediate_expected_number_lake_cells(3,3))
+      third_intermediate_expected_number_lake_cells = transpose(reshape((/ &
+             12,6,3, &
+              9,6,1, &
+              0,0,0 /), &
+       (/3,3/)))
+      allocate(third_intermediate_expected_number_fine_grid_cells(3,3))
+      third_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
+             42,36,42, &
+             56,48,56, &
+            42,36,42 /), &
+       (/3,3/)))
       allocate(third_intermediate_expected_lake_volumes(6))
       third_intermediate_expected_lake_volumes = (/46.0, 0.0, 38.0, 6.0, 1.0, 0.0 /)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
@@ -8546,6 +9857,8 @@ subroutine testLakeModel8
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
+      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
       call assert_equals(first_intermediate_expected_river_inflow,river_fields%river_inflow,4,4)
       call assert_equals(first_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,4,4,0.00001_dp)
@@ -8555,6 +9868,10 @@ subroutine testLakeModel8
       call assert_equals(first_intermediate_expected_lake_volumes,lake_volumes,6)
       call assert_equals(diagnostic_lake_volumes,&
                          first_intermediate_expected_diagnostic_lake_volumes,20,20)
+      call assert_equals(first_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(first_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(first_intermediate_expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -8592,6 +9909,8 @@ subroutine testLakeModel8
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
+      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
       call assert_equals(second_intermediate_expected_river_inflow,river_fields%river_inflow,4,4)
       call assert_equals(second_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,4,4,0.00001_dp)
@@ -8601,6 +9920,10 @@ subroutine testLakeModel8
       call assert_equals(second_intermediate_expected_lake_volumes,lake_volumes,6)
       call assert_equals(diagnostic_lake_volumes,&
                          second_intermediate_expected_diagnostic_lake_volumes,20,20)
+      call assert_equals(second_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(second_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(second_intermediate_expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -8638,6 +9961,8 @@ subroutine testLakeModel8
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
+      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
       call assert_equals( third_intermediate_expected_river_inflow,river_fields%river_inflow,4,4)
       call assert_equals( third_intermediate_expected_water_to_ocean,&
                           river_fields%water_to_ocean,4,4,0.00001_dp)
@@ -8647,6 +9972,10 @@ subroutine testLakeModel8
       call assert_equals( third_intermediate_expected_lake_volumes,lake_volumes,6)
       call assert_equals( diagnostic_lake_volumes,&
                           third_intermediate_expected_diagnostic_lake_volumes,20,20)
+      call assert_equals( third_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals( third_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals( third_intermediate_expected_number_fine_grid_cells, &
+                          lake_parameters%number_fine_grid_cells,3,3)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -8684,6 +10013,8 @@ subroutine testLakeModel8
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
+      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
       call assert_equals( expected_river_inflow,river_fields%river_inflow,4,4)
       call assert_equals( expected_water_to_ocean,river_fields%water_to_ocean,4,4,0.00001_dp)
       call assert_equals( expected_water_to_hd,lake_fields_out%water_to_hd,4,4)
@@ -8691,6 +10022,10 @@ subroutine testLakeModel8
       call assert_equals( expected_lake_types,lake_types,20,20)
       call assert_equals( expected_lake_volumes,lake_volumes,6)
       call assert_equals( diagnostic_lake_volumes,expected_diagnostic_lake_volumes,20,20)
+      call assert_equals( expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals( expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals( expected_number_fine_grid_cells, &
+                          lake_parameters%number_fine_grid_cells,3,3)
       deallocate(lake_volumes)
       deallocate(drainage)
       deallocate(drainages)
@@ -8776,6 +10111,8 @@ subroutine testLakeModel9
    integer,dimension(:,:), pointer :: additional_flood_redirect_lon_index
    integer,dimension(:,:), pointer :: additional_connect_redirect_lat_index
    integer,dimension(:,:), pointer :: additional_connect_redirect_lon_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
    real(dp),dimension(:,:), pointer :: drainage
    real(dp),dimension(:,:,:), pointer :: drainages
    real(dp),dimension(:,:), pointer :: runoff
@@ -8790,6 +10127,9 @@ subroutine testLakeModel9
    integer,dimension(:,:), pointer :: expected_lake_numbers
    integer,dimension(:,:), pointer :: expected_lake_types
    real(dp),dimension(:), pointer :: expected_lake_volumes
+   real(dp), dimension(:,:), pointer :: expected_lake_fractions
+   integer , dimension(:,:), pointer :: expected_number_lake_cells
+   integer , dimension(:,:), pointer :: expected_number_fine_grid_cells
    real(dp),dimension(:,:), pointer :: expected_diagnostic_lake_volumes
    integer,dimension(:,:), pointer :: lake_types
    real(dp) :: seconds_per_day
@@ -8798,7 +10138,9 @@ subroutine testLakeModel9
    integer :: connection_merge_not_set_flood_merge_as_secondary
    real(dp),dimension(:), pointer :: lake_volumes
    real(dp), dimension(:,:), pointer :: diagnostic_lake_volumes
+   real(dp), dimension(:,:), pointer :: lake_fractions
    integer :: nlat_coarse, nlon_coarse
+   integer :: nlat_surface_model,nlon_surface_model
    integer :: nlat,nlon
    integer :: lake_number
    integer :: i,j
@@ -8811,6 +10153,8 @@ subroutine testLakeModel9
       connection_merge_not_set_flood_merge_as_secondary = 10
       nlat_coarse = 4
       nlon_coarse = 4
+      nlat_surface_model = 3
+      nlon_surface_model = 3
       allocate(flow_directions(nlat_coarse,nlon_coarse))
       flow_directions = transpose(reshape((/-2,4,2,2, &
                                             6,-2,-2,2, &
@@ -9451,6 +10795,52 @@ subroutine testLakeModel9
       additional_connect_redirect_lon_index(:,:) = 0
       instant_throughflow_local=.True.
       lake_retention_coefficient_local=0.1_dp
+      allocate(corresponding_surface_cell_lat_index(nlat,nlon))
+      corresponding_surface_cell_lat_index = transpose(reshape((/ &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3 /), &
+         (/nlon,nlat/)))
+      allocate(corresponding_surface_cell_lon_index(nlat,nlon))
+      corresponding_surface_cell_lon_index = transpose(reshape((/ &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3 /), &
+         (/nlon,nlat/)))
       lake_parameters => LakeParameters(lake_centers, &
                                         connection_volume_thresholds, &
                                         flood_volume_thresholds, &
@@ -9475,8 +10865,11 @@ subroutine testLakeModel9
                                         additional_flood_redirect_lon_index, &
                                         additional_connect_redirect_lat_index, &
                                         additional_connect_redirect_lon_index, &
+                                        corresponding_surface_cell_lat_index, &
+                                        corresponding_surface_cell_lon_index, &
                                         nlat,nlon, &
                                         nlat_coarse,nlon_coarse, &
+                                        nlat_surface_model,nlon_surface_model, &
                                         instant_throughflow_local, &
                                         lake_retention_coefficient_local)
       allocate(drainage(4,4))
@@ -9636,6 +11029,24 @@ subroutine testLakeModel9
          0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     &
          0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0 /), &
          (/nlon,nlat/)))
+      allocate(expected_lake_fractions(3,3))
+      expected_lake_fractions = transpose(reshape((/ &
+                 0.380952,0.305556,0.404762, &
+                 0.160714,0.229167,0.321429, &
+                      0.0,0.0,0.0714286 /), &
+         (/3,3/)))
+      allocate(expected_number_lake_cells(3,3))
+      expected_number_lake_cells = transpose(reshape((/ &
+               16,11,17, &
+                9,11,18, &
+                0,0 ,3 /), &
+         (/3,3/)))
+      allocate(expected_number_fine_grid_cells(3,3))
+      expected_number_fine_grid_cells = transpose(reshape((/ &
+               42,36,42, &
+               56,48,56, &
+               42,36,42 /), &
+         (/3,3/)))
       allocate(expected_lake_volumes(6))
       expected_lake_volumes = (/46.0, 0.0, 38.0, 6.0, 340.0,10.0 /)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
@@ -9673,6 +11084,8 @@ subroutine testLakeModel9
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
+      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
       call assert_equals( expected_river_inflow,river_fields%river_inflow,4,4)
       call assert_equals( expected_water_to_ocean,river_fields%water_to_ocean,4,4,0.00001_dp)
       call assert_equals( expected_water_to_hd,lake_fields_out%water_to_hd,4,4)
@@ -9680,6 +11093,10 @@ subroutine testLakeModel9
       call assert_equals( expected_lake_types,lake_types,20,20)
       call assert_equals( expected_lake_volumes,lake_volumes,6)
       call assert_equals( diagnostic_lake_volumes,expected_diagnostic_lake_volumes,20,20)
+      call assert_equals( expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals( expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals( expected_number_fine_grid_cells, &
+                          lake_parameters%number_fine_grid_cells,3,3)
       deallocate(lake_volumes)
       deallocate(drainage)
       deallocate(drainages)
@@ -9744,6 +11161,8 @@ subroutine testLakeModel10
    integer,dimension(:,:), pointer :: additional_flood_redirect_lon_index
    integer,dimension(:,:), pointer :: additional_connect_redirect_lat_index
    integer,dimension(:,:), pointer :: additional_connect_redirect_lon_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
    real(dp),dimension(:,:), pointer :: drainage
    real(dp),dimension(:,:,:), pointer :: drainages
    real(dp),dimension(:,:), pointer :: runoff
@@ -9758,6 +11177,9 @@ subroutine testLakeModel10
    integer,dimension(:,:), pointer :: expected_lake_numbers
    integer,dimension(:,:), pointer :: expected_lake_types
    real(dp),dimension(:), pointer :: expected_lake_volumes
+   real(dp), dimension(:,:), pointer :: expected_lake_fractions
+   integer , dimension(:,:), pointer :: expected_number_lake_cells
+   integer , dimension(:,:), pointer :: expected_number_fine_grid_cells
    real(dp),dimension(:,:), pointer :: expected_diagnostic_lake_volumes
    integer,dimension(:,:), pointer :: lake_types
    real(dp),dimension(:), pointer :: lake_volumes
@@ -9765,7 +11187,9 @@ subroutine testLakeModel10
    integer :: connection_merge_not_set_flood_merge_as_primary
    integer :: connection_merge_not_set_flood_merge_as_secondary
    real(dp), dimension(:,:), pointer :: diagnostic_lake_volumes
+   real(dp), dimension(:,:), pointer :: lake_fractions
    integer :: nlat_coarse, nlon_coarse
+   integer :: nlat_surface_model,nlon_surface_model
    integer :: nlat,nlon
    integer :: lake_number
    integer :: i,j
@@ -9779,6 +11203,8 @@ subroutine testLakeModel10
       connection_merge_not_set_flood_merge_as_secondary = 10
       nlat_coarse = 4
       nlon_coarse = 4
+      nlat_surface_model = 3
+      nlon_surface_model = 3
       allocate(flow_directions(nlat_coarse,nlon_coarse))
       flow_directions = transpose(reshape((/ &
                                             -2,4,2,2, &
@@ -10420,6 +11846,52 @@ subroutine testLakeModel10
       additional_connect_redirect_lon_index(:,:) = 0
       instant_throughflow_local=.True.
       lake_retention_coefficient_local=0.1_dp
+      allocate(corresponding_surface_cell_lat_index(nlat,nlon))
+      corresponding_surface_cell_lat_index = transpose(reshape((/ &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3 /), &
+         (/nlon,nlat/)))
+      allocate(corresponding_surface_cell_lon_index(nlat,nlon))
+      corresponding_surface_cell_lon_index = transpose(reshape((/ &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3 /), &
+         (/nlon,nlat/)))
       lake_parameters => LakeParameters(lake_centers, &
                                         connection_volume_thresholds, &
                                         flood_volume_thresholds, &
@@ -10444,8 +11916,11 @@ subroutine testLakeModel10
                                         additional_flood_redirect_lon_index, &
                                         additional_connect_redirect_lat_index, &
                                         additional_connect_redirect_lon_index, &
+                                        corresponding_surface_cell_lat_index, &
+                                        corresponding_surface_cell_lon_index, &
                                         nlat,nlon, &
                                         nlat_coarse,nlon_coarse, &
+                                        nlat_surface_model,nlon_surface_model, &
                                         instant_throughflow_local, &
                                         lake_retention_coefficient_local)
       allocate(drainage(4,4))
@@ -10585,6 +12060,24 @@ subroutine testLakeModel10
          0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
          0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 /), &
          (/nlon,nlat/)))
+      allocate(expected_lake_fractions(3,3))
+      expected_lake_fractions = transpose(reshape((/ &
+                 0.285714,0.25,  0.238095, &
+                 0.160714,0.1875,0.178571, &
+                 0.0,     0.0,   0.0 /), &
+         (/3,3/)))
+      allocate(expected_number_lake_cells(3,3))
+      expected_number_lake_cells = transpose(reshape((/ &
+               12,9,10, &
+                9,9,10, &
+                0,0,0 /), &
+         (/3,3/)))
+      allocate(expected_number_fine_grid_cells(3,3))
+      expected_number_fine_grid_cells = transpose(reshape((/ &
+               42,36,42, &
+               56,48,56, &
+               42,36,42 /), &
+         (/3,3/)))
       allocate(expected_lake_volumes(6))
       expected_lake_volumes = (/46.0, 0.0, 38.0, 6.0, 50.0, 0.0 /)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
@@ -10622,6 +12115,8 @@ subroutine testLakeModel10
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
+      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
       call assert_equals(expected_river_inflow,river_fields%river_inflow,4,4)
       call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,4,4,0.00001_dp)
       call assert_equals(expected_water_to_hd,lake_fields_out%water_to_hd,4,4)
@@ -10629,6 +12124,10 @@ subroutine testLakeModel10
       call assert_equals(expected_lake_types,lake_types,20,20)
       call assert_equals(expected_lake_volumes,lake_volumes,6)
       call assert_equals(diagnostic_lake_volumes,expected_diagnostic_lake_volumes,20,20)
+      call assert_equals(expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
       deallocate(diagnostic_lake_volumes)
       deallocate(lake_volumes)
       deallocate(drainage)
@@ -10693,6 +12192,8 @@ subroutine testLakeModel11
    integer,dimension(:,:), pointer :: additional_flood_redirect_lon_index
    integer,dimension(:,:), pointer :: additional_connect_redirect_lat_index
    integer,dimension(:,:), pointer :: additional_connect_redirect_lon_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
    real(dp),dimension(:,:), pointer :: drainage
    real(dp),dimension(:,:,:), pointer :: drainages
    real(dp),dimension(:,:), pointer :: runoff
@@ -10707,6 +12208,9 @@ subroutine testLakeModel11
    integer,dimension(:,:), pointer :: expected_lake_numbers
    integer,dimension(:,:), pointer :: expected_lake_types
    real(dp),dimension(:), pointer :: expected_lake_volumes
+   real(dp), dimension(:,:), pointer :: expected_lake_fractions
+   integer , dimension(:,:), pointer :: expected_number_lake_cells
+   integer , dimension(:,:), pointer :: expected_number_fine_grid_cells
    real(dp),dimension(:,:), pointer :: expected_diagnostic_lake_volumes
    real(dp),dimension(:,:), pointer :: first_intermediate_expected_river_inflow
    real(dp),dimension(:,:), pointer :: first_intermediate_expected_water_to_ocean
@@ -10714,6 +12218,9 @@ subroutine testLakeModel11
    integer,dimension(:,:), pointer :: first_intermediate_expected_lake_numbers
    integer,dimension(:,:), pointer :: first_intermediate_expected_lake_types
    real(dp),dimension(:), pointer :: first_intermediate_expected_lake_volumes
+   real(dp), dimension(:,:), pointer :: first_intermediate_expected_lake_fractions
+   integer , dimension(:,:), pointer :: first_intermediate_expected_number_lake_cells
+   integer , dimension(:,:), pointer :: first_intermediate_expected_number_fine_grid_cells
    real(dp),dimension(:,:), pointer :: first_intermediate_expected_diagnostic_lake_volumes
    real(dp),dimension(:,:), pointer :: second_intermediate_expected_river_inflow
    real(dp),dimension(:,:), pointer :: second_intermediate_expected_water_to_ocean
@@ -10721,6 +12228,9 @@ subroutine testLakeModel11
    integer,dimension(:,:), pointer :: second_intermediate_expected_lake_numbers
    integer,dimension(:,:), pointer :: second_intermediate_expected_lake_types
    real(dp),dimension(:), pointer :: second_intermediate_expected_lake_volumes
+   real(dp), dimension(:,:), pointer :: second_intermediate_expected_lake_fractions
+   integer , dimension(:,:), pointer :: second_intermediate_expected_number_lake_cells
+   integer , dimension(:,:), pointer :: second_intermediate_expected_number_fine_grid_cells
    real(dp),dimension(:,:), pointer :: second_intermediate_expected_diagnostic_lake_volumes
    integer,dimension(:,:), pointer :: lake_types
    real(dp),dimension(:), pointer :: lake_volumes
@@ -10728,7 +12238,9 @@ subroutine testLakeModel11
    integer :: connection_merge_not_set_flood_merge_as_primary
    integer :: connection_merge_not_set_flood_merge_as_secondary
    real(dp), dimension(:,:), pointer :: diagnostic_lake_volumes
+   real(dp), dimension(:,:), pointer :: lake_fractions
    integer :: nlat_coarse, nlon_coarse
+   integer :: nlat_surface_model,nlon_surface_model
    integer :: nlat,nlon
    integer :: lake_number
    integer :: i,j
@@ -10742,6 +12254,8 @@ subroutine testLakeModel11
       connection_merge_not_set_flood_merge_as_secondary = 10
       nlat_coarse = 4
       nlon_coarse = 4
+      nlat_surface_model = 3
+      nlon_surface_model = 3
       allocate(flow_directions(nlat_coarse,nlon_coarse))
       flow_directions = transpose(reshape((/-2,4,2,2,&
                                             8,-2,-2,2,&
@@ -11382,6 +12896,52 @@ subroutine testLakeModel11
       additional_connect_redirect_lon_index(:,:) = 0
       instant_throughflow_local=.True.
       lake_retention_coefficient_local=0.1_dp
+      allocate(corresponding_surface_cell_lat_index(nlat,nlon))
+      corresponding_surface_cell_lat_index = transpose(reshape((/ &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3 /), &
+         (/nlon,nlat/)))
+      allocate(corresponding_surface_cell_lon_index(nlat,nlon))
+      corresponding_surface_cell_lon_index = transpose(reshape((/ &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3 /), &
+         (/nlon,nlat/)))
       lake_parameters => LakeParameters(lake_centers, &
                                         connection_volume_thresholds, &
                                         flood_volume_thresholds, &
@@ -11406,8 +12966,11 @@ subroutine testLakeModel11
                                         additional_flood_redirect_lon_index, &
                                         additional_connect_redirect_lat_index, &
                                         additional_connect_redirect_lon_index, &
+                                        corresponding_surface_cell_lat_index, &
+                                        corresponding_surface_cell_lon_index, &
                                         nlat,nlon, &
                                         nlat_coarse,nlon_coarse, &
+                                        nlat_surface_model,nlon_surface_model, &
                                         instant_throughflow_local, &
                                         lake_retention_coefficient_local)
       allocate(drainage(4,4))
@@ -11567,6 +13130,24 @@ subroutine testLakeModel11
          0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     &
            0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0 /), &
          (/nlon,nlat/)))
+      allocate(expected_lake_fractions(3,3))
+      expected_lake_fractions = transpose(reshape((/ &
+                 0.357142,0.305556,0.404762, &
+                 0.160714,0.229167,0.25, &
+                 0.0     ,0.0     ,0.0 /), &
+         (/3,3/)))
+      allocate(expected_number_lake_cells(3,3))
+      expected_number_lake_cells = transpose(reshape((/ &
+               15,11,17, &
+                9,11,14, &
+                0, 0,0 /), &
+         (/3,3/)))
+      allocate(expected_number_fine_grid_cells(3,3))
+      expected_number_fine_grid_cells = transpose(reshape((/ &
+               42,36,42, &
+               56,48,56, &
+               42,36,42 /), &
+         (/3,3/)))
       allocate(expected_lake_volumes(6))
       expected_lake_volumes = (/46.0, 0.0, 38.0, 6.0, 340.0, 0.0 /)
       allocate(first_intermediate_expected_river_inflow(nlat_coarse,nlon_coarse))
@@ -11681,6 +13262,24 @@ subroutine testLakeModel11
          0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,&
             0.0,    0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0  /), &
          (/nlon,nlat/)))
+      allocate(first_intermediate_expected_lake_fractions(3,3))
+      first_intermediate_expected_lake_fractions = transpose(reshape((/ &
+                 0.0952381,0.25,0.214286, &
+                 0.0714286,0.229167,0.214286, &
+                 0.0,0.0,0.0  /), &
+         (/3,3/)))
+      allocate(first_intermediate_expected_number_lake_cells(3,3))
+      first_intermediate_expected_number_lake_cells = transpose(reshape((/ &
+               4,9,9, &
+               4,11,12, &
+               0,0,0  /), &
+         (/3,3/)))
+      allocate(first_intermediate_expected_number_fine_grid_cells(3,3))
+      first_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
+               42,36,42, &
+               56,48,56, &
+               42,36,42  /), &
+         (/3,3/)))
       allocate(first_intermediate_expected_lake_volumes(6))
       first_intermediate_expected_lake_volumes = (/0.0, 0.0, 38.0, 6.0, 56.0, 0.0 /)
 
@@ -11796,6 +13395,24 @@ subroutine testLakeModel11
          0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,&
             0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0  /), &
          (/nlon,nlat/)))
+      allocate(second_intermediate_expected_lake_fractions(3,3))
+      second_intermediate_expected_lake_fractions = transpose(reshape((/ &
+                 0.0952381,0.305555,0.357143, &
+                 0.0714286,0.229167,0.25, &
+                 0.0,0.0,0.0 /), &
+         (/3,3/)))
+      allocate(second_intermediate_expected_number_lake_cells(3,3))
+      second_intermediate_expected_number_lake_cells = transpose(reshape((/ &
+               4,11,15, &
+               4,11,14, &
+               0,0,0  /), &
+         (/3,3/)))
+      allocate(second_intermediate_expected_number_fine_grid_cells(3,3))
+      second_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
+               42,36,42, &
+               56,48,56, &
+               42,36,42  /), &
+         (/3,3/)))
       allocate(second_intermediate_expected_lake_volumes(6))
       second_intermediate_expected_lake_volumes = (/0.0, 0.0, 38.0, 6.0, 111.0, 0.0 /)
 
@@ -11834,6 +13451,8 @@ subroutine testLakeModel11
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
+      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
       call assert_equals(first_intermediate_expected_river_inflow, river_fields%river_inflow,4,4)
       call assert_equals(first_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,4,4,0.00001_dp)
@@ -11844,6 +13463,10 @@ subroutine testLakeModel11
       call assert_equals(first_intermediate_expected_lake_volumes,lake_volumes,6)
       call assert_equals(diagnostic_lake_volumes,&
                          first_intermediate_expected_diagnostic_lake_volumes,20,20)
+      call assert_equals(first_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(first_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(first_intermediate_expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -11881,6 +13504,8 @@ subroutine testLakeModel11
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
+      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
       call assert_equals(second_intermediate_expected_river_inflow,river_fields%river_inflow,4,4)
       call assert_equals(second_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,4,4,0.00001_dp)
@@ -11890,6 +13515,10 @@ subroutine testLakeModel11
       call assert_equals(second_intermediate_expected_lake_volumes,lake_volumes,6)
       call assert_equals(diagnostic_lake_volumes,&
                          second_intermediate_expected_diagnostic_lake_volumes,20,20)
+      call assert_equals(second_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(second_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(second_intermediate_expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -11927,6 +13556,8 @@ subroutine testLakeModel11
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
+      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
       call assert_equals(expected_river_inflow,river_fields%river_inflow,4,4)
       call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,4,4,0.00001_dp)
       call assert_equals(expected_water_to_hd,lake_fields_out%water_to_hd,4,4)
@@ -11934,6 +13565,10 @@ subroutine testLakeModel11
       call assert_equals(expected_lake_types,lake_types,20,20)
       call assert_equals(expected_lake_volumes,lake_volumes,6)
       call assert_equals(diagnostic_lake_volumes,expected_diagnostic_lake_volumes,20,20)
+      call assert_equals(expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
       deallocate(diagnostic_lake_volumes)
       deallocate(lake_volumes)
       deallocate(drainage)
@@ -12012,6 +13647,8 @@ subroutine testLakeModel12
    integer,dimension(:,:), pointer :: additional_flood_redirect_lon_index
    integer,dimension(:,:), pointer :: additional_connect_redirect_lat_index
    integer,dimension(:,:), pointer :: additional_connect_redirect_lon_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
    real(dp),dimension(:,:), pointer :: drainage
    real(dp),dimension(:,:,:), pointer :: drainages
    real(dp),dimension(:,:), pointer :: runoff
@@ -12026,6 +13663,9 @@ subroutine testLakeModel12
    integer,dimension(:,:), pointer :: expected_lake_numbers
    integer,dimension(:,:), pointer :: expected_lake_types
    real(dp),dimension(:), pointer :: expected_lake_volumes
+   real(dp), dimension(:,:), pointer :: expected_lake_fractions
+   integer , dimension(:,:), pointer :: expected_number_lake_cells
+   integer , dimension(:,:), pointer :: expected_number_fine_grid_cells
    real(dp),dimension(:,:), pointer :: expected_diagnostic_lake_volumes
    integer,dimension(:,:), pointer :: lake_types
    real(dp),dimension(:), pointer :: lake_volumes
@@ -12033,7 +13673,9 @@ subroutine testLakeModel12
    integer :: connection_merge_not_set_flood_merge_as_primary
    integer :: connection_merge_not_set_flood_merge_as_secondary
    real(dp), dimension(:,:), pointer :: diagnostic_lake_volumes
+   real(dp), dimension(:,:), pointer :: lake_fractions
    integer :: nlat_coarse, nlon_coarse
+   integer :: nlat_surface_model,nlon_surface_model
    integer :: nlat,nlon
    integer :: lake_number
    integer :: i,j
@@ -12047,6 +13689,8 @@ subroutine testLakeModel12
       connection_merge_not_set_flood_merge_as_secondary = 10
       nlat_coarse = 4
       nlon_coarse = 4
+      nlat_surface_model = 3
+      nlon_surface_model = 3
       allocate(flow_directions(nlat_coarse,nlon_coarse))
       flow_directions = transpose(reshape((/ &
                                             -2,4,2,2, &
@@ -12688,6 +14332,52 @@ subroutine testLakeModel12
       additional_connect_redirect_lon_index(:,:) = 0
       instant_throughflow_local=.True.
       lake_retention_coefficient_local=0.1_dp
+      allocate(corresponding_surface_cell_lat_index(nlat,nlon))
+      corresponding_surface_cell_lat_index = transpose(reshape((/ &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3 /), &
+         (/nlon,nlat/)))
+      allocate(corresponding_surface_cell_lon_index(nlat,nlon))
+      corresponding_surface_cell_lon_index = transpose(reshape((/ &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3 /), &
+         (/nlon,nlat/)))
       lake_parameters => LakeParameters(lake_centers, &
                                         connection_volume_thresholds, &
                                         flood_volume_thresholds, &
@@ -12712,8 +14402,11 @@ subroutine testLakeModel12
                                         additional_flood_redirect_lon_index, &
                                         additional_connect_redirect_lat_index, &
                                         additional_connect_redirect_lon_index, &
+                                        corresponding_surface_cell_lat_index, &
+                                        corresponding_surface_cell_lon_index, &
                                         nlat,nlon, &
                                         nlat_coarse,nlon_coarse, &
+                                        nlat_surface_model,nlon_surface_model, &
                                         instant_throughflow_local, &
                                         lake_retention_coefficient_local)
       allocate(drainage(4,4))
@@ -12873,6 +14566,24 @@ subroutine testLakeModel12
          0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,    &
             0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0 /), &
          (/nlon,nlat/)))
+      allocate(expected_lake_fractions(3,3))
+      expected_lake_fractions = transpose(reshape((/ &
+                 0.380952,0.305556,0.404762, &
+                 0.160714,0.229167,0.3035714, &
+                 0.0     , 0.0    ,0.0714286 /), &
+         (/3,3/)))
+      allocate(expected_number_lake_cells(3,3))
+      expected_number_lake_cells = transpose(reshape((/ &
+               16,11,17, &
+                9,11,17, &
+                0, 0, 3 /), &
+         (/3,3/)))
+      allocate(expected_number_fine_grid_cells(3,3))
+      expected_number_fine_grid_cells = transpose(reshape((/ &
+               42,36,42, &
+               56,48,56, &
+               42,36,42 /), &
+         (/3,3/)))
       allocate(expected_lake_volumes(6))
       expected_lake_volumes = (/46.0, 0.0, 38.0, 6.0, 340.0,10.0 /)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
@@ -12910,6 +14621,8 @@ subroutine testLakeModel12
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
+      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
       call assert_equals(expected_river_inflow,river_fields%river_inflow,4,4)
       call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,4,4,0.00001_dp)
       call assert_equals(expected_water_to_hd,lake_fields_out%water_to_hd,4,4)
@@ -12917,6 +14630,10 @@ subroutine testLakeModel12
       call assert_equals(expected_lake_types,lake_types,20,20)
       call assert_equals(expected_lake_volumes,lake_volumes,6)
       call assert_equals(diagnostic_lake_volumes,expected_diagnostic_lake_volumes,20,20)
+      call assert_equals(expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
       deallocate(diagnostic_lake_volumes)
       deallocate(lake_volumes)
       deallocate(drainage)
@@ -12981,6 +14698,8 @@ subroutine testLakeModel13
    integer,dimension(:,:), pointer :: additional_flood_redirect_lon_index
    integer,dimension(:,:), pointer :: additional_connect_redirect_lat_index
    integer,dimension(:,:), pointer :: additional_connect_redirect_lon_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
    real(dp),dimension(:,:), pointer :: drainage
    real(dp),dimension(:,:,:), pointer :: drainages
    real(dp),dimension(:,:), pointer :: runoff
@@ -12995,6 +14714,9 @@ subroutine testLakeModel13
    integer,dimension(:,:), pointer :: expected_lake_numbers
    integer,dimension(:,:), pointer :: expected_lake_types
    real(dp),dimension(:), pointer :: expected_lake_volumes
+   real(dp), dimension(:,:), pointer :: expected_lake_fractions
+   integer , dimension(:,:), pointer :: expected_number_lake_cells
+   integer , dimension(:,:), pointer :: expected_number_fine_grid_cells
    real(dp),dimension(:,:), pointer :: expected_diagnostic_lake_volumes
    integer,dimension(:,:), pointer :: lake_types
    real(dp),dimension(:), pointer :: lake_volumes
@@ -13002,7 +14724,9 @@ subroutine testLakeModel13
    integer :: connection_merge_not_set_flood_merge_as_primary
    integer :: connection_merge_not_set_flood_merge_as_secondary
    real(dp), dimension(:,:), pointer :: diagnostic_lake_volumes
+   real(dp), dimension(:,:), pointer :: lake_fractions
    integer :: nlat_coarse, nlon_coarse
+   integer :: nlat_surface_model,nlon_surface_model
    integer :: nlat,nlon
    integer :: lake_number
    integer :: i,j
@@ -13016,6 +14740,8 @@ subroutine testLakeModel13
       connection_merge_not_set_flood_merge_as_secondary = 10
       nlat_coarse = 4
       nlon_coarse = 4
+      nlat_surface_model = 3
+      nlon_surface_model = 3
       allocate(flow_directions(nlat_coarse,nlon_coarse))
       flow_directions = transpose(reshape((/ &
                                             -2,4,2,2, &
@@ -13657,6 +15383,52 @@ subroutine testLakeModel13
       additional_connect_redirect_lon_index(:,:) = 0
       instant_throughflow_local=.True.
       lake_retention_coefficient_local=0.1_dp
+      allocate(corresponding_surface_cell_lat_index(nlat,nlon))
+      corresponding_surface_cell_lat_index = transpose(reshape((/ &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3 /), &
+         (/nlon,nlat/)))
+      allocate(corresponding_surface_cell_lon_index(nlat,nlon))
+      corresponding_surface_cell_lon_index = transpose(reshape((/ &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3 /), &
+         (/nlon,nlat/)))
       lake_parameters => LakeParameters(lake_centers, &
                                         connection_volume_thresholds, &
                                         flood_volume_thresholds, &
@@ -13681,8 +15453,11 @@ subroutine testLakeModel13
                                         additional_flood_redirect_lon_index, &
                                         additional_connect_redirect_lat_index, &
                                         additional_connect_redirect_lon_index, &
+                                        corresponding_surface_cell_lat_index, &
+                                        corresponding_surface_cell_lon_index, &
                                         nlat,nlon, &
                                         nlat_coarse,nlon_coarse, &
+                                        nlat_surface_model,nlon_surface_model, &
                                         instant_throughflow_local, &
                                         lake_retention_coefficient_local)
       allocate(drainage(4,4))
@@ -13822,6 +15597,24 @@ subroutine testLakeModel13
          0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
          0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 /), &
          (/nlon,nlat/)))
+      allocate(expected_lake_fractions(3,3))
+      expected_lake_fractions = transpose(reshape((/ &
+                 0.285714,0.25  ,0.238095, &
+                 0.160714,0.1875,0.178571, &
+                 0.0     ,0.0   ,0.0 /), &
+         (/3,3/)))
+      allocate(expected_number_lake_cells(3,3))
+      expected_number_lake_cells = transpose(reshape((/ &
+               12,9,10, &
+                9,9,10, &
+                0,0,0 /), &
+         (/3,3/)))
+      allocate(expected_number_fine_grid_cells(3,3))
+      expected_number_fine_grid_cells = transpose(reshape((/ &
+               42,36,42, &
+               56,48,56, &
+               42,36,42 /), &
+         (/3,3/)))
       allocate(expected_lake_volumes(6))
       expected_lake_volumes = (/46.0, 0.0, 38.0, 6.0, 50.0, 0.0 /)
 
@@ -13860,6 +15653,8 @@ subroutine testLakeModel13
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
+      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
       call assert_equals(expected_river_inflow,river_fields%river_inflow,4,4)
       call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,4,4,0.00001_dp)
       call assert_equals(expected_water_to_hd,lake_fields_out%water_to_hd,4,4)
@@ -13867,6 +15662,10 @@ subroutine testLakeModel13
       call assert_equals(expected_lake_types,lake_types,20,20)
       call assert_equals(expected_lake_volumes,lake_volumes,6)
       call assert_equals(diagnostic_lake_volumes,expected_diagnostic_lake_volumes,20,20)
+      call assert_equals(expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
       deallocate(diagnostic_lake_volumes)
       deallocate(lake_volumes)
       deallocate(drainage)
@@ -13931,6 +15730,8 @@ subroutine testLakeModel14
    integer,dimension(:,:), pointer :: additional_flood_redirect_lon_index
    integer,dimension(:,:), pointer :: additional_connect_redirect_lat_index
    integer,dimension(:,:), pointer :: additional_connect_redirect_lon_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
    real(dp),dimension(:,:), pointer :: drainage
    real(dp),dimension(:,:,:), pointer :: drainages
    real(dp),dimension(:,:), pointer :: runoff
@@ -13944,6 +15745,9 @@ subroutine testLakeModel14
    real(dp),dimension(:,:), pointer :: expected_water_to_hd
    integer,dimension(:,:), pointer :: expected_lake_numbers
    integer,dimension(:,:), pointer :: expected_lake_types
+   real(dp), dimension(:,:), pointer :: expected_lake_fractions
+   integer , dimension(:,:), pointer :: expected_number_lake_cells
+   integer , dimension(:,:), pointer :: expected_number_fine_grid_cells
    real(dp),dimension(:,:), pointer :: expected_diagnostic_lake_volumes
    real(dp),dimension(:), pointer :: expected_lake_volumes
    real(dp),dimension(:,:), pointer :: first_intermediate_expected_river_inflow
@@ -13952,6 +15756,9 @@ subroutine testLakeModel14
    integer,dimension(:,:), pointer :: first_intermediate_expected_lake_numbers
    integer,dimension(:,:), pointer :: first_intermediate_expected_lake_types
    real(dp),dimension(:), pointer :: first_intermediate_expected_lake_volumes
+   real(dp), dimension(:,:), pointer :: first_intermediate_expected_lake_fractions
+   integer , dimension(:,:), pointer :: first_intermediate_expected_number_lake_cells
+   integer , dimension(:,:), pointer :: first_intermediate_expected_number_fine_grid_cells
    real(dp),dimension(:,:), pointer :: first_intermediate_expected_diagnostic_lake_volumes
    real(dp),dimension(:,:), pointer :: second_intermediate_expected_river_inflow
    real(dp),dimension(:,:), pointer :: second_intermediate_expected_water_to_ocean
@@ -13959,6 +15766,9 @@ subroutine testLakeModel14
    integer,dimension(:,:), pointer :: second_intermediate_expected_lake_numbers
    integer,dimension(:,:), pointer :: second_intermediate_expected_lake_types
    real(dp),dimension(:), pointer :: second_intermediate_expected_lake_volumes
+   real(dp), dimension(:,:), pointer :: second_intermediate_expected_lake_fractions
+   integer , dimension(:,:), pointer :: second_intermediate_expected_number_lake_cells
+   integer , dimension(:,:), pointer :: second_intermediate_expected_number_fine_grid_cells
    real(dp),dimension(:,:), pointer :: second_intermediate_expected_diagnostic_lake_volumes
    integer,dimension(:,:), pointer :: lake_types
    integer :: no_merge_mtype
@@ -13966,7 +15776,9 @@ subroutine testLakeModel14
    integer :: connection_merge_not_set_flood_merge_as_secondary
    real(dp),dimension(:), pointer :: lake_volumes
    real(dp), dimension(:,:), pointer :: diagnostic_lake_volumes
+   real(dp), dimension(:,:), pointer :: lake_fractions
    integer :: nlat_coarse, nlon_coarse
+   integer :: nlat_surface_model,nlon_surface_model
    integer :: nlat,nlon
    integer :: lake_number
    integer :: i,j
@@ -13980,6 +15792,8 @@ subroutine testLakeModel14
       connection_merge_not_set_flood_merge_as_secondary = 10
       nlat_coarse = 4
       nlon_coarse = 4
+      nlat_surface_model = 3
+      nlon_surface_model = 3
       allocate(flow_directions(nlat_coarse,nlon_coarse))
       flow_directions = transpose(reshape((/ -2,4,2,2,&
                                             6,-2,-2,2,&
@@ -14620,6 +16434,52 @@ subroutine testLakeModel14
       additional_connect_redirect_lon_index(:,:) = 0
       instant_throughflow_local=.True.
       lake_retention_coefficient_local=0.1_dp
+      allocate(corresponding_surface_cell_lat_index(nlat,nlon))
+      corresponding_surface_cell_lat_index = transpose(reshape((/ &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3 /), &
+         (/nlon,nlat/)))
+      allocate(corresponding_surface_cell_lon_index(nlat,nlon))
+      corresponding_surface_cell_lon_index = transpose(reshape((/ &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3 /), &
+         (/nlon,nlat/)))
       lake_parameters => LakeParameters(lake_centers, &
                                         connection_volume_thresholds, &
                                         flood_volume_thresholds, &
@@ -14644,8 +16504,11 @@ subroutine testLakeModel14
                                         additional_flood_redirect_lon_index, &
                                         additional_connect_redirect_lat_index, &
                                         additional_connect_redirect_lon_index, &
+                                        corresponding_surface_cell_lat_index, &
+                                        corresponding_surface_cell_lon_index, &
                                         nlat,nlon, &
                                         nlat_coarse,nlon_coarse, &
+                                        nlat_surface_model,nlon_surface_model, &
                                         instant_throughflow_local, &
                                         lake_retention_coefficient_local)
       allocate(drainage(4,4))
@@ -14805,6 +16668,24 @@ subroutine testLakeModel14
          0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,       0.0,    &
           0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0,     0.0 /), &
          (/nlon,nlat/)))
+      allocate(expected_lake_fractions(3,3))
+      expected_lake_fractions = transpose(reshape((/ &
+                 0.357142,0.305556,0.404762, &
+                 0.160714,0.229167,0.25, &
+                 0.0,0.0,0.0 /), &
+         (/3,3/)))
+      allocate(expected_number_lake_cells(3,3))
+      expected_number_lake_cells = transpose(reshape((/ &
+              15,11,17, &
+               9,11,14, &
+               0,0,0 /), &
+         (/3,3/)))
+      allocate(expected_number_fine_grid_cells(3,3))
+      expected_number_fine_grid_cells = transpose(reshape((/ &
+               42,36,42, &
+               56,48,56, &
+               42,36,42 /), &
+         (/3,3/)))
       allocate(expected_lake_volumes(6))
       expected_lake_volumes = (/46.0, 0.0, 38.0, 6.0, 340.0, 0.0 /)
 
@@ -14920,6 +16801,24 @@ subroutine testLakeModel14
          0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
            0.0,    0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0  /), &
          (/nlon,nlat/)))
+      allocate(first_intermediate_expected_lake_fractions(3,3))
+      first_intermediate_expected_lake_fractions = transpose(reshape((/ &
+                 0.190476,0.0,0.047619, &
+                 0.0892857,0.0,0.0, &
+                 0.0,0.0,0.0 /), &
+         (/3,3/)))
+      allocate(first_intermediate_expected_number_lake_cells(3,3))
+      first_intermediate_expected_number_lake_cells = transpose(reshape((/ &
+               8,0,2, &
+               5,0,0, &
+               0,0,0 /), &
+         (/3,3/)))
+      allocate(first_intermediate_expected_number_fine_grid_cells(3,3))
+      first_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
+               42,36,42, &
+               56,48,56, &
+               42,36,42 /), &
+         (/3,3/)))
       allocate(first_intermediate_expected_lake_volumes(6))
       first_intermediate_expected_lake_volumes = (/46.0, 0.0, 0.0, 0.0, 0.0, 0.0 /)
 
@@ -15033,6 +16932,24 @@ subroutine testLakeModel14
          0.0,     0.0,    0.0,   0.0,   0.0,    0.0,    0.0,    0.0,&
              0.0,    0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0  /), &
          (/nlon,nlat/)))
+      allocate(second_intermediate_expected_lake_fractions(3,3))
+      second_intermediate_expected_lake_fractions = transpose(reshape((/ &
+                 0.285714,0.166667,0.0714286, &
+                 0.160714,0.125   ,0.0178571, &
+                 0.0,0.0,0.0 /), &
+         (/3,3/)))
+      allocate(second_intermediate_expected_number_lake_cells(3,3))
+      second_intermediate_expected_number_lake_cells = transpose(reshape((/ &
+              12,6,3, &
+               9,6,1, &
+               0,0,0 /), &
+         (/3,3/)))
+      allocate(second_intermediate_expected_number_fine_grid_cells(3,3))
+      second_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
+               42,36,42, &
+               56,48,56, &
+               42,36,42 /), &
+         (/3,3/)))
       allocate(second_intermediate_expected_lake_volumes(6))
       second_intermediate_expected_lake_volumes = (/46.0, 0.0, 38.0, 6.0, 1.0, 0.0 /)
 
@@ -15071,6 +16988,8 @@ subroutine testLakeModel14
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
+      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
       call assert_equals(first_intermediate_expected_river_inflow,river_fields%river_inflow,4,4,&
                          0.00000001_dp)
       call assert_equals(first_intermediate_expected_water_to_ocean,&
@@ -15082,6 +17001,10 @@ subroutine testLakeModel14
       call assert_equals(first_intermediate_expected_lake_volumes,lake_volumes,6)
       call assert_equals(diagnostic_lake_volumes,&
                          first_intermediate_expected_diagnostic_lake_volumes,20,20)
+      call assert_equals(first_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(first_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(first_intermediate_expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -15119,6 +17042,8 @@ subroutine testLakeModel14
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
+      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
       call assert_equals(second_intermediate_expected_river_inflow,river_fields%river_inflow,4,4)
       call assert_equals(second_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,4,4,0.00001_dp)
@@ -15128,6 +17053,10 @@ subroutine testLakeModel14
       call assert_equals(second_intermediate_expected_lake_volumes,lake_volumes,6)
       call assert_equals(diagnostic_lake_volumes,&
                          second_intermediate_expected_diagnostic_lake_volumes,20,20)
+      call assert_equals(second_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(second_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(second_intermediate_expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -15165,6 +17094,8 @@ subroutine testLakeModel14
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
+      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
       call assert_equals(expected_river_inflow,river_fields%river_inflow,4,4)
       call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,4,4,0.00001_dp)
       call assert_equals(expected_water_to_hd,lake_fields_out%water_to_hd,4,4)
@@ -15172,6 +17103,10 @@ subroutine testLakeModel14
       call assert_equals(expected_lake_types,lake_types,20,20)
       call assert_equals(expected_lake_volumes,lake_volumes,6)
       call assert_equals(diagnostic_lake_volumes,expected_diagnostic_lake_volumes,20,20)
+      call assert_equals(expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
       deallocate(diagnostic_lake_volumes)
       deallocate(lake_volumes)
       deallocate(drainage)
@@ -15239,9 +17174,12 @@ subroutine testLakeNumberRetrieval
   integer,dimension(:,:), pointer :: additional_flood_redirect_lon_index
   integer,dimension(:,:), pointer :: additional_connect_redirect_lat_index
   integer,dimension(:,:), pointer :: additional_connect_redirect_lon_index
+  integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
+  integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
   integer,dimension(:,:), pointer :: expected_lake_numbers
   integer :: nlat,nlon
   integer :: nlat_coarse,nlon_coarse
+  integer :: nlat_surface_model,nlon_surface_model
   integer :: no_merge_mtype
   integer :: connection_merge_not_set_flood_merge_as_primary
   integer :: connection_merge_not_set_flood_merge_as_secondary
@@ -15254,6 +17192,8 @@ subroutine testLakeNumberRetrieval
     nlon = 20
     nlat_coarse = 4
     nlon_coarse = 4
+    nlat_surface_model = 3
+    nlon_surface_model = 3
     allocate(lake_centers(nlat,nlon))
     lake_centers = transpose(reshape((/ &
         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
@@ -15840,6 +17780,52 @@ subroutine testLakeNumberRetrieval
     additional_connect_redirect_lon_index(:,:) = 0
     instant_throughflow_local=.True.
     lake_retention_coefficient_local=0.1_dp
+      allocate(corresponding_surface_cell_lat_index(nlat,nlon))
+    corresponding_surface_cell_lat_index = transpose(reshape((/ &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3 /), &
+         (/nlon,nlat/)))
+      allocate(corresponding_surface_cell_lon_index(nlat,nlon))
+    corresponding_surface_cell_lon_index = transpose(reshape((/ &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
+                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3 /), &
+         (/nlon,nlat/)))
     lake_parameters => LakeParameters(lake_centers, &
                                       connection_volume_thresholds, &
                                       flood_volume_thresholds, &
@@ -15864,8 +17850,11 @@ subroutine testLakeNumberRetrieval
                                       additional_flood_redirect_lon_index, &
                                       additional_connect_redirect_lat_index, &
                                       additional_connect_redirect_lon_index, &
+                                      corresponding_surface_cell_lat_index, &
+                                      corresponding_surface_cell_lon_index, &
                                       nlat,nlon, &
                                       nlat_coarse,nlon_coarse, &
+                                      nlat_surface_model,nlon_surface_model, &
                                       instant_throughflow_local, &
                                       lake_retention_coefficient_local)
       allocate(expected_lake_numbers(nlat,nlon))
