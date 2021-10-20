@@ -86,7 +86,8 @@ function main()
         drive_hd_and_lake_model(river_parameters,river_fields,
                                 lake_parameters,drainages,runoffs,lake_evaporations,
                                 timesteps,true,initial_water_to_lake_centers,
-                                initial_spillover_to_rivers;print_timestep_results=false)
+                                initial_spillover_to_rivers;output_timestep=10,
+                                print_timestep_results=false)
         # Profile.clear()
         # Profile.init(delay=0.01)
         # @time drive_hd_and_lake_model(river_parameters,river_fields,
@@ -102,18 +103,19 @@ function main()
       else
         drive_hd_and_lake_model(river_parameters,lake_parameters,drainages,runoffs,
                                 lake_evaporations,timesteps,true,initial_water_to_lake_centers,
-                                initial_spillover_to_rivers;print_timestep_results=true)
+                                initial_spillover_to_rivers;output_timestep=10,
+                                print_timestep_results=true)
       end
     else
       if args["hd-init-file"] != nothing
         drive_hd_and_lake_model(river_parameters,river_fields,
                                 lake_parameters,drainages,runoffs,
-                                lake_evaporations,timesteps;
+                                lake_evaporations,timesteps;output_timestep=10,
                                 print_timestep_results=true)
       else
         drive_hd_and_lake_model(river_parameters,lake_parameters,
                                 drainages,runoffs,lake_evaporations,
-                                timesteps;print_timestep_results=true)
+                                timesteps;output_timestep=10,print_timestep_results=true)
         # @time drive_hd_and_lake_model(river_parameters,lake_parameters,
         #                               drainages_copy,runoffs_copy,
         #                               lake_evaporations_copy,timesteps;
@@ -126,22 +128,22 @@ function main()
       river_fields = load_river_initial_values(args["hd-init-file"],grid,river_parameters)
       drive_hd_model(river_parameters,river_fields,
                      drainages,runoffs,lake_evaporations,
-                     timesteps;print_timestep_results=false)
+                     timesteps;output_timestep=10,print_timestep_results=false)
       @time drive_hd_model(river_parameters,river_fields,
                            drainages_copy,runoffs_copy,lake_evaporations_copy,
-                           timesteps;print_timestep_results=false)
+                           timesteps;output_timestep=10,print_timestep_results=false)
     else
       drainages_copy = deepcopy(drainages)
       runoffs_copy = deepcopy(runoffs)
       lake_evaporations_copy = deepcopy(lake_evaporations)
       drive_hd_model(river_parameters,drainages,runoffs,
-                     lake_evaporations,timesteps;
+                     lake_evaporations,timesteps;output_timestep=10,
                      print_timestep_results=true)
       Profile.clear()
       Profile.init(delay=0.0001)
       @time drive_hd_model(river_parameters,drainages_copy,
                            runoffs_copy,lake_evaporations_copy,
-                           timesteps;print_timestep_results=false)
+                           timesteps;output_timestep=10,print_timestep_results=false)
       Profile.print()
       r = Profile.retrieve();
       f = open("/Users/thomasriddick/Downloads/profile.bin", "w")
@@ -158,11 +160,11 @@ end
 #push!(ARGS,"-n/Users/thomasriddick/Documents/data/temp/transient_sim_1/results_for_1400/lake_model_start_1400.nc")
 #push!(ARGS,"-i/Users/thomasriddick/Documents/data/temp/transient_sim_1/results_for_1400/hdstart_1400.nc")
 # push!(ARGS,"-t6000")
-push!(ARGS,"-p/Users/thomasriddick/Documents/data/temp/8890/hdpara_8890k.nc")
-push!(ARGS,"-l/Users/thomasriddick/Documents/data/temp/8890/lakepara_8890k.nc")
-#push!(ARGS,"-n/Users/thomasriddick/Documents/data/temp/8890/lakestart_8890k.nc")
-#push!(ARGS,"-i/Users/thomasriddick/Documents/data/temp/8890/hdrestart_8890k.nc")
+push!(ARGS,"-p/Users/thomasriddick/Documents/data/temp/8510/hdpara_8510k.nc")
+push!(ARGS,"-l/Users/thomasriddick/Documents/data/temp/8510/lakepara_8510k.nc")
+push!(ARGS,"-n/Users/thomasriddick/Documents/data/temp/8510/lakestart_8510k.nc")
+push!(ARGS,"-i/Users/thomasriddick/Documents/data/temp/8510/hdrestart_8510k.nc")
 #push!(ARGS,"-n/Users/thomasriddick/Documents/data/temp/transient_sim_1/results_for_1400/lake_model_start_1400.nc")
 #push!(ARGS,"-i/Users/thomasriddick/Documents/data/temp/transient_sim_1/results_for_1400/hdstart_1400.nc")
-push!(ARGS,"-t10000")
+push!(ARGS,"-t1000")
 main()

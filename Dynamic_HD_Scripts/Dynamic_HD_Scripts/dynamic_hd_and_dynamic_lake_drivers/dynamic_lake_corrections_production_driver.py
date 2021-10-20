@@ -28,6 +28,7 @@ class Dynamic_Lake_Correction_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Driver
     prelim_match = re.compile(r"^\s*#\s*Prelim",flags=re.IGNORECASE)
     final_match = re.compile(r"^\s*#\s*Final",flags=re.IGNORECASE)
     comment_line_match = re.compile(r"\s*#")
+    remove_sink_line_match = re.compile(r"\s*R\s*,\s*[0-9]*\s*,\s*[0-9]*\s*")
 
     def __init__(self,working_directory=None):
         super(Dynamic_Lake_Correction_Production_Run_Drivers,self).__init__()
@@ -295,6 +296,7 @@ class Dynamic_Lake_Correction_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Driver
                                                            field_type='Generic',
                                                            fieldname="true_sinks")
         true_sinks_list = []
+        true_sinks_to_remove_list = []
         with open(true_sinks_list_filename,"r") as true_sinks_list_file:
             if not self.true_sinks_first_line_pattern.\
                 match(true_sinks_list_file.readline().strip()):
@@ -303,11 +305,17 @@ class Dynamic_Lake_Correction_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Driver
             for line in true_sinks_list_file:
                 if self.comment_line_match.match(line):
                     continue
+                elif self.remove_sink_line_match.match(line):
+                    true_sinks_to_remove_list.append(tuple(int(value)
+                                                           for value in line.strip().split(",")[1:]))
                 else:
                     true_sinks_list.append(tuple(int(value) for value in line.strip().split(",")))
         for lat,lon in true_sinks_list:
-            print("Add true sinks at lat={0},lon={1}".format(lat,lon))
+            print("Adding true sinks at lat={0},lon={1}".format(lat,lon))
             true_sinks_field.get_data()[lat,lon] = True
+        for lat,lon in true_sinks_to_remove_list:
+            print("Removing true sinks at lat={0},lon={1}".format(lat,lon))
+            true_sinks_field.get_data()[lat,lon] = False
         iodriver.advanced_field_writer(output_true_sinks_filename,
                                        true_sinks_field,
                                        fieldname="true_sinks")
