@@ -109,6 +109,7 @@ TEST_F(OrographyCreationTest, OrographyCreationTestSmallGrid){
                    0.0,nlat,nlon);
   EXPECT_TRUE(field<double>(expected_orography_out,grid_params_in)
               == field<double>(orography_out,grid_params_in));
+  delete grid_params_in;
 }
 
 }

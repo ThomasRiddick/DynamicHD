@@ -464,4 +464,5 @@ void icon_single_index_evaluate_basins(bool* minima_in,
   }
   delete grid_params_in;
   delete coarse_grid_params_in;
+  delete sink_filling_alg_4;
 }

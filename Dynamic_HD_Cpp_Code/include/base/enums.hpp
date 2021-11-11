@@ -26,4 +26,8 @@
 
   enum geometry_types {icosohedral = 0};
 
+  enum channel_type {not_main_channel = 0,
+                     main_channel_valid,
+                     main_channel_invalid};
+
 #endif /* ENUMS_HPP_ */

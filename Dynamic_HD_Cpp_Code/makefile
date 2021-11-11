@@ -56,7 +56,7 @@ endif
 # Add inputs and outputs from these tool invocations to the build variables
 
 # All Target
-all: Dynamic_HD_Cpp_Code Fill_Sinks_Icon_SI_Exec Compute_Catchments_SI_Exec Determine_River_Directions_SI_Exec Evaluate_Basins_SI_Exec
+all: Dynamic_HD_Cpp_Code Fill_Sinks_Icon_SI_Exec Compute_Catchments_SI_Exec Determine_River_Directions_SI_Exec Evaluate_Basins_SI_Exec Bifurcate_River_Basic_SI_Exec
 
 # Tool invocations
 tools_only: $(USER_OBJS) Fill_Sinks_Icon_SI_Exec Compute_Catchments_SI_Exec Determine_River_Directions_SI_Exec Evaluate_Basins_SI_Exec
@@ -89,6 +89,12 @@ Determine_River_Directions_SI_Exec: $(USER_OBJS) $(DRD_ICON_SI_OBJS)
 Evaluate_Basins_SI_Exec: $(USER_OBJS) $(EB_ICON_SI_OBJS)
 	@echo 'Building target: $@'
 	$(GPLUSPLUS)  -o "Evaluate_Basins_SI_Exec" $(USER_OBJS) $(EB_ICON_SI_OBJS) $(FLAGS) $(LIBS) $(INCLUDE)
+	@echo 'Finished building target: $@'
+	@echo ' '
+
+Bifurcate_River_Basic_SI_Exec:$(USER_OBJS) $(BRB_ICON_SI_OBJS)
+	@echo 'Building target: $@'
+	$(GPLUSPLUS)  -o "Bifurcate_River_Basic_SI_Exec" $(USER_OBJS) $(BRB_ICON_SI_OBJS) $(FLAGS) $(LIBS) $(INCLUDE)
 	@echo 'Finished building target: $@'
 	@echo ' '
 

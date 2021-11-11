@@ -18076,6 +18076,7 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsFive) {
               field<bool>(additional_connect_local_redirect_expected_out,grid_params_in));
   EXPECT_TRUE(field<int>(merge_points_out_int,grid_params_in) ==
               field<int>(merge_points_expected_out,grid_params_in));
+  delete grid_params_in;
 }
 
 } //namespace

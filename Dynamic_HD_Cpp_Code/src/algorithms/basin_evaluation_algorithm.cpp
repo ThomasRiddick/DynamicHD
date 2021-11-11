@@ -1048,6 +1048,7 @@ void basin_evaluation_algorithm::set_remaining_redirects() {
 				}
 				int coarse_catchment_number =
 					(*coarse_catchment_nums)(catchment_outlet_coarse_coords);
+				if (prior_fine_catchment_num == 0) delete catchment_outlet_coarse_coords;
 				find_and_set_non_local_redirect_index_from_coarse_catchment_num(coords_in,
 						                                        						 				first_cell_beyond_rim_coords,
 						                                        						 				redirect_height_type,

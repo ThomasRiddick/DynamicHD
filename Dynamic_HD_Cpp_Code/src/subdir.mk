@@ -14,6 +14,7 @@ CPP_SRCS += \
 ../src/algorithms/stream_following_algorithm.cpp \
 ../src/algorithms/carved_river_direction_burning_algorithm.cpp \
 ../src/algorithms/orography_creation_algorithm.cpp \
+../src/algorithms/basic_bifurcation_algorithms.cpp \
 ../src/drivers/filter_out_shallow_lakes.cpp \
 ../src/drivers/redistribute_water.cpp \
 ../src/drivers/determine_river_directions.cpp \
@@ -27,6 +28,7 @@ CPP_SRCS += \
 ../src/drivers/evaluate_basins.cpp \
 ../src/drivers/follow_streams.cpp \
 ../src/drivers/create_orography.cpp \
+../src/drivers/bifurcate_rivers_basic.cpp \
 ../src/testing/test_fill_inks.cpp  \
 ../src/testing/test_lake_operators.cpp \
 ../src/testing/test_catchment_computation.cpp \
@@ -34,10 +36,12 @@ CPP_SRCS += \
 ../src/testing/test_grid.cpp \
 ../src/testing/test_determine_river_directions.cpp \
 ../src/testing/test_orography_creation.cpp \
+../src/testing/test_bifurcate_rivers_basic.cpp \
 ../src/command_line_drivers/determine_river_directions_icon_simple_interface.cpp \
 ../src/command_line_drivers/compute_catchments_icon_simple_interface.cpp \
 ../src/command_line_drivers/sink_filling_icon_simple_interface.cpp \
-../src/command_line_drivers/evaluate_basins_simple_interface.cpp
+../src/command_line_drivers/evaluate_basins_simple_interface.cpp \
+../src/command_line_drivers/bifurcate_rivers_basic_icon_simple_interface.cpp
 
 USER_OBJS += \
 ./src/base/cell.o \
@@ -54,6 +58,7 @@ USER_OBJS += \
 ./src/algorithms/water_redistribution_algorithm.o \
 ./src/algorithms/stream_following_algorithm.o \
 ./src/algorithms/orography_creation_algorithm.o \
+./src/algorithms/basic_bifurcation_algorithm.o \
 ./src/drivers/create_connected_lsmask.o \
 ./src/drivers/fill_sinks.o \
 ./src/drivers/upscale_orography.o \
@@ -66,7 +71,8 @@ USER_OBJS += \
 ./src/drivers/redistribute_water.o \
 ./src/drivers/filter_out_shallow_lakes.o \
 ./src/drivers/follow_streams.o \
-./src/drivers/create_orography.o
+./src/drivers/create_orography.o \
+./src/drivers/bifurcate_rivers_basic.o
 
 FS_ICON_SI_OBJS += \
 ./src/command_line_drivers/sink_filling_icon_simple_interface.o
@@ -80,6 +86,9 @@ DRD_ICON_SI_OBJS += \
 EB_ICON_SI_OBJS += \
 ./src/command_line_drivers/evaluate_basins_simple_interface.o
 
+BRB_ICON_SI_OBJS += \
+./src/command_line_drivers/bifurcate_rivers_basic_icon_simple_interface.o
+
 TEST_OBJS += \
 ./src/testing/test_fill_sinks.o \
 ./src/testing/test_lake_operators.o \
@@ -87,7 +96,8 @@ TEST_OBJS += \
 ./src/testing/test_evaluate_basins.o \
 ./src/testing/test_grid.o \
 ./src/testing/test_determine_river_directions.o \
-./src/testing/test_orography_creation.o
+./src/testing/test_orography_creation.o \
+./src/testing/test_bifurcate_rivers_basic.o
 
 CPP_DEPS += \
 ./src/base/cell.d \
@@ -104,6 +114,7 @@ CPP_DEPS += \
 ./src/algorithms/river_direction_determination_algorithm.d \
 ./src/algorithms/orography_creation_algorithm.d \
 ./src/algorithms/stream_following_algorithm.d \
+./src/algorithms/evaluate_basins_simple_interface.d \
 ./src/drivers/create_connected_lsmask.d \
 ./src/drivers/fill_sinks.d \
 ./src/drivers/upscale_orography.d \
@@ -117,6 +128,7 @@ CPP_DEPS += \
 ./src/drivers/follow_streams.d \
 ./src/drivers/filter_out_shallow_lakes.d \
 ./src/drivers/create_orography.d \
+./src/drivers/bifurcate_rivers_basic.d \
 ./src/testing/test_lake_operators.d \
 ./src/testing/test_catchment_computation.d \
 ./src/testing/test_evaluate_basins.d \
@@ -124,10 +136,12 @@ CPP_DEPS += \
 ./src/testing/test_determine_river_directions.d \
 ./src/testing/test_fill_sinks.d \
 ./src/testing/test_orography_creation.d \
+./src/testing/test_bifurcate_rivers_basic.d \
 ./src/command_line_drivers/evaluate_basins_simple_interface.d \
 ./src/command_line_drivers/sink_filling_icon_simple_interface.d \
 ./src/command_line_drivers/compute_catchments_icon_simple_interface.d \
-./src/command_line_drivers/determine_river_directions_icon_simple_interface.d
+./src/command_line_drivers/determine_river_directions_icon_simple_interface.d \
+./src/command_line_drivers/bifurcate_rivers_basic_icon_simple_interface.d
 
 # Each subdirectory must supply rules for building sources it contributes
 src/base/%.o: ../src/base/%.cpp

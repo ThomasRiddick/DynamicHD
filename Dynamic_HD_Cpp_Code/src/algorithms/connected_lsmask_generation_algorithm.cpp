@@ -60,7 +60,7 @@ void create_connected_landsea_mask::add_ls_seed_points_to_q()
 		if ((*ls_seed_points)(coords_in)) {
 			q.push(new landsea_cell(coords_in));
 			(*completed_cells)(coords_in) = true;
-		}};
+		} else delete coords_in; };
 	_grid->for_all(add_ls_point_to_q_func);
 }
 
