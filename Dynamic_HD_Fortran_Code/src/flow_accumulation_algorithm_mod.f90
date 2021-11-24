@@ -4,20 +4,28 @@ use coords_mod
 use doubly_linked_list_mod
 implicit none
 
+type :: subfield_ptr
+  class(subfield), pointer :: ptr
+end type
+
 type, abstract :: flow_accumulation_algorithm
   private
     class(subfield), pointer :: dependencies => null()
     class(subfield), pointer :: cumulative_flow => null()
+    class(subfield_ptr), pointer, dimension(:) :: bifurcation_complete => null()
     type(doubly_linked_list) :: q
     class(coords), pointer :: links(:)
     class(coords),pointer :: external_data_value
     class(coords),pointer :: flow_terminates_value
     class(coords),pointer :: no_data_value
     class(coords),pointer :: no_flow_value
+    integer :: max_neighbors
+    integer :: no_bifurcation_value
   contains
     private
     procedure :: init_flow_accumulation_algorithm
     procedure, public :: generate_cumulative_flow
+    procedure, public :: update_bifurcated_flows
     procedure :: set_dependencies
     procedure :: add_cells_to_queue
     procedure :: process_queue
@@ -26,10 +34,14 @@ type, abstract :: flow_accumulation_algorithm
     procedure :: get_flow_terminates_value
     procedure :: get_no_data_value
     procedure :: get_no_flow_value
+    procedure :: check_for_bifurcations_in_cell
+    procedure :: update_bifurcated_flow
     procedure, public :: destructor
     procedure(get_next_cell_coords), deferred :: get_next_cell_coords
     procedure(generate_coords_index), deferred :: generate_coords_index
     procedure(assign_coords_to_link_array), deferred :: assign_coords_to_link_array
+    procedure(is_bifurcated), deferred :: is_bifurcated
+    procedure(get_next_cell_bifurcated_coords), deferred :: get_next_cell_bifurcated_coords
 end type flow_accumulation_algorithm
 
 abstract interface
@@ -57,6 +69,25 @@ abstract interface
     class(coords), pointer :: coords_in
     class(coords), pointer :: next_cell_coords
   end function get_next_cell_coords
+
+  function get_next_cell_bifurcated_coords(this,coords_in,layer_in) &
+    result(next_cell_coords)
+    import flow_accumulation_algorithm
+    import coords
+    class(flow_accumulation_algorithm), intent(in) :: this
+    class(coords), pointer :: coords_in
+    class(coords), pointer :: next_cell_coords
+    integer, intent(in) :: layer_in
+  end function get_next_cell_bifurcated_coords
+
+  function is_bifurcated(this,coords_in,layer_in) result(bifurcated)
+    import flow_accumulation_algorithm
+    import coords
+    class(flow_accumulation_algorithm), intent(inout) :: this
+    class(coords), pointer :: coords_in
+    integer, optional, intent(in) :: layer_in
+    logical :: bifurcated
+  end function is_bifurcated
 end interface
 
 type, extends(flow_accumulation_algorithm) :: latlon_flow_accumulation_algorithm
@@ -69,22 +100,28 @@ type, extends(flow_accumulation_algorithm) :: latlon_flow_accumulation_algorithm
     integer :: tile_width_lon
     class(subfield), pointer :: next_cell_index_lat => null()
     class(subfield), pointer :: next_cell_index_lon => null()
-    class(subfield), pointer :: river_directions => null()
+    class(subfield_ptr), pointer, dimension(:) :: bifurcated_next_cell_index_lat => null()
+    class(subfield_ptr), pointer, dimension(:) :: bifurcated_next_cell_index_lon => null()
   contains
     procedure :: generate_coords_index => latlon_generate_coords_index
     procedure :: assign_coords_to_link_array => latlon_assign_coords_to_link_array
     procedure :: get_next_cell_coords => latlon_get_next_cell_coords
+    procedure :: is_bifurcated => latlon_is_bifurcated
+    procedure :: get_next_cell_bifurcated_coords => latlon_get_next_cell_bifurcated_coords
 end type latlon_flow_accumulation_algorithm
 
 type, extends(flow_accumulation_algorithm) :: icon_single_index_flow_accumulation_algorithm
   private
     class(subfield), pointer :: next_cell_index => null()
+    class(subfield_ptr), pointer, dimension(:) :: bifurcated_next_cell_index => null()
   contains
     procedure :: icon_single_index_init_flow_accumulation_algorithm
     procedure :: icon_single_index_destructor
     procedure :: generate_coords_index => icon_single_index_generate_coords_index
     procedure :: assign_coords_to_link_array => icon_single_index_assign_coords_to_link_array
     procedure :: get_next_cell_coords => icon_single_index_get_next_cell_coords
+    procedure :: is_bifurcated => icon_single_index_is_bifurcated
+    procedure :: get_next_cell_bifurcated_coords => icon_single_index_get_next_cell_bifurcated_coords
 end type icon_single_index_flow_accumulation_algorithm
 
 interface icon_single_index_flow_accumulation_algorithm
@@ -109,12 +146,19 @@ end subroutine latlon_init_flow_accumulation_algorithm
 
 subroutine icon_single_index_init_flow_accumulation_algorithm(this,field_section_coords, &
                                                               next_cell_index, &
-                                                              cumulative_flow)
+                                                              cumulative_flow, &
+                                                              bifurcated_next_cell_index)
   class(icon_single_index_flow_accumulation_algorithm), intent(inout) :: this
   class(*), dimension(:), pointer, intent(in) :: next_cell_index
   class(*), dimension(:), pointer, intent(out) :: cumulative_flow
+  class(*), dimension(:,:), pointer, intent(in), optional :: bifurcated_next_cell_index
+  class(*), dimension(:), pointer :: bifurcated_next_cell_index_slice
+  class(*), dimension(:), pointer :: bifurcation_complete_slice
   type(generic_1d_section_coords), intent(in) :: field_section_coords
   class(*), dimension(:), pointer :: dependencies_data
+  integer :: i
+    this%max_neighbors = 12
+    this%no_bifurcation_value = -9
     this%next_cell_index => icon_single_index_subfield(next_cell_index,field_section_coords)
     this%cumulative_flow => icon_single_index_subfield(cumulative_flow,field_section_coords)
     allocate(integer::dependencies_data(size(next_cell_index)))
@@ -124,20 +168,45 @@ subroutine icon_single_index_init_flow_accumulation_algorithm(this,field_section
     allocate(this%flow_terminates_value,source=generic_1d_coords(-3,.true.))
     allocate(this%no_data_value,source=generic_1d_coords(-4,.true.))
     allocate(this%no_flow_value,source=generic_1d_coords(-5,.true.))
+    if (present(bifurcated_next_cell_index)) then
+      allocate(subfield_ptr::this%bifurcated_next_cell_index(this%max_neighbors-1))
+      allocate(subfield_ptr::this%bifurcation_complete(this%max_neighbors-1))
+      do i = 1,this%max_neighbors - 1
+        bifurcated_next_cell_index_slice => bifurcated_next_cell_index(:,i)
+        this%bifurcated_next_cell_index(i)%ptr => &
+          icon_single_index_subfield(bifurcated_next_cell_index_slice,field_section_coords)
+        allocate(logical::bifurcation_complete_slice(size(next_cell_index)))
+        select type(bifurcation_complete_slice)
+          type is (logical)
+            bifurcation_complete_slice(:) = .false.
+        end select
+        this%bifurcation_complete(i)%ptr => &
+          icon_single_index_subfield(bifurcation_complete_slice,field_section_coords)
+      end do
+    end if
     call this%init_flow_accumulation_algorithm()
 end subroutine icon_single_index_init_flow_accumulation_algorithm
 
 function icon_single_index_flow_accumulation_algorithm_constructor(field_section_coords, &
                                                                    next_cell_index, &
-                                                                   cumulative_flow) &
+                                                                   cumulative_flow, &
+                                                                   bifurcated_next_cell_index) &
                                                                    result(constructor)
   class(*), dimension(:), pointer, intent(in) :: next_cell_index
   class(*), dimension(:), pointer, intent(out) :: cumulative_flow
   type(generic_1d_section_coords), intent(in) :: field_section_coords
+  class(*), dimension(:,:), pointer, intent(in), optional :: bifurcated_next_cell_index
   type(icon_single_index_flow_accumulation_algorithm) :: constructor
-    call constructor%icon_single_index_init_flow_accumulation_algorithm(field_section_coords, &
-                                                                        next_cell_index, &
-                                                                        cumulative_flow)
+    if(present(bifurcated_next_cell_index)) then
+      call constructor%icon_single_index_init_flow_accumulation_algorithm(field_section_coords, &
+                                                                          next_cell_index, &
+                                                                          cumulative_flow, &
+                                                                          bifurcated_next_cell_index)
+    else
+      call constructor%icon_single_index_init_flow_accumulation_algorithm(field_section_coords, &
+                                                                          next_cell_index, &
+                                                                          cumulative_flow)
+    end if
 end function icon_single_index_flow_accumulation_algorithm_constructor
 
 subroutine destructor(this)
@@ -471,5 +540,182 @@ end subroutine follow_paths
       end select
     end select
   end subroutine icon_single_index_assign_coords_to_link_array
+
+  subroutine update_bifurcated_flows(this)
+    class(flow_accumulation_algorithm), intent(inout) :: this
+      call this%bifurcation_complete(1)%ptr%for_all(check_for_bifurcations_in_cell_wrapper,this)
+  end subroutine
+
+  subroutine check_for_bifurcations_in_cell_wrapper(this,coords_in)
+    class(*), intent(inout) :: this
+    class(coords), pointer, intent(inout) :: coords_in
+      select type(this)
+      class is (flow_accumulation_algorithm)
+        call this%check_for_bifurcations_in_cell(coords_in)
+      end select
+  end subroutine check_for_bifurcations_in_cell_wrapper
+
+  subroutine check_for_bifurcations_in_cell(this,coords_in)
+    class(flow_accumulation_algorithm), intent(inout) :: this
+    class(coords), pointer, intent(inout) :: coords_in
+    class(*), pointer :: cumulative_flow_value_ptr
+    class(coords), pointer :: target_coords
+    integer :: i
+      if (this%is_bifurcated(coords_in)) then
+        do i=1,this%max_neighbors - 1
+          if(this%is_bifurcated(coords_in,i)) then
+            target_coords => this%get_next_cell_bifurcated_coords(coords_in,i)
+            cumulative_flow_value_ptr => this%cumulative_flow%get_value(coords_in)
+            select type (cumulative_flow_value_ptr)
+              type is (integer)
+                call this%update_bifurcated_flow(target_coords, &
+                                                 cumulative_flow_value_ptr)
+            end select
+            call this%bifurcation_complete(i)%ptr%set_value(coords_in,.true.)
+          end if
+        end do
+      end if
+  end subroutine check_for_bifurcations_in_cell
+
+
+  subroutine update_bifurcated_flow(this,initial_coords,additional_accumulated_flow)
+  class(flow_accumulation_algorithm), intent(inout) :: this
+  class(coords), pointer, intent(inout) :: initial_coords
+  integer, intent(in) :: additional_accumulated_flow
+  class(coords), pointer :: current_coords
+  class(coords), pointer :: target_coords
+  class(*), pointer :: cumulative_flow_value_ptr
+  class(*), pointer :: bifurcated_complete_ptr
+  integer :: i
+    allocate(current_coords,source=initial_coords)
+    do
+      cumulative_flow_value_ptr => this%cumulative_flow%get_value(current_coords)
+      select type (cumulative_flow_value_ptr)
+        type is (integer)
+          call this%cumulative_flow%set_value(current_coords, &
+                                              cumulative_flow_value_ptr + &
+                                              additional_accumulated_flow)
+      end select
+      if (this%is_bifurcated(current_coords)) then
+        do i=1,this%max_neighbors - 1
+          bifurcated_complete_ptr => this%bifurcation_complete(i)%ptr%get_value(current_coords)
+          select type (bifurcated_complete_ptr)
+            type is (logical)
+              if(this%is_bifurcated(current_coords,i) .and. bifurcated_complete_ptr) then
+                target_coords => this%get_next_cell_bifurcated_coords(current_coords,i)
+                call this%update_bifurcated_flow(target_coords, &
+                                                 additional_accumulated_flow)
+            end if
+          end select
+        end do
+      end if
+      if (current_coords%are_equal_to(this%get_flow_terminates_value())) exit
+      target_coords => this%get_next_cell_coords(current_coords)
+      deallocate(current_coords)
+      current_coords => target_coords
+    end do
+  end subroutine
+
+  function latlon_is_bifurcated(this,coords_in,layer_in) result(bifurcated)
+    class(latlon_flow_accumulation_algorithm), intent(inout) :: this
+    class(coords), pointer :: coords_in
+    integer, optional, intent(in) :: layer_in
+    class(*),pointer :: bifurcated_next_cell_index_lat_value
+    logical :: bifurcated
+    integer :: i
+      if (present(layer_in)) then
+        bifurcated_next_cell_index_lat_value => &
+          this%bifurcated_next_cell_index_lat(layer_in)%ptr%get_value(coords_in)
+        select type(bifurcated_next_cell_index_lat_value)
+          type is (integer)
+            bifurcated = (bifurcated_next_cell_index_lat_value &
+                         /= this%no_bifurcation_value)
+        end select
+      else
+        bifurcated = .false.
+        do i = 1,this%max_neighbors - 1
+          bifurcated_next_cell_index_lat_value => &
+            this%bifurcated_next_cell_index_lat(i)%ptr%get_value(coords_in)
+          select type(bifurcated_next_cell_index_lat_value)
+            type is (integer)
+              bifurcated = bifurcated .or. &
+                           (bifurcated_next_cell_index_lat_value &
+                           /= this%no_bifurcation_value)
+          end select
+          if (bifurcated) exit
+        end do
+      end if
+  end function latlon_is_bifurcated
+
+  function icon_single_index_is_bifurcated(this,coords_in,layer_in) result(bifurcated)
+    class(icon_single_index_flow_accumulation_algorithm), intent(inout) :: this
+    class(coords), pointer :: coords_in
+    integer, optional, intent(in) :: layer_in
+    class(*), pointer :: bifurcated_next_cell_index_value_ptr
+    integer :: i
+    logical :: bifurcated
+      if (present(layer_in)) then
+        bifurcated_next_cell_index_value_ptr => &
+          this%bifurcated_next_cell_index(layer_in)%ptr%get_value(coords_in)
+        select type (bifurcated_next_cell_index_value_ptr)
+          type is (integer)
+            bifurcated = (bifurcated_next_cell_index_value_ptr &
+                          /= this%no_bifurcation_value)
+        end select
+      else
+        bifurcated = .false.
+        do i = 1,this%max_neighbors - 1
+          bifurcated_next_cell_index_value_ptr => &
+            this%bifurcated_next_cell_index(i)%ptr%get_value(coords_in)
+          select type (bifurcated_next_cell_index_value_ptr)
+            type is (integer)
+            bifurcated = bifurcated .or. &
+                         (bifurcated_next_cell_index_value_ptr &
+                         /= this%no_bifurcation_value)
+          end select
+          if (bifurcated) exit
+        end do
+      end if
+  end function icon_single_index_is_bifurcated
+
+  function latlon_get_next_cell_bifurcated_coords(this,coords_in,layer_in) &
+    result(next_cell_coords)
+    class(latlon_flow_accumulation_algorithm), intent(in) :: this
+    class(coords), pointer :: coords_in
+    class(coords), pointer :: next_cell_coords
+    class(*), pointer :: bifurcated_next_cell_coords_lat_ptr
+    class(*), pointer :: bifurcated_next_cell_coords_lon_ptr
+    integer, intent(in) :: layer_in
+      bifurcated_next_cell_coords_lat_ptr => &
+        this%bifurcated_next_cell_index_lat(layer_in)%ptr%get_value(coords_in)
+      bifurcated_next_cell_coords_lon_ptr => &
+        this%bifurcated_next_cell_index_lon(layer_in)%ptr%get_value(coords_in)
+      select type (bifurcated_next_cell_coords_lat_ptr)
+      type is (integer)
+        select type (bifurcated_next_cell_coords_lon_ptr)
+        type is (integer)
+          allocate(next_cell_coords, &
+                   source=latlon_coords(bifurcated_next_cell_coords_lat_ptr, &
+                                        bifurcated_next_cell_coords_lon_ptr))
+        end select
+      end select
+  end function latlon_get_next_cell_bifurcated_coords
+
+  function icon_single_index_get_next_cell_bifurcated_coords(this,coords_in,layer_in) &
+      result(next_cell_coords)
+    class(icon_single_index_flow_accumulation_algorithm), intent(in) :: this
+    class(coords), pointer :: coords_in
+    class(coords), pointer :: next_cell_coords
+    class(*), pointer :: bifurcated_next_cell_coords_index_ptr
+    integer, intent(in) :: layer_in
+      bifurcated_next_cell_coords_index_ptr => &
+        this%bifurcated_next_cell_index(layer_in)%ptr%get_value(coords_in)
+      select type (bifurcated_next_cell_coords_index_ptr)
+        type is (integer)
+          allocate(next_cell_coords, &
+                   source=generic_1d_coords(bifurcated_next_cell_coords_index_ptr,.true.))
+      end select
+      deallocate(bifurcated_next_cell_coords_index_ptr)
+  end function icon_single_index_get_next_cell_bifurcated_coords
 
 end module flow_accumulation_algorithm_mod

@@ -15,6 +15,7 @@ implicit none
     integer :: ncells_dimid
     integer, dimension(2) :: dimids
     integer, dimension(:), pointer  :: rdirs
+    integer, dimension(:,:), pointer  ::bifurcated_rdirs
     integer, dimension(:), pointer  :: cumulative_flow
     real(kind=double_precision), dimension(:), allocatable :: cell_lats
     real(kind=double_precision), dimension(:), allocatable :: cell_lons
@@ -27,6 +28,8 @@ implicit none
     character(len=MAX_NAME_LENGTH) :: output_cumulative_flow_filename
     character(len=MAX_NAME_LENGTH) :: input_rdirs_fieldname
     character(len=MAX_NAME_LENGTH) :: output_cumulative_flow_fieldname
+    character(len=MAX_NAME_LENGTH) :: input_bifurcated_rdirs_filename
+    character(len=MAX_NAME_LENGTH) :: input_bifurcated_rdirs_fieldname
 
         num_args = command_argument_count()
         if (num_args == 1) then
@@ -36,7 +39,7 @@ implicit none
             stop
           end if
         end if
-        if (num_args /= 5) then
+        if (num_args /= 5 .and. num_args /=7) then
           write(*,*) "Wrong number of command line arguments given"
           call print_usage()
           stop
@@ -46,6 +49,10 @@ implicit none
         call get_command_argument(3,value=output_cumulative_flow_filename)
         call get_command_argument(4,value=input_rdirs_fieldname)
         call get_command_argument(5,value=output_cumulative_flow_fieldname)
+        if (num_args == 7) then
+          call get_command_argument(6,value=input_bifurcated_rdirs_filename)
+          call get_command_argument(7,value=input_bifurcated_rdirs_fieldname)
+        end if
 
         write(*,*) "Reading Icosohedral Grid Parameters"
         call check_return_code(nf90_open(grid_params_filename,nf90_nowrite,ncid))
@@ -82,10 +89,25 @@ implicit none
         call check_return_code(nf90_get_var(ncid,varid,rdirs))
         call check_return_code(nf90_close(ncid))
 
+        if (num_args == 7) then
+          write(*,*) "Reading Bifurcated Icon River Directions"
+          call check_return_code(nf90_open(input_bifurcated_rdirs_filename,nf90_nowrite,ncid))
+          allocate(bifurcated_rdirs(ncells,11))
+          call check_return_code(nf90_inq_varid(ncid,input_bifurcated_rdirs_fieldname,varid))
+          call check_return_code(nf90_get_var(ncid,varid,rdirs))
+          call check_return_code(nf90_close(ncid))
+        end if
+
         write(*,*) "Generating Cumulative Flow"
         allocate(cumulative_flow(ncells))
-        call accumulate_flow_icon_single_index(cell_neighbors, &
-                                               rdirs, cumulative_flow)
+        if (num_args == 7) then
+          call accumulate_flow_icon_single_index(cell_neighbors, &
+                                                 rdirs, cumulative_flow, &
+                                                 bifurcated_rdirs)
+        else
+          call accumulate_flow_icon_single_index(cell_neighbors, &
+                                                 rdirs, cumulative_flow)
+        end if
 
         write(*,*) "Writing Icosohedral Cumulative Flow File"
         call check_return_code(nf90_create(output_cumulative_flow_filename,nf90_netcdf4,ncid))
