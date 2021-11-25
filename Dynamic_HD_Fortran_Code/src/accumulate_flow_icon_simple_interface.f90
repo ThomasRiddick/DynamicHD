@@ -94,7 +94,7 @@ implicit none
           call check_return_code(nf90_open(input_bifurcated_rdirs_filename,nf90_nowrite,ncid))
           allocate(bifurcated_rdirs(ncells,11))
           call check_return_code(nf90_inq_varid(ncid,input_bifurcated_rdirs_fieldname,varid))
-          call check_return_code(nf90_get_var(ncid,varid,rdirs))
+          call check_return_code(nf90_get_var(ncid,varid,bifurcated_rdirs))
           call check_return_code(nf90_close(ncid))
         end if
 
@@ -149,7 +149,9 @@ implicit none
     write(*,*) "Accumulated Flow Calculation Algorithm"
     write(*,*) "./Accumulate_Flow_Icon_Simple_Interface_Exec [grid_params_filename]" // &
                " [input_rdirs_filename] [output_cumulative_flow_filename]" // &
-               " [input_rdirs_fieldname] [output_cumulative_flow_fieldname]"
+               " [input_rdirs_fieldname] [output_cumulative_flow_fieldname]" // &
+               " [input_bifurcated_rdirs_filename (optional)]" // &
+               " [input_bifurcated_rdirs_fieldname (optional)] "
   end subroutine print_usage
 
   subroutine print_help()
@@ -165,6 +167,9 @@ implicit none
     write(*,*) "input_rdirs_fieldname - Field name for the next cell index field in the specified file."
     write(*,*) "cumulative_flow_fieldname - Field name for the output cumulative flow field in the"
     write(*,*) " specified file"
+    write(*,*) "input_bifurcated_rdirs_filename (optional) - Full path to file containing bifurcated"
+    write(*,*) " river directions"
+    write(*,*) "input_bifurcated_rdirs_fieldname (optional) - Field name of bifurcated river directions"
   end subroutine print_help
 
 end program accumulate_flow_icon_simple_interface
