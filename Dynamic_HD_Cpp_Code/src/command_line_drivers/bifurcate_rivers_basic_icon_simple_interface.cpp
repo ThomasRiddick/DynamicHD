@@ -41,6 +41,8 @@ void print_usage(){
     cout <<
     "[minimum_cells_from_split_to_main_mouth_string]" << endl;
     cout <<
+    "[maximum_cells_from_split_to_main_mouth_string]" << endl;
+    cout <<
     "[cumulative_flow_threshold_fraction_string]" << endl;
 }
 
@@ -61,6 +63,7 @@ void print_help(){
   cout << "cumulative_flow_fieldname - " << endl;
   cout << "landsea_mask_fieldname - " << endl;
   cout << "minimum_cells_from_split_to_main_mouth_string - " << endl;
+  cout << "maximum_cells_from_split_to_main_mouth_string - " << endl;
   cout << "cumulative_flow_threshold_fraction_string - " << endl;
 }
 
@@ -73,13 +76,13 @@ int main(int argc, char *argv[]){
       exit(EXIT_FAILURE);
     }
   }
-  if(argc<14) {
+  if(argc<15) {
     cout << "Not enough arguments" << endl;
     print_usage();
     cout << "Run with option -h for help" << endl;
     exit(EXIT_FAILURE);
   }
-  if(argc>14) {
+  if(argc>15) {
     cout << "Too many arguments" << endl;
     print_usage();
     cout << "Run with option -h for help" << endl;
@@ -97,7 +100,8 @@ int main(int argc, char *argv[]){
   string cumulative_flow_fieldname(argv[10]);
   string landsea_mask_fieldname(argv[11]);
   string minimum_cells_from_split_to_main_mouth_string(argv[12]);
-  string cumulative_flow_threshold_fraction_string(argv[13]);
+  string maximum_cells_from_split_to_main_mouth_string(argv[13]);
+  string cumulative_flow_threshold_fraction_string(argv[14]);
   map<int,vector<int>> river_mouths;
   regex primary_mouth_regex("primary mouth:\\s*([0-9]+)");
   regex secondary_mouth_regex("secondary mouth:\\s*([0-9]+)");
@@ -135,9 +139,12 @@ int main(int argc, char *argv[]){
     delete secondary_mouths_vector;
   }
   int minimum_cells_from_split_to_main_mouth = stoi(minimum_cells_from_split_to_main_mouth_string);
+  int maximum_cells_from_split_to_main_mouth = stoi(maximum_cells_from_split_to_main_mouth_string);
   double cumulative_flow_threshold_fraction = stod(cumulative_flow_threshold_fraction_string);
   cout << "Using minimum_cells_from_split_to_main_mouth= "
        << minimum_cells_from_split_to_main_mouth << endl;
+  cout << "Using maximum_cells_from_split_to_main_mouth= "
+       << maximum_cells_from_split_to_main_mouth << endl;
   cout << "Using cumulative_flow_threshold_fraction= "
        << cumulative_flow_threshold_fraction << endl;
   cout << "Loading grid parameters from:" << endl;
@@ -192,6 +199,7 @@ int main(int argc, char *argv[]){
                                            landsea_mask_in,
                                            cumulative_flow_threshold_fraction,
                                            minimum_cells_from_split_to_main_mouth,
+                                           maximum_cells_from_split_to_main_mouth,
                                            ncells,
                                            neighboring_cell_indices);
   NcFile output_number_of_outflows_file(output_number_of_outflows_filepath.c_str(), NcFile::newFile);

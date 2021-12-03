@@ -44,7 +44,7 @@ if $compilation_required; then
   cd - 2>&1 > /dev/null
 fi
 
-if ! ${compile_only} ; then
+if ${prep_paragen_code} && ! ${compile_only} ; then
   # Clean up paragen working directory if any
   if [[ -d "${working_directory}/paragen" ]]; then
     cd ${working_directory}/paragen

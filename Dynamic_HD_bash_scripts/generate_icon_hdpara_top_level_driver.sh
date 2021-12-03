@@ -238,7 +238,7 @@ export LD_LIBRARY_PATH=/Users/thomasriddick/anaconda3/pkgs/netcdf-cxx4-4.3.0-h70
 export LD_LIBRARY_PATH="/sw/rhel6-x64/netcdf/netcdf_fortran-4.4.4-gcc64/lib:/sw/rhel6-x64/netcdf/netcdf_cxx-4.3.0-gcc64/lib:${LD_LIBRARY_PATH}"
 
 if ! $no_modules && ! $no_conda ; then
-	load_module anaconda3
+	load_module anaconda3/.bleeding_edge
 fi
 
 if ! $no_conda ; then

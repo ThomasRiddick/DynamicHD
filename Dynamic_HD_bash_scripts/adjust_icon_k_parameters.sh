@@ -4,7 +4,11 @@ icon_para_input_filename=${1}
 icon_para_output_filename=${2}
 resolution=${3}
 
-if [[ ${resolution} == 'r2b8' ]]; then
+if [[ ${resolution} == 'r2b9' ]]; then
+  echo "Retuning included in paragen program for r2b9... "
+  cp ${icon_para_input_filename} ${icon_para_output_filename}
+  exit 0
+elif [[ ${resolution} == 'r2b8' ]]; then
   new_arf_k=0.027
   arf_k_adjustment_thres=0.1
   new_alf_k=4.82
@@ -14,7 +18,13 @@ elif [[ ${resolution} == 'r2b4' ]]; then
   arf_k_adjustment_thres=1.0
   new_alf_k=45.3
   alf_k_adjustment_thres=200.0
+elif [[ ${resolution} == 'r2b7' ]]; then
+  new_arf_k=0.056
+  arf_k_adjustment_thres=0.2
+  new_alf_k=10.12
+  alf_k_adjustment_thres=40.0
 else
+  echo "Unrecognised resolution"
   exit 1
 fi
 

@@ -56,9 +56,11 @@ void basic_bifurcation_algorithm::setup_fields(int* cumulative_flow_in,
 }
 
 void basic_bifurcation_algorithm::setup_flags(double cumulative_flow_threshold_fraction_in,
-                                              int minimum_cells_from_split_to_main_mouth_in) {
+                                              int minimum_cells_from_split_to_main_mouth_in,
+                                              int maximum_cells_from_split_to_main_mouth_in) {
   cumulative_flow_threshold_fraction = cumulative_flow_threshold_fraction_in;
   minimum_cells_from_split_to_main_mouth = minimum_cells_from_split_to_main_mouth_in;
+  maximum_cells_from_split_to_main_mouth = maximum_cells_from_split_to_main_mouth_in;
 }
 
 void basic_bifurcation_algorithm::bifurcate_rivers(){
@@ -166,7 +168,8 @@ void basic_bifurcation_algorithm::track_main_channel(coords* mouth_coords){
       cells_from_mouth++;
       (*major_side_channel_mask)(next_upstream_cell_coords) = false;
       (*main_channel_mask)(next_upstream_cell_coords) =
-        cells_from_mouth >  minimum_cells_from_split_to_main_mouth ?
+        (cells_from_mouth >  minimum_cells_from_split_to_main_mouth &&
+         cells_from_mouth <=  maximum_cells_from_split_to_main_mouth) ?
                             main_channel_valid : main_channel_invalid;
     }
     delete center_cell;

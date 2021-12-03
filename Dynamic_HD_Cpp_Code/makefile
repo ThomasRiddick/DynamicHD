@@ -30,7 +30,7 @@ endif
 -include ../src/subdir.mk
 -include ../subdir.mk
 
-EXECUTABLES += Dynamic_HD_Cpp_Exec Fill_Sinks_Icon_SI_Exec Compute_Catchments_SI_Exec Determine_River_Directions_SI_Exec Evaluate_Basins_SI_Exec
+EXECUTABLES += Dynamic_HD_Cpp_Exec Fill_Sinks_Icon_SI_Exec Compute_Catchments_SI_Exec Determine_River_Directions_SI_Exec Evaluate_Basins_SI_Exec Bifurcate_River_Basic_SI_Exec
 
 ifneq ($(MAKECMDGOALS),clean)
 ifneq ($(strip $(CC_DEPS)),)
@@ -59,7 +59,7 @@ endif
 all: Dynamic_HD_Cpp_Code Fill_Sinks_Icon_SI_Exec Compute_Catchments_SI_Exec Determine_River_Directions_SI_Exec Evaluate_Basins_SI_Exec Bifurcate_River_Basic_SI_Exec
 
 # Tool invocations
-tools_only: $(USER_OBJS) Fill_Sinks_Icon_SI_Exec Compute_Catchments_SI_Exec Determine_River_Directions_SI_Exec Evaluate_Basins_SI_Exec
+tools_only: $(USER_OBJS) Fill_Sinks_Icon_SI_Exec Compute_Catchments_SI_Exec Determine_River_Directions_SI_Exec Evaluate_Basins_SI_Exec Bifurcate_River_Basic_SI_Exec
 compile_only: $(USER_OBJS)
 
 Dynamic_HD_Cpp_Code: $(OBJS) $(USER_OBJS) $(TEST_OBJS)
@@ -100,7 +100,7 @@ Bifurcate_River_Basic_SI_Exec:$(USER_OBJS) $(BRB_ICON_SI_OBJS)
 
 # Other Targets
 clean:
-	-$(RM) $(CC_DEPS)$(C++_DEPS)$(EXECUTABLES)$(OBJS)$(USER_OBJS)$(TEST_OBJS)$(FS_ICON_SI_OBJS)$(CC_ICON_SI_OBJS)$(DRD_ICON_SI_OBJS)$(EB_ICON_SI_OBJS)$(C_UPPER_DEPS)$(CXX_DEPS)$(CPP_DEPS)$(C_DEPS)
+	-$(RM) $(CC_DEPS)$(C++_DEPS)$(EXECUTABLES)$(OBJS)$(USER_OBJS)$(TEST_OBJS)$(FS_ICON_SI_OBJS)$(CC_ICON_SI_OBJS)$(DRD_ICON_SI_OBJS)$(EB_ICON_SI_OBJS)$(BRB_ICON_SI_OBJS)$(C_UPPER_DEPS)$(CXX_DEPS)$(CPP_DEPS)$(C_DEPS)
 	-@echo ' '
 
 .PHONY: all clean dependents

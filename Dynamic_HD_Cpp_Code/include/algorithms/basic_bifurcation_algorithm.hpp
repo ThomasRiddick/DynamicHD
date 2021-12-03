@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <queue>
+#include <climits>
 #include "base/priority_cell_queue.hpp"
 #include "base/enums.hpp"
 #include "base/coords.hpp"
@@ -20,7 +21,8 @@ class basic_bifurcation_algorithm {
                       bool* landsea_mask_in,
                       grid_params* grid_params_in);
     void setup_flags(double cumulative_flow_threshold_fraction_in,
-                     int minimum_cells_from_split_to_main_mouth_in);
+                     int minimum_cells_from_split_to_main_mouth_in,
+                     int maximum_cells_from_split_to_main_mouth_in=INT_MAX);
     void bifurcate_rivers();
     virtual int get_maximum_bifurcations() = 0;
   protected:
@@ -58,6 +60,7 @@ class basic_bifurcation_algorithm {
     double cumulative_flow_threshold_fraction;
     int cumulative_flow_threshold;
     int minimum_cells_from_split_to_main_mouth;
+    int maximum_cells_from_split_to_main_mouth;
     int highest_cumulative_flow_nbrs;
     int cells_from_mouth;
     bool connection_found;

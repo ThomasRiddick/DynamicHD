@@ -8,6 +8,7 @@
  *      Author: thomasriddick using Google's recommended template code
  */
 
+#include <climits>
 #include "drivers/bifurcate_rivers_basic.hpp"
 #include "base/grid.hpp"
 #include "base/field.hpp"
@@ -114,6 +115,7 @@ TEST_F(BifurcateRiversBasicTest, BifurcateRiversBasicTestOne){
   fill_n(number_of_outflows_in,8*8,1);
   double cumulative_flow_threshold_fraction_in = 0.25;
   int minimum_cells_from_split_to_main_mouth_in = 2;
+  int maximum_cells_from_split_to_main_mouth_in = INT_MAX;
   latlon_bifurcate_rivers_basic(river_mouths_in,
                                 original_rdirs,
                                 bifurcations_rdirs_in,
@@ -122,6 +124,7 @@ TEST_F(BifurcateRiversBasicTest, BifurcateRiversBasicTestOne){
                                 landsea_mask_in,
                                 cumulative_flow_threshold_fraction_in,
                                 minimum_cells_from_split_to_main_mouth_in,
+                                maximum_cells_from_split_to_main_mouth_in,
                                 nlat,nlon);
   EXPECT_TRUE(field<int>(number_of_outflows_in,grid_params_in) ==
               field<int>(expected_number_of_outflows_out,grid_params_in));
@@ -230,6 +233,7 @@ TEST_F(BifurcateRiversBasicTest, BifurcateRiversBasicTestTwo){
   fill_n(number_of_outflows_in,8*8,1);
   double cumulative_flow_threshold_fraction_in = 0.25;
   int minimum_cells_from_split_to_main_mouth_in = 4;
+  int maximum_cells_from_split_to_main_mouth_in = INT_MAX;
   latlon_bifurcate_rivers_basic(river_mouths_in,
                                 original_rdirs,
                                 bifurcations_rdirs_in,
@@ -238,6 +242,7 @@ TEST_F(BifurcateRiversBasicTest, BifurcateRiversBasicTestTwo){
                                 landsea_mask_in,
                                 cumulative_flow_threshold_fraction_in,
                                 minimum_cells_from_split_to_main_mouth_in,
+                                maximum_cells_from_split_to_main_mouth_in,
                                 nlat,nlon);
   EXPECT_TRUE(field<int>(number_of_outflows_in,grid_params_in) ==
               field<int>(expected_number_of_outflows_out,grid_params_in));
@@ -357,6 +362,7 @@ TEST_F(BifurcateRiversBasicTest, BifurcateRiversBasicTestThree){
   fill_n(number_of_outflows_in,8*8,1);
   double cumulative_flow_threshold_fraction_in = 0.25;
   int minimum_cells_from_split_to_main_mouth_in = 3;
+  int maximum_cells_from_split_to_main_mouth_in = INT_MAX;
   latlon_bifurcate_rivers_basic(river_mouths_in,
                                 original_rdirs,
                                 bifurcations_rdirs_in,
@@ -365,6 +371,7 @@ TEST_F(BifurcateRiversBasicTest, BifurcateRiversBasicTestThree){
                                 landsea_mask_in,
                                 cumulative_flow_threshold_fraction_in,
                                 minimum_cells_from_split_to_main_mouth_in,
+                                maximum_cells_from_split_to_main_mouth_in,
                                 nlat,nlon);
   EXPECT_TRUE(field<int>(number_of_outflows_in,grid_params_in) ==
               field<int>(expected_number_of_outflows_out,grid_params_in));
@@ -498,6 +505,7 @@ TEST_F(BifurcateRiversBasicTest, BifurcateRiversBasicTestFour){
   fill_n(number_of_outflows_in,9*9,1);
   double cumulative_flow_threshold_fraction_in = 0.1;
   int minimum_cells_from_split_to_main_mouth_in = 3;
+  int maximum_cells_from_split_to_main_mouth_in = INT_MAX;
   latlon_bifurcate_rivers_basic(river_mouths_in,
                                 original_rdirs,
                                 bifurcations_rdirs_in,
@@ -506,6 +514,7 @@ TEST_F(BifurcateRiversBasicTest, BifurcateRiversBasicTestFour){
                                 landsea_mask_in,
                                 cumulative_flow_threshold_fraction_in,
                                 minimum_cells_from_split_to_main_mouth_in,
+                                maximum_cells_from_split_to_main_mouth_in,
                                 nlat,nlon);
   EXPECT_TRUE(field<int>(number_of_outflows_in,grid_params_in) ==
               field<int>(expected_number_of_outflows_out,grid_params_in));
@@ -2016,6 +2025,7 @@ TEST_F(BifurcateRiversBasicTest, BifurcateRiversBasicTestFive) {
   fill_n(number_of_outflows_in,80,1);
   double cumulative_flow_threshold_fraction_in = 0.1;
   int minimum_cells_from_split_to_main_mouth_in = 3;
+  int maximum_cells_from_split_to_main_mouth_in = INT_MAX;
   icon_single_index_bifurcate_rivers_basic(river_mouths_in,
                                            original_next_cell_index_in,
                                            bifurcations_next_cell_index_in,
@@ -2024,6 +2034,7 @@ TEST_F(BifurcateRiversBasicTest, BifurcateRiversBasicTestFive) {
                                            landsea_mask_in,
                                            cumulative_flow_threshold_fraction_in,
                                            minimum_cells_from_split_to_main_mouth_in,
+                                           maximum_cells_from_split_to_main_mouth_in,
                                            ncells,
                                            cell_neighbors);
   EXPECT_TRUE(field<int>(number_of_outflows_in,grid_params_in) ==

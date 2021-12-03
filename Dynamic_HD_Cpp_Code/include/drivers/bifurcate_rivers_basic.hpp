@@ -20,6 +20,7 @@ void latlon_bifurcate_rivers_basic(map<pair<int,int>,
                                    bool* landsea_mask_in,
                                    double cumulative_flow_threshold_fraction_in,
                                    int minimum_cells_from_split_to_main_mouth_in,
+                                   int maximum_cells_from_split_to_main_mouth_in,
                                    int nlat_in,int nlon_in);
 
 void icon_single_index_bifurcate_rivers_basic(map<int,vector<int>> river_mouths_in,
@@ -30,6 +31,7 @@ void icon_single_index_bifurcate_rivers_basic(map<int,vector<int>> river_mouths_
                                               bool* landsea_mask_in,
                                               double cumulative_flow_threshold_fraction_in,
                                               int minimum_cells_from_split_to_main_mouth_in,
+                                              int maximum_cells_from_split_to_main_mouth_in,
                                               int ncells_in,
                                               int* neighboring_cell_indices_in);
 

@@ -17,6 +17,7 @@ void latlon_bifurcate_rivers_basic(map<pair<int,int>,
                                    bool* landsea_mask_in,
                                    double cumulative_flow_threshold_fraction_in,
                                    int minimum_cells_from_split_to_main_mouth_in,
+                                   int maximum_cells_from_split_to_main_mouth_in,
                                    int nlat_in,int nlon_in){
   cout << "Entering River Bifurcation C++ Code" << endl;
   auto alg = basic_bifurcation_algorithm_latlon();
@@ -27,7 +28,8 @@ void latlon_bifurcate_rivers_basic(map<pair<int,int>,
                    landsea_mask_in,
                    grid_params_in);
   alg.setup_flags(cumulative_flow_threshold_fraction_in,
-                  minimum_cells_from_split_to_main_mouth_in);
+                  minimum_cells_from_split_to_main_mouth_in,
+                  maximum_cells_from_split_to_main_mouth_in);
   alg.bifurcate_rivers();
   double* bifurcations_rdirs_out = alg.get_bifurcation_rdirs();
   copy(bifurcations_rdirs_out,
@@ -45,6 +47,7 @@ void icon_single_index_bifurcate_rivers_basic(map<int,vector<int>> river_mouths_
                                               bool* landsea_mask_in,
                                               double cumulative_flow_threshold_fraction_in,
                                               int minimum_cells_from_split_to_main_mouth_in,
+                                              int maximum_cells_from_split_to_main_mouth_in,
                                               int ncells_in,
                                               int* neighboring_cell_indices_in){
   cout << "Entering River Bifurcation C++ Code" << endl;
@@ -61,7 +64,8 @@ void icon_single_index_bifurcate_rivers_basic(map<int,vector<int>> river_mouths_
                    landsea_mask_in,
                    grid_params_in);
   alg.setup_flags(cumulative_flow_threshold_fraction_in,
-                  minimum_cells_from_split_to_main_mouth_in);
+                  minimum_cells_from_split_to_main_mouth_in,
+                  maximum_cells_from_split_to_main_mouth_in);
   alg.bifurcate_rivers();
   int* bifurcations_next_cell_index_out = alg.get_bifurcation_next_cell_index();
   copy(bifurcations_next_cell_index_out,

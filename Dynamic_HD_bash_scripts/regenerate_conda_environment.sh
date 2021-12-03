@@ -24,7 +24,7 @@ fi
 
 if ! $no_modules ; then
   unload_module netcdf_c
-  load_module anaconda3
+  load_module anaconda3/.bleeding_edge
 fi
 
 conda-env remove -n dyhdenv3

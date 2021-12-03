@@ -283,7 +283,7 @@ if ! $no_modules ; then
 fi
 
 if ! $no_modules && ! $no_conda ; then
-	load_module anaconda3
+	load_module anaconda3/.bleeding_edge
 fi
 
 if ! $no_conda && ! $no_env_gen ; then
