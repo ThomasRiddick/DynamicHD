@@ -175,7 +175,9 @@ class GenericConfig(Config):
                                                "orography_creation":
                                                "OrographyCreationConfig",
                                                "determine_river_directions":
-                                               "RiverDirectionDeterminationConfig"}
+                                               "RiverDirectionDeterminationConfig",
+                                               "parameter_generation":
+                                               "ParameterGeneration"}
     common_additional_fields_objects = [ExtendedInputField("rdirs","input_filepaths",
                                                            True,[check_extension_is_nc()]),
                                         ExtendedInputField("fine_rdirs","input_filepaths",
@@ -194,7 +196,7 @@ class GenericConfig(Config):
                                                            True,[check_extension_is_nc()]),
                                         ExtendedInputField("truesinks","input_filepaths",
                                                            True,[check_extension_is_nc()]),
-                                        ExtendedInputField("coarse_rdirs","output_filepaths",
+                                        ExtendedInputField("coarse_rdirs_out","output_filepaths",
                                                            True,[check_extension_is_nc()]),
                                         ExtendedInputField("coarse_orography","output_filepaths",
                                                            True,[check_extension_is_nc()]),
@@ -204,6 +206,8 @@ class GenericConfig(Config):
                                                            True,[check_extension_is_nc()]),
                                         ExtendedInputField("catchments_out","output_filepaths",
                                                            True,[check_extension_is_nc()]),
+                                        ExtendedInputField("hdpara_out","output_filepaths",
+                                                           False,[check_extension_is_nc()]),
                                         ExtendedInputField("cumulative_flow_out",
                                                            "output_filepaths",True,
                                                            [check_extension_is_nc()]),
@@ -278,7 +282,8 @@ class GenericConfig(Config):
 class RiverDirUpscalingConfig(GenericConfig):
 
     terminal_node = False
-    upscaling_algorithms_and_associated_layouts = {"modified_cotat_plus":"CotatPlusConfig"}
+    upscaling_algorithms_and_associated_layouts = {"modified_cotat_plus":"CotatPlusConfig",
+                                                   "loop_removal":"LoopRemovalConfig"}
 
     def __init__(self):
         super(RiverDirUpscalingConfig,self).__init__()
@@ -301,7 +306,32 @@ class CotatPlusConfig(RiverDirUpscalingConfig):
 
     def __init__(self):
         super(CotatPlusConfig,self).__init__()
-        self.add_additional_existing_required_fields(["coarse_rdirs"])
+        self.add_additional_existing_required_fields(["coarse_rdirs_out"])
+        self.driver_to_use =  "cotat_plus_driver"
+
+class LoopRemovalConfig(RiverDirUpscalingConfig):
+
+    terminal_node = True
+
+    def __init__(self):
+        super(LoopRemovalConfig,self).__init__()
+        add_new_fields(self.required_input_fields,
+                       {"input_filepaths":
+                        [InputField("loop_logfile",
+                         [printable_lambda("value :"
+                                           "value.lower().endswith('txt')")]),
+                         InputField("coarse_rdirs",
+                          [check_extension_is_nc()]),
+                         InputField("coarse_catchments",
+                          [check_extension_is_nc()]),
+                         InputField("coarse_cumulative_flow",
+                          [check_extension_is_nc()])],
+                         "input_fieldnames":
+                         [InputField("coarse_rdirs",[]),
+                          InputField("coarse_catchments",[]),
+                          InputField("coarse_cumulative_flow",[])]})
+        self.add_additional_existing_required_fields(["coarse_rdirs_out"])
+        self.driver_to_use = "loop_breaking_driver"
 
 class OrographyUpscalingConfig(GenericConfig):
 
@@ -562,3 +592,17 @@ class RiverDirectionDeterminationConfig(GenericConfig):
                                                       "orography"])
         self.add_additional_existing_optional_fields(["truesinks"])
         self.driver_to_use = "river_direction_determination_driver"
+
+class ParameterGeneration(GenericConfig):
+
+    terminal_node = True
+
+    def __init__(self):
+        super(ParameterGeneration,self).__init__()
+        add_new_fields(self.required_input_fields,
+                       {"parameter_generation":
+                        [InputField("ancillary_data_path",[]),
+                         InputField("working_dir",[])]})
+        self.add_additional_existing_required_fields(["rdirs","landsea","orography",
+                                                      "hdpara_out"])
+        self.driver_to_use = "parameter_generation_driver"

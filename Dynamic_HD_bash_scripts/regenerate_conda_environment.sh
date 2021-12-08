@@ -31,6 +31,6 @@ conda-env remove -n dyhdenv3
 conda config --add channels conda-forge
 conda create --yes -n dyhdenv3
 source activate dyhdenv3
-conda install --yes cdo netcdf4 numpy matplotlib xarray cython scipy python-cdo configparser
+conda install --yes cdo=1.9.9 netcdf4 numpy matplotlib xarray cython scipy python-cdo configparser
 conda list -e
 source deactivate

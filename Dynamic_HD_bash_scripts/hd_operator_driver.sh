@@ -158,9 +158,9 @@ if ! $no_modules ; then
 	if [[ $(hostname -d) == "hpc.dkrz.de" ]]; then
 		source /sw/rhel6-x64/etc/profile.mistral
 		unload_module netcdf_c
-	    unload_module imagemagick
+	  unload_module imagemagick
 		unload_module cdo/1.7.0-magicsxx-gcc48
-	    unload_module python
+	  unload_module python
 	else
 		export MODULEPATH="/sw/common/Modules:/client/Modules"
 	fi

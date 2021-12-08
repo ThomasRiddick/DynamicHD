@@ -12,6 +12,7 @@ import re
 from Dynamic_HD_Scripts.base import field
 from Dynamic_HD_Scripts.base import iodriver
 from Dynamic_HD_Scripts.interface.fortran_interface import f2py_manager
+from Dynamic_HD_Scripts.utilities import coordinate_scaling_utilities
 from Dynamic_HD_Scripts.context import fortran_project_source_path,fortran_project_object_path,fortran_project_include_path
 
 def run_loop_breaker(course_rdirs,course_cumulative_flow,course_catchments,fine_rdirs_field,
@@ -138,3 +139,73 @@ def loop_breaker_driver(input_course_rdirs_filepath,input_course_cumulative_flow
     iodriver.write_field(output_updated_course_rdirs_filepath, output_course_rdirs_field,
                          file_type=iodriver.\
                          get_file_extension(output_updated_course_rdirs_filepath))
+
+def advanced_loop_breaker_driver(input_course_rdirs_filepath,input_course_cumulative_flow_filepath,
+                                 input_course_catchments_filepath,input_fine_rdirs_filepath,
+                                 input_fine_cumulative_flow_filepath,output_updated_course_rdirs_filepath,
+                                 input_course_rdirs_fieldname,input_course_cumulative_flow_fieldname,
+                                 input_course_catchments_fieldname,input_fine_rdirs_fieldname,
+                                 input_fine_cumulative_flow_fieldname,output_updated_course_rdirs_fieldname,
+                                 loop_nums_list_filepath,
+                                 scaling_factor):
+    """Drive the FORTRAN code to remove more complex loops from a field of river directions
+
+    Arguments:
+    input_course_rdirs_filepath: string, full path to input course river directions to remove
+        loops from
+    input_course_cumulative_flow_filepath: string, full path to the input course cumulative
+        flow file
+    input_course_catchments_filepath: string, full path to the course input catchments file
+    input_fine_rdirs_filepath: string, full path to the fine input river directions the course
+        input river directions were upscaled from
+    input_fine_cumulative_flow_filepath: string, full path to the catchments generated from the
+        fine input river directions
+    output_updated_course_rdirs_filepath: string, full path to write the course river direction with
+        the specified loops removed too
+    loop_nums_list_filepath: string, full path to the file contain the catchment numbers of the
+        loops to remove, one per line, see code below for correct format for the first line
+    Returns: nothing
+    """
+
+    input_course_rdirs_field = iodriver.advanced_field_loader(input_course_rdirs_filepath,
+                                                              field_type='RiverDirections',
+                                                              fieldname=input_course_rdirs_fieldname)
+
+    course_cumulative_flow_field =\
+        iodriver.advanced_field_loader(input_course_cumulative_flow_filepath,
+                                       field_type='CumulativeFlow',
+                                       fieldname=input_course_cumulative_flow_fieldname)
+    course_catchments_field =\
+        iodriver.advanced_field_loader(input_course_catchments_filepath,
+                                       field_type='Generic',
+                                       fieldname=input_course_catchments_fieldname)
+    fine_rdirs_field = iodriver.advanced_field_loader(input_fine_rdirs_filepath,
+                                                      field_type='RiverDirections',
+                                                      fieldname=input_fine_rdirs_fieldname)
+    fine_cumulative_flow_field =\
+        iodriver.advanced_field_loader(input_fine_cumulative_flow_filepath,
+                                       field_type='CumulativeFlow',
+                                       fieldname=input_fine_cumulative_flow_fieldname)
+    loop_nums_list = []
+    first_line_pattern = re.compile(r"^Loops found in catchments:$")
+    with open(loop_nums_list_filepath,'r') as f:
+        if not first_line_pattern.match(f.readline().strip()):
+            raise RuntimeError("Format of the file with list of catchments to remove loops from"
+                               " is invalid")
+        for line in f:
+            loop_nums_list.append(int(line.strip()))
+    print('Removing loops from catchments: ' + ", ".join(str(value) for value in loop_nums_list))
+    nlat_fine,nlon_fine = fine_rdirs_field.get_grid_dimensions()
+    lat_pts_fine,lon_pts_fine = fine_rdirs_field.get_grid_coordinates()
+    nlat_coarse,nlon_coarse,lat_pts_coarse,lon_pts_coarse = \
+        coordinate_scaling_utilities.generate_coarse_coords(nlat_fine,nlon_fine,
+                                                            lat_pts_fine,lon_pts_fine,
+                                                            scaling_factor)
+    output_coarse_rdirs_field = run_loop_breaker(input_coarse_rdirs_field,coarse_cumulative_flow_field,
+                                                 coarse_catchments_field,fine_rdirs_field,
+                                                 fine_cumulative_flow_field,loop_nums_list,
+                                                 course_grid_type="LatLong",nlat=nlat_coarse,
+                                                 nlong=nlon_coarse)
+    output_coarse_rdirs_field.set_grid_coordinates([lat_pts_coarse,lon_pts_coarse])
+    iodriver.advanced_field_writer(output_updated_coarse_rdirs_filepath, output_coarse_rdirs_field,
+                                   fieldname=output_updated_coarse_rdirs_fieldname)

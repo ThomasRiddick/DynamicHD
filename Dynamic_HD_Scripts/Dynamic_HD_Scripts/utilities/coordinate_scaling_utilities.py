@@ -25,8 +25,8 @@ def guess_bound(coord,tolerance=5.0):
 def generate_course_coords(nlat_fine,nlon_fine,
                            lat_pts_fine,lon_pts_fine,
                            scaling_factor):
-    nlat_course = nlat_fine/scaling_factor
-    nlon_course = nlon_fine/scaling_factor
+    nlat_course = nlat_fine//scaling_factor
+    nlon_course = nlon_fine//scaling_factor
     lat_pts_course,lon_pts_course = generate_course_pts(nlat_fine,nlon_fine,
                                                         lat_pts_fine,lon_pts_fine,
                                                         nlat_course,nlon_course)
