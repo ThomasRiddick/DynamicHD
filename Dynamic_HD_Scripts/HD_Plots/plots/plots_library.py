@@ -3685,8 +3685,8 @@ class LakePlots(Plots):
     norm = mpl.colors.BoundaryNorm(bounds,cmap.N)
     plt.title('Lakes and rivers with flow greater than {0} m3/s'.format(minflowcutoff))
     ims = []
-    #show_slices = [14600,13500,12800,12330,11500,11300]
-    show_slices = [15990]
+    show_slices = [14600,13500,12800,12330,11500,11300]
+    #show_slices = [15990]
     for time in range(15990,11000,-10):
       mpiesm_time = 3000 + 16000 - time
       show_snapshot = True if time in show_slices else False
@@ -3824,6 +3824,8 @@ class LakePlots(Plots):
     else:
         im = plt.imshow(fine_rivers_and_lakes,cmap=cmap,norm=norm,interpolation="none")
     if show_snapshot:
+        plt.gca().axes.get_xaxis().set_ticks([])
+        plt.gca().axes.get_yaxis().set_ticks([])
         plt.show()
     return im
 
