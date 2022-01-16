@@ -559,7 +559,7 @@ void basin_evaluation_algorithm::process_center_cell() {
 		(*connection_volume_thresholds)(previous_filled_cell_coords) =
 			center_cell_volume_threshold;
 		q.push(new basin_cell((*raw_orography)(previous_filled_cell_coords),
-		                      flood_height,previous_filled_cell_coords));
+		                      flood_height,previous_filled_cell_coords->clone()));
 		set_previous_cells_connect_next_cell_index(center_coords);
 	} else if (previous_filled_cell_height_type == flood_height) {
 		(*flood_volume_thresholds)(previous_filled_cell_coords) =
@@ -992,7 +992,10 @@ void basin_evaluation_algorithm::set_remaining_redirects() {
 			if (cell_requires_flood_redirect_indices) {
 				redirect_height_type = flood_height;
 				cell_requires_flood_redirect_indices = false;
-			} else redirect_height_type = connection_height;
+			} else {
+				redirect_height_type = connection_height;
+				cell_requires_connect_redirect_indices = false;
+			}
 			//this isn't the cells actual redirect index; the redirect index array is simply being
 			//used as temporary storage
 			is_double_merge = (get_merge_type(redirect_height_type,coords_in) ==

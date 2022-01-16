@@ -2,6 +2,7 @@ module CoordsModule
 
 using UserExceptionModule: UserError
 using SpecialDirectionCodesModule
+import Base.==
 
 abstract type Coords end
 
@@ -22,6 +23,10 @@ function is_lake(coords::Coords)
 end
 
 function are_valid(coords::Coords)
+  throw(UserError())
+end
+
+function ==(lcoords::Coords,rcoords::Coords)
   throw(UserError())
 end
 
@@ -54,6 +59,11 @@ function is_lake(coords::LatLonCoords)
          coords.lon == coord_base_indicator_lake
 end
 
+function ==(lcoords::LatLonCoords,rcoords::LatLonCoords)
+  return (lcoords.lat == rcoords.lat &&
+          lcoords.lon == rcoords.lon)::Bool
+end
+
 function is_ocean(coords::Generic1DCoords)
   return coords.index == coord_base_indicator_ocean
 end
@@ -68,6 +78,10 @@ end
 
 function is_lake(coords::Generic1DCoords)
   return coords.index == coord_base_indicator_lake
+end
+
+function ==(lcoords::Generic1DCoords,rcoords::Generic1DCoords)
+  return lcoords.index == rcoords.index
 end
 
 struct DirectionIndicator

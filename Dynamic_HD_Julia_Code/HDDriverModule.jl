@@ -6,15 +6,17 @@ using HDModule: RiverParameters,RiverPrognosticFields,RiverPrognosticFieldsOnly,
 using HDModule: SetDrainage,SetRunoff,PrintResults,PrognosticFields,WriteRiverInitialValues
 using HDModule: WriteRiverFlow,AccumulateRiverFlow,ResetCumulativeRiverFlow,WriteMeanRiverFlow
 using HDModule: PrintGlobalValues, water_to_lakes,water_from_lakes,get_river_parameters
-using HDModule: SetLakeEvaporation
-using FieldModule: Field
+using FieldModule: Field,elementwise_multiple
 using LakeModule: LakeParameters,LakePrognostics,LakeFields,RiverAndLakePrognosticFields,RunLakes
 using LakeModule: PrintSection,WriteLakeNumbers,WriteLakeVolumes,SetupLakes,DistributeSpillover
-using LakeModule: WriteDiagnosticLakeVolumes,CheckWaterBudget
+using LakeModule: WriteDiagnosticLakeVolumes,CheckWaterBudget,SetLakeEvaporation,Lake
+using LakeModule: SetRealisticLakeEvaporation,PrintSelectedLakes
 using LakeModule: water_to_lakes,handle_event,water_from_lakes
+using LakeModule: calculate_lake_fraction_on_surface_grid
 using GridModule: get_number_of_cells
 
 FloatFieldOrNothing = Union{Field{Float64},Nothing}
+VectorOfVectorOfFloatsOrNothing = Union{Vector{Vector{Float64}},Nothing}
 
 function drive_hd_model_with_or_without_lakes(prognostic_fields::PrognosticFields,
                                               drainages::Array{Field{Float64},1},
@@ -28,7 +30,11 @@ function drive_hd_model_with_or_without_lakes(prognostic_fields::PrognosticField
                                               nothing;
                                               print_timestep_results::Bool=true,
                                               output_timestep::Int64=100,
-                                              write_output::Bool=true)
+                                              write_output::Bool=true,
+                                              use_realistic_surface_coupling::Bool=false,
+                                              return_lake_volumes::Bool=false,
+                                              diagnostic_lake_volumes::VectorOfVectorOfFloatsOrNothing=
+                                              nothing)
   ncells::Int64 = get_number_of_cells(get_river_parameters(prognostic_fields).grid)
   hsm::HierarchicalStateMachine = HierarchicalStateMachine(prognostic_fields)
   runHD::RunHD = RunHD()
@@ -62,18 +68,41 @@ function drive_hd_model_with_or_without_lakes(prognostic_fields::PrognosticField
       set_runoff = SetRunoff(deepcopy(runoffs[convert(Int64,ceil(convert(Float64,i)/30.0))]))
     end
     handle_event(hsm,set_runoff)
-    if size(lake_evaporations) == (1,)
+    if use_realistic_surface_coupling
+      lake_fraction_on_surface_grid::Field{Float64} =
+        calculate_lake_fraction_on_surface_grid(prognostic_fields.lake_parameters,
+                                                prognostic_fields.lake_fields)
+      local lake_evaporation::Field{Float64}
+      if size(lake_evaporations) == (1,)
+        lake_evaporation = lake_evaporations[1]
+      else
+        lake_evaporation = lake_evaporations[convert(Int64,ceil(convert(Float64,i)/30.0))]
+      end
+      fraction_adjusted_lake_evaporation::Field{Float64} = elementwise_multiple(lake_fraction_on_surface_grid,
+                                                                                lake_evaporation)
       set_lake_evaporation =
-        SetLakeEvaporation(deepcopy(lake_evaporations[1]))
+        SetRealisticLakeEvaporation(fraction_adjusted_lake_evaporation)
     else
-      set_lake_evaporation =
-        SetLakeEvaporation(deepcopy(lake_evaporations[convert(Int64,ceil(convert(Float64,i)/30.0))]))
+      if size(lake_evaporations) == (1,)
+        set_lake_evaporation =
+          SetLakeEvaporation(deepcopy(lake_evaporations[1]))
+      else
+        set_lake_evaporation =
+          SetLakeEvaporation(deepcopy(lake_evaporations[convert(Int64,ceil(convert(Float64,i)/30.0))]))
+      end
     end
-    handle_event(hsm,set_lake_evaporation)
     handle_event(hsm,runHD)
     if run_lakes_flag
+      handle_event(hsm,set_lake_evaporation)
       handle_event(hsm,run_lakes)
       handle_event(hsm,CheckWaterBudget())
+      if return_lake_volumes
+        lake_volumes_for_timestep::Array{Float64} = Float64[]
+        for lake::Lake in prognostic_fields.lake_prognostics.lakes
+          append!(lake_volumes_for_timestep,lake.lake_variables.lake_volume)
+        end
+        push!(diagnostic_lake_volumes,lake_volumes_for_timestep)
+      end
     end
     if print_timestep_results
       if i%output_timestep == 0 || i == 1
@@ -124,13 +153,16 @@ function drive_hd_model(river_parameters::RiverParameters,river_fields::RiverPro
                         timesteps::Int64;print_timestep_results::Bool=false,
                         output_timestep::Int64=100,
                         write_output::Bool=true,
-                        return_output::Bool=false)
+                        return_output::Bool=false,
+                        use_realistic_surface_coupling::Bool=false)
   prognostic_fields::PrognosticFields = RiverPrognosticFieldsOnly(river_parameters,river_fields)
   drive_hd_model_with_or_without_lakes(prognostic_fields,drainages,runoffs,
                                        lake_evaporations,timesteps,false,
                                        print_timestep_results=print_timestep_results,
                                        output_timestep=output_timestep,
-                                       write_output=write_output)
+                                       write_output=write_output,
+                                       use_realistic_surface_coupling=
+                                       use_realistic_surface_coupling)
   if return_output
     return river_fields.water_to_ocean,river_fields.river_inflow
   end
@@ -142,13 +174,16 @@ function drive_hd_model(river_parameters::RiverParameters,drainages::Array{Field
                         print_timestep_results::Bool=false,
                         output_timestep::Int64=100,
                         write_output::Bool=true,
-                        return_output::Bool=false)
+                        return_output::Bool=false,
+                        use_realistic_surface_coupling::Bool=false)
   river_fields::RiverPrognosticFields = RiverPrognosticFields(river_parameters)
   drive_hd_model(river_parameters,river_fields,drainages,runoffs,lake_evaporations,
                  timesteps,print_timestep_results=print_timestep_results,
                  output_timestep=output_timestep,
                  write_output=write_output,
-                 return_output=false)
+                 return_output=false,
+                 use_realistic_surface_coupling=
+                 use_realistic_surface_coupling)
   if return_output
     return river_fields.water_to_ocean,river_fields.river_inflow
   end
@@ -165,7 +200,11 @@ function drive_hd_and_lake_model(river_parameters::RiverParameters,river_fields:
                                  print_timestep_results::Bool=false,
                                  output_timestep::Int64=100,
                                  write_output::Bool=true,
-                                 return_output::Bool=true)
+                                 return_output::Bool=true,
+                                 use_realistic_surface_coupling::Bool=false,
+                                 return_lake_volumes::Bool=false,
+                                 diagnostic_lake_volumes::VectorOfVectorOfFloatsOrNothing=
+                                 nothing)
   prognostic_fields::PrognosticFields = RiverAndLakePrognosticFields(river_parameters,river_fields,
                                                                      lake_parameters,lake_prognostics,
                                                                      lake_fields)
@@ -176,7 +215,13 @@ function drive_hd_and_lake_model(river_parameters::RiverParameters,river_fields:
                                        initial_spillover_to_rivers,
                                        print_timestep_results=print_timestep_results,
                                        output_timestep=output_timestep,
-                                       write_output=write_output)
+                                       write_output=write_output,
+                                       use_realistic_surface_coupling=
+                                       use_realistic_surface_coupling,
+                                       return_lake_volumes=
+                                       return_lake_volumes,
+                                       diagnostic_lake_volumes=
+                                       diagnostic_lake_volumes)
   if return_output
     return river_fields,lake_prognostics,lake_fields
   end
@@ -195,7 +240,11 @@ function drive_hd_and_lake_model(river_parameters::RiverParameters,
                                  print_timestep_results::Bool=false,
                                  output_timestep::Int64=100,
                                  write_output::Bool=true,
-                                 return_output::Bool=false)
+                                 return_output::Bool=false,
+                                 use_realistic_surface_coupling::Bool=false,
+                                 return_lake_volumes::Bool=false,
+                                 diagnostic_lake_volumes::VectorOfVectorOfFloatsOrNothing=
+                                 nothing)
   lake_fields::LakeFields = LakeFields(lake_parameters)
   lake_prognostics::LakePrognostics = LakePrognostics(lake_parameters,lake_fields)
   drive_hd_and_lake_model(river_parameters,river_fields,lake_parameters,lake_prognostics,
@@ -205,7 +254,13 @@ function drive_hd_and_lake_model(river_parameters::RiverParameters,
                           print_timestep_results=print_timestep_results,
                           output_timestep=output_timestep,
                           write_output=write_output,
-                          return_output=false)
+                          return_output=false,
+                          use_realistic_surface_coupling=
+                          use_realistic_surface_coupling,
+                          return_lake_volumes=
+                          return_lake_volumes,
+                          diagnostic_lake_volumes=
+                          diagnostic_lake_volumes)
   if return_output
     return river_fields,lake_prognostics,lake_fields
   end
@@ -222,7 +277,11 @@ function drive_hd_and_lake_model(river_parameters::RiverParameters,lake_paramete
                                  print_timestep_results::Bool=false,
                                  output_timestep::Int64=100,
                                  write_output::Bool=true,
-                                 return_output::Bool=false)
+                                 return_output::Bool=false,
+                                 use_realistic_surface_coupling::Bool=false,
+                                 return_lake_volumes::Bool=false,
+                                 diagnostic_lake_volumes::VectorOfVectorOfFloatsOrNothing=
+                                 nothing)
   river_fields::RiverPrognosticFields = RiverPrognosticFields(river_parameters)
   drive_hd_and_lake_model(river_parameters,river_fields,lake_parameters,lake_prognostics,
                           lake_fields,drainages,runoffs,lake_evaporations,timesteps,
@@ -231,7 +290,13 @@ function drive_hd_and_lake_model(river_parameters::RiverParameters,lake_paramete
                           print_timestep_results=print_timestep_results,
                           output_timestep=output_timestep,
                           write_output=write_output,
-                          return_output=false)
+                          return_output=false,
+                          use_realistic_surface_coupling=
+                          use_realistic_surface_coupling,
+                          return_lake_volumes=
+                          return_lake_volumes,
+                          diagnostic_lake_volumes=
+                          diagnostic_lake_volumes)
   if return_output
     return river_fields,lake_prognostics,lake_fields
   end
@@ -246,7 +311,11 @@ function drive_hd_and_lake_model(river_parameters::RiverParameters,lake_paramete
                                  print_timestep_results::Bool=false,
                                  output_timestep::Int64=100,
                                  write_output::Bool=true,
-                                 return_output::Bool=false)
+                                 return_output::Bool=false,
+                                 use_realistic_surface_coupling::Bool=false,
+                                 return_lake_volumes::Bool=false,
+                                 diagnostic_lake_volumes::VectorOfVectorOfFloatsOrNothing=
+                                 nothing)
   river_fields::RiverPrognosticFields = RiverPrognosticFields(river_parameters)
   lake_fields::LakeFields = LakeFields(lake_parameters)
   lake_prognostics::LakePrognostics = LakePrognostics(lake_parameters,lake_fields)
@@ -257,7 +326,13 @@ function drive_hd_and_lake_model(river_parameters::RiverParameters,lake_paramete
                           print_timestep_results=print_timestep_results,
                           output_timestep=output_timestep,
                           write_output=write_output,
-                          return_output=false)
+                          return_output=false,
+                          use_realistic_surface_coupling=
+                          use_realistic_surface_coupling,
+                          return_lake_volumes=
+                          return_lake_volumes,
+                          diagnostic_lake_volumes=
+                          diagnostic_lake_volumes)
   if return_output
     return river_fields,lake_prognostics,lake_fields
   end

@@ -301,6 +301,8 @@ function load_lake_parameters(lake_para_filepath::AbstractString,grid::Grid,hd_g
       load_field(file_handle,grid,"additional_connect_local_redirect",Bool)
     merge_points::Field{MergeTypes} =
       load_field(file_handle,grid,"merge_points",Int64)
+    cell_areas_on_surface_model_grid:Field{Float64} =
+      load_field(file_handle,grid,"cell_areas_on_surface_model_grid",Float64)
     return LakeParameters(lake_centers,
                           connection_volume_thresholds,
                           flood_volume_thresholds,
@@ -308,7 +310,9 @@ function load_lake_parameters(lake_para_filepath::AbstractString,grid::Grid,hd_g
                           connect_local_redirect,
                           additional_flood_local_redirect,
                           additional_connect_local_redirect,
-                          merge_points,grid,hd_grid,
+                          merge_points,
+                          cell_areas_on_surface_model_grid,
+                          grid,hd_grid,
                           surface_model_grid,
                           grid_specific_lake_parameters)
   finally

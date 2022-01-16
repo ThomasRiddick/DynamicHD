@@ -11,9 +11,10 @@ using CoordsModule: Coords,LatLonCoords,LatLonSectionCoords,is_lake
 using CoordsModule: Generic1DCoords
 using GridModule: Grid, LatLonGrid, for_all, for_all_fine_cells_in_coarse_cell, for_all_with_line_breaks
 using GridModule: for_section_with_line_breaks,find_coarse_cell_containing_fine_cell
-using FieldModule: Field, set!,elementwise_divide
+using FieldModule: Field, set!,elementwise_divide, elementwise_multiple
 import HDModule: water_to_lakes,water_from_lakes
 import HierarchicalStateMachineModule: handle_event
+import Base.show
 
 abstract type Lake <: State end
 
@@ -59,11 +60,34 @@ struct DistributeSpillover <: Event
   initial_spillover_to_rivers::Field{Float64}
 end
 
+struct CalculateEffectiveLakeVolumePerCell <: Event
+  consider_secondary_lake::Bool
+  cell_list::Vector{Coords}
+  function CalculateEffectiveLakeVolumePerCell(cell_list::Vector{Coords})
+    return new(true,cell_list)
+  end
+  function CalculateEffectiveLakeVolumePerCell()
+    return new(false,Vector{Coords}[])
+  end
+end
+
 struct CheckWaterBudget <: Event
   total_initial_water_volume::Float64
 end
 
 CheckWaterBudget() = CheckWaterBudget(0.0)
+
+struct SetLakeEvaporation <: Event
+  lake_evaporation::Field{Float64}
+end
+
+struct SetRealisticLakeEvaporation <: Event
+  height_of_water_evaporated::Field{Float64}
+end
+
+struct PrintSelectedLakes <: Event
+  lakes_to_print::Array{Int64,1}
+end
 
 abstract type GridSpecificLakeParameters end
 
@@ -77,9 +101,12 @@ struct LakeParameters
   additional_flood_local_redirect::Field{Bool}
   additional_connect_local_redirect::Field{Bool}
   merge_points::Field{MergeTypes}
+  cell_areas_on_surface_model_grid::Field{Float64}
   basin_numbers::Field{Int64}
   number_fine_grid_cells::Field{Int64}
   basins::Vector{Vector{Coords}}
+  surface_cell_to_fine_cell_maps::Vector{Vector{Coords}}
+  surface_cell_to_fine_cell_map_numbers::Field{Int64}
   grid::Grid
   hd_grid::Grid
   surface_model_grid::Grid
@@ -93,12 +120,15 @@ struct LakeParameters
                           additional_flood_local_redirect::Field{Bool},
                           additional_connect_local_redirect::Field{Bool},
                           merge_points::Field{MergeTypes},
+                          cell_areas_on_surface_model_grid::Field{Float64},
                           grid::Grid,
                           hd_grid::Grid,
                           surface_model_grid::Grid,
                           grid_specific_lake_parameters::GridSpecificLakeParameters)
     flood_only::Field{Bool} =  Field{Bool}(grid,false)
     number_fine_grid_cells = Field{Int64}(surface_model_grid,0)
+    surface_cell_to_fine_cell_maps::Vector{Vector{Coords}} = Vector{Vector{Coords}}[]
+    surface_cell_to_fine_cell_map_numbers = Field{Int64}(surface_model_grid,0)
     for_all(grid) do coords::Coords
       if connection_volume_thresholds(coords) == -1.0
         set!(flood_only,coords,true)
@@ -108,6 +138,21 @@ struct LakeParameters
       set!(number_fine_grid_cells,
            surface_model_coords,
            number_fine_grid_cells(surface_model_coords) + 1)
+      if flood_volume_thresholds(coords) != -1.0
+        local surface_cell_to_fine_cell_map::Vector{Coords}
+        surface_cell_to_fine_cell_map_number::Int64 =
+          surface_cell_to_fine_cell_map_numbers(surface_model_coords)
+        if  surface_cell_to_fine_cell_map_number == 0
+          surface_cell_to_fine_cell_map = Coords[coords]
+          push!(surface_cell_to_fine_cell_maps,surface_cell_to_fine_cell_map)
+          set!(surface_cell_to_fine_cell_map_numbers,surface_model_coords,
+               length(surface_cell_to_fine_cell_maps))
+        else
+          surface_cell_to_fine_cell_map =
+            surface_cell_to_fine_cell_maps[surface_cell_to_fine_cell_map_number]
+          push!(surface_cell_to_fine_cell_map,coords)
+        end
+      end
     end
     basins::Vector{Vector{Coords}} = Vector{Vector{Coords}}[]
     basin_numbers::Field{Int64} = Field{Int64}(hd_grid)
@@ -136,9 +181,12 @@ struct LakeParameters
                additional_flood_local_redirect,
                additional_connect_local_redirect,
                merge_points,
+               cell_areas_on_surface_model_grid,
                basin_numbers,
                number_fine_grid_cells,
-               basins,grid,hd_grid,
+               basins,surface_cell_to_fine_cell_maps,
+               surface_cell_to_fine_cell_map_numbers,
+               grid,hd_grid,
                surface_model_grid,
                grid_specific_lake_parameters,
                LakeModelParameters())
@@ -183,16 +231,24 @@ struct LakeFields
   flooded_lake_cells::Field{Bool}
   lake_numbers::Field{Int64}
   buried_lake_numbers::Field{Int64}
+  effective_volume_per_cell_on_surface_grid::Field{Float64}
+  effective_lake_height_on_surface_grid_to_lakes::Field{Float64}
   water_to_lakes::Field{Float64}
   water_to_hd::Field{Float64}
   lake_water_from_ocean::Field{Float64}
   number_lake_cells::Field{Int64}
   cells_with_lakes::Vector{Coords}
+  evaporation_from_lakes::Array{Float64,1}
+  evaporation_applied::BitArray{1}
   function LakeFields(lake_parameters::LakeParameters)
     connected_lake_cells = Field{Bool}(lake_parameters.grid,false)
     flooded_lake_cells = Field{Bool}(lake_parameters.grid,false)
     lake_numbers = Field{Int64}(lake_parameters.grid,0)
     buried_lake_numbers = Field{Int64}(lake_parameters.grid,0)
+    effective_volume_per_cell_on_surface_grid =
+      Field{Float64}(lake_parameters.surface_model_grid,0.0)
+    effective_lake_height_on_surface_grid_to_lakes =
+      Field{Float64}(lake_parameters.surface_model_grid,0.0)
     water_to_lakes = Field{Float64}(lake_parameters.hd_grid,0.0)
     water_to_hd = Field{Float64}(lake_parameters.hd_grid,0.0)
     lake_water_from_ocean = Field{Float64}(lake_parameters.hd_grid,0.0)
@@ -208,9 +264,12 @@ struct LakeFields
         push!(cells_with_lakes,coords)
       end
     end
-    new(connected_lake_cells,flooded_lake_cells,
-        lake_numbers,buried_lake_numbers,water_to_lakes,water_to_hd,
-        lake_water_from_ocean,number_lake_cells,cells_with_lakes)
+    evaporation_from_lakes::Array{Float64,1} = zeros(Float64,count(lake_parameters.lake_centers))
+    evaporation_applied = falses(count(lake_parameters.lake_centers))
+    new(connected_lake_cells,flooded_lake_cells,lake_numbers,buried_lake_numbers,
+        effective_volume_per_cell_on_surface_grid,effective_lake_height_on_surface_grid_to_lakes,
+        water_to_lakes,water_to_hd,lake_water_from_ocean,number_lake_cells,cells_with_lakes,
+        evaporation_from_lakes,evaporation_applied)
   end
 end
 
@@ -232,6 +291,13 @@ struct LakePrognostics
                                 lake_fields))
         set!(lake_fields.lake_numbers,coords,lake_number)
         lake_number += 1
+        if lake_parameters.flood_only(coords)
+          surface_model_coords::Coords =
+            get_corresponding_surface_model_grid_cell(coords,
+                                                      lake_parameters.grid_specific_lake_parameters)
+          set!(lake_fields.number_lake_cells,surface_model_coords,
+               lake_fields.number_lake_cells(surface_model_coords) + 1)
+        end
       end
     end
     return new(lakes)
@@ -249,12 +315,14 @@ mutable struct LakeVariables
   lake_number::Int64
   filled_lake_cells::Vector{Coords}
   center_cell_coarse_coords::Coords
+  number_of_flooded_cells::Int64
+  secondary_number_of_flooded_cells::Int64
   LakeVariables(center_cell::Coords,
                 other_lakes::Vector{Lake},
                 lake_number::Int64,
                 center_cell_coarse_coords::Coords) =
     new(center_cell,0.0,0.0,0.0,deepcopy(center_cell),deepcopy(center_cell),
-        other_lakes,lake_number,Vector{Coords}[],center_cell_coarse_coords)
+        other_lakes,lake_number,Vector{Coords}[],center_cell_coarse_coords,0,0)
 end
 
 get_lake_parameters(obj::T) where {T <: Lake} =
@@ -411,17 +479,59 @@ function handle_event(prognostic_fields::RiverAndLakePrognosticFields,run_lake::
   drain_excess_water::DrainExcessWater = DrainExcessWater()
   fill!(lake_fields.water_to_hd,0.0)
   fill!(lake_fields.lake_water_from_ocean,0.0)
+  fill!(lake_fields.evaporation_from_lakes,0.0)
   local basins_in_cell::Array{Coords,1}
+  new_effective_volume_per_cell_on_surface_grid::Field{Float64} =
+    elementwise_multiple(lake_fields.effective_lake_height_on_surface_grid_to_lakes,
+                         lake_parameters.cell_areas_on_surface_model_grid)
+  evaporation_on_surface_grid::Field{Float64} = lake_fields.effective_volume_per_cell_on_surface_grid -
+                                                new_effective_volume_per_cell_on_surface_grid
+  fill!(lake_fields.effective_volume_per_cell_on_surface_grid,0.0)
+  for_all(lake_parameters.surface_model_grid) do coords::Coords
+    number_lake_cells::Int64 = lake_fields.number_lake_cells(coords)
+    if evaporation_on_surface_grid(coords) > 0.0 && number_lake_cells > 0
+      map_index::Int64 = lake_parameters.surface_cell_to_fine_cell_map_numbers(coords)
+      evaporation_per_lake_cell::Float64 = evaporation_on_surface_grid(coords)/number_lake_cells
+      if map_index != 0
+        for fine_coords::Coords in lake_parameters.surface_cell_to_fine_cell_maps[map_index]
+          target_lake_index::Int64 = lake_fields.lake_numbers(fine_coords)
+          if target_lake_index != 0
+            lake::Lake = lake_prognostics.lakes[target_lake_index]
+            if lake_fields.flooded_lake_cells(fine_coords) ||
+               ((lake.lake_variables.current_cell_to_fill == fine_coords) &&
+                (lake_parameters.flood_only(fine_coords) ||
+                 lake_fields.connected_lake_cells(fine_coords)))
+              lake_fields.evaporation_from_lakes[target_lake_index] += evaporation_per_lake_cell
+            end
+          end
+        end
+      end
+    end
+  end
+  fill!(lake_fields.evaporation_applied,false)
   for coords::Coords in lake_fields.cells_with_lakes
     if lake_fields.water_to_lakes(coords) > 0.0
       basins_in_cell =
         lake_parameters.basins[lake_parameters.basin_numbers(coords)]
-      share_to_each_lake = lake_fields.water_to_lakes(coords)/length(basins_in_cell)
+      share_to_each_lake::Float64 = lake_fields.water_to_lakes(coords)/length(basins_in_cell)
       add_water::AddWater = AddWater(share_to_each_lake)
       for basin_center::Coords in basins_in_cell
         lake_index::Int64 = lake_fields.lake_numbers(basin_center)
         lake::Lake = lake_prognostics.lakes[lake_index]
-        lake_prognostics.lakes[lake_index] = handle_event(lake,add_water)
+        if ! lake_fields.evaporation_applied[lake_index]
+          inflow_minus_evaporation::Float64 = share_to_each_lake -
+                                              lake_fields.evaporation_from_lakes[lake_index]
+          if inflow_minus_evaporation >= 0.0
+            add_water_modified::AddWater = AddWater(inflow_minus_evaporation)
+            lake_prognostics.lakes[lake_index] = handle_event(lake,add_water_modified)
+          else
+            remove_water_modified::RemoveWater = RemoveWater(-1.0*inflow_minus_evaporation)
+            lake_prognostics.lakes[lake_index] = handle_event(lake,remove_water_modified)
+          end
+          lake_fields.evaporation_applied[lake_index] = true
+        else
+          lake_prognostics.lakes[lake_index] = handle_event(lake,add_water)
+        end
       end
     elseif lake_fields.water_to_lakes(coords) < 0.0
       basins_in_cell =
@@ -441,12 +551,35 @@ function handle_event(prognostic_fields::RiverAndLakePrognosticFields,run_lake::
     if lake_variables.unprocessed_water > 0.0
       lake_prognostics.lakes[lake_index] = handle_event(lake,AddWater(0.0))
     end
+  end
+  for lake::Lake in lake_prognostics.lakes
+    lake_variables::LakeVariables = get_lake_variables(lake)
+    lake_index::Int64 = lake_variables.lake_number
+    if ! lake_fields.evaporation_applied[lake_index]
+      evaporation::Float64 = lake_fields.evaporation_from_lakes[lake_index]
+      lake_prognostics.lakes[lake_index] = handle_event(lake,RemoveWater(evaporation))
+      lake_fields.evaporation_applied[lake_index] = true
+    end
+  end
+  for lake::Lake in lake_prognostics.lakes
+    lake_variables::LakeVariables = get_lake_variables(lake)
+    lake_index::Int64 = lake_variables.lake_number
     if lake_variables.lake_volume < 0.0
       lake_prognostics.lakes[lake_index] = handle_event(lake,ReleaseNegativeWater())
     end
+  end
+  for lake::Lake in lake_prognostics.lakes
+    lake_variables::LakeVariables = get_lake_variables(lake)
+    lake_index::Int64 = lake_variables.lake_number
     if isa(lake,OverflowingLake)
       handle_event(lake,drain_excess_water)
     end
+  end
+  for lake::Lake in lake_prognostics.lakes
+    lake_variables::LakeVariables = get_lake_variables(lake)
+    lake_index::Int64 = lake_variables.lake_number
+    lake_prognostics.lakes[lake_index] = handle_event(lake,
+                                                      CalculateEffectiveLakeVolumePerCell())
   end
   return prognostic_fields
 end
@@ -576,11 +709,7 @@ function handle_event(lake::OverflowingLake,remove_water::RemoveWater)
   lake.overflowing_lake_variables.excess_water = 0
   if lake_fields.flooded_lake_cells(lake_variables.current_cell_to_fill)
     set!(lake_fields.flooded_lake_cells,lake_variables.current_cell_to_fill,false)
-    surface_model_coords::Coords =
-      get_corresponding_surface_model_grid_cell(lake_variables.current_cell_to_fill,
-                                                lake_parameters.grid_specific_lake_parameters)
-    set!(lake_fields.number_lake_cells,surface_model_coords,
-         lake_fields.number_lake_cells(surface_model_coords) - 1)
+    lake_variables.number_of_flooded_cells -= 1
   else
     set!(lake_fields.connected_lake_cells,lake_variables.current_cell_to_fill,false)
   end
@@ -648,11 +777,7 @@ function handle_event(lake::Lake,accept_merge::AcceptMerge)
     set!(lake_fields.connected_lake_cells,lake_variables.current_cell_to_fill,true)
   elseif ! lake_fields.flooded_lake_cells(lake_variables.current_cell_to_fill)
     set!(lake_fields.flooded_lake_cells,lake_variables.current_cell_to_fill,true)
-    surface_model_coords::Coords =
-      get_corresponding_surface_model_grid_cell(lake_variables.current_cell_to_fill,
-                                                lake_parameters.grid_specific_lake_parameters)
-    set!(lake_fields.number_lake_cells,surface_model_coords,
-         lake_fields.number_lake_cells(surface_model_coords) + 1)
+    lake_variables.number_of_flooded_cells += 1
   end
   subsumed_lake::SubsumedLake = SubsumedLake(lake_parameters,
                                              lake_variables,
@@ -674,11 +799,7 @@ function handle_event(lake::SubsumedLake,accept_split::AcceptSplit)
   lake_fields::LakeFields = get_lake_fields(lake)
   if lake_fields.flooded_lake_cells(lake_variables.current_cell_to_fill)
       set!(lake_fields.flooded_lake_cells,lake_variables.current_cell_to_fill,false)
-      surface_model_coords::Coords =
-        get_corresponding_surface_model_grid_cell(lake_variables.current_cell_to_fill,
-                                                  lake_parameters.grid_specific_lake_parameters)
-      set!(lake_fields.number_lake_cells,surface_model_coords,
-           lake_fields.number_lake_cells(surface_model_coords) - 1)
+      lake_variables.number_of_flooded_cells -= 1
   else
     set!(lake_fields.connected_lake_cells,lake_variables.current_cell_to_fill,false)
   end
@@ -694,17 +815,6 @@ function change_to_overflowing_lake(lake::FillingLake,merge_type::SimpleMergeTyp
   lake_parameters::LakeParameters = get_lake_parameters(lake)
   lake_fields::LakeFields = get_lake_fields(lake)
   lake_variables::LakeVariables = get_lake_variables(lake)
-  if ! (lake_fields.connected_lake_cells(lake_variables.current_cell_to_fill) ||
-        lake_parameters.flood_only(lake_variables.current_cell_to_fill))
-    set!(lake_fields.connected_lake_cells,lake_variables.current_cell_to_fill,true)
-  elseif ! lake_fields.flooded_lake_cells(lake_variables.current_cell_to_fill)
-    set!(lake_fields.flooded_lake_cells,lake_variables.current_cell_to_fill,true)
-    surface_model_coords::Coords =
-      get_corresponding_surface_model_grid_cell(lake_variables.current_cell_to_fill,
-                                                  lake_parameters.grid_specific_lake_parameters)
-    set!(lake_fields.number_lake_cells,surface_model_coords,
-         lake_fields.number_lake_cells(surface_model_coords) + 1)
-  end
   outflow_redirect_coords,local_redirect =
     get_outflow_redirect_coords(lake)
   local next_merge_target_coords::Coords
@@ -712,6 +822,13 @@ function change_to_overflowing_lake(lake::FillingLake,merge_type::SimpleMergeTyp
     next_merge_target_coords = get_secondary_merge_coords(lake)
   else
     next_merge_target_coords = get_primary_merge_coords(lake)
+  end
+  if ! (lake_fields.connected_lake_cells(lake_variables.current_cell_to_fill) ||
+        lake_parameters.flood_only(lake_variables.current_cell_to_fill))
+    set!(lake_fields.connected_lake_cells,lake_variables.current_cell_to_fill,true)
+  elseif ! lake_fields.flooded_lake_cells(lake_variables.current_cell_to_fill)
+    set!(lake_fields.flooded_lake_cells,lake_variables.current_cell_to_fill,true)
+    lake_variables.number_of_flooded_cells += 1
   end
   return OverflowingLake(lake.lake_parameters,
                          lake_variables,
@@ -739,6 +856,45 @@ function handle_event(lake::OverflowingLake,drain_excess_water::DrainExcessWater
          lake_fields.water_to_hd(lake.outflow_redirect_coords)+flow)
     lake.overflowing_lake_variables.excess_water -= flow
   end
+  return lake
+end
+
+function handle_event(lake::Union{OverflowingLake,FillingLake},
+    calculate_effective_lake_volume_per_cell::CalculateEffectiveLakeVolumePerCell)
+  lake_parameters::LakeParameters = get_lake_parameters(lake)
+  lake_fields::LakeFields = get_lake_fields(lake)
+  lake_variables::LakeVariables = get_lake_variables(lake)
+  effective_volume_per_cell::Float64 =
+    (lake_variables.lake_volume + lake_variables.secondary_lake_volume) /
+    (lake_variables.number_of_flooded_cells+lake_variables.secondary_number_of_flooded_cells +
+     (isa(lake,FillingLake) ? 1 : 0))
+  working_cell_list::Vector{Coords} =
+    calculate_effective_lake_volume_per_cell.consider_secondary_lake ?
+    calculate_effective_lake_volume_per_cell.cell_list :
+    lake_variables.filled_lake_cells
+  surface_model_coords::Coords =
+    get_corresponding_surface_model_grid_cell(lake_variables.current_cell_to_fill,
+                                              lake_parameters.grid_specific_lake_parameters)
+  set!(lake_fields.effective_volume_per_cell_on_surface_grid,surface_model_coords,
+       lake_fields.effective_volume_per_cell_on_surface_grid(surface_model_coords)+
+       effective_volume_per_cell)
+  for coords::Coords in working_cell_list
+    surface_model_coords = get_corresponding_surface_model_grid_cell(coords,
+                              lake_parameters.grid_specific_lake_parameters)
+    set!(lake_fields.effective_volume_per_cell_on_surface_grid,surface_model_coords,
+         lake_fields.effective_volume_per_cell_on_surface_grid(surface_model_coords)+
+         effective_volume_per_cell)
+  end
+
+  return lake
+end
+
+function handle_event(lake::SubsumedLake,
+    calculate_effective_lake_volume_per_cell::CalculateEffectiveLakeVolumePerCell)
+  lake_variables::LakeVariables = get_lake_variables(lake)
+  lake_variables.other_lakes[lake.primary_lake_number] =
+    handle_event(lake_variables.other_lakes[lake.primary_lake_number],
+                 CalculateEffectiveLakeVolumePerCell(lake_variables.filled_lake_cells))
   return lake
 end
 
@@ -858,6 +1014,8 @@ function perform_primary_merge(lake::FillingLake)
   other_lake = find_true_primary_lake(other_lake)
   lake_variables.secondary_lake_volume += (other_lake.lake_variables.lake_volume +
     other_lake.lake_variables.secondary_lake_volume)
+  lake_variables.secondary_number_of_flooded_cells += (other_lake.lake_variables.number_of_flooded_cells +
+    other_lake.lake_variables.secondary_number_of_flooded_cells)
   other_lake_number = other_lake.lake_variables.lake_number
   lake.filling_lake_variables.primary_merge_completed = true
   accept_merge::AcceptMerge = AcceptMerge(lake_variables.center_cell)
@@ -878,17 +1036,16 @@ function perform_secondary_merge(lake::FillingLake)
   elseif ! (lake_fields.flooded_lake_cells(lake_variables.current_cell_to_fill))
     set!(lake_fields.flooded_lake_cells,
          lake_variables.current_cell_to_fill,true)
-    surface_model_coords =
-      get_corresponding_surface_model_grid_cell(lake_variables.current_cell_to_fill,
-                                                lake_parameters.grid_specific_lake_parameters)
-    set!(lake_fields.number_lake_cells,surface_model_coords,
-         lake_fields.number_lake_cells(surface_model_coords) + 1)
+    lake_variables.number_of_flooded_cells += 1
   end
   other_lake_number::Integer = lake_fields.lake_numbers(target_cell)
   other_lake::Lake = lake_variables.other_lakes[other_lake_number]
   other_lake = find_true_primary_lake(other_lake)
   other_lake.lake_variables.secondary_lake_volume += (lake_variables.lake_volume +
     lake_variables.secondary_lake_volume)
+  other_lake.lake_variables.secondary_number_of_flooded_cells +=
+    (lake_variables.number_of_flooded_cells +
+     lake_variables.secondary_number_of_flooded_cells)
   other_lake_number = other_lake.lake_variables.lake_number
   other_lake_current_cell_to_fill::Coords = other_lake.lake_variables.current_cell_to_fill
   if ! (lake_fields.flooded_lake_cells(other_lake_current_cell_to_fill) ||
@@ -896,11 +1053,7 @@ function perform_secondary_merge(lake::FillingLake)
     set!(lake_fields.connected_lake_cells,other_lake_current_cell_to_fill,false)
   else
     set!(lake_fields.flooded_lake_cells,other_lake_current_cell_to_fill,false)
-    surface_model_coords =
-      get_corresponding_surface_model_grid_cell(other_lake_current_cell_to_fill,
-                                                lake_parameters.grid_specific_lake_parameters)
-    set!(lake_fields.number_lake_cells,surface_model_coords,
-         lake_fields.number_lake_cells(surface_model_coords) - 1)
+    other_lake.lake_variables.number_of_flooded_cells -= 1
   end
   other_lake_as_filling_lake::FillingLake = change_to_filling_lake(other_lake)
   lake_variables.other_lakes[other_lake_number] = other_lake_as_filling_lake
@@ -919,6 +1072,9 @@ function rollback_primary_merge(lake::FillingLake,other_lake_outflow::Float64)
   lake_variables.secondary_lake_volume -=
     (other_lake.lake_variables.lake_volume +
      other_lake.lake_variables.secondary_lake_volume)
+  lake_variables.secondary_number_of_flooded_cells -=
+    (other_lake.lake_variables.number_of_flooded_cells +
+     other_lake.lake_variables.secondary_number_of_flooded_cells)
   other_lake_number = other_lake.lake_variables.lake_number
   accept_split::AcceptSplit = AcceptSplit()
   lake_variables.other_lakes[other_lake_number] =
@@ -972,11 +1128,16 @@ function update_filling_cell(lake::FillingLake)
     set!(lake_fields.connected_lake_cells,coords,true)
   elseif ! lake_fields.flooded_lake_cells(coords)
     set!(lake_fields.flooded_lake_cells,coords,true)
-    surface_model_coords::Coords =
-      get_corresponding_surface_model_grid_cell(coords,
+    lake_variables.number_of_flooded_cells += 1
+  end
+  if (lake_fields.connected_lake_cells(new_coords) ||
+      lake_parameters.flood_only(new_coords)) &&
+     ! lake_fields.flooded_lake_cells(new_coords)
+    surface_model_new_coords::Coords =
+      get_corresponding_surface_model_grid_cell(new_coords,
                                                 lake_parameters.grid_specific_lake_parameters)
-    set!(lake_fields.number_lake_cells,surface_model_coords,
-         lake_fields.number_lake_cells(surface_model_coords) + 1)
+    set!(lake_fields.number_lake_cells,surface_model_new_coords,
+         lake_fields.number_lake_cells(surface_model_new_coords) + 1)
   end
   push!(lake_variables.filled_lake_cells,coords)
   lake_variables.previous_cell_to_fill = coords
@@ -1002,8 +1163,12 @@ function rollback_filling_cell(lake::FillingLake)
     set!(lake_fields.connected_lake_cells,new_coords,false)
   else
     set!(lake_fields.flooded_lake_cells,new_coords,false)
+    lake_variables.number_of_flooded_cells -= 1
+  end
+  if lake_fields.connected_lake_cells(coords) ||
+     lake_parameters.flood_only(coords)
     surface_model_coords::Coords =
-      get_corresponding_surface_model_grid_cell(new_coords,
+      get_corresponding_surface_model_grid_cell(coords,
                                                 lake_parameters.grid_specific_lake_parameters)
     set!(lake_fields.number_lake_cells,surface_model_coords,
          lake_fields.number_lake_cells(surface_model_coords) - 1)
@@ -1234,10 +1399,25 @@ function get_corresponding_surface_model_grid_cell(coords::Generic1DCoords,
   return Generic1DCoords(grid_specific_lake_parameters.corresponding_surface_cell_index(coords))
 end
 
+function set_effective_lake_height_on_surface_grid_to_lakes(lake_parameters::LakeParameters,
+                                                            lake_fields::LakeFields,
+                                                            effective_lake_height_on_surface_grid::Field{Float64})
+  for_all(lake_parameters.surface_model_grid) do coords::Coords
+    set!(lake_fields.effective_lake_height_on_surface_grid_to_lakes,coords,
+         effective_lake_height_on_surface_grid(coords))
+  end
+end
+
 function calculate_lake_fraction_on_surface_grid(lake_parameters::LakeParameters,
                                                  lake_fields::LakeFields)
   return elementwise_divide(lake_fields.number_lake_cells,
-                            lake_parameters.number_fine_grid_cells)
+                            lake_parameters.number_fine_grid_cells)::Field{Float64}
+end
+
+function calculate_effective_lake_height_on_surface_grid(lake_parameters::LakeParameters,
+                                                         lake_fields::LakeFields)
+  return elementwise_divide(lake_fields.effective_volume_per_cell_on_surface_grid,
+                            lake_parameters.cell_areas_on_surface_model_grid)::Field{Float64}
 end
 
 function handle_event(prognostic_fields::RiverAndLakePrognosticFields,
@@ -1255,7 +1435,26 @@ function handle_event(prognostic_fields::RiverAndLakePrognosticFields,
             "Lake Volume: $(lake.lake_variables.lake_volume)")
   end
   println("")
+  println("Diagnostic Lake Volumes:")
   print_lake_types(lake_parameters.grid,lake_prognostics,lake_fields)
+  println("")
+  diagnostic_lake_volumes::Field{Float64} = calculate_diagnostic_lake_volumes_field(lake_parameters,
+                                                                                    lake_fields,
+                                                                                    lake_prognostics)
+  println(diagnostic_lake_volumes)
+  return prognostic_fields
+end
+
+function handle_event(prognostic_fields::RiverAndLakePrognosticFields,
+                      print_selected_lakes::PrintSelectedLakes)
+  lake_prognostics::LakePrognostics = get_lake_prognostics(prognostic_fields)
+  for lake_number in print_selected_lakes.lakes_to_print
+
+    if length(lake_prognostics.lakes) >= lake_number
+      lake::Lake = lake_prognostics.lakes[lake_number]
+      println(lake)
+    end
+  end
   return prognostic_fields
 end
 
@@ -1367,6 +1566,46 @@ function calculate_diagnostic_lake_volumes_field(lake_parameters::LakeParameters
   return diagnostic_lake_volumes
 end
 
+function handle_event(prognostic_fields::RiverAndLakePrognosticFields,
+                      set_lake_evaporation::SetLakeEvaporation)
+  lake_parameters::LakeParameters = get_lake_parameters(prognostic_fields)
+  lake_fields::LakeFields = get_lake_fields(prognostic_fields)
+  old_effective_lake_height_on_surface_grid::Field{Float64} =
+    calculate_effective_lake_height_on_surface_grid(lake_parameters,lake_fields)
+  effective_lake_height_on_surface_grid::Field{Float64} =
+    old_effective_lake_height_on_surface_grid -
+    elementwise_divide(set_lake_evaporation.lake_evaporation,
+                       lake_parameters.cell_areas_on_surface_model_grid)
+  set_effective_lake_height_on_surface_grid_to_lakes(lake_parameters,lake_fields,
+                                                     effective_lake_height_on_surface_grid)
+  return prognostic_fields
+end
+
+function handle_event(prognostic_fields::RiverAndLakePrognosticFields,
+                      set_lake_evaporation::SetRealisticLakeEvaporation)
+  lake_parameters::LakeParameters = get_lake_parameters(prognostic_fields)
+  lake_fields::LakeFields = get_lake_fields(prognostic_fields)
+  old_effective_lake_height_on_surface_grid::Field{Float64} =
+    calculate_effective_lake_height_on_surface_grid(lake_parameters,lake_fields)
+  effective_lake_height_on_surface_grid::Field{Float64} = old_effective_lake_height_on_surface_grid
+  for_all(lake_parameters.surface_model_grid) do coords::Coords
+    if old_effective_lake_height_on_surface_grid(coords) > 0.0
+      working_effective_lake_height_on_surface_grid::Float64 =
+        old_effective_lake_height_on_surface_grid(coords) -
+        set_lake_evaporation.height_of_water_evaporated(coords)
+      if working_effective_lake_height_on_surface_grid > 0.0
+        set!(effective_lake_height_on_surface_grid,coords,
+             working_effective_lake_height_on_surface_grid)
+      else
+        set!(effective_lake_height_on_surface_grid,coords,0.0)
+      end
+    end
+  end
+  set_effective_lake_height_on_surface_grid_to_lakes(lake_parameters,lake_fields,
+                                                     effective_lake_height_on_surface_grid)
+  return prognostic_fields
+end
+
 function write_lake_volumes_field(lake_parameters::LakeParameters,lake_volumes::Field{Float64})
   throw(UserError())
 end
@@ -1397,22 +1636,49 @@ function handle_event(prognostic_fields::RiverAndLakePrognosticFields,
   total_water_to_lakes::Float64 = sum(lake_fields.water_to_lakes)
   total_inflow_minus_outflow::Float64 = total_water_to_lakes +
                                         sum(lake_fields.lake_water_from_ocean) -
-                                        sum(lake_fields.water_to_hd)
+                                        sum(lake_fields.water_to_hd) -
+                                        sum(lake_fields.evaporation_from_lakes)
   difference::Float64 = change_in_total_lake_volume - total_inflow_minus_outflow
-  tolerance::Float64 = 10e-16*max(new_total_lake_volume, total_water_to_lakes)
+  tolerance::Float64 = 10e-15*max(new_total_lake_volume, total_water_to_lakes)
   if ! isapprox(difference,0,atol=tolerance)
     println("*** Lake Water Budget ***")
     println("Total lake volume: $(new_total_lake_volume)")
     println("Total inflow - outflow: $(total_inflow_minus_outflow)")
     println("Change in lake volume: $(change_in_total_lake_volume)")
     println("Difference: $(difference)")
-    println(total_water_to_lakes)
-    println(sum(lake_fields.lake_water_from_ocean))
-    println(sum(lake_fields.water_to_hd))
-    println(lake_diagnostic_variables.total_lake_volume)
+    println("Total water to lakes: $total_water_to_lakes")
+    println("Total water from ocean: "*string(sum(lake_fields.lake_water_from_ocean)))
+    println("Total water to HD model from lakes: "*string(sum(lake_fields.water_to_hd)))
+    println("Old total lake volume: "*string(lake_diagnostic_variables.total_lake_volume))
   end
   lake_diagnostic_variables.total_lake_volume = new_total_lake_volume
   return prognostic_fields
+end
+
+function show(io::IO,lake::Lake)
+  lake_variables::LakeVariables = get_lake_variables(lake)
+  println(io,"-----------------------------------------------")
+  println(io,"Center cell: "*string(lake_variables.center_cell))
+  println(io,"Lake volume: "*string(lake_variables.lake_volume))
+  println(io,"Secondary lake volume: "*string(lake_variables.secondary_lake_volume))
+  println(io,"Unprocessed water: "*string(lake_variables.unprocessed_water))
+  println(io,"Current cell to fill: "*string(lake_variables.current_cell_to_fill))
+  println(io,"Previous cell to fill: "*string(lake_variables.previous_cell_to_fill))
+  println(io,"Lake number: "*string(lake_variables.lake_number))
+  println(io,"Center cell coarse coords: "*string(lake_variables.center_cell_coarse_coords))
+  println(io,"Number of flooded cells: "*string(lake_variables.number_of_flooded_cells))
+  println(io,"Secondary number of flooded cells: "*string(lake_variables.secondary_number_of_flooded_cells))
+  if isa(lake,OverflowingLake)
+    println(io,"O")
+    println(io,"Excess water: "*string(lake.overflowing_lake_variables.excess_water))
+  elseif isa(lake,FillingLake)
+    println(io,"F")
+    println(io,"Primary merge complete: "*string(lake.filling_lake_variables.primary_merge_completed))
+    println(io,"Use additonal fields: "*string(lake.filling_lake_variables.use_additional_fields))
+  elseif isa(lake,SubsumedLake)
+    println(io,"S")
+    println(io,"Primary lake number: "*string(lake.primary_lake_number))
+  end
 end
 
 end
