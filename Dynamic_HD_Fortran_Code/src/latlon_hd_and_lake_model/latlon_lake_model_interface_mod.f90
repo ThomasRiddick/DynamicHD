@@ -178,4 +178,39 @@ function get_lake_fields() result(value)
     value => global_lake_fields
 end function get_lake_fields
 
+function get_surface_model_nlat() result(nlat)
+  integer :: nlat
+    nlat = global_lake_parameters%nlat_surface_model
+end function get_surface_model_nlat
+
+function get_surface_model_nlon() result(nlon)
+  integer :: nlon
+    nlon = global_lake_parameters%nlon_surface_model
+end function get_surface_model_nlon
+
+function get_lake_volumes() result(lake_volumes)
+  real(dp), pointer, dimension(:) :: lake_volumes
+    lake_volumes => get_lake_volume_list(global_lake_prognostics)
+end function get_lake_volumes
+
+function get_lake_fractions() result(lake_fractions)
+  real(dp), pointer, dimension(:,:) :: lake_fractions
+    lake_fractions => get_lake_fraction_on_surface_grid(global_lake_parameters, &
+                                                        global_lake_fields)
+end function get_lake_fractions
+
+subroutine set_lake_evaporation_for_testing_interface(lake_evaporation)
+  real(dp), allocatable, dimension(:,:), intent(in) :: lake_evaporation
+    call set_lake_evaporation_for_testing(global_lake_parameters, &
+                                          global_lake_fields, &
+                                          lake_evaporation)
+end subroutine set_lake_evaporation_for_testing_interface
+
+subroutine set_lake_evaporation_interface(height_of_water_evaporated)
+  real(dp), allocatable, dimension(:,:), intent(in) :: height_of_water_evaporated
+    call set_lake_evaporation(global_lake_parameters, &
+                              global_lake_fields, &
+                              height_of_water_evaporated)
+end subroutine set_lake_evaporation_interface
+
 end module latlon_lake_model_interface_mod

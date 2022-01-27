@@ -1440,6 +1440,39 @@ contains
         call teardown
 
         call setup
+        if (verbose) write (*,('(/A)')) "..running test: testLakeModel15"
+        call set_unit_name('Lake model with Evaporation')
+        call run_test_case(testLakeModel15,'Lake model with evaporation')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","Lake Model test 15")
+        else
+            call case_passed_xml("test_something","Lake Model test 15")
+        end if
+        call teardown
+
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testLakeModel16"
+        call set_unit_name('Lake model with Evaporation')
+        call run_test_case(testLakeModel16,'Lake model with evaporation')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","Lake Model test 16")
+        else
+            call case_passed_xml("test_something","Lake Model test 16")
+        end if
+        call teardown
+
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testLakeModel17"
+        call set_unit_name('Lake model with Evaporation')
+        call run_test_case(testLakeModel17,'Lake model with evaporation')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","Lake Model test 17")
+        else
+            call case_passed_xml("test_something","Lake Model test 17")
+        end if
+        call teardown
+
+        call setup
         if (verbose) write (*,('(/A)')) "..running test: testLakeNumberRetrieval"
         call set_unit_name('Retreive lake numbers')
         call run_test_case(testLakeNumberRetrieval,'Retrieve lake numbers from lake parameters')

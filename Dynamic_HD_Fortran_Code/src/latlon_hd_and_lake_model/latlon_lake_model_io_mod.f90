@@ -73,6 +73,7 @@ function read_lake_parameters(instant_throughflow)&
   logical, pointer, dimension(:,:) :: additional_connect_local_redirect
   integer, pointer, dimension(:,:) :: additional_connect_local_redirect_int
   integer, pointer, dimension(:,:) :: merge_points
+  real(dp), pointer, dimension(:,:) :: cell_areas_on_surface_model_grid
   integer, pointer, dimension(:,:) :: flood_next_cell_lat_index
   integer, pointer, dimension(:,:) :: flood_next_cell_lon_index
   integer, pointer, dimension(:,:) :: connect_next_cell_lat_index
@@ -93,6 +94,7 @@ function read_lake_parameters(instant_throughflow)&
   integer, pointer, dimension(:,:) :: corresponding_surface_cell_lon_index
   integer, allocatable, dimension(:,:) :: temp_integer_array
   real(dp),    allocatable, dimension(:,:) :: temp_real_array
+  real(dp),    allocatable, dimension(:,:) :: temp_real_array_surface
   integer :: nlat,nlon
   integer :: nlat_coarse,nlon_coarse
   integer :: nlat_surface_model,nlon_surface_model
@@ -114,6 +116,7 @@ function read_lake_parameters(instant_throughflow)&
     call check_return_code(nf90_inquire_dimension(ncid,dimid,len=nlon))
 
     allocate(temp_real_array(nlon,nlat))
+    allocate(temp_real_array_surface(nlat_surface_model,nlon_surface_model))
     allocate(temp_integer_array(nlon,nlat))
 
     call check_return_code(nf90_inq_varid(ncid,'lake_centers',varid))
@@ -264,6 +267,11 @@ function read_lake_parameters(instant_throughflow)&
     allocate(merge_points(nlat,nlon))
     merge_points  = transpose(temp_integer_array)
 
+    call check_return_code(nf90_inq_varid(ncid,'cell_areas_on_surface_model_grid',varid))
+    call check_return_code(nf90_get_var(ncid, varid,temp_real_array_surface))
+    allocate(cell_areas_on_surface_model_grid(nlat_surface_model,nlon_surface_model))
+    cell_areas_on_surface_model_grid  = transpose(temp_real_array_surface)
+
     call check_return_code(nf90_close(ncid))
 
     allocate(lake_centers(nlat,nlon))
@@ -313,6 +321,7 @@ function read_lake_parameters(instant_throughflow)&
                                       additional_flood_local_redirect, &
                                       additional_connect_local_redirect, &
                                       merge_points, &
+                                      cell_areas_on_surface_model_grid, &
                                       flood_next_cell_lat_index, &
                                       flood_next_cell_lon_index, &
                                       connect_next_cell_lat_index, &
@@ -338,6 +347,7 @@ function read_lake_parameters(instant_throughflow)&
                                       lake_retention_coefficient)
     deallocate(temp_integer_array)
     deallocate(temp_real_array)
+    deallocate(temp_real_array_surface)
 end function read_lake_parameters
 
 subroutine load_lake_initial_values(initial_water_to_lake_centers,&

@@ -133,6 +133,7 @@ subroutine testLakeModel1
    logical,dimension(:,:), pointer :: additional_flood_local_redirect
    logical,dimension(:,:), pointer :: additional_connect_local_redirect
    integer,dimension(:,:), pointer :: merge_points
+   real(dp),dimension(:,:),pointer :: cell_areas_on_surface_model_grid
    integer,dimension(:,:), pointer :: flood_next_cell_lat_index
    integer,dimension(:,:), pointer :: flood_next_cell_lon_index
    integer,dimension(:,:), pointer :: connect_next_cell_lat_index
@@ -280,6 +281,12 @@ subroutine testLakeModel1
       no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,&
         no_merge_mtype,no_merge_mtype,no_merge_mtype /), &
          (/nlon,nlat/)))
+      allocate(cell_areas_on_surface_model_grid(nlat_surface_model,nlon_surface_model))
+      cell_areas_on_surface_model_grid = transpose(reshape((/ &
+          2.5,3.0,2.5, &
+          3.0,4.0,3.0, &
+          2.5,3.0,2.5 /), &
+      (/nlon_surface_model,nlat_surface_model/)))
       allocate(flood_next_cell_lat_index(nlat,nlon))
       flood_next_cell_lat_index = transpose(reshape((/ &
           0, 0, 0, 1, 0, 0, 0, 0, 0, &
@@ -466,6 +473,7 @@ subroutine testLakeModel1
                                         additional_flood_local_redirect, &
                                         additional_connect_local_redirect, &
                                         merge_points, &
+                                        cell_areas_on_surface_model_grid, &
                                         flood_next_cell_lat_index, &
                                         flood_next_cell_lon_index, &
                                         connect_next_cell_lat_index, &
@@ -623,7 +631,7 @@ subroutine testLakeModel1
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
                                                                 lake_fields_out)
       call assert_equals(expected_river_inflow,river_fields%river_inflow,3,3,0.0000000001_dp)
       call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,3,3,0.0000000001_dp)
@@ -652,6 +660,8 @@ subroutine testLakeModel1
       deallocate(expected_lake_volumes)
       deallocate(expected_diagnostic_lake_volumes)
       deallocate(expected_lake_fractions)
+      deallocate(expected_number_lake_cells)
+      deallocate(expected_number_fine_grid_cells)
       deallocate(lake_types)
       call clean_lake_model()
       call clean_hd_model()
@@ -683,6 +693,7 @@ subroutine testLakeModel2
   logical,dimension(:,:), pointer :: additional_flood_local_redirect
   logical,dimension(:,:), pointer :: additional_connect_local_redirect
   integer,dimension(:,:), pointer :: merge_points
+  real(dp),dimension(:,:),pointer :: cell_areas_on_surface_model_grid
   integer,dimension(:,:), pointer :: flood_next_cell_lat_index
   integer,dimension(:,:), pointer :: flood_next_cell_lon_index
   integer,dimension(:,:), pointer :: connect_next_cell_lat_index
@@ -1071,6 +1082,12 @@ subroutine testLakeModel2
        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype /), &
        (/nlon,nlat/)))
+    allocate(cell_areas_on_surface_model_grid(nlat_surface_model,nlon_surface_model))
+      cell_areas_on_surface_model_grid = transpose(reshape((/ &
+          2.5,3.0,2.5, &
+          3.0,2.0,3.0, &
+          2.5,3.0,2.5 /), &
+      (/nlon_surface_model,nlat_surface_model/)))
     allocate(flood_next_cell_lat_index(nlat,nlon))
     flood_next_cell_lat_index = transpose(reshape((/ &
         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
@@ -1423,6 +1440,7 @@ subroutine testLakeModel2
                                       additional_flood_local_redirect, &
                                       additional_connect_local_redirect, &
                                       merge_points, &
+                                      cell_areas_on_surface_model_grid, &
                                       flood_next_cell_lat_index, &
                                       flood_next_cell_lon_index, &
                                       connect_next_cell_lat_index, &
@@ -1638,7 +1656,7 @@ subroutine testLakeModel2
     diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-    lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+    lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
                                                                 lake_fields_out)
     call assert_equals(expected_river_inflow,river_fields%river_inflow,&
                        nlat_coarse,nlon_coarse,0.0000000001_dp)
@@ -1668,6 +1686,8 @@ subroutine testLakeModel2
     deallocate(expected_lake_volumes)
     deallocate(expected_diagnostic_lake_volumes)
     deallocate(expected_lake_fractions)
+    deallocate(expected_number_lake_cells)
+    deallocate(expected_number_fine_grid_cells)
     deallocate(lake_types)
     call clean_lake_model()
     call clean_hd_model()
@@ -1699,6 +1719,7 @@ subroutine testLakeModel3
   logical,dimension(:,:), pointer :: additional_flood_local_redirect
   logical,dimension(:,:), pointer :: additional_connect_local_redirect
   integer,dimension(:,:), pointer :: merge_points
+  real(dp),dimension(:,:),pointer :: cell_areas_on_surface_model_grid
   integer,dimension(:,:), pointer :: flood_next_cell_lat_index
   integer,dimension(:,:), pointer :: flood_next_cell_lon_index
   integer,dimension(:,:), pointer :: connect_next_cell_lat_index
@@ -2100,6 +2121,12 @@ subroutine testLakeModel3
          no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
          no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype /), &
          (/nlon,nlat/)))
+      allocate(cell_areas_on_surface_model_grid(nlat_surface_model,nlon_surface_model))
+      cell_areas_on_surface_model_grid = transpose(reshape((/ &
+          2.5,3.0,2.5, &
+          3.0,4.0,3.0, &
+          2.5,3.0,2.5 /), &
+      (/nlon_surface_model,nlat_surface_model/)))
       allocate(flood_next_cell_lat_index(nlat,nlon))
       flood_next_cell_lat_index = transpose(reshape((/ &
           -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
@@ -2400,49 +2427,49 @@ subroutine testLakeModel3
       lake_retention_coefficient_local=0.1_dp
       allocate(corresponding_surface_cell_lat_index(nlat,nlon))
       corresponding_surface_cell_lat_index = transpose(reshape((/ &
-                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
-                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
-                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
-                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
-                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
-                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
-                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
-                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
-                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
-                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
-                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3 /), &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,2,1,1,1,1,1,1,1,1,1,1,2,2,2,2,1,1,1,1, &
+                                                             1,1,1,1,1,2,2,1,1,1,1,2,2,2,2,2,1,1,1,1, &
+                                                             1,1,1,1,1,3,3,3,3,1,1,1,1,2,2,2,2,1,1,1, &
+                                                             1,1,1,2,3,3,1,3,3,2,2,1,2,1,2,2,2,2,1,1, &
+                                                             1,1,1,1,3,3,3,3,3,1,2,1,1,2,2,2,2,2,1,1, &
+                                                             1,1,1,1,1,3,1,3,1,1,1,2,1,2,2,2,2,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,2,2,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,3,3,3,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,3,3,1,1, &
+                                                             1,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,3 /), &
          (/nlon,nlat/)))
       allocate(corresponding_surface_cell_lon_index(nlat,nlon))
       corresponding_surface_cell_lon_index = transpose(reshape((/ &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3 /), &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,1, &
+                                                             1,2,1,3,3,3,3,3,3,3,3,3,2,2,2,2,3,3,3,1, &
+                                                             3,1,1,3,3,2,2,3,3,3,3,2,2,2,2,2,3,3,3,3, &
+                                                             3,1,1,3,3,1,1,1,1,3,3,3,2,2,2,2,2,3,3,3, &
+                                                             3,1,1,2,1,1,3,1,1,2,2,2,2,2,2,2,2,2,3,3, &
+                                                             1,1,1,3,1,1,1,1,1,3,2,2,2,2,2,2,2,2,3,3, &
+                                                             3,1,1,3,3,1,3,1,3,3,3,2,2,2,2,2,2,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,2,2,2,2,2,2,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,2,2,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,2,2,2,2,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,2,2,2,3,3, &
+                                                             3,3,3,1,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3 /), &
          (/nlon,nlat/)))
       lake_parameters => LakeParameters(lake_centers, &
                                         connection_volume_thresholds, &
@@ -2452,6 +2479,7 @@ subroutine testLakeModel3
                                         additional_flood_local_redirect, &
                                         additional_connect_local_redirect, &
                                         merge_points, &
+                                        cell_areas_on_surface_model_grid, &
                                         flood_next_cell_lat_index, &
                                         flood_next_cell_lon_index, &
                                         connect_next_cell_lat_index, &
@@ -2495,16 +2523,16 @@ subroutine testLakeModel3
         drainages(:,:,i) = drainage(:,:)/step_length
         runoffs(:,:,i) = runoff(:,:)/step_length
       end do
-      allocate(evaporation(4,4))
+      allocate(evaporation(3,3))
       evaporation(:,:) = 0.0
-      allocate(evaporations(4,4,5000))
+      allocate(evaporations(3,3,5000))
       do i = 1,5000
-        evaporations(:,:,i) = evaporation(:,:)/step_length
+        evaporations(:,:,i) = evaporation(:,:)
       end do
       evaporation(:,:) = 100.0
-      allocate(evaporations_set_two(4,4,5000))
+      allocate(evaporations_set_two(3,3,5000))
       do i = 1,5000
-        evaporations_set_two(:,:,i) = evaporation(:,:)/step_length
+        evaporations_set_two(:,:,i) = evaporation(:,:)
       end do
       allocate(initial_spillover_to_rivers(4,4))
       initial_spillover_to_rivers(:,:) = 0.0
@@ -2521,7 +2549,7 @@ subroutine testLakeModel3
       allocate(expected_water_to_ocean(4,4))
       expected_water_to_ocean = transpose(reshape((/ &
           -96.0,   0.0,   0.0,   0.0, &
-         0.0, -96.0, -96.0,   0.0, &
+         0.0, -96.0, -196.0,   0.0, &
          0.0,   0.0,   0.0, -94.0, &
          -98.0,   4.0,   0.0,   4.0 /), &
          (/4,4/)))
@@ -2586,21 +2614,21 @@ subroutine testLakeModel3
       expected_diagnostic_lake_volumes(:,:) = 0.0
       allocate(expected_lake_fractions(3,3))
       expected_lake_fractions = transpose(reshape((/ &
-                 0.0,0.0,0.0, &
-                 0.0,0.0,0.0, &
-                 0.0,0.0,0.0 /), &
+                 0.06666666,0.16666667,0.0, &
+                 1.0,0.02325581395,0.0, &
+                 0.06666666,0.1428571429,0.0 /), &
           (/3,3/)))
       allocate(expected_number_lake_cells(3,3))
       expected_number_lake_cells = transpose(reshape((/ &
-               0,0,0, &
-               0,0,0, &
-               0,0,0 /), &
+               1,1,0, &
+               1,1,0, &
+               1,1,0 /), &
           (/3,3/)))
       allocate(expected_number_fine_grid_cells(3,3))
       expected_number_fine_grid_cells = transpose(reshape((/ &
-               42,36,42, &
-               56,48,56, &
-               42,36,42 /), &
+               15, 6, 311, &
+                1,43, 1, &
+               15, 7, 1 /), &
           (/3,3/)))
       allocate(expected_intermediate_river_inflow(4,4))
       expected_intermediate_river_inflow = transpose(reshape((/ &
@@ -2720,21 +2748,21 @@ subroutine testLakeModel3
        (/nlon,nlat/)))
       allocate(expected_intermediate_lake_fractions(3,3))
       expected_intermediate_lake_fractions = transpose(reshape((/ &
-                 0.380952,0.305556,0.404762, &
-                 0.160714,0.229167,0.321429, &
-                 0.0238095,0.0,0.0714286 /), &
+                 1.0,1.0,0.0, &
+                 1.0,0.976744186,0.0, &
+                 1.0,1.0,0.0 /), &
        (/3,3/)))
       allocate(expected_intermediate_number_lake_cells(3,3))
       expected_intermediate_number_lake_cells = transpose(reshape((/ &
-               16,11,17, &
-                9,11,18, &
-                1,0,3 /), &
+               15,6, 0, &
+                1,42,0, &
+               15,7, 0 /), &
        (/3,3/)))
       allocate(expected_intermediate_number_fine_grid_cells(3,3))
       expected_intermediate_number_fine_grid_cells = transpose(reshape((/ &
-               42,36,42, &
-               56,48,56, &
-               42,36,42 /), &
+               15,6 ,311, &
+                1,43,1, &
+               15,7 ,1  /), &
        (/3,3/)))
       allocate(expected_intermediate_lake_volumes(6))
       expected_intermediate_lake_volumes = (/46.0, 1.0, 38.0, 6.0, 340.0, 10.0/)
@@ -2777,7 +2805,7 @@ subroutine testLakeModel3
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
                                                                 lake_fields_out)
       call assert_equals(expected_intermediate_river_inflow,river_fields%river_inflow,&
                          4,4,0.0000000001_dp)
@@ -2822,7 +2850,7 @@ subroutine testLakeModel3
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
                                                                 lake_fields_out)
       call assert_equals(expected_river_inflow,river_fields%river_inflow,&
                          4,4,0.0000000001_dp)
@@ -2856,6 +2884,9 @@ subroutine testLakeModel3
       deallocate(expected_lake_numbers)
       deallocate(expected_lake_types)
       deallocate(expected_lake_volumes)
+      deallocate(expected_lake_fractions)
+      deallocate(expected_number_lake_cells)
+      deallocate(expected_number_fine_grid_cells)
       deallocate(expected_diagnostic_lake_volumes)
       deallocate(expected_intermediate_river_inflow)
       deallocate(expected_intermediate_water_to_ocean)
@@ -2864,6 +2895,9 @@ subroutine testLakeModel3
       deallocate(expected_intermediate_lake_types)
       deallocate(expected_intermediate_lake_volumes)
       deallocate(expected_intermediate_diagnostic_lake_volumes)
+      deallocate(expected_intermediate_lake_fractions)
+      deallocate(expected_intermediate_number_lake_cells)
+      deallocate(expected_intermediate_number_fine_grid_cells)
       deallocate(lake_types)
       call clean_lake_model()
       call clean_hd_model()
@@ -2898,6 +2932,7 @@ subroutine testLakeModel4
    logical,dimension(:,:), pointer :: additional_flood_local_redirect
    logical,dimension(:,:), pointer :: additional_connect_local_redirect
    integer,dimension(:,:), pointer :: merge_points
+  real(dp),dimension(:,:),pointer :: cell_areas_on_surface_model_grid
    integer,dimension(:,:), pointer :: flood_next_cell_lat_index
    integer,dimension(:,:), pointer :: flood_next_cell_lon_index
    integer,dimension(:,:), pointer :: connect_next_cell_lat_index
@@ -2996,8 +3031,8 @@ subroutine testLakeModel4
       connection_merge_not_set_flood_merge_as_secondary = 10
       nlat_coarse = 3
       nlon_coarse = 3
-      nlat_surface_model = 3
-      nlon_surface_model = 3
+      nlat_surface_model = 2
+      nlon_surface_model = 2
       seconds_per_day = 86400.0_dp
       allocate(flow_directions(nlat_coarse,nlon_coarse))
       flow_directions = transpose(reshape((/-2,6,2,&
@@ -3091,6 +3126,11 @@ subroutine testLakeModel4
          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype /), &
          (/nlon,nlat/)))
+      allocate(cell_areas_on_surface_model_grid(nlat_surface_model,nlon_surface_model))
+        cell_areas_on_surface_model_grid = transpose(reshape((/ &
+          2.5,3.0, &
+          3.5,4.0  /), &
+      (/nlon_surface_model,nlat_surface_model/)))
       allocate(flood_next_cell_lat_index(nlat,nlon))
       flood_next_cell_lat_index = transpose(reshape((/ &
           0, 0, 0, 1, 0, 0, 0, 0, 0, &
@@ -3247,27 +3287,27 @@ subroutine testLakeModel4
       lake_retention_coefficient_local=0.1_dp
       allocate(corresponding_surface_cell_lat_index(nlat,nlon))
       corresponding_surface_cell_lat_index = transpose(reshape((/ &
-                                                           1,1,1,1,1,1,1,1,1, &
-                                                           1,1,1,1,1,1,1,1,1, &
+                                                           2,2,2,1,2,2,2,2,2, &
+                                                           2,2,2,1,2,2,2,2,2, &
+                                                           2,2,1,1,2,2,2,2,2, &
+                                                           2,2,1,1,2,2,2,2,2, &
+                                                           2,2,1,1,2,2,2,2,2, &
                                                            2,2,2,2,2,2,2,2,2, &
                                                            2,2,2,2,2,2,2,2,2, &
                                                            2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2, &
-                                                           3,3,3,3,3,3,3,3,3, &
-                                                           3,3,3,3,3,3,3,3,3, &
-                                                           3,3,3,3,3,3,3,3,3 /), &
+                                                           2,2,2,2,2,2,2,2,1 /), &
          (/nlon,nlat/)))
       allocate(corresponding_surface_cell_lon_index(nlat,nlon))
       corresponding_surface_cell_lon_index = transpose(reshape((/ &
-                                                           1,1,1,2,2,2,3,3,3, &
-                                                           1,1,1,2,2,2,3,3,3, &
-                                                           1,1,1,2,2,2,3,3,3, &
-                                                           1,1,1,2,2,2,3,3,3, &
-                                                           1,1,1,2,2,2,3,3,3, &
-                                                           1,1,1,2,2,2,3,3,3, &
-                                                           1,1,1,2,2,2,3,3,3, &
-                                                           1,1,1,2,2,2,3,3,3, &
-                                                           1,1,1,2,2,2,3,3,3 /), &
+                                                           2,2,2,1,2,2,2,2,2, &
+                                                           2,2,2,1,2,2,2,2,2, &
+                                                           2,2,1,1,2,2,2,2,2, &
+                                                           2,2,1,1,2,2,2,2,2, &
+                                                           2,2,1,1,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,1, &
+                                                           2,2,2,2,2,2,2,2,2 /), &
          (/nlon,nlat/)))
       lake_parameters => LakeParameters(lake_centers, &
                                         connection_volume_thresholds, &
@@ -3277,6 +3317,7 @@ subroutine testLakeModel4
                                         additional_flood_local_redirect, &
                                         additional_connect_local_redirect, &
                                         merge_points, &
+                                        cell_areas_on_surface_model_grid, &
                                         flood_next_cell_lat_index, &
                                         flood_next_cell_lon_index, &
                                         connect_next_cell_lat_index, &
@@ -3308,11 +3349,11 @@ subroutine testLakeModel4
                           (/nlon_coarse,nlat_coarse/)))
       allocate(runoff(nlat_coarse,nlon_coarse))
       runoff(:,:) = 0.0
-      allocate(evaporation(nlat_coarse,nlon_coarse))
+      allocate(evaporation(nlat_surface_model,nlon_surface_model))
       evaporation(:,:) = 0.0
       allocate(drainages(nlat_coarse,nlon_coarse,1000))
       allocate(runoffs(nlat_coarse,nlon_coarse,1000))
-      allocate(evaporations(nlat_coarse,nlon_coarse,1000))
+      allocate(evaporations(nlat_surface_model,nlon_surface_model,1000))
       do i = 1,1000
         drainages(:,:,i) = drainage(:,:)
         runoffs(:,:,i) = runoff(:,:)
@@ -3377,24 +3418,21 @@ subroutine testLakeModel4
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0 /), &
          (/nlon,nlat/)))
-      allocate(expected_lake_fractions(3,3))
+      allocate(expected_lake_fractions(2,2))
       expected_lake_fractions = transpose(reshape((/ &
-                  0.0,1.0/3.0,0.0, &
-                 0.25,    0.25,0.0, &
-                 0.0,    0.0,0.0 /), &
-         (/3,3/)))
-      allocate(expected_number_lake_cells(3,3))
+                  1.0, 0.0, &
+                  0.0, 0.0 /), &
+         (/2,2/)))
+      allocate(expected_number_lake_cells(2,2))
       expected_number_lake_cells = transpose(reshape((/ &
-               0,2,0, &
-               3,3,0, &
-               0,0,0 /), &
-         (/3,3/)))
-      allocate(expected_number_fine_grid_cells(3,3))
+               8,0, &
+               0,0 /), &
+         (/2,2/)))
+      allocate(expected_number_fine_grid_cells(2,2))
       expected_number_fine_grid_cells = transpose(reshape((/ &
-               6,6,6, &
-              12,12,12, &
-               9,9,9 /), &
-         (/3,3/)))
+               8,1, &
+               1,71 /), &
+         (/2,2/)))
       allocate(expected_lake_volumes(1))
       expected_lake_volumes = (/ 432000.0 /)
 
@@ -3454,24 +3492,21 @@ subroutine testLakeModel4
          0.0,    0.0,    0.0,    0.0,   0.0,    0.0,    0.0,    0.0,    0.0, &
          0.0,    0.0,    0.0,    0.0,   0.0,    0.0,    0.0,    0.0,    0.0 /), &
          (/nlon,nlat/)))
-      allocate(first_intermediate_expected_lake_fractions(3,3))
+      allocate(first_intermediate_expected_lake_fractions(2,2))
       first_intermediate_expected_lake_fractions = transpose(reshape((/ &
-                 0.0,0.0,0.0, &
-                 0.0,0.0,0.0, &
-                 0.0,0.0,0.0 /), &
-         (/3,3/)))
-      allocate(first_intermediate_expected_number_lake_cells(3,3))
+                 0.125,0.0, &
+                 0.0,  0.0 /), &
+         (/2,2/)))
+      allocate(first_intermediate_expected_number_lake_cells(2,2))
       first_intermediate_expected_number_lake_cells = transpose(reshape((/ &
-               0,0,0, &
-               0,0,0, &
-               0,0,0 /), &
-         (/3,3/)))
-      allocate(first_intermediate_expected_number_fine_grid_cells(3,3))
+               1,0, &
+               0,0 /), &
+         (/2,2/)))
+      allocate(first_intermediate_expected_number_fine_grid_cells(2,2))
       first_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
-               6,6,6, &
-              12,12,12, &
-               9,9,9 /), &
-         (/3,3/)))
+               8, 1, &
+               1,71 /), &
+         (/2,2/)))
       allocate(first_intermediate_expected_lake_volumes(1))
       first_intermediate_expected_lake_volumes = (/ 172800.0 /)
 
@@ -3531,24 +3566,21 @@ subroutine testLakeModel4
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0 /), &
          (/nlon,nlat/)))
-      allocate(second_intermediate_expected_lake_fractions(3,3))
+      allocate(second_intermediate_expected_lake_fractions(2,2))
       second_intermediate_expected_lake_fractions = transpose(reshape((/ &
-                 0.0,0.0,0.0, &
-                 0.25,0.166667,0.0, &
-                 0.0,0.0,0.0 /), &
-         (/3,3/)))
-      allocate(second_intermediate_expected_number_lake_cells(3,3))
+                 0.75,0.0, &
+                 0.0,0.0 /), &
+         (/2,2/)))
+      allocate(second_intermediate_expected_number_lake_cells(2,2))
       second_intermediate_expected_number_lake_cells =  transpose(reshape((/ &
-               0,0,0, &
-               3,2,0, &
-               0,0,0 /), &
-         (/3,3/)))
-      allocate(second_intermediate_expected_number_fine_grid_cells(3,3))
+               6,0, &
+               0,0 /), &
+         (/2,2/)))
+      allocate(second_intermediate_expected_number_fine_grid_cells(2,2))
       second_intermediate_expected_number_fine_grid_cells =  transpose(reshape((/ &
-               6,6,6, &
-              12,12,12, &
-               9,9,9 /), &
-         (/3,3/)))
+               8, 1, &
+               1,71 /), &
+         (/2,2/)))
       allocate(second_intermediate_expected_lake_volumes(1))
       second_intermediate_expected_lake_volumes = (/ 259200.0 /)
 
@@ -3608,24 +3640,21 @@ subroutine testLakeModel4
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0 /), &
          (/nlon,nlat/)))
-      allocate(third_intermediate_expected_lake_fractions(3,3))
+      allocate(third_intermediate_expected_lake_fractions(2,2))
       third_intermediate_expected_lake_fractions = transpose(reshape((/ &
-                  0.0,0.0,0.0, &
-                 0.25,1.0/6.0,0.0, &
-                  0.0,0.0,0.0 /), &
-         (/3,3/)))
-      allocate(third_intermediate_expected_number_lake_cells(3,3))
+                  0.75,0.0, &
+                  0.0,0.0 /), &
+         (/2,2/)))
+      allocate(third_intermediate_expected_number_lake_cells(2,2))
       third_intermediate_expected_number_lake_cells = transpose(reshape((/ &
-               0,0,0, &
-               3,2,0, &
-               0,0,0 /), &
-         (/3,3/)))
-      allocate(third_intermediate_expected_number_fine_grid_cells(3,3))
+               6,0, &
+               0,0 /), &
+         (/2,2/)))
+      allocate(third_intermediate_expected_number_fine_grid_cells(2,2))
       third_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
-               6,6,6, &
-              12,12,12, &
-               9,9,9 /), &
-         (/3,3/)))
+               8,1, &
+               1,71 /), &
+         (/2,2/)))
 
       allocate(third_intermediate_expected_lake_volumes(1))
       third_intermediate_expected_lake_volumes = (/ 432000.0 /)
@@ -3650,24 +3679,21 @@ subroutine testLakeModel4
          (/nlon_coarse,nlat_coarse/)))
       fourth_intermediate_expected_water_to_hd = &
         fourth_intermediate_expected_water_to_hd/seconds_per_day
-      allocate(fourth_intermediate_expected_lake_fractions(3,3))
+      allocate(fourth_intermediate_expected_lake_fractions(2,2))
       fourth_intermediate_expected_lake_fractions = transpose(reshape((/ &
-                 0.0,1.0/3.0,0.0, &
-                 0.25,0.25,0.0, &
-                 0.0, 0.0,0.0 /), &
-         (/3,3/)))
-      allocate(fourth_intermediate_expected_number_lake_cells(3,3))
+                 1.0,0.0, &
+                 0.0,0.0 /), &
+         (/2,2/)))
+      allocate(fourth_intermediate_expected_number_lake_cells(2,2))
       fourth_intermediate_expected_number_lake_cells = transpose(reshape((/ &
-               0,2,0, &
-               3,3,0, &
-               0,0,0  /), &
-         (/3,3/)))
-      allocate(fourth_intermediate_expected_number_fine_grid_cells(3,3))
+               8,0, &
+               0,0  /), &
+         (/2,2/)))
+      allocate(fourth_intermediate_expected_number_fine_grid_cells(2,2))
       fourth_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
-               6,6,6, &
-              12,12,12, &
-               9,9,9  /), &
-         (/3,3/)))
+               8,1, &
+               1,71  /), &
+         (/2,2/)))
       allocate(fifth_intermediate_expected_river_inflow(nlat_coarse,nlon_coarse))
       fifth_intermediate_expected_river_inflow = transpose(reshape((/ &
           0.0, 0.0, 0.0, &
@@ -3688,24 +3714,21 @@ subroutine testLakeModel4
          (/nlon_coarse,nlat_coarse/)))
       fifth_intermediate_expected_water_to_hd = &
         fifth_intermediate_expected_water_to_hd/seconds_per_day
-      allocate(fifth_intermediate_expected_lake_fractions(3,3))
+      allocate(fifth_intermediate_expected_lake_fractions(2,2))
       fifth_intermediate_expected_lake_fractions = transpose(reshape((/ &
-                  0.0, 1.0/3.0,0.0, &
-                 0.25,0.25,   0.0, &
-                 0.0, 0.0,    0.0 /), &
-         (/3,3/)))
-      allocate(fifth_intermediate_expected_number_lake_cells(3,3))
+                 1.0, 0.0, &
+                 0.0, 0.0 /), &
+         (/2,2/)))
+      allocate(fifth_intermediate_expected_number_lake_cells(2,2))
       fifth_intermediate_expected_number_lake_cells = transpose(reshape((/ &
-               0,2,0, &
-               3,3,0, &
-               0,0,0 /), &
-         (/3,3/)))
-      allocate(fifth_intermediate_expected_number_fine_grid_cells(3,3))
+               8,0, &
+               0,0 /), &
+         (/2,2/)))
+      allocate(fifth_intermediate_expected_number_fine_grid_cells(2,2))
       fifth_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
-               6,6,6, &
-              12,12,12, &
-               9,9,9 /), &
-         (/3,3/)))
+               8,1, &
+               1,71 /), &
+         (/2,2/)))
 
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
@@ -3743,7 +3766,7 @@ subroutine testLakeModel4
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
 
-      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
                                                                 lake_fields_out)
       call assert_equals(first_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(first_intermediate_expected_water_to_ocean,&
@@ -3754,10 +3777,10 @@ subroutine testLakeModel4
       call assert_equals(first_intermediate_expected_lake_volumes,lake_volumes,1)
       call assert_equals(diagnostic_lake_volumes, &
                          first_intermediate_expected_diagnostic_lake_volumes,nlat,nlon)
-      call assert_equals(first_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
-      call assert_equals(first_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(first_intermediate_expected_lake_fractions,lake_fractions,2,2,0.000001_dp)
+      call assert_equals(first_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,2,2)
       call assert_equals(first_intermediate_expected_number_fine_grid_cells, &
-                         lake_parameters%number_fine_grid_cells,3,3)
+                         lake_parameters%number_fine_grid_cells,2,2)
       deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
@@ -3793,7 +3816,7 @@ subroutine testLakeModel4
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
                                                                 lake_fields_out)
       call assert_equals(second_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(second_intermediate_expected_water_to_ocean,river_fields%water_to_ocean,&
@@ -3805,10 +3828,10 @@ subroutine testLakeModel4
       call assert_equals(second_intermediate_expected_lake_volumes,lake_volumes,1)
       call assert_equals(diagnostic_lake_volumes,&
                          second_intermediate_expected_diagnostic_lake_volumes,nlat,nlon)
-      call assert_equals(second_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
-      call assert_equals(second_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(second_intermediate_expected_lake_fractions,lake_fractions,2,2,0.000001_dp)
+      call assert_equals(second_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,2,2)
       call assert_equals(second_intermediate_expected_number_fine_grid_cells, &
-                         lake_parameters%number_fine_grid_cells,3,3)
+                         lake_parameters%number_fine_grid_cells,2,2)
       deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
 
@@ -3845,7 +3868,7 @@ subroutine testLakeModel4
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
                                                                 lake_fields_out)
       call assert_equals(third_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(third_intermediate_expected_water_to_ocean, &
@@ -3857,10 +3880,10 @@ subroutine testLakeModel4
       call assert_equals(third_intermediate_expected_lake_volumes,lake_volumes,1)
       call assert_equals(diagnostic_lake_volumes,&
                          third_intermediate_expected_diagnostic_lake_volumes,nlat,nlon)
-      call assert_equals(third_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
-      call assert_equals(third_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(third_intermediate_expected_lake_fractions,lake_fractions,2,2,0.000001_dp)
+      call assert_equals(third_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,2,2)
       call assert_equals(third_intermediate_expected_number_fine_grid_cells, &
-                         lake_parameters%number_fine_grid_cells,3,3)
+                         lake_parameters%number_fine_grid_cells,2,2)
       deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
 
@@ -3897,7 +3920,7 @@ subroutine testLakeModel4
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
                                                                 lake_fields_out)
       call assert_equals(fourth_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(fourth_intermediate_expected_water_to_ocean,&
@@ -3907,10 +3930,10 @@ subroutine testLakeModel4
       call assert_equals(expected_lake_types,lake_types,nlat,nlon)
       call assert_equals(expected_lake_volumes,lake_volumes,1)
       call assert_equals(diagnostic_lake_volumes,expected_diagnostic_lake_volumes,nlat,nlon)
-      call assert_equals(fourth_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
-      call assert_equals(fourth_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(fourth_intermediate_expected_lake_fractions,lake_fractions,2,2,0.000001_dp)
+      call assert_equals(fourth_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,2,2)
       call assert_equals(fourth_intermediate_expected_number_fine_grid_cells, &
-                         lake_parameters%number_fine_grid_cells,3,3)
+                         lake_parameters%number_fine_grid_cells,2,2)
       deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
 
@@ -3947,7 +3970,7 @@ subroutine testLakeModel4
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
                                                                 lake_fields_out)
       call assert_equals(fifth_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(fifth_intermediate_expected_water_to_ocean,&
@@ -3957,10 +3980,10 @@ subroutine testLakeModel4
       call assert_equals(expected_lake_types,lake_types,nlat,nlon)
       call assert_equals(expected_lake_volumes,lake_volumes,1)
       call assert_equals(diagnostic_lake_volumes,expected_diagnostic_lake_volumes,nlat,nlon)
-      call assert_equals(fifth_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
-      call assert_equals(fifth_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(fifth_intermediate_expected_lake_fractions,lake_fractions,2,2,0.000001_dp)
+      call assert_equals(fifth_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,2,2)
       call assert_equals(fifth_intermediate_expected_number_fine_grid_cells, &
-                         lake_parameters%number_fine_grid_cells,3,3)
+                         lake_parameters%number_fine_grid_cells,2,2)
       deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
 
@@ -3997,7 +4020,7 @@ subroutine testLakeModel4
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
                                                                 lake_fields_out)
       call assert_equals(expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -4006,10 +4029,10 @@ subroutine testLakeModel4
       call assert_equals(expected_lake_types,lake_types,nlat,nlon)
       call assert_equals(expected_lake_volumes,lake_volumes,1)
       call assert_equals(diagnostic_lake_volumes,expected_diagnostic_lake_volumes,nlat,nlon)
-      call assert_equals(expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
-      call assert_equals(expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(expected_lake_fractions,lake_fractions,2,2,0.000001_dp)
+      call assert_equals(expected_number_lake_cells,lake_fields_out%number_lake_cells,2,2)
       call assert_equals(expected_number_fine_grid_cells, &
-                         lake_parameters%number_fine_grid_cells,3,3)
+                         lake_parameters%number_fine_grid_cells,2,2)
       deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       deallocate(lake_volumes)
@@ -4028,6 +4051,9 @@ subroutine testLakeModel4
       deallocate(expected_lake_types)
       deallocate(expected_lake_volumes)
       deallocate(expected_diagnostic_lake_volumes)
+      deallocate(expected_lake_fractions)
+      deallocate(expected_number_lake_cells)
+      deallocate(expected_number_fine_grid_cells)
       deallocate(first_intermediate_expected_river_inflow)
       deallocate(first_intermediate_expected_water_to_ocean)
       deallocate(first_intermediate_expected_water_to_hd)
@@ -4035,6 +4061,9 @@ subroutine testLakeModel4
       deallocate(first_intermediate_expected_lake_types)
       deallocate(first_intermediate_expected_lake_volumes)
       deallocate(first_intermediate_expected_diagnostic_lake_volumes)
+      deallocate(first_intermediate_expected_lake_fractions)
+      deallocate(first_intermediate_expected_number_lake_cells)
+      deallocate(first_intermediate_expected_number_fine_grid_cells)
       deallocate(second_intermediate_expected_river_inflow)
       deallocate(second_intermediate_expected_water_to_ocean)
       deallocate(second_intermediate_expected_water_to_hd)
@@ -4042,6 +4071,9 @@ subroutine testLakeModel4
       deallocate(second_intermediate_expected_lake_types)
       deallocate(second_intermediate_expected_lake_volumes)
       deallocate(second_intermediate_expected_diagnostic_lake_volumes)
+      deallocate(second_intermediate_expected_lake_fractions)
+      deallocate(second_intermediate_expected_number_lake_cells)
+      deallocate(second_intermediate_expected_number_fine_grid_cells)
       deallocate(third_intermediate_expected_river_inflow)
       deallocate(third_intermediate_expected_water_to_ocean)
       deallocate(third_intermediate_expected_water_to_hd)
@@ -4049,12 +4081,21 @@ subroutine testLakeModel4
       deallocate(third_intermediate_expected_lake_types)
       deallocate(third_intermediate_expected_lake_volumes)
       deallocate(third_intermediate_expected_diagnostic_lake_volumes)
+      deallocate(third_intermediate_expected_lake_fractions)
+      deallocate(third_intermediate_expected_number_lake_cells)
+      deallocate(third_intermediate_expected_number_fine_grid_cells)
       deallocate(fourth_intermediate_expected_river_inflow)
       deallocate(fourth_intermediate_expected_water_to_ocean)
       deallocate(fourth_intermediate_expected_water_to_hd)
+      deallocate(fourth_intermediate_expected_lake_fractions)
+      deallocate(fourth_intermediate_expected_number_lake_cells)
+      deallocate(fourth_intermediate_expected_number_fine_grid_cells)
       deallocate(fifth_intermediate_expected_river_inflow)
       deallocate(fifth_intermediate_expected_water_to_ocean)
       deallocate(fifth_intermediate_expected_water_to_hd)
+      deallocate(fifth_intermediate_expected_lake_fractions)
+      deallocate(fifth_intermediate_expected_number_lake_cells)
+      deallocate(fifth_intermediate_expected_number_fine_grid_cells)
       deallocate(lake_types)
       call clean_lake_model()
       call clean_hd_model()
@@ -4089,6 +4130,7 @@ subroutine testLakeModel5
    logical,dimension(:,:), pointer :: additional_flood_local_redirect
    logical,dimension(:,:), pointer :: additional_connect_local_redirect
    integer,dimension(:,:), pointer :: merge_points
+  real(dp),dimension(:,:),pointer :: cell_areas_on_surface_model_grid
    integer,dimension(:,:), pointer :: flood_next_cell_lat_index
    integer,dimension(:,:), pointer :: flood_next_cell_lon_index
    integer,dimension(:,:), pointer :: connect_next_cell_lat_index
@@ -4187,8 +4229,8 @@ subroutine testLakeModel5
       connection_merge_not_set_flood_merge_as_secondary = 10
       nlat_coarse = 3
       nlon_coarse = 3
-      nlat_surface_model = 3
-      nlon_surface_model = 3
+      nlat_surface_model = 2
+      nlon_surface_model = 2
       seconds_per_day = 86400.0_dp
       allocate(flow_directions(nlat_coarse,nlon_coarse))
       flow_directions = transpose(reshape((/-2,6,2,&
@@ -4282,6 +4324,11 @@ subroutine testLakeModel5
          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype /), &
          (/nlon,nlat/)))
+      allocate(cell_areas_on_surface_model_grid(nlat_surface_model,nlon_surface_model))
+      cell_areas_on_surface_model_grid = transpose(reshape((/ &
+          2.5,5.0, &
+          3.0,4.0 /), &
+      (/nlon_surface_model,nlat_surface_model/)))
       allocate(flood_next_cell_lat_index(nlat,nlon))
       flood_next_cell_lat_index = transpose(reshape((/ &
           0, 0, 0, 1, 0, 0, 0, 0, 0, &
@@ -4438,27 +4485,27 @@ subroutine testLakeModel5
       lake_retention_coefficient_local=0.1_dp
       allocate(corresponding_surface_cell_lat_index(nlat,nlon))
       corresponding_surface_cell_lat_index = transpose(reshape((/ &
-                                                           1,1,1,1,1,1,1,1,1, &
-                                                           1,1,1,1,1,1,1,1,1, &
+                                                           2,2,2,1,2,2,2,2,2, &
+                                                           2,2,2,1,2,2,2,2,2, &
+                                                           2,2,1,1,2,2,2,2,2, &
+                                                           2,2,1,1,2,2,2,2,2, &
+                                                           2,2,1,1,2,2,2,2,2, &
                                                            2,2,2,2,2,2,2,2,2, &
                                                            2,2,2,2,2,2,2,2,2, &
                                                            2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2, &
-                                                           3,3,3,3,3,3,3,3,3, &
-                                                           3,3,3,3,3,3,3,3,3, &
-                                                           3,3,3,3,3,3,3,3,3 /), &
+                                                           2,2,2,2,2,2,2,2,1 /), &
          (/nlon,nlat/)))
       allocate(corresponding_surface_cell_lon_index(nlat,nlon))
       corresponding_surface_cell_lon_index = transpose(reshape((/ &
-                                                           1,1,1,2,2,2,3,3,3, &
-                                                           1,1,1,2,2,2,3,3,3, &
-                                                           1,1,1,2,2,2,3,3,3, &
-                                                           1,1,1,2,2,2,3,3,3, &
-                                                           1,1,1,2,2,2,3,3,3, &
-                                                           1,1,1,2,2,2,3,3,3, &
-                                                           1,1,1,2,2,2,3,3,3, &
-                                                           1,1,1,2,2,2,3,3,3, &
-                                                           1,1,1,2,2,2,3,3,3 /), &
+                                                           2,2,2,1,2,2,2,2,2, &
+                                                           2,2,2,1,2,2,2,2,2, &
+                                                           2,2,1,1,2,2,2,2,2, &
+                                                           2,2,1,1,2,2,2,2,2, &
+                                                           2,2,1,1,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,1, &
+                                                           2,2,2,2,2,2,2,2,2 /), &
          (/nlon,nlat/)))
       lake_parameters => LakeParameters(lake_centers, &
                                         connection_volume_thresholds, &
@@ -4468,6 +4515,7 @@ subroutine testLakeModel5
                                         additional_flood_local_redirect, &
                                         additional_connect_local_redirect, &
                                         merge_points, &
+                                        cell_areas_on_surface_model_grid, &
                                         flood_next_cell_lat_index, &
                                         flood_next_cell_lon_index, &
                                         connect_next_cell_lat_index, &
@@ -4501,8 +4549,8 @@ subroutine testLakeModel5
       allocate(drainage(nlat_coarse,nlon_coarse))
       allocate(drainages(nlat_coarse,nlon_coarse,1000))
       drainage(:,:) = 0.0
-      allocate(evaporation(nlat_coarse,nlon_coarse))
-      allocate(evaporations(nlat_coarse,nlon_coarse,1000))
+      allocate(evaporation(nlat_surface_model,nlon_surface_model))
+      allocate(evaporations(nlat_surface_model,nlon_surface_model,1000))
       evaporation(:,:) = 0.0
       do i = 1,1000
         drainages(:,:,i) = drainage(:,:)
@@ -4568,24 +4616,21 @@ subroutine testLakeModel5
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0 /), &
          (/nlon,nlat/)))
-      allocate(expected_lake_fractions(3,3))
+      allocate(expected_lake_fractions(2,2))
       expected_lake_fractions = transpose(reshape((/ &
-                  0.0,1.0/3.0,0.0, &
-                 0.25,    0.25,0.0, &
-                 0.0,    0.0,0.0 /), &
-         (/3,3/)))
-      allocate(expected_number_lake_cells(3,3))
+                  1.0,0.0, &
+                 0.0,0.0 /), &
+         (/2,2/)))
+      allocate(expected_number_lake_cells(2,2))
       expected_number_lake_cells = transpose(reshape((/ &
-               0,2,0, &
-               3,3,0, &
-               0,0,0 /), &
-         (/3,3/)))
-      allocate(expected_number_fine_grid_cells(3,3))
+               8,0, &
+               0,0 /), &
+         (/2,2/)))
+      allocate(expected_number_fine_grid_cells(2,2))
       expected_number_fine_grid_cells = transpose(reshape((/ &
-               6,6,6, &
-              12,12,12, &
-               9,9,9 /), &
-         (/3,3/)))
+               8,1, &
+               1,71 /), &
+         (/2,2/)))
       allocate(expected_lake_volumes(1))
       expected_lake_volumes = (/ 432000.0 /)
 
@@ -4645,24 +4690,21 @@ subroutine testLakeModel5
          0.0,    0.0,    0.0,    0.0,   0.0,    0.0,    0.0,    0.0,    0.0, &
          0.0,    0.0,    0.0,    0.0,   0.0,    0.0,    0.0,    0.0,    0.0 /), &
          (/nlon,nlat/)))
-      allocate(first_intermediate_expected_lake_fractions(3,3))
+      allocate(first_intermediate_expected_lake_fractions(2,2))
       first_intermediate_expected_lake_fractions = transpose(reshape((/ &
-                 0.0,0.0,0.0, &
-                 0.0,0.0,0.0, &
-                 0.0,0.0,0.0 /), &
-         (/3,3/)))
-      allocate(first_intermediate_expected_number_lake_cells(3,3))
+                 0.125,0.0, &
+                 0.0,0.0 /), &
+         (/2,2/)))
+      allocate(first_intermediate_expected_number_lake_cells(2,2))
       first_intermediate_expected_number_lake_cells = transpose(reshape((/ &
-               0,0,0, &
-               0,0,0, &
-               0,0,0 /), &
-         (/3,3/)))
-      allocate(first_intermediate_expected_number_fine_grid_cells(3,3))
+               1,0, &
+               0,0 /), &
+         (/2,2/)))
+      allocate(first_intermediate_expected_number_fine_grid_cells(2,2))
       first_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
-               6,6,6, &
-              12,12,12, &
-               9,9,9 /), &
-         (/3,3/)))
+               8,1, &
+               1,71 /), &
+         (/2,2/)))
       allocate(first_intermediate_expected_lake_volumes(1))
       first_intermediate_expected_lake_volumes = (/ 172800.0 /)
 
@@ -4722,24 +4764,21 @@ subroutine testLakeModel5
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0 /), &
          (/nlon,nlat/)))
-      allocate(second_intermediate_expected_lake_fractions(3,3))
+      allocate(second_intermediate_expected_lake_fractions(2,2))
       second_intermediate_expected_lake_fractions = transpose(reshape((/ &
-                 0.0,0.0,0.0, &
-                 0.25,1.0/6.0,0.0, &
-                 0.0,0.0,0.0 /), &
-         (/3,3/)))
-      allocate(second_intermediate_expected_number_lake_cells(3,3))
+                 0.75,0.0, &
+                 0.0,0.0 /), &
+         (/2,2/)))
+      allocate(second_intermediate_expected_number_lake_cells(2,2))
       second_intermediate_expected_number_lake_cells = transpose(reshape((/ &
-               0,0,0, &
-               3,2,0, &
-               0,0,0 /), &
-         (/3,3/)))
-      allocate(second_intermediate_expected_number_fine_grid_cells(3,3))
+               6,0, &
+               0,0 /), &
+         (/2,2/)))
+      allocate(second_intermediate_expected_number_fine_grid_cells(2,2))
       second_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
-               6,6,6, &
-              12,12,12, &
-               9,9,9 /), &
-         (/3,3/)))
+               8,1, &
+               1,71 /), &
+         (/2,2/)))
       allocate(second_intermediate_expected_lake_volumes(1))
       second_intermediate_expected_lake_volumes = (/ 259200.0 /)
 
@@ -4799,24 +4838,21 @@ subroutine testLakeModel5
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0 /), &
          (/nlon,nlat/)))
-      allocate(third_intermediate_expected_lake_fractions(3,3))
+      allocate(third_intermediate_expected_lake_fractions(2,2))
       third_intermediate_expected_lake_fractions= transpose(reshape((/ &
-                 0.0,0.0,0.0, &
-                 0.25,1.0/6.0,0.0, &
-                 0.0,0.0,0.0 /), &
-         (/3,3/)))
-      allocate(third_intermediate_expected_number_lake_cells(3,3))
+                 0.75,0.0, &
+                 0.0,0.0 /), &
+         (/2,2/)))
+      allocate(third_intermediate_expected_number_lake_cells(2,2))
       third_intermediate_expected_number_lake_cells = transpose(reshape((/ &
-               0,0,0, &
-               3,2,0, &
-               0,0,0 /), &
-         (/3,3/)))
-      allocate(third_intermediate_expected_number_fine_grid_cells(3,3))
+               6,0, &
+               0,0 /), &
+         (/2,2/)))
+      allocate(third_intermediate_expected_number_fine_grid_cells(2,2))
       third_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
-               6,6,6, &
-              12,12,12, &
-               9,9,9 /), &
-         (/3,3/)))
+               8,1, &
+               1,71 /), &
+         (/2,2/)))
 
       allocate(third_intermediate_expected_lake_volumes(1))
       third_intermediate_expected_lake_volumes = (/ 432000.0 /)
@@ -4841,24 +4877,21 @@ subroutine testLakeModel5
          (/nlon_coarse,nlat_coarse/)))
       fourth_intermediate_expected_water_to_hd = &
         fourth_intermediate_expected_water_to_hd/seconds_per_day
-      allocate(fourth_intermediate_expected_lake_fractions(3,3))
+      allocate(fourth_intermediate_expected_lake_fractions(2,2))
       fourth_intermediate_expected_lake_fractions = transpose(reshape((/ &
-                 0.0,1.0/3.0,0.0, &
-                 0.25,0.25,0.0, &
-                 0.0,0.0,0.0  /), &
-         (/3,3/)))
-      allocate(fourth_intermediate_expected_number_lake_cells(3,3))
+                 1.0,0.0, &
+                 0.0,0.0  /), &
+         (/2,2/)))
+      allocate(fourth_intermediate_expected_number_lake_cells(2,2))
       fourth_intermediate_expected_number_lake_cells = transpose(reshape((/ &
-               0,2,0, &
-               3,3,0, &
-               0,0,0  /), &
-         (/3,3/)))
-      allocate(fourth_intermediate_expected_number_fine_grid_cells(3,3))
+               8,0, &
+               0,0 /), &
+         (/2,2/)))
+      allocate(fourth_intermediate_expected_number_fine_grid_cells(2,2))
       fourth_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
-               6,6,6, &
-              12,12,12, &
-               9,9,9  /), &
-         (/3,3/)))
+               8,1, &
+               1,71 /), &
+         (/2,2/)))
       allocate(fifth_intermediate_expected_river_inflow(nlat_coarse,nlon_coarse))
       fifth_intermediate_expected_river_inflow = transpose(reshape((/ &
           0.0, 0.0, 0.0, &
@@ -4879,24 +4912,21 @@ subroutine testLakeModel5
          (/nlon_coarse,nlat_coarse/)))
       fifth_intermediate_expected_water_to_hd = &
         fifth_intermediate_expected_water_to_hd/seconds_per_day
-      allocate(fifth_intermediate_expected_lake_fractions(3,3))
+      allocate(fifth_intermediate_expected_lake_fractions(2,2))
       fifth_intermediate_expected_lake_fractions = transpose(reshape((/ &
-                 0.0,1.0/3.0,0.0, &
-                 0.25,    0.25,0.0, &
-                 0.0,    0.0,0.0  /), &
-         (/3,3/)))
-      allocate(fifth_intermediate_expected_number_lake_cells(3,3))
+                 1.0,0.0, &
+                 0.0,0.0  /), &
+         (/2,2/)))
+      allocate(fifth_intermediate_expected_number_lake_cells(2,2))
       fifth_intermediate_expected_number_lake_cells = transpose(reshape((/ &
-               0,2,0, &
-               3,3,0, &
-               0,0,0  /), &
-         (/3,3/)))
-      allocate(fifth_intermediate_expected_number_fine_grid_cells(3,3))
+               8,0, &
+               0,0  /), &
+         (/2,2/)))
+      allocate(fifth_intermediate_expected_number_fine_grid_cells(2,2))
       fifth_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
-               6,6,6, &
-              12,12,12, &
-               9,9,9  /), &
-         (/3,3/)))
+               8,1, &
+               1,71  /), &
+         (/2,2/)))
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
                                      initial_water_to_lake_centers, &
@@ -4932,7 +4962,7 @@ subroutine testLakeModel5
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
                                                                 lake_fields_out)
       call assert_equals(first_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(first_intermediate_expected_water_to_ocean,&
@@ -4944,10 +4974,10 @@ subroutine testLakeModel5
       call assert_equals(first_intermediate_expected_lake_volumes,lake_volumes,1)
       call assert_equals(diagnostic_lake_volumes,&
                          first_intermediate_expected_diagnostic_lake_volumes,nlat,nlon)
-      call assert_equals(first_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
-      call assert_equals(first_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(first_intermediate_expected_lake_fractions,lake_fractions,2,2,0.000001_dp)
+      call assert_equals(first_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,2,2)
       call assert_equals(first_intermediate_expected_number_fine_grid_cells, &
-                         lake_parameters%number_fine_grid_cells,3,3)
+                         lake_parameters%number_fine_grid_cells,2,2)
       deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
@@ -4986,7 +5016,7 @@ subroutine testLakeModel5
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
                                                                 lake_fields_out)
       call assert_equals(second_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(second_intermediate_expected_water_to_ocean, &
@@ -4997,10 +5027,10 @@ subroutine testLakeModel5
       call assert_equals(second_intermediate_expected_lake_volumes,lake_volumes,1)
       call assert_equals(diagnostic_lake_volumes,&
                          second_intermediate_expected_diagnostic_lake_volumes,nlat,nlon)
-      call assert_equals(second_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
-      call assert_equals(second_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(second_intermediate_expected_lake_fractions,lake_fractions,2,2,0.000001_dp)
+      call assert_equals(second_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,2,2)
       call assert_equals(second_intermediate_expected_number_fine_grid_cells, &
-                         lake_parameters%number_fine_grid_cells,3,3)
+                         lake_parameters%number_fine_grid_cells,2,2)
       deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
@@ -5039,7 +5069,7 @@ subroutine testLakeModel5
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
                                                                 lake_fields_out)
       call assert_equals(third_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(third_intermediate_expected_water_to_ocean,&
@@ -5051,10 +5081,10 @@ subroutine testLakeModel5
       call assert_equals(third_intermediate_expected_lake_volumes,lake_volumes,1)
       call assert_equals(diagnostic_lake_volumes,&
                          third_intermediate_expected_diagnostic_lake_volumes,nlat,nlon)
-      call assert_equals(third_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
-      call assert_equals(third_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(third_intermediate_expected_lake_fractions,lake_fractions,2,2,0.000001_dp)
+      call assert_equals(third_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,2,2)
       call assert_equals(third_intermediate_expected_number_fine_grid_cells, &
-                         lake_parameters%number_fine_grid_cells,3,3)
+                         lake_parameters%number_fine_grid_cells,2,2)
       deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
@@ -5093,7 +5123,7 @@ subroutine testLakeModel5
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
                                                                 lake_fields_out)
       call assert_equals(fourth_intermediate_expected_river_inflow,&
                          river_fields%river_inflow,3,3)
@@ -5105,10 +5135,10 @@ subroutine testLakeModel5
       call assert_equals(expected_lake_types,lake_types,nlat,nlon)
       call assert_equals(expected_lake_volumes,lake_volumes,1)
       call assert_equals(diagnostic_lake_volumes,expected_diagnostic_lake_volumes,nlat,nlon)
-      call assert_equals(fourth_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
-      call assert_equals(fourth_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(fourth_intermediate_expected_lake_fractions,lake_fractions,2,2,0.000001_dp)
+      call assert_equals(fourth_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,2,2)
       call assert_equals(fourth_intermediate_expected_number_fine_grid_cells, &
-                         lake_parameters%number_fine_grid_cells,3,3)
+                         lake_parameters%number_fine_grid_cells,2,2)
       deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
@@ -5147,7 +5177,7 @@ subroutine testLakeModel5
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
                                                                 lake_fields_out)
       call assert_equals(fifth_intermediate_expected_river_inflow,&
                          river_fields%river_inflow,3,3)
@@ -5158,10 +5188,10 @@ subroutine testLakeModel5
       call assert_equals(expected_lake_types,lake_types,nlat,nlon)
       call assert_equals(expected_lake_volumes,lake_volumes,1)
       call assert_equals(diagnostic_lake_volumes,expected_diagnostic_lake_volumes,nlat,nlon)
-      call assert_equals(fifth_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
-      call assert_equals(fifth_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(fifth_intermediate_expected_lake_fractions,lake_fractions,2,2,0.000001_dp)
+      call assert_equals(fifth_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,2,2)
       call assert_equals(fifth_intermediate_expected_number_fine_grid_cells, &
-                         lake_parameters%number_fine_grid_cells,3,3)
+                         lake_parameters%number_fine_grid_cells,2,2)
       deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
@@ -5200,7 +5230,7 @@ subroutine testLakeModel5
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
                                                                 lake_fields_out)
       call assert_equals(expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -5209,10 +5239,10 @@ subroutine testLakeModel5
       call assert_equals(expected_lake_types,lake_types,nlat,nlon)
       call assert_equals(expected_lake_volumes,lake_volumes,1)
       call assert_equals(diagnostic_lake_volumes,expected_diagnostic_lake_volumes,nlat,nlon)
-      call assert_equals(expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
-      call assert_equals(expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(expected_lake_fractions,lake_fractions,2,2,0.000001_dp)
+      call assert_equals(expected_number_lake_cells,lake_fields_out%number_lake_cells,2,2)
       call assert_equals(expected_number_fine_grid_cells, &
-                         lake_parameters%number_fine_grid_cells,3,3)
+                         lake_parameters%number_fine_grid_cells,2,2)
       deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       deallocate(lake_volumes)
@@ -5231,6 +5261,9 @@ subroutine testLakeModel5
       deallocate(expected_lake_types)
       deallocate(expected_lake_volumes)
       deallocate(expected_diagnostic_lake_volumes)
+      deallocate(expected_lake_fractions)
+      deallocate(expected_number_lake_cells)
+      deallocate(expected_number_fine_grid_cells)
       deallocate(first_intermediate_expected_river_inflow)
       deallocate(first_intermediate_expected_water_to_ocean)
       deallocate(first_intermediate_expected_water_to_hd)
@@ -5238,6 +5271,9 @@ subroutine testLakeModel5
       deallocate(first_intermediate_expected_lake_types)
       deallocate(first_intermediate_expected_lake_volumes)
       deallocate(first_intermediate_expected_diagnostic_lake_volumes)
+      deallocate(first_intermediate_expected_lake_fractions)
+      deallocate(first_intermediate_expected_number_lake_cells)
+      deallocate(first_intermediate_expected_number_fine_grid_cells)
       deallocate(second_intermediate_expected_river_inflow)
       deallocate(second_intermediate_expected_water_to_ocean)
       deallocate(second_intermediate_expected_water_to_hd)
@@ -5245,6 +5281,9 @@ subroutine testLakeModel5
       deallocate(second_intermediate_expected_lake_types)
       deallocate(second_intermediate_expected_lake_volumes)
       deallocate(second_intermediate_expected_diagnostic_lake_volumes)
+      deallocate(second_intermediate_expected_lake_fractions)
+      deallocate(second_intermediate_expected_number_lake_cells)
+      deallocate(second_intermediate_expected_number_fine_grid_cells)
       deallocate(third_intermediate_expected_river_inflow)
       deallocate(third_intermediate_expected_water_to_ocean)
       deallocate(third_intermediate_expected_water_to_hd)
@@ -5252,12 +5291,21 @@ subroutine testLakeModel5
       deallocate(third_intermediate_expected_lake_types)
       deallocate(third_intermediate_expected_lake_volumes)
       deallocate(third_intermediate_expected_diagnostic_lake_volumes)
+      deallocate(third_intermediate_expected_lake_fractions)
+      deallocate(third_intermediate_expected_number_lake_cells)
+      deallocate(third_intermediate_expected_number_fine_grid_cells)
       deallocate(fourth_intermediate_expected_river_inflow)
       deallocate(fourth_intermediate_expected_water_to_ocean)
       deallocate(fourth_intermediate_expected_water_to_hd)
+      deallocate(fourth_intermediate_expected_lake_fractions)
+      deallocate(fourth_intermediate_expected_number_lake_cells)
+      deallocate(fourth_intermediate_expected_number_fine_grid_cells)
       deallocate(fifth_intermediate_expected_river_inflow)
       deallocate(fifth_intermediate_expected_water_to_ocean)
       deallocate(fifth_intermediate_expected_water_to_hd)
+      deallocate(fifth_intermediate_expected_lake_fractions)
+      deallocate(fifth_intermediate_expected_number_lake_cells)
+      deallocate(fifth_intermediate_expected_number_fine_grid_cells)
       deallocate(lake_types)
       call clean_lake_model()
       call clean_hd_model()
@@ -5292,6 +5340,7 @@ subroutine testLakeModel6
    logical,dimension(:,:), pointer :: additional_flood_local_redirect
    logical,dimension(:,:), pointer :: additional_connect_local_redirect
    integer,dimension(:,:), pointer :: merge_points
+  real(dp),dimension(:,:),pointer :: cell_areas_on_surface_model_grid
    integer,dimension(:,:), pointer :: flood_next_cell_lat_index
    integer,dimension(:,:), pointer :: flood_next_cell_lon_index
    integer,dimension(:,:), pointer :: connect_next_cell_lat_index
@@ -5461,8 +5510,8 @@ subroutine testLakeModel6
       connection_merge_not_set_flood_merge_as_secondary = 10
       nlat_coarse = 3
       nlon_coarse = 3
-      nlat_surface_model = 3
-      nlon_surface_model = 3
+      nlat_surface_model = 2
+      nlon_surface_model = 2
       seconds_per_day = 86400.0_dp
       allocate(flow_directions(nlat_coarse,nlon_coarse))
       flow_directions = transpose(reshape((/-2,6,2,&
@@ -5556,6 +5605,11 @@ subroutine testLakeModel6
          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype /), &
          (/nlon,nlat/)))
+      allocate(cell_areas_on_surface_model_grid(nlat_surface_model,nlon_surface_model))
+      cell_areas_on_surface_model_grid = transpose(reshape((/ &
+          2.5,3.5, &
+          3.0,4.0 /), &
+      (/nlon_surface_model,nlat_surface_model/)))
       allocate(flood_next_cell_lat_index(nlat,nlon))
       flood_next_cell_lat_index = transpose(reshape((/ &
           0, 0, 0, 1, 0, 0, 0, 0, 0, &
@@ -5712,27 +5766,28 @@ subroutine testLakeModel6
       lake_retention_coefficient_local=0.1_dp
       allocate(corresponding_surface_cell_lat_index(nlat,nlon))
       corresponding_surface_cell_lat_index = transpose(reshape((/ &
-                                                           1,1,1,1,1,1,1,1,1, &
-                                                           1,1,1,1,1,1,1,1,1, &
+                                                           2,2,2,1,2,2,2,2,2, &
+                                                           2,2,2,1,2,2,2,2,2, &
+                                                           2,2,1,1,2,2,2,2,2, &
+                                                           2,2,1,1,2,2,2,2,2, &
+                                                           2,2,1,1,2,2,2,2,2, &
                                                            2,2,2,2,2,2,2,2,2, &
                                                            2,2,2,2,2,2,2,2,2, &
                                                            2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2, &
-                                                           3,3,3,3,3,3,3,3,3, &
-                                                           3,3,3,3,3,3,3,3,3, &
-                                                           3,3,3,3,3,3,3,3,3 /), &
+                                                           2,2,2,2,2,2,2,2,1 /), &
          (/nlon,nlat/)))
       allocate(corresponding_surface_cell_lon_index(nlat,nlon))
       corresponding_surface_cell_lon_index = transpose(reshape((/ &
-                                                           1,1,1,2,2,2,3,3,3, &
-                                                           1,1,1,2,2,2,3,3,3, &
-                                                           1,1,1,2,2,2,3,3,3, &
-                                                           1,1,1,2,2,2,3,3,3, &
-                                                           1,1,1,2,2,2,3,3,3, &
-                                                           1,1,1,2,2,2,3,3,3, &
-                                                           1,1,1,2,2,2,3,3,3, &
-                                                           1,1,1,2,2,2,3,3,3, &
-                                                           1,1,1,2,2,2,3,3,3 /), &
+                                                           2,2,2,1,2,2,2,2,2, &
+                                                           2,2,2,1,2,2,2,2,2, &
+                                                           2,2,1,1,2,2,2,2,2, &
+                                                           2,2,1,1,2,2,2,2,2, &
+                                                           2,2,1,1,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,2, &
+                                                           2,2,2,2,2,2,2,2,1, &
+                                                           2,2,2,2,2,2,2,2,2  /), &
+
          (/nlon,nlat/)))
       lake_parameters => LakeParameters(lake_centers, &
                                         connection_volume_thresholds, &
@@ -5742,6 +5797,7 @@ subroutine testLakeModel6
                                         additional_flood_local_redirect, &
                                         additional_connect_local_redirect, &
                                         merge_points, &
+                                        cell_areas_on_surface_model_grid, &
                                         flood_next_cell_lat_index, &
                                         flood_next_cell_lon_index, &
                                         connect_next_cell_lat_index, &
@@ -5787,13 +5843,12 @@ subroutine testLakeModel6
       allocate(runoff(nlat_coarse,nlon_coarse))
       allocate(runoffs(nlat_coarse,nlon_coarse,30000))
       runoff(:,:) = 0.0
-      allocate(evaporation(nlat_coarse,nlon_coarse))
-      allocate(evaporations(nlat_coarse,nlon_coarse,30000))
+      allocate(evaporation(nlat_surface_model,nlon_surface_model))
+      allocate(evaporations(nlat_surface_model,nlon_surface_model,30000))
       evaporation = transpose(reshape((/ &
-                                         1.0, 0.0, 0.0, &
-                                         0.0, 0.0, 0.0, &
-                                         0.0, 0.0, 0.0 /), &
-                                         (/nlon_coarse,nlat_coarse/)))
+                                         86400.0, 0.0, &
+                                         0.0, 0.0 /), &
+                                         (/nlon_surface_model,nlat_surface_model/)))
       do i = 1,30000
         runoffs(:,:,i) = runoff(:,:)
         evaporations(:,:,i) = evaporation(:,:)
@@ -5857,24 +5912,21 @@ subroutine testLakeModel6
          0,    0,    0,    0,    0,    0,    0,    0,    0, &
          0,    0,    0,    0,    0,    0,    0,    0,    0 /), &
          (/nlon,nlat/)))
-      allocate(expected_lake_fractions(3,3))
+      allocate(expected_lake_fractions(2,2))
       expected_lake_fractions = transpose(reshape((/ &
-                 0.0,0.0,0.0, &
-                 0.0,0.0,0.0, &
-                 0.0,0.0,0.0 /), &
-         (/3,3/)))
-      allocate(expected_number_lake_cells(3,3))
+                 0.125,0.0, &
+                 0.0,0.0 /), &
+         (/2,2/)))
+      allocate(expected_number_lake_cells(2,2))
       expected_number_lake_cells = transpose(reshape((/ &
-               0,0,0, &
-               0,0,0, &
-               0,0,0 /), &
-         (/3,3/)))
-      allocate(expected_number_fine_grid_cells(3,3))
+               1,0, &
+               0,0 /), &
+         (/2,2/)))
+      allocate(expected_number_fine_grid_cells(2,2))
       expected_number_fine_grid_cells = transpose(reshape((/ &
-               6,6,6, &
-              12,12,12, &
-               9,9,9 /), &
-         (/3,3/)))
+               8,1, &
+               1,71 /), &
+         (/2,2/)))
      allocate(expected_lake_volumes(1))
      expected_lake_volumes = (/ 0.0 /)
 
@@ -5934,24 +5986,21 @@ subroutine testLakeModel6
          0.0,    0.0,    0.0,    0.0,   0.0,    0.0,    0.0,    0.0,    0.0, &
          0.0,    0.0,    0.0,    0.0,   0.0,    0.0,    0.0,    0.0,    0.0 /), &
          (/nlon,nlat/)))
-      allocate(first_intermediate_expected_lake_fractions(3,3))
+      allocate(first_intermediate_expected_lake_fractions(2,2))
       first_intermediate_expected_lake_fractions = transpose(reshape((/ &
-                 0.0,0.0,0.0, &
-                 0.0,0.0,0.0, &
-                 0.0,0.0,0.0 /), &
-         (/3,3/)))
-      allocate(first_intermediate_expected_number_lake_cells(3,3))
+                 0.125,0.0, &
+                 0.0,0.0 /), &
+         (/2,2/)))
+      allocate(first_intermediate_expected_number_lake_cells(2,2))
       first_intermediate_expected_number_lake_cells = transpose(reshape((/ &
-               0,0,0, &
-               0,0,0, &
-               0,0,0 /), &
-         (/3,3/)))
-      allocate(first_intermediate_expected_number_fine_grid_cells(3,3))
+               1,0, &
+               0,0 /), &
+         (/2,2/)))
+      allocate(first_intermediate_expected_number_fine_grid_cells(2,2))
       first_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
-               6,6,6, &
-              12,12,12, &
-               9,9,9 /), &
-         (/3,3/)))
+               8,1, &
+               1,71 /), &
+         (/2,2/)))
       allocate(first_intermediate_expected_lake_volumes(1))
       first_intermediate_expected_lake_volumes = (/ 172800.0 /)
 
@@ -6011,24 +6060,21 @@ subroutine testLakeModel6
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0 /), &
          (/nlon,nlat/)))
-      allocate(second_intermediate_expected_lake_fractions(3,3))
+      allocate(second_intermediate_expected_lake_fractions(2,2))
       second_intermediate_expected_lake_fractions = transpose(reshape((/ &
-                0.0,0.0,0.0, &
-               0.25,1.0/6.0,0.0, &
-               0.0,0.0,0.0  /), &
-       (/3,3/)))
-      allocate(second_intermediate_expected_number_lake_cells(3,3))
+                0.75,0.0, &
+               0.0,0.0  /), &
+       (/2,2/)))
+      allocate(second_intermediate_expected_number_lake_cells(2,2))
       second_intermediate_expected_number_lake_cells = transpose(reshape((/ &
-             0,0,0, &
-             3,2,0, &
-             0,0,0 /), &
-       (/3,3/)))
-      allocate(second_intermediate_expected_number_fine_grid_cells(3,3))
+             6,0, &
+             0,0 /), &
+       (/2,2/)))
+      allocate(second_intermediate_expected_number_fine_grid_cells(2,2))
       second_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
-             6,6,6, &
-            12,12,12, &
-             9,9,9  /), &
-       (/3,3/)))
+             8,1, &
+             1,71  /), &
+       (/2,2/)))
       allocate(second_intermediate_expected_lake_volumes(1))
       second_intermediate_expected_lake_volumes = (/ 259200.0 /)
 
@@ -6088,24 +6134,21 @@ subroutine testLakeModel6
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0 /), &
          (/nlon,nlat/)))
-      allocate(third_intermediate_expected_lake_fractions(3,3))
+      allocate(third_intermediate_expected_lake_fractions(2,2))
       third_intermediate_expected_lake_fractions = transpose(reshape((/ &
-               0.0,0.0,0.0, &
-               0.25,1.0/6.0,0.0, &
-               0.0,0.0,0.0 /), &
-       (/3,3/)))
-      allocate(third_intermediate_expected_number_lake_cells(3,3))
+               0.75,0.0, &
+               0.0,0.0 /), &
+       (/2,2/)))
+      allocate(third_intermediate_expected_number_lake_cells(2,2))
       third_intermediate_expected_number_lake_cells = transpose(reshape((/ &
-             0,0,0, &
-             3,2,0, &
-             0,0,0 /), &
-       (/3,3/)))
-      allocate(third_intermediate_expected_number_fine_grid_cells(3,3))
+             6,0, &
+             0,0 /), &
+       (/2,2/)))
+      allocate(third_intermediate_expected_number_fine_grid_cells(2,2))
       third_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
-             6,6,6, &
-            12,12,12, &
-             9,9,9 /), &
-       (/3,3/)))
+             8,1, &
+             1,71 /), &
+       (/2,2/)))
       allocate(third_intermediate_expected_lake_volumes(1))
       third_intermediate_expected_lake_volumes = (/ 432000.0 /)
 
@@ -6129,24 +6172,21 @@ subroutine testLakeModel6
          (/nlon_coarse,nlat_coarse/)))
       fourth_intermediate_expected_water_to_hd = &
         fourth_intermediate_expected_water_to_hd/seconds_per_day
-      allocate(fourth_intermediate_expected_lake_fractions(3,3))
+      allocate(fourth_intermediate_expected_lake_fractions(2,2))
       fourth_intermediate_expected_lake_fractions = transpose(reshape((/ &
-                 0.0,1.0/3.0,0.0, &
-                 0.25,0.25,0.0, &
-                 0.0,0.0,0.0 /), &
-         (/3,3/)))
-      allocate(fourth_intermediate_expected_number_lake_cells(3,3))
+                 1.0,0.0, &
+                 0.0,0.0 /), &
+         (/2,2/)))
+      allocate(fourth_intermediate_expected_number_lake_cells(2,2))
       fourth_intermediate_expected_number_lake_cells = transpose(reshape((/ &
-               0,2,0, &
-               3,3,0, &
-               0,0,0 /), &
-         (/3,3/)))
-      allocate(fourth_intermediate_expected_number_fine_grid_cells(3,3))
+               8,0, &
+               0,0 /), &
+         (/2,2/)))
+      allocate(fourth_intermediate_expected_number_fine_grid_cells(2,2))
       fourth_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
-               6,6,6, &
-              12,12,12, &
-               9,9,9 /), &
-         (/3,3/)))
+               8,1, &
+               1,71 /), &
+         (/2,2/)))
       allocate(fifth_intermediate_expected_river_inflow(nlat_coarse,nlon_coarse))
       fifth_intermediate_expected_river_inflow = transpose(reshape((/ &
           0.0, 0.0, 0.0, &
@@ -6167,24 +6207,21 @@ subroutine testLakeModel6
          (/nlon_coarse,nlat_coarse/)))
       fifth_intermediate_expected_water_to_hd = &
         fifth_intermediate_expected_water_to_hd/seconds_per_day
-      allocate(fifth_intermediate_expected_lake_fractions(3,3))
+      allocate(fifth_intermediate_expected_lake_fractions(2,2))
       fifth_intermediate_expected_lake_fractions = transpose(reshape((/ &
-                 0.0,1.0/3.0,0.0, &
-                 0.25,0.25,0.0, &
-                 0.0,0.0,0.0 /), &
-         (/3,3/)))
-      allocate(fifth_intermediate_expected_number_lake_cells(3,3))
+                 1.0,0.0, &
+                 0.0,0.0 /), &
+         (/2,2/)))
+      allocate(fifth_intermediate_expected_number_lake_cells(2,2))
       fifth_intermediate_expected_number_lake_cells = transpose(reshape((/ &
-               0,2,0, &
-               3,3,0, &
-               0,0,0 /), &
-         (/3,3/)))
-      allocate(fifth_intermediate_expected_number_fine_grid_cells(3,3))
+               8,0, &
+               0,0 /), &
+         (/2,2/)))
+      allocate(fifth_intermediate_expected_number_fine_grid_cells(2,2))
       fifth_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
-               6,6,6, &
-              12,12,12, &
-               9,9,9 /), &
-         (/3,3/)))
+               8,1, &
+               1,71 /), &
+         (/2,2/)))
       allocate(sixth_intermediate_expected_river_inflow(nlat_coarse,nlon_coarse))
       sixth_intermediate_expected_river_inflow = transpose(reshape((/ &
           0.0, 0.0, 0.0, &
@@ -6241,24 +6278,21 @@ subroutine testLakeModel6
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0 /), &
          (/nlon,nlat/)))
-      allocate(sixth_intermediate_expected_lake_fractions(3,3))
+      allocate(sixth_intermediate_expected_lake_fractions(2,2))
       sixth_intermediate_expected_lake_fractions = transpose(reshape((/ &
-               0.0,1.0/3.0,0.0, &
-               0.25,0.25,0.0, &
-               0.0,0.0,0.0 /), &
-       (/3,3/)))
-      allocate(sixth_intermediate_expected_number_lake_cells(3,3))
+               1.0,0.0, &
+               0.0,0.0 /), &
+       (/2,2/)))
+      allocate(sixth_intermediate_expected_number_lake_cells(2,2))
       sixth_intermediate_expected_number_lake_cells = transpose(reshape((/ &
-             0,2,0, &
-             3,3,0, &
-             0,0,0 /), &
-       (/3,3/)))
-      allocate(sixth_intermediate_expected_number_fine_grid_cells(3,3))
+             8,0, &
+             0,0 /), &
+       (/2,2/)))
+      allocate(sixth_intermediate_expected_number_fine_grid_cells(2,2))
       sixth_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
-             6,6,6, &
-            12,12,12, &
-             9,9,9 /), &
-       (/3,3/)))
+             8,1, &
+             1,71 /), &
+       (/2,2/)))
       allocate(sixth_intermediate_expected_lake_volumes(1))
       sixth_intermediate_expected_lake_volumes = (/ 432000.0 /)
 
@@ -6318,24 +6352,21 @@ subroutine testLakeModel6
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0 /), &
          (/nlon,nlat/)))
-      allocate(seven_intermediate_expected_lake_fractions(3,3))
+      allocate(seven_intermediate_expected_lake_fractions(2,2))
       seven_intermediate_expected_lake_fractions = transpose(reshape((/ &
-               0.0,0.0,0.0, &
-               0.25,1.0/6.0,0.0, &
-               0.0,0.0,0.0 /), &
-       (/3,3/)))
-      allocate(seven_intermediate_expected_number_lake_cells(3,3))
+               0.75,0.0, &
+               0.0,0.0 /), &
+       (/2,2/)))
+      allocate(seven_intermediate_expected_number_lake_cells(2,2))
       seven_intermediate_expected_number_lake_cells = transpose(reshape((/ &
-             0,0,0, &
-             3,2,0, &
-             0,0,0 /), &
-       (/3,3/)))
-      allocate(seven_intermediate_expected_number_fine_grid_cells(3,3))
+             6,0, &
+             0,0 /), &
+       (/2,2/)))
+      allocate(seven_intermediate_expected_number_fine_grid_cells(2,2))
       seven_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
-             6,6,6, &
-            12,12,12, &
-             9,9,9 /), &
-       (/3,3/)))
+             8,1, &
+             1,71 /), &
+       (/2,2/)))
       allocate(seven_intermediate_expected_lake_volumes(1))
       seven_intermediate_expected_lake_volumes = (/ 345600.0 /)
 
@@ -6395,24 +6426,21 @@ subroutine testLakeModel6
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0 /), &
          (/nlon,nlat/)))
-      allocate(eight_intermediate_expected_lake_fractions(3,3))
+      allocate(eight_intermediate_expected_lake_fractions(2,2))
       eight_intermediate_expected_lake_fractions = transpose(reshape((/ &
-                 0.0,0.0,0.0, &
-                 0.25,1.0/6.0,0.0, &
-                 0.0,0.0,0.0 /), &
-         (/3,3/)))
-      allocate(eight_intermediate_expected_number_lake_cells(3,3))
+                 0.75,0.0, &
+                 0.0,0.0 /), &
+         (/2,2/)))
+      allocate(eight_intermediate_expected_number_lake_cells(2,2))
       eight_intermediate_expected_number_lake_cells = transpose(reshape((/ &
-               0,0,0, &
-               3,2,0, &
-               0,0,0 /), &
-         (/3,3/)))
-      allocate(eight_intermediate_expected_number_fine_grid_cells(3,3))
+               6,0, &
+               0,0 /), &
+         (/2,2/)))
+      allocate(eight_intermediate_expected_number_fine_grid_cells(2,2))
       eight_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
-               6,6,6, &
-              12,12,12, &
-               9,9,9 /), &
-         (/3,3/)))
+               8,1, &
+               1,71 /), &
+         (/2,2/)))
       allocate(eight_intermediate_expected_lake_volumes(1))
       eight_intermediate_expected_lake_volumes = (/ 259200.0 /)
 
@@ -6472,24 +6500,21 @@ subroutine testLakeModel6
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0 /), &
          (/nlon,nlat/)))
-      allocate(nine_intermediate_expected_lake_fractions(3,3))
+      allocate(nine_intermediate_expected_lake_fractions(2,2))
       nine_intermediate_expected_lake_fractions = transpose(reshape((/ &
-                 0.0,0.0,0.0, &
-                 0.25,1.0/6.0,0.0, &
-                 0.0,0.0,0.0 /), &
-         (/3,3/)))
-      allocate(nine_intermediate_expected_number_lake_cells(3,3))
+                 0.75,0.0, &
+                 0.0,0.0 /), &
+         (/2,2/)))
+      allocate(nine_intermediate_expected_number_lake_cells(2,2))
       nine_intermediate_expected_number_lake_cells = transpose(reshape((/ &
-               0,0,0, &
-               3,2,0, &
-               0,0,0 /), &
-         (/3,3/)))
-      allocate(nine_intermediate_expected_number_fine_grid_cells(3,3))
+               6,0, &
+               0,0 /), &
+         (/2,2/)))
+      allocate(nine_intermediate_expected_number_fine_grid_cells(2,2))
       nine_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
-         6,6,6, &
-        12,12,12, &
-         9,9,9 /), &
-         (/3,3/)))
+         8,1, &
+         1,71 /), &
+         (/2,2/)))
       allocate(nine_intermediate_expected_lake_volumes(1))
       nine_intermediate_expected_lake_volumes = (/ 172800.0 /)
 
@@ -6549,24 +6574,21 @@ subroutine testLakeModel6
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
          0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0 /), &
          (/nlon,nlat/)))
-      allocate(ten_intermediate_expected_lake_fractions(3,3))
+      allocate(ten_intermediate_expected_lake_fractions(2,2))
       ten_intermediate_expected_lake_fractions = transpose(reshape((/ &
-               0.0,0.0,0.0, &
-               0.0,0.0,0.0, &
-               0.0,0.0,0.0 /), &
-       (/3,3/)))
-      allocate(ten_intermediate_expected_number_lake_cells(3,3))
+               0.125,0.0, &
+               0.0,0.0 /), &
+       (/2,2/)))
+      allocate(ten_intermediate_expected_number_lake_cells(2,2))
       ten_intermediate_expected_number_lake_cells = transpose(reshape((/ &
-             0,0,0, &
-             0,0,0, &
-             0,0,0 /), &
-       (/3,3/)))
-      allocate(ten_intermediate_expected_number_fine_grid_cells(3,3))
+             1,0, &
+             0,0 /), &
+       (/2,2/)))
+      allocate(ten_intermediate_expected_number_fine_grid_cells(2,2))
       ten_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
-             6,6,6, &
-            12,12,12, &
-             9,9,9 /), &
-       (/3,3/)))
+             8,1, &
+             1,71 /), &
+       (/2,2/)))
       allocate(ten_intermediate_expected_lake_volumes(1))
       ten_intermediate_expected_lake_volumes = (/ 86400.0 /)
       allocate(eleven_intermediate_expected_river_inflow(nlat_coarse,nlon_coarse))
@@ -6625,24 +6647,21 @@ subroutine testLakeModel6
          0,    0,    0,    0,    0,    0,    0,    0,    0, &
          0,    0,    0,    0,    0,    0,    0,    0,    0 /), &
          (/nlon,nlat/)))
-      allocate(eleven_intermediate_expected_lake_fractions(3,3))
+      allocate(eleven_intermediate_expected_lake_fractions(2,2))
       eleven_intermediate_expected_lake_fractions = transpose(reshape((/ &
-               0.0,0.0,0.0, &
-               0.0,0.0,0.0, &
-               0.0,0.0,0.0 /), &
-       (/3,3/)))
-      allocate(eleven_intermediate_expected_number_lake_cells(3,3))
+               0.125,0.0, &
+               0.0,0.0 /), &
+       (/2,2/)))
+      allocate(eleven_intermediate_expected_number_lake_cells(2,2))
       eleven_intermediate_expected_number_lake_cells = transpose(reshape((/ &
-             0,0,0, &
-             0,0,0, &
-             0,0,0 /), &
-       (/3,3/)))
-      allocate(eleven_intermediate_expected_number_fine_grid_cells(3,3))
+             1,0, &
+             0,0 /), &
+       (/2,2/)))
+      allocate(eleven_intermediate_expected_number_fine_grid_cells(2,2))
       eleven_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
-             6,6,6, &
-            12,12,12, &
-             9,9,9 /), &
-       (/3,3/)))
+             8,1, &
+             1,71 /), &
+       (/2,2/)))
       allocate(eleven_intermediate_expected_lake_volumes(1))
       eleven_intermediate_expected_lake_volumes = (/ 0.0 /)
 
@@ -6702,24 +6721,21 @@ subroutine testLakeModel6
          0,    0,    0,    0,    0,    0,    0,    0,    0, &
          0,    0,    0,    0,    0,    0,    0,    0,    0 /), &
          (/nlon,nlat/)))
-      allocate(twelve_intermediate_expected_lake_fractions(3,3))
+      allocate(twelve_intermediate_expected_lake_fractions(2,2))
       twelve_intermediate_expected_lake_fractions = transpose(reshape((/ &
-               0.0,0.0,0.0, &
-               0.0,0.0,0.0, &
-               0.0,0.0,0.0 /), &
-       (/3,3/)))
-      allocate(twelve_intermediate_expected_number_lake_cells(3,3))
+               0.125,0.0, &
+               0.0,0.0 /), &
+       (/2,2/)))
+      allocate(twelve_intermediate_expected_number_lake_cells(2,2))
       twelve_intermediate_expected_number_lake_cells = transpose(reshape((/ &
-             0,0,0, &
-             0,0,0, &
-             0,0,0 /), &
-       (/3,3/)))
-      allocate(twelve_intermediate_expected_number_fine_grid_cells(3,3))
+             1,0, &
+             0,0 /), &
+       (/2,2/)))
+      allocate(twelve_intermediate_expected_number_fine_grid_cells(2,2))
       twelve_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
-             6,6,6, &
-            12,12,12, &
-             9,9,9 /), &
-       (/3,3/)))
+             8,1, &
+             1,71 /), &
+       (/2,2/)))
       allocate(twelve_intermediate_expected_lake_volumes(1))
       twelve_intermediate_expected_lake_volumes = (/ 0.0 /)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
@@ -6757,7 +6773,7 @@ subroutine testLakeModel6
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
                                                                 lake_fields_out)
       call assert_equals(first_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(first_intermediate_expected_water_to_ocean,&
@@ -6769,10 +6785,10 @@ subroutine testLakeModel6
       call assert_equals(first_intermediate_expected_lake_volumes,lake_volumes,1)
       call assert_equals(diagnostic_lake_volumes,&
                          first_intermediate_expected_diagnostic_lake_volumes,nlat,nlon)
-      call assert_equals(first_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
-      call assert_equals(first_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(first_intermediate_expected_lake_fractions,lake_fractions,2,2,0.000001_dp)
+      call assert_equals(first_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,2,2)
       call assert_equals(first_intermediate_expected_number_fine_grid_cells, &
-                         lake_parameters%number_fine_grid_cells,3,3)
+                         lake_parameters%number_fine_grid_cells,2,2)
       deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
@@ -6811,7 +6827,7 @@ subroutine testLakeModel6
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
                                                                 lake_fields_out)
       call assert_equals(second_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(second_intermediate_expected_water_to_ocean,&
@@ -6823,10 +6839,10 @@ subroutine testLakeModel6
       call assert_equals(second_intermediate_expected_lake_volumes,lake_volumes,1)
       call assert_equals(diagnostic_lake_volumes,&
                          second_intermediate_expected_diagnostic_lake_volumes,nlat,nlon)
-      call assert_equals(second_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
-      call assert_equals(second_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(second_intermediate_expected_lake_fractions,lake_fractions,2,2,0.000001_dp)
+      call assert_equals(second_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,2,2)
       call assert_equals(second_intermediate_expected_number_fine_grid_cells, &
-                         lake_parameters%number_fine_grid_cells,3,3)
+                         lake_parameters%number_fine_grid_cells,2,2)
       deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
@@ -6865,7 +6881,7 @@ subroutine testLakeModel6
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
                                                                 lake_fields_out)
       call assert_equals(third_intermediate_expected_river_inflow, river_fields%river_inflow,3,3)
       call assert_equals(third_intermediate_expected_water_to_ocean,&
@@ -6877,10 +6893,10 @@ subroutine testLakeModel6
       call assert_equals(third_intermediate_expected_lake_volumes,lake_volumes,1)
       call assert_equals(diagnostic_lake_volumes,&
                          third_intermediate_expected_diagnostic_lake_volumes,nlat,nlon)
-      call assert_equals(third_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
-      call assert_equals(third_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(third_intermediate_expected_lake_fractions,lake_fractions,2,2,0.000001_dp)
+      call assert_equals(third_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,2,2)
       call assert_equals(third_intermediate_expected_number_fine_grid_cells, &
-                         lake_parameters%number_fine_grid_cells,3,3)
+                         lake_parameters%number_fine_grid_cells,2,2)
       deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
@@ -6919,7 +6935,7 @@ subroutine testLakeModel6
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
                                                                 lake_fields_out)
       call assert_equals(fourth_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(fourth_intermediate_expected_water_to_ocean,&
@@ -6931,10 +6947,10 @@ subroutine testLakeModel6
       call assert_equals(sixth_intermediate_expected_lake_volumes,lake_volumes,1)
       call assert_equals(diagnostic_lake_volumes,&
                          sixth_intermediate_expected_diagnostic_lake_volumes,nlat,nlon)
-      call assert_equals(fourth_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
-      call assert_equals(fourth_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(fourth_intermediate_expected_lake_fractions,lake_fractions,2,2,0.000001_dp)
+      call assert_equals(fourth_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,2,2)
       call assert_equals(fourth_intermediate_expected_number_fine_grid_cells, &
-                         lake_parameters%number_fine_grid_cells,3,3)
+                         lake_parameters%number_fine_grid_cells,2,2)
       deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
@@ -6973,7 +6989,7 @@ subroutine testLakeModel6
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
                                                                 lake_fields_out)
       call assert_equals(fifth_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(fifth_intermediate_expected_water_to_ocean,&
@@ -6985,10 +7001,10 @@ subroutine testLakeModel6
       call assert_equals(sixth_intermediate_expected_lake_volumes,lake_volumes,1)
       call assert_equals(diagnostic_lake_volumes,&
                          sixth_intermediate_expected_diagnostic_lake_volumes,nlat,nlon)
-      call assert_equals(fifth_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
-      call assert_equals(fifth_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(fifth_intermediate_expected_lake_fractions,lake_fractions,2,2,0.000001_dp)
+      call assert_equals(fifth_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,2,2)
       call assert_equals(fifth_intermediate_expected_number_fine_grid_cells, &
-                         lake_parameters%number_fine_grid_cells,3,3)
+                         lake_parameters%number_fine_grid_cells,2,2)
       deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
@@ -7027,7 +7043,7 @@ subroutine testLakeModel6
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
                                                                 lake_fields_out)
       call assert_equals(sixth_intermediate_expected_river_inflow,&
                          river_fields%river_inflow,3,3)
@@ -7040,10 +7056,10 @@ subroutine testLakeModel6
       call assert_equals(sixth_intermediate_expected_lake_volumes,lake_volumes,1)
       call assert_equals(diagnostic_lake_volumes,&
                          sixth_intermediate_expected_diagnostic_lake_volumes,nlat,nlon)
-      call assert_equals(sixth_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
-      call assert_equals(sixth_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(sixth_intermediate_expected_lake_fractions,lake_fractions,2,2,0.000001_dp)
+      call assert_equals(sixth_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,2,2)
       call assert_equals(sixth_intermediate_expected_number_fine_grid_cells, &
-                         lake_parameters%number_fine_grid_cells,3,3)
+                         lake_parameters%number_fine_grid_cells,2,2)
       deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
@@ -7082,7 +7098,7 @@ subroutine testLakeModel6
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
                                                                 lake_fields_out)
       call assert_equals(sixth_intermediate_expected_river_inflow, river_fields%river_inflow,3,3)
       call assert_equals(sixth_intermediate_expected_water_to_ocean,&
@@ -7094,10 +7110,10 @@ subroutine testLakeModel6
       call assert_equals(sixth_intermediate_expected_lake_volumes,lake_volumes,1)
       call assert_equals(diagnostic_lake_volumes,&
                          sixth_intermediate_expected_diagnostic_lake_volumes,nlat,nlon)
-      call assert_equals(sixth_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
-      call assert_equals(sixth_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(sixth_intermediate_expected_lake_fractions,lake_fractions,2,2,0.000001_dp)
+      call assert_equals(sixth_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,2,2)
       call assert_equals(sixth_intermediate_expected_number_fine_grid_cells, &
-                         lake_parameters%number_fine_grid_cells,3,3)
+                         lake_parameters%number_fine_grid_cells,2,2)
       deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
@@ -7136,7 +7152,7 @@ subroutine testLakeModel6
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
                                                                 lake_fields_out)
       call assert_equals(seven_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(seven_intermediate_expected_water_to_ocean,&
@@ -7148,10 +7164,10 @@ subroutine testLakeModel6
       call assert_equals(seven_intermediate_expected_lake_volumes,lake_volumes,1)
       call assert_equals(diagnostic_lake_volumes,&
                          seven_intermediate_expected_diagnostic_lake_volumes,nlat,nlon)
-      call assert_equals(seven_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
-      call assert_equals(seven_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(seven_intermediate_expected_lake_fractions,lake_fractions,2,2,0.000001_dp)
+      call assert_equals(seven_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,2,2)
       call assert_equals(seven_intermediate_expected_number_fine_grid_cells, &
-                         lake_parameters%number_fine_grid_cells,3,3)
+                         lake_parameters%number_fine_grid_cells,2,2)
       deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
@@ -7190,7 +7206,7 @@ subroutine testLakeModel6
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
                                                                 lake_fields_out)
       call assert_equals(eight_intermediate_expected_river_inflow,&
                          river_fields%river_inflow,3,3)
@@ -7203,10 +7219,11 @@ subroutine testLakeModel6
       call assert_equals(eight_intermediate_expected_lake_volumes,lake_volumes,1)
       call assert_equals(diagnostic_lake_volumes,&
                          eight_intermediate_expected_diagnostic_lake_volumes,nlat,nlon)
-      call assert_equals(eight_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
-      call assert_equals(eight_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(eight_intermediate_expected_lake_fractions,lake_fractions,2,2,0.000001_dp)
+      call assert_equals(eight_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,2,2)
       call assert_equals(eight_intermediate_expected_number_fine_grid_cells, &
-                         lake_parameters%number_fine_grid_cells,3,3)
+                         lake_parameters%number_fine_grid_cells,2,2)
+      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -7244,7 +7261,7 @@ subroutine testLakeModel6
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
                                                                 lake_fields_out)
       call assert_equals(nine_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(nine_intermediate_expected_water_to_ocean,&
@@ -7256,10 +7273,11 @@ subroutine testLakeModel6
       call assert_equals(nine_intermediate_expected_lake_volumes,lake_volumes,1)
       call assert_equals(diagnostic_lake_volumes,&
                          nine_intermediate_expected_diagnostic_lake_volumes,nlat,nlon)
-      call assert_equals(nine_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
-      call assert_equals(nine_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(nine_intermediate_expected_lake_fractions,lake_fractions,2,2,0.000001_dp)
+      call assert_equals(nine_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,2,2)
       call assert_equals(nine_intermediate_expected_number_fine_grid_cells, &
-                         lake_parameters%number_fine_grid_cells,3,3)
+                         lake_parameters%number_fine_grid_cells,2,2)
+      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -7297,7 +7315,7 @@ subroutine testLakeModel6
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
                                                                 lake_fields_out)
       call assert_equals(ten_intermediate_expected_river_inflow,&
                          river_fields%river_inflow,3,3)
@@ -7310,10 +7328,11 @@ subroutine testLakeModel6
       call assert_equals(ten_intermediate_expected_lake_volumes,lake_volumes,1)
       call assert_equals(diagnostic_lake_volumes,&
                          ten_intermediate_expected_diagnostic_lake_volumes,nlat,nlon)
-      call assert_equals(ten_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
-      call assert_equals(ten_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(ten_intermediate_expected_lake_fractions,lake_fractions,2,2,0.000001_dp)
+      call assert_equals(ten_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,2,2)
       call assert_equals(ten_intermediate_expected_number_fine_grid_cells, &
-                         lake_parameters%number_fine_grid_cells,3,3)
+                         lake_parameters%number_fine_grid_cells,2,2)
+      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -7351,7 +7370,7 @@ subroutine testLakeModel6
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
                                                                 lake_fields_out)
       call assert_equals(eleven_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(eleven_intermediate_expected_water_to_ocean,&
@@ -7364,10 +7383,11 @@ subroutine testLakeModel6
       call assert_equals(diagnostic_lake_volumes, &
                          eleven_intermediate_expected_diagnostic_lake_volumes,nlat,nlon,&
                          0.0000000000001_dp)
-      call assert_equals(eleven_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
-      call assert_equals(eleven_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(eleven_intermediate_expected_lake_fractions,lake_fractions,2,2,0.000001_dp)
+      call assert_equals(eleven_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,2,2)
       call assert_equals(eleven_intermediate_expected_number_fine_grid_cells, &
-                         lake_parameters%number_fine_grid_cells,3,3)
+                         lake_parameters%number_fine_grid_cells,2,2)
+      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -7405,7 +7425,7 @@ subroutine testLakeModel6
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
                                                                 lake_fields_out)
       call assert_equals(twelve_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(twelve_intermediate_expected_water_to_ocean,&
@@ -7418,10 +7438,11 @@ subroutine testLakeModel6
       call assert_equals(diagnostic_lake_volumes,&
                          twelve_intermediate_expected_diagnostic_lake_volumes,nlat,nlon,&
                          0.0000000000001_dp)
-      call assert_equals(twelve_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
-      call assert_equals(twelve_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(twelve_intermediate_expected_lake_fractions,lake_fractions,2,2,0.000001_dp)
+      call assert_equals(twelve_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,2,2)
       call assert_equals(twelve_intermediate_expected_number_fine_grid_cells, &
-                         lake_parameters%number_fine_grid_cells,3,3)
+                         lake_parameters%number_fine_grid_cells,2,2)
+      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -7459,7 +7480,7 @@ subroutine testLakeModel6
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
                                                                 lake_fields_out)
       call assert_equals(expected_river_inflow, river_fields%river_inflow,3,3)
       call assert_equals(expected_water_to_ocean,&
@@ -7470,10 +7491,11 @@ subroutine testLakeModel6
       call assert_equals(expected_lake_volumes,lake_volumes,1)
       call assert_equals(diagnostic_lake_volumes,expected_diagnostic_lake_volumes,nlat,nlon,&
                          0.0000000000001_dp)
-      call assert_equals(expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
-      call assert_equals(expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(expected_lake_fractions,lake_fractions,2,2,0.000001_dp)
+      call assert_equals(expected_number_lake_cells,lake_fields_out%number_lake_cells,2,2)
       call assert_equals(expected_number_fine_grid_cells, &
-                         lake_parameters%number_fine_grid_cells,3,3)
+                         lake_parameters%number_fine_grid_cells,2,2)
+      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       deallocate(lake_volumes)
       deallocate(drainage)
@@ -7492,6 +7514,9 @@ subroutine testLakeModel6
       deallocate(expected_lake_types)
       deallocate(expected_lake_volumes)
       deallocate(expected_diagnostic_lake_volumes)
+      deallocate(expected_lake_fractions)
+      deallocate(expected_number_lake_cells)
+      deallocate(expected_number_fine_grid_cells)
       deallocate(first_intermediate_expected_river_inflow)
       deallocate(first_intermediate_expected_water_to_ocean)
       deallocate(first_intermediate_expected_water_to_hd)
@@ -7499,6 +7524,9 @@ subroutine testLakeModel6
       deallocate(first_intermediate_expected_lake_types)
       deallocate(first_intermediate_expected_lake_volumes)
       deallocate(first_intermediate_expected_diagnostic_lake_volumes)
+      deallocate(first_intermediate_expected_lake_fractions)
+      deallocate(first_intermediate_expected_number_lake_cells)
+      deallocate(first_intermediate_expected_number_fine_grid_cells)
       deallocate(second_intermediate_expected_river_inflow)
       deallocate(second_intermediate_expected_water_to_ocean)
       deallocate(second_intermediate_expected_water_to_hd)
@@ -7506,6 +7534,9 @@ subroutine testLakeModel6
       deallocate(second_intermediate_expected_lake_types)
       deallocate(second_intermediate_expected_lake_volumes)
       deallocate(second_intermediate_expected_diagnostic_lake_volumes)
+      deallocate(second_intermediate_expected_lake_fractions)
+      deallocate(second_intermediate_expected_number_lake_cells)
+      deallocate(second_intermediate_expected_number_fine_grid_cells)
       deallocate(third_intermediate_expected_river_inflow)
       deallocate(third_intermediate_expected_water_to_ocean)
       deallocate(third_intermediate_expected_water_to_hd)
@@ -7513,12 +7544,21 @@ subroutine testLakeModel6
       deallocate(third_intermediate_expected_lake_types)
       deallocate(third_intermediate_expected_lake_volumes)
       deallocate(third_intermediate_expected_diagnostic_lake_volumes)
+      deallocate(third_intermediate_expected_lake_fractions)
+      deallocate(third_intermediate_expected_number_lake_cells)
+      deallocate(third_intermediate_expected_number_fine_grid_cells)
       deallocate(fourth_intermediate_expected_river_inflow)
       deallocate(fourth_intermediate_expected_water_to_ocean)
       deallocate(fourth_intermediate_expected_water_to_hd)
+      deallocate(fourth_intermediate_expected_lake_fractions)
+      deallocate(fourth_intermediate_expected_number_lake_cells)
+      deallocate(fourth_intermediate_expected_number_fine_grid_cells)
       deallocate(fifth_intermediate_expected_river_inflow)
       deallocate(fifth_intermediate_expected_water_to_ocean)
       deallocate(fifth_intermediate_expected_water_to_hd)
+      deallocate(fifth_intermediate_expected_lake_fractions)
+      deallocate(fifth_intermediate_expected_number_lake_cells)
+      deallocate(fifth_intermediate_expected_number_fine_grid_cells)
       deallocate(sixth_intermediate_expected_river_inflow)
       deallocate(sixth_intermediate_expected_water_to_ocean)
       deallocate(sixth_intermediate_expected_water_to_hd)
@@ -7526,6 +7566,9 @@ subroutine testLakeModel6
       deallocate(sixth_intermediate_expected_lake_types)
       deallocate(sixth_intermediate_expected_lake_volumes)
       deallocate(sixth_intermediate_expected_diagnostic_lake_volumes)
+      deallocate(sixth_intermediate_expected_lake_fractions)
+      deallocate(sixth_intermediate_expected_number_lake_cells)
+      deallocate(sixth_intermediate_expected_number_fine_grid_cells)
       deallocate(seven_intermediate_expected_river_inflow)
       deallocate(seven_intermediate_expected_water_to_ocean)
       deallocate(seven_intermediate_expected_water_to_hd)
@@ -7533,6 +7576,9 @@ subroutine testLakeModel6
       deallocate(seven_intermediate_expected_lake_types)
       deallocate(seven_intermediate_expected_lake_volumes)
       deallocate(seven_intermediate_expected_diagnostic_lake_volumes)
+      deallocate(seven_intermediate_expected_lake_fractions)
+      deallocate(seven_intermediate_expected_number_lake_cells)
+      deallocate(seven_intermediate_expected_number_fine_grid_cells)
       deallocate(eight_intermediate_expected_river_inflow)
       deallocate(eight_intermediate_expected_water_to_ocean)
       deallocate(eight_intermediate_expected_water_to_hd)
@@ -7540,6 +7586,9 @@ subroutine testLakeModel6
       deallocate(eight_intermediate_expected_lake_types)
       deallocate(eight_intermediate_expected_lake_volumes)
       deallocate(eight_intermediate_expected_diagnostic_lake_volumes)
+      deallocate(eight_intermediate_expected_lake_fractions)
+      deallocate(eight_intermediate_expected_number_lake_cells)
+      deallocate(eight_intermediate_expected_number_fine_grid_cells)
       deallocate(nine_intermediate_expected_river_inflow)
       deallocate(nine_intermediate_expected_water_to_ocean)
       deallocate(nine_intermediate_expected_water_to_hd)
@@ -7547,6 +7596,9 @@ subroutine testLakeModel6
       deallocate(nine_intermediate_expected_lake_types)
       deallocate(nine_intermediate_expected_lake_volumes)
       deallocate(nine_intermediate_expected_diagnostic_lake_volumes)
+      deallocate(nine_intermediate_expected_lake_fractions)
+      deallocate(nine_intermediate_expected_number_lake_cells)
+      deallocate(nine_intermediate_expected_number_fine_grid_cells)
       deallocate(ten_intermediate_expected_river_inflow)
       deallocate(ten_intermediate_expected_water_to_ocean)
       deallocate(ten_intermediate_expected_water_to_hd)
@@ -7554,6 +7606,9 @@ subroutine testLakeModel6
       deallocate(ten_intermediate_expected_lake_types)
       deallocate(ten_intermediate_expected_lake_volumes)
       deallocate(ten_intermediate_expected_diagnostic_lake_volumes)
+      deallocate(ten_intermediate_expected_lake_fractions)
+      deallocate(ten_intermediate_expected_number_lake_cells)
+      deallocate(ten_intermediate_expected_number_fine_grid_cells)
       deallocate(eleven_intermediate_expected_river_inflow)
       deallocate(eleven_intermediate_expected_water_to_ocean)
       deallocate(eleven_intermediate_expected_water_to_hd)
@@ -7561,6 +7616,9 @@ subroutine testLakeModel6
       deallocate(eleven_intermediate_expected_lake_types)
       deallocate(eleven_intermediate_expected_lake_volumes)
       deallocate(eleven_intermediate_expected_diagnostic_lake_volumes)
+      deallocate(eleven_intermediate_expected_lake_fractions)
+      deallocate(eleven_intermediate_expected_number_lake_cells)
+      deallocate(eleven_intermediate_expected_number_fine_grid_cells)
       deallocate(twelve_intermediate_expected_river_inflow)
       deallocate(twelve_intermediate_expected_water_to_ocean)
       deallocate(twelve_intermediate_expected_water_to_hd)
@@ -7568,6 +7626,9 @@ subroutine testLakeModel6
       deallocate(twelve_intermediate_expected_lake_types)
       deallocate(twelve_intermediate_expected_lake_volumes)
       deallocate(twelve_intermediate_expected_diagnostic_lake_volumes)
+      deallocate(twelve_intermediate_expected_lake_fractions)
+      deallocate(twelve_intermediate_expected_number_lake_cells)
+      deallocate(twelve_intermediate_expected_number_fine_grid_cells)
       deallocate(lake_types)
       call clean_lake_model()
       call clean_hd_model()
@@ -7602,6 +7663,7 @@ subroutine testLakeModel7
    logical,dimension(:,:), pointer :: additional_flood_local_redirect
    logical,dimension(:,:), pointer :: additional_connect_local_redirect
    integer,dimension(:,:), pointer :: merge_points
+  real(dp),dimension(:,:),pointer :: cell_areas_on_surface_model_grid
    integer,dimension(:,:), pointer :: flood_next_cell_lat_index
    integer,dimension(:,:), pointer :: flood_next_cell_lon_index
    integer,dimension(:,:), pointer :: connect_next_cell_lat_index
@@ -7770,6 +7832,12 @@ subroutine testLakeModel7
          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype /), &
          (/nlon,nlat/)))
+      allocate(cell_areas_on_surface_model_grid(nlat_surface_model,nlon_surface_model))
+      cell_areas_on_surface_model_grid = transpose(reshape((/ &
+          2.5,3.0,2.5, &
+          3.0,4.0,3.0, &
+          2.5,3.0,2.5 /), &
+      (/nlon_surface_model,nlat_surface_model/)))
       allocate(flood_next_cell_lat_index(nlat,nlon))
       flood_next_cell_lat_index = transpose(reshape((/ &
           0, 0, 0, 1, 0, 0, 0, 0, 0, &
@@ -7956,6 +8024,7 @@ subroutine testLakeModel7
                                         additional_flood_local_redirect, &
                                         additional_connect_local_redirect, &
                                         merge_points, &
+                                        cell_areas_on_surface_model_grid, &
                                         flood_next_cell_lat_index, &
                                         flood_next_cell_lon_index, &
                                         connect_next_cell_lat_index, &
@@ -7983,7 +8052,7 @@ subroutine testLakeModel7
       drainages(:,:,:) = 0.0
       allocate(runoffs(nlat_coarse,nlon_coarse,1000))
       runoffs(:,:,:) = 0.0
-      allocate(evaporations(nlat_coarse,nlon_coarse,1000))
+      allocate(evaporations(nlat_surface_model,nlon_surface_model,1000))
       evaporations(:,:,:) = 0.0
       allocate(initial_water_to_lake_centers(nlat,nlon))
       initial_water_to_lake_centers = transpose(reshape((/ &
@@ -8269,7 +8338,7 @@ subroutine testLakeModel7
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
                                                                 lake_fields_out)
       call assert_equals(first_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(first_intermediate_expected_water_to_ocean,&
@@ -8286,6 +8355,7 @@ subroutine testLakeModel7
       call assert_equals(first_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
       call assert_equals(first_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,3,3)
+      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -8323,7 +8393,7 @@ subroutine testLakeModel7
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
                                                                 lake_fields_out)
       call assert_equals(second_intermediate_expected_river_inflow,&
                          river_fields%river_inflow,3,3)
@@ -8342,6 +8412,7 @@ subroutine testLakeModel7
       call assert_equals(second_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
       call assert_equals(second_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,3,3)
+      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -8379,7 +8450,7 @@ subroutine testLakeModel7
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
                                                                 lake_fields_out)
       call assert_equals(expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -8398,6 +8469,7 @@ subroutine testLakeModel7
       deallocate(drainages)
       deallocate(runoffs)
       deallocate(evaporations)
+      deallocate(lake_fractions)
       deallocate(initial_spillover_to_rivers)
       deallocate(initial_water_to_lake_centers)
       deallocate(expected_river_inflow)
@@ -8407,6 +8479,9 @@ subroutine testLakeModel7
       deallocate(expected_lake_types)
       deallocate(expected_lake_volumes)
       deallocate(expected_diagnostic_lake_volumes)
+      deallocate(expected_lake_fractions)
+      deallocate(expected_number_lake_cells)
+      deallocate(expected_number_fine_grid_cells)
       deallocate(first_intermediate_expected_river_inflow)
       deallocate(first_intermediate_expected_water_to_ocean)
       deallocate(first_intermediate_expected_water_to_hd)
@@ -8414,6 +8489,9 @@ subroutine testLakeModel7
       deallocate(first_intermediate_expected_lake_types)
       deallocate(first_intermediate_expected_lake_volumes)
       deallocate(first_intermediate_expected_diagnostic_lake_volumes)
+      deallocate(first_intermediate_expected_lake_fractions)
+      deallocate(first_intermediate_expected_number_lake_cells)
+      deallocate(first_intermediate_expected_number_fine_grid_cells)
       deallocate(second_intermediate_expected_river_inflow)
       deallocate(second_intermediate_expected_water_to_ocean)
       deallocate(second_intermediate_expected_water_to_hd)
@@ -8421,6 +8499,9 @@ subroutine testLakeModel7
       deallocate(second_intermediate_expected_lake_types)
       deallocate(second_intermediate_expected_lake_volumes)
       deallocate(second_intermediate_expected_diagnostic_lake_volumes)
+      deallocate(second_intermediate_expected_lake_fractions)
+      deallocate(second_intermediate_expected_number_lake_cells)
+      deallocate(second_intermediate_expected_number_fine_grid_cells)
       deallocate(lake_types)
       call clean_lake_model()
       call clean_hd_model()
@@ -8526,6 +8607,7 @@ subroutine testLakeModel8
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
    real(dp), dimension(:,:), pointer :: lake_fractions
    integer,dimension(:,:), pointer :: merge_points
+   real(dp),dimension(:,:),pointer :: cell_areas_on_surface_model_grid
    integer :: nlat_coarse, nlon_coarse
    integer :: nlat_surface_model,nlon_surface_model
    integer :: nlat,nlon
@@ -8893,6 +8975,12 @@ subroutine testLakeModel8
        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype /), &
          (/nlon,nlat/)))
+      allocate(cell_areas_on_surface_model_grid(nlat_surface_model,nlon_surface_model))
+      cell_areas_on_surface_model_grid = transpose(reshape((/ &
+          2.5,3.0,2.5, &
+          3.0,4.0,3.0, &
+          2.5,3.0,2.5 /), &
+      (/nlon_surface_model,nlat_surface_model/)))
       allocate(flood_next_cell_lat_index(20,20))
       flood_next_cell_lat_index = transpose(reshape((/ &
           -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
@@ -9193,49 +9281,49 @@ subroutine testLakeModel8
       lake_retention_coefficient_local=0.1_dp
       allocate(corresponding_surface_cell_lat_index(nlat,nlon))
       corresponding_surface_cell_lat_index = transpose(reshape((/ &
-                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
-                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
-                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
-                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
-                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
-                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
-                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
-                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
-                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
-                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
-                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3 /), &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,2,1,1,1,1,1,1,1,1,1,1,2,2,2,2,1,1,1,1, &
+                                                             1,1,1,1,1,2,2,1,1,1,1,2,2,2,2,2,1,1,1,1, &
+                                                             1,1,1,1,1,3,3,3,3,1,1,1,1,2,2,2,2,1,1,1, &
+                                                             1,1,1,2,3,3,1,3,3,2,2,1,2,1,2,2,2,2,1,1, &
+                                                             1,1,1,1,3,3,3,3,3,1,2,1,1,2,2,2,2,2,1,1, &
+                                                             1,1,1,1,1,3,1,3,1,1,1,2,1,2,2,2,2,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,2,2,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,3,3,3,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,3,3,1,1, &
+                                                             1,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,3 /), &
          (/nlon,nlat/)))
       allocate(corresponding_surface_cell_lon_index(nlat,nlon))
       corresponding_surface_cell_lon_index = transpose(reshape((/ &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3 /), &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,1, &
+                                                             1,2,1,3,3,3,3,3,3,3,3,3,2,2,2,2,3,3,3,1, &
+                                                             3,1,1,3,3,2,2,3,3,3,3,2,2,2,2,2,3,3,3,3, &
+                                                             3,1,1,3,3,1,1,1,1,3,3,3,2,2,2,2,2,3,3,3, &
+                                                             3,1,1,2,1,1,3,1,1,2,2,2,2,2,2,2,2,2,3,3, &
+                                                             1,1,1,3,1,1,1,1,1,3,2,2,2,2,2,2,2,2,3,3, &
+                                                             3,1,1,3,3,1,3,1,3,3,3,2,2,2,2,2,2,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,2,2,2,2,2,2,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,2,2,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,2,2,2,2,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,2,2,2,3,3, &
+                                                             3,3,3,1,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3 /), &
          (/nlon,nlat/)))
       lake_parameters => LakeParameters(lake_centers, &
                                         connection_volume_thresholds, &
@@ -9245,6 +9333,7 @@ subroutine testLakeModel8
                                         additional_flood_local_redirect, &
                                         additional_connect_local_redirect, &
                                         merge_points, &
+                                        cell_areas_on_surface_model_grid, &
                                         flood_next_cell_lat_index, &
                                         flood_next_cell_lon_index, &
                                         connect_next_cell_lat_index, &
@@ -9278,9 +9367,9 @@ subroutine testLakeModel8
         drainages(:,:,i) = drainage(:,:)
         runoffs(:,:,i) = runoff(:,:)
       end do
-      allocate(evaporation(4,4))
+      allocate(evaporation(3,3))
       evaporation(:,:) = 0.0
-      allocate(evaporations(4,4,5000))
+      allocate(evaporations(3,3,5000))
       do i = 1,5000
         evaporations(:,:,i) = evaporation(:,:)
       end do
@@ -9428,21 +9517,21 @@ subroutine testLakeModel8
          (/nlon,nlat/)))
       allocate(expected_lake_fractions(3,3))
       expected_lake_fractions = transpose(reshape((/ &
-                 0.357143,0.305556,0.404762, &
-                 0.160714,0.229167,0.25, &
-                 0.0,0.0,0.0 /), &
+                 1.0,1.0,0.0, &
+                 1.0,0.976744186,0.0, &
+                 1.0,0.1428571429,0.0 /), &
          (/3,3/)))
       allocate(expected_number_lake_cells(3,3))
       expected_number_lake_cells = transpose(reshape((/ &
-               15,11,17, &
-                9,11,14, &
-                0,0,0 /), &
+               15, 6, 0, &
+                1,42, 0, &
+               15, 1, 0 /), &
          (/3,3/)))
       allocate(expected_number_fine_grid_cells(3,3))
       expected_number_fine_grid_cells = transpose(reshape((/ &
-               42,36,42, &
-               56,48,56, &
-              42,36,42 /), &
+                15,6 ,311, &
+                1 ,43,1, &
+                15,7 ,1  /), &
          (/3,3/)))
       allocate(expected_lake_volumes(6))
       expected_lake_volumes = (/46.0, 0.0, 38.0, 6.0, 340.0, 0.0 /)
@@ -9540,21 +9629,21 @@ subroutine testLakeModel8
          (/nlon,nlat/)))
       allocate(first_intermediate_expected_lake_fractions(3,3))
       first_intermediate_expected_lake_fractions = transpose(reshape((/ &
-                 0.0,0.0,0.0, &
-                 0.0,0.0,0.0, &
-                 0.0,0.0,0.0 /), &
+                 0.06666666667,0.1666666667,0.0, &
+                 1.0,0.02325581395,0.0, &
+                 0.06666666667,0.1428571429,0.0 /), &
          (/3,3/)))
       allocate(first_intermediate_expected_number_lake_cells(3,3))
       first_intermediate_expected_number_lake_cells = transpose(reshape((/ &
-                0, 0, 0, &
-                0, 0, 0, &
-                0, 0, 0  /), &
+                1, 1, 0, &
+                1, 1, 0, &
+                1, 1, 0  /), &
          (/3,3/)))
       allocate(first_intermediate_expected_number_fine_grid_cells(3,3))
       first_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
-               42,36,42, &
-               56,48,56, &
-              42,36,42  /), &
+               15,6 ,311, &
+                1,43,1, &
+               15,7 ,1  /), &
          (/3,3/)))
       allocate(first_intermediate_expected_lake_volumes(6))
       first_intermediate_expected_lake_volumes = (/ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 /)
@@ -9672,21 +9761,22 @@ subroutine testLakeModel8
          (/nlon,nlat/)))
       allocate(second_intermediate_expected_lake_fractions(3,3))
       second_intermediate_expected_lake_fractions = transpose(reshape((/ &
-               4.0/21.0,0.0,1.0/21.0, &
-               5.0/56.0,0.0,0.0, &
-               0.0,0.0,0.0 /), &
+                 1.0,0.1666666667,0.0, &
+                 1.0,0.02325581395,0.0, &
+                 0.06666666667,0.1428571429,0.0 /), &
        (/3,3/)))
       allocate(second_intermediate_expected_number_lake_cells(3,3))
       second_intermediate_expected_number_lake_cells = transpose(reshape((/ &
-              8,0,2, &
-              5,0,0, &
-              0,0,0 /), &
+               15,1,0, &
+                1,1,0, &
+                1,1,0 /), &
+
        (/3,3/)))
       allocate(second_intermediate_expected_number_fine_grid_cells(3,3))
       second_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
-             42,36,42, &
-             56,48,56, &
-            42,36,42 /), &
+               15,6 ,311, &
+                1,43,1, &
+               15,7 ,1 /), &
        (/3,3/)))
       allocate(second_intermediate_expected_lake_volumes(6))
       second_intermediate_expected_lake_volumes = (/46.0, 0.0, 0.0, 0.0, 0.0, 0.0 /)
@@ -9804,21 +9894,21 @@ subroutine testLakeModel8
          (/nlon,nlat/)))
       allocate(third_intermediate_expected_lake_fractions(3,3))
       third_intermediate_expected_lake_fractions = transpose(reshape((/ &
-               0.285714,0.166667,0.0714286, &
-               0.160714,0.125,   0.0178571, &
-               0.0,0.0,0.0 /), &
+               1.0,1.0,0.0, &
+               1.0,0.04651162791,0.0, &
+               1.0,0.1428571429,0.0 /), &
        (/3,3/)))
       allocate(third_intermediate_expected_number_lake_cells(3,3))
       third_intermediate_expected_number_lake_cells = transpose(reshape((/ &
-             12,6,3, &
-              9,6,1, &
-              0,0,0 /), &
+               15,6,0, &
+                1,2,0, &
+               15,1,0 /), &
        (/3,3/)))
       allocate(third_intermediate_expected_number_fine_grid_cells(3,3))
       third_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
-             42,36,42, &
-             56,48,56, &
-            42,36,42 /), &
+            15,6 ,311, &
+            1 ,43,1, &
+            15,7 ,1  /), &
        (/3,3/)))
       allocate(third_intermediate_expected_lake_volumes(6))
       third_intermediate_expected_lake_volumes = (/46.0, 0.0, 38.0, 6.0, 1.0, 0.0 /)
@@ -9857,7 +9947,7 @@ subroutine testLakeModel8
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
                                                                 lake_fields_out)
       call assert_equals(first_intermediate_expected_river_inflow,river_fields%river_inflow,4,4)
       call assert_equals(first_intermediate_expected_water_to_ocean,&
@@ -9872,6 +9962,7 @@ subroutine testLakeModel8
       call assert_equals(first_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
       call assert_equals(first_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,3,3)
+      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -9909,7 +10000,7 @@ subroutine testLakeModel8
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
                                                                 lake_fields_out)
       call assert_equals(second_intermediate_expected_river_inflow,river_fields%river_inflow,4,4)
       call assert_equals(second_intermediate_expected_water_to_ocean,&
@@ -9924,6 +10015,7 @@ subroutine testLakeModel8
       call assert_equals(second_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
       call assert_equals(second_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,3,3)
+      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -9961,7 +10053,7 @@ subroutine testLakeModel8
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
                                                                 lake_fields_out)
       call assert_equals( third_intermediate_expected_river_inflow,river_fields%river_inflow,4,4)
       call assert_equals( third_intermediate_expected_water_to_ocean,&
@@ -9976,6 +10068,7 @@ subroutine testLakeModel8
       call assert_equals( third_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
       call assert_equals( third_intermediate_expected_number_fine_grid_cells, &
                           lake_parameters%number_fine_grid_cells,3,3)
+      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -10013,7 +10106,7 @@ subroutine testLakeModel8
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
                                                                 lake_fields_out)
       call assert_equals( expected_river_inflow,river_fields%river_inflow,4,4)
       call assert_equals( expected_water_to_ocean,river_fields%water_to_ocean,4,4,0.00001_dp)
@@ -10033,6 +10126,7 @@ subroutine testLakeModel8
       deallocate(runoffs)
       deallocate(evaporation)
       deallocate(evaporations)
+      deallocate(lake_fractions)
       deallocate(initial_spillover_to_rivers)
       deallocate(initial_water_to_lake_centers)
       deallocate(expected_river_inflow)
@@ -10042,6 +10136,9 @@ subroutine testLakeModel8
       deallocate(expected_lake_types)
       deallocate(expected_lake_volumes)
       deallocate(expected_diagnostic_lake_volumes)
+      deallocate(expected_lake_fractions)
+      deallocate(expected_number_lake_cells)
+      deallocate(expected_number_fine_grid_cells)
       deallocate(first_intermediate_expected_river_inflow)
       deallocate(first_intermediate_expected_water_to_ocean)
       deallocate(first_intermediate_expected_water_to_hd)
@@ -10049,6 +10146,9 @@ subroutine testLakeModel8
       deallocate(first_intermediate_expected_lake_types)
       deallocate(first_intermediate_expected_lake_volumes)
       deallocate(first_intermediate_expected_diagnostic_lake_volumes)
+      deallocate(first_intermediate_expected_lake_fractions)
+      deallocate(first_intermediate_expected_number_lake_cells)
+      deallocate(first_intermediate_expected_number_fine_grid_cells)
       deallocate(second_intermediate_expected_river_inflow)
       deallocate(second_intermediate_expected_water_to_ocean)
       deallocate(second_intermediate_expected_water_to_hd)
@@ -10056,6 +10156,9 @@ subroutine testLakeModel8
       deallocate(second_intermediate_expected_lake_types)
       deallocate(second_intermediate_expected_lake_volumes)
       deallocate(second_intermediate_expected_diagnostic_lake_volumes)
+      deallocate(second_intermediate_expected_lake_fractions)
+      deallocate(second_intermediate_expected_number_lake_cells)
+      deallocate(second_intermediate_expected_number_fine_grid_cells)
       deallocate(third_intermediate_expected_river_inflow)
       deallocate(third_intermediate_expected_water_to_ocean)
       deallocate(third_intermediate_expected_water_to_hd)
@@ -10063,6 +10166,9 @@ subroutine testLakeModel8
       deallocate(third_intermediate_expected_lake_types)
       deallocate(third_intermediate_expected_lake_volumes)
       deallocate(third_intermediate_expected_diagnostic_lake_volumes)
+      deallocate(third_intermediate_expected_lake_fractions)
+      deallocate(third_intermediate_expected_number_lake_cells)
+      deallocate(third_intermediate_expected_number_fine_grid_cells)
       deallocate(diagnostic_lake_volumes)
       deallocate(lake_types)
       call clean_lake_model()
@@ -10080,6 +10186,7 @@ subroutine testLakeModel9
    type(lakepointer) :: working_lake_ptr
    real(dp),dimension(:,:), pointer :: flow_directions
    integer,dimension(:,:), pointer :: merge_points
+   real(dp),dimension(:,:),pointer :: cell_areas_on_surface_model_grid
    type(riverprognosticfields), pointer :: river_fields
    integer,dimension(:,:), pointer :: river_reservoir_nums
    integer,dimension(:,:), pointer ::  overland_reservoir_nums
@@ -10497,6 +10604,12 @@ subroutine testLakeModel9
        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype /), &
          (/nlon,nlat/)))
+      allocate(cell_areas_on_surface_model_grid(nlat_surface_model,nlon_surface_model))
+      cell_areas_on_surface_model_grid = transpose(reshape((/ &
+          2.5,3.0,2.5, &
+          3.0,4.0,3.0, &
+          2.5,3.0,2.5 /), &
+      (/nlon_surface_model,nlat_surface_model/)))
       allocate(flood_next_cell_lat_index(nlat,nlon))
       flood_next_cell_lat_index = transpose(reshape((/ &
           -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
@@ -10797,49 +10910,49 @@ subroutine testLakeModel9
       lake_retention_coefficient_local=0.1_dp
       allocate(corresponding_surface_cell_lat_index(nlat,nlon))
       corresponding_surface_cell_lat_index = transpose(reshape((/ &
-                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
-                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
-                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
-                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
-                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
-                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
-                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
-                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
-                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
-                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
-                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3 /), &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,2,1,1,1,1,1,1,1,1,1,1,2,2,2,2,1,1,1,1, &
+                                                             1,1,1,1,1,2,2,1,1,1,1,2,2,2,2,2,1,1,1,1, &
+                                                             1,1,1,1,1,3,3,3,3,1,1,1,1,2,2,2,2,1,1,1, &
+                                                             1,1,1,2,3,3,1,3,3,2,2,1,2,1,2,2,2,2,1,1, &
+                                                             1,1,1,1,3,3,3,3,3,1,2,1,1,2,2,2,2,2,1,1, &
+                                                             1,1,1,1,1,3,1,3,1,1,1,2,1,2,2,2,2,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,2,2,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,3,3,3,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,3,3,1,1, &
+                                                             1,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,3  /), &
          (/nlon,nlat/)))
       allocate(corresponding_surface_cell_lon_index(nlat,nlon))
       corresponding_surface_cell_lon_index = transpose(reshape((/ &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3 /), &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,1, &
+                                                             1,2,1,3,3,3,3,3,3,3,3,3,2,2,2,2,3,3,3,1, &
+                                                             3,1,1,3,3,2,2,3,3,3,3,2,2,2,2,2,3,3,3,3, &
+                                                             3,1,1,3,3,1,1,1,1,3,3,3,2,2,2,2,2,3,3,3, &
+                                                             3,1,1,2,1,1,3,1,1,2,2,2,2,2,2,2,2,2,3,3, &
+                                                             1,1,1,3,1,1,1,1,1,3,2,2,2,2,2,2,2,2,3,3, &
+                                                             3,1,1,3,3,1,3,1,3,3,3,2,2,2,2,2,2,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,2,2,2,2,2,2,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,2,2,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,2,2,2,2,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,2,2,2,3,3, &
+                                                             3,3,3,1,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3 /), &
          (/nlon,nlat/)))
       lake_parameters => LakeParameters(lake_centers, &
                                         connection_volume_thresholds, &
@@ -10849,6 +10962,7 @@ subroutine testLakeModel9
                                         additional_flood_local_redirect, &
                                         additional_connect_local_redirect, &
                                         merge_points, &
+                                        cell_areas_on_surface_model_grid, &
                                         flood_next_cell_lat_index, &
                                         flood_next_cell_lon_index, &
                                         connect_next_cell_lat_index, &
@@ -10882,9 +10996,9 @@ subroutine testLakeModel9
         drainages(:,:,i) = drainage(:,:)
         runoffs(:,:,i) = runoff(:,:)
       end do
-      allocate(evaporation(4,4))
+      allocate(evaporation(3,3))
       evaporation(:,:) = 0.0
-      allocate(evaporations(4,4,5000))
+      allocate(evaporations(3,3,5000))
       do i = 1,5000
         evaporations(:,:,i) = evaporation(:,:)
       end do
@@ -11031,21 +11145,21 @@ subroutine testLakeModel9
          (/nlon,nlat/)))
       allocate(expected_lake_fractions(3,3))
       expected_lake_fractions = transpose(reshape((/ &
-                 0.380952,0.305556,0.404762, &
-                 0.160714,0.229167,0.321429, &
-                      0.0,0.0,0.0714286 /), &
+                 1.0,1.0,0.0, &
+                 1.0,0.976744186,0.0, &
+                 1.0,1.0,0.0 /), &
          (/3,3/)))
       allocate(expected_number_lake_cells(3,3))
       expected_number_lake_cells = transpose(reshape((/ &
-               16,11,17, &
-                9,11,18, &
-                0,0 ,3 /), &
+               15, 6,0, &
+                1,42,0, &
+               15, 7,0 /), &
          (/3,3/)))
       allocate(expected_number_fine_grid_cells(3,3))
       expected_number_fine_grid_cells = transpose(reshape((/ &
-               42,36,42, &
-               56,48,56, &
-               42,36,42 /), &
+               15, 6,311, &
+                1,43, 1, &
+               15, 7, 1 /), &
          (/3,3/)))
       allocate(expected_lake_volumes(6))
       expected_lake_volumes = (/46.0, 0.0, 38.0, 6.0, 340.0,10.0 /)
@@ -11084,7 +11198,7 @@ subroutine testLakeModel9
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
                                                                 lake_fields_out)
       call assert_equals( expected_river_inflow,river_fields%river_inflow,4,4)
       call assert_equals( expected_water_to_ocean,river_fields%water_to_ocean,4,4,0.00001_dp)
@@ -11097,6 +11211,7 @@ subroutine testLakeModel9
       call assert_equals( expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
       call assert_equals( expected_number_fine_grid_cells, &
                           lake_parameters%number_fine_grid_cells,3,3)
+      deallocate(lake_fractions)
       deallocate(lake_volumes)
       deallocate(drainage)
       deallocate(drainages)
@@ -11113,6 +11228,9 @@ subroutine testLakeModel9
       deallocate(expected_lake_types)
       deallocate(expected_lake_volumes)
       deallocate(expected_diagnostic_lake_volumes)
+      deallocate(expected_lake_fractions)
+      deallocate(expected_number_lake_cells)
+      deallocate(expected_number_fine_grid_cells)
       deallocate(diagnostic_lake_volumes)
       deallocate(lake_types)
       call clean_lake_model()
@@ -11131,6 +11249,7 @@ subroutine testLakeModel10
    type(lakepointer) :: working_lake_ptr
    real(dp),dimension(:,:), pointer :: flow_directions
    integer,dimension(:,:), pointer :: merge_points
+   real(dp),dimension(:,:),pointer :: cell_areas_on_surface_model_grid
    integer,dimension(:,:), pointer :: river_reservoir_nums
    integer,dimension(:,:), pointer ::  overland_reservoir_nums
    integer,dimension(:,:), pointer ::  base_reservoir_nums
@@ -11548,6 +11667,12 @@ subroutine testLakeModel10
        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype /), &
          (/nlon,nlat/)))
+      allocate(cell_areas_on_surface_model_grid(nlat_surface_model,nlon_surface_model))
+      cell_areas_on_surface_model_grid = transpose(reshape((/ &
+          2.5,3.0,2.5, &
+          3.0,4.0,3.0, &
+          2.5,3.0,2.5 /), &
+      (/nlon_surface_model,nlat_surface_model/)))
       allocate(flood_next_cell_lat_index(nlat,nlon))
       flood_next_cell_lat_index = transpose(reshape((/ &
           -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
@@ -11848,49 +11973,49 @@ subroutine testLakeModel10
       lake_retention_coefficient_local=0.1_dp
       allocate(corresponding_surface_cell_lat_index(nlat,nlon))
       corresponding_surface_cell_lat_index = transpose(reshape((/ &
-                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
-                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
-                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
-                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
-                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
-                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
-                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
-                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
-                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
-                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
-                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3 /), &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,2,1,1,1,1,1,1,1,1,1,1,2,2,2,2,1,1,1,1, &
+                                                             1,1,1,1,1,2,2,1,1,1,1,2,2,2,2,2,1,1,1,1, &
+                                                             1,1,1,1,1,3,3,3,3,1,1,1,1,2,2,2,2,1,1,1, &
+                                                             1,1,1,2,3,3,1,3,3,2,2,1,2,1,2,2,2,2,1,1, &
+                                                             1,1,1,1,3,3,3,3,3,1,2,1,1,2,2,2,2,2,1,1, &
+                                                             1,1,1,1,1,3,1,3,1,1,1,2,1,2,2,2,2,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,2,2,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,3,3,3,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,3,3,1,1, &
+                                                             1,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,3 /), &
          (/nlon,nlat/)))
       allocate(corresponding_surface_cell_lon_index(nlat,nlon))
       corresponding_surface_cell_lon_index = transpose(reshape((/ &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3 /), &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,1, &
+                                                             1,2,1,3,3,3,3,3,3,3,3,3,2,2,2,2,3,3,3,1, &
+                                                             3,1,1,3,3,2,2,3,3,3,3,2,2,2,2,2,3,3,3,3, &
+                                                             3,1,1,3,3,1,1,1,1,3,3,3,2,2,2,2,2,3,3,3, &
+                                                             3,1,1,2,1,1,3,1,1,2,2,2,2,2,2,2,2,2,3,3, &
+                                                             1,1,1,3,1,1,1,1,1,3,2,2,2,2,2,2,2,2,3,3, &
+                                                             3,1,1,3,3,1,3,1,3,3,3,2,2,2,2,2,2,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,2,2,2,2,2,2,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,2,2,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,2,2,2,2,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,2,2,2,3,3, &
+                                                             3,3,3,1,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3 /), &
          (/nlon,nlat/)))
       lake_parameters => LakeParameters(lake_centers, &
                                         connection_volume_thresholds, &
@@ -11900,6 +12025,7 @@ subroutine testLakeModel10
                                         additional_flood_local_redirect, &
                                         additional_connect_local_redirect, &
                                         merge_points, &
+                                        cell_areas_on_surface_model_grid, &
                                         flood_next_cell_lat_index, &
                                         flood_next_cell_lon_index, &
                                         connect_next_cell_lat_index, &
@@ -11933,9 +12059,9 @@ subroutine testLakeModel10
         drainages(:,:,i) = drainage(:,:)
         runoffs(:,:,i) = runoff(:,:)
       end do
-      allocate(evaporation(4,4))
+      allocate(evaporation(3,3))
       evaporation(:,:) = 0.0
-      allocate(evaporations(4,4,5000))
+      allocate(evaporations(3,3,5000))
       do i = 1,5000
         evaporations(:,:,i) = evaporation(:,:)
       end do
@@ -12062,21 +12188,21 @@ subroutine testLakeModel10
          (/nlon,nlat/)))
       allocate(expected_lake_fractions(3,3))
       expected_lake_fractions = transpose(reshape((/ &
-                 0.285714,0.25,  0.238095, &
-                 0.160714,0.1875,0.178571, &
-                 0.0,     0.0,   0.0 /), &
+                 1.0,1.0,0.0, &
+                 1.0,0.5581395349,0.0, &
+                 1.0,0.1428571429,0.0 /), &
          (/3,3/)))
       allocate(expected_number_lake_cells(3,3))
       expected_number_lake_cells = transpose(reshape((/ &
-               12,9,10, &
-                9,9,10, &
-                0,0,0 /), &
+               15,6,0, &
+                1,24,0, &
+               15,1,0 /), &
          (/3,3/)))
       allocate(expected_number_fine_grid_cells(3,3))
       expected_number_fine_grid_cells = transpose(reshape((/ &
-               42,36,42, &
-               56,48,56, &
-               42,36,42 /), &
+               15, 6,311, &
+                1,43,  1, &
+               15, 7,  1 /), &
          (/3,3/)))
       allocate(expected_lake_volumes(6))
       expected_lake_volumes = (/46.0, 0.0, 38.0, 6.0, 50.0, 0.0 /)
@@ -12115,7 +12241,7 @@ subroutine testLakeModel10
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
                                                                 lake_fields_out)
       call assert_equals(expected_river_inflow,river_fields%river_inflow,4,4)
       call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,4,4,0.00001_dp)
@@ -12128,6 +12254,7 @@ subroutine testLakeModel10
       call assert_equals(expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
       call assert_equals(expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,3,3)
+      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       deallocate(lake_volumes)
       deallocate(drainage)
@@ -12145,6 +12272,9 @@ subroutine testLakeModel10
       deallocate(expected_lake_types)
       deallocate(expected_lake_volumes)
       deallocate(expected_diagnostic_lake_volumes)
+      deallocate(expected_lake_fractions)
+      deallocate(expected_number_lake_cells)
+      deallocate(expected_number_fine_grid_cells)
       deallocate(lake_types)
       call clean_lake_model()
       call clean_hd_model()
@@ -12162,6 +12292,7 @@ subroutine testLakeModel11
    type(lakepointer) :: working_lake_ptr
    real(dp),dimension(:,:), pointer :: flow_directions
    integer,dimension(:,:), pointer :: merge_points
+   real(dp),dimension(:,:),pointer :: cell_areas_on_surface_model_grid
    integer,dimension(:,:), pointer :: river_reservoir_nums
    integer,dimension(:,:), pointer ::  overland_reservoir_nums
    integer,dimension(:,:), pointer ::  base_reservoir_nums
@@ -12598,6 +12729,12 @@ subroutine testLakeModel11
         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype /), &
          (/nlon,nlat/)))
+      allocate(cell_areas_on_surface_model_grid(nlat_surface_model,nlon_surface_model))
+      cell_areas_on_surface_model_grid = transpose(reshape((/ &
+          2.5,3.0,2.5, &
+          3.0,4.0,3.0, &
+          2.5,3.0,2.5 /), &
+      (/nlon_surface_model,nlat_surface_model/)))
       allocate(flood_next_cell_lat_index(nlat,nlon))
       flood_next_cell_lat_index = transpose(reshape((/ &
           -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
@@ -12898,49 +13035,49 @@ subroutine testLakeModel11
       lake_retention_coefficient_local=0.1_dp
       allocate(corresponding_surface_cell_lat_index(nlat,nlon))
       corresponding_surface_cell_lat_index = transpose(reshape((/ &
-                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
-                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
-                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
-                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
-                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
-                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
-                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
-                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
-                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
-                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
-                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3 /), &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,2,1,1,1,1,1,1,1,1,1,1,2,2,2,2,1,1,1,1, &
+                                                             1,1,1,1,1,2,2,1,1,1,1,2,2,2,2,2,1,1,1,1, &
+                                                             1,1,1,1,1,3,3,3,3,1,1,1,1,2,2,2,2,1,1,1, &
+                                                             1,1,1,2,3,3,1,3,3,2,2,1,2,1,2,2,2,2,1,1, &
+                                                             1,1,1,1,3,3,3,3,3,1,2,1,1,2,2,2,2,2,1,1, &
+                                                             1,1,1,1,1,3,1,3,1,1,1,2,1,2,2,2,2,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,2,2,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,3,3,3,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,3,3,1,1, &
+                                                             1,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,3  /), &
          (/nlon,nlat/)))
       allocate(corresponding_surface_cell_lon_index(nlat,nlon))
       corresponding_surface_cell_lon_index = transpose(reshape((/ &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3 /), &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,1, &
+                                                             1,2,1,3,3,3,3,3,3,3,3,3,2,2,2,2,3,3,3,1, &
+                                                             3,1,1,3,3,2,2,3,3,3,3,2,2,2,2,2,3,3,3,3, &
+                                                             3,1,1,3,3,1,1,1,1,3,3,3,2,2,2,2,2,3,3,3, &
+                                                             3,1,1,2,1,1,3,1,1,2,2,2,2,2,2,2,2,2,3,3, &
+                                                             1,1,1,3,1,1,1,1,1,3,2,2,2,2,2,2,2,2,3,3, &
+                                                             3,1,1,3,3,1,3,1,3,3,3,2,2,2,2,2,2,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,2,2,2,2,2,2,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,2,2,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,2,2,2,2,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,2,2,2,3,3, &
+                                                             3,3,3,1,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3 /), &
          (/nlon,nlat/)))
       lake_parameters => LakeParameters(lake_centers, &
                                         connection_volume_thresholds, &
@@ -12950,6 +13087,7 @@ subroutine testLakeModel11
                                         additional_flood_local_redirect, &
                                         additional_connect_local_redirect, &
                                         merge_points, &
+                                        cell_areas_on_surface_model_grid, &
                                         flood_next_cell_lat_index, &
                                         flood_next_cell_lon_index, &
                                         connect_next_cell_lat_index, &
@@ -12983,9 +13121,9 @@ subroutine testLakeModel11
         drainages(:,:,i) = drainage(:,:)
         runoffs(:,:,i) = runoff(:,:)
       end do
-      allocate(evaporation(4,4))
+      allocate(evaporation(3,3))
       evaporation(:,:) = 0.0
-      allocate(evaporations(4,4,5000))
+      allocate(evaporations(3,3,5000))
       do i = 1,5000
         evaporations(:,:,i) = evaporation(:,:)
       end do
@@ -13132,21 +13270,21 @@ subroutine testLakeModel11
          (/nlon,nlat/)))
       allocate(expected_lake_fractions(3,3))
       expected_lake_fractions = transpose(reshape((/ &
-                 0.357142,0.305556,0.404762, &
-                 0.160714,0.229167,0.25, &
-                 0.0     ,0.0     ,0.0 /), &
+                 1.0,1.0,0.0, &
+                 1.0,0.976744186,0.0, &
+                 1.0,0.1428571429,0.0 /), &
          (/3,3/)))
       allocate(expected_number_lake_cells(3,3))
       expected_number_lake_cells = transpose(reshape((/ &
-               15,11,17, &
-                9,11,14, &
-                0, 0,0 /), &
+               15, 6,0, &
+                1,42,0, &
+               15, 1,0 /), &
          (/3,3/)))
       allocate(expected_number_fine_grid_cells(3,3))
       expected_number_fine_grid_cells = transpose(reshape((/ &
-               42,36,42, &
-               56,48,56, &
-               42,36,42 /), &
+               15, 6,311, &
+                1,43,  1, &
+               15, 7,  1 /), &
          (/3,3/)))
       allocate(expected_lake_volumes(6))
       expected_lake_volumes = (/46.0, 0.0, 38.0, 6.0, 340.0, 0.0 /)
@@ -13264,21 +13402,21 @@ subroutine testLakeModel11
          (/nlon,nlat/)))
       allocate(first_intermediate_expected_lake_fractions(3,3))
       first_intermediate_expected_lake_fractions = transpose(reshape((/ &
-                 0.0952381,0.25,0.214286, &
-                 0.0714286,0.229167,0.214286, &
-                 0.0,0.0,0.0  /), &
+                 0.06666666667,1.0,0.0, &
+                 1.0,0.6744186047,0.0, &
+                 1.0,0.1428571429,0.0 /), &
          (/3,3/)))
       allocate(first_intermediate_expected_number_lake_cells(3,3))
       first_intermediate_expected_number_lake_cells = transpose(reshape((/ &
-               4,9,9, &
-               4,11,12, &
-               0,0,0  /), &
+               1,6,0, &
+               1,29,0, &
+               15,1,0 /), &
          (/3,3/)))
       allocate(first_intermediate_expected_number_fine_grid_cells(3,3))
       first_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
-               42,36,42, &
-               56,48,56, &
-               42,36,42  /), &
+               15, 6,311, &
+                1,43,  1, &
+               15, 7,  1  /), &
          (/3,3/)))
       allocate(first_intermediate_expected_lake_volumes(6))
       first_intermediate_expected_lake_volumes = (/0.0, 0.0, 38.0, 6.0, 56.0, 0.0 /)
@@ -13397,21 +13535,21 @@ subroutine testLakeModel11
          (/nlon,nlat/)))
       allocate(second_intermediate_expected_lake_fractions(3,3))
       second_intermediate_expected_lake_fractions = transpose(reshape((/ &
-                 0.0952381,0.305555,0.357143, &
-                 0.0714286,0.229167,0.25, &
-                 0.0,0.0,0.0 /), &
+                 0.06666666667,1.0,0.0, &
+                 1.0,0.8837209302,0.0, &
+                 1.0,0.1428571429,0.0 /), &
          (/3,3/)))
       allocate(second_intermediate_expected_number_lake_cells(3,3))
       second_intermediate_expected_number_lake_cells = transpose(reshape((/ &
-               4,11,15, &
-               4,11,14, &
-               0,0,0  /), &
+               1,6,0, &
+               1,38,0, &
+              15,1,0 /), &
          (/3,3/)))
       allocate(second_intermediate_expected_number_fine_grid_cells(3,3))
       second_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
-               42,36,42, &
-               56,48,56, &
-               42,36,42  /), &
+                15,6 ,311, &
+                1 ,43,1, &
+                15,7 ,1 /), &
          (/3,3/)))
       allocate(second_intermediate_expected_lake_volumes(6))
       second_intermediate_expected_lake_volumes = (/0.0, 0.0, 38.0, 6.0, 111.0, 0.0 /)
@@ -13451,7 +13589,7 @@ subroutine testLakeModel11
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
                                                                 lake_fields_out)
       call assert_equals(first_intermediate_expected_river_inflow, river_fields%river_inflow,4,4)
       call assert_equals(first_intermediate_expected_water_to_ocean,&
@@ -13467,6 +13605,7 @@ subroutine testLakeModel11
       call assert_equals(first_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
       call assert_equals(first_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,3,3)
+      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -13504,7 +13643,7 @@ subroutine testLakeModel11
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
                                                                 lake_fields_out)
       call assert_equals(second_intermediate_expected_river_inflow,river_fields%river_inflow,4,4)
       call assert_equals(second_intermediate_expected_water_to_ocean,&
@@ -13519,6 +13658,7 @@ subroutine testLakeModel11
       call assert_equals(second_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
       call assert_equals(second_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,3,3)
+      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -13556,7 +13696,7 @@ subroutine testLakeModel11
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
                                                                 lake_fields_out)
       call assert_equals(expected_river_inflow,river_fields%river_inflow,4,4)
       call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,4,4,0.00001_dp)
@@ -13569,6 +13709,7 @@ subroutine testLakeModel11
       call assert_equals(expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
       call assert_equals(expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,3,3)
+      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       deallocate(lake_volumes)
       deallocate(drainage)
@@ -13586,6 +13727,9 @@ subroutine testLakeModel11
       deallocate(expected_lake_types)
       deallocate(expected_lake_volumes)
       deallocate(expected_diagnostic_lake_volumes)
+      deallocate(expected_lake_fractions)
+      deallocate(expected_number_lake_cells)
+      deallocate(expected_number_fine_grid_cells)
       deallocate(first_intermediate_expected_river_inflow)
       deallocate(first_intermediate_expected_water_to_ocean)
       deallocate(first_intermediate_expected_water_to_hd)
@@ -13593,6 +13737,9 @@ subroutine testLakeModel11
       deallocate(first_intermediate_expected_lake_types)
       deallocate(first_intermediate_expected_lake_volumes)
       deallocate(first_intermediate_expected_diagnostic_lake_volumes)
+      deallocate(first_intermediate_expected_lake_fractions)
+      deallocate(first_intermediate_expected_number_lake_cells)
+      deallocate(first_intermediate_expected_number_fine_grid_cells)
       deallocate(second_intermediate_expected_river_inflow)
       deallocate(second_intermediate_expected_water_to_ocean)
       deallocate(second_intermediate_expected_water_to_hd)
@@ -13600,6 +13747,9 @@ subroutine testLakeModel11
       deallocate(second_intermediate_expected_lake_types)
       deallocate(second_intermediate_expected_lake_volumes)
       deallocate(second_intermediate_expected_diagnostic_lake_volumes)
+      deallocate(second_intermediate_expected_lake_fractions)
+      deallocate(second_intermediate_expected_number_lake_cells)
+      deallocate(second_intermediate_expected_number_fine_grid_cells)
       deallocate(lake_types)
       call clean_lake_model()
       call clean_hd_model()
@@ -13617,6 +13767,7 @@ subroutine testLakeModel12
    type(lakepointer) :: working_lake_ptr
    real(dp),dimension(:,:), pointer :: flow_directions
    integer,dimension(:,:), pointer :: merge_points
+   real(dp),dimension(:,:),pointer :: cell_areas_on_surface_model_grid
    integer,dimension(:,:), pointer :: river_reservoir_nums
    integer,dimension(:,:), pointer ::  overland_reservoir_nums
    integer,dimension(:,:), pointer ::  base_reservoir_nums
@@ -14034,6 +14185,12 @@ subroutine testLakeModel12
         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype /), &
          (/nlon,nlat/)))
+      allocate(cell_areas_on_surface_model_grid(nlat_surface_model,nlon_surface_model))
+      cell_areas_on_surface_model_grid = transpose(reshape((/ &
+          2.5,3.0,2.5, &
+          3.0,4.0,3.0, &
+          2.5,3.0,2.5 /), &
+      (/nlon_surface_model,nlat_surface_model/)))
       allocate(flood_next_cell_lat_index(nlat,nlon))
       flood_next_cell_lat_index = transpose(reshape((/ &
           -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
@@ -14334,49 +14491,49 @@ subroutine testLakeModel12
       lake_retention_coefficient_local=0.1_dp
       allocate(corresponding_surface_cell_lat_index(nlat,nlon))
       corresponding_surface_cell_lat_index = transpose(reshape((/ &
-                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
-                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
-                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
-                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
-                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
-                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
-                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
-                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
-                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
-                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
-                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3 /), &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,2,1,1,1,1,1,1,1,1,1,1,2,2,2,2,1,1,1,1, &
+                                                             1,1,1,1,1,2,2,1,1,1,1,2,2,2,2,2,1,1,1,1, &
+                                                             1,1,1,1,1,3,3,3,3,1,1,1,1,2,2,2,2,1,1,1, &
+                                                             1,1,1,2,3,3,1,3,3,2,2,1,2,1,2,2,2,2,1,1, &
+                                                             1,1,1,1,3,3,3,3,3,1,2,1,1,2,2,2,2,2,1,1, &
+                                                             1,1,1,1,1,3,1,3,1,1,1,2,1,2,2,2,2,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,2,2,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,3,3,3,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,3,3,1,1, &
+                                                             1,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,3 /), &
          (/nlon,nlat/)))
       allocate(corresponding_surface_cell_lon_index(nlat,nlon))
       corresponding_surface_cell_lon_index = transpose(reshape((/ &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3 /), &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,1, &
+                                                             1,2,1,3,3,3,3,3,3,3,3,3,2,2,2,2,3,3,3,1, &
+                                                             3,1,1,3,3,2,2,3,3,3,3,2,2,2,2,2,3,3,3,3, &
+                                                             3,1,1,3,3,1,1,1,1,3,3,3,2,2,2,2,2,3,3,3, &
+                                                             3,1,1,2,1,1,3,1,1,2,2,2,2,2,2,2,2,2,3,3, &
+                                                             1,1,1,3,1,1,1,1,1,3,2,2,2,2,2,2,2,2,3,3, &
+                                                             3,1,1,3,3,1,3,1,3,3,3,2,2,2,2,2,2,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,2,2,2,2,2,2,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,2,2,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,2,2,2,2,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,2,2,2,3,3, &
+                                                             3,3,3,1,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3 /), &
          (/nlon,nlat/)))
       lake_parameters => LakeParameters(lake_centers, &
                                         connection_volume_thresholds, &
@@ -14386,6 +14543,7 @@ subroutine testLakeModel12
                                         additional_flood_local_redirect, &
                                         additional_connect_local_redirect, &
                                         merge_points, &
+                                        cell_areas_on_surface_model_grid, &
                                         flood_next_cell_lat_index, &
                                         flood_next_cell_lon_index, &
                                         connect_next_cell_lat_index, &
@@ -14419,9 +14577,9 @@ subroutine testLakeModel12
         drainages(:,:,i) = drainage(:,:)
         runoffs(:,:,i) = runoff(:,:)
       end do
-      allocate(evaporation(4,4))
+      allocate(evaporation(3,3))
       evaporation(:,:) = 0.0
-      allocate(evaporations(4,4,5000))
+      allocate(evaporations(3,3,5000))
       do i = 1,5000
         evaporations(:,:,i) = evaporation(:,:)
       end do
@@ -14568,21 +14726,21 @@ subroutine testLakeModel12
          (/nlon,nlat/)))
       allocate(expected_lake_fractions(3,3))
       expected_lake_fractions = transpose(reshape((/ &
-                 0.380952,0.305556,0.404762, &
-                 0.160714,0.229167,0.3035714, &
-                 0.0     , 0.0    ,0.0714286 /), &
+                 1.0,1.0,0.0, &
+                 1.0,0.976744186,0.0, &
+                 1.0,1.0,0.0 /), &
          (/3,3/)))
       allocate(expected_number_lake_cells(3,3))
       expected_number_lake_cells = transpose(reshape((/ &
-               16,11,17, &
-                9,11,17, &
-                0, 0, 3 /), &
+               15, 6, 0, &
+                1,42, 0, &
+               15, 7, 0 /), &
          (/3,3/)))
       allocate(expected_number_fine_grid_cells(3,3))
       expected_number_fine_grid_cells = transpose(reshape((/ &
-               42,36,42, &
-               56,48,56, &
-               42,36,42 /), &
+               15, 6,311, &
+                1,43,  1, &
+               15, 7,  1 /), &
          (/3,3/)))
       allocate(expected_lake_volumes(6))
       expected_lake_volumes = (/46.0, 0.0, 38.0, 6.0, 340.0,10.0 /)
@@ -14621,7 +14779,7 @@ subroutine testLakeModel12
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
                                                                 lake_fields_out)
       call assert_equals(expected_river_inflow,river_fields%river_inflow,4,4)
       call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,4,4,0.00001_dp)
@@ -14634,6 +14792,7 @@ subroutine testLakeModel12
       call assert_equals(expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
       call assert_equals(expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,3,3)
+      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       deallocate(lake_volumes)
       deallocate(drainage)
@@ -14651,6 +14810,9 @@ subroutine testLakeModel12
       deallocate(expected_lake_types)
       deallocate(expected_lake_volumes)
       deallocate(expected_diagnostic_lake_volumes)
+      deallocate(expected_lake_fractions)
+      deallocate(expected_number_lake_cells)
+      deallocate(expected_number_fine_grid_cells)
       deallocate(lake_types)
       call clean_lake_model()
       call clean_hd_model()
@@ -14668,6 +14830,7 @@ subroutine testLakeModel13
    type(lakepointer) :: working_lake_ptr
    real(dp),dimension(:,:), pointer :: flow_directions
    integer,dimension(:,:), pointer :: merge_points
+   real(dp),dimension(:,:),pointer :: cell_areas_on_surface_model_grid
    integer,dimension(:,:), pointer :: river_reservoir_nums
    integer,dimension(:,:), pointer ::  overland_reservoir_nums
    integer,dimension(:,:), pointer ::  base_reservoir_nums
@@ -15085,6 +15248,12 @@ subroutine testLakeModel13
         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype /), &
          (/nlon,nlat/)))
+      allocate(cell_areas_on_surface_model_grid(nlat_surface_model,nlon_surface_model))
+      cell_areas_on_surface_model_grid = transpose(reshape((/ &
+          2.5,3.0,2.5, &
+          3.0,4.0,3.0, &
+          2.5,3.0,2.5 /), &
+      (/nlon_surface_model,nlat_surface_model/)))
       allocate(flood_next_cell_lat_index(nlat,nlon))
       flood_next_cell_lat_index = transpose(reshape((/ &
           -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
@@ -15385,49 +15554,49 @@ subroutine testLakeModel13
       lake_retention_coefficient_local=0.1_dp
       allocate(corresponding_surface_cell_lat_index(nlat,nlon))
       corresponding_surface_cell_lat_index = transpose(reshape((/ &
-                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
-                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
-                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
-                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
-                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
-                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
-                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
-                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
-                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
-                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
-                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3 /), &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,2,1,1,1,1,1,1,1,1,1,1,2,2,2,2,1,1,1,1, &
+                                                             1,1,1,1,1,2,2,1,1,1,1,2,2,2,2,2,1,1,1,1, &
+                                                             1,1,1,1,1,3,3,3,3,1,1,1,1,2,2,2,2,1,1,1, &
+                                                             1,1,1,2,3,3,1,3,3,2,2,1,2,1,2,2,2,2,1,1, &
+                                                             1,1,1,1,3,3,3,3,3,1,2,1,1,2,2,2,2,2,1,1, &
+                                                             1,1,1,1,1,3,1,3,1,1,1,2,1,2,2,2,2,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,2,2,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,3,3,3,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,3,3,1,1, &
+                                                             1,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,3 /), &
          (/nlon,nlat/)))
       allocate(corresponding_surface_cell_lon_index(nlat,nlon))
       corresponding_surface_cell_lon_index = transpose(reshape((/ &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3 /), &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,1, &
+                                                             1,2,1,3,3,3,3,3,3,3,3,3,2,2,2,2,3,3,3,1, &
+                                                             3,1,1,3,3,2,2,3,3,3,3,2,2,2,2,2,3,3,3,3, &
+                                                             3,1,1,3,3,1,1,1,1,3,3,3,2,2,2,2,2,3,3,3, &
+                                                             3,1,1,2,1,1,3,1,1,2,2,2,2,2,2,2,2,2,3,3, &
+                                                             1,1,1,3,1,1,1,1,1,3,2,2,2,2,2,2,2,2,3,3, &
+                                                             3,1,1,3,3,1,3,1,3,3,3,2,2,2,2,2,2,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,2,2,2,2,2,2,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,2,2,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,2,2,2,2,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,2,2,2,3,3, &
+                                                             3,3,3,1,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3  /), &
          (/nlon,nlat/)))
       lake_parameters => LakeParameters(lake_centers, &
                                         connection_volume_thresholds, &
@@ -15437,6 +15606,7 @@ subroutine testLakeModel13
                                         additional_flood_local_redirect, &
                                         additional_connect_local_redirect, &
                                         merge_points, &
+                                        cell_areas_on_surface_model_grid, &
                                         flood_next_cell_lat_index, &
                                         flood_next_cell_lon_index, &
                                         connect_next_cell_lat_index, &
@@ -15470,9 +15640,9 @@ subroutine testLakeModel13
         drainages(:,:,i) = drainage(:,:)
         runoffs(:,:,i) = runoff(:,:)
       end do
-      allocate(evaporation(4,4))
+      allocate(evaporation(3,3))
       evaporation(:,:) = 0.0
-      allocate(evaporations(4,4,5000))
+      allocate(evaporations(3,3,5000))
       do i = 1,5000
         evaporations(:,:,i) = evaporation(:,:)
       end do
@@ -15599,21 +15769,21 @@ subroutine testLakeModel13
          (/nlon,nlat/)))
       allocate(expected_lake_fractions(3,3))
       expected_lake_fractions = transpose(reshape((/ &
-                 0.285714,0.25  ,0.238095, &
-                 0.160714,0.1875,0.178571, &
-                 0.0     ,0.0   ,0.0 /), &
+                 1.0,1.0,0.0, &
+                 1.0,0.5581395349,0.0, &
+                 1.0,0.1428571429,0.0 /), &
          (/3,3/)))
       allocate(expected_number_lake_cells(3,3))
       expected_number_lake_cells = transpose(reshape((/ &
-               12,9,10, &
-                9,9,10, &
-                0,0,0 /), &
+               15,6, 0, &
+                1,24,0, &
+               15,1, 0 /), &
          (/3,3/)))
       allocate(expected_number_fine_grid_cells(3,3))
       expected_number_fine_grid_cells = transpose(reshape((/ &
-               42,36,42, &
-               56,48,56, &
-               42,36,42 /), &
+               15, 6,311, &
+                1,43,  1, &
+               15, 7,  1 /), &
          (/3,3/)))
       allocate(expected_lake_volumes(6))
       expected_lake_volumes = (/46.0, 0.0, 38.0, 6.0, 50.0, 0.0 /)
@@ -15653,7 +15823,7 @@ subroutine testLakeModel13
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
                                                                 lake_fields_out)
       call assert_equals(expected_river_inflow,river_fields%river_inflow,4,4)
       call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,4,4,0.00001_dp)
@@ -15666,6 +15836,7 @@ subroutine testLakeModel13
       call assert_equals(expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
       call assert_equals(expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,3,3)
+      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       deallocate(lake_volumes)
       deallocate(drainage)
@@ -15683,6 +15854,9 @@ subroutine testLakeModel13
       deallocate(expected_lake_types)
       deallocate(expected_lake_volumes)
       deallocate(expected_diagnostic_lake_volumes)
+      deallocate(expected_lake_fractions)
+      deallocate(expected_number_lake_cells)
+      deallocate(expected_number_fine_grid_cells)
       deallocate(lake_types)
       call clean_lake_model()
       call clean_hd_model()
@@ -15700,6 +15874,7 @@ subroutine testLakeModel14
    type(lakepointer) :: working_lake_ptr
    real(dp),dimension(:,:), pointer :: flow_directions
    integer,dimension(:,:), pointer :: merge_points
+   real(dp),dimension(:,:),pointer :: cell_areas_on_surface_model_grid
    integer,dimension(:,:), pointer :: river_reservoir_nums
    integer,dimension(:,:), pointer ::  overland_reservoir_nums
    integer,dimension(:,:), pointer ::  base_reservoir_nums
@@ -16136,6 +16311,12 @@ subroutine testLakeModel14
         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype /), &
          (/nlon,nlat/)))
+      allocate(cell_areas_on_surface_model_grid(nlat_surface_model,nlon_surface_model))
+      cell_areas_on_surface_model_grid = transpose(reshape((/ &
+          2.5,3.0,2.5, &
+          3.0,4.0,3.0, &
+          2.5,3.0,2.5 /), &
+      (/nlon_surface_model,nlat_surface_model/)))
       allocate(flood_next_cell_lat_index(nlat,nlon))
       flood_next_cell_lat_index = transpose(reshape((/ &
           -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
@@ -16436,49 +16617,49 @@ subroutine testLakeModel14
       lake_retention_coefficient_local=0.1_dp
       allocate(corresponding_surface_cell_lat_index(nlat,nlon))
       corresponding_surface_cell_lat_index = transpose(reshape((/ &
-                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
-                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
-                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
-                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
-                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
-                                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, &
-                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
-                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
-                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
-                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
-                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
-                                                           3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3 /), &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,2,1,1,1,1,1,1,1,1,1,1,2,2,2,2,1,1,1,1, &
+                                                             1,1,1,1,1,2,2,1,1,1,1,2,2,2,2,2,1,1,1,1, &
+                                                             1,1,1,1,1,3,3,3,3,1,1,1,1,2,2,2,2,1,1,1, &
+                                                             1,1,1,2,3,3,1,3,3,2,2,1,2,1,2,2,2,2,1,1, &
+                                                             1,1,1,1,3,3,3,3,3,1,2,1,1,2,2,2,2,2,1,1, &
+                                                             1,1,1,1,1,3,1,3,1,1,1,2,1,2,2,2,2,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,2,2,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,3,3,3,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,3,3,1,1, &
+                                                             1,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, &
+                                                             1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,3 /), &
          (/nlon,nlat/)))
       allocate(corresponding_surface_cell_lon_index(nlat,nlon))
       corresponding_surface_cell_lon_index = transpose(reshape((/ &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
-                                                           1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3 /), &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,1, &
+                                                             1,2,1,3,3,3,3,3,3,3,3,3,2,2,2,2,3,3,3,1, &
+                                                             3,1,1,3,3,2,2,3,3,3,3,2,2,2,2,2,3,3,3,3, &
+                                                             3,1,1,3,3,1,1,1,1,3,3,3,2,2,2,2,2,3,3,3, &
+                                                             3,1,1,2,1,1,3,1,1,2,2,2,2,2,2,2,2,2,3,3, &
+                                                             1,1,1,3,1,1,1,1,1,3,2,2,2,2,2,2,2,2,3,3, &
+                                                             3,1,1,3,3,1,3,1,3,3,3,2,2,2,2,2,2,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,2,2,2,2,2,2,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,2,2,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,2,2,2,2,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,2,2,2,3,3, &
+                                                             3,3,3,1,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
+                                                             3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3 /), &
          (/nlon,nlat/)))
       lake_parameters => LakeParameters(lake_centers, &
                                         connection_volume_thresholds, &
@@ -16488,6 +16669,7 @@ subroutine testLakeModel14
                                         additional_flood_local_redirect, &
                                         additional_connect_local_redirect, &
                                         merge_points, &
+                                        cell_areas_on_surface_model_grid, &
                                         flood_next_cell_lat_index, &
                                         flood_next_cell_lon_index, &
                                         connect_next_cell_lat_index, &
@@ -16521,9 +16703,9 @@ subroutine testLakeModel14
         drainages(:,:,i) = drainage(:,:)
         runoffs(:,:,i) = runoff(:,:)
       end do
-      allocate(evaporation(4,4))
+      allocate(evaporation(3,3))
       evaporation(:,:) = 0.0
-      allocate(evaporations(4,4,5000))
+      allocate(evaporations(3,3,5000))
       do i = 1,5000
         evaporations(:,:,i) = evaporation(:,:)
       end do
@@ -16670,21 +16852,21 @@ subroutine testLakeModel14
          (/nlon,nlat/)))
       allocate(expected_lake_fractions(3,3))
       expected_lake_fractions = transpose(reshape((/ &
-                 0.357142,0.305556,0.404762, &
-                 0.160714,0.229167,0.25, &
-                 0.0,0.0,0.0 /), &
+                 1.0,1.0,0.0, &
+                 1.0,0.976744186,0.0, &
+                 1.0,0.1428571429,0.0 /), &
          (/3,3/)))
       allocate(expected_number_lake_cells(3,3))
       expected_number_lake_cells = transpose(reshape((/ &
-              15,11,17, &
-               9,11,14, &
-               0,0,0 /), &
+              15, 6,0, &
+               1,42,0, &
+              15, 1,0 /), &
          (/3,3/)))
       allocate(expected_number_fine_grid_cells(3,3))
       expected_number_fine_grid_cells = transpose(reshape((/ &
-               42,36,42, &
-               56,48,56, &
-               42,36,42 /), &
+               15, 6,311, &
+                1,43, 1, &
+               15, 7, 1 /), &
          (/3,3/)))
       allocate(expected_lake_volumes(6))
       expected_lake_volumes = (/46.0, 0.0, 38.0, 6.0, 340.0, 0.0 /)
@@ -16803,21 +16985,21 @@ subroutine testLakeModel14
          (/nlon,nlat/)))
       allocate(first_intermediate_expected_lake_fractions(3,3))
       first_intermediate_expected_lake_fractions = transpose(reshape((/ &
-                 0.190476,0.0,0.047619, &
-                 0.0892857,0.0,0.0, &
-                 0.0,0.0,0.0 /), &
+                 1.0,0.1666666667,0.0,  &
+                 1.0,0.02325581395,0.0, &
+                 0.06666666667,0.1428571429,0.0 /), &
          (/3,3/)))
       allocate(first_intermediate_expected_number_lake_cells(3,3))
       first_intermediate_expected_number_lake_cells = transpose(reshape((/ &
-               8,0,2, &
-               5,0,0, &
-               0,0,0 /), &
+              15,1,0, &
+               1,1,0, &
+               1,1,0 /), &
          (/3,3/)))
       allocate(first_intermediate_expected_number_fine_grid_cells(3,3))
       first_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
-               42,36,42, &
-               56,48,56, &
-               42,36,42 /), &
+               15, 6,311, &
+                1,43, 1, &
+               15, 7, 1 /), &
          (/3,3/)))
       allocate(first_intermediate_expected_lake_volumes(6))
       first_intermediate_expected_lake_volumes = (/46.0, 0.0, 0.0, 0.0, 0.0, 0.0 /)
@@ -16934,21 +17116,21 @@ subroutine testLakeModel14
          (/nlon,nlat/)))
       allocate(second_intermediate_expected_lake_fractions(3,3))
       second_intermediate_expected_lake_fractions = transpose(reshape((/ &
-                 0.285714,0.166667,0.0714286, &
-                 0.160714,0.125   ,0.0178571, &
-                 0.0,0.0,0.0 /), &
+                 1.0,1.0,          0.0, &
+                 1.0,0.04651162791,0.0, &
+                 1.0,0.1428571429, 0.0 /), &
          (/3,3/)))
       allocate(second_intermediate_expected_number_lake_cells(3,3))
       second_intermediate_expected_number_lake_cells = transpose(reshape((/ &
-              12,6,3, &
-               9,6,1, &
-               0,0,0 /), &
+              15,6,0, &
+               1,2,0, &
+              15,1,0 /), &
          (/3,3/)))
       allocate(second_intermediate_expected_number_fine_grid_cells(3,3))
       second_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
-               42,36,42, &
-               56,48,56, &
-               42,36,42 /), &
+               15, 6,311, &
+                1,43, 1, &
+               15, 7, 1 /), &
          (/3,3/)))
       allocate(second_intermediate_expected_lake_volumes(6))
       second_intermediate_expected_lake_volumes = (/46.0, 0.0, 38.0, 6.0, 1.0, 0.0 /)
@@ -16988,7 +17170,7 @@ subroutine testLakeModel14
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
                                                                 lake_fields_out)
       call assert_equals(first_intermediate_expected_river_inflow,river_fields%river_inflow,4,4,&
                          0.00000001_dp)
@@ -17005,6 +17187,7 @@ subroutine testLakeModel14
       call assert_equals(first_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
       call assert_equals(first_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,3,3)
+      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -17042,7 +17225,7 @@ subroutine testLakeModel14
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
                                                                 lake_fields_out)
       call assert_equals(second_intermediate_expected_river_inflow,river_fields%river_inflow,4,4)
       call assert_equals(second_intermediate_expected_water_to_ocean,&
@@ -17057,6 +17240,7 @@ subroutine testLakeModel14
       call assert_equals(second_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
       call assert_equals(second_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,3,3)
+      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -17094,7 +17278,7 @@ subroutine testLakeModel14
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => calculate_lake_fraction_on_surface_grid(lake_parameters, &
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
                                                                 lake_fields_out)
       call assert_equals(expected_river_inflow,river_fields%river_inflow,4,4)
       call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,4,4,0.00001_dp)
@@ -17107,6 +17291,7 @@ subroutine testLakeModel14
       call assert_equals(expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
       call assert_equals(expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,3,3)
+      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       deallocate(lake_volumes)
       deallocate(drainage)
@@ -17124,6 +17309,9 @@ subroutine testLakeModel14
       deallocate(expected_lake_types)
       deallocate(expected_lake_volumes)
       deallocate(expected_diagnostic_lake_volumes)
+      deallocate(expected_lake_fractions)
+      deallocate(expected_number_lake_cells)
+      deallocate(expected_number_fine_grid_cells)
       deallocate(first_intermediate_expected_river_inflow)
       deallocate(first_intermediate_expected_water_to_ocean)
       deallocate(first_intermediate_expected_water_to_hd)
@@ -17131,6 +17319,9 @@ subroutine testLakeModel14
       deallocate(first_intermediate_expected_lake_types)
       deallocate(first_intermediate_expected_lake_volumes)
       deallocate(first_intermediate_expected_diagnostic_lake_volumes)
+      deallocate(first_intermediate_expected_lake_fractions)
+      deallocate(first_intermediate_expected_number_lake_cells)
+      deallocate(first_intermediate_expected_number_fine_grid_cells)
       deallocate(second_intermediate_expected_river_inflow)
       deallocate(second_intermediate_expected_water_to_ocean)
       deallocate(second_intermediate_expected_water_to_hd)
@@ -17138,10 +17329,5844 @@ subroutine testLakeModel14
       deallocate(second_intermediate_expected_lake_types)
       deallocate(second_intermediate_expected_lake_volumes)
       deallocate(second_intermediate_expected_diagnostic_lake_volumes)
+      deallocate(second_intermediate_expected_lake_fractions)
+      deallocate(second_intermediate_expected_number_lake_cells)
+      deallocate(second_intermediate_expected_number_fine_grid_cells)
       deallocate(lake_types)
       call clean_lake_model()
       call clean_hd_model()
 end subroutine testLakeModel14
+
+subroutine testLakeModel15
+   use latlon_hd_model_interface_mod
+   use latlon_hd_model_mod
+   use latlon_lake_model_io_mod
+   type(riverparameters), pointer :: river_parameters
+   type(lakeparameters),pointer :: lake_parameters
+   type(lakefields), pointer :: lake_fields_out
+   type(riverprognosticfields), pointer :: river_fields
+   type(lakeprognostics), pointer :: lake_prognostics_out
+   type(lakepointer) :: working_lake_ptr
+   real(dp),dimension(:,:), pointer :: flow_directions
+   integer,dimension(:,:), pointer :: river_reservoir_nums
+   integer,dimension(:,:), pointer :: overland_reservoir_nums
+   integer,dimension(:,:), pointer :: base_reservoir_nums
+   real(dp),dimension(:,:), pointer :: river_retention_coefficients
+   real(dp),dimension(:,:), pointer :: overland_retention_coefficients
+   real(dp),dimension(:,:), pointer :: base_retention_coefficients
+   logical,dimension(:,:), pointer :: landsea_mask
+   logical,dimension(:,:), pointer :: lake_centers
+   real(dp),dimension(:,:), pointer :: connection_volume_thresholds
+   real(dp),dimension(:,:), pointer :: flood_volume_thresholds
+   logical,dimension(:,:), pointer :: flood_local_redirect
+   logical,dimension(:,:), pointer :: connect_local_redirect
+   logical,dimension(:,:), pointer :: additional_flood_local_redirect
+   logical,dimension(:,:), pointer :: additional_connect_local_redirect
+   integer,dimension(:,:), pointer :: merge_points
+   real(dp),dimension(:,:), pointer :: cell_areas_on_surface_model_grid
+   integer,dimension(:,:), pointer :: flood_next_cell_lat_index
+   integer,dimension(:,:), pointer :: flood_next_cell_lon_index
+   integer,dimension(:,:), pointer :: connect_next_cell_lat_index
+   integer,dimension(:,:), pointer :: connect_next_cell_lon_index
+   integer,dimension(:,:), pointer :: flood_force_merge_lat_index
+   integer,dimension(:,:), pointer :: flood_force_merge_lon_index
+   integer,dimension(:,:), pointer :: connect_force_merge_lat_index
+   integer,dimension(:,:), pointer :: connect_force_merge_lon_index
+   integer,dimension(:,:), pointer :: flood_redirect_lat_index
+   integer,dimension(:,:), pointer :: flood_redirect_lon_index
+   integer,dimension(:,:), pointer :: connect_redirect_lat_index
+   integer,dimension(:,:), pointer :: connect_redirect_lon_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
+   integer,dimension(:,:), pointer :: additional_flood_redirect_lat_index
+   integer,dimension(:,:), pointer :: additional_flood_redirect_lon_index
+   integer,dimension(:,:), pointer :: additional_connect_redirect_lat_index
+   integer,dimension(:,:), pointer :: additional_connect_redirect_lon_index
+   real(dp),dimension(:,:), pointer :: drainage
+   real(dp),dimension(:,:,:), pointer :: drainages
+   real(dp),dimension(:,:), pointer :: runoff
+   real(dp),dimension(:,:,:), pointer :: runoffs
+   real(dp),dimension(:,:), pointer :: evaporation
+   real(dp),dimension(:,:,:), pointer :: lake_evaporations
+   real(dp),dimension(:,:), pointer :: initial_water_to_lake_centers
+   real(dp),dimension(:,:), pointer :: initial_spillover_to_rivers
+   real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
+   real(dp),dimension(:), pointer :: lake_volumes
+   real(dp),dimension(:,:), pointer :: lake_fractions
+   real(dp),dimension(:,:), pointer :: expected_river_inflow
+   real(dp),dimension(:,:), pointer :: expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: expected_water_to_hd
+   integer,dimension(:,:), pointer :: expected_lake_numbers
+   integer,dimension(:,:), pointer :: expected_lake_types
+   real(dp),dimension(:,:), pointer :: expected_diagnostic_lake_volumes
+   real(dp),dimension(:), pointer :: expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: expected_lake_fractions
+   integer,dimension(:,:), pointer :: expected_number_lake_cells
+   integer,dimension(:,:), pointer :: expected_number_fine_grid_cells
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: first_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: first_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:), pointer :: first_intermediate_expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: first_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: first_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: second_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: second_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:), pointer :: second_intermediate_expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: second_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: second_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:,:), pointer :: third_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: third_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: third_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: third_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: third_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: third_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:), pointer :: third_intermediate_expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: third_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: third_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: third_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:,:), pointer :: fourth_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: fourth_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: fourth_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: fourth_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: fourth_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: fourth_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:), pointer :: fourth_intermediate_expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: fourth_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: fourth_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: fourth_intermediate_expected_number_fine_grid_cells
+   integer,dimension(:,:), pointer :: lake_types
+   real(dp),dimension(:), pointer :: fifth_intermediate_expected_lake_volumes
+   real(dp),dimension(:), pointer :: sixth_intermediate_expected_lake_volumes
+   real(dp),dimension(:), pointer :: seventh_intermediate_expected_lake_volumes
+   real(dp),dimension(:), pointer :: eighth_intermediate_expected_lake_volumes
+   real(dp),dimension(:), pointer :: ninth_intermediate_expected_lake_volumes
+   real(dp),dimension(:), pointer :: tenth_intermediate_expected_lake_volumes
+   real(dp),dimension(:), pointer :: eleventh_intermediate_expected_lake_volumes
+   real(dp),dimension(:), pointer :: twelfth_intermediate_expected_lake_volumes
+   real(dp),dimension(:), pointer :: thirteenth_intermediate_expected_lake_volumes
+   real(dp) :: lake_retention_coefficient_local
+   logical :: use_realistic_surface_coupling_in
+   logical :: instant_throughflow_local
+   integer :: i,j
+   integer :: nlat,nlon
+   integer :: nlat_coarse,nlon_coarse
+   integer :: nlat_surface_model,nlon_surface_model
+   integer :: no_merge_mtype
+   integer :: connection_merge_not_set_flood_merge_as_primary
+   integer :: connection_merge_not_set_flood_merge_as_secondary
+   integer :: lake_number,lake_type
+      no_merge_mtype = 0
+      connection_merge_not_set_flood_merge_as_primary = 9
+      connection_merge_not_set_flood_merge_as_secondary = 10
+      nlat_coarse = 4
+      nlon_coarse = 4
+      nlat_surface_model = 3
+      nlon_surface_model = 3
+      allocate(flow_directions(nlat_coarse,nlon_coarse))
+      flow_directions = transpose(reshape((/ 3,2,2,1, &
+                                             6,6,-2,4, &
+                                             6,8,8,2, &
+                                             9,8,8,0 /), &
+                                            (/nlon_coarse, &
+                                              nlat_coarse/)))
+      allocate(river_reservoir_nums(nlat_coarse,nlon_coarse))
+      river_reservoir_nums(:,:) = 5
+      allocate(overland_reservoir_nums(nlat_coarse,nlon_coarse))
+      overland_reservoir_nums(:,:) = 1
+      allocate(base_reservoir_nums(nlat_coarse,nlon_coarse))
+      base_reservoir_nums(:,:) = 1
+      allocate(river_retention_coefficients(nlat_coarse,nlon_coarse))
+      river_retention_coefficients(:,:) = 0.0
+      allocate(overland_retention_coefficients(nlat_coarse,nlon_coarse))
+      overland_retention_coefficients(:,:) = 0.0
+      allocate(base_retention_coefficients(nlat_coarse,nlon_coarse))
+      base_retention_coefficients(:,:) = 0.0
+      allocate(landsea_mask(nlat_coarse,nlon_coarse))
+      landsea_mask(:,:) = .False.
+      river_reservoir_nums(4,4) = 0
+      overland_reservoir_nums(4,4) = 0
+      base_reservoir_nums(4,4) = 0
+      landsea_mask(4,4) = .True.
+      river_parameters => RiverParameters(flow_directions, &
+                                          river_reservoir_nums, &
+                                          overland_reservoir_nums, &
+                                          base_reservoir_nums, &
+                                          river_retention_coefficients, &
+                                          overland_retention_coefficients, &
+                                          base_retention_coefficients, &
+                                          landsea_mask)
+      river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
+      nlat = 20
+      nlon = 20
+      use_realistic_surface_coupling_in = .true.
+      allocate(lake_centers(nlat,nlon))
+      lake_centers = transpose(reshape((/ &
+          .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+          .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .True., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False. /), &
+         (/nlon,nlat/)))
+      allocate(connection_volume_thresholds(nlat,nlon))
+      connection_volume_thresholds = transpose(reshape((/ &
+          -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0/), &
+         (/nlon,nlat/)))
+      allocate(flood_volume_thresholds(nlat,nlon))
+      flood_volume_thresholds = transpose(reshape((/ &
+          -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0,  &
+          -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, 574.0, 574.0, 574.0, 574.0, 574.0, 574.0, 574.0,  &
+         574.0, 574.0, 574.0, 574.0, 574.0, 574.0, 574.0, 574.0, 574.0, 574.0, 574.0, -1.0, &
+         -1.0, 574.0, 574.0, 574.0, 574.0, 574.0, 574.0, 574.0,  &
+         574.0, 574.0, 574.0, 574.0, 574.0, 574.0, 574.0, 574.0, 574.0, 574.0, 574.0, -1.0, &
+         -1.0, 574.0, 206.0, 96.0, 96.0, 96.0, 96.0, 96.0, 36.0, &
+          36.0, 36.0, 36.0, 36.0, 206.0, 206.0, 206.0, 206.0, 366.0, 574.0, -1.0, &
+         -1.0, 574.0, 96.0, 96.0, 96.0, 96.0, 96.0, 36.0, 36.0,  &
+         36.0, 36.0, 36.0, 36.0, 206.0, 206.0, 206.0, 206.0, 206.0, 574.0, -1.0, &
+         -1.0, 574.0, 96.0, 96.0, 96.0, 96.0, 96.0, 36.0, 36.0,  &
+         36.0, 36.0, 36.0, 36.0, 206.0, 206.0, 206.0, 206.0, 206.0, 574.0, -1.0, &
+         -1.0, 574.0, 96.0, 96.0, 96.0, 96.0, 96.0, 36.0, 36.0,  &
+         36.0, 36.0, 36.0, 36.0, 206.0, 206.0, 206.0, 206.0, 206.0, 574.0, -1.0, &
+         -1.0, 574.0, 96.0, 96.0, 96.0, 96.0, 96.0, 36.0, 0.0, &
+          0.0, 0.0, 0.0, 0.0, 206.0, 206.0, 206.0, 206.0, 206.0, 574.0, -1.0, &
+         -1.0, 574.0, 96.0, 96.0, 96.0, 96.0, 96.0, 0.0, 0.0,  &
+         0.0, 0.0, 0.0, 0.0, 206.0, 206.0, 206.0, 206.0, 206.0, 574.0, -1.0, &
+         -1.0, 574.0, 96.0, 96.0, 96.0, 96.0, 96.0, 0.0, 0.0,  &
+         0.0, 0.0, 0.0, 0.0, 206.0, 206.0, 206.0, 206.0, 206.0, 574.0, -1.0, &
+         -1.0, 574.0, 96.0, 96.0, 96.0, 96.0, 96.0, 0.0, 0.0,  &
+         0.0, 0.0, 0.0, 0.0, 206.0, 206.0, 206.0, 206.0, 206.0, 574.0, -1.0, &
+         -1.0, 574.0, 96.0, 96.0, 96.0, 96.0, 96.0, 0.0, 0.0,  &
+         0.0, 0.0, 0.0, 0.0, 206.0, 206.0, 206.0, 206.0, 206.0, 574.0, -1.0, &
+         -1.0, 574.0, 96.0, 96.0, 96.0, 96.0, 96.0, 0.0, 0.0,  &
+         0.0, 0.0, 0.0, 0.0, 206.0, 206.0, 206.0, 206.0, 206.0, 574.0, -1.0, &
+         -1.0, 574.0, 366.0, 366.0, 366.0, 366.0, 366.0, 366.0, &
+          366.0, 366.0, 366.0, 366.0, 366.0, 366.0, 1459.0, 1459.0, 1459.0, 1459.0, 574.0, -1.0, &
+         -1.0, 574.0, 366.0, 366.0, 366.0, 366.0, 366.0, 366.0, &
+          366.0, 366.0, 366.0, 366.0, 366.0, 366.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, 574.0, 366.0, 366.0, 366.0, 366.0, 366.0, 366.0, &
+          366.0, 366.0, 366.0, 366.0, 366.0, 366.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, 574.0, 574.0, 366.0, 366.0, 366.0, 366.0, 366.0, &
+          366.0, 366.0, 366.0, 366.0, 366.0, 366.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, 574.0, 574.0, 574.0, 574.0, 574.0, 574.0, 574.0, &
+          574.0, 574.0, 574.0, 574.0, 574.0, 574.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, 1459.0, 574.0, 574.0, 574.0, 574.0, 574.0, 574.0, &
+         574.0, 574.0, 574.0, 574.0, 574.0, 574.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0 /), &
+         (/nlon,nlat/)))
+      allocate(flood_local_redirect(nlat,nlon))
+      flood_local_redirect = transpose(reshape((/ &
+          .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+           .False., .False., .False., .False., .False., .False., &
+             .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False.,  &
+           .False., .False., .False., .False., &
+         .False.,  .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+          .False., .False., .False., .False., .False., .False., &
+            .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False.,  &
+           .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False.,  &
+           .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False.,  .False., .False., &
+            .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False.,  .False., .False., .False., .False., &
+          .False., .False., .False., .False., .False., .False., &
+            .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False.,  .False., &
+            .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False.,  &
+           .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False.,  &
+           .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False.,  &
+           .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False.,  &
+           .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False.,  &
+           .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False.,  &
+           .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False.,  &
+           .False., .False., .False., .False., &
+         .False., .False., .False., .False.,  .False., .False., .False., .False., .False., .False., &
+          .False., .False., .False., .False., .False., .False., &
+            .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False.,  &
+           .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False.,  &
+           .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False.,  &
+           .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False.,  &
+           .False., .False., .False., .False. /), &
+         (/nlon,nlat/)))
+      allocate(connect_local_redirect(nlat,nlon))
+      connect_local_redirect = transpose(reshape((/ &
+          .False., .False., .False., .False., .False., .False., .False., .False.,&
+           .False., .False., .False., .False., .False., .False., .False., .False.,&
+              .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., &
+            .False., .False., .False., .False., &
+         .False.,  .False., .False., .False., .False., .False., .False., .False.,&
+          .False., .False., .False., .False., .False., .False., .False., .False.,&
+             .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., &
+            .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., &
+            .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False.,  .False., .False.,&
+             .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False.,  .False., .False.,&
+          .False., .False., .False., .False., .False., .False., .False., .False.,&
+             .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False.,  .False.,&
+             .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., &
+            .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., &
+            .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., &
+            .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., &
+            .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., &
+            .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., &
+            .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., &
+            .False., .False., .False., .False., &
+         .False., .False., .False., .False.,  .False., .False., .False., .False.,&
+          .False., .False., .False., .False., .False., .False., .False., .False.,&
+             .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., &
+            .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., &
+            .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., &
+            .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., &
+            .False., .False., .False., .False. /), &
+         (/nlon,nlat/)))
+      allocate(additional_flood_local_redirect(nlat,nlon))
+      additional_flood_local_redirect(:,:) = .false.
+      allocate(additional_connect_local_redirect(nlat,nlon))
+      additional_connect_local_redirect(:,:) = .false.
+      allocate(merge_points(nlat,nlon))
+      merge_points = transpose(reshape((/ &
+         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
+                   no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,     &
+                          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,    &
+                                  no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
+                   no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,     &
+                          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,    &
+                                  no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
+                   no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,     &
+                          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,    &
+                                  no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
+                   no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,     &
+                          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,    &
+                                  no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
+                   no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,     &
+                          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,    &
+                                  no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
+                   no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,     &
+                          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,    &
+                                  no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
+                   no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,     &
+                          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,    &
+                                  no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
+                   no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,     &
+                          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,    &
+                                  no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
+                   no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,     &
+                          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,    &
+                                  no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
+                   no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,     &
+                          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,    &
+                                  no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
+                   no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,     &
+                          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,    &
+                                  no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
+                   no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,     &
+                          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,    &
+                                  no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
+                   no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,     &
+                          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,    &
+                                  no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
+                   no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,     &
+                          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,    &
+                                  no_merge_mtype, no_merge_mtype, connection_merge_not_set_flood_merge_as_secondary, &
+                                  no_merge_mtype, no_merge_mtype, &
+         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
+                   no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,     &
+                          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,    &
+                                  no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
+                   no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,     &
+                          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,    &
+                                  no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
+                   no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,     &
+                          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,    &
+                                  no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
+                   no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,     &
+                          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,    &
+                                  no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
+                   no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,     &
+                          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,    &
+                                  no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
+                   no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,     &
+                          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,    &
+                                  no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype /), &
+         (/nlon,nlat/)))
+      allocate(cell_areas_on_surface_model_grid(3,3))
+      cell_areas_on_surface_model_grid = transpose(reshape((/ &
+          2.5, 3.0, 2.5, &
+         3.0, 4.0, 3.0, &
+         2.5, 3.0, 2.5 /), &
+         (/3,3/)))
+      allocate(flood_next_cell_lat_index(nlat,nlon))
+      flood_next_cell_lat_index = transpose(reshape((/ &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 18, -1, &
+         -1, 2, 13, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 13, 14, -1, &
+         -1, 2, 12, 12, 12, 12, 12, 12, 3, 3, 3, 3, 3, 12, 12, 12, 12, 13, 2, -1, &
+         -1, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, -1, &
+         -1, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 4, 4, 4, 4, 4, 4, -1, &
+         -1, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, -1, &
+         -1, 6, 6, 6, 6, 6, 6, 6, 12, 7, 7, 7, 7, 6, 6, 6, 6, 6, 6, -1, &
+         -1, 7, 7, 7, 7, 7, 7, 7, 7, 11, 8, 8, 8, 7, 7, 7, 7, 7, 7, -1, &
+         -1, 8, 8, 8, 8, 8, 8, 8, 8, 8, 10, 9, 11, 8, 8, 8, 8, 8, 8, -1, &
+         -1, 9, 9, 9, 9, 9, 9, 9, 9, 9, 10, 10, 9, 9, 9, 9, 9, 9, 9, -1, &
+         -1, 10, 10, 10, 10, 10, 10, 10, 10, 11, 10, 11, 11, 10, 10, 10, 10, 10, 10, -1, &
+         -1, 11, 11, 11, 11, 11, 11, 11, 12, 12, 12, 12, 12, 11, 11, 11, 11, 11, 11, -1, &
+         -1, 12, 14, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 15, 12, -1, &
+         -1, 15, 15, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, -1, -1, -1, -1, -1, -1, &
+         -1, 16, 16, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, -1, -1, -1, -1, -1, -1, &
+         -1, 17, 2, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, -1, -1, -1, -1, -1, -1, &
+         -1, 1, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, -1, -1, -1, -1, -1, -1, &
+         -1, 13, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
+         (/nlon,nlat/)))
+      allocate(flood_next_cell_lon_index(nlat,nlon))
+      flood_next_cell_lon_index = transpose(reshape((/ &
+          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, 15, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16, 17, 18, 13, -1, &
+         -1, 14, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15, 16, 17, 18, 1, -1, &
+         -1, 1, 13, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 14, 15, 16, 17, 13, 18, -1, &
+         -1, 1, 2, 3, 4, 5, 6, 12, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, -1, &
+         -1, 1, 2, 3, 4, 5, 6, 12, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, -1, &
+         -1, 1, 2, 3, 4, 5, 6, 12, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, -1, &
+         -1, 1, 2, 3, 4, 5, 6, 12, 12, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, -1, &
+         -1, 1, 2, 3, 4, 5, 6, 7, 12, 12, 9, 10, 8, 13, 14, 15, 16, 17, 18, -1, &
+         -1, 1, 2, 3, 4, 5, 6, 7, 12, 11, 11, 9, 9, 13, 14, 15, 16, 17, 18, -1, &
+         -1, 1, 2, 3, 4, 5, 6, 7, 8, 11, 9, 10, 12, 13, 14, 15, 16, 17, 18, -1, &
+         -1, 1, 2, 3, 4, 5, 6, 7, 8, 8, 12, 10, 11, 13, 14, 15, 16, 17, 18, -1, &
+         -1, 1, 2, 3, 4, 5, 6, 7, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, -1, &
+         -1, 1, 13, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15, 16, 17, 15, 18, -1, &
+         -1, 1, 13, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, -1, -1, -1, -1, -1, -1, &
+         -1, 1, 13, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, -1, -1, -1, -1, -1, -1, &
+         -1, 13, 13, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, -1, -1, -1, -1, -1, -1, &
+         -1, 14, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, -1, -1, -1, -1, -1, -1, &
+         -1, 14, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
+         (/nlon,nlat/)))
+      allocate(connect_next_cell_lat_index(nlat,nlon))
+      connect_next_cell_lat_index = transpose(reshape((/ &
+          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
+         (/nlon,nlat/)))
+      allocate(connect_next_cell_lon_index(nlat,nlon))
+      connect_next_cell_lon_index = transpose(reshape((/ &
+          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
+         (/nlon,nlat/)))
+      allocate(flood_force_merge_lat_index(nlat,nlon))
+      flood_force_merge_lat_index = transpose(reshape((/ &
+          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1  /), &
+         (/nlon,nlat/)))
+      allocate(flood_force_merge_lon_index(nlat,nlon))
+      flood_force_merge_lon_index = transpose(reshape((/ &
+          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1  /), &
+         (/nlon,nlat/)))
+      allocate(connect_force_merge_lat_index(nlat,nlon))
+      connect_force_merge_lat_index = transpose(reshape((/ &
+          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
+         (/nlon,nlat/)))
+      allocate(connect_force_merge_lon_index(nlat,nlon))
+      connect_force_merge_lon_index = transpose(reshape((/ &
+          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
+         (/nlon,nlat/)))
+      allocate(flood_redirect_lat_index(nlat,nlon))
+      flood_redirect_lat_index = transpose(reshape((/ &
+          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 3, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1  /), &
+         (/nlon,nlat/)))
+      allocate(flood_redirect_lon_index(nlat,nlon))
+      flood_redirect_lon_index = transpose(reshape((/ &
+          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 3, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
+         (/nlon,nlat/)))
+      allocate(connect_redirect_lat_index(nlat,nlon))
+      connect_redirect_lat_index = transpose(reshape((/ &
+          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
+         (/nlon,nlat/)))
+      allocate(connect_redirect_lon_index(nlat,nlon))
+      connect_redirect_lon_index = transpose(reshape((/ &
+          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1  /), &
+         (/nlon,nlat/)))
+      allocate(corresponding_surface_cell_lat_index(nlat,nlon))
+      corresponding_surface_cell_lat_index = transpose(reshape((/ &
+            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, &
+         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, &
+         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, &
+         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, &
+         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, &
+         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, &
+         2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, &
+         2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, &
+         2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, &
+         2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, &
+         2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, &
+         2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, &
+         2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, &
+         2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, &
+         3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, &
+         3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, &
+         3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, &
+         3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, &
+         3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, &
+         3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3 /), &
+         (/nlon,nlat/)))
+      allocate(corresponding_surface_cell_lon_index(nlat,nlon))
+      corresponding_surface_cell_lon_index = transpose(reshape((/ &
+          1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3 /), &
+         (/nlon,nlat/)))
+      call add_offset(flood_next_cell_lat_index,1,(/-1/))
+      call add_offset(flood_next_cell_lon_index,1,(/-1/))
+      call add_offset(connect_next_cell_lat_index,1,(/-1/))
+      call add_offset(connect_next_cell_lon_index,1,(/-1/))
+      call add_offset(flood_force_merge_lat_index,1,(/-1/))
+      call add_offset(flood_force_merge_lon_index,1,(/-1/))
+      call add_offset(connect_force_merge_lat_index,1,(/-1/))
+      call add_offset(connect_force_merge_lon_index,1,(/-1/))
+      call add_offset(flood_redirect_lat_index,1,(/-1/))
+      call add_offset(flood_redirect_lon_index,1,(/-1/))
+      call add_offset(connect_redirect_lat_index,1,(/-1/))
+      call add_offset(connect_redirect_lon_index,1,(/-1/))
+      allocate(additional_flood_redirect_lat_index(nlat,nlon))
+      additional_flood_redirect_lat_index(:,:) = 0
+      allocate(additional_flood_redirect_lon_index(nlat,nlon))
+      additional_flood_redirect_lon_index(:,:) = 0
+      allocate(additional_connect_redirect_lat_index(nlat,nlon))
+      additional_connect_redirect_lat_index(:,:) = 0
+      allocate(additional_connect_redirect_lon_index(nlat,nlon))
+      additional_connect_redirect_lon_index(:,:) = 0
+      instant_throughflow_local=.True.
+      lake_retention_coefficient_local=0.1_dp
+      lake_parameters => LakeParameters(lake_centers, &
+                                        connection_volume_thresholds, &
+                                        flood_volume_thresholds, &
+                                        flood_local_redirect, &
+                                        connect_local_redirect, &
+                                        additional_flood_local_redirect, &
+                                        additional_connect_local_redirect, &
+                                        merge_points, &
+                                        cell_areas_on_surface_model_grid, &
+                                        flood_next_cell_lat_index, &
+                                        flood_next_cell_lon_index, &
+                                        connect_next_cell_lat_index, &
+                                        connect_next_cell_lon_index, &
+                                        flood_force_merge_lat_index, &
+                                        flood_force_merge_lon_index, &
+                                        connect_force_merge_lat_index, &
+                                        connect_force_merge_lon_index, &
+                                        flood_redirect_lat_index, &
+                                        flood_redirect_lon_index, &
+                                        connect_redirect_lat_index, &
+                                        connect_redirect_lon_index, &
+                                        additional_flood_redirect_lat_index, &
+                                        additional_flood_redirect_lon_index, &
+                                        additional_connect_redirect_lat_index, &
+                                        additional_connect_redirect_lon_index, &
+                                        corresponding_surface_cell_lat_index, &
+                                        corresponding_surface_cell_lon_index, &
+                                        nlat,nlon, &
+                                        nlat_coarse,nlon_coarse, &
+                                        nlat_surface_model,nlon_surface_model, &
+                                        instant_throughflow_local, &
+                                        lake_retention_coefficient_local)
+      allocate(drainage(4,4))
+      drainage(:,:) = 0.0
+      allocate(runoff(4,4))
+      runoff(:,:) = 0.0
+      allocate(drainages(4,4,10000))
+      allocate(runoffs(4,4,10000))
+      do i = 1,10000
+        drainages(:,:,i) = drainage(:,:)
+        runoffs(:,:,i) = runoff(:,:)
+      end do
+      allocate(evaporation(3,3))
+      evaporation(:,:) = 1.0
+      allocate(lake_evaporations(3,3,180))
+      do i = 1,180
+        lake_evaporations(:,:,i) = evaporation(:,:)
+      end do
+      allocate(initial_water_to_lake_centers(20,20))
+      initial_water_to_lake_centers = transpose(reshape((/ &
+         0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  1459.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0 /), &
+         (/nlon,nlat/)))
+      allocate(initial_spillover_to_rivers(4,4))
+      initial_spillover_to_rivers = transpose(reshape((/ &
+          0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0 /), &
+         (/4,4/)))
+      allocate(expected_river_inflow(4,4))
+      expected_river_inflow = transpose(reshape((/ &
+          0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0 /), &
+         (/4,4/)))
+      allocate(expected_water_to_ocean(4,4))
+      expected_water_to_ocean = transpose(reshape((/ &
+          0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0 /), &
+         (/4,4/)))
+      allocate(expected_water_to_hd(4,4))
+      expected_water_to_hd = transpose(reshape((/ &
+          0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0 /), &
+         (/4,4/)))
+      allocate(expected_lake_numbers(nlat,nlon))
+      expected_lake_numbers = transpose(reshape((/ &
+        0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,  &
+        0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,  &
+        0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,  &
+        0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,  &
+        0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,  &
+
+        0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,  &
+        0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,  &
+        0,0,0,0,0,0,0,1,1,1, 1,1,1,0,0,0,0,0,0,0,  &
+        0,0,0,0,0,0,0,1,1,1, 1,1,1,0,0,0,0,0,0,0,  &
+        0,0,0,0,0,0,0,1,1,1, 1,1,1,0,0,0,0,0,0,0,  &
+
+        0,0,0,0,0,0,0,1,1,1, 1,1,1,0,0,0,0,0,0,0,  &
+        0,0,0,0,0,0,0,1,1,1, 1,1,1,0,0,0,0,0,0,0,  &
+        0,0,0,0,0,0,0,1,1,1, 1,1,1,0,0,0,0,0,0,0,  &
+        0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,  &
+        0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,  &
+
+        0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,  &
+        0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,  &
+        0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,  &
+        0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,  &
+        0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0 /), &
+         (/nlon,nlat/)))
+      allocate(expected_lake_types(nlat,nlon))
+      expected_lake_types = transpose(reshape((/ &
+        0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,  &
+        0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,  &
+        0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,  &
+        0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,  &
+        0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,  &
+
+        0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,  &
+        0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,  &
+        0,0,0,0,0,0,0,1,1,1, 1,1,1,0,0,0,0,0,0,0,  &
+        0,0,0,0,0,0,0,1,1,1, 1,1,1,0,0,0,0,0,0,0,  &
+        0,0,0,0,0,0,0,1,1,1, 1,1,1,0,0,0,0,0,0,0,  &
+
+        0,0,0,0,0,0,0,1,1,1, 1,1,1,0,0,0,0,0,0,0,  &
+        0,0,0,0,0,0,0,1,1,1, 1,1,1,0,0,0,0,0,0,0,  &
+        0,0,0,0,0,0,0,1,1,1, 1,1,1,0,0,0,0,0,0,0,  &
+        0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,  &
+        0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,  &
+
+        0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,  &
+        0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,  &
+        0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,  &
+        0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,  &
+        0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0  /), &
+         (/nlon,nlat/)))
+      allocate(expected_diagnostic_lake_volumes(nlat,nlon))
+      expected_diagnostic_lake_volumes = transpose(reshape((/ &
+          0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0  /), &
+         (/nlon,nlat/)))
+      allocate(expected_lake_fractions(3,3))
+      expected_lake_fractions = transpose(reshape((/ &
+          0.0, 0.0, 0.0, &
+         0.0, 0.5625,  0.0, &
+         0.0, 0.0, 0.0/), &
+         (/3,3/)))
+      allocate(expected_number_lake_cells(3,3))
+      expected_number_lake_cells = transpose(reshape((/ &
+           0, 0,  0, &
+         0, 36,  0, &
+         0, 0,  0 /), &
+         (/3,3/)))
+      allocate(expected_number_fine_grid_cells(3,3))
+      expected_number_fine_grid_cells = transpose(reshape((/ &
+          36, 48, 36, &
+         48, 64, 48, &
+         36, 48, 36  /), &
+         (/3,3/)))
+      allocate(expected_lake_volumes(1))
+      expected_lake_volumes = (/0.0/)
+      allocate(first_intermediate_expected_river_inflow(4,4))
+      first_intermediate_expected_river_inflow = transpose(reshape((/ &
+          0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0 /), &
+         (/4,4/)))
+      allocate(first_intermediate_expected_water_to_ocean(4,4))
+      first_intermediate_expected_water_to_ocean = transpose(reshape((/ &
+          0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0 /), &
+         (/4,4/)))
+      allocate(first_intermediate_expected_water_to_hd(4,4))
+      first_intermediate_expected_water_to_hd = transpose(reshape((/ &
+          0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0 /), &
+         (/4,4/)))
+      allocate(first_intermediate_expected_lake_numbers(nlat,nlon))
+      first_intermediate_expected_lake_numbers = transpose(reshape((/ &
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0  /), &
+         (/nlon,nlat/)))
+      allocate(first_intermediate_expected_lake_types(nlat,nlon))
+      first_intermediate_expected_lake_types = transpose(reshape((/ &
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0   /), &
+         (/nlon,nlat/)))
+      allocate(first_intermediate_expected_diagnostic_lake_volumes(nlat,nlon))
+      first_intermediate_expected_diagnostic_lake_volumes = transpose(reshape((/ &
+           0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+              0.0,   0.0,   0.0,   0.0,   0.0, &
+         0.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0, &
+            1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   0.0, &
+         0.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0, &
+            1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   0.0, &
+         0.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0, &
+            1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   0.0, &
+         0.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0, &
+            1459.0,   1459.0,    1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   0.0, &
+         0.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0, &
+            1459.0,   1459.0,    1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   0.0, &
+         0.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0, &
+            1459.0,   1459.0,    1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   0.0, &
+         0.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0, &
+            1459.0,   1459.0,    1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   0.0, &
+         0.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0, &
+            1459.0,   1459.0,    1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   0.0, &
+         0.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0, &
+            1459.0,   1459.0,    1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   0.0, &
+         0.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0, &
+            1459.0,   1459.0,    1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   0.0, &
+         0.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0, &
+            1459.0,   1459.0,    1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   0.0, &
+         0.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0, &
+            1459.0,   1459.0,    1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   0.0, &
+         0.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0, &
+            1459.0,   1459.0,    1459.0,   0.0,   0.0,   0.0,   0.0,   1459.0,   0.0, &
+         0.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0, &
+            1459.0,   1459.0,    1459.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+         0.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0, &
+            1459.0,   1459.0,    1459.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+         0.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0, &
+            1459.0,   1459.0,    1459.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+         0.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0, &
+            1459.0,   1459.0,    1459.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+         0.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0,   1459.0, &
+            1459.0,   1459.0,    1459.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+         0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,    0.0,   0.0,  &
+           0.0,   0.0,   0.0,   0.0,   0.0  /), &
+         (/nlon,nlat/)))
+      allocate(first_intermediate_expected_lake_fractions(3,3))
+      first_intermediate_expected_lake_fractions = transpose(reshape((/ &
+          0.6944444444, 0.8333333333, 0.6944444444, &
+         0.8333333333, 1.0, 0.75, &
+         0.6944444444, 0.8333333333, 0.0/), &
+         (/3,3/)))
+      allocate(first_intermediate_expected_number_lake_cells(3,3))
+      first_intermediate_expected_number_lake_cells = transpose(reshape((/ &
+          25, 40, 25, &
+         40, 64, 36, &
+         25, 40, 0/), &
+         (/3,3/)))
+      allocate(first_intermediate_expected_number_fine_grid_cells(3,3))
+      first_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
+          36, 48, 36, &
+         48, 64, 48, &
+         36, 48, 36  /), &
+         (/3,3/)))
+      allocate(first_intermediate_expected_lake_volumes(1))
+      first_intermediate_expected_lake_volumes =  (/1459.0/)
+      allocate(second_intermediate_expected_river_inflow(4,4))
+      second_intermediate_expected_river_inflow = transpose(reshape((/ &
+          0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0 /), &
+         (/4,4/)))
+      allocate(second_intermediate_expected_water_to_ocean(4,4))
+      second_intermediate_expected_water_to_ocean = transpose(reshape((/ &
+          0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0 /), &
+         (/4,4/)))
+      allocate(second_intermediate_expected_water_to_hd(4,4))
+      second_intermediate_expected_water_to_hd = transpose(reshape((/ &
+          0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0 /), &
+         (/4,4/)))
+      allocate(second_intermediate_expected_lake_numbers(nlat,nlon))
+      second_intermediate_expected_lake_numbers = transpose(reshape((/ &
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0   /), &
+         (/nlon,nlat/)))
+      allocate(second_intermediate_expected_lake_types(nlat,nlon))
+      second_intermediate_expected_lake_types = transpose(reshape((/ &
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0  /), &
+         (/nlon,nlat/)))
+      allocate(second_intermediate_expected_diagnostic_lake_volumes(nlat,nlon))
+      second_intermediate_expected_diagnostic_lake_volumes = transpose(reshape((/ &
+            0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  &
+             0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+         0.0,   1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667,  &
+          1440.041667,    1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667,&
+             1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667, &
+               1440.041667,   0.0, &
+         0.0,   1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667,  &
+          1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667, &
+            1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667,  &
+             1440.041667,   0.0, &
+         0.0,   1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667,  &
+          1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667, &
+            1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667,  &
+             1440.041667,   0.0, &
+         0.0,   1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667,  &
+          1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667, &
+            1440.041667,    1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667, &
+              1440.041667,   0.0, &
+         0.0,   1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667,  &
+          1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667, &
+            1440.041667,    1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667, &
+              1440.041667,   0.0, &
+         0.0,   1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667,  &
+          1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667, &
+            1440.041667,    1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667, &
+              1440.041667,   0.0, &
+         0.0,   1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667,  &
+          1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667, &
+            1440.041667,    1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667, &
+              1440.041667,   0.0, &
+         0.0,   1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667,  &
+          1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667, &
+            1440.041667,    1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667, &
+              1440.041667,   0.0, &
+         0.0,   1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667,  &
+          1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667, &
+            1440.041667,    1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667, &
+              1440.041667,   0.0, &
+         0.0,   1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667,  &
+          1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667, &
+            1440.041667,    1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667, &
+              1440.041667,   0.0, &
+         0.0,   1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667,  &
+          1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667, &
+            1440.041667,    1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667, &
+              1440.041667,   0.0, &
+         0.0,   1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667,  &
+          1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667, &
+            1440.041667,    1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667, &
+              1440.041667,   0.0, &
+         0.0,   1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667,  &
+          1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667, &
+            1440.041667,    1440.041667,   0.0,   0.0,   0.0,   0.0,   1440.041667,   0.0, &
+         0.0,   1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667,  &
+          1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667, &
+            1440.041667,    1440.041667,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+         0.0,   1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667,  &
+          1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667, &
+            1440.041667,    1440.041667,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+         0.0,   1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667,  &
+          1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667, &
+            1440.041667,    1440.041667,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+         0.0,   1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667,  &
+          1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667, &
+            1440.041667,    1440.041667,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+         0.0,   1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667,  &
+          1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667,   1440.041667, &
+            1440.041667,    1440.041667,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+         0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+            0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0 /), &
+         (/nlon,nlat/)))
+      allocate(second_intermediate_expected_lake_fractions(3,3))
+      second_intermediate_expected_lake_fractions = transpose(reshape((/ &
+          0.6944444444, 0.8333333333, 0.6944444444, &
+         0.8333333333, 1.0, 0.75, &
+         0.6944444444, 0.8333333333, 0.0 /), &
+         (/3,3/)))
+      allocate(second_intermediate_expected_number_lake_cells(3,3))
+      second_intermediate_expected_number_lake_cells = transpose(reshape((/ &
+          25, 40, 25, &
+         40, 64, 36, &
+         25, 40, 0/), &
+         (/3,3/)))
+      allocate(second_intermediate_expected_number_fine_grid_cells(3,3))
+      second_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
+          36, 48, 36, &
+         48, 64, 48, &
+         36, 48, 36  /), &
+         (/3,3/)))
+      allocate(second_intermediate_expected_lake_volumes(1))
+      second_intermediate_expected_lake_volumes = (/1440.041667/)
+      allocate(third_intermediate_expected_river_inflow(4,4))
+      third_intermediate_expected_river_inflow = transpose(reshape((/ &
+          0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0 /), &
+         (/4,4/)))
+      allocate(third_intermediate_expected_water_to_ocean(4,4))
+      third_intermediate_expected_water_to_ocean = transpose(reshape((/ &
+          0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0 /), &
+         (/4,4/)))
+      allocate(third_intermediate_expected_water_to_hd(4,4))
+      third_intermediate_expected_water_to_hd = transpose(reshape((/ &
+          0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0 /), &
+         (/4,4/)))
+      allocate(third_intermediate_expected_lake_numbers(nlat,nlon))
+      third_intermediate_expected_lake_numbers = transpose(reshape((/ &
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0   /), &
+         (/nlon,nlat/)))
+      allocate(third_intermediate_expected_lake_types(nlat,nlon))
+      third_intermediate_expected_lake_types = transpose(reshape((/ &
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0  /), &
+         (/nlon,nlat/)))
+      allocate(third_intermediate_expected_diagnostic_lake_volumes(nlat,nlon))
+      third_intermediate_expected_diagnostic_lake_volumes = transpose(reshape((/ &
+            0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  &
+             0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+         0.0,   586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667,&
+            586.9166667,    586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667,&
+               586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667, &
+                 586.9166667,   0.0, &
+         0.0,   586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667,&
+            586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667, &
+              586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667,  &
+               586.9166667,   0.0, &
+         0.0,   586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667,&
+            586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667, &
+              586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667,  &
+               586.9166667,   0.0, &
+         0.0,   586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667,&
+            586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667, &
+              586.9166667,    586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667, &
+                586.9166667,   0.0, &
+         0.0,   586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667,&
+            586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667, &
+              586.9166667,    586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667, &
+                586.9166667,   0.0, &
+         0.0,   586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667,&
+            586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667, &
+              586.9166667,    586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667, &
+                586.9166667,   0.0, &
+         0.0,   586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667,&
+            586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667, &
+              586.9166667,    586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667, &
+                586.9166667,   0.0, &
+         0.0,   586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667,&
+            586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667, &
+              586.9166667,    586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667, &
+                586.9166667,   0.0, &
+         0.0,   586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667,&
+            586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667, &
+              586.9166667,    586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667, &
+                586.9166667,   0.0, &
+         0.0,   586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667,&
+            586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667, &
+              586.9166667,    586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667, &
+                586.9166667,   0.0, &
+         0.0,   586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667,&
+            586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667, &
+              586.9166667,    586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667, &
+                586.9166667,   0.0, &
+         0.0,   586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667,&
+            586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667, &
+              586.9166667,    586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667, &
+                586.9166667,   0.0, &
+         0.0,   586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667,&
+            586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667, &
+              586.9166667,    586.9166667,   0.0,   0.0,   0.0,   0.0,   586.9166667,   0.0, &
+         0.0,   586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667,&
+            586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667, &
+              586.9166667,    586.9166667,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+         0.0,   586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667,&
+            586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667, &
+              586.9166667,    586.9166667,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+         0.0,   586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667,&
+            586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667, &
+              586.9166667,    586.9166667,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+         0.0,   586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667,&
+            586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667, &
+              586.9166667,    586.9166667,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+         0.0,   586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667,&
+            586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667,   586.9166667, &
+              586.9166667,    586.9166667,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+         0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+            0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0 /), &
+         (/nlon,nlat/)))
+      allocate(third_intermediate_expected_lake_fractions(3,3))
+      third_intermediate_expected_lake_fractions = transpose(reshape((/ &
+          0.6944444444, 0.8333333333, 0.6944444444, &
+         0.8333333333, 1.0, 0.75, &
+         0.6944444444, 0.8333333333, 0.0 /), &
+         (/3,3/)))
+      allocate(third_intermediate_expected_number_lake_cells(3,3))
+      third_intermediate_expected_number_lake_cells = transpose(reshape((/ &
+          25, 40, 25, &
+         40, 64, 36, &
+         25, 40, 0/), &
+         (/3,3/)))
+      allocate(third_intermediate_expected_number_fine_grid_cells(3,3))
+      third_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
+          36, 48, 36, &
+         48, 64, 48, &
+         36, 48, 36  /), &
+         (/3,3/)))
+      allocate(third_intermediate_expected_lake_volumes(1))
+      third_intermediate_expected_lake_volumes = (/586.9166667/)
+      allocate(fourth_intermediate_expected_river_inflow(4,4))
+      fourth_intermediate_expected_river_inflow = transpose(reshape((/ &
+          0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0 /), &
+         (/4,4/)))
+      allocate(fourth_intermediate_expected_water_to_ocean(4,4))
+      fourth_intermediate_expected_water_to_ocean = transpose(reshape((/ &
+          0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0 /), &
+         (/4,4/)))
+      allocate(fourth_intermediate_expected_water_to_hd(4,4))
+      fourth_intermediate_expected_water_to_hd = transpose(reshape((/ &
+          0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0 /), &
+         (/4,4/)))
+      allocate(fourth_intermediate_expected_lake_numbers(nlat,nlon))
+      fourth_intermediate_expected_lake_numbers = transpose(reshape((/ &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, &
+         0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, &
+         0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, &
+         0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, &
+         0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, &
+         0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, &
+         0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, &
+         0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, &
+         0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, &
+         0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, &
+         0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, &
+         0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, &
+         0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, &
+         0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0  /), &
+         (/nlon,nlat/)))
+      allocate(fourth_intermediate_expected_lake_types(nlat,nlon))
+      fourth_intermediate_expected_lake_types = transpose(reshape((/ &
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, &
+         0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, &
+         0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, &
+         0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, &
+         0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, &
+         0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, &
+         0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, &
+         0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, &
+         0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, &
+         0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, &
+         0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, &
+         0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, &
+         0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, &
+         0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0   /), &
+         (/nlon,nlat/)))
+      allocate(fourth_intermediate_expected_diagnostic_lake_volumes(nlat,nlon))
+      fourth_intermediate_expected_diagnostic_lake_volumes = transpose(reshape((/ &
+         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 567.9583333, 567.9583333, 567.9583333, 567.9583333, 567.9583333, 567.9583333, 567.9583333,&
+             567.9583333, 567.9583333, 567.9583333, 567.9583333,&
+          567.9583333, 567.9583333, 567.9583333,    567.9583333, 567.9583333, 0.0, 0.0, &
+         0.0, 0.0, 567.9583333, 567.9583333, 567.9583333, 567.9583333, 567.9583333, 567.9583333, 567.9583333,&
+             567.9583333, 567.9583333, 567.9583333, 567.9583333,&
+          567.9583333, 567.9583333, 567.9583333,    567.9583333, 567.9583333, 0.0, 0.0, &
+         0.0, 0.0, 567.9583333, 567.9583333, 567.9583333, 567.9583333, 567.9583333, 567.9583333, 567.9583333,&
+             567.9583333, 567.9583333, 567.9583333, 567.9583333,&
+          567.9583333, 567.9583333, 567.9583333,    567.9583333, 567.9583333, 0.0, 0.0, &
+         0.0, 0.0, 567.9583333, 567.9583333, 567.9583333, 567.9583333, 567.9583333, 567.9583333, 567.9583333,&
+             567.9583333, 567.9583333, 567.9583333, 567.9583333,&
+          567.9583333, 567.9583333, 567.9583333,    567.9583333, 567.9583333, 0.0, 0.0, &
+         0.0, 0.0, 567.9583333, 567.9583333, 567.9583333, 567.9583333, 567.9583333, 567.9583333, 567.9583333,&
+             567.9583333, 567.9583333, 567.9583333, 567.9583333,&
+          567.9583333, 567.9583333, 567.9583333,    567.9583333, 567.9583333, 0.0, 0.0, &
+         0.0, 0.0, 567.9583333, 567.9583333, 567.9583333, 567.9583333, 567.9583333, 567.9583333, 567.9583333,&
+             567.9583333, 567.9583333, 567.9583333, 567.9583333,&
+          567.9583333, 567.9583333, 567.9583333,    567.9583333, 567.9583333, 0.0, 0.0, &
+         0.0, 0.0, 567.9583333, 567.9583333, 567.9583333, 567.9583333, 567.9583333, 567.9583333, 567.9583333,&
+             567.9583333, 567.9583333, 567.9583333, 567.9583333,&
+          567.9583333, 567.9583333, 567.9583333,    567.9583333, 567.9583333, 0.0, 0.0, &
+         0.0, 0.0, 567.9583333, 567.9583333, 567.9583333, 567.9583333, 567.9583333, 567.9583333, 567.9583333,&
+             567.9583333, 567.9583333, 567.9583333, 567.9583333,&
+          567.9583333, 567.9583333, 567.9583333,    567.9583333, 567.9583333, 0.0, 0.0, &
+         0.0, 0.0, 567.9583333, 567.9583333, 567.9583333, 567.9583333, 567.9583333, 567.9583333, 567.9583333,&
+             567.9583333, 567.9583333, 567.9583333, 567.9583333,&
+          567.9583333, 567.9583333, 567.9583333,    567.9583333, 567.9583333, 0.0, 0.0, &
+         0.0, 0.0, 567.9583333, 567.9583333, 567.9583333, 567.9583333, 567.9583333, 567.9583333, 567.9583333,&
+             567.9583333, 567.9583333, 567.9583333, 567.9583333,&
+          567.9583333, 567.9583333, 567.9583333,    567.9583333, 567.9583333, 0.0, 0.0, &
+         0.0, 0.0, 567.9583333, 567.9583333, 567.9583333, 567.9583333, 567.9583333, 567.9583333, 567.9583333,&
+             567.9583333, 567.9583333, 567.9583333, 567.9583333,&
+          567.9583333, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 567.9583333, 567.9583333, 567.9583333, 567.9583333, 567.9583333, 567.9583333, 567.9583333,&
+             567.9583333, 567.9583333, 567.9583333, 567.9583333,&
+          567.9583333, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 567.9583333, 567.9583333, 567.9583333, 567.9583333, 567.9583333, 567.9583333, 567.9583333,&
+             567.9583333, 567.9583333, 567.9583333, 567.9583333,&
+          567.9583333, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 567.9583333, 567.9583333, 567.9583333, 567.9583333, 567.9583333, 567.9583333, 567.9583333,&
+             567.9583333, 567.9583333, 567.9583333, 567.9583333,&
+          567.9583333, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 /), &
+         (/nlon,nlat/)))
+      allocate(fourth_intermediate_expected_lake_fractions(3,3))
+      fourth_intermediate_expected_lake_fractions = transpose(reshape((/ &
+          0.3333333333, 0.5, 0.3333333333, &
+         0.6666666667, 1.0, 0.5833333333, &
+         0.3333333333, 0.5, 0.0 /), &
+         (/3,3/)))
+      allocate(fourth_intermediate_expected_number_lake_cells(3,3))
+      fourth_intermediate_expected_number_lake_cells = transpose(reshape((/ &
+          12, 24, 12, &
+         32, 64, 28, &
+         12, 24, 0/), &
+         (/3,3/)))
+      allocate(fourth_intermediate_expected_number_fine_grid_cells(3,3))
+      fourth_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
+          36, 48, 36, &
+         48, 64, 48, &
+         36, 48, 36  /), &
+         (/3,3/)))
+      allocate(fourth_intermediate_expected_lake_volumes(1))
+      fourth_intermediate_expected_lake_volumes = (/567.9583333/)
+
+      allocate(fifth_intermediate_expected_lake_volumes(1))
+      fifth_intermediate_expected_lake_volumes = (/369.2083332/)
+      allocate(sixth_intermediate_expected_lake_volumes(1))
+      sixth_intermediate_expected_lake_volumes = (/355.9583332/)
+
+      allocate(seventh_intermediate_expected_lake_volumes(1))
+      seventh_intermediate_expected_lake_volumes = (/213.625/)
+      allocate(eighth_intermediate_expected_lake_volumes(1))
+      eighth_intermediate_expected_lake_volumes = (/203.458/)
+
+      allocate(ninth_intermediate_expected_lake_volumes(1))
+      ninth_intermediate_expected_lake_volumes = (/99.0833/)
+      allocate(tenth_intermediate_expected_lake_volumes(1))
+      tenth_intermediate_expected_lake_volumes = (/92.125/)
+
+      allocate(eleventh_intermediate_expected_lake_volumes(1))
+      eleventh_intermediate_expected_lake_volumes = (/39.625/)
+      allocate(twelfth_intermediate_expected_lake_volumes(1))
+      twelfth_intermediate_expected_lake_volumes = (/35.875/)
+
+      allocate(thirteenth_intermediate_expected_lake_volumes(1))
+      thirteenth_intermediate_expected_lake_volumes = (/2.125/)
+
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_parameters, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
+      call run_hd_model(0,runoffs,drainages,lake_evaporations,&
+                          use_realistic_surface_coupling_in)
+      allocate(lake_types(nlat,nlon))
+      lake_types(:,:) = 0
+      lake_prognostics_out => get_lake_prognostics()
+      lake_fields_out => get_lake_fields()
+      do i = 1,nlat
+        do j = 1,nlon
+          lake_number = lake_fields_out%lake_numbers(i,j)
+          if (lake_number > 0) then
+            working_lake_ptr = lake_prognostics_out%lakes(lake_number)
+            lake_type = working_lake_ptr%lake_pointer%lake_type
+              if (lake_type == filling_lake_type) then
+                lake_types(i,j) = 1
+              else if (lake_type == overflowing_lake_type) then
+                lake_types(i,j) = 2
+              else if (lake_type == subsumed_lake_type) then
+                lake_types(i,j) = 3
+              else
+                lake_types(i,j) = 4
+              end if
+          end if
+        end do
+      end do
+      allocate(lake_volumes(1))
+      do i = 1,size(lake_volumes)
+        working_lake_ptr = lake_prognostics_out%lakes(i)
+        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+      end do
+      diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
+                                                                   lake_prognostics_out,&
+                                                                   lake_fields_out)
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
+      call assert_equals(first_intermediate_expected_river_inflow,river_fields%river_inflow,4,4,&
+                         0.00000001_dp)
+      call assert_equals(first_intermediate_expected_water_to_ocean,&
+                         river_fields%water_to_ocean,4,4,0.00001_dp)
+      call assert_equals(first_intermediate_expected_water_to_hd,&
+                         lake_fields_out%water_to_hd,4,4,0.000000000001_dp)
+      call assert_equals(first_intermediate_expected_lake_numbers,lake_fields_out%lake_numbers,20,20)
+      call assert_equals(first_intermediate_expected_lake_types,lake_types,20,20)
+      call assert_equals(first_intermediate_expected_lake_volumes,lake_volumes,1)
+      call assert_equals(diagnostic_lake_volumes,&
+                         first_intermediate_expected_diagnostic_lake_volumes,20,20)
+      call assert_equals(first_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(first_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(first_intermediate_expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
+      deallocate(diagnostic_lake_volumes)
+      deallocate(lake_fractions)
+      call river_fields%riverprognosticfieldsdestructor()
+      deallocate(river_fields)
+      river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_parameters, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
+      call run_hd_model(1,runoffs,drainages,lake_evaporations,&
+                          use_realistic_surface_coupling_in)
+      lake_types(:,:) = 0
+      lake_prognostics_out => get_lake_prognostics()
+      lake_fields_out => get_lake_fields()
+      do i = 1,nlat
+        do j = 1,nlon
+          lake_number = lake_fields_out%lake_numbers(i,j)
+          if (lake_number > 0) then
+            working_lake_ptr = lake_prognostics_out%lakes(lake_number)
+            lake_type = working_lake_ptr%lake_pointer%lake_type
+              if (lake_type == filling_lake_type) then
+                lake_types(i,j) = 1
+              else if (lake_type == overflowing_lake_type) then
+                lake_types(i,j) = 2
+              else if (lake_type == subsumed_lake_type) then
+                lake_types(i,j) = 3
+              else
+                lake_types(i,j) = 4
+              end if
+          end if
+        end do
+      end do
+      do i = 1,size(lake_volumes)
+        working_lake_ptr = lake_prognostics_out%lakes(i)
+        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+      end do
+      diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
+                                                                   lake_prognostics_out,&
+                                                                   lake_fields_out)
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
+      call assert_equals(second_intermediate_expected_river_inflow,river_fields%river_inflow,4,4,&
+                         0.00000001_dp)
+      call assert_equals(second_intermediate_expected_water_to_ocean,&
+                         river_fields%water_to_ocean,4,4,0.00001_dp)
+      call assert_equals(second_intermediate_expected_water_to_hd,&
+                         lake_fields_out%water_to_hd,4,4,0.000000000001_dp)
+      call assert_equals(second_intermediate_expected_lake_numbers,lake_fields_out%lake_numbers,20,20)
+      call assert_equals(second_intermediate_expected_lake_types,lake_types,20,20)
+      call assert_equals(second_intermediate_expected_lake_volumes,lake_volumes,1,0.0001_dp)
+      call assert_equals(diagnostic_lake_volumes,&
+                         second_intermediate_expected_diagnostic_lake_volumes,20,20,0.0001_dp)
+      call assert_equals(second_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(second_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(second_intermediate_expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
+      deallocate(diagnostic_lake_volumes)
+      deallocate(lake_fractions)
+      call river_fields%riverprognosticfieldsdestructor()
+      deallocate(river_fields)
+      river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_parameters, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
+      call run_hd_model(46,runoffs,drainages,lake_evaporations,&
+                          use_realistic_surface_coupling_in)
+      lake_types(:,:) = 0
+      lake_prognostics_out => get_lake_prognostics()
+      lake_fields_out => get_lake_fields()
+      do i = 1,nlat
+        do j = 1,nlon
+          lake_number = lake_fields_out%lake_numbers(i,j)
+          if (lake_number > 0) then
+            working_lake_ptr = lake_prognostics_out%lakes(lake_number)
+            lake_type = working_lake_ptr%lake_pointer%lake_type
+              if (lake_type == filling_lake_type) then
+                lake_types(i,j) = 1
+              else if (lake_type == overflowing_lake_type) then
+                lake_types(i,j) = 2
+              else if (lake_type == subsumed_lake_type) then
+                lake_types(i,j) = 3
+              else
+                lake_types(i,j) = 4
+              end if
+          end if
+        end do
+      end do
+      do i = 1,size(lake_volumes)
+        working_lake_ptr = lake_prognostics_out%lakes(i)
+        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+      end do
+      diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
+                                                                   lake_prognostics_out,&
+                                                                   lake_fields_out)
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
+      call assert_equals(third_intermediate_expected_river_inflow,river_fields%river_inflow,4,4,&
+                         0.00000001_dp)
+      call assert_equals(third_intermediate_expected_water_to_ocean,&
+                         river_fields%water_to_ocean,4,4,0.00001_dp)
+      call assert_equals(third_intermediate_expected_water_to_hd,&
+                         lake_fields_out%water_to_hd,4,4,0.000000000001_dp)
+      call assert_equals(third_intermediate_expected_lake_numbers,lake_fields_out%lake_numbers,20,20)
+      call assert_equals(third_intermediate_expected_lake_types,lake_types,20,20)
+      call assert_equals(third_intermediate_expected_lake_volumes,lake_volumes,1,0.0001_dp)
+      call assert_equals(diagnostic_lake_volumes,&
+                         third_intermediate_expected_diagnostic_lake_volumes,20,20,0.0001_dp)
+      call assert_equals(third_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(third_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(third_intermediate_expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
+      deallocate(diagnostic_lake_volumes)
+      deallocate(lake_fractions)
+      call river_fields%riverprognosticfieldsdestructor()
+      deallocate(river_fields)
+      river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_parameters, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
+      call run_hd_model(47,runoffs,drainages,lake_evaporations,&
+                          use_realistic_surface_coupling_in)
+      lake_types(:,:) = 0
+      lake_prognostics_out => get_lake_prognostics()
+      lake_fields_out => get_lake_fields()
+      do i = 1,nlat
+        do j = 1,nlon
+          lake_number = lake_fields_out%lake_numbers(i,j)
+          if (lake_number > 0) then
+            working_lake_ptr = lake_prognostics_out%lakes(lake_number)
+            lake_type = working_lake_ptr%lake_pointer%lake_type
+              if (lake_type == filling_lake_type) then
+                lake_types(i,j) = 1
+              else if (lake_type == overflowing_lake_type) then
+                lake_types(i,j) = 2
+              else if (lake_type == subsumed_lake_type) then
+                lake_types(i,j) = 3
+              else
+                lake_types(i,j) = 4
+              end if
+          end if
+        end do
+      end do
+      do i = 1,size(lake_volumes)
+        working_lake_ptr = lake_prognostics_out%lakes(i)
+        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+      end do
+      diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
+                                                                   lake_prognostics_out,&
+                                                                   lake_fields_out)
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
+      call assert_equals(fourth_intermediate_expected_river_inflow,river_fields%river_inflow,4,4,&
+                         0.00000001_dp)
+      call assert_equals(fourth_intermediate_expected_water_to_ocean,&
+                         river_fields%water_to_ocean,4,4,0.00001_dp)
+      call assert_equals(fourth_intermediate_expected_water_to_hd,&
+                         lake_fields_out%water_to_hd,4,4,0.000000000001_dp)
+      call assert_equals(fourth_intermediate_expected_lake_numbers,lake_fields_out%lake_numbers,20,20)
+      call assert_equals(fourth_intermediate_expected_lake_types,lake_types,20,20)
+      call assert_equals(fourth_intermediate_expected_lake_volumes,lake_volumes,1,0.0001_dp)
+      call assert_equals(diagnostic_lake_volumes,&
+                         fourth_intermediate_expected_diagnostic_lake_volumes,20,20,0.0001_dp)
+      call assert_equals(fourth_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(fourth_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(fourth_intermediate_expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
+      deallocate(diagnostic_lake_volumes)
+      deallocate(lake_fractions)
+      call river_fields%riverprognosticfieldsdestructor()
+      deallocate(river_fields)
+      river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_parameters, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
+      call run_hd_model(62,runoffs,drainages,lake_evaporations,&
+                          use_realistic_surface_coupling_in)
+      lake_prognostics_out => get_lake_prognostics()
+      do i = 1,size(lake_volumes)
+        working_lake_ptr = lake_prognostics_out%lakes(i)
+        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+      end do
+      call assert_equals(fifth_intermediate_expected_lake_volumes,lake_volumes,1,0.0001_dp)
+      call river_fields%riverprognosticfieldsdestructor()
+      deallocate(river_fields)
+      river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_parameters, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
+      call run_hd_model(63,runoffs,drainages,lake_evaporations,&
+                          use_realistic_surface_coupling_in)
+      lake_prognostics_out => get_lake_prognostics()
+      do i = 1,size(lake_volumes)
+        working_lake_ptr = lake_prognostics_out%lakes(i)
+        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+      end do
+      call assert_equals(sixth_intermediate_expected_lake_volumes,lake_volumes,1,0.0001_dp)
+      call river_fields%riverprognosticfieldsdestructor()
+      deallocate(river_fields)
+      river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_parameters, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
+      call run_hd_model(77,runoffs,drainages,lake_evaporations,&
+                          use_realistic_surface_coupling_in)
+      lake_prognostics_out => get_lake_prognostics()
+      do i = 1,size(lake_volumes)
+        working_lake_ptr = lake_prognostics_out%lakes(i)
+        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+      end do
+      call assert_equals(seventh_intermediate_expected_lake_volumes,lake_volumes,1,0.0001_dp)
+      call river_fields%riverprognosticfieldsdestructor()
+      deallocate(river_fields)
+      river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_parameters, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
+      call run_hd_model(78,runoffs,drainages,lake_evaporations,&
+                          use_realistic_surface_coupling_in)
+      lake_prognostics_out => get_lake_prognostics()
+      do i = 1,size(lake_volumes)
+        working_lake_ptr = lake_prognostics_out%lakes(i)
+        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+      end do
+      call assert_equals(eighth_intermediate_expected_lake_volumes,lake_volumes,1,0.001_dp)
+      call river_fields%riverprognosticfieldsdestructor()
+      deallocate(river_fields)
+      river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_parameters, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
+      call run_hd_model(93,runoffs,drainages,lake_evaporations,&
+                          use_realistic_surface_coupling_in)
+      lake_prognostics_out => get_lake_prognostics()
+      do i = 1,size(lake_volumes)
+        working_lake_ptr = lake_prognostics_out%lakes(i)
+        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+      end do
+      call assert_equals(ninth_intermediate_expected_lake_volumes,lake_volumes,1,0.0001_dp)
+      call river_fields%riverprognosticfieldsdestructor()
+      deallocate(river_fields)
+      river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_parameters, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
+      call run_hd_model(94,runoffs,drainages,lake_evaporations,&
+                          use_realistic_surface_coupling_in)
+      lake_prognostics_out => get_lake_prognostics()
+      do i = 1,size(lake_volumes)
+        working_lake_ptr = lake_prognostics_out%lakes(i)
+        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+      end do
+      call assert_equals(tenth_intermediate_expected_lake_volumes,lake_volumes,1,0.0001_dp)
+      call river_fields%riverprognosticfieldsdestructor()
+      deallocate(river_fields)
+      river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_parameters, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
+      call run_hd_model(108,runoffs,drainages,lake_evaporations,&
+                          use_realistic_surface_coupling_in)
+      lake_prognostics_out => get_lake_prognostics()
+      do i = 1,size(lake_volumes)
+        working_lake_ptr = lake_prognostics_out%lakes(i)
+        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+      end do
+      call assert_equals(eleventh_intermediate_expected_lake_volumes,lake_volumes,1,0.0001_dp)
+      call river_fields%riverprognosticfieldsdestructor()
+      deallocate(river_fields)
+      river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_parameters, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
+      call run_hd_model(109,runoffs,drainages,lake_evaporations,&
+                          use_realistic_surface_coupling_in)
+      lake_prognostics_out => get_lake_prognostics()
+      do i = 1,size(lake_volumes)
+        working_lake_ptr = lake_prognostics_out%lakes(i)
+        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+      end do
+      call assert_equals(twelfth_intermediate_expected_lake_volumes,lake_volumes,1,0.0001_dp)
+      call river_fields%riverprognosticfieldsdestructor()
+      deallocate(river_fields)
+      river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_parameters, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
+      call run_hd_model(124,runoffs,drainages,lake_evaporations,&
+                          use_realistic_surface_coupling_in)
+      lake_prognostics_out => get_lake_prognostics()
+      do i = 1,size(lake_volumes)
+        working_lake_ptr = lake_prognostics_out%lakes(i)
+        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+      end do
+      call assert_equals(thirteenth_intermediate_expected_lake_volumes,lake_volumes,1,0.001_dp)
+      call river_fields%riverprognosticfieldsdestructor()
+      deallocate(river_fields)
+      river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_parameters, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
+      call run_hd_model(125,runoffs,drainages,lake_evaporations,&
+                          use_realistic_surface_coupling_in)
+      lake_prognostics_out => get_lake_prognostics()
+      lake_types(:,:) = 0
+      lake_prognostics_out => get_lake_prognostics()
+      lake_fields_out => get_lake_fields()
+      do i = 1,nlat
+        do j = 1,nlon
+          lake_number = lake_fields_out%lake_numbers(i,j)
+          if (lake_number > 0) then
+            working_lake_ptr = lake_prognostics_out%lakes(lake_number)
+            lake_type = working_lake_ptr%lake_pointer%lake_type
+              if (lake_type == filling_lake_type) then
+                lake_types(i,j) = 1
+              else if (lake_type == overflowing_lake_type) then
+                lake_types(i,j) = 2
+              else if (lake_type == subsumed_lake_type) then
+                lake_types(i,j) = 3
+              else
+                lake_types(i,j) = 4
+              end if
+          end if
+        end do
+      end do
+      do i = 1,size(lake_volumes)
+        working_lake_ptr = lake_prognostics_out%lakes(i)
+        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+      end do
+      diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
+                                                                   lake_prognostics_out,&
+                                                                   lake_fields_out)
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
+      call assert_equals(expected_river_inflow,river_fields%river_inflow,4,4,&
+                         0.00000001_dp)
+      call assert_equals(expected_water_to_ocean,&
+                         river_fields%water_to_ocean,4,4,0.00001_dp)
+      call assert_equals(expected_water_to_hd,&
+                         lake_fields_out%water_to_hd,4,4,0.000000000001_dp)
+      call assert_equals(expected_lake_numbers,lake_fields_out%lake_numbers,20,20)
+      call assert_equals(expected_lake_types,lake_types,20,20)
+      call assert_equals(expected_lake_volumes,lake_volumes,1,0.0001_dp)
+      call assert_equals(diagnostic_lake_volumes,&
+                         expected_diagnostic_lake_volumes,20,20,0.0001_dp)
+      call assert_equals(expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
+      deallocate(diagnostic_lake_volumes)
+      deallocate(lake_fractions)
+      deallocate(lake_volumes)
+      deallocate(drainage)
+      deallocate(drainages)
+      deallocate(runoff)
+      deallocate(runoffs)
+      deallocate(evaporation)
+      deallocate(lake_evaporations)
+      deallocate(initial_spillover_to_rivers)
+      deallocate(initial_water_to_lake_centers)
+      deallocate(expected_river_inflow)
+      deallocate(expected_water_to_ocean)
+      deallocate(expected_water_to_hd)
+      deallocate(expected_lake_numbers)
+      deallocate(expected_lake_types)
+      deallocate(expected_lake_volumes)
+      deallocate(expected_diagnostic_lake_volumes)
+      deallocate(expected_lake_fractions)
+      deallocate(expected_number_lake_cells)
+      deallocate(expected_number_fine_grid_cells)
+      deallocate(first_intermediate_expected_river_inflow)
+      deallocate(first_intermediate_expected_water_to_ocean)
+      deallocate(first_intermediate_expected_water_to_hd)
+      deallocate(first_intermediate_expected_lake_numbers)
+      deallocate(first_intermediate_expected_lake_types)
+      deallocate(first_intermediate_expected_lake_volumes)
+      deallocate(first_intermediate_expected_diagnostic_lake_volumes)
+      deallocate(first_intermediate_expected_lake_fractions)
+      deallocate(first_intermediate_expected_number_lake_cells)
+      deallocate(first_intermediate_expected_number_fine_grid_cells)
+      deallocate(second_intermediate_expected_river_inflow)
+      deallocate(second_intermediate_expected_water_to_ocean)
+      deallocate(second_intermediate_expected_water_to_hd)
+      deallocate(second_intermediate_expected_lake_numbers)
+      deallocate(second_intermediate_expected_lake_types)
+      deallocate(second_intermediate_expected_lake_volumes)
+      deallocate(second_intermediate_expected_diagnostic_lake_volumes)
+      deallocate(second_intermediate_expected_lake_fractions)
+      deallocate(second_intermediate_expected_number_lake_cells)
+      deallocate(second_intermediate_expected_number_fine_grid_cells)
+      deallocate(third_intermediate_expected_river_inflow)
+      deallocate(third_intermediate_expected_water_to_ocean)
+      deallocate(third_intermediate_expected_water_to_hd)
+      deallocate(third_intermediate_expected_lake_numbers)
+      deallocate(third_intermediate_expected_lake_types)
+      deallocate(third_intermediate_expected_lake_volumes)
+      deallocate(third_intermediate_expected_diagnostic_lake_volumes)
+      deallocate(third_intermediate_expected_lake_fractions)
+      deallocate(third_intermediate_expected_number_lake_cells)
+      deallocate(third_intermediate_expected_number_fine_grid_cells)
+      deallocate(fourth_intermediate_expected_river_inflow)
+      deallocate(fourth_intermediate_expected_water_to_ocean)
+      deallocate(fourth_intermediate_expected_water_to_hd)
+      deallocate(fourth_intermediate_expected_lake_numbers)
+      deallocate(fourth_intermediate_expected_lake_types)
+      deallocate(fourth_intermediate_expected_lake_volumes)
+      deallocate(fourth_intermediate_expected_diagnostic_lake_volumes)
+      deallocate(fourth_intermediate_expected_lake_fractions)
+      deallocate(fourth_intermediate_expected_number_lake_cells)
+      deallocate(fourth_intermediate_expected_number_fine_grid_cells)
+      deallocate(fifth_intermediate_expected_lake_volumes)
+      deallocate(sixth_intermediate_expected_lake_volumes)
+      deallocate(seventh_intermediate_expected_lake_volumes)
+      deallocate(eighth_intermediate_expected_lake_volumes)
+      deallocate(ninth_intermediate_expected_lake_volumes)
+      deallocate(tenth_intermediate_expected_lake_volumes)
+      deallocate(eleventh_intermediate_expected_lake_volumes)
+      deallocate(twelfth_intermediate_expected_lake_volumes)
+      deallocate(thirteenth_intermediate_expected_lake_volumes)
+      deallocate(lake_types)
+      call clean_lake_model()
+      call clean_hd_model()
+end subroutine testLakeModel15
+
+subroutine testLakeModel16
+   use latlon_hd_model_interface_mod
+   use latlon_hd_model_mod
+   use latlon_lake_model_io_mod
+   type(riverparameters), pointer :: river_parameters
+   type(lakeparameters),pointer :: lake_parameters
+   type(riverprognosticfields), pointer :: river_fields
+   real(dp),dimension(:,:), pointer :: flow_directions
+   integer,dimension(:,:), pointer :: river_reservoir_nums
+   integer,dimension(:,:), pointer :: overland_reservoir_nums
+   integer,dimension(:,:), pointer :: base_reservoir_nums
+   real(dp),dimension(:,:), pointer :: river_retention_coefficients
+   real(dp),dimension(:,:), pointer :: overland_retention_coefficients
+   real(dp),dimension(:,:), pointer :: base_retention_coefficients
+   logical,dimension(:,:), pointer :: landsea_mask
+   logical,dimension(:,:), pointer :: lake_centers
+   real(dp),dimension(:,:), pointer :: connection_volume_thresholds
+   real(dp),dimension(:,:), pointer :: flood_volume_thresholds
+   logical,dimension(:,:), pointer :: flood_local_redirect
+   logical,dimension(:,:), pointer :: connect_local_redirect
+   logical,dimension(:,:), pointer :: additional_flood_local_redirect
+   logical,dimension(:,:), pointer :: additional_connect_local_redirect
+   integer,dimension(:,:), pointer :: merge_points
+   real(dp),dimension(:,:), pointer :: cell_areas_on_surface_model_grid
+   integer,dimension(:,:), pointer :: flood_next_cell_lat_index
+   integer,dimension(:,:), pointer :: flood_next_cell_lon_index
+   integer,dimension(:,:), pointer :: connect_next_cell_lat_index
+   integer,dimension(:,:), pointer :: connect_next_cell_lon_index
+   integer,dimension(:,:), pointer :: flood_force_merge_lat_index
+   integer,dimension(:,:), pointer :: flood_force_merge_lon_index
+   integer,dimension(:,:), pointer :: connect_force_merge_lat_index
+   integer,dimension(:,:), pointer :: connect_force_merge_lon_index
+   integer,dimension(:,:), pointer :: flood_redirect_lat_index
+   integer,dimension(:,:), pointer :: flood_redirect_lon_index
+   integer,dimension(:,:), pointer :: connect_redirect_lat_index
+   integer,dimension(:,:), pointer :: connect_redirect_lon_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
+   integer,dimension(:,:), pointer :: additional_flood_redirect_lat_index
+   integer,dimension(:,:), pointer :: additional_flood_redirect_lon_index
+   integer,dimension(:,:), pointer :: additional_connect_redirect_lat_index
+   integer,dimension(:,:), pointer :: additional_connect_redirect_lon_index
+   real(dp),dimension(:,:), pointer :: drainage
+   real(dp),dimension(:,:), pointer :: runoff
+   real(dp),dimension(:,:), pointer :: evaporation
+   real(dp),dimension(:,:,:), pointer :: drainages
+   real(dp),dimension(:,:,:), pointer :: runoffs
+   real(dp),dimension(:,:,:), pointer :: lake_evaporations
+   real(dp),dimension(:,:), pointer :: initial_water_to_lake_centers
+   real(dp),dimension(:,:), pointer :: initial_spillover_to_rivers
+   real(dp),dimension(:,:), pointer :: lake_volumes_all_timesteps
+   real(dp),dimension(:,:), pointer :: expected_lake_volumes_all_timesteps
+   real(dp) :: lake_retention_coefficient_local
+   logical :: use_realistic_surface_coupling_in
+   logical :: instant_throughflow_local
+   integer :: i
+   integer :: nlat,nlon
+   integer :: nlat_coarse,nlon_coarse
+   integer :: nlat_surface_model,nlon_surface_model
+   integer :: no_merge_mtype
+   integer :: connection_merge_not_set_flood_merge_as_primary
+   integer :: connection_merge_not_set_flood_merge_as_secondary
+      use_realistic_surface_coupling_in = .true.
+      no_merge_mtype = 0
+      connection_merge_not_set_flood_merge_as_primary = 9
+      connection_merge_not_set_flood_merge_as_secondary = 10
+      nlat_coarse = 4
+      nlon_coarse = 4
+      nlat_surface_model = 3
+      nlon_surface_model = 3
+      allocate(flow_directions(4,4))
+      flow_directions = transpose(reshape((/ 3,2,2,1,&
+                                             6,6,-2,4,&
+                                             6,8,8,2,&
+                                             9,8,8,0 /), &
+                                            (/nlon_coarse, &
+                                              nlat_coarse/)))
+      allocate(river_reservoir_nums(4,4))
+      river_reservoir_nums(:,:) = 5
+      allocate(overland_reservoir_nums(4,4))
+      overland_reservoir_nums(:,:) = 1
+      allocate(base_reservoir_nums(4,4))
+      base_reservoir_nums(:,:) = 1
+      allocate(river_retention_coefficients(4,4))
+      river_retention_coefficients(:,:) = 0.0
+      allocate(overland_retention_coefficients(4,4))
+      overland_retention_coefficients(:,:) = 0.0
+      allocate(base_retention_coefficients(4,4))
+      base_retention_coefficients(:,:) = 0.0
+      allocate(landsea_mask(4,4))
+      landsea_mask(:,:) = .False.
+      river_reservoir_nums(4,4) = 0
+      overland_reservoir_nums(4,4) = 0
+      base_reservoir_nums(4,4) = 0
+      landsea_mask(4,4) = .True.
+      river_parameters => RiverParameters(flow_directions, &
+                                          river_reservoir_nums, &
+                                          overland_reservoir_nums, &
+                                          base_reservoir_nums, &
+                                          river_retention_coefficients, &
+                                          overland_retention_coefficients, &
+                                          base_retention_coefficients, &
+                                          landsea_mask)
+      river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
+      nlat = 20
+      nlon = 20
+      allocate(lake_centers(nlat,nlon))
+      lake_centers = transpose(reshape((/ &
+          .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
+           .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .True.,  &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False. /), &
+         (/nlon,nlat/)))
+      allocate(connection_volume_thresholds(nlat,nlon))
+      connection_volume_thresholds = transpose(reshape((/ &
+          -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0/), &
+         (/nlon,nlat/)))
+      allocate(flood_volume_thresholds(nlat,nlon))
+      flood_volume_thresholds = transpose(reshape((/ &
+          -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0,     &
+          -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, 574.0, 574.0, 574.0, 574.0, 574.0, 574.0, 574.0, 574.0, 574.0,   &
+         574.0, 574.0, 574.0, 574.0, 574.0, 574.0, 574.0, 574.0, 574.0, -1.0, &
+         -1.0, 574.0, 574.0, 574.0, 574.0, 574.0, 574.0, 574.0, 574.0, 574.0,   &
+         574.0, 574.0, 574.0, 574.0, 574.0, 574.0, 574.0, 574.0, 574.0, -1.0, &
+         -1.0, 574.0, 206.0, 96.0, 96.0, 96.0, 96.0, 96.0, 36.0, 36.0, 36.0,    &
+          36.0, 36.0, 206.0, 206.0, 206.0, 206.0, 366.0, 574.0, -1.0, &
+         -1.0, 574.0, 96.0, 96.0, 96.0, 96.0, 96.0, 36.0, 36.0, 36.0, 36.0,     &
+          36.0, 36.0, 206.0, 206.0, 206.0, 206.0, 206.0, 574.0, -1.0, &
+         -1.0, 574.0, 96.0, 96.0, 96.0, 96.0, 96.0, 36.0, 36.0, 36.0, 36.0,     &
+          36.0, 36.0, 206.0, 206.0, 206.0, 206.0, 206.0, 574.0, -1.0, &
+         -1.0, 574.0, 96.0, 96.0, 96.0, 96.0, 96.0, 36.0, 36.0, 36.0, 36.0,     &
+          36.0, 36.0, 206.0, 206.0, 206.0, 206.0, 206.0, 574.0, -1.0, &
+         -1.0, 574.0, 96.0, 96.0, 96.0, 96.0, 96.0, 36.0, 0.0, 0.0, 0.0, 0.0,   &
+           0.0, 206.0, 206.0, 206.0, 206.0, 206.0, 574.0, -1.0, &
+         -1.0, 574.0, 96.0, 96.0, 96.0, 96.0, 96.0, 0.0, 0.0, 0.0, 0.0, 0.0,    &
+           0.0, 206.0, 206.0, 206.0, 206.0, 206.0, 574.0, -1.0, &
+         -1.0, 574.0, 96.0, 96.0, 96.0, 96.0, 96.0, 0.0, 0.0, 0.0, 0.0, 0.0,    &
+           0.0, 206.0, 206.0, 206.0, 206.0, 206.0, 574.0, -1.0, &
+         -1.0, 574.0, 96.0, 96.0, 96.0, 96.0, 96.0, 0.0, 0.0, 0.0, 0.0, 0.0,    &
+           0.0, 206.0, 206.0, 206.0, 206.0, 206.0, 574.0, -1.0, &
+         -1.0, 574.0, 96.0, 96.0, 96.0, 96.0, 96.0, 0.0, 0.0, 0.0, 0.0, 0.0,    &
+           0.0, 206.0, 206.0, 206.0, 206.0, 206.0, 574.0, -1.0, &
+         -1.0, 574.0, 96.0, 96.0, 96.0, 96.0, 96.0, 0.0, 0.0, 0.0, 0.0, 0.0,    &
+           0.0, 206.0, 206.0, 206.0, 206.0, 206.0, 574.0, -1.0, &
+         -1.0, 574.0, 366.0, 366.0, 366.0, 366.0, 366.0, 366.0, 366.0, 366.0,   &
+           366.0, 366.0, 366.0, 366.0, 1459.0, 1459.0, 1459.0, 1459.0, 574.0, -1.0, &
+         -1.0, 574.0, 366.0, 366.0, 366.0, 366.0, 366.0, 366.0, 366.0, 366.0,   &
+           366.0, 366.0, 366.0, 366.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, 574.0, 366.0, 366.0, 366.0, 366.0, 366.0, 366.0, 366.0, 366.0,   &
+           366.0, 366.0, 366.0, 366.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, 574.0, 574.0, 366.0, 366.0, 366.0, 366.0, 366.0, 366.0, 366.0,   &
+           366.0, 366.0, 366.0, 366.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, 574.0, 574.0, 574.0, 574.0, 574.0, 574.0, 574.0, 574.0, 574.0,   &
+            574.0, 574.0, 574.0, 574.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, 1459.0, 574.0, 574.0, 574.0, 574.0, 574.0, 574.0, 574.0, 574.0,  &
+           574.0, 574.0, 574.0, 574.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0,&
+          -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0 /), &
+         (/nlon,nlat/)))
+      allocate(flood_local_redirect(nlat,nlon))
+      flood_local_redirect = transpose(reshape((/ &
+          .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
+         .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
+         .False.,  .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
+         .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
+         .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
+         .False., .False., .False.,  .False., .False.,    .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False.,  .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
+         .False., .False., .False., .False.,  .False.,    .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
+         .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
+         .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
+         .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
+         .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
+         .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
+         .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
+         .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
+         .False., .False., .False., .False.,  .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
+         .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
+         .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
+         .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
+         .False., .False., .False., .False., .False.,    .False., .False., .False., .False. /), &
+         (/nlon,nlat/)))
+      allocate(connect_local_redirect(nlat,nlon))
+      connect_local_redirect = transpose(reshape((/ &
+          .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+          .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
+         .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
+         .False.,  .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
+         .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
+         .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
+         .False., .False., .False., .False.,  .False., .False.,    .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False.,  .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
+         .False., .False., .False., .False., .False.,  .False.,    .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
+         .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
+         .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
+         .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
+         .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
+         .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
+         .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
+         .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
+         .False., .False., .False., .False.,  .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
+         .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
+         .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
+         .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
+         .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False. /), &
+         (/nlon,nlat/)))
+      allocate(additional_flood_local_redirect(nlat,nlon))
+      additional_flood_local_redirect(:,:) = .False.
+      allocate(additional_connect_local_redirect(nlat,nlon))
+      additional_connect_local_redirect(:,:) = .False.
+      allocate(merge_points(nlat,nlon))
+      merge_points = transpose(reshape((/ &
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            no_merge_mtype, &
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,           &
+                      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            no_merge_mtype, &
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,           &
+                      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            &
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            no_merge_mtype, &
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,           &
+                      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            &
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            no_merge_mtype, &
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,           &
+                      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            &
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            no_merge_mtype, &
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,           &
+                      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            &
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            no_merge_mtype, &
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,           &
+                      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            &
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            no_merge_mtype, &
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,           &
+                      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            &
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            no_merge_mtype, &
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,           &
+                      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            &
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            no_merge_mtype, &
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,           &
+                      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            &
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            no_merge_mtype, &
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,           &
+                      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            &
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            no_merge_mtype, &
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,           &
+                      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            &
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            no_merge_mtype, &
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,           &
+                      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            &
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            no_merge_mtype, &
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,           &
+                      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            &
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            no_merge_mtype, &
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,           &
+                      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            &
+                     no_merge_mtype, no_merge_mtype, connection_merge_not_set_flood_merge_as_secondary, no_merge_mtype, &
+                     no_merge_mtype, &
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            no_merge_mtype,&
+                      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,           &
+                      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            &
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            no_merge_mtype,&
+                      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,           &
+                      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            &
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            no_merge_mtype,&
+                      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,           &
+                      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            &
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            no_merge_mtype,&
+                      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,           &
+                      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            &
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            no_merge_mtype,&
+                      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,           &
+                      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            &
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            no_merge_mtype,&
+                      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,           &
+                      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            &
+                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype /), &
+                     (/nlon,nlat/)))
+      allocate(cell_areas_on_surface_model_grid(3,3))
+      cell_areas_on_surface_model_grid = transpose(reshape((/ &
+          2.5, 3.0, 2.5, &
+         3.0, 4.0, 3.0, &
+         2.5, 3.0, 2.5 /), &
+         (/3,3/)))
+      allocate(flood_next_cell_lat_index(nlat,nlon))
+      flood_next_cell_lat_index = transpose(reshape((/ &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 18, -1, &
+         -1, 2, 13, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 13, 14, -1, &
+         -1, 2, 12, 12, 12, 12, 12, 12, 3, 3, 3, 3, 3, 12, 12, 12, 12, 13, 2, -1, &
+         -1, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, -1, &
+         -1, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 4, 4, 4, 4, 4, 4, -1, &
+         -1, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, -1, &
+         -1, 6, 6, 6, 6, 6, 6, 6, 12, 7, 7, 7, 7, 6, 6, 6, 6, 6, 6, -1, &
+         -1, 7, 7, 7, 7, 7, 7, 7, 7, 11, 8, 8, 8, 7, 7, 7, 7, 7, 7, -1, &
+         -1, 8, 8, 8, 8, 8, 8, 8, 8, 8, 10, 9, 11, 8, 8, 8, 8, 8, 8, -1, &
+         -1, 9, 9, 9, 9, 9, 9, 9, 9, 9, 10, 10, 9, 9, 9, 9, 9, 9, 9, -1, &
+         -1, 10, 10, 10, 10, 10, 10, 10, 10, 11, 10, 11, 11, 10, 10, 10, 10, 10, 10, -1, &
+         -1, 11, 11, 11, 11, 11, 11, 11, 12, 12, 12, 12, 12, 11, 11, 11, 11, 11, 11, -1, &
+         -1, 12, 14, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 15, 12, -1, &
+         -1, 15, 15, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, -1, -1, -1, -1, -1, -1, &
+         -1, 16, 16, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, -1, -1, -1, -1, -1, -1, &
+         -1, 17, 2, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, -1, -1, -1, -1, -1, -1, &
+         -1, 1, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, -1, -1, -1, -1, -1, -1, &
+         -1, 13, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
+         (/nlon,nlat/)))
+      allocate(flood_next_cell_lon_index(nlat,nlon))
+      flood_next_cell_lon_index = transpose(reshape((/ &
+          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, 15, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16, 17, 18, 13, -1, &
+         -1, 14, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15, 16, 17, 18, 1, -1, &
+         -1, 1, 13, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 14, 15, 16, 17, 13, 18, -1, &
+         -1, 1, 2, 3, 4, 5, 6, 12, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, -1, &
+         -1, 1, 2, 3, 4, 5, 6, 12, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, -1, &
+         -1, 1, 2, 3, 4, 5, 6, 12, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, -1, &
+         -1, 1, 2, 3, 4, 5, 6, 12, 12, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, -1, &
+         -1, 1, 2, 3, 4, 5, 6, 7, 12, 12, 9, 10, 8, 13, 14, 15, 16, 17, 18, -1, &
+         -1, 1, 2, 3, 4, 5, 6, 7, 12, 11, 11, 9, 9, 13, 14, 15, 16, 17, 18, -1, &
+         -1, 1, 2, 3, 4, 5, 6, 7, 8, 11, 9, 10, 12, 13, 14, 15, 16, 17, 18, -1, &
+         -1, 1, 2, 3, 4, 5, 6, 7, 8, 8, 12, 10, 11, 13, 14, 15, 16, 17, 18, -1, &
+         -1, 1, 2, 3, 4, 5, 6, 7, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, -1, &
+         -1, 1, 13, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15, 16, 17, 15, 18, -1, &
+         -1, 1, 13, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, -1, -1, -1, -1, -1, -1, &
+         -1, 1, 13, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, -1, -1, -1, -1, -1, -1, &
+         -1, 13, 13, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, -1, -1, -1, -1, -1, -1, &
+         -1, 14, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, -1, -1, -1, -1, -1, -1, &
+         -1, 14, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
+         (/nlon,nlat/)))
+      allocate(connect_next_cell_lat_index(nlat,nlon))
+      connect_next_cell_lat_index = transpose(reshape((/ &
+          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
+         (/nlon,nlat/)))
+      allocate(connect_next_cell_lon_index(nlat,nlon))
+      connect_next_cell_lon_index = transpose(reshape((/ &
+          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
+         (/nlon,nlat/)))
+      allocate(flood_force_merge_lat_index(nlat,nlon))
+      flood_force_merge_lat_index = transpose(reshape((/ &
+          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1  /), &
+         (/nlon,nlat/)))
+      allocate(flood_force_merge_lon_index(nlat,nlon))
+      flood_force_merge_lon_index = transpose(reshape((/ &
+          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1  /), &
+         (/nlon,nlat/)))
+      allocate(connect_force_merge_lat_index(nlat,nlon))
+      connect_force_merge_lat_index = transpose(reshape((/ &
+          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
+         (/nlon,nlat/)))
+      allocate(connect_force_merge_lon_index(nlat,nlon))
+      connect_force_merge_lon_index = transpose(reshape((/ &
+          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
+         (/nlon,nlat/)))
+      allocate(flood_redirect_lat_index(nlat,nlon))
+      flood_redirect_lat_index = transpose(reshape((/ &
+          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 3, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1  /), &
+         (/nlon,nlat/)))
+      allocate(flood_redirect_lon_index(nlat,nlon))
+      flood_redirect_lon_index = transpose(reshape((/ &
+          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 3, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1/), &
+         (/nlon,nlat/)))
+      allocate(connect_redirect_lat_index(nlat,nlon))
+      connect_redirect_lat_index = transpose(reshape((/ &
+          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
+         (/nlon,nlat/)))
+      allocate(connect_redirect_lon_index(nlat,nlon))
+      connect_redirect_lon_index = transpose(reshape((/ &
+          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1  /), &
+         (/nlon,nlat/)))
+      allocate(corresponding_surface_cell_lat_index(nlat,nlon))
+      corresponding_surface_cell_lat_index = transpose(reshape((/ &
+            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, &
+         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, &
+         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, &
+         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, &
+         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, &
+         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, &
+         2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, &
+         2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, &
+         2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, &
+         2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, &
+         2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, &
+         2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, &
+         2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, &
+         2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, &
+         3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, &
+         3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, &
+         3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, &
+         3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, &
+         3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, &
+         3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3 /), &
+         (/nlon,nlat/)))
+      allocate(corresponding_surface_cell_lon_index(nlat,nlon))
+      corresponding_surface_cell_lon_index = transpose(reshape((/ &
+          1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3 /), &
+         (/nlon,nlat/)))
+      call add_offset(flood_next_cell_lat_index,1,(/-1/))
+      call add_offset(flood_next_cell_lon_index,1,(/-1/))
+      call add_offset(connect_next_cell_lat_index,1,(/-1/))
+      call add_offset(connect_next_cell_lon_index,1,(/-1/))
+      call add_offset(flood_force_merge_lat_index,1,(/-1/))
+      call add_offset(flood_force_merge_lon_index,1,(/-1/))
+      call add_offset(connect_force_merge_lat_index,1,(/-1/))
+      call add_offset(connect_force_merge_lon_index,1,(/-1/))
+      call add_offset(flood_redirect_lat_index,1,(/-1/))
+      call add_offset(flood_redirect_lon_index,1,(/-1/))
+      call add_offset(connect_redirect_lat_index,1,(/-1/))
+      call add_offset(connect_redirect_lon_index,1,(/-1/))
+      allocate(additional_flood_redirect_lat_index(nlat,nlon))
+      additional_flood_redirect_lat_index(:,:) = 0
+      allocate(additional_flood_redirect_lon_index(nlat,nlon))
+      additional_flood_redirect_lon_index(:,:) = 0
+      allocate(additional_connect_redirect_lat_index(nlat,nlon))
+      additional_connect_redirect_lat_index(:,:) = 0
+      allocate(additional_connect_redirect_lon_index(nlat,nlon))
+      additional_connect_redirect_lon_index(:,:) = 0
+      lake_parameters => LakeParameters(lake_centers, &
+                                        connection_volume_thresholds, &
+                                        flood_volume_thresholds, &
+                                        flood_local_redirect, &
+                                        connect_local_redirect, &
+                                        additional_flood_local_redirect, &
+                                        additional_connect_local_redirect, &
+                                        merge_points, &
+                                        cell_areas_on_surface_model_grid, &
+                                        flood_next_cell_lat_index, &
+                                        flood_next_cell_lon_index, &
+                                        connect_next_cell_lat_index, &
+                                        connect_next_cell_lon_index, &
+                                        flood_force_merge_lat_index, &
+                                        flood_force_merge_lon_index, &
+                                        connect_force_merge_lat_index, &
+                                        connect_force_merge_lon_index, &
+                                        flood_redirect_lat_index, &
+                                        flood_redirect_lon_index, &
+                                        connect_redirect_lat_index, &
+                                        connect_redirect_lon_index, &
+                                        additional_flood_redirect_lat_index, &
+                                        additional_flood_redirect_lon_index, &
+                                        additional_connect_redirect_lat_index, &
+                                        additional_connect_redirect_lon_index, &
+                                        corresponding_surface_cell_lat_index, &
+                                        corresponding_surface_cell_lon_index, &
+                                        nlat,nlon, &
+                                        nlat_coarse,nlon_coarse, &
+                                        nlat_surface_model,nlon_surface_model, &
+                                        instant_throughflow_local, &
+                                        lake_retention_coefficient_local)
+      allocate(drainage(4,4))
+      drainage(:,:) = 0.0
+      allocate(runoff(4,4))
+      runoff = transpose(reshape((/ &
+          0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 15.0/86400.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0 /), &
+         (/4,4/)))
+      allocate(drainages(4,4,10000))
+      allocate(runoffs(4,4,10000))
+      do i = 1,10000
+        drainages(:,:,i) = drainage(:,:)
+        runoffs(:,:,i) = runoff(:,:)
+      end do
+      allocate(evaporation(3,3))
+      evaporation(:,:) = 1.0
+      allocate(lake_evaporations(3,3,10000))
+      do i = 1,10000
+        lake_evaporations(:,:,i) = evaporation(:,:)
+      end do
+      allocate(initial_water_to_lake_centers(nlat,nlon))
+      initial_water_to_lake_centers = transpose(reshape((/ &
+         0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  1459.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0 /), &
+         (/nlon,nlat/)))
+      allocate(initial_spillover_to_rivers(4,4))
+      initial_spillover_to_rivers = transpose(reshape((/ &
+          0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0 /), &
+         (/4,4/)))
+
+      allocate(expected_lake_volumes_all_timesteps(1,500))
+      expected_lake_volumes_all_timesteps = reshape((/ &
+        1455.04, 1451.08, 1447.13, 1443.17, 1439.21, 1435.25, 1431.29, &
+        1427.33, 1423.38, 1419.42, 1415.46, 1411.5, 1407.54, 1403.58, &
+        1399.63, 1395.67, 1391.71, 1387.75, 1383.79, 1379.83, 1375.88, &
+        1371.92, 1367.96, 1364.0, 1360.04, 1356.08, 1352.13, 1348.17, &
+        1344.21, 1340.25, 1336.29, 1332.33, 1328.38, 1324.42, 1320.46, &
+        1316.5, 1312.54, 1308.58, 1304.63, 1300.67, 1296.71, 1292.75, &
+        1288.79, 1284.83, 1280.88, 1276.92, 1272.96, 1269.0, 1265.04, &
+        1261.08, 1257.13, 1253.17, 1249.21, 1245.25, 1241.29, 1237.33, &
+        1233.38, 1229.42, 1225.46, 1221.5, 1217.54, 1213.58, 1209.63, &
+        1205.67, 1201.71, 1197.75, 1193.79, 1189.83, 1185.88, 1181.92, &
+        1177.96, 1174.0, 1170.04, 1166.08, 1162.13, 1158.17, 1154.21, &
+        1150.25, 1146.29, 1142.33, 1138.38, 1134.42, 1130.46, 1126.5, &
+        1122.54, 1118.58, 1114.63, 1110.67, 1106.71, 1102.75, 1098.79, &
+        1094.83, 1090.88, 1086.92, 1082.96, 1079.0, 1075.04, 1071.08, &
+        1067.13, 1063.17, 1059.21, 1055.25, 1051.29, 1047.33, 1043.38, &
+        1039.42, 1035.46, 1031.5, 1027.54, 1023.58, 1019.63, 1015.67, &
+        1011.71, 1007.75, 1003.79, 999.833, 995.875, 991.917, 987.958, &
+        984.0, 980.042, 976.083, 972.125, 968.167, 964.208, 960.25, &
+        956.292, 952.333, 948.375, 944.417, 940.458, 936.5, 932.542, &
+        928.583, 924.625, 920.667, 916.708, 912.75, 908.792, 904.833, &
+        900.875, 896.917, 892.958, 889.0, 885.042, 881.083, 877.125, &
+        873.167, 869.208, 865.25, 861.292, 857.333, 853.375, 849.417, &
+        845.458, 841.5, 837.542, 833.583, 829.625, 825.667, 821.708, &
+        817.75, 813.792, 809.833, 805.875, 801.917, 797.958, 794.0, &
+        790.042, 786.083, 782.125, 778.167, 774.208, 770.25, 766.292, &
+        762.333, 758.375, 754.417, 750.458, 746.5, 742.542, 738.583, &
+        734.625, 730.667, 726.708, 722.75, 718.792, 714.833, 710.875, &
+        706.917, 702.958, 699.0, 695.042, 691.083, 687.125, 683.167, &
+        679.208, 675.25, 671.292, 667.333, 663.375, 659.417, 655.458, &
+        651.5, 647.542, 643.583, 639.625, 635.667, 631.708, 627.75, &
+        623.792, 619.833, 615.875, 611.917, 607.958, 604.0, 600.042, &
+        596.083, 592.125, 588.167, 584.208, 580.25, 576.292, 572.333, &
+        574.083, 570.125, 571.875, 573.625, 575.375, 571.417, 573.167, &
+        574.917, 570.958, 572.708, 574.458, 570.5, 572.25, 574.0, 570.042, &
+        571.792, 573.542, 575.292, 571.333, 573.083, 574.833, 570.875, &
+        572.625, 574.375, 570.417, 572.167, 573.917, 575.667, 571.708, &
+        573.458, 575.208, 571.25, 573.0, 574.75, 570.792, 572.542, &
+        574.292, 570.333, 572.083, 573.833, 575.583, 571.625, 573.375, &
+        575.125, 571.167, 572.917, 574.667, 570.708, 572.458, 574.208, &
+        570.25, 572.0, 573.75, 575.5, 571.542, 573.292, 575.042, 571.083, &
+        572.833, 574.583, 570.625, 572.375, 574.125, 570.167, 571.917, &
+        573.667, 575.417, 571.458, 573.208, 574.958, 571.0, 572.75, &
+        574.5, 570.542, 572.292, 574.042, 570.083, 571.833, 573.583, &
+        575.333, 571.375, 573.125, 574.875, 570.917, 572.667, 574.417, &
+        570.458, 572.208, 573.958, 575.708, 571.75, 573.5, 575.25, &
+        571.292, 573.042, 574.792, 570.833, 572.583, 574.333, 570.375, &
+        572.125, 573.875, 575.625, 571.667, 573.417, 575.167, 571.208, &
+        572.958, 574.708, 570.75, 572.5, 574.25, 570.292, 572.042, 573.792, &
+        575.542, 571.583, 573.333, 575.083, 571.125, 572.875, 574.625, &
+        570.667, 572.417, 574.167, 570.208, 571.958, 573.708, 575.458, 571.5, &
+        573.25, 575.0, 571.042, 572.792, 574.542, 570.583, 572.333, 574.083, &
+        570.125, 571.875, 573.625, 575.375, 571.417, 573.167, 574.917, 570.958, &
+        572.708, 574.458, 570.5, 572.25, 574.0, 570.042, 571.792, 573.542, &
+        575.292, 571.333, 573.083, 574.833, 570.875, 572.625, 574.375, 570.417, &
+        572.167, 573.917, 575.667, 571.708, 573.458, 575.208, 571.25, 573.0, &
+        574.75, 570.792, 572.542, 574.292, 570.333, 572.083, 573.833, 575.583, &
+        571.625, 573.375, 575.125, 571.167, 572.917, 574.667, 570.708, 572.458, &
+        574.208, 570.25, 572.0, 573.75, 575.5, 571.542, 573.292, 575.042, 571.083, &
+        572.833, 574.583, 570.625, 572.375, 574.125, 570.167, 571.917, 573.667, &
+        575.417, 571.458, 573.208, 574.958, 571.0, 572.75, 574.5, 570.542, 572.292, &
+        574.042, 570.083, 571.833, 573.583, 575.333, 571.375, 573.125, 574.875, 570.917, &
+        572.667, 574.417, 570.458, 572.208, 573.958, 575.708, 571.75, 573.5, 575.25, &
+        571.292, 573.042, 574.792, 570.833, 572.583, 574.333, 570.375, 572.125, 573.875, &
+        575.625, 571.667, 573.417, 575.167, 571.208, 572.958, 574.708, 570.75, 572.5, &
+        574.25, 570.292, 572.042, 573.792, 575.542, 571.583, 573.333, 575.083, 571.125, &
+        572.875, 574.625, 570.667, 572.417, 574.167, 570.208, 571.958, 573.708, 575.458, &
+        571.5, 573.25, 575.0, 571.042, 572.792, 574.542, 570.583, 572.333, 574.083, 570.125 /), &
+         (/1,500/))
+      allocate(lake_volumes_all_timesteps(1,500))
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_parameters, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
+      call run_hd_model(500,runoffs,drainages,lake_evaporations,&
+                            use_realistic_surface_coupling_in, &
+                            "",lake_volumes_all_timesteps)
+      call assert_equals(lake_volumes_all_timesteps,expected_lake_volumes_all_timesteps, &
+                         1,500,0.01_dp)
+      deallocate(drainage)
+      deallocate(drainages)
+      deallocate(runoff)
+      deallocate(runoffs)
+      deallocate(evaporation)
+      deallocate(lake_evaporations)
+      deallocate(initial_spillover_to_rivers)
+      deallocate(initial_water_to_lake_centers)
+      deallocate(lake_volumes_all_timesteps)
+      deallocate(expected_lake_volumes_all_timesteps)
+      call clean_lake_model()
+      call clean_hd_model()
+end subroutine testLakeModel16
+
+subroutine testLakeModel17
+   use latlon_hd_model_interface_mod
+   use latlon_hd_model_mod
+   use latlon_lake_model_io_mod
+   type(riverparameters), pointer :: river_parameters
+   type(lakeparameters),pointer :: lake_parameters
+   type(lakefields), pointer :: lake_fields_out
+   type(riverprognosticfields), pointer :: river_fields
+   type(lakeprognostics), pointer :: lake_prognostics_out
+   type(lakepointer) :: working_lake_ptr
+   real(dp),dimension(:,:), pointer :: flow_directions
+   integer,dimension(:,:), pointer :: river_reservoir_nums
+   integer,dimension(:,:), pointer :: overland_reservoir_nums
+   integer,dimension(:,:), pointer :: base_reservoir_nums
+   real(dp),dimension(:,:), pointer :: river_retention_coefficients
+   real(dp),dimension(:,:), pointer :: overland_retention_coefficients
+   real(dp),dimension(:,:), pointer :: base_retention_coefficients
+   logical,dimension(:,:), pointer :: landsea_mask
+   logical,dimension(:,:), pointer :: lake_centers
+   real(dp),dimension(:,:), pointer :: connection_volume_thresholds
+   real(dp),dimension(:,:), pointer :: flood_volume_thresholds
+   logical,dimension(:,:), pointer :: flood_local_redirect
+   logical,dimension(:,:), pointer :: connect_local_redirect
+   logical,dimension(:,:), pointer :: additional_flood_local_redirect
+   logical,dimension(:,:), pointer :: additional_connect_local_redirect
+   integer,dimension(:,:), pointer :: merge_points
+   real(dp),dimension(:,:), pointer :: cell_areas_on_surface_model_grid
+   integer,dimension(:,:), pointer :: flood_next_cell_lat_index
+   integer,dimension(:,:), pointer :: flood_next_cell_lon_index
+   integer,dimension(:,:), pointer :: connect_next_cell_lat_index
+   integer,dimension(:,:), pointer :: connect_next_cell_lon_index
+   integer,dimension(:,:), pointer :: flood_force_merge_lat_index
+   integer,dimension(:,:), pointer :: flood_force_merge_lon_index
+   integer,dimension(:,:), pointer :: connect_force_merge_lat_index
+   integer,dimension(:,:), pointer :: connect_force_merge_lon_index
+   integer,dimension(:,:), pointer :: flood_redirect_lat_index
+   integer,dimension(:,:), pointer :: flood_redirect_lon_index
+   integer,dimension(:,:), pointer :: connect_redirect_lat_index
+   integer,dimension(:,:), pointer :: connect_redirect_lon_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
+   integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
+   integer,dimension(:,:), pointer :: additional_flood_redirect_lat_index
+   integer,dimension(:,:), pointer :: additional_flood_redirect_lon_index
+   integer,dimension(:,:), pointer :: additional_connect_redirect_lat_index
+   integer,dimension(:,:), pointer :: additional_connect_redirect_lon_index
+   real(dp),dimension(:,:), pointer :: drainage
+   real(dp),dimension(:,:), pointer :: runoff
+   real(dp),dimension(:,:), pointer :: evaporation
+   real(dp),dimension(:,:), pointer :: initial_water_to_lake_centers
+   real(dp),dimension(:,:), pointer :: initial_spillover_to_rivers
+   real(dp),dimension(:,:), pointer :: expected_river_inflow
+   real(dp),dimension(:,:), pointer :: expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: expected_water_to_hd
+   integer,dimension(:,:), pointer :: expected_lake_numbers
+   integer,dimension(:,:), pointer :: expected_lake_types
+   real(dp),dimension(:,:), pointer :: expected_diagnostic_lake_volumes
+   real(dp),dimension(:), pointer :: expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: expected_lake_fractions
+   integer,dimension(:,:), pointer :: expected_number_lake_cells
+   integer,dimension(:,:), pointer :: expected_number_fine_grid_cells
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: first_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: first_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: first_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: first_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: first_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: second_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: second_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: second_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: second_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: second_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:,:), pointer :: third_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: third_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: third_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: third_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: third_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: third_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: third_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: third_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: third_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:,:), pointer :: fourth_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: fourth_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: fourth_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: fourth_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: fourth_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: fourth_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: fourth_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: fourth_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: fourth_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: first_intermediate_expected_lake_volumes
+   real(dp),dimension(:), pointer :: second_intermediate_expected_lake_volumes
+   real(dp),dimension(:), pointer :: third_intermediate_expected_lake_volumes
+   real(dp),dimension(:), pointer :: fourth_intermediate_expected_lake_volumes
+   real(dp),dimension(:,:), pointer :: fifth_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: fifth_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: fifth_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: fifth_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: fifth_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: fifth_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: fifth_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: fifth_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: fifth_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:,:), pointer :: sixth_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: sixth_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: sixth_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: sixth_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: sixth_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: sixth_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: sixth_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: sixth_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: sixth_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:,:), pointer :: seventh_intermediate_expected_river_inflow
+   real(dp),dimension(:,:), pointer :: seventh_intermediate_expected_water_to_ocean
+   real(dp),dimension(:,:), pointer :: seventh_intermediate_expected_water_to_hd
+   integer,dimension(:,:), pointer :: seventh_intermediate_expected_lake_numbers
+   integer,dimension(:,:), pointer :: seventh_intermediate_expected_lake_types
+   real(dp),dimension(:,:), pointer :: seventh_intermediate_expected_diagnostic_lake_volumes
+   real(dp),dimension(:,:), pointer :: seventh_intermediate_expected_lake_fractions
+   integer,dimension(:,:), pointer :: seventh_intermediate_expected_number_lake_cells
+   integer,dimension(:,:), pointer :: seventh_intermediate_expected_number_fine_grid_cells
+   real(dp),dimension(:), pointer :: fifth_intermediate_expected_lake_volumes
+   real(dp),dimension(:), pointer :: sixth_intermediate_expected_lake_volumes
+   real(dp),dimension(:), pointer :: seventh_intermediate_expected_lake_volumes
+   integer,dimension(:,:), pointer :: lake_types
+   real(dp) :: lake_retention_coefficient_local
+   logical :: use_realistic_surface_coupling_in
+   logical :: instant_throughflow_local
+   integer :: i,j
+   integer :: nlat,nlon
+   integer :: nlat_coarse,nlon_coarse
+   integer :: nlat_surface_model,nlon_surface_model
+   integer :: no_merge_mtype
+   integer :: connection_merge_not_set_flood_merge_as_primary
+   integer :: connection_merge_not_set_flood_merge_as_secondary
+   integer :: connection_merge_as_secondary_flood_merge_not_set
+   integer :: lake_number,lake_type
+   real(dp),dimension(:,:,:), pointer :: drainages
+   real(dp),dimension(:,:,:), pointer :: runoffs
+   real(dp),dimension(:,:,:), pointer :: lake_evaporations
+   real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
+   real(dp),dimension(:), pointer :: lake_volumes
+   real(dp),dimension(:,:), pointer :: lake_fractions
+   real(dp),dimension(:,:), pointer :: lake_volumes_all_timesteps
+   real(dp),dimension(:,:), pointer :: expected_lake_volumes_all_timesteps
+      use_realistic_surface_coupling_in = .true.
+      nlat_coarse = 4
+      nlon_coarse = 4
+      nlat_surface_model = 3
+      nlon_surface_model = 3
+      no_merge_mtype = 0
+      connection_merge_as_secondary_flood_merge_not_set = 7
+      connection_merge_not_set_flood_merge_as_primary = 9
+      connection_merge_not_set_flood_merge_as_secondary = 10
+      allocate(flow_directions(4,4))
+      flow_directions = transpose(reshape((/5,5,5,5,&
+                                            2,2,5,5,&
+                                            5,4,8,8,&
+                                            8,7,4,0 /), &
+                                            (/nlon_coarse, &
+                                              nlat_coarse/)))
+      allocate(river_reservoir_nums(4,4))
+      river_reservoir_nums(:,:) = 5
+      allocate(overland_reservoir_nums(4,4))
+      overland_reservoir_nums(:,:) = 1
+      allocate(base_reservoir_nums(4,4))
+      base_reservoir_nums(:,:) = 1
+      allocate(river_retention_coefficients(4,4))
+      river_retention_coefficients(:,:) = 0.0
+      allocate(overland_retention_coefficients(4,4))
+      overland_retention_coefficients(:,:) = 0.0
+      allocate(base_retention_coefficients(4,4))
+      base_retention_coefficients(:,:) = 0.0
+      allocate(landsea_mask(4,4))
+      landsea_mask(:,:) = .False.
+      river_reservoir_nums(4,4) = 0
+      overland_reservoir_nums(4,4) = 0
+      base_reservoir_nums(4,4) = 0
+      landsea_mask(4,4) = .True.
+      river_parameters => RiverParameters(flow_directions, &
+                                          river_reservoir_nums, &
+                                          overland_reservoir_nums, &
+                                          base_reservoir_nums, &
+                                          river_retention_coefficients, &
+                                          overland_retention_coefficients, &
+                                          base_retention_coefficients, &
+                                          landsea_mask)
+      river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
+      nlat = 20
+      nlon = 20
+      allocate(lake_centers(nlat,nlon))
+      lake_centers = transpose(reshape((/ &
+          .False., .False., .False., .False., .False.,  .False., .False., .False., .False., .False.,&
+            .False., .False., .False., .False., .False.,&
+              .False., .False., .False., .False., .False., &
+         .False., .False., .False.,  .True., .False.,  .False., .False.,  .True., .False., .False., &
+          .False., .False., .False., .False., .False., &
+            .False.,  .True., .False., .False., .False., &
+         .False.,  .True., .False., .False., .False.,  .False., .False., .False., .False., .False., &
+          .False., .False., .False., .False., .False., &
+            .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False.,  .False., .False., .False., .False., .False., &
+          .False., .False., .False., .False., .False., &
+            .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False.,  .False., .False., .False., .False., .False., &
+          .False., .False., .False., .False., .False., &
+            .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False.,  .False., .False., .False., .False., .False., &
+          .False., .False., .False., .False., .False., &
+            .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False.,  .False., .False., .False., .False., .False., &
+          .False., .False., .False., .False., .False., &
+            .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False.,  .False., .False., .False., .False., .False., &
+          .False.,  .True., .False., .False., .False., &
+            .False., .True., .False., .False., .False., &
+         .False., .False., .False., .False., .False.,  .False., .False., .False., .False., .False., &
+          .False., .False., .False., .False., .False., &
+            .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False.,  .False., .False., .False., .False., .False., &
+          .False., .False., .False., .False., .False., &
+            .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False.,  .False., .False., .False., .False., .False., &
+          .False., .False., .False., .False., .False., &
+            .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False.,  .False., .False., .False., .False., .False., &
+          .False., .False., .False., .False., .False., &
+            .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False.,  .False., .False., .False., .False., .False., &
+          .False., .False., .False., .False., .False., &
+            .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False.,  .False., .False., .False., .False., .False., &
+          .False., .False., .False., .False., .False., &
+            .False., .False., .False., .False., .False., &
+         .False.,  .True., .False., .False., .False.,  .False., .False., .False., .False., .False., &
+          .False., .False., .False., .False., .False., &
+            .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False.,  .False., .False., .False., .False., .False., &
+          .False., .False., .False., .False., .False., &
+            .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False.,  .False., .False., .False., .False., .False., &
+          .False., .False., .False., .False., .False., &
+            .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False.,  .False., .False., .False., .False., .False., &
+          .False., .False., .False., .False., .False., &
+            .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False.,  .False., .False., .False., .False., .False., &
+          .False., .False., .False., .False., .False., &
+            .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False.,  .False., .False., .False., .False., .False., &
+          .False., .False., .False., .False., .False., &
+            .False., .False., .False., .False., .False. /), &
+         (/nlon,nlat/)))
+      allocate(connection_volume_thresholds(nlat,nlon))
+      connection_volume_thresholds = transpose(reshape((/ &
+          -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0,&
+           -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, 101.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0,&
+          -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0 /), &
+         (/nlon,nlat/)))
+      allocate(flood_volume_thresholds(nlat,nlon))
+      flood_volume_thresholds = transpose(reshape((/ &
+          -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+           -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, 0.0, 0.0, 27.0, -1.0, 0.0, 0.0, -1.0, 0.0, &
+           0.0, 0.0, 104.0, -1.0, -1.0, 0.0, 0.0, 0.0, -1.0, &
+         -1.0, 0.0, -1.0, 0.0, 0.0, 0.0, 204.0, 0.0, 0.0, 0.0, 0.0,   &
+           0.0, 0.0, 0.0, 204.0, 173.0, 0.0, 0.0, 0.0, -1.0, &
+         -1.0, 0.0, -1.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, 0.0,    &
+           0.0, 0.0, 0.0, -1.0, -1.0, 0.0, 0.0, 0.0, -1.0, &
+         -1.0, 0.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0,   &
+          -1.0, 0.0, 0.0, 0.0, -1.0, -1.0, 48.0, 0.0, 0.0, -1.0, &
+         -1.0, 0.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0,   &
+          -1.0, 0.0, 0.0, 0.0, -1.0, -1.0, -1.0, 82.0, -1.0, -1.0, &
+         -1.0, 0.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0,   &
+          -1.0, -1.0, 149.0, -1.0, -1.0, -1.0, 0.0, 0.0, 0.0, -1.0, &
+         -1.0, 0.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0,   &
+          -1.0, 0.0, 0.0, 0.0, -1.0, -1.0, 0.0, 0.0, 0.0, -1.0, &
+         -1.0, 0.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0,   &
+          -1.0, 0.0, 0.0, 0.0, -1.0, -1.0, 0.0, 0.0, 0.0, -1.0, &
+         -1.0, 0.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0,   &
+          -1.0, 0.0, 0.0, 0.0, -1.0, -1.0, 0.0, 0.0, 0.0, -1.0, &
+         -1.0, 0.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0,   &
+          -1.0, 0.0, 0.0, 0.0, -1.0, -1.0, 0.0, 0.0, 0.0, -1.0, &
+         -1.0, 0.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0,   &
+          -1.0, 0.0, 0.0, 0.0, -1.0, -1.0, 0.0, 0.0, 0.0, -1.0, &
+         -1.0, 66.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0,  &
+           -1.0, 18.0, 0.0, 0.0, -1.0, -1.0, 63.0, 0.0, 0.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0,  &
+           -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0, -1.0,&
+          -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  &
+          45.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  &
+           0.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  &
+           0.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0,   &
+          -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
+         -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0,   &
+          -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0/), &
+         (/nlon,nlat/)))
+      allocate(flood_local_redirect(nlat,nlon))
+      flood_local_redirect = transpose(reshape((/ &
+          .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
+           .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .True., .False., .False., .False.,  &
+         .False., .False., .False., .False., .True., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .True., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .True., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .True., .False., .False., .False., .False., .False., .False., .False.,  &
+         .False., .False., .False., .False., .False., .False., .False., .True., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False./), &
+         (/nlon,nlat/)))
+      allocate(connect_local_redirect(nlat,nlon))
+      connect_local_redirect = transpose(reshape((/ &
+          .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
+           .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False. /), &
+         (/nlon,nlat/)))
+      allocate(additional_flood_local_redirect(nlat,nlon))
+      additional_flood_local_redirect = transpose(reshape((/ &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False. /), &
+         (/nlon,nlat/)))
+      allocate(additional_connect_local_redirect(nlat,nlon))
+      additional_connect_local_redirect = transpose(reshape((/ &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+          .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+          .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+          .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+          .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+          .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+          .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+          .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+          .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+          .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+          .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+          .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+          .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+          .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+          .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+          .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+          .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+          .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+          .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+          .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
+          .False., .False., .False., .False., .False., .False., .False., .False., .False. /), &
+         (/nlon,nlat/)))
+      allocate(merge_points(nlat,nlon))
+      merge_points = transpose(reshape((/ &
+         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,       &
+          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+          no_merge_mtype, no_merge_mtype, &
+          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+         connection_merge_not_set_flood_merge_as_secondary,&
+          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
+           no_merge_mtype, no_merge_mtype, connection_merge_not_set_flood_merge_as_primary, &
+          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
+           no_merge_mtype, &
+         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,    &
+          no_merge_mtype, no_merge_mtype, no_merge_mtype,   &
+          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,   &
+           no_merge_mtype, connection_merge_not_set_flood_merge_as_secondary, &
+          connection_merge_not_set_flood_merge_as_secondary, no_merge_mtype, no_merge_mtype,&
+           no_merge_mtype, no_merge_mtype, &
+         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,    &
+          no_merge_mtype, no_merge_mtype, no_merge_mtype,   &
+          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,   &
+           no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
+          no_merge_mtype, no_merge_mtype, no_merge_mtype,   &
+          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+           no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+          connection_merge_not_set_flood_merge_as_primary, no_merge_mtype, no_merge_mtype,&
+           no_merge_mtype, &
+         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
+          no_merge_mtype, no_merge_mtype, no_merge_mtype,   &
+          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+           no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+          no_merge_mtype, connection_merge_not_set_flood_merge_as_primary, no_merge_mtype,&
+           no_merge_mtype, &
+         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+         no_merge_mtype, no_merge_mtype, no_merge_mtype,   &
+          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+          connection_merge_not_set_flood_merge_as_primary, no_merge_mtype, &
+          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
+           no_merge_mtype, &
+         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+          no_merge_mtype, no_merge_mtype, no_merge_mtype,   &
+          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
+           no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+          no_merge_mtype, no_merge_mtype, no_merge_mtype,   &
+          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
+           no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+          no_merge_mtype, no_merge_mtype, no_merge_mtype,   &
+          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
+           no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+          no_merge_mtype, no_merge_mtype, no_merge_mtype,   &
+          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
+           no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+          no_merge_mtype, no_merge_mtype, no_merge_mtype,   &
+          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
+           no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+         no_merge_mtype, connection_merge_not_set_flood_merge_as_secondary, &
+         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
+          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,   &
+          no_merge_mtype, connection_merge_not_set_flood_merge_as_secondary, &
+          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,   &
+          connection_merge_not_set_flood_merge_as_secondary, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+         no_merge_mtype, connection_merge_as_secondary_flood_merge_not_set, &
+         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
+          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,   &
+          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,   &
+          no_merge_mtype, no_merge_mtype, &
+         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
+         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,   &
+          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
+         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,   &
+          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+          connection_merge_not_set_flood_merge_as_primary, no_merge_mtype, &
+          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+          no_merge_mtype, no_merge_mtype, &
+         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
+         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,   &
+          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+          no_merge_mtype, no_merge_mtype, &
+          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+          no_merge_mtype, no_merge_mtype, &
+         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
+         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,   &
+          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,   &
+          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
+           no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,   &
+          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
+           no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
+          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype /), &
+         (/nlon,nlat/)))
+      allocate(cell_areas_on_surface_model_grid(3,3))
+      cell_areas_on_surface_model_grid = transpose(reshape((/ &
+          2.5, 3.0, 2.5, &
+         3.0, 4.0, 3.0, &
+         2.5, 3.0, 2.5 /), &
+         (/3,3/)))
+      allocate(flood_next_cell_lat_index(nlat,nlon))
+      flood_next_cell_lat_index = transpose(reshape((/ &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, 2, 3, 3, -1, 2, 3, -1, 4, 5, 5, 6, -1, -1, 2, 3, 4, -1, &
+         -1, 3, -1, 1, 2, 1, 2, 1, 2, 3, 1, 1, 1, 1, 3, 14, 1, 2, 1, -1, &
+         -1, 4, -1, 2, 3, 3, -1, 2, 3, 3, 2, 2, 2, 2, -1, -1, 2, 3, 3, -1, &
+         -1, 5, -1, -1, -1, -1, -1, -1, -1, -1, -1, 3, 3, 3, -1, -1, 5, 4, 4, -1, &
+         -1, 6, -1, -1, -1, -1, -1, -1, -1, -1, -1, 4, 5, 4, -1, -1, -1, 2, -1, -1, &
+         -1, 7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 2, -1, -1, -1, 9, 6, 10, -1, &
+         -1, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, 8, 9, 10, -1, -1, 8, 6, 6, -1, &
+         -1, 9, -1, -1, -1, -1, -1, -1, -1, -1, -1, 7, 8, 7, -1, -1, 7, 8, 7, -1, &
+         -1, 10, -1, -1, -1, -1, -1, -1, -1, -1, -1, 8, 9, 9, -1, -1, 8, 9, 9, -1, &
+         -1, 11, -1, -1, -1, -1, -1, -1, -1, -1, -1, 11, 10, 10, -1, -1, 11, 10, 10, -1, &
+         -1, 12, -1, -1, -1, -1, -1, -1, -1, -1, -1, 12, 11, 11, -1, -1, 12, 11, 11, -1, &
+         -1, 14, -1, -1, -1, -1, -1, -1, -1, -1, -1, 5, 12, 12, -1, -1, 4, 12, 12, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, 15, 16, 17, 17, 17, 17, 17, 17, 17, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, 14, 15, 14, 17, 14, 14, 14, 14, 14, 17, 17, 13, -1, -1, -1, -1, -1, -1, -1, &
+         -1, 15, 16, 16, 15, 15, 15, 15, 15, 15, 15, 15, 15, -1, -1, -1, -1, -1, -1, -1, &
+         -1, 14, 16, 17, 17, 16, 16, 16, 16, 16, 16, 16, 16, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
+         (/nlon,nlat/)))
+      allocate(flood_next_cell_lon_index(nlat,nlon))
+      flood_next_cell_lon_index = transpose(reshape((/ &
+          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, 4, 5, 7, -1, 8, 9, -1, 11, 12, 13, 12, -1, -1, 17, 18, 18, -1, &
+         -1, 1, -1, 4, 3, 5, 14, 8, 7, 10, 10, 11, 12, 13, 16, 19, 17, 16, 18, -1, &
+         -1, 1, -1, 5, 3, 4, -1, 9, 7, 8, 10, 11, 12, 13, -1, -1, 18, 16, 17, -1, &
+         -1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 11, 12, 13, -1, -1, 17, 16, 17, -1, &
+         -1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 12, 11, 13, -1, -1, -1, 15, -1, -1, &
+         -1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 6, -1, -1, -1, 18, 16, 18, -1, &
+         -1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 12, 13, 13, -1, -1, 17, 17, 18, -1, &
+         -1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 12, 11, 13, -1, -1, 17, 16, 18, -1, &
+         -1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 13, 11, 12, -1, -1, 18, 16, 17, -1, &
+         -1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 13, 11, 12, -1, -1, 18, 16, 17, -1, &
+         -1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 13, 11, 12, -1, -1, 18, 16, 17, -1, &
+         -1, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1, 13, 11, 12, -1, -1, 18, 16, 17, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, 2, 3, 4, 5, 6, 7, 8, 9, 10, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, 2, 1, 3, 1, 5, 6, 7, 8, 9, 11, 12, 1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, 3, 1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, -1, -1, -1, -1, -1, -1, -1, &
+         -1, 4, 4, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1/), &
+         (/nlon,nlat/)))
+      allocate(connect_next_cell_lat_index(nlat,nlon))
+      connect_next_cell_lat_index = transpose(reshape((/ &
+          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, 18, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1/), &
+         (/nlon,nlat/)))
+      allocate(connect_next_cell_lon_index(nlat,nlon))
+      connect_next_cell_lon_index = transpose(reshape((/ &
+          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, 14, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1/), &
+         (/nlon,nlat/)))
+      allocate(flood_force_merge_lat_index(nlat,nlon))
+      flood_force_merge_lat_index = transpose(reshape((/ &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 7, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 7, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 2, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
+         (/nlon,nlat/)))
+      allocate(flood_force_merge_lon_index(nlat,nlon))
+      flood_force_merge_lon_index = transpose(reshape((/ &
+          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 11, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 16, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 7, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 3, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
+         (/nlon,nlat/)))
+      allocate(connect_force_merge_lat_index(nlat,nlon))
+      connect_force_merge_lat_index = transpose(reshape((/ &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
+         (/nlon,nlat/)))
+      allocate(connect_force_merge_lon_index(nlat,nlon))
+      connect_force_merge_lon_index = transpose(reshape((/ &
+          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
+         (/nlon,nlat/)))
+      allocate(flood_redirect_lat_index(nlat,nlon))
+      flood_redirect_lat_index = transpose(reshape((/ &
+          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, 1, -1, -1, -1, -1, -1, -1, -1, 7, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 3, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 7, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, 14, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, -1, -1, -1, -1, 1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 2, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
+         (/nlon,nlat/)))
+      allocate(flood_redirect_lon_index(nlat,nlon))
+      flood_redirect_lon_index = transpose(reshape((/ &
+          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, 7, -1, -1, -1, -1, -1, -1, -1, 11, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 16, 3, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 16, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, -1, -1, -1, -1, 16, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1/), &
+         (/nlon,nlat/)))
+      allocate(connect_redirect_lat_index(nlat,nlon))
+      connect_redirect_lat_index = transpose(reshape((/ &
+          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
+         (/nlon,nlat/)))
+      allocate(connect_redirect_lon_index(nlat,nlon))
+      connect_redirect_lon_index = transpose(reshape((/ &
+          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
+         (/nlon,nlat/)))
+      allocate(corresponding_surface_cell_lat_index(nlat,nlon))
+      corresponding_surface_cell_lat_index = transpose(reshape((/ &
+            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, &
+         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, &
+         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, &
+         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, &
+         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, &
+         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, &
+         2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, &
+         2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, &
+         2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, &
+         2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, &
+         2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, &
+         2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, &
+         2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, &
+         2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, &
+         3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, &
+         3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, &
+         3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, &
+         3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, &
+         3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, &
+         3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3 /), &
+         (/nlon,nlat/)))
+      allocate(corresponding_surface_cell_lon_index(nlat,nlon))
+      corresponding_surface_cell_lon_index = transpose(reshape((/ &
+          1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
+         1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3 /), &
+         (/nlon,nlat/)))
+      allocate(additional_flood_redirect_lat_index(nlat,nlon))
+      additional_flood_redirect_lat_index = transpose(reshape((/ &
+           -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
+         (/nlon,nlat/)))
+      allocate(additional_flood_redirect_lon_index(nlat,nlon))
+      additional_flood_redirect_lon_index = transpose(reshape((/ &
+           -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
+         (/nlon,nlat/)))
+      allocate(additional_connect_redirect_lat_index(nlat,nlon))
+      additional_connect_redirect_lat_index = transpose(reshape((/ &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
+         (/nlon,nlat/)))
+      allocate(additional_connect_redirect_lon_index(nlat,nlon))
+      additional_connect_redirect_lon_index = transpose(reshape((/ &
+          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
+         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1/), &
+         (/nlon,nlat/)))
+      lake_retention_coefficient_local=0.1_dp
+      instant_throughflow_local=.True.
+      call add_offset(flood_next_cell_lat_index,1,(/-1/))
+      call add_offset(flood_next_cell_lon_index,1,(/-1/))
+      call add_offset(connect_next_cell_lat_index,1,(/-1/))
+      call add_offset(connect_next_cell_lon_index,1,(/-1/))
+      call add_offset(flood_force_merge_lat_index,1,(/-1/))
+      call add_offset(flood_force_merge_lon_index,1,(/-1/))
+      call add_offset(connect_force_merge_lat_index,1,(/-1/))
+      call add_offset(connect_force_merge_lon_index,1,(/-1/))
+      call add_offset(flood_redirect_lat_index,1,(/-1/))
+      call add_offset(flood_redirect_lon_index,1,(/-1/))
+      call add_offset(connect_redirect_lat_index,1,(/-1/))
+      call add_offset(connect_redirect_lon_index,1,(/-1/))
+      call add_offset(additional_flood_redirect_lat_index,1,(/-1/))
+      call add_offset(additional_flood_redirect_lon_index,1,(/-1/))
+      call add_offset(additional_connect_redirect_lat_index,1,(/-1/))
+      call add_offset(additional_connect_redirect_lon_index,1,(/-1/))
+      lake_parameters => LakeParameters(lake_centers, &
+                                        connection_volume_thresholds, &
+                                        flood_volume_thresholds, &
+                                        flood_local_redirect, &
+                                        connect_local_redirect, &
+                                        additional_flood_local_redirect, &
+                                        additional_connect_local_redirect, &
+                                        merge_points, &
+                                        cell_areas_on_surface_model_grid, &
+                                        flood_next_cell_lat_index, &
+                                        flood_next_cell_lon_index, &
+                                        connect_next_cell_lat_index, &
+                                        connect_next_cell_lon_index, &
+                                        flood_force_merge_lat_index, &
+                                        flood_force_merge_lon_index, &
+                                        connect_force_merge_lat_index, &
+                                        connect_force_merge_lon_index, &
+                                        flood_redirect_lat_index, &
+                                        flood_redirect_lon_index, &
+                                        connect_redirect_lat_index, &
+                                        connect_redirect_lon_index, &
+                                        additional_flood_redirect_lat_index, &
+                                        additional_flood_redirect_lon_index, &
+                                        additional_connect_redirect_lat_index, &
+                                        additional_connect_redirect_lon_index, &
+                                        corresponding_surface_cell_lat_index, &
+                                        corresponding_surface_cell_lon_index, &
+                                        nlat,nlon, &
+                                        nlat_coarse,nlon_coarse, &
+                                        nlat_surface_model,nlon_surface_model, &
+                                        instant_throughflow_local, &
+                                        lake_retention_coefficient_local)
+      allocate(drainage(4,4))
+      drainage(:,:) = 0.0_dp
+      allocate(runoff(4,4))
+      runoff(:,:) = 0.0_dp
+      allocate(drainages(4,4,10000))
+      allocate(runoffs(4,4,10000))
+      do i = 1,10000
+        drainages(:,:,i) = drainage(:,:)
+        runoffs(:,:,i) = runoff(:,:)
+      end do
+      allocate(evaporation(3,3))
+      evaporation(:,:) = 1.0_dp
+      allocate(lake_evaporations(3,3,10000))
+      do i = 1,10000
+        lake_evaporations(:,:,i) = evaporation(:,:)
+      end do
+      allocate(initial_water_to_lake_centers(nlat,nlon))
+      initial_water_to_lake_centers = transpose(reshape((/ &
+         0.0, 0.0,   0.0, 0.0,  0.0,  0.0, 0.0, 0.0,   0.0, 0.0,  0.0, 0.0,   0.0, 0.0, 0.0, 0.0, 0.0,     0.0, 0.0, 0.0, &
+         0.0, 0.0,   0.0, 27.1, 0.0,  0.0, 0.0, 204.1, 0.0, 0.0,  0.0, 0.0,   0.0, 0.0, 0.0, 0.0, 173.1,   0.0, 0.0, 0.0, &
+         0.0, 66.1,  0.0, 0.0,  0.0,  0.0, 0.0, 0.0,   0.0, 0.0,  0.0, 0.0,   0.0, 0.0, 0.0, 0.0, 0.0,     0.0, 0.0, 0.0, &
+         0.0, 0.0,   0.0, 0.0,  0.0,  0.0, 0.0, 0.0,   0.0, 0.0,  0.0, 0.0,   0.0, 0.0, 0.0, 0.0, 0.0,     0.0, 0.0, 0.0, &
+         0.0, 0.0,   0.0, 0.0,  0.0,  0.0, 0.0, 0.0,   0.0, 0.0,  0.0, 0.0,   0.0, 0.0, 0.0, 0.0, 0.0,     0.0, 0.0, 0.0, &
+         0.0, 0.0,   0.0, 0.0,  0.0,  0.0, 0.0, 0.0,   0.0, 0.0,  0.0, 0.0,   0.0, 0.0, 0.0, 0.0, 0.0,     0.0, 0.0, 0.0, &
+         0.0, 0.0,   0.0, 0.0,  0.0,  0.0, 0.0, 0.0,   0.0, 0.0,  0.0, 0.0,   0.0, 0.0, 0.0, 0.0, 0.0,     0.0, 0.0, 0.0, &
+         0.0, 0.0,   0.0, 0.0,  0.0,  0.0, 0.0, 0.0,   0.0, 0.0,  0.0, 18.1,  0.0, 0.0, 0.0, 0.0, 63.1,    0.0, 0.0, 0.0, &
+         0.0, 0.0,   0.0, 0.0,  0.0,  0.0, 0.0, 0.0,   0.0, 0.0,  0.0, 0.0,   0.0, 0.0, 0.0, 0.0, 0.0,     0.0, 0.0, 0.0, &
+         0.0, 0.0,   0.0, 0.0,  0.0,  0.0, 0.0, 0.0,   0.0, 0.0,  0.0, 0.0,   0.0, 0.0, 0.0, 0.0, 0.0,     0.0, 0.0, 0.0, &
+         0.0, 0.0,   0.0, 0.0,  0.0,  0.0, 0.0, 0.0,   0.0, 0.0,  0.0, 0.0,   0.0, 0.0, 0.0, 0.0, 0.0,     0.0, 0.0, 0.0, &
+         0.0, 0.0,   0.0, 0.0,  0.0,  0.0, 0.0, 0.0,   0.0, 0.0,  0.0, 0.0,   0.0, 0.0, 0.0, 0.0, 0.0,     0.0, 0.0, 0.0, &
+         0.0, 0.0,   0.0, 0.0,  0.0,  0.0, 0.0, 0.0,   0.0, 0.0,  0.0, 0.0,   0.0, 0.0, 0.0, 0.0, 0.0,     0.0, 0.0, 0.0, &
+         0.0, 0.0,   0.0, 0.0,  0.0,  0.0, 0.0, 0.0,   0.0, 0.0,  0.0, 0.0,   0.0, 0.0, 0.0, 0.0, 0.0,     0.0, 0.0, 0.0, &
+         0.0, 101.1, 0.0, 0.0,  0.0,  0.0, 0.0, 0.0,   0.0, 0.0,  0.0, 0.0,   0.0, 0.0, 0.0, 0.0, 0.0,     0.0, 0.0, 0.0, &
+         0.0, 0.0,   0.0, 0.0,  0.0,  0.0, 0.0, 0.0,   0.0, 0.0,  0.0, 0.0,   0.0, 0.0, 0.0, 0.0, 0.0,     0.0, 0.0, 0.0, &
+         0.0, 0.0,   0.0, 0.0,  0.0,  0.0, 0.0, 0.0,   0.0, 0.0,  0.0, 0.0,   0.0, 0.0, 0.0, 0.0, 0.0,     0.0, 0.0, 0.0, &
+         0.0, 0.0,   0.0, 0.0,  0.0,  0.0, 0.0, 0.0,   0.0, 0.0,  0.0, 0.0,   0.0, 0.0, 0.0, 0.0, 0.0,     0.0, 0.0, 0.0, &
+         0.0, 0.0,   0.0, 0.0,  0.0,  0.0, 0.0, 0.0,   0.0, 0.0,  0.0, 0.0,   0.0, 0.0, 0.0, 0.0, 0.0,     0.0, 0.0, 0.0, &
+         0.0, 0.0,   0.0, 0.0,  0.0,  0.0, 0.0, 0.0,   0.0, 0.0,  0.0, 0.0,   0.0, 0.0, 0.0, 0.0, 0.0,     0.0, 0.0, 0.0  /), &
+         (/nlon,nlat/)))
+      allocate(initial_spillover_to_rivers(4,4))
+      initial_spillover_to_rivers = transpose(reshape((/ &
+          0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0 /), &
+         (/4,4/)))
+      allocate(expected_river_inflow(4,4))
+      expected_river_inflow = transpose(reshape((/ &
+          0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0 /), &
+         (/4,4/)))
+      allocate(expected_water_to_ocean(4,4))
+      expected_water_to_ocean = transpose(reshape((/ &
+          0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0 /), &
+         (/4,4/)))
+      allocate(expected_water_to_hd(4,4))
+      expected_water_to_hd = transpose(reshape((/ &
+          0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0 /), &
+         (/4,4/)))
+      allocate(expected_lake_numbers(nlat,nlon))
+      expected_lake_numbers = transpose(reshape((/ &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 3, 0, 0, 0, 4, 4, 0, 4, 4, 4, 4, 0, 0, 6, 6, 6, 0, &
+         0, 1, 0, 0, 0, 0, 0, 4, 4, 4, 4, 4, 4, 4, 0, 0, 6, 6, 6, 0, &
+         0, 1, 0, 0, 0, 0, 0, 4, 4, 4, 4, 4, 4, 4, 0, 0, 6, 6, 6, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 0, 0, 6, 6, 6, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 7, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
+         (/nlon,nlat/)))
+      allocate(expected_lake_types(nlat,nlon))
+      expected_lake_types = transpose(reshape((/ &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, &
+         0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, &
+         0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
+         (/nlon,nlat/)))
+      allocate(expected_diagnostic_lake_volumes(nlat,nlon))
+      expected_diagnostic_lake_volumes = transpose(reshape((/ &
+          0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0,  0, 0, 0, 0, 0  /), &
+         (/nlon,nlat/)))
+      allocate(expected_lake_fractions(3,3))
+      expected_lake_fractions = transpose(reshape((/ &
+          0.1388888889,   0.5416666667,   0.3333333333, &
+         0.1458333333,   0.015625,   0.02083333333, &
+         0.02777777778,   0.0,   0.0 /), &
+         (/3,3/)))
+      allocate(expected_number_lake_cells(3,3))
+      expected_number_lake_cells = transpose(reshape((/ &
+           5,    26,   12, &
+           7,    1,    1, &
+           1,    0,    0 /), &
+         (/3,3/)))
+      allocate(expected_number_fine_grid_cells(3,3))
+      expected_number_fine_grid_cells = transpose(reshape((/ &
+          36, 48, 36, &
+         48, 64, 48, &
+         36, 48, 36  /), &
+         (/3,3/)))
+      allocate(expected_lake_volumes(7))
+      expected_lake_volumes = (/0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0/)
+
+      allocate(expected_lake_volumes_all_timesteps(7,115))
+      expected_lake_volumes_all_timesteps = reshape((/ &
+                                              66.0, 97.3333, 27.0, 204.0, 18.0, 167.146, 63.0, &
+                                              66.0, 93.6667, 27.0, 204.0, 18.0, 161.292, 63.0, &
+                                              66.0, 90.0, 27.0, 204.0, 18.0, 155.437, 63.0, &
+                                              66.0, 86.3333, 27.0, 204.0, 18.0, 149.583, 63.0, &
+                                              66.0, 82.6667, 27.0, 204.0, 18.0, 143.729, 63.0, &
+                                              66.0, 79.0, 27.0, 204.0, 18.0, 137.875, 63.0, &
+                                              66.0, 75.3333, 27.0, 204.0, 18.0, 132.021, 63.0, &
+                                              66.0, 71.6667, 27.0, 204.0, 18.0, 126.167, 63.0, &
+                                              66.0, 68.0, 27.0, 204.0, 18.0, 120.312, 63.0, &
+                                              66.0, 64.3333, 27.0, 204.0, 18.0, 114.458, 63.0, &
+                                              66.0, 60.6667, 27.0, 204.0, 18.0, 108.604, 63.0, &
+                                              66.0, 57.0, 27.0, 204.0, 18.0, 102.75, 63.0, &
+                                              66.0, 53.3333, 27.0, 204.0, 18.0, 96.8958, 63.0, &
+                                              66.0, 49.6667, 27.0, 204.0, 18.0, 91.0417, 63.0, &
+                                              66.0, 46.0, 27.0, 204.0, 18.0, 85.1875, 63.0, &
+                                              64.6667, 43.6667, 27.0, 203.809, 18.0, 79.5243, 63.0, &
+                                              63.9514, 40.7153, 27.0, 200.309, 18.0, 77.309, 63.0, &
+                                              63.2361, 37.7639, 27.0, 196.809, 18.0, 75.0937, 63.0, &
+                                              62.5208, 34.8125, 27.0, 193.309, 18.0, 72.8785, 63.0, &
+                                              61.8056, 31.8611, 27.0, 189.809, 18.0, 70.6632, 63.0, &
+                                              61.0903, 28.9097, 27.0, 186.309, 18.0, 68.4479, 63.0, &
+                                              60.375, 25.9583, 27.0, 182.809, 18.0, 66.2326, 63.0, &
+                                              59.6597, 23.0069, 27.0, 179.309, 18.0, 64.0174, 63.0, &
+                                              58.9444, 20.0556, 27.0, 175.809, 18.0, 61.8021, 63.0, &
+                                              58.2292, 17.1042, 27.0, 172.309, 18.0, 59.5868, 63.0, &
+                                              57.5139, 14.1528, 27.0, 168.809, 18.0, 57.3715, 63.0, &
+                                              56.7986, 11.2014, 27.0, 165.309, 18.0, 55.1562, 63.0, &
+                                              56.0833, 8.25, 27.0, 161.809, 18.0, 52.941, 63.0, &
+                                              55.3681, 5.29861, 27.0, 158.309, 18.0, 50.7257, 63.0, &
+                                              54.6528, 2.34722, 27.0, 154.809, 18.0, 48.5104, 63.0, &
+                                              53.9375, 0.0, 27.0, 151.309, 18.0, 47.8038, 61.4913, &
+                                              53.2222, 0.0, 26.967, 147.842, 18.0, 46.9705, 60.1788, &
+                                              52.5069, 0.0, 26.342, 145.03, 18.0, 46.1372, 58.8663, &
+                                              51.7917, 0.0, 25.717, 142.217, 18.0, 45.3038, 57.5538, &
+                                              51.0764, 0.0, 25.092, 139.405, 18.0, 44.4705, 56.2413, &
+                                              50.3611, 0.0, 24.467, 136.592, 18.0, 43.6372, 54.9288, &
+                                              49.6458, 0.0, 23.842, 133.78, 18.0, 42.8038, 53.6163, &
+                                              48.9306, 0.0, 23.217, 130.967, 18.0, 41.9705, 52.3038, &
+                                              48.2153, 0.0, 22.592, 128.155, 18.0, 41.1372, 50.9913, &
+                                              47.5, 0.0, 21.967, 125.342, 18.0, 40.3038, 49.6788, &
+                                              46.7847, 0.0, 21.342, 122.53, 18.0, 39.4705, 48.3663, &
+                                              46.0694, 0.0, 20.717, 119.717, 18.0, 38.6372, 47.0538, &
+                                              45.3542, 0.0, 20.092, 116.905, 18.0, 37.8038, 45.7413, &
+                                              44.6389, 0.0, 19.467, 114.092, 18.0, 36.9705, 44.4288, &
+                                              43.9236, 0.0, 18.842, 111.28, 18.0, 36.1372, 43.1163, &
+                                              43.2083, 0.0, 18.217, 108.467, 18.0, 35.3038, 41.8038, &
+                                              42.4931, 0.0, 17.592, 105.655, 18.0, 34.4705, 40.4913, &
+                                              41.7778, 0.0, 16.967, 103.984, 16.8585, 33.6372, 39.1788, &
+                                              41.0625, 0.0, 16.342, 102.359, 15.7335, 32.8038, 37.8663, &
+                                              40.3472, 0.0, 15.717, 100.734, 14.6085, 31.9705, 36.5538, &
+                                              39.6319, 0.0, 15.092, 99.1085, 13.4835, 31.1372, 35.2413, &
+                                              38.9167, 0.0, 14.467, 97.4835, 12.3585, 30.3038, 33.9288, &
+                                              38.2014, 0.0, 13.842, 95.8585, 11.2335, 29.4705, 32.6163, &
+                                              37.4861, 0.0, 13.217, 94.2335, 10.1085, 28.6372, 31.3038, &
+                                              36.7708, 0.0, 12.592, 92.6085, 8.98351, 27.8038, 29.9913, &
+                                              36.0556, 0.0, 11.967, 90.9835, 7.85851, 26.9705, 28.6788, &
+                                              35.3403, 0.0, 11.342, 89.3585, 6.73351, 26.1372, 27.3663, &
+                                              34.625, 0.0, 10.717, 87.7335, 5.60851, 25.3038, 26.0538, &
+                                              33.9097, 0.0, 10.092, 86.1085, 4.48351, 24.4705, 24.7413, &
+                                              33.1944, 0.0, 9.46701, 84.4835, 3.35851, 23.6372, 23.4288, &
+                                              32.4792, 0.0, 8.84201, 82.8585, 2.23351, 22.8038, 22.1163, &
+                                              31.7639, 0.0, 8.21701, 81.2335, 1.10851, 21.9705, 20.8038, &
+                                              31.0486, 0.0, 7.59201, 79.6085, 0.0, 21.1372, 19.4913, &
+                                              30.3333, 0.0, 6.96701, 77.9835, 0.0, 20.3038, 18.1788, &
+                                              29.6181, 0.0, 6.34201, 76.3585, 0.0, 19.4705, 16.8663, &
+                                              28.9028, 0.0, 5.71701, 74.7335, 0.0, 18.6372, 15.5538, &
+                                              28.1875, 0.0, 5.09201, 73.1085, 0.0, 17.8038, 14.2413, &
+                                              27.4722, 0.0, 4.46701, 71.4835, 0.0, 16.9705, 12.9288, &
+                                              26.7569, 0.0, 3.84201, 69.8585, 0.0, 16.1372, 11.6163, &
+                                              26.0417, 0.0, 3.21701, 68.2335, 0.0, 15.3038, 10.3038, &
+                                              25.3264, 0.0, 2.59201, 66.6085, 0.0, 14.4705, 8.99132, &
+                                              24.6111, 0.0, 1.96701, 64.9835, 0.0, 13.6372, 7.67882, &
+                                              23.8958, 0.0, 1.34201, 63.3585, 0.0, 12.8038, 6.36632, &
+                                              23.1806, 0.0, 0.717014, 61.7335, 0.0, 11.9705, 5.05382, &
+                                              22.4653, 0.0, 0.0920139, 60.1085, 0.0, 11.1372, 3.74132, &
+                                              21.75, 0.0, 0.0, 58.4835, 0.0, 10.3038, 2.42882, &
+                                              21.0347, 0.0, 0.0, 56.8585, 0.0, 9.47049, 1.11632, &
+                                              20.3194, 0.0, 0.0, 55.2335, 0.0, 8.63715, 6.66134e-16, &
+                                              19.6042, 0.0, 0.0, 53.6085, 0.0, 7.80382, 1.97215e-31, &
+                                              18.8889, 0.0, 0.0, 51.9835, 0.0, 6.97049, 0.0, &
+                                              18.1736, 0.0, 0.0, 50.3585, 0.0, 6.13715, 0.0, &
+                                              17.4583, 0.0, 0.0, 48.7335, 0.0, 5.30382, 0.0, &
+                                              16.7431, 0.0, 0.0, 47.1085, 0.0, 4.47049, 0.0, &
+                                              16.0278, 0.0, 0.0, 45.4835, 0.0, 3.63715, 0.0, &
+                                              15.3125, 0.0, 0.0, 43.8585, 0.0, 2.80382, 0.0, &
+                                              14.5972, 0.0, 0.0, 42.2335, 0.0, 1.97049, 0.0, &
+                                              13.8819, 0.0, 0.0, 40.6085, 0.0, 1.13715, 0.0, &
+                                              13.1667, 0.0, 0.0, 38.9835, 0.0, 0.303819, 0.0, &
+                                              12.4514, 0.0, 0.0, 37.3585, 0.0, 0.0, 0.0, &
+                                              11.7361, 0.0, 0.0, 35.7335, 0.0, 0.0, 0.0, &
+                                              11.0208, 0.0, 0.0, 34.1085, 0.0, 0.0, 0.0, &
+                                              10.3056, 0.0, 0.0, 32.4835, 0.0, 0.0, 0.0, &
+                                              9.59028, 0.0, 0.0, 30.8585, 0.0, 0.0, 0.0, &
+                                              8.875, 0.0, 0.0, 29.2335, 0.0, 0.0, 0.0, &
+                                              8.15972, 0.0, 0.0, 27.6085, 0.0, 0.0, 0.0, &
+                                              7.44444, 0.0, 0.0, 25.9835, 0.0, 0.0, 0.0, &
+                                              6.72917, 0.0, 0.0, 24.3585, 0.0, 0.0, 0.0, &
+                                              6.01389, 0.0, 0.0, 22.7335, 0.0, 0.0, 0.0, &
+                                              5.29861, 0.0, 0.0, 21.1085, 0.0, 0.0, 0.0, &
+                                              4.58333, 0.0, 0.0, 19.4835, 0.0, 0.0, 0.0, &
+                                              3.86806, 0.0, 0.0, 17.8585, 0.0, 0.0, 0.0, &
+                                              3.15278, 0.0, 0.0, 16.2335, 0.0, 0.0, 0.0, &
+                                              2.4375, 0.0, 0.0, 14.6085, 0.0, 0.0, 0.0, &
+                                              1.72222, 0.0, 0.0, 12.9835, 0.0, 0.0, 0.0, &
+                                              1.00694, 0.0, 0.0, 11.3585, 0.0, 0.0, 0.0, &
+                                              0.291667, 0.0, 0.0, 9.73351, 0.0, 0.0, 0.0, &
+                                              0.0212121, 0.0, 0.0, 8.10851, 0.0, 0.0, 0.0, &
+                                              0.0015427, 0.0, 0.0, 6.48351, 0.0, 0.0, 0.0, &
+                                              0.000112196, 0.0, 0.0, 4.85851, 0.0, 0.0, 0.0, &
+                                              8.15973e-6, 0.0, 0.0, 3.23351, 0.0, 0.0, 0.0, &
+                                              5.93435e-7, 0.0, 0.0, 1.60851, 0.0, 0.0, 0.0, &
+                                              4.31589e-8, 0.0, 0.0, 1.33227e-15, 0.0, 0.0, 0.0, &
+                                              3.13883e-9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
+                                              2.28279e-10, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
+                                              1.66021e-11, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 /), &
+                                              (/7,115/))
+      allocate(first_intermediate_expected_river_inflow(4,4))
+      first_intermediate_expected_river_inflow = transpose(reshape((/ &
+          0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0 /), &
+         (/4,4/)))
+      allocate(first_intermediate_expected_water_to_ocean(4,4))
+      first_intermediate_expected_water_to_ocean = transpose(reshape((/ &
+          0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0 /), &
+         (/4,4/)))
+      allocate(first_intermediate_expected_water_to_hd(4,4))
+      first_intermediate_expected_water_to_hd = transpose(reshape((/ &
+          0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.7  /), &
+         (/4,4/)))
+      first_intermediate_expected_water_to_hd = &
+        first_intermediate_expected_water_to_hd/86400.0_dp
+      allocate(first_intermediate_expected_lake_numbers(nlat,nlon))
+      first_intermediate_expected_lake_numbers = transpose(reshape((/ &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 3, 3, 3, 0, 4, 4, 0, 4, 4, 4, 4, 0, 0, 6, 6, 6, 0, &
+         0, 1, 0, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 6, 6, 6, 6, 0, &
+         0, 1, 0, 3, 3, 3, 0, 4, 4, 4, 4, 4, 4, 4, 0, 0, 6, 6, 6, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 0, 0, 6, 6, 6, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 0, 0, 0, 6, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 7, 7, 7, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 0, 0, 7, 7, 7, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 0, 0, 7, 7, 7, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 0, 0, 7, 7, 7, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 0, 0, 7, 7, 7, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 0, 0, 7, 7, 7, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 0, 0, 7, 7, 7, 0, &
+         0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, &
+         0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, &
+         0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0  /), &
+         (/nlon,nlat/)))
+      allocate(first_intermediate_expected_lake_types(nlat,nlon))
+      first_intermediate_expected_lake_types = transpose(reshape((/ &
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 3, 3, 3, 0, 3, 3, 0, 3, 3, 3, 3, 0, 0, 2, 2, 2, 0, &
+         0, 3, 0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 0, &
+         0, 3, 0, 3, 3, 3, 0, 3, 3, 3, 3, 3, 3, 3, 0, 0, 2, 2, 2, 0, &
+         0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 2, 2, 2, 0, &
+         0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 0, 2, 0, 0, &
+         0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 3, 3, 3, 0, &
+         0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, &
+         0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, &
+         0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, &
+         0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, &
+         0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, &
+         0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, &
+         0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, &
+         0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, &
+         0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0   /), &
+         (/nlon,nlat/)))
+      allocate(first_intermediate_expected_diagnostic_lake_volumes(nlat,nlon))
+      first_intermediate_expected_diagnostic_lake_volumes = transpose(reshape((/ &
+           0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,&
+              0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+         0.0,   0.0,   0.0, 485.0, 485.0, 485.0,   0.0, 485.0, 485.0,   0.0, 485.0, 485.0, 485.0, 485.0,  &
+          0.0,   0.0, 485.0, 485.0, 485.0,   0.0, &
+         0.0, 167.0,   0.0, 485.0, 485.0, 485.0, 485.0, 485.0, 485.0, 485.0, 485.0, 485.0, 485.0, 485.0,  &
+          485.0, 485.0, 485.0, 485.0, 485.0,   0.0, &
+         0.0, 167.0,   0.0, 485.0, 485.0, 485.0,   0.0, 485.0, 485.0, 485.0, 485.0, 485.0, 485.0, 485.0,  &
+          0.0,   0.0, 485.0, 485.0, 485.0,   0.0, &
+         0.0, 167.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, 485.0, 485.0, 485.0,  &
+          0.0,   0.0, 485.0, 485.0, 485.0,   0.0, &
+         0.0, 167.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, 485.0, 485.0, 485.0,  &
+          0.0,   0.0,   0.0, 485.0,   0.0,   0.0, &
+         0.0, 167.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, 485.0,   0.0,  &
+          0.0,   0.0, 485.0, 485.0, 485.0,   0.0, &
+         0.0, 167.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, 485.0, 485.0, 485.0,  &
+          0.0,   0.0, 485.0, 485.0, 485.0,   0.0, &
+         0.0, 167.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, 485.0, 485.0, 485.0,  &
+          0.0,   0.0, 485.0, 485.0, 485.0,   0.0, &
+         0.0, 167.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, 485.0, 485.0, 485.0,  &
+          0.0,   0.0, 485.0, 485.0, 485.0,   0.0, &
+         0.0, 167.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, 485.0, 485.0, 485.0,  &
+          0.0,   0.0, 485.0, 485.0, 485.0,   0.0, &
+         0.0, 167.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, 485.0, 485.0, 485.0,  &
+          0.0,   0.0, 485.0, 485.0, 485.0,   0.0, &
+         0.0, 167.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, 485.0, 485.0, 485.0,  &
+          0.0,   0.0, 485.0, 485.0, 485.0,   0.0, &
+         0.0, 167.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  &
+          0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+         0.0, 167.0, 167.0, 167.0, 167.0, 167.0, 167.0, 167.0, 167.0, 167.0,   0.0,   0.0,   0.0,   0.0,  &
+          0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+         0.0, 167.0, 167.0, 167.0, 167.0, 167.0, 167.0, 167.0, 167.0, 167.0, 167.0, 167.0, 167.0,   0.0,  &
+          0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+         0.0, 167.0, 167.0, 167.0, 167.0, 167.0, 167.0, 167.0, 167.0, 167.0, 167.0, 167.0, 167.0,   0.0,  &
+          0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+         0.0, 167.0, 167.0, 167.0, 167.0, 167.0, 167.0, 167.0, 167.0, 167.0, 167.0, 167.0, 167.0,   0.0,  &
+          0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+         0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  &
+          0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+         0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  &
+          0.0,   0.0,   0.0,   0.0,   0.0,   0.0   /), &
+         (/nlon,nlat/)))
+      allocate(first_intermediate_expected_lake_fractions(3,3))
+      first_intermediate_expected_lake_fractions = transpose(reshape((/ &
+          0.3611111111, 0.5625, 0.4166666667, &
+         0.1458333333, 0.296875, 0.4375, &
+         0.5555555556, 0.5208333333, 0.0/), &
+         (/3,3/)))
+      allocate(first_intermediate_expected_number_lake_cells(3,3))
+      first_intermediate_expected_number_lake_cells = transpose(reshape((/ &
+          13, 27, 15, &
+         7, 19, 21, &
+         20, 25, 0/), &
+         (/3,3/)))
+      allocate(first_intermediate_expected_number_fine_grid_cells(3,3))
+      first_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
+          36, 48, 36, &
+         48, 64, 48, &
+         36, 48, 36  /), &
+         (/3,3/)))
+      allocate(first_intermediate_expected_lake_volumes(7))
+      first_intermediate_expected_lake_volumes = (/66.0, 101.0, 27.0, 204.0, 18.0, 173.0, 63.0/)
+      allocate(second_intermediate_expected_river_inflow(4,4))
+      second_intermediate_expected_river_inflow = transpose(reshape((/ &
+          0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0 /), &
+         (/4,4/)))
+      allocate(second_intermediate_expected_water_to_ocean(4,4))
+      second_intermediate_expected_water_to_ocean = transpose(reshape((/ &
+          0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0 /), &
+         (/4,4/)))
+      allocate(second_intermediate_expected_water_to_hd(4,4))
+      second_intermediate_expected_water_to_hd = transpose(reshape((/ &
+          0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0 /), &
+         (/4,4/)))
+      allocate(second_intermediate_expected_lake_numbers(nlat,nlon))
+      second_intermediate_expected_lake_numbers = transpose(reshape((/ &
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 3, 3, 3, 0, 4, 4, 0, 4, 4, 4, 4, 0, 0, 6, 6, 6, 0, &
+         0, 1, 0, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 6, 6, 6, 6, 0, &
+         0, 1, 0, 3, 3, 3, 0, 4, 4, 4, 4, 4, 4, 4, 0, 0, 6, 6, 6, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 0, 0, 6, 6, 6, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 0, 0, 0, 6, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 7, 7, 7, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 0, 0, 7, 7, 7, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 0, 0, 7, 7, 7, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 0, 0, 7, 7, 7, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 0, 0, 7, 7, 7, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 0, 0, 7, 7, 7, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 0, 0, 7, 7, 7, 0, &
+         0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, &
+         0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, &
+         0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0  /), &
+         (/nlon,nlat/)))
+      allocate(second_intermediate_expected_lake_types(nlat,nlon))
+      second_intermediate_expected_lake_types = transpose(reshape((/ &
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 3, 3, 3, 0, 3, 3, 0, 3, 3, 3, 3, 0, 0, 1, 1, 1, 0, &
+         0, 3, 0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 0, &
+         0, 3, 0, 3, 3, 3, 0, 3, 3, 3, 3, 3, 3, 3, 0, 0, 1, 1, 1, 0, &
+         0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 1, 1, 1, 0, &
+         0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 0, 1, 0, 0, &
+         0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 3, 3, 3, 0, &
+         0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, &
+         0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, &
+         0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, &
+         0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, &
+         0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, &
+         0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
+         (/nlon,nlat/)))
+      allocate(second_intermediate_expected_diagnostic_lake_volumes(nlat,nlon))
+      second_intermediate_expected_diagnostic_lake_volumes = transpose(reshape((/ &
+          0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+            0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+         0.0,   0.0,   0.0, 397.19, 397.19, 397.19,   0.00, 397.19, 397.19,   0.00, 397.19, 397.19,&
+          397.19, 397.19,   0.0,   0.0,  397.19, 397.19, 397.19,   0.0, &
+         0.0, 112.0,   0.0, 397.19, 397.19, 397.19, 397.19, 397.19, 397.19, 397.19, 397.19, 397.19,&
+          397.19, 397.19, 397.19, 397.19, 397.19, 397.19, 397.19,   0.0, &
+         0.0, 112.0,   0.0, 397.19, 397.19, 397.19,   0.00, 397.19, 397.19, 397.19, 397.19, 397.19,&
+          397.19, 397.19,  0.0,   0.0,  397.19, 397.19, 397.19,   0.0, &
+         0.0, 112.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, 397.19, 397.19,&
+          397.19,   0.0,    0.0, 397.19, 397.19, 397.19,   0.0, &
+         0.0, 112.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, 397.19, 397.19,&
+          397.19,   0.0,    0.0,   0.0,  397.19,    0.0,   0.0, &
+         0.0, 112.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, 397.19, &
+            0.0,    0.0,    0.0, 397.19, 397.19, 397.19,   0.0, &
+         0.0, 112.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, 397.19, 397.19,&
+          397.19,   0.0,    0.0, 397.19, 397.19, 397.19,   0.0, &
+         0.0, 112.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, 397.19, 397.19,&
+          397.19,   0.0,    0.0, 397.19, 397.19, 397.19,   0.0, &
+         0.0, 112.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, 397.19, 397.19,&
+          397.19,   0.0,    0.0, 397.19, 397.19, 397.19,   0.0, &
+         0.0, 112.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, 397.19, 397.19,&
+          397.19,   0.0,    0.0, 397.19, 397.19, 397.19,   0.0, &
+         0.0, 112.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, 397.19, 397.19,&
+          397.19,   0.0,    0.0, 397.19, 397.19, 397.19,   0.0, &
+         0.0, 112.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, 397.19, 397.19,&
+          397.19,   0.0,    0.0, 397.19, 397.19, 397.19,   0.0, &
+         0.0, 112.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,    0.0, &
+            0.0,    0.0,    0.0,    0.0,    0.0,    0.0,   0.0, &
+         0.0, 112.0, 112.0, 112.0, 112.0, 112.0, 112.0, 112.0, 112.0, 112.0,   0.0,   0.0,    0.0, &
+            0.0,    0.0,    0.0,    0.0,    0.0,    0.0,   0.0, &
+         0.0, 112.0, 112.0, 112.0, 112.0, 112.0, 112.0, 112.0, 112.0, 112.0, 112.0, 112.0,  112.0, &
+            0.0,    0.0,    0.0,    0.0,    0.0,    0.0,   0.0, &
+         0.0, 112.0, 112.0, 112.0, 112.0, 112.0, 112.0, 112.0, 112.0, 112.0, 112.0, 112.0,  112.0, &
+            0.0,    0.0,    0.0,    0.0,    0.0,    0.0,   0.0, &
+         0.0, 112.0, 112.0, 112.0, 112.0, 112.0, 112.0, 112.0, 112.0, 112.0, 112.0, 112.0,  112.0, &
+            0.0,    0.0,    0.0,    0.0,    0.0,    0.0,   0.0, &
+         0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,    0.0, &
+            0.0,    0.0,    0.0,    0.0,    0.0,    0.0,   0.0, &
+         0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,    0.0, &
+            0.0,    0.0,    0.0,    0.0,    0.0,    0.0,   0.0  /), &
+         (/nlon,nlat/)))
+      allocate(second_intermediate_expected_lake_fractions(3,3))
+      second_intermediate_expected_lake_fractions = transpose(reshape((/ &
+          0.3611111111, 0.5625, 0.4166666667, &
+         0.1458333333, 0.296875, 0.4375, &
+         0.5555555556, 0.5208333333, 0.0 /), &
+         (/3,3/)))
+      allocate(second_intermediate_expected_number_lake_cells(3,3))
+      second_intermediate_expected_number_lake_cells = transpose(reshape((/ &
+          13, 27, 15, &
+         7, 19, 21, &
+         20, 25, 0/), &
+         (/3,3/)))
+      allocate(second_intermediate_expected_number_fine_grid_cells(3,3))
+      second_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
+          36, 48, 36, &
+         48, 64, 48, &
+         36, 48, 36  /), &
+         (/3,3/)))
+      allocate(second_intermediate_expected_lake_volumes(7))
+      second_intermediate_expected_lake_volumes = (/66.0, 46.0, 27.0, 204.0, 18.0, 85.1875, 63.0 /)
+
+      allocate(third_intermediate_expected_river_inflow(4,4))
+      third_intermediate_expected_river_inflow = transpose(reshape((/ &
+          0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0 /), &
+         (/4,4/)))
+      allocate(third_intermediate_expected_water_to_ocean(4,4))
+      third_intermediate_expected_water_to_ocean = transpose(reshape((/ &
+          0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0 /), &
+         (/4,4/)))
+      allocate(third_intermediate_expected_water_to_hd(4,4))
+      third_intermediate_expected_water_to_hd = transpose(reshape((/ &
+          0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0 /), &
+         (/4,4/)))
+      allocate(third_intermediate_expected_lake_numbers(nlat,nlon))
+      third_intermediate_expected_lake_numbers = transpose(reshape((/ &
+           0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 3, 3, 3, 0, 4, 4, 0, 4, 4, 4, 4, 0, 0, 6, 6, 6, 0, &
+         0, 1, 0, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 0, 0, 6, 6, 6, 0, &
+         0, 1, 0, 3, 3, 3, 0, 4, 4, 4, 4, 4, 4, 4, 0, 0, 6, 6, 6, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 0, 0, 6, 6, 6, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 0, 0, 0, 6, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 7, 7, 7, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 0, 0, 7, 7, 7, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 0, 0, 7, 7, 7, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 0, 0, 7, 7, 7, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 0, 0, 7, 7, 7, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 0, 0, 7, 7, 7, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 0, 0, 7, 7, 7, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, &
+         0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, &
+         0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
+         (/nlon,nlat/)))
+      allocate(third_intermediate_expected_lake_types(nlat,nlon))
+      third_intermediate_expected_lake_types = transpose(reshape((/ &
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 3, 3, 3, 0, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, &
+         0, 1, 0, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, &
+         0, 1, 0, 3, 3, 3, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 3, 3, 3, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
+         (/nlon,nlat/)))
+      allocate(third_intermediate_expected_diagnostic_lake_volumes(nlat,nlon))
+      third_intermediate_expected_diagnostic_lake_volumes = transpose(reshape((/ &
+              0.0,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,     &
+                 0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  0.0,   0.0, &
+         0.0,  0.0,   0.0, 248.81, 248.81, 248.81,   0.0, 248.81, 248.81,   0.00, 248.81,   &
+          248.81, 248.81, 248.81,   0.0,   0.0, 142.52, 142.52, 142.52,   0.0, &
+         0.0, 64.67,  0.0, 248.81, 248.81, 248.81, 248.81, 248.81, 248.81, 248.81, 248.81,  &
+          248.81, 248.81, 248.81,   0.0,   0.0, 142.52, 142.52, 142.52,   0.0, &
+         0.0, 64.67,  0.0, 248.81, 248.81, 248.81,   0.0, 248.81, 248.81, 248.81, 248.81,   &
+          248.81, 248.81, 248.81,   0.0,   0.0, 142.52, 142.52, 142.52,   0.0, &
+         0.0, 64.67,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, 248.81,  &
+          248.81, 248.81,   0.0,   0.0, 142.52, 142.52, 142.52,   0.0, &
+         0.0, 64.67,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, 248.81,  &
+          248.81, 248.81,   0.0,   0.0,   0.0, 142.52,   0.0,     0.0, &
+         0.0, 64.67,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   &
+          248.81,   0.0,     0.0,   0.0, 142.52, 142.52, 142.52,   0.0, &
+         0.0, 64.67,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, 248.81,  &
+          248.81, 248.81,   0.0,   0.0, 142.52, 142.52, 142.52,   0.0, &
+         0.0, 64.67,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, 248.81,  &
+          248.81, 248.81,   0.0,   0.0, 142.52, 142.52, 142.52,   0.0, &
+         0.0, 64.67,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, 248.81,  &
+          248.81, 248.81,   0.0,   0.0, 142.52, 142.52, 142.52,   0.0, &
+         0.0, 64.67,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, 248.81,  &
+          248.81, 248.81,   0.0,   0.0, 142.52, 142.52, 142.52,   0.0, &
+         0.0, 64.67,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, 248.81,  &
+          248.81, 248.81,   0.0,   0.0, 142.52, 142.52, 142.52,   0.0, &
+         0.0, 64.67,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, 248.81,  &
+          248.81, 248.81,   0.0,   0.0, 142.52, 142.52, 142.52,   0.0, &
+         0.0,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   &
+          0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+         0.0, 43.67,  43.67,  43.67,  43.67,  43.67,  43.67,  43.67,  43.67,  43.67,   0.0, &
+           0.0,   0.0,      0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+         0.0, 43.67,  43.67,  43.67,  43.67,  43.67,  43.67,  43.67,  43.67,  43.67,  43.67,&
+           43.67,  43.67,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+         0.0, 43.67,  43.67,  43.67,  43.67,  43.67,  43.67,  43.67,  43.67,  43.67,  43.67,&
+           43.67,  43.67,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+         0.0, 43.67,  43.67,  43.67,  43.67,  43.67,  43.67,  43.67,  43.67,  43.67,  43.67,&
+           43.67,  43.67,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+         0.0,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   &
+            0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+         0.0,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   &
+            0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0   /), &
+         (/nlon,nlat/)))
+      allocate(third_intermediate_expected_lake_fractions(3,3))
+      third_intermediate_expected_lake_fractions = transpose(reshape((/ &
+          0.3611111111, 0.5625,   0.3611111111, &
+         0.1458333333, 0.296875, 0.4375, &
+         0.5555555556, 0.5208333333, 0.0 /), &
+         (/3,3/)))
+      allocate(third_intermediate_expected_number_lake_cells(3,3))
+      third_intermediate_expected_number_lake_cells = transpose(reshape((/ &
+          13, 27, 13, &
+         7, 19, 21, &
+         20, 25, 0/), &
+         (/3,3/)))
+      allocate(third_intermediate_expected_number_fine_grid_cells(3,3))
+      third_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
+          36, 48, 36, &
+         48, 64, 48, &
+         36, 48, 36  /), &
+         (/3,3/)))
+      allocate(third_intermediate_expected_lake_volumes(7))
+      third_intermediate_expected_lake_volumes = (/64.6667, 43.6667, 27.0, 203.809, 18.0, 79.5243, 63.0/)
+
+      allocate(fourth_intermediate_expected_river_inflow(4,4))
+      fourth_intermediate_expected_river_inflow = transpose(reshape((/ &
+          0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0 /), &
+         (/4,4/)))
+      allocate(fourth_intermediate_expected_water_to_ocean(4,4))
+      fourth_intermediate_expected_water_to_ocean = transpose(reshape((/ &
+          0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0 /), &
+         (/4,4/)))
+      allocate(fourth_intermediate_expected_water_to_hd(4,4))
+      fourth_intermediate_expected_water_to_hd = transpose(reshape((/ &
+          0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0 /), &
+         (/4,4/)))
+      allocate(fourth_intermediate_expected_lake_numbers(nlat,nlon))
+      fourth_intermediate_expected_lake_numbers = transpose(reshape((/ &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 3, 3, 3, 0, 4, 4, 0, 4, 4, 4, 4, 0, 0, 6, 6, 6, 0, &
+         0, 1, 0, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 0, 0, 6, 6, 6, 0, &
+         0, 1, 0, 3, 3, 3, 0, 4, 4, 4, 4, 4, 4, 4, 0, 0, 6, 6, 6, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 0, 0, 6, 6, 6, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 0, 0, 0, 6, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 7, 7, 7, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 0, 0, 7, 7, 7, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 0, 0, 7, 7, 7, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 0, 0, 7, 7, 7, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 0, 0, 7, 7, 7, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 0, 0, 7, 7, 7, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 0, 0, 7, 7, 7, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, &
+         0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, &
+         0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0  /), &
+         (/nlon,nlat/)))
+      allocate(fourth_intermediate_expected_lake_types(nlat,nlon))
+      fourth_intermediate_expected_lake_types = transpose(reshape((/ &
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 3, 3, 3, 0, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, &
+         0, 1, 0, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, &
+         0, 1, 0, 3, 3, 3, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 3, 3, 3, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0   /), &
+         (/nlon,nlat/)))
+      allocate(fourth_intermediate_expected_diagnostic_lake_volumes(nlat,nlon))
+      fourth_intermediate_expected_diagnostic_lake_volumes = transpose(reshape((/ &
+              0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    &
+              0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+         0.0,   0.0,    0.0,  245.31, 245.31, 245.31,   0.0,  245.31, 245.31,   0.0,  245.31,&
+          245.31, 245.31, 245.31,   0.0,    0.0,  140.31, 140.31, 140.31,   0.0, &
+         0.0,  63.95,   0.0,  245.31, 245.31, 245.31, 245.31, 245.31, 245.31, 245.31, 245.31,&
+          245.31, 245.31, 245.31,   0.0,    0.0,  140.31, 140.31, 140.31,   0.0, &
+         0.0,  63.95,   0.0,  245.31, 245.31, 245.31,   0.00, 245.31, 245.31, 245.31, 245.31,&
+          245.31, 245.31, 245.31,   0.0,    0.0,  140.31, 140.31, 140.31,   0.0, &
+         0.0,  63.95,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+          245.31, 245.31, 245.31,   0.0,    0.0,  140.31, 140.31, 140.31,   0.0, &
+         0.0,  63.95,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+          245.31, 245.31, 245.31,   0.0,    0.0,    0.0,  140.31,   0.0,    0.0, &
+         0.0,  63.95,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+            0.0,  245.31,   0.0,    0.0,    0.0,  140.31, 140.31, 140.31,   0.0, &
+         0.0,  63.95,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+          245.31, 245.31, 245.31,   0.0,    0.0,  140.31, 140.31, 140.31,   0.0, &
+         0.0,  63.95,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+          245.31, 245.31, 245.31,   0.0,    0.0,  140.31, 140.31, 140.31,   0.0, &
+         0.0,  63.95,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+          245.31, 245.31, 245.31,   0.0,    0.0,  140.31, 140.31, 140.31,   0.0, &
+         0.0,  63.95,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+          245.31, 245.31, 245.31,   0.0,    0.0,  140.31, 140.31, 140.31,   0.0, &
+         0.0,  63.95,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+          245.31, 245.31, 245.31,   0.0,    0.0,  140.31, 140.31, 140.31,   0.0, &
+         0.0,  63.95,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+          245.31, 245.31, 245.31,   0.0,    0.0,  140.31, 140.31, 140.31,   0.0, &
+         0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+            0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+         0.0,  40.72,  40.72,  40.72,  40.72,  40.72,  40.72,  40.72,  40.72,  40.72,   0.0, &
+            0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+         0.0,  40.72,  40.72,  40.72,  40.72,  40.72,  40.72,  40.72,  40.72,  40.72,  40.72,&
+           40.72,  40.72,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+         0.0,  40.72,  40.72,  40.72,  40.72,  40.72,  40.72,  40.72,  40.72,  40.72,  40.72,&
+           40.72,  40.72,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+         0.0,  40.72,  40.72,  40.72,  40.72,  40.72,  40.72,  40.72,  40.72,  40.72,  40.72,&
+           40.72,  40.72,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+         0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+            0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+         0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+            0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0  /), &
+         (/nlon,nlat/)))
+        allocate(fourth_intermediate_expected_lake_fractions(3,3))
+        fourth_intermediate_expected_lake_fractions = transpose(reshape((/ &
+            0.3611111111, 0.5625,   0.3611111111, &
+           0.1458333333, 0.296875, 0.4375, &
+           0.5555555556, 0.5208333333, 0.0 /), &
+           (/3,3/)))
+        allocate(fourth_intermediate_expected_number_lake_cells(3,3))
+      fourth_intermediate_expected_number_lake_cells = transpose(reshape((/ &
+          13, 27, 13, &
+         7, 19, 21, &
+         20, 25, 0/), &
+         (/3,3/)))
+      allocate(fourth_intermediate_expected_number_fine_grid_cells(3,3))
+      fourth_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
+          36, 48, 36, &
+         48, 64, 48, &
+         36, 48, 36  /), &
+         (/3,3/)))
+      allocate(fourth_intermediate_expected_lake_volumes(7))
+      fourth_intermediate_expected_lake_volumes= (/63.9514, 40.7153, 27.0, 200.309, 18.0, 77.309, 63.0/)
+
+      allocate(fifth_intermediate_expected_river_inflow(4,4))
+      fifth_intermediate_expected_river_inflow = transpose(reshape((/ &
+          0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0 /), &
+         (/4,4/)))
+      allocate(fifth_intermediate_expected_water_to_ocean(4,4))
+      fifth_intermediate_expected_water_to_ocean = transpose(reshape((/ &
+          0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0 /), &
+         (/4,4/)))
+      allocate(fifth_intermediate_expected_water_to_hd(4,4))
+      fifth_intermediate_expected_water_to_hd = transpose(reshape((/ &
+          0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0 /), &
+         (/4,4/)))
+      allocate(fifth_intermediate_expected_lake_numbers(20,20))
+      fifth_intermediate_expected_lake_numbers = transpose(reshape((/ &
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 3, 0, 0, 0, 4, 4, 0, 4, 4, 4, 4, 0, 0, 6, 6, 6, 0, &
+         0, 1, 0, 0, 0, 0, 0, 4, 4, 4, 4, 4, 4, 4, 0, 0, 6, 6, 6, 0, &
+         0, 1, 0, 0, 0, 0, 0, 4, 4, 4, 4, 4, 4, 4, 0, 0, 6, 6, 6, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 0, 0, 6, 6, 6, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 7, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
+         (/20,20/)))
+      allocate(fifth_intermediate_expected_lake_types(20,20))
+      fifth_intermediate_expected_lake_types = transpose(reshape((/ &
+             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, &
+         0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, &
+         0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
+         (/20,20/)))
+      allocate(fifth_intermediate_expected_diagnostic_lake_volumes(20,20))
+      fifth_intermediate_expected_diagnostic_lake_volumes = transpose(reshape((/ &
+         0.0,  0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0,   0.0,   0.0,  0.0,    0.0,   0.0,  0.0,   0.0, 0.0, 0.0,  0.0,  0.0,  0.0, &
+         0.0,  0.0,  0.0, 0.0, 0.0, 0.0, 0.0, 47.11, 47.11,  0.0,  47.11, 47.11, 47.11, 47.11, 0.0, 0.0, 4.47, 4.47, 4.47, 0.0, &
+         0.0, 16.74, 0.0, 0.0, 0.0, 0.0, 0.0, 47.11, 47.11, 47.11, 47.11, 47.11, 47.11, 47.11, 0.0, 0.0, 4.47, 4.47, 4.47, 0.0, &
+         0.0, 16.74, 0.0, 0.0, 0.0, 0.0, 0.0, 47.11, 47.11, 47.11, 47.11, 47.11, 47.11, 47.11, 0.0, 0.0, 4.47, 4.47, 4.47, 0.0, &
+         0.0, 16.74, 0.0, 0.0, 0.0, 0.0, 0.0,  0.0,   0.0,   0.0,  0.0,   47.11, 47.11, 47.11, 0.0, 0.0, 4.47, 4.47, 4.47, 0.0, &
+         0.0, 16.74, 0.0, 0.0, 0.0, 0.0, 0.0,  0.0,   0.0,   0.0,  0.0,   47.11, 47.11, 47.11, 0.0, 0.0, 0.0,  0.0,  0.0,  0.0, &
+         0.0, 16.74, 0.0, 0.0, 0.0, 0.0, 0.0,  0.0,   0.0,   0.0,  0.0,    0.0,   0.0,   0.0,  0.0, 0.0, 0.0,  0.0,  0.0,  0.0, &
+         0.0, 16.74, 0.0, 0.0, 0.0, 0.0, 0.0,  0.0,   0.0,   0.0,  0.0,    0.0,   0.0,   0.0,  0.0, 0.0, 0.0,  0.0,  0.0,  0.0, &
+         0.0, 16.74, 0.0, 0.0, 0.0, 0.0, 0.0,  0.0,   0.0,   0.0,  0.0,    0.0,   0.0,   0.0,  0.0, 0.0, 0.0,  0.0,  0.0,  0.0, &
+         0.0, 16.74, 0.0, 0.0, 0.0, 0.0, 0.0,  0.0,   0.0,   0.0,  0.0,    0.0,   0.0,   0.0,  0.0, 0.0, 0.0,  0.0,  0.0,  0.0, &
+         0.0, 16.74, 0.0, 0.0, 0.0, 0.0, 0.0,  0.0,   0.0,   0.0,  0.0,    0.0,   0.0,   0.0,  0.0, 0.0, 0.0,  0.0,  0.0,  0.0, &
+         0.0, 16.74, 0.0, 0.0, 0.0, 0.0, 0.0,  0.0,   0.0,   0.0,  0.0,    0.0,   0.0,   0.0,  0.0, 0.0, 0.0,  0.0,  0.0,  0.0, &
+         0.0, 16.74, 0.0, 0.0, 0.0, 0.0, 0.0,  0.0,   0.0,   0.0,  0.0,    0.0,   0.0,   0.0,  0.0, 0.0, 0.0,  0.0,  0.0,  0.0, &
+         0.0,  0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0,   0.0,   0.0,  0.0,    0.0,   0.0,   0.0,  0.0, 0.0, 0.0,  0.0,  0.0,  0.0, &
+         0.0,  0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0,   0.0,   0.0,  0.0,    0.0,   0.0,   0.0,  0.0, 0.0, 0.0,  0.0,  0.0,  0.0, &
+         0.0,  0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0,   0.0,   0.0,  0.0,    0.0,   0.0,   0.0,  0.0, 0.0, 0.0,  0.0,  0.0,  0.0, &
+         0.0,  0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0,   0.0,   0.0,  0.0,    0.0,   0.0,   0.0,  0.0, 0.0, 0.0,  0.0,  0.0,  0.0, &
+         0.0,  0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0,   0.0,   0.0,  0.0,    0.0,   0.0,   0.0,  0.0, 0.0, 0.0,  0.0,  0.0,  0.0, &
+         0.0,  0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0,   0.0,   0.0,  0.0,    0.0,   0.0,   0.0,  0.0, 0.0, 0.0,  0.0,  0.0,  0.0, &
+         0.0,  0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0,   0.0,   0.0,  0.0,    0.0,   0.0,   0.0,  0.0, 0.0, 0.0,  0.0, 0.0, 0.0 /), &
+         (/20,20/)))
+      allocate(fifth_intermediate_expected_lake_fractions(3,3))
+      fifth_intermediate_expected_lake_fractions = transpose(reshape((/ &
+          0.1388888889,   0.5416666667,   0.3333333333, &
+         0.1458333333,   0.015625,   0.02083333333, &
+         0.02777777778,   0.0,   0.0 /), &
+         (/3,3/)))
+      allocate(fifth_intermediate_expected_number_lake_cells(3,3))
+      fifth_intermediate_expected_number_lake_cells = transpose(reshape((/ &
+           5, 26, 12, &
+         7,  1,  1, &
+         1,  0, 0 /), &
+         (/3,3/)))
+      allocate(fifth_intermediate_expected_number_fine_grid_cells(3,3))
+      fifth_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
+          36, 48, 36, &
+         48, 64, 48, &
+         36, 48, 36  /), &
+         (/3,3/)))
+      allocate(fifth_intermediate_expected_lake_volumes(7))
+      fifth_intermediate_expected_lake_volumes= (/16.7431, 0.0, 0.0, 47.1085, 0.0, 4.47049, 0.0/)
+      allocate(sixth_intermediate_expected_river_inflow(4,4))
+      sixth_intermediate_expected_river_inflow = transpose(reshape((/ &
+          0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0 /), &
+         (/4,4/)))
+      allocate(sixth_intermediate_expected_water_to_ocean(4,4))
+      sixth_intermediate_expected_water_to_ocean = transpose(reshape((/ &
+          0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0 /), &
+         (/4,4/)))
+      allocate(sixth_intermediate_expected_water_to_hd(4,4))
+      sixth_intermediate_expected_water_to_hd = transpose(reshape((/ &
+          0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0 /), &
+         (/4,4/)))
+      allocate(sixth_intermediate_expected_lake_numbers(20,20))
+      sixth_intermediate_expected_lake_numbers = transpose(reshape((/ &
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 3, 0, 0, 0, 4, 4, 0, 4, 4, 4, 4, 0, 0, 6, 6, 6, 0, &
+         0, 1, 0, 0, 0, 0, 0, 4, 4, 4, 4, 4, 4, 4, 0, 0, 6, 6, 6, 0, &
+         0, 1, 0, 0, 0, 0, 0, 4, 4, 4, 4, 4, 4, 4, 0, 0, 6, 6, 6, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 0, 0, 6, 6, 6, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 7, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
+         (/20,20/)))
+      allocate(sixth_intermediate_expected_lake_types(20,20))
+      sixth_intermediate_expected_lake_types = transpose(reshape((/ &
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, &
+         0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, &
+         0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0/), &
+         (/20,20/)))
+      allocate(sixth_intermediate_expected_diagnostic_lake_volumes(20,20))
+      sixth_intermediate_expected_diagnostic_lake_volumes = transpose(reshape((/ &
+          0.0,  0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, 0.0, 0.0, 0.0,   0.0,  0.0,  0.0, &
+         0.0,  0.0,  0.0, 0.0, 0.0, 0.0, 0.0, 45.48, 45.48,  0.0,  45.48, 45.48, 45.48, 45.48, 0.0, 0.0, 3.64,  3.64, 3.64, 0.0, &
+         0.0, 16.03, 0.0, 0.0, 0.0, 0.0, 0.0, 45.48, 45.48, 45.48, 45.48, 45.48, 45.48, 45.48, 0.0, 0.0, 3.64,  3.64, 3.64, 0.0, &
+         0.0, 16.03, 0.0, 0.0, 0.0, 0.0, 0.0, 45.48, 45.48, 45.48, 45.48, 45.48, 45.48, 45.48, 0.0, 0.0, 3.64,  3.64, 3.64, 0.0, &
+         0.0, 16.03, 0.0, 0.0, 0.0, 0.0, 0.0,  0.0,   0.0,   0.0,   0.0,  45.48, 45.48, 45.48, 0.0, 0.0, 3.64,  3.64, 3.64, 0.0, &
+         0.0, 16.03, 0.0, 0.0, 0.0, 0.0, 0.0,  0.0,   0.0,   0.0,   0.0,  45.48, 45.48, 45.48, 0.0, 0.0, 0.0,   0.0,  0.0,  0.0, &
+         0.0, 16.03, 0.0, 0.0, 0.0, 0.0, 0.0,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  0.0, 0.0, 0.0,   0.0,  0.0,  0.0, &
+         0.0, 16.03, 0.0, 0.0, 0.0, 0.0, 0.0,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  0.0, 0.0, 0.0,   0.0,  0.0,  0.0, &
+         0.0, 16.03, 0.0, 0.0, 0.0, 0.0, 0.0,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  0.0, 0.0, 0.0,   0.0,  0.0,  0.0, &
+         0.0, 16.03, 0.0, 0.0, 0.0, 0.0, 0.0,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  0.0, 0.0, 0.0,   0.0,  0.0,  0.0, &
+         0.0, 16.03, 0.0, 0.0, 0.0, 0.0, 0.0,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  0.0, 0.0, 0.0,   0.0,  0.0,  0.0, &
+         0.0, 16.03, 0.0, 0.0, 0.0, 0.0, 0.0,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  0.0, 0.0, 0.0,   0.0,  0.0,  0.0, &
+         0.0, 16.03, 0.0, 0.0, 0.0, 0.0, 0.0,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  0.0, 0.0, 0.0,   0.0,  0.0,  0.0, &
+         0.0,  0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  0.0, 0.0, 0.0,   0.0,  0.0,  0.0, &
+         0.0,  0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  0.0, 0.0, 0.0,   0.0,  0.0,  0.0, &
+         0.0,  0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  0.0, 0.0, 0.0,   0.0,  0.0,  0.0, &
+         0.0,  0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  0.0, 0.0, 0.0,   0.0,  0.0,  0.0, &
+         0.0,  0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  0.0, 0.0, 0.0,   0.0,  0.0,  0.0, &
+         0.0,  0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  0.0, 0.0, 0.0,   0.0,  0.0,  0.0, &
+         0.0,  0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  0.0, 0.0, 0.0, 0.0, 0.0,0.0  /), &
+         (/20,20/)))
+      allocate(sixth_intermediate_expected_lake_fractions(3,3))
+      sixth_intermediate_expected_lake_fractions = transpose(reshape((/ &
+          0.1388888889,   0.5416666667,   0.3333333333, &
+         0.1458333333,   0.015625,   0.02083333333, &
+         0.02777777778,   0.0,   0.0  /), &
+         (/3,3/)))
+      allocate(sixth_intermediate_expected_number_lake_cells(3,3))
+      sixth_intermediate_expected_number_lake_cells = transpose(reshape((/ &
+          5, 26, 12, &
+         7,  1, 1, &
+         1,  0, 0 /), &
+         (/3,3/)))
+      allocate(sixth_intermediate_expected_number_fine_grid_cells(3,3))
+      sixth_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
+          36, 48, 36, &
+         48, 64, 48, &
+         36, 48, 36  /), &
+         (/3,3/)))
+      allocate(sixth_intermediate_expected_lake_volumes(7))
+      sixth_intermediate_expected_lake_volumes= (/16.0278, 0.0, 0.0, 45.4835, 0.0, 3.63715, 0.0/)
+
+      allocate(seventh_intermediate_expected_river_inflow(4,4))
+      seventh_intermediate_expected_river_inflow = transpose(reshape((/ &
+          0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0 /), &
+         (/4,4/)))
+      allocate(seventh_intermediate_expected_water_to_ocean(4,4))
+      seventh_intermediate_expected_water_to_ocean = transpose(reshape((/ &
+          0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0 /), &
+         (/4,4/)))
+      allocate(seventh_intermediate_expected_water_to_hd(4,4))
+      seventh_intermediate_expected_water_to_hd = transpose(reshape((/ &
+          0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0, &
+         0.0, 0.0, 0.0, 0.0 /), &
+         (/4,4/)))
+      allocate(seventh_intermediate_expected_lake_numbers(20,20))
+      seventh_intermediate_expected_lake_numbers = transpose(reshape((/ &
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 3, 0, 0, 0, 4, 4, 0, 4, 4, 4, 4, 0, 0, 6, 6, 6, 0, &
+         0, 1, 0, 0, 0, 0, 0, 4, 4, 4, 4, 4, 4, 4, 0, 0, 6, 6, 6, 0, &
+         0, 1, 0, 0, 0, 0, 0, 4, 4, 4, 4, 4, 4, 4, 0, 0, 6, 6, 6, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 0, 0, 6, 6, 6, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 7, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
+         (/20,20/)))
+      allocate(seventh_intermediate_expected_lake_types(20,20))
+      seventh_intermediate_expected_lake_types = transpose(reshape((/ &
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, &
+         0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, &
+         0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
+         (/20,20/)))
+      allocate(seventh_intermediate_expected_diagnostic_lake_volumes(20,20))
+      seventh_intermediate_expected_diagnostic_lake_volumes = transpose(reshape((/ &
+          0.0,  0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0,  0.0,  0.0, 0.0, 0.0, 0.0, 0.0, 43.86, 43.86,  0.00, 43.86, 43.86, 43.86, 43.86, 0.0, 0.0, 2.8, 2.8, 2.8, 0.0, &
+         0.0, 15.31, 0.0, 0.0, 0.0, 0.0, 0.0, 43.86, 43.86, 43.86, 43.86, 43.86, 43.86, 43.86, 0.0, 0.0, 2.8, 2.8, 2.8, 0.0, &
+         0.0, 15.31, 0.0, 0.0, 0.0, 0.0, 0.0, 43.86, 43.86, 43.86, 43.86, 43.86, 43.86, 43.86, 0.0, 0.0, 2.8, 2.8, 2.8, 0.0, &
+         0.0, 15.31, 0.0, 0.0, 0.0, 0.0, 0.0,  0.0,   0.0,   0.0,   0.0,  43.86, 43.86, 43.86, 0.0, 0.0, 2.8, 2.8, 2.8, 0.0, &
+         0.0, 15.31, 0.0, 0.0, 0.0, 0.0, 0.0,  0.0,   0.0,   0.0,   0.0,  43.86, 43.86, 43.86, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 15.31, 0.0, 0.0, 0.0, 0.0, 0.0,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 15.31, 0.0, 0.0, 0.0, 0.0, 0.0,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 15.31, 0.0, 0.0, 0.0, 0.0, 0.0,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 15.31, 0.0, 0.0, 0.0, 0.0, 0.0,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 15.31, 0.0, 0.0, 0.0, 0.0, 0.0,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 15.31, 0.0, 0.0, 0.0, 0.0, 0.0,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0, 15.31, 0.0, 0.0, 0.0, 0.0, 0.0,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0,  0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0,  0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0,  0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0,  0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0,  0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0,  0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &
+         0.0,  0.0,  0.0, 0.0, 0.0, 0.0, 0.0,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0  /), &
+         (/20,20/)))
+      allocate(seventh_intermediate_expected_lake_fractions(3,3))
+      seventh_intermediate_expected_lake_fractions = transpose(reshape((/ &
+          0.1388888889,   0.5416666667,   0.3333333333, &
+         0.1458333333,   0.015625,   0.02083333333, &
+         0.02777777778,   0.0,   0.0  /), &
+         (/3,3/)))
+      allocate(seventh_intermediate_expected_number_lake_cells(3,3))
+      seventh_intermediate_expected_number_lake_cells = transpose(reshape((/ &
+           5, 26, 12, &
+         7,  1,  1, &
+         1,  0, 0 /), &
+         (/3,3/)))
+      allocate(seventh_intermediate_expected_number_fine_grid_cells(3,3))
+      seventh_intermediate_expected_number_fine_grid_cells = transpose(reshape((/ &
+          36, 48, 36, &
+         48, 64, 48, &
+         36, 48, 36  /), &
+         (/3,3/)))
+      allocate(seventh_intermediate_expected_lake_volumes(7))
+      seventh_intermediate_expected_lake_volumes= (/15.3125, 0.0, 0.0, 43.8585, 0.0, 2.80382, 0.0/)
+
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_parameters, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
+      call run_hd_model(0,runoffs,drainages,lake_evaporations,&
+                            use_realistic_surface_coupling_in)
+      allocate(lake_types(nlat,nlon))
+      lake_types(:,:) = 0
+      lake_prognostics_out => get_lake_prognostics()
+      lake_fields_out => get_lake_fields()
+      do i = 1,nlat
+        do j = 1,nlon
+          lake_number = lake_fields_out%lake_numbers(i,j)
+          if (lake_number > 0) then
+            working_lake_ptr = lake_prognostics_out%lakes(lake_number)
+            lake_type = working_lake_ptr%lake_pointer%lake_type
+              if (lake_type == filling_lake_type) then
+                lake_types(i,j) = 1
+              else if (lake_type == overflowing_lake_type) then
+                lake_types(i,j) = 2
+              else if (lake_type == subsumed_lake_type) then
+                lake_types(i,j) = 3
+              else
+                lake_types(i,j) = 4
+              end if
+          end if
+        end do
+      end do
+      allocate(lake_volumes(7))
+      do i = 1,size(lake_volumes)
+        working_lake_ptr = lake_prognostics_out%lakes(i)
+        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+      end do
+      diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
+                                                                   lake_prognostics_out,&
+                                                                   lake_fields_out)
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
+      call assert_equals(first_intermediate_expected_river_inflow,river_fields%river_inflow,4,4,&
+                         0.00000001_dp)
+      call assert_equals(first_intermediate_expected_water_to_ocean,&
+                         river_fields%water_to_ocean,4,4,0.00001_dp)
+      call assert_equals(first_intermediate_expected_water_to_hd,&
+                         lake_fields_out%water_to_hd,4,4,0.00001_dp)
+      call assert_equals(first_intermediate_expected_lake_numbers,lake_fields_out%lake_numbers,20,20)
+      call assert_equals(first_intermediate_expected_lake_types,lake_types,20,20)
+      call assert_equals(first_intermediate_expected_lake_volumes,lake_volumes,7)
+      call assert_equals(diagnostic_lake_volumes,&
+                         first_intermediate_expected_diagnostic_lake_volumes,20,20)
+      call assert_equals(first_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(first_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(first_intermediate_expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
+      deallocate(diagnostic_lake_volumes)
+      deallocate(lake_fractions)
+      call river_fields%riverprognosticfieldsdestructor()
+      deallocate(river_fields)
+      river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_parameters, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
+      call run_hd_model(15,runoffs,drainages,lake_evaporations,&
+                            use_realistic_surface_coupling_in)
+      lake_types(:,:) = 0
+      lake_prognostics_out => get_lake_prognostics()
+      lake_fields_out => get_lake_fields()
+      do i = 1,nlat
+        do j = 1,nlon
+          lake_number = lake_fields_out%lake_numbers(i,j)
+          if (lake_number > 0) then
+            working_lake_ptr = lake_prognostics_out%lakes(lake_number)
+            lake_type = working_lake_ptr%lake_pointer%lake_type
+              if (lake_type == filling_lake_type) then
+                lake_types(i,j) = 1
+              else if (lake_type == overflowing_lake_type) then
+                lake_types(i,j) = 2
+              else if (lake_type == subsumed_lake_type) then
+                lake_types(i,j) = 3
+              else
+                lake_types(i,j) = 4
+              end if
+          end if
+        end do
+      end do
+      do i = 1,size(lake_volumes)
+        working_lake_ptr = lake_prognostics_out%lakes(i)
+        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+      end do
+      diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
+                                                                   lake_prognostics_out,&
+                                                                   lake_fields_out)
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
+    call assert_equals(second_intermediate_expected_river_inflow,river_fields%river_inflow,4,4,&
+                         0.00000001_dp)
+      call assert_equals(second_intermediate_expected_water_to_ocean,&
+                         river_fields%water_to_ocean,4,4,0.00001_dp)
+      call assert_equals(second_intermediate_expected_water_to_hd,&
+                         lake_fields_out%water_to_hd,4,4,0.000000000001_dp)
+      call assert_equals(second_intermediate_expected_lake_numbers,lake_fields_out%lake_numbers,20,20)
+      call assert_equals(second_intermediate_expected_lake_types,lake_types,20,20)
+      call assert_equals(second_intermediate_expected_lake_volumes,lake_volumes,7,0.0001_dp)
+      call assert_equals(diagnostic_lake_volumes,&
+                         second_intermediate_expected_diagnostic_lake_volumes,20,20,0.05_dp)
+      call assert_equals(second_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(second_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(second_intermediate_expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
+      deallocate(diagnostic_lake_volumes)
+      deallocate(lake_fractions)
+      call river_fields%riverprognosticfieldsdestructor()
+      deallocate(river_fields)
+      river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_parameters, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
+      call run_hd_model(16,runoffs,drainages,lake_evaporations,&
+                            use_realistic_surface_coupling_in)
+      lake_types(:,:) = 0
+      lake_prognostics_out => get_lake_prognostics()
+      lake_fields_out => get_lake_fields()
+      do i = 1,nlat
+        do j = 1,nlon
+          lake_number = lake_fields_out%lake_numbers(i,j)
+          if (lake_number > 0) then
+            working_lake_ptr = lake_prognostics_out%lakes(lake_number)
+            lake_type = working_lake_ptr%lake_pointer%lake_type
+              if (lake_type == filling_lake_type) then
+                lake_types(i,j) = 1
+              else if (lake_type == overflowing_lake_type) then
+                lake_types(i,j) = 2
+              else if (lake_type == subsumed_lake_type) then
+                lake_types(i,j) = 3
+              else
+                lake_types(i,j) = 4
+              end if
+          end if
+        end do
+      end do
+      do i = 1,size(lake_volumes)
+        working_lake_ptr = lake_prognostics_out%lakes(i)
+        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+      end do
+      diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
+                                                                   lake_prognostics_out,&
+                                                                   lake_fields_out)
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
+      call assert_equals(third_intermediate_expected_river_inflow,river_fields%river_inflow,4,4,&
+                         0.00000001_dp)
+      call assert_equals(third_intermediate_expected_water_to_ocean,&
+                         river_fields%water_to_ocean,4,4,0.00001_dp)
+      call assert_equals(third_intermediate_expected_water_to_hd,&
+                         lake_fields_out%water_to_hd,4,4,0.000000000001_dp)
+      call assert_equals(third_intermediate_expected_lake_numbers,lake_fields_out%lake_numbers,20,20)
+      call assert_equals(third_intermediate_expected_lake_types,lake_types,20,20)
+      call assert_equals(third_intermediate_expected_lake_volumes,lake_volumes,7,0.0001_dp)
+      call assert_equals(diagnostic_lake_volumes,&
+                         third_intermediate_expected_diagnostic_lake_volumes,20,20,0.05_dp)
+      call assert_equals(third_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(third_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(third_intermediate_expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
+      deallocate(diagnostic_lake_volumes)
+      deallocate(lake_fractions)
+      call river_fields%riverprognosticfieldsdestructor()
+      deallocate(river_fields)
+      river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_parameters, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
+      call run_hd_model(17,runoffs,drainages,lake_evaporations,&
+                            use_realistic_surface_coupling_in)
+      lake_types(:,:) = 0
+      lake_prognostics_out => get_lake_prognostics()
+      lake_fields_out => get_lake_fields()
+      do i = 1,nlat
+        do j = 1,nlon
+          lake_number = lake_fields_out%lake_numbers(i,j)
+          if (lake_number > 0) then
+            working_lake_ptr = lake_prognostics_out%lakes(lake_number)
+            lake_type = working_lake_ptr%lake_pointer%lake_type
+              if (lake_type == filling_lake_type) then
+                lake_types(i,j) = 1
+              else if (lake_type == overflowing_lake_type) then
+                lake_types(i,j) = 2
+              else if (lake_type == subsumed_lake_type) then
+                lake_types(i,j) = 3
+              else
+                lake_types(i,j) = 4
+              end if
+          end if
+        end do
+      end do
+      do i = 1,size(lake_volumes)
+        working_lake_ptr = lake_prognostics_out%lakes(i)
+        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+      end do
+      diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
+                                                                   lake_prognostics_out,&
+                                                                   lake_fields_out)
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
+      call assert_equals(fourth_intermediate_expected_river_inflow,river_fields%river_inflow,4,4,&
+                         0.00000001_dp)
+      call assert_equals(fourth_intermediate_expected_water_to_ocean,&
+                         river_fields%water_to_ocean,4,4,0.00001_dp)
+      call assert_equals(fourth_intermediate_expected_water_to_hd,&
+                         lake_fields_out%water_to_hd,4,4,0.000000000001_dp)
+      call assert_equals(fourth_intermediate_expected_lake_numbers,lake_fields_out%lake_numbers,20,20)
+      call assert_equals(fourth_intermediate_expected_lake_types,lake_types,20,20)
+      call assert_equals(fourth_intermediate_expected_lake_volumes,lake_volumes,7,0.0001_dp)
+      call assert_equals(diagnostic_lake_volumes,&
+                         fourth_intermediate_expected_diagnostic_lake_volumes,20,20,0.05_dp)
+      call assert_equals(fourth_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(fourth_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(fourth_intermediate_expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
+      deallocate(diagnostic_lake_volumes)
+      deallocate(lake_fractions)
+      call river_fields%riverprognosticfieldsdestructor()
+      deallocate(river_fields)
+      river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_parameters, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
+      call run_hd_model(83,runoffs,drainages,lake_evaporations,&
+                            use_realistic_surface_coupling_in)
+      lake_types(:,:) = 0
+      lake_prognostics_out => get_lake_prognostics()
+      lake_fields_out => get_lake_fields()
+      do i = 1,nlat
+        do j = 1,nlon
+          lake_number = lake_fields_out%lake_numbers(i,j)
+          if (lake_number > 0) then
+            working_lake_ptr = lake_prognostics_out%lakes(lake_number)
+            lake_type = working_lake_ptr%lake_pointer%lake_type
+              if (lake_type == filling_lake_type) then
+                lake_types(i,j) = 1
+              else if (lake_type == overflowing_lake_type) then
+                lake_types(i,j) = 2
+              else if (lake_type == subsumed_lake_type) then
+                lake_types(i,j) = 3
+              else
+                lake_types(i,j) = 4
+              end if
+          end if
+        end do
+      end do
+      do i = 1,size(lake_volumes)
+        working_lake_ptr = lake_prognostics_out%lakes(i)
+        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+      end do
+      diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
+                                                                   lake_prognostics_out,&
+                                                                   lake_fields_out)
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
+      call assert_equals(fifth_intermediate_expected_river_inflow,river_fields%river_inflow,4,4,&
+                         0.00000001_dp)
+      call assert_equals(fifth_intermediate_expected_water_to_ocean,&
+                         river_fields%water_to_ocean,4,4,0.00001_dp)
+      call assert_equals(fifth_intermediate_expected_water_to_hd,&
+                         lake_fields_out%water_to_hd,4,4,0.000000000001_dp)
+      call assert_equals(fifth_intermediate_expected_lake_numbers,lake_fields_out%lake_numbers,20,20)
+      call assert_equals(fifth_intermediate_expected_lake_types,lake_types,20,20)
+      call assert_equals(fifth_intermediate_expected_lake_volumes,lake_volumes,7,0.0001_dp)
+      call assert_equals(diagnostic_lake_volumes,&
+                         fifth_intermediate_expected_diagnostic_lake_volumes,20,20,0.05_dp)
+      call assert_equals(fifth_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(fifth_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(fifth_intermediate_expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
+      deallocate(diagnostic_lake_volumes)
+      deallocate(lake_fractions)
+      call river_fields%riverprognosticfieldsdestructor()
+      deallocate(river_fields)
+      river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_parameters, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
+      call run_hd_model(84,runoffs,drainages,lake_evaporations,&
+                            use_realistic_surface_coupling_in)
+      lake_types(:,:) = 0
+      lake_prognostics_out => get_lake_prognostics()
+      lake_fields_out => get_lake_fields()
+      do i = 1,nlat
+        do j = 1,nlon
+          lake_number = lake_fields_out%lake_numbers(i,j)
+          if (lake_number > 0) then
+            working_lake_ptr = lake_prognostics_out%lakes(lake_number)
+            lake_type = working_lake_ptr%lake_pointer%lake_type
+              if (lake_type == filling_lake_type) then
+                lake_types(i,j) = 1
+              else if (lake_type == overflowing_lake_type) then
+                lake_types(i,j) = 2
+              else if (lake_type == subsumed_lake_type) then
+                lake_types(i,j) = 3
+              else
+                lake_types(i,j) = 4
+              end if
+          end if
+        end do
+      end do
+      do i = 1,size(lake_volumes)
+        working_lake_ptr = lake_prognostics_out%lakes(i)
+        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+      end do
+      diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
+                                                                   lake_prognostics_out,&
+                                                                   lake_fields_out)
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
+      call assert_equals(sixth_intermediate_expected_river_inflow,river_fields%river_inflow,4,4,&
+                         0.00000001_dp)
+      call assert_equals(sixth_intermediate_expected_water_to_ocean,&
+                         river_fields%water_to_ocean,4,4,0.00001_dp)
+      call assert_equals(sixth_intermediate_expected_water_to_hd,&
+                         lake_fields_out%water_to_hd,4,4,0.000000000001_dp)
+      call assert_equals(sixth_intermediate_expected_lake_numbers,lake_fields_out%lake_numbers,20,20)
+      call assert_equals(sixth_intermediate_expected_lake_types,lake_types,20,20)
+      call assert_equals(sixth_intermediate_expected_lake_volumes,lake_volumes,7,0.0001_dp)
+      call assert_equals(diagnostic_lake_volumes,&
+                         sixth_intermediate_expected_diagnostic_lake_volumes,20,20,0.05_dp)
+      call assert_equals(sixth_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(sixth_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(sixth_intermediate_expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
+      deallocate(diagnostic_lake_volumes)
+      deallocate(lake_fractions)
+      call river_fields%riverprognosticfieldsdestructor()
+      deallocate(river_fields)
+      river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_parameters, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
+      call run_hd_model(85,runoffs,drainages,lake_evaporations,&
+                            use_realistic_surface_coupling_in)
+      lake_types(:,:) = 0
+      lake_prognostics_out => get_lake_prognostics()
+      lake_fields_out => get_lake_fields()
+      do i = 1,nlat
+        do j = 1,nlon
+          lake_number = lake_fields_out%lake_numbers(i,j)
+          if (lake_number > 0) then
+            working_lake_ptr = lake_prognostics_out%lakes(lake_number)
+            lake_type = working_lake_ptr%lake_pointer%lake_type
+              if (lake_type == filling_lake_type) then
+                lake_types(i,j) = 1
+              else if (lake_type == overflowing_lake_type) then
+                lake_types(i,j) = 2
+              else if (lake_type == subsumed_lake_type) then
+                lake_types(i,j) = 3
+              else
+                lake_types(i,j) = 4
+              end if
+          end if
+        end do
+      end do
+      do i = 1,size(lake_volumes)
+        working_lake_ptr = lake_prognostics_out%lakes(i)
+        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+      end do
+      diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
+                                                                   lake_prognostics_out,&
+                                                                   lake_fields_out)
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
+      call assert_equals(seventh_intermediate_expected_river_inflow,river_fields%river_inflow,4,4,&
+                         0.00000001_dp)
+      call assert_equals(seventh_intermediate_expected_water_to_ocean,&
+                         river_fields%water_to_ocean,4,4,0.00001_dp)
+      call assert_equals(seventh_intermediate_expected_water_to_hd,&
+                         lake_fields_out%water_to_hd,4,4,0.000000000001_dp)
+      call assert_equals(seventh_intermediate_expected_lake_numbers,lake_fields_out%lake_numbers,20,20)
+      call assert_equals(seventh_intermediate_expected_lake_types,lake_types,20,20)
+      call assert_equals(seventh_intermediate_expected_lake_volumes,lake_volumes,7,0.0001_dp)
+      call assert_equals(diagnostic_lake_volumes,&
+                         seventh_intermediate_expected_diagnostic_lake_volumes,20,20,0.05_dp)
+      call assert_equals(seventh_intermediate_expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(seventh_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(seventh_intermediate_expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
+      deallocate(diagnostic_lake_volumes)
+      deallocate(lake_fractions)
+      call river_fields%riverprognosticfieldsdestructor()
+      deallocate(river_fields)
+      river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
+      allocate(lake_volumes_all_timesteps(7,115))
+      call init_hd_model_for_testing(river_parameters,river_fields,.True., &
+                                     lake_parameters, &
+                                     initial_water_to_lake_centers, &
+                                     initial_spillover_to_rivers)
+      call run_hd_model(115,runoffs,drainages,lake_evaporations,&
+                            use_realistic_surface_coupling_in, &
+                            "",lake_volumes_all_timesteps)
+      call assert_equals(lake_volumes_all_timesteps,expected_lake_volumes_all_timesteps, &
+                         7,115,0.01_dp)
+      lake_types(:,:) = 0
+      lake_prognostics_out => get_lake_prognostics()
+      lake_fields_out => get_lake_fields()
+      do i = 1,nlat
+        do j = 1,nlon
+          lake_number = lake_fields_out%lake_numbers(i,j)
+          if (lake_number > 0) then
+            working_lake_ptr = lake_prognostics_out%lakes(lake_number)
+            lake_type = working_lake_ptr%lake_pointer%lake_type
+              if (lake_type == filling_lake_type) then
+                lake_types(i,j) = 1
+              else if (lake_type == overflowing_lake_type) then
+                lake_types(i,j) = 2
+              else if (lake_type == subsumed_lake_type) then
+                lake_types(i,j) = 3
+              else
+                lake_types(i,j) = 4
+              end if
+          end if
+        end do
+      end do
+      do i = 1,size(lake_volumes)
+        working_lake_ptr = lake_prognostics_out%lakes(i)
+        lake_volumes(i) = working_lake_ptr%lake_pointer%lake_volume
+      end do
+      diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
+                                                                   lake_prognostics_out,&
+                                                                   lake_fields_out)
+      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
+                                                                lake_fields_out)
+      call assert_equals(expected_river_inflow,river_fields%river_inflow,4,4,&
+                         0.00000001_dp)
+      call assert_equals(expected_water_to_ocean,&
+                         river_fields%water_to_ocean,4,4,0.00001_dp)
+      call assert_equals(expected_water_to_hd,&
+                         lake_fields_out%water_to_hd,4,4,0.000000000001_dp)
+      call assert_equals(expected_lake_numbers,lake_fields_out%lake_numbers,20,20)
+      call assert_equals(expected_lake_types,lake_types,20,20)
+      call assert_equals(expected_lake_volumes,lake_volumes,7,0.0001_dp)
+      call assert_equals(diagnostic_lake_volumes,&
+                         expected_diagnostic_lake_volumes,20,20,0.01_dp)
+      call assert_equals(expected_lake_fractions,lake_fractions,3,3,0.000001_dp)
+      call assert_equals(expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
+      call assert_equals(expected_number_fine_grid_cells, &
+                         lake_parameters%number_fine_grid_cells,3,3)
+      deallocate(diagnostic_lake_volumes)
+      deallocate(lake_fractions)
+      deallocate(lake_volumes)
+      deallocate(drainage)
+      deallocate(drainages)
+      deallocate(runoff)
+      deallocate(runoffs)
+      deallocate(evaporation)
+      deallocate(lake_evaporations)
+      deallocate(initial_spillover_to_rivers)
+      deallocate(initial_water_to_lake_centers)
+      deallocate(expected_river_inflow)
+      deallocate(expected_water_to_ocean)
+      deallocate(expected_water_to_hd)
+      deallocate(expected_lake_numbers)
+      deallocate(expected_lake_types)
+      deallocate(expected_lake_volumes)
+      deallocate(expected_diagnostic_lake_volumes)
+      deallocate(expected_lake_fractions)
+      deallocate(expected_number_lake_cells)
+      deallocate(expected_number_fine_grid_cells)
+      deallocate(first_intermediate_expected_river_inflow)
+      deallocate(first_intermediate_expected_water_to_ocean)
+      deallocate(first_intermediate_expected_water_to_hd)
+      deallocate(first_intermediate_expected_lake_numbers)
+      deallocate(first_intermediate_expected_lake_types)
+      deallocate(first_intermediate_expected_lake_volumes)
+      deallocate(first_intermediate_expected_diagnostic_lake_volumes)
+      deallocate(first_intermediate_expected_lake_fractions)
+      deallocate(first_intermediate_expected_number_lake_cells)
+      deallocate(first_intermediate_expected_number_fine_grid_cells)
+      deallocate(second_intermediate_expected_river_inflow)
+      deallocate(second_intermediate_expected_water_to_ocean)
+      deallocate(second_intermediate_expected_water_to_hd)
+      deallocate(second_intermediate_expected_lake_numbers)
+      deallocate(second_intermediate_expected_lake_types)
+      deallocate(second_intermediate_expected_lake_volumes)
+      deallocate(second_intermediate_expected_diagnostic_lake_volumes)
+      deallocate(second_intermediate_expected_lake_fractions)
+      deallocate(second_intermediate_expected_number_lake_cells)
+      deallocate(second_intermediate_expected_number_fine_grid_cells)
+      deallocate(third_intermediate_expected_river_inflow)
+      deallocate(third_intermediate_expected_water_to_ocean)
+      deallocate(third_intermediate_expected_water_to_hd)
+      deallocate(third_intermediate_expected_lake_numbers)
+      deallocate(third_intermediate_expected_lake_types)
+      deallocate(third_intermediate_expected_lake_volumes)
+      deallocate(third_intermediate_expected_diagnostic_lake_volumes)
+      deallocate(third_intermediate_expected_lake_fractions)
+      deallocate(third_intermediate_expected_number_lake_cells)
+      deallocate(third_intermediate_expected_number_fine_grid_cells)
+      deallocate(fourth_intermediate_expected_river_inflow)
+      deallocate(fourth_intermediate_expected_water_to_ocean)
+      deallocate(fourth_intermediate_expected_water_to_hd)
+      deallocate(fourth_intermediate_expected_lake_numbers)
+      deallocate(fourth_intermediate_expected_lake_types)
+      deallocate(fourth_intermediate_expected_lake_volumes)
+      deallocate(fourth_intermediate_expected_diagnostic_lake_volumes)
+      deallocate(fourth_intermediate_expected_lake_fractions)
+      deallocate(fourth_intermediate_expected_number_lake_cells)
+      deallocate(fourth_intermediate_expected_number_fine_grid_cells)
+      deallocate(fifth_intermediate_expected_river_inflow)
+      deallocate(fifth_intermediate_expected_water_to_ocean)
+      deallocate(fifth_intermediate_expected_water_to_hd)
+      deallocate(fifth_intermediate_expected_lake_numbers)
+      deallocate(fifth_intermediate_expected_lake_types)
+      deallocate(fifth_intermediate_expected_lake_volumes)
+      deallocate(fifth_intermediate_expected_diagnostic_lake_volumes)
+      deallocate(fifth_intermediate_expected_lake_fractions)
+      deallocate(fifth_intermediate_expected_number_lake_cells)
+      deallocate(fifth_intermediate_expected_number_fine_grid_cells)
+      deallocate(sixth_intermediate_expected_river_inflow)
+      deallocate(sixth_intermediate_expected_water_to_ocean)
+      deallocate(sixth_intermediate_expected_water_to_hd)
+      deallocate(sixth_intermediate_expected_lake_numbers)
+      deallocate(sixth_intermediate_expected_lake_types)
+      deallocate(sixth_intermediate_expected_lake_volumes)
+      deallocate(sixth_intermediate_expected_diagnostic_lake_volumes)
+      deallocate(sixth_intermediate_expected_lake_fractions)
+      deallocate(sixth_intermediate_expected_number_lake_cells)
+      deallocate(sixth_intermediate_expected_number_fine_grid_cells)
+      deallocate(seventh_intermediate_expected_river_inflow)
+      deallocate(seventh_intermediate_expected_water_to_ocean)
+      deallocate(seventh_intermediate_expected_water_to_hd)
+      deallocate(seventh_intermediate_expected_lake_numbers)
+      deallocate(seventh_intermediate_expected_lake_types)
+      deallocate(seventh_intermediate_expected_lake_volumes)
+      deallocate(seventh_intermediate_expected_diagnostic_lake_volumes)
+      deallocate(seventh_intermediate_expected_lake_fractions)
+      deallocate(seventh_intermediate_expected_number_lake_cells)
+      deallocate(seventh_intermediate_expected_number_fine_grid_cells)
+      deallocate(lake_types)
+      deallocate(lake_volumes_all_timesteps)
+      deallocate(expected_lake_volumes_all_timesteps)
+      call clean_lake_model()
+      call clean_hd_model()
+end subroutine testLakeModel17
+
 
 subroutine testLakeNumberRetrieval
   use latlon_lake_model_mod
@@ -17151,6 +23176,7 @@ subroutine testLakeNumberRetrieval
   type(lakeprognostics), pointer :: lake_prognostics
   type(lakefields),      pointer :: lake_fields
   integer,dimension(:,:), pointer :: merge_points
+  real(dp),dimension(:,:),pointer :: cell_areas_on_surface_model_grid
   logical,dimension(:,:), pointer :: lake_centers
   real(dp),dimension(:,:), pointer :: connection_volume_thresholds
   real(dp),dimension(:,:), pointer :: flood_volume_thresholds
@@ -17482,6 +23508,12 @@ subroutine testLakeNumberRetrieval
        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype /), &
        (/nlon,nlat/)))
+    allocate(cell_areas_on_surface_model_grid(nlat_surface_model,nlon_surface_model))
+    cell_areas_on_surface_model_grid = transpose(reshape((/ &
+          2.5,3.0,2.5, &
+          3.0,4.0,3.0, &
+          2.5,3.0,2.5 /), &
+      (/nlon_surface_model,nlat_surface_model/)))
     allocate(flood_next_cell_lat_index(nlat,nlon))
     flood_next_cell_lat_index = transpose(reshape((/ &
         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
@@ -17834,6 +23866,7 @@ subroutine testLakeNumberRetrieval
                                       additional_flood_local_redirect, &
                                       additional_connect_local_redirect, &
                                       merge_points, &
+                                      cell_areas_on_surface_model_grid, &
                                       flood_next_cell_lat_index, &
                                       flood_next_cell_lon_index, &
                                       connect_next_cell_lat_index, &

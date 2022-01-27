@@ -27,7 +27,6 @@ end interface
 type, public :: riverprognosticfields
   real(dp), pointer,     dimension(:,:)   :: runoff
   real(dp), pointer,     dimension(:,:)   :: drainage
-  real(dp), pointer,     dimension(:,:)   :: lake_evaporation
   real(dp), pointer,     dimension(:,:)   :: river_inflow
   real(dp), pointer,     dimension(:,:,:)   :: base_flow_reservoirs
   real(dp), pointer,     dimension(:,:,:)   :: overland_flow_reservoirs
@@ -169,11 +168,9 @@ subroutine initialiseriverprognosticfields(this,river_inflow_in, &
   real(dp), pointer, dimension(:,:,:) :: river_flow_reservoirs_in
     allocate(this%runoff,mold=river_inflow_in)
     allocate(this%drainage,mold=river_inflow_in)
-    allocate(this%lake_evaporation,mold=river_inflow_in)
     allocate(this%water_to_ocean,mold=river_inflow_in)
     this%runoff(:,:) = 0
     this%drainage(:,:) = 0
-    this%lake_evaporation(:,:) = 0
     this%water_to_ocean(:,:) = 0
     this%river_inflow => river_inflow_in
     this%base_flow_reservoirs => base_flow_reservoirs_in
@@ -185,7 +182,6 @@ subroutine riverprognosticfieldsdestructor(this)
   class(riverprognosticfields) :: this
     deallocate(this%runoff)
     deallocate(this%drainage)
-    deallocate(this%lake_evaporation)
     deallocate(this%water_to_ocean)
     deallocate(this%river_inflow)
     deallocate(this%base_flow_reservoirs)
@@ -396,8 +392,7 @@ subroutine run_hd(prognostic_fields)
         prognostic_fields%lake_interface_fields%water_to_lakes = &
             prognostic_fields%river_fields%river_inflow + &
             prognostic_fields%river_fields%runoff + &
-            prognostic_fields%river_fields%drainage - &
-            prognostic_fields%river_fields%lake_evaporation
+            prognostic_fields%river_fields%drainage
         prognostic_fields%river_fields%river_inflow = 0.0_dp
         prognostic_fields%river_fields%water_to_ocean = &
           -1.0_dp*prognostic_fields%lake_interface_fields%lake_water_from_ocean
@@ -494,12 +489,6 @@ subroutine set_runoff(prognostic_fields,runoff)
     prognostic_fields%river_fields%runoff = runoff
 end subroutine set_runoff
 
-subroutine set_lake_evaporation(prognostic_fields,lake_evaporation)
-  type(prognostics), intent(inout) :: prognostic_fields
-  real(dp), allocatable, dimension(:,:) :: lake_evaporation
-    prognostic_fields%river_fields%lake_evaporation = lake_evaporation
-end subroutine set_lake_evaporation
-
 subroutine distribute_spillover(prognostic_fields, &
                                 initial_spillover_to_rivers)
   type(prognostics), intent(inout) :: prognostic_fields
@@ -513,6 +502,37 @@ subroutine distribute_spillover(prognostic_fields, &
         initial_spillover_to_rivers
     end where
 end subroutine distribute_spillover
+
+subroutine set_evaporation_to_lakes_for_testing_interface(lake_evaporation)
+  real(dp), allocatable, dimension(:,:), intent(in) :: lake_evaporation
+    call set_lake_evaporation_for_testing_interface(lake_evaporation)
+end subroutine set_evaporation_to_lakes_for_testing_interface
+
+subroutine set_evaporation_to_lakes_interface(height_of_water_evaporated)
+  real(dp), allocatable, dimension(:,:), intent(in) :: height_of_water_evaporated
+  call set_lake_evaporation_interface(height_of_water_evaporated)
+end subroutine set_evaporation_to_lakes_interface
+
+function get_surface_model_nlat_interface() result(nlat)
+  integer :: nlat
+    nlat = get_surface_model_nlat()
+end function get_surface_model_nlat_interface
+
+function get_surface_model_nlon_interface() result(nlon)
+  integer :: nlon
+    nlon = get_surface_model_nlon()
+end function get_surface_model_nlon_interface
+
+function  get_lake_volumes_interface() result(lake_volumes)
+  real(dp), pointer, dimension(:) :: lake_volumes
+    lake_volumes => get_lake_volumes()
+end function get_lake_volumes_interface
+
+function  get_lake_fractions_interface() result(lake_fractions)
+  real(dp), pointer, dimension(:,:) :: lake_fractions
+    lake_fractions => get_lake_fractions()
+end function get_lake_fractions_interface
+
 
 ! function handle_event(prognostic_fields::prognosticfields,
 !                       print_results::PrintResults)

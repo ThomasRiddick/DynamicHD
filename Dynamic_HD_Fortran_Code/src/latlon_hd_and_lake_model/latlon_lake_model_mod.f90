@@ -29,14 +29,15 @@ integer, parameter, dimension(17) :: convert_to_simple_merge_type_flood = (/no_m
                                                                             primary_merge,secondary_merge,no_merge, &
                                                                             double_merge,null_mtype/)
 
-type :: basinlist
-  integer, pointer, dimension(:) :: basin_lats
-  integer, pointer, dimension(:) :: basin_lons
-end type basinlist
 
-interface basinlist
-  procedure :: basinlistconstructor
-end interface basinlist
+type :: coordslist
+  integer, pointer, dimension(:) :: lat_coords
+  integer, pointer, dimension(:) :: lon_coords
+end type coordslist
+
+interface coordslist
+  procedure :: coordslistconstructor
+end interface coordslist
 
 type :: lakeparameters
   logical :: instant_throughflow
@@ -50,9 +51,12 @@ type :: lakeparameters
   logical, pointer, dimension(:,:) :: additional_flood_local_redirect
   logical, pointer, dimension(:,:) :: additional_connect_local_redirect
   integer, pointer, dimension(:,:) :: merge_points
+  real(dp), pointer, dimension(:,:) :: cell_areas_on_surface_model_grid
   integer, pointer, dimension(:,:) :: basin_numbers
   integer, pointer, dimension(:,:) :: number_fine_grid_cells
-  type(basinlist), pointer, dimension(:) :: basins
+  type(coordslist), pointer, dimension(:) :: basins
+  type(coordslist), pointer, dimension(:) :: surface_cell_to_fine_cell_maps
+  integer, pointer, dimension(:,:) :: surface_cell_to_fine_cell_map_numbers
   integer, pointer, dimension(:,:) :: flood_next_cell_lat_index
   integer, pointer, dimension(:,:) :: flood_next_cell_lon_index
   integer, pointer, dimension(:,:) :: connect_next_cell_lat_index
@@ -92,12 +96,19 @@ type :: lakefields
   logical, pointer, dimension(:,:) :: flooded_lake_cells
   integer, pointer, dimension(:,:) :: lake_numbers
   integer, pointer, dimension(:,:) :: buried_lake_numbers
+  real(dp), pointer, dimension(:,:) :: effective_volume_per_cell_on_surface_grid
+  real(dp), pointer, dimension(:,:) :: new_effective_volume_per_cell_on_surface_grid
+  real(dp), pointer, dimension(:,:) :: effective_lake_height_on_surface_grid_from_lakes
+  real(dp), pointer, dimension(:,:) :: effective_lake_height_on_surface_grid_to_lakes
+  real(dp), pointer, dimension(:,:) :: evaporation_on_surface_grid
   real(dp), pointer, dimension(:,:) :: water_to_lakes
   real(dp), pointer, dimension(:,:) :: water_to_hd
   real(dp), pointer, dimension(:,:) :: lake_water_from_ocean
   integer, pointer, dimension(:,:) :: number_lake_cells
   integer, pointer, dimension(:) :: cells_with_lakes_lat
   integer, pointer, dimension(:) :: cells_with_lakes_lon
+  real(dp), pointer, dimension(:) :: evaporation_from_lakes
+  logical, pointer, dimension(:) :: evaporation_applied
   type(lakepointer), pointer, dimension(:) :: other_lakes
   contains
     procedure :: initialiselakefields
@@ -134,11 +145,15 @@ type :: lake
   integer :: center_cell_coarse_lon
   integer :: previous_cell_to_fill_lat
   integer :: previous_cell_to_fill_lon
-  integer, dimension(:), allocatable :: filled_lake_cell_lats
-  integer, dimension(:), allocatable :: filled_lake_cell_lons
+  ! Need to nullify these pointers so tests for
+  ! a lack of association work
+  integer, dimension(:), pointer :: filled_lake_cell_lats => null()
+  integer, dimension(:), pointer :: filled_lake_cell_lons => null()
   integer :: filled_lake_cell_index
   type(lakeparameters), pointer :: lake_parameters
   type(lakefields), pointer :: lake_fields
+  integer :: number_of_flooded_cells
+  integer :: secondary_number_of_flooded_cells
   ! Filling lake variables
   logical :: primary_merge_completed
   logical :: use_additional_fields
@@ -170,6 +185,7 @@ type :: lake
     procedure :: drain_current_cell
     procedure :: release_negative_water
     procedure :: generate_lake_numbers
+    procedure :: calculate_effective_lake_volume_per_cell
     !Filling lake procedures
     procedure :: initialisefillinglake
     procedure :: perform_primary_merge
@@ -216,7 +232,7 @@ subroutine initialiselake(this,center_cell_lat_in,center_cell_lon_in, &
   real(dp), intent(in)    :: secondary_lake_volume_in
   real(dp), intent(in)    :: unprocessed_water_in
   type(lakeparameters), target, intent(in) :: lake_parameters_in
-  type(lakefields), target, intent(inout) :: lake_fields_in
+  type(lakefields), pointer, intent(inout) :: lake_fields_in
   integer :: i
   integer :: merge_type
     this%lake_parameters => lake_parameters_in
@@ -231,7 +247,7 @@ subroutine initialiselake(this,center_cell_lat_in,center_cell_lon_in, &
     this%current_cell_to_fill_lat = current_cell_to_fill_lat_in
     this%current_cell_to_fill_lon = current_cell_to_fill_lon_in
     this%unprocessed_water = unprocessed_water_in
-    if (.not. allocated(this%filled_lake_cell_lats)) then
+    if (.not. associated(this%filled_lake_cell_lats)) then
       i = 0
       do
         merge_type = this%get_merge_type()
@@ -239,14 +255,20 @@ subroutine initialiselake(this,center_cell_lat_in,center_cell_lon_in, &
         call this%update_filling_cell(.true.)
         i = i + 1
       end do
+      if (i == 0) then
+        i = 1
+      end if
       allocate(this%filled_lake_cell_lats(i))
       allocate(this%filled_lake_cell_lons(i))
+      this%filled_lake_cell_lats(:) = -1
+      this%filled_lake_cell_lons(:) = -1
       this%filled_lake_cell_index = 0
       this%current_cell_to_fill_lat = current_cell_to_fill_lat_in
       this%current_cell_to_fill_lon = current_cell_to_fill_lon_in
       this%lake_fields%connected_lake_cells(:,:) = .false.
       this%lake_fields%flooded_lake_cells(:,:) = .false.
-      this%lake_fields%number_lake_cells(:,:) = 0
+      this%number_of_flooded_cells = 0
+      this%secondary_number_of_flooded_cells = 0
     end if
 end subroutine initialiselake
 
@@ -263,14 +285,14 @@ subroutine generate_lake_numbers(this)
     end do
 end subroutine generate_lake_numbers
 
-function basinlistconstructor(basin_lats_in,basin_lons_in) &
+function coordslistconstructor(lat_coords_in,lon_coords_in) &
     result(constructor)
-  type(basinlist) :: constructor
-  integer, pointer, dimension(:) :: basin_lats_in
-  integer, pointer, dimension(:) :: basin_lons_in
-    constructor%basin_lats => basin_lats_in
-    constructor%basin_lons => basin_lons_in
-end function basinlistconstructor
+  type(coordslist) :: constructor
+  integer, pointer, dimension(:) :: lat_coords_in
+  integer, pointer, dimension(:) :: lon_coords_in
+    constructor%lat_coords => lat_coords_in
+    constructor%lon_coords => lon_coords_in
+end function coordslistconstructor
 
 subroutine initialiselakeparameters(this,lake_centers_in, &
                                     connection_volume_thresholds_in, &
@@ -280,6 +302,7 @@ subroutine initialiselakeparameters(this,lake_centers_in, &
                                     additional_flood_local_redirect_in, &
                                     additional_connect_local_redirect_in, &
                                     merge_points_in, &
+                                    cell_areas_on_surface_model_grid_in, &
                                     flood_next_cell_lat_index_in, &
                                     flood_next_cell_lon_index_in, &
                                     connect_next_cell_lat_index_in, &
@@ -314,6 +337,7 @@ subroutine initialiselakeparameters(this,lake_centers_in, &
   logical, pointer, dimension(:,:) :: additional_flood_local_redirect_in
   logical, pointer, dimension(:,:) :: additional_connect_local_redirect_in
   integer, pointer, dimension(:,:) :: merge_points_in
+  real(dp), pointer, dimension(:,:) :: cell_areas_on_surface_model_grid_in
   integer, pointer, dimension(:,:) :: flood_next_cell_lat_index_in
   integer, pointer, dimension(:,:) :: flood_next_cell_lon_index_in
   integer, pointer, dimension(:,:) :: connect_next_cell_lat_index_in
@@ -332,11 +356,15 @@ subroutine initialiselakeparameters(this,lake_centers_in, &
   integer, pointer, dimension(:,:) :: additional_connect_redirect_lon_index_in
   integer, pointer, dimension(:,:) :: corresponding_surface_cell_lat_index_in
   integer, pointer, dimension(:,:) :: corresponding_surface_cell_lon_index_in
+  integer, pointer, dimension(:,:) :: number_of_lake_cells_temp
   integer, pointer, dimension(:) :: basins_in_coarse_cell_lat_temp
   integer, pointer, dimension(:) :: basins_in_coarse_cell_lon_temp
   integer, pointer, dimension(:) :: basins_in_coarse_cell_lat
   integer, pointer, dimension(:) :: basins_in_coarse_cell_lon
-  type(basinlist), pointer, dimension(:) :: basins_temp
+  integer, pointer, dimension(:) :: surface_cell_to_fine_cell_map_lats_temp
+  integer, pointer, dimension(:) :: surface_cell_to_fine_cell_map_lons_temp
+  logical, pointer, dimension(:,:) :: needs_map
+  type(coordslist), pointer, dimension(:) :: basins_temp
   integer :: nlat_in,nlon_in
   integer :: nlat_coarse_in,nlon_coarse_in
   integer :: nlat_surface_model_in,nlon_surface_model_in
@@ -345,6 +373,8 @@ subroutine initialiselakeparameters(this,lake_centers_in, &
   integer :: i,j,k,l,m
   integer :: lat_scale_factor,lon_scale_factor
   integer :: lat_surface_model,lon_surface_model
+  integer :: surface_cell_to_fine_cell_map_number
+  integer :: map_number,number_of_lake_cells
     number_of_basins_in_coarse_cell = 0
     this%lake_centers => lake_centers_in
     this%connection_volume_thresholds => connection_volume_thresholds_in
@@ -354,6 +384,7 @@ subroutine initialiselakeparameters(this,lake_centers_in, &
     this%additional_flood_local_redirect => additional_flood_local_redirect_in
     this%additional_connect_local_redirect => additional_connect_local_redirect_in
     this%merge_points => merge_points_in
+    this%cell_areas_on_surface_model_grid => cell_areas_on_surface_model_grid_in
     this%flood_next_cell_lat_index => flood_next_cell_lat_index_in
     this%flood_next_cell_lon_index => flood_next_cell_lon_index_in
     this%connect_next_cell_lat_index => connect_next_cell_lat_index_in
@@ -390,12 +421,71 @@ subroutine initialiselakeparameters(this,lake_centers_in, &
     else where
       this%flood_only = .false.
     end where
+    allocate(needs_map(nlat_surface_model_in, &
+                       nlon_surface_model_in))
+    needs_map(:,:) = .false.
+    allocate(number_of_lake_cells_temp(nlat_surface_model_in, &
+                                  nlon_surface_model_in))
+    number_of_lake_cells_temp(:,:) = 0
     do j = 1,nlon_in
       do i = 1,nlat_in
         lat_surface_model = this%corresponding_surface_cell_lat_index(i,j)
         lon_surface_model = this%corresponding_surface_cell_lon_index(i,j)
         this%number_fine_grid_cells(lat_surface_model,lon_surface_model) = &
           this%number_fine_grid_cells(lat_surface_model,lon_surface_model) + 1
+        if (this%flood_volume_thresholds(i,j) /= -1.0_dp) then
+          needs_map(lat_surface_model,lon_surface_model) = .true.
+          number_of_lake_cells_temp(lat_surface_model,lon_surface_model) = &
+            number_of_lake_cells_temp(lat_surface_model,lon_surface_model) + 1
+        end if
+      end do
+    end do
+    allocate(this%surface_cell_to_fine_cell_map_numbers(nlat_surface_model_in, &
+                                                        nlon_surface_model_in))
+    this%surface_cell_to_fine_cell_map_numbers(:,:) = 0
+    map_number = 0
+    do j = 1,nlon_surface_model_in
+      do i = 1,nlat_surface_model_in
+        if (needs_map(i,j)) then
+          map_number = map_number + 1
+        end if
+      end do
+    end do
+    allocate(this%surface_cell_to_fine_cell_maps(map_number))
+    map_number = 0
+    do j = 1,nlon_surface_model_in
+      do i = 1,nlat_surface_model_in
+        if (needs_map(i,j)) then
+          map_number = map_number + 1
+          number_of_lake_cells = number_of_lake_cells_temp(i,j)
+          allocate(surface_cell_to_fine_cell_map_lats_temp(number_of_lake_cells))
+          allocate(surface_cell_to_fine_cell_map_lons_temp(number_of_lake_cells))
+          surface_cell_to_fine_cell_map_lats_temp(:) = -1
+          surface_cell_to_fine_cell_map_lons_temp(:) = -1
+          this%surface_cell_to_fine_cell_maps(map_number) = &
+            coordslist(surface_cell_to_fine_cell_map_lats_temp, &
+                       surface_cell_to_fine_cell_map_lons_temp)
+          this%surface_cell_to_fine_cell_map_numbers(i,j) = map_number
+        end if
+      end do
+    end do
+    deallocate(number_of_lake_cells_temp)
+    do j = 1,nlon_in
+      do i = 1,nlat_in
+        if (this%flood_volume_thresholds(i,j) /= -1.0) then
+          lat_surface_model = this%corresponding_surface_cell_lat_index(i,j)
+          lon_surface_model = this%corresponding_surface_cell_lon_index(i,j)
+          surface_cell_to_fine_cell_map_number = &
+            this%surface_cell_to_fine_cell_map_numbers(lat_surface_model, &
+                                                       lon_surface_model)
+          k = 1
+          do while (this%surface_cell_to_fine_cell_maps(&
+                    surface_cell_to_fine_cell_map_number)%lat_coords(k) /= -1)
+            k = k + 1
+          end do
+          this%surface_cell_to_fine_cell_maps(surface_cell_to_fine_cell_map_number)%lat_coords(k) = i
+          this%surface_cell_to_fine_cell_maps(surface_cell_to_fine_cell_map_number)%lon_coords(k) = j
+        end if
       end do
     end do
     allocate(basins_in_coarse_cell_lat_temp((this%nlat*this%nlon)&
@@ -429,7 +519,7 @@ subroutine initialiselakeparameters(this,lake_centers_in, &
           end do
           basin_number = basin_number + 1
           basins_temp(basin_number) = &
-            basinlist(basins_in_coarse_cell_lat,basins_in_coarse_cell_lon)
+            coordslist(basins_in_coarse_cell_lat,basins_in_coarse_cell_lon)
           this%basin_numbers(i,j) = basin_number
         end if
       end do
@@ -438,6 +528,7 @@ subroutine initialiselakeparameters(this,lake_centers_in, &
     do m=1,basin_number
       this%basins(m) = basins_temp(m)
     end do
+    deallocate(needs_map)
     deallocate(basins_temp)
     deallocate(basins_in_coarse_cell_lat_temp)
     deallocate(basins_in_coarse_cell_lon_temp)
@@ -451,6 +542,7 @@ function lakeparametersconstructor(lake_centers_in, &
                                    additional_flood_local_redirect_in, &
                                    additional_connect_local_redirect_in, &
                                    merge_points_in, &
+                                   cell_areas_on_surface_model_grid_in, &
                                    flood_next_cell_lat_index_in, &
                                    flood_next_cell_lon_index_in, &
                                    connect_next_cell_lat_index_in, &
@@ -483,6 +575,7 @@ function lakeparametersconstructor(lake_centers_in, &
   logical, pointer, dimension(:,:), intent(in) :: additional_flood_local_redirect_in
   logical, pointer, dimension(:,:), intent(in) :: additional_connect_local_redirect_in
   integer, pointer, dimension(:,:), intent(in) :: merge_points_in
+  real(dp), pointer, dimension(:,:), intent(in) :: cell_areas_on_surface_model_grid_in
   integer, pointer, dimension(:,:), intent(in) :: flood_next_cell_lat_index_in
   integer, pointer, dimension(:,:), intent(in) :: flood_next_cell_lon_index_in
   integer, pointer, dimension(:,:), intent(in) :: connect_next_cell_lat_index_in
@@ -515,6 +608,7 @@ function lakeparametersconstructor(lake_centers_in, &
                                               additional_flood_local_redirect_in, &
                                               additional_connect_local_redirect_in, &
                                               merge_points_in, &
+                                              cell_areas_on_surface_model_grid_in, &
                                               flood_next_cell_lat_index_in, &
                                               flood_next_cell_lon_index_in, &
                                               connect_next_cell_lat_index_in, &
@@ -546,10 +640,15 @@ subroutine lakeparametersdestructor(this)
     deallocate(this%flood_only)
     deallocate(this%basin_numbers)
     do i = 1,size(this%basins)
-      deallocate(this%basins(i)%basin_lats)
-      deallocate(this%basins(i)%basin_lons)
+      deallocate(this%basins(i)%lat_coords)
+      deallocate(this%basins(i)%lon_coords)
     end do
     deallocate(this%basins)
+    do i = 1,size(this%surface_cell_to_fine_cell_maps)
+      deallocate(this%surface_cell_to_fine_cell_maps(i)%lat_coords)
+      deallocate(this%surface_cell_to_fine_cell_maps(i)%lon_coords)
+    end do
+    deallocate(this%surface_cell_to_fine_cell_maps)
     deallocate(this%lake_centers)
     deallocate(this%connection_volume_thresholds)
     deallocate(this%flood_volume_thresholds)
@@ -558,6 +657,7 @@ subroutine lakeparametersdestructor(this)
     deallocate(this%additional_flood_local_redirect)
     deallocate(this%additional_connect_local_redirect)
     deallocate(this%merge_points)
+    deallocate(this%cell_areas_on_surface_model_grid)
     deallocate(this%flood_next_cell_lat_index)
     deallocate(this%flood_next_cell_lon_index)
     deallocate(this%connect_next_cell_lat_index)
@@ -577,6 +677,7 @@ subroutine lakeparametersdestructor(this)
     deallocate(this%corresponding_surface_cell_lat_index)
     deallocate(this%corresponding_surface_cell_lon_index)
     deallocate(this%number_fine_grid_cells)
+    deallocate(this%surface_cell_to_fine_cell_map_numbers)
 end subroutine lakeparametersdestructor
 
 subroutine initialiselakefields(this,lake_parameters)
@@ -596,6 +697,21 @@ subroutine initialiselakefields(this,lake_parameters)
       this%lake_numbers(:,:) = 0
       allocate(this%buried_lake_numbers(lake_parameters%nlat,lake_parameters%nlon))
       this%buried_lake_numbers(:,:) = 0
+      allocate(this%effective_volume_per_cell_on_surface_grid(lake_parameters%nlat_surface_model,&
+                                                              lake_parameters%nlon_surface_model))
+      this%effective_volume_per_cell_on_surface_grid(:,:) = 0.0_dp
+      allocate(this%effective_lake_height_on_surface_grid_to_lakes(lake_parameters%nlat_surface_model,&
+                                                                   lake_parameters%nlon_surface_model))
+      this%effective_lake_height_on_surface_grid_to_lakes(:,:) = 0.0_dp
+      allocate(this%effective_lake_height_on_surface_grid_from_lakes(lake_parameters%nlat_surface_model, &
+                                                                     lake_parameters%nlon_surface_model))
+      this%effective_lake_height_on_surface_grid_from_lakes(:,:) = 0.0_dp
+      allocate(this%new_effective_volume_per_cell_on_surface_grid(lake_parameters%nlat_surface_model,&
+                                                                  lake_parameters%nlon_surface_model))
+      this%new_effective_volume_per_cell_on_surface_grid(:,:) = 0.0_dp
+      allocate(this%evaporation_on_surface_grid(lake_parameters%nlat_surface_model,&
+                                                lake_parameters%nlon_surface_model))
+      this%evaporation_on_surface_grid(:,:) = 0.0_dp
       allocate(this%water_to_lakes(lake_parameters%nlat_coarse,lake_parameters%nlon_coarse))
       this%water_to_lakes(:,:) = 0.0_dp
       allocate(this%lake_water_from_ocean(lake_parameters%nlat_coarse,lake_parameters%nlon_coarse))
@@ -633,6 +749,10 @@ subroutine initialiselakefields(this,lake_parameters)
         this%cells_with_lakes_lon(i) = &
           & cells_with_lakes_lon_temp(i)
       end do
+      allocate(this%evaporation_from_lakes(count(lake_parameters%lake_centers)))
+      this%evaporation_from_lakes(:) = 0.0
+      allocate(this%evaporation_applied(count(lake_parameters%lake_centers)))
+      this%evaporation_applied(:) = .false.
       deallocate(cells_with_lakes_lat_temp)
       deallocate(cells_with_lakes_lon_temp)
 end subroutine initialiselakefields
@@ -656,18 +776,26 @@ subroutine lakefieldsdestructor(this)
     deallocate(this%cells_with_lakes_lat)
     deallocate(this%cells_with_lakes_lon)
     deallocate(this%number_lake_cells)
+    deallocate(this%evaporation_on_surface_grid)
+    deallocate(this%new_effective_volume_per_cell_on_surface_grid)
+    deallocate(this%effective_lake_height_on_surface_grid_from_lakes)
+    deallocate(this%effective_lake_height_on_surface_grid_to_lakes)
+    deallocate(this%effective_volume_per_cell_on_surface_grid)
+    deallocate(this%evaporation_applied)
+    deallocate(this%evaporation_from_lakes)
 end subroutine lakefieldsdestructor
 
 subroutine initialiselakeprognostics(this,lake_parameters_in,lake_fields_in)
   class(lakeprognostics), intent(inout) :: this
   type(lakeparameters), intent(in) :: lake_parameters_in
-  type(lakefields), intent(inout) :: lake_fields_in
+  type(lakefields), pointer, intent(inout) :: lake_fields_in
   type(lakepointer), pointer, dimension(:) :: lakes_temp
   type(lake), pointer :: lake_temp
   integer :: lake_number
   integer :: center_cell_coarse_lat, center_cell_coarse_lon
   integer :: i,j
   integer :: fine_cells_per_coarse_cell_lat, fine_cells_per_coarse_cell_lon
+  integer :: lat_surface_model, lon_surface_model
     this%total_lake_volume = 0.0_dp
     allocate(lakes_temp(lake_parameters_in%nlat*lake_parameters_in%nlon))
     lake_number = 0
@@ -690,6 +818,20 @@ subroutine initialiselakeprognostics(this,lake_parameters_in,lake_fields_in)
         end if
       end do
     end do
+    !Need a seperate loop as the dry run messes up the number_lake_cells field
+    lake_fields_in%number_lake_cells(:,:) = 0
+    do j=1,lake_parameters_in%nlon
+      do i=1,lake_parameters_in%nlat
+        if(lake_parameters_in%lake_centers(i,j)) then
+          if (lake_parameters_in%flood_only(i,j)) then
+            lat_surface_model = lake_parameters_in%corresponding_surface_cell_lat_index(i,j)
+            lon_surface_model = lake_parameters_in%corresponding_surface_cell_lon_index(i,j)
+            lake_fields_in%number_lake_cells(lat_surface_model,lon_surface_model) = &
+              lake_fields_in%number_lake_cells(lat_surface_model,lon_surface_model) + 1
+          end if
+        end if
+      end do
+    end do
     allocate(this%lakes(lake_number))
     do i=1,lake_number
       this%lakes(i) = lakes_temp(i)
@@ -700,7 +842,7 @@ end subroutine initialiselakeprognostics
 
 function lakeprognosticsconstructor(lake_parameters_in,lake_fields_in) result(constructor)
   type(lakeparameters), intent(in) :: lake_parameters_in
-  type(lakefields), intent(inout) :: lake_fields_in
+  type(lakefields), pointer, intent(inout) :: lake_fields_in
   type(lakeprognostics), pointer :: constructor
     allocate(constructor)
     call constructor%initialiselakeprognostics(lake_parameters_in,lake_fields_in)
@@ -710,6 +852,8 @@ subroutine lakeprognosticsdestructor(this)
   class(lakeprognostics), intent(inout) :: this
   integer :: i
     do i = 1,size(this%lakes)
+      deallocate(this%lakes(i)%lake_pointer%filled_lake_cell_lats)
+      deallocate(this%lakes(i)%lake_pointer%filled_lake_cell_lons)
       deallocate(this%lakes(i)%lake_pointer)
     end do
     deallocate(this%lakes)
@@ -726,7 +870,7 @@ subroutine initialisefillinglake(this,lake_parameters_in,lake_fields_in,center_c
                                  unprocessed_water_in)
   class(lake) :: this
   type(lakeparameters), intent(in) :: lake_parameters_in
-  type(lakefields), intent(inout) :: lake_fields_in
+  type(lakefields), pointer, intent(inout) :: lake_fields_in
   integer, intent(in) :: center_cell_lat_in
   integer, intent(in) :: center_cell_lon_in
   integer, intent(in) :: current_cell_to_fill_lat_in
@@ -763,7 +907,7 @@ function lakeconstructor(lake_parameters_in,lake_fields_in,center_cell_lat_in, &
                          unprocessed_water_in) result(constructor)
   type(lake), pointer :: constructor
   type(lakeparameters), intent(in) :: lake_parameters_in
-  type(lakefields), intent(inout) :: lake_fields_in
+  type(lakefields), pointer, intent(inout) :: lake_fields_in
   integer, intent(in) :: center_cell_lat_in
   integer, intent(in) :: center_cell_lon_in
   integer, intent(in) :: current_cell_to_fill_lat_in
@@ -829,7 +973,7 @@ subroutine initialiseoverflowinglake(this,outflow_redirect_lat_in, &
   real(dp), intent(in)    :: secondary_lake_volume_in
   real(dp),    intent(in) :: unprocessed_water_in
   type(lakeparameters), intent(in) :: lake_parameters_in
-  type(lakefields), intent(inout) :: lake_fields_in
+  type(lakefields), pointer, intent(inout) :: lake_fields_in
     call this%initialiselake(center_cell_lat_in,center_cell_lon_in, &
                              current_cell_to_fill_lat_in, &
                              current_cell_to_fill_lon_in, &
@@ -875,7 +1019,7 @@ subroutine initialisesubsumedlake(this,lake_parameters_in,lake_fields_in, &
                                   unprocessed_water_in)
   class(lake) :: this
   type(lakeparameters), intent(in) :: lake_parameters_in
-  type(lakefields), intent(inout) :: lake_fields_in
+  type(lakefields), pointer, intent(inout) :: lake_fields_in
   integer, intent(in) :: primary_lake_number_in
   integer, intent(in) :: center_cell_lat_in
   integer, intent(in) :: center_cell_lon_in
@@ -937,13 +1081,15 @@ subroutine run_lakes(lake_parameters,lake_prognostics,lake_fields)
   type(lakeparameters), intent(in) :: lake_parameters
   type(lakeprognostics), intent(inout) :: lake_prognostics
   type(lakefields), intent(inout) :: lake_fields
-  integer :: lat,lon
+  integer :: lat,lon,fine_lat,fine_lon
   integer :: basin_center_lat,basin_center_lon
-  integer :: lake_index
-  integer :: i,j
+  integer :: lake_index,target_lake_index
+  integer :: i,j,k
   integer :: num_basins_in_cell
   integer :: basin_number
-  real(dp) :: share_to_each_lake
+  integer :: number_lake_cells,map_index
+  real(dp) :: share_to_each_lake,inflow_minus_evaporation
+  real(dp) :: evaporation_per_lake_cell,evaporation
   type(lake), pointer :: working_lake
 #ifdef USE_LOGGING
     call increment_timestep_wrapper
@@ -959,31 +1105,79 @@ subroutine run_lakes(lake_parameters,lake_prognostics,lake_fields)
 #endif
     lake_fields%water_to_hd(:,:) = 0.0_dp
     lake_fields%lake_water_from_ocean(:,:) = 0.0_dp
+    lake_fields%evaporation_from_lakes(:) = 0.0_dp
+    lake_fields%new_effective_volume_per_cell_on_surface_grid = &
+      lake_fields%effective_lake_height_on_surface_grid_to_lakes * &
+      lake_parameters%cell_areas_on_surface_model_grid
+    lake_fields%evaporation_on_surface_grid = &
+      lake_fields%effective_volume_per_cell_on_surface_grid - &
+      lake_fields%new_effective_volume_per_cell_on_surface_grid
+    lake_fields%effective_volume_per_cell_on_surface_grid(:,:) = 0.0_dp
+    do j = 1,lake_parameters%nlon_surface_model
+      do i = 1,lake_parameters%nlat_surface_model
+        number_lake_cells = lake_fields%number_lake_cells(i,j)
+        if ((lake_fields%evaporation_on_surface_grid(i,j) > 0.0) .and. &
+            (number_lake_cells > 0)) then
+          map_index = lake_parameters%surface_cell_to_fine_cell_map_numbers(i,j)
+          evaporation_per_lake_cell = lake_fields%evaporation_on_surface_grid(i,j)/number_lake_cells
+          if (map_index /= 0) then
+            do k = 1,size(lake_parameters%surface_cell_to_fine_cell_maps(map_index)%lat_coords)
+              fine_lat = lake_parameters%surface_cell_to_fine_cell_maps(map_index)%lat_coords(k)
+              fine_lon = lake_parameters%surface_cell_to_fine_cell_maps(map_index)%lon_coords(k)
+              target_lake_index = lake_fields%lake_numbers(fine_lat,fine_lon)
+              if (target_lake_index /= 0) then
+                working_lake => lake_prognostics%lakes(target_lake_index)%lake_pointer
+                if (lake_fields%flooded_lake_cells(fine_lat,fine_lon) .or. &
+                   (((working_lake%current_cell_to_fill_lat == fine_lat) .and. &
+                     (working_lake%current_cell_to_fill_lon == fine_lon))  .and. &
+                    (lake_parameters%flood_only(fine_lat,fine_lon) .or. &
+                     lake_fields%connected_lake_cells(fine_lat,fine_lon)))) then
+                  lake_fields%evaporation_from_lakes(target_lake_index) = &
+                    lake_fields%evaporation_from_lakes(target_lake_index) + evaporation_per_lake_cell
+                end if
+              end if
+            end do
+          end if
+        end if
+      end do
+    end do
+    lake_fields%evaporation_applied(:) = .false.
     do i = 1,size(lake_fields%cells_with_lakes_lat)
       lat = lake_fields%cells_with_lakes_lat(i)
       lon = lake_fields%cells_with_lakes_lon(i)
       if (lake_fields%water_to_lakes(lat,lon) > 0.0_dp) then
         basin_number = lake_parameters%basin_numbers(lat,lon)
         num_basins_in_cell = &
-          size(lake_parameters%basins(basin_number)%basin_lats)
+          size(lake_parameters%basins(basin_number)%lat_coords)
         share_to_each_lake = lake_fields%water_to_lakes(lat,lon)/&
                              real(num_basins_in_cell,dp)
         do j = 1,num_basins_in_cell
-          basin_center_lat = lake_parameters%basins(basin_number)%basin_lats(j)
-          basin_center_lon = lake_parameters%basins(basin_number)%basin_lons(j)
+          basin_center_lat = lake_parameters%basins(basin_number)%lat_coords(j)
+          basin_center_lon = lake_parameters%basins(basin_number)%lon_coords(j)
           lake_index = lake_fields%lake_numbers(basin_center_lat,basin_center_lon)
           working_lake => lake_prognostics%lakes(lake_index)%lake_pointer
-          call working_lake%add_water(share_to_each_lake)
+          if (.not. lake_fields%evaporation_applied(lake_index)) then
+            inflow_minus_evaporation = share_to_each_lake - &
+                                       lake_fields%evaporation_from_lakes(lake_index)
+            if (inflow_minus_evaporation >= 0.0) then
+              call working_lake%add_water(inflow_minus_evaporation)
+            else
+              call working_lake%remove_water(-1.0_dp*inflow_minus_evaporation)
+            end if
+            lake_fields%evaporation_applied(lake_index) = .true.
+          else
+            call working_lake%add_water(share_to_each_lake)
+          end if
         end do
       else if (lake_fields%water_to_lakes(lat,lon) < 0.0_dp) then
         basin_number = lake_parameters%basin_numbers(lat,lon)
         num_basins_in_cell = \
-          size(lake_parameters%basins(basin_number)%basin_lats)
+          size(lake_parameters%basins(basin_number)%lat_coords)
         share_to_each_lake = -1.0_dp*lake_fields%water_to_lakes(lat,lon)/&
                               real(num_basins_in_cell,dp)
         do j = 1,num_basins_in_cell
-          basin_center_lat = lake_parameters%basins(basin_number)%basin_lats(j)
-          basin_center_lon = lake_parameters%basins(basin_number)%basin_lons(j)
+          basin_center_lat = lake_parameters%basins(basin_number)%lat_coords(j)
+          basin_center_lon = lake_parameters%basins(basin_number)%lon_coords(j)
           lake_index = lake_fields%lake_numbers(basin_center_lat,basin_center_lon)
           working_lake => lake_prognostics%lakes(lake_index)%lake_pointer
           call working_lake%remove_water(share_to_each_lake)
@@ -995,12 +1189,30 @@ subroutine run_lakes(lake_parameters,lake_prognostics,lake_fields)
       if (working_lake%unprocessed_water > 0.0_dp) then
           call working_lake%add_water(0.0_dp)
       end if
+    end do
+    do i = 1,size(lake_prognostics%lakes)
+      working_lake => lake_prognostics%lakes(i)%lake_pointer
+      if (.not. lake_fields%evaporation_applied(i)) then
+        evaporation = lake_fields%evaporation_from_lakes(i)
+        call working_lake%remove_water(evaporation)
+        lake_fields%evaporation_applied(i) = .true.
+      end if
+    end do
+    do i = 1,size(lake_prognostics%lakes)
+      working_lake => lake_prognostics%lakes(i)%lake_pointer
       if (working_lake%lake_volume < 0.0_dp) then
         call working_lake%release_negative_water()
       end if
+    end do
+    do i = 1,size(lake_prognostics%lakes)
+      working_lake => lake_prognostics%lakes(i)%lake_pointer
       if (working_lake%lake_type == overflowing_lake_type) then
           call working_lake%drain_excess_water()
       end if
+    end do
+    do i = 1,size(lake_prognostics%lakes)
+      working_lake => lake_prognostics%lakes(i)%lake_pointer
+      call working_lake%calculate_effective_lake_volume_per_cell(.false.)
     end do
 end subroutine run_lakes
 
@@ -1105,7 +1317,6 @@ subroutine remove_water(this,outflow)
   real(dp) :: new_outflow
   logical :: drained
   integer :: merge_type
-  integer :: lat_surface_model,lon_surface_model
 #ifdef USE_LOGGING
     call log_process_wrapper(this%lake_number,this%center_cell_lat, &
                              this%center_cell_lon,this%lake_type,&
@@ -1149,16 +1360,8 @@ subroutine remove_water(this,outflow)
                                               this%current_cell_to_fill_lon)) then
         this%lake_fields%flooded_lake_cells(this%current_cell_to_fill_lat, &
                                             this%current_cell_to_fill_lon) = .false.
-        lat_surface_model = &
-          this%lake_parameters%corresponding_surface_cell_lat_index(this%current_cell_to_fill_lat, &
-                                                                    this%current_cell_to_fill_lon)
-        lon_surface_model = &
-          this%lake_parameters%corresponding_surface_cell_lon_index(this%current_cell_to_fill_lat, &
-                                                                    this%current_cell_to_fill_lon)
-        this%lake_fields%number_lake_cells(lat_surface_model,&
-                                           lon_surface_model) = &
-          this%lake_fields%number_lake_cells(lat_surface_model,&
-                                             lon_surface_model) - 1
+        this%number_of_flooded_cells = &
+          this%number_of_flooded_cells - 1
       else
         this%lake_fields%connected_lake_cells(this%current_cell_to_fill_lat, &
                                               this%current_cell_to_fill_lon) = .false.
@@ -1201,7 +1404,7 @@ subroutine release_negative_water(this)
                                              this%center_cell_coarse_lon) - &
       this%lake_volume
     this%lake_volume = 0.0_dp
-end subroutine
+end subroutine release_negative_water
 
 subroutine accept_merge(this,redirect_coords_lat,redirect_coords_lon)
   class(lake), intent(inout) :: this
@@ -1209,7 +1412,6 @@ subroutine accept_merge(this,redirect_coords_lat,redirect_coords_lon)
   integer, intent(in) :: redirect_coords_lon
   integer :: lake_type
   real(dp) :: excess_water
-  integer :: lat_surface_model,lon_surface_model
     lake_type = this%lake_type
     excess_water = this%excess_water
     if (.not. (this%lake_fields%connected_lake_cells(this%current_cell_to_fill_lat,&
@@ -1222,16 +1424,8 @@ subroutine accept_merge(this,redirect_coords_lat,redirect_coords_lon)
                                                        this%current_cell_to_fill_lon)) then
       this%lake_fields%flooded_lake_cells(this%current_cell_to_fill_lat,&
                                           this%current_cell_to_fill_lon) = .true.
-      lat_surface_model = &
-          this%lake_parameters%corresponding_surface_cell_lat_index(this%current_cell_to_fill_lat, &
-                                                                    this%current_cell_to_fill_lon)
-      lon_surface_model = &
-          this%lake_parameters%corresponding_surface_cell_lon_index(this%current_cell_to_fill_lat, &
-                                                                    this%current_cell_to_fill_lon)
-      this%lake_fields%number_lake_cells(lat_surface_model, &
-                                         lon_surface_model) = &
-         this%lake_fields%number_lake_cells(lat_surface_model, &
-                                             lon_surface_model) + 1
+      this%number_of_flooded_cells = &
+        this%number_of_flooded_cells + 1
     end if
     call this%initialisesubsumedlake(this%lake_parameters, &
                                      this%lake_fields, &
@@ -1253,21 +1447,12 @@ end subroutine accept_merge
 
 subroutine accept_split(this)
   class(lake), intent(inout) :: this
-  integer :: lat_surface_model,lon_surface_model
     if (this%lake_fields%flooded_lake_cells(this%current_cell_to_fill_lat, &
                                             this%current_cell_to_fill_lon)) then
       this%lake_fields%flooded_lake_cells(this%current_cell_to_fill_lat, &
                                           this%current_cell_to_fill_lon) = .false.
-      lat_surface_model = &
-          this%lake_parameters%corresponding_surface_cell_lat_index(this%current_cell_to_fill_lat, &
-                                                                    this%current_cell_to_fill_lon)
-      lon_surface_model = &
-          this%lake_parameters%corresponding_surface_cell_lon_index(this%current_cell_to_fill_lat, &
-                                                                    this%current_cell_to_fill_lon)
-      this%lake_fields%number_lake_cells(lat_surface_model, &
-                                         lon_surface_model) = &
-           this%lake_fields%number_lake_cells(lat_surface_model, &
-                                              lon_surface_model) - 1
+      this%number_of_flooded_cells = &
+        this%number_of_flooded_cells - 1
     else
       this%lake_fields%connected_lake_cells(this%current_cell_to_fill_lat, &
                                             this%current_cell_to_fill_lon) = .false.
@@ -1291,28 +1476,6 @@ subroutine change_to_overflowing_lake(this,merge_type)
   integer :: merge_type
   integer :: target_cell_lat,target_cell_lon
   logical :: local_redirect
-  integer :: lat_surface_model,lon_surface_model
-    if (.not. (this%lake_fields%connected_lake_cells(this%current_cell_to_fill_lat, &
-                                                     this%current_cell_to_fill_lon) .or. &
-                this%lake_parameters%flood_only(this%current_cell_to_fill_lat, &
-                                                this%current_cell_to_fill_lon))) then
-      this%lake_fields%connected_lake_cells(this%current_cell_to_fill_lat, &
-                                            this%current_cell_to_fill_lon) = .true.
-    else if (.not. this%lake_fields%flooded_lake_cells(this%current_cell_to_fill_lat, &
-                                                       this%current_cell_to_fill_lon)) then
-      this%lake_fields%flooded_lake_cells(this%current_cell_to_fill_lat, &
-                                          this%current_cell_to_fill_lon) = .true.
-      lat_surface_model = &
-          this%lake_parameters%corresponding_surface_cell_lat_index(this%current_cell_to_fill_lat, &
-                                                                    this%current_cell_to_fill_lon)
-      lon_surface_model = &
-          this%lake_parameters%corresponding_surface_cell_lon_index(this%current_cell_to_fill_lat, &
-                                                                    this%current_cell_to_fill_lon)
-      this%lake_fields%number_lake_cells(lat_surface_model, &
-                                         lon_surface_model) = &
-          this%lake_fields%number_lake_cells(lat_surface_model, &
-                                             lon_surface_model) + 1
-    end if
     call this%get_outflow_redirect_coords(outflow_redirect_lat, &
                                           outflow_redirect_lon, &
                                           local_redirect)
@@ -1320,6 +1483,18 @@ subroutine change_to_overflowing_lake(this,merge_type)
       call this%get_secondary_merge_coords(target_cell_lat,target_cell_lon)
     else
       call this%get_primary_merge_coords(target_cell_lat,target_cell_lon)
+    end if
+    if (.not. (this%lake_fields%connected_lake_cells(this%current_cell_to_fill_lat, &
+                                                     this%current_cell_to_fill_lon) .or. &
+               this%lake_parameters%flood_only(this%current_cell_to_fill_lat, &
+                                               this%current_cell_to_fill_lon))) then
+      this%lake_fields%connected_lake_cells(this%current_cell_to_fill_lat, &
+                                            this%current_cell_to_fill_lon) = .true.
+    else if (.not. this%lake_fields%flooded_lake_cells(this%current_cell_to_fill_lat, &
+                                                       this%current_cell_to_fill_lon)) then
+      this%lake_fields%flooded_lake_cells(this%current_cell_to_fill_lat, &
+                                          this%current_cell_to_fill_lon) = .true.
+      this%number_of_flooded_cells = this%number_of_flooded_cells + 1
     end if
     call this%initialiseoverflowinglake(outflow_redirect_lat, &
                                         outflow_redirect_lon, &
@@ -1357,6 +1532,80 @@ subroutine drain_excess_water(this)
       this%excess_water = this%excess_water - flow
     end if
 end subroutine drain_excess_water
+
+recursive subroutine calculate_effective_lake_volume_per_cell(this,consider_secondary_lake, &
+                                                              lake_cell_lats_in, &
+                                                              lake_cell_lons_in, &
+                                                              filled_lake_cell_index_in)
+  class(lake), intent(inout) :: this
+  logical, intent(in) :: consider_secondary_lake
+  integer, pointer, dimension(:), optional :: lake_cell_lats_in
+  integer, pointer, dimension(:), optional :: lake_cell_lons_in
+  integer, optional :: filled_lake_cell_index_in
+  integer, pointer, dimension(:) :: working_filled_lake_cell_lats
+  integer, pointer, dimension(:) :: working_filled_lake_cell_lons
+  integer :: working_filled_lake_cell_index
+  real(dp) :: effective_volume_per_cell
+  integer :: total_number_of_flooded_cells
+  integer :: lat,lon,lat_surface_model,lon_surface_model
+  integer :: i
+    if (this%lake_type == subsumed_lake_type) then
+      call calculate_effective_lake_volume_per_cell(&
+            this%lake_fields%other_lakes(this%primary_lake_number)%lake_pointer, &
+            .true.,this%filled_lake_cell_lats,this%filled_lake_cell_lons, &
+            this%filled_lake_cell_index)
+    else
+      total_number_of_flooded_cells = this%number_of_flooded_cells + &
+                                      this%secondary_number_of_flooded_cells
+      if ((this%lake_type == filling_lake_type) .or. &
+          (total_number_of_flooded_cells == 0)) then
+        effective_volume_per_cell = &
+          (this%lake_volume + this%secondary_lake_volume) / &
+          (total_number_of_flooded_cells + 1)
+      else
+        effective_volume_per_cell = &
+          (this%lake_volume + this%secondary_lake_volume) / &
+           total_number_of_flooded_cells
+      end if
+      if (consider_secondary_lake) then
+        working_filled_lake_cell_lats => lake_cell_lats_in
+        working_filled_lake_cell_lons => lake_cell_lons_in
+        working_filled_lake_cell_index = filled_lake_cell_index_in
+      else
+        working_filled_lake_cell_lats => this%filled_lake_cell_lats
+        working_filled_lake_cell_lons => this%filled_lake_cell_lons
+        working_filled_lake_cell_index = this%filled_lake_cell_index
+        lat_surface_model = &
+            this%lake_parameters%corresponding_surface_cell_lat_index(this%current_cell_to_fill_lat, &
+                                                                      this%current_cell_to_fill_lon)
+        lon_surface_model = &
+            this%lake_parameters%corresponding_surface_cell_lon_index(this%current_cell_to_fill_lat, &
+                                                                      this%current_cell_to_fill_lon)
+        this%lake_fields%effective_volume_per_cell_on_surface_grid(lat_surface_model, &
+                                                                   lon_surface_model) = &
+          this%lake_fields%effective_volume_per_cell_on_surface_grid(lat_surface_model, &
+                                                                     lon_surface_model) + &
+          effective_volume_per_cell
+      end if
+      if (working_filled_lake_cell_index > 0) then
+        do i = 1,working_filled_lake_cell_index
+          lat = working_filled_lake_cell_lats(i)
+          lon = working_filled_lake_cell_lons(i)
+          lat_surface_model = &
+            this%lake_parameters%corresponding_surface_cell_lat_index(lat, &
+                                                                      lon)
+          lon_surface_model = &
+            this%lake_parameters%corresponding_surface_cell_lon_index(lat, &
+                                                                      lon)
+          this%lake_fields%effective_volume_per_cell_on_surface_grid(lat_surface_model, &
+                                                                     lon_surface_model) = &
+            this%lake_fields%effective_volume_per_cell_on_surface_grid(lat_surface_model, &
+                                                                       lon_surface_model) + &
+            effective_volume_per_cell
+        end do
+      end if
+    end if
+end subroutine calculate_effective_lake_volume_per_cell
 
 function fill_current_cell(this,inflow) result(filled)
   class(lake), intent(inout) :: this
@@ -1527,6 +1776,9 @@ subroutine perform_primary_merge(this)
     other_lake => other_lake%find_true_primary_lake()
     this%secondary_lake_volume = this%secondary_lake_volume + other_lake%lake_volume + &
       other_lake%secondary_lake_volume
+    this%secondary_number_of_flooded_cells = this%secondary_number_of_flooded_cells + &
+      other_lake%number_of_flooded_cells + &
+      other_lake%secondary_number_of_flooded_cells
     this%primary_merge_completed = .true.
     call other_lake%accept_merge(this%center_cell_lat,this%center_cell_lon)
 end subroutine perform_primary_merge
@@ -1536,7 +1788,6 @@ subroutine perform_secondary_merge(this)
   type(lake), pointer :: other_lake
   integer :: target_cell_lat,target_cell_lon
   integer :: other_lake_number
-  integer :: lat_surface_model,lon_surface_model
     call this%get_secondary_merge_coords(target_cell_lat,target_cell_lon)
     if (.not. (this%lake_fields%connected_lake_cells(this%current_cell_to_fill_lat, &
                                                      this%current_cell_to_fill_lon) .or. &
@@ -1548,22 +1799,16 @@ subroutine perform_secondary_merge(this)
                                                         this%current_cell_to_fill_lon))) then
       this%lake_fields%flooded_lake_cells(this%current_cell_to_fill_lat, &
                                           this%current_cell_to_fill_lon) = .true.
-      lat_surface_model = &
-          this%lake_parameters%corresponding_surface_cell_lat_index(this%current_cell_to_fill_lat, &
-                                                                    this%current_cell_to_fill_lon)
-      lon_surface_model = &
-          this%lake_parameters%corresponding_surface_cell_lon_index(this%current_cell_to_fill_lat, &
-                                                                    this%current_cell_to_fill_lon)
-      this%lake_fields%number_lake_cells(lat_surface_model,&
-                                         lon_surface_model) = &
-           this%lake_fields%number_lake_cells(lat_surface_model,&
-                                              lon_surface_model) + 1
+      this%number_of_flooded_cells = this%number_of_flooded_cells + 1
     end if
     other_lake_number = this%lake_fields%lake_numbers(target_cell_lat,target_cell_lon)
     other_lake => this%lake_fields%other_lakes(other_lake_number)%lake_pointer
     other_lake => other_lake%find_true_primary_lake()
     other_lake%secondary_lake_volume = other_lake%secondary_lake_volume + &
       this%lake_volume + this%secondary_lake_volume
+    other_lake%secondary_number_of_flooded_cells = other_lake%secondary_number_of_flooded_cells + &
+                                                   this%number_of_flooded_cells + &
+                                                   this%secondary_number_of_flooded_cells
     if (.not. (this%lake_fields%flooded_lake_cells(other_lake%current_cell_to_fill_lat, &
                                                    other_lake%current_cell_to_fill_lon) .or. &
                this%lake_parameters%flood_only(other_lake%current_cell_to_fill_lat, &
@@ -1573,16 +1818,7 @@ subroutine perform_secondary_merge(this)
     else
       this%lake_fields%flooded_lake_cells(other_lake%current_cell_to_fill_lat, &
                                           other_lake%current_cell_to_fill_lon) = .false.
-      lat_surface_model = &
-          this%lake_parameters%corresponding_surface_cell_lat_index(other_lake%current_cell_to_fill_lat, &
-                                                                    other_lake%current_cell_to_fill_lon)
-      lon_surface_model = &
-          this%lake_parameters%corresponding_surface_cell_lon_index(other_lake%current_cell_to_fill_lat, &
-                                                                    other_lake%current_cell_to_fill_lon)
-      this%lake_fields%number_lake_cells(lat_surface_model, &
-                                         lon_surface_model) = &
-           this%lake_fields%number_lake_cells(lat_surface_model, &
-                                              lon_surface_model) - 1
+      other_lake%number_of_flooded_cells = other_lake%number_of_flooded_cells - 1
     end if
     if (other_lake%lake_type == overflowing_lake_type) then
         call other_lake%change_overflowing_lake_to_filling_lake()
@@ -1605,6 +1841,10 @@ subroutine rollback_primary_merge(this,other_lake_outflow)
     other_lake => find_true_rolledback_primary_lake(other_lake)
     this%secondary_lake_volume = this%secondary_lake_volume - other_lake%lake_volume - &
       other_lake%secondary_lake_volume
+    this%secondary_number_of_flooded_cells = &
+      this%secondary_number_of_flooded_cells - &
+      (other_lake%number_of_flooded_cells + &
+       other_lake%secondary_number_of_flooded_cells)
     call other_lake%accept_split()
     call other_lake%remove_water(other_lake_outflow)
 end subroutine rollback_primary_merge
@@ -1648,7 +1888,7 @@ subroutine update_filling_cell(this,dry_run)
   class(lake), intent(inout) :: this
   logical, optional :: dry_run
   integer :: coords_lat, coords_lon
-  integer :: lat_surface_model, lon_surface_model
+  integer :: new_lat_surface_model, new_lon_surface_model
   integer :: old_lake_number
   logical :: dry_run_local
     if (present(dry_run)) then
@@ -1680,16 +1920,24 @@ subroutine update_filling_cell(this,dry_run)
                                                        coords_lon)) then
       this%lake_fields%flooded_lake_cells(coords_lat, &
                                           coords_lon) = .true.
-      lat_surface_model = &
-          this%lake_parameters%corresponding_surface_cell_lat_index(coords_lat, &
-                                                                    coords_lon)
-      lon_surface_model = &
-          this%lake_parameters%corresponding_surface_cell_lon_index(coords_lat, &
-                                                                    coords_lon)
-      this%lake_fields%number_lake_cells(lat_surface_model, &
-                                         lon_surface_model) = &
-        this%lake_fields%number_lake_cells(lat_surface_model, &
-                                           lon_surface_model) + 1
+      this%number_of_flooded_cells = this%number_of_flooded_cells + 1
+    end if
+    if ((this%lake_fields%connected_lake_cells(this%current_cell_to_fill_lat, &
+                                               this%current_cell_to_fill_lon) .or. &
+         this%lake_parameters%flood_only(this%current_cell_to_fill_lat, &
+                                         this%current_cell_to_fill_lon)) .and. &
+        .not. this%lake_fields%flooded_lake_cells(this%current_cell_to_fill_lat, &
+                                                  this%current_cell_to_fill_lon)) then
+      new_lat_surface_model = &
+            this%lake_parameters%corresponding_surface_cell_lat_index(this%current_cell_to_fill_lat, &
+                                                                      this%current_cell_to_fill_lon)
+      new_lon_surface_model = &
+            this%lake_parameters%corresponding_surface_cell_lon_index(this%current_cell_to_fill_lat, &
+                                                                      this%current_cell_to_fill_lon)
+      this%lake_fields%number_lake_cells(new_lat_surface_model, &
+                                         new_lon_surface_model) = &
+          this%lake_fields%number_lake_cells(new_lat_surface_model, &
+                                             new_lon_surface_model) + 1
     end if
     if ( .not. dry_run_local) then
       old_lake_number = this%lake_fields%lake_numbers(this%current_cell_to_fill_lat, &
@@ -1738,12 +1986,18 @@ subroutine rollback_filling_cell(this)
     else
       this%lake_fields%flooded_lake_cells(this%previous_cell_to_fill_lat, &
                                           this%previous_cell_to_fill_lon) = .false.
+      this%number_of_flooded_cells = this%number_of_flooded_cells - 1
+    end if
+    if (this%lake_fields%connected_lake_cells(this%current_cell_to_fill_lat, &
+                                              this%current_cell_to_fill_lon) .or. &
+        this%lake_parameters%flood_only(this%current_cell_to_fill_lat, &
+                                        this%current_cell_to_fill_lon)) then
       lat_surface_model = &
-          this%lake_parameters%corresponding_surface_cell_lat_index(this%previous_cell_to_fill_lat, &
-                                                                    this%previous_cell_to_fill_lon)
+          this%lake_parameters%corresponding_surface_cell_lat_index(this%current_cell_to_fill_lat, &
+                                                                    this%current_cell_to_fill_lon)
       lon_surface_model = &
-          this%lake_parameters%corresponding_surface_cell_lon_index(this%previous_cell_to_fill_lat, &
-                                                                    this%previous_cell_to_fill_lon)
+          this%lake_parameters%corresponding_surface_cell_lon_index(this%current_cell_to_fill_lat, &
+                                                                    this%current_cell_to_fill_lon)
       this%lake_fields%number_lake_cells(lat_surface_model,&
                                          lon_surface_model) = &
            this%lake_fields%number_lake_cells(lat_surface_model, &
@@ -1961,6 +2215,27 @@ function calculate_diagnostic_lake_volumes(lake_parameters,&
     deallocate(lake_volumes_by_lake_number)
 end function calculate_diagnostic_lake_volumes
 
+function get_lake_volume_list(lake_prognostics) result(lake_volumes)
+  type(lakeprognostics) :: lake_prognostics
+  real(dp), dimension(:), pointer :: lake_volumes
+  type(lake), pointer :: working_lake
+  real(dp) :: lake_overflow
+  integer :: i
+      allocate(lake_volumes(size(lake_prognostics%lakes)))
+      lake_volumes(:) = 0.0_dp
+      do i = 1,size(lake_prognostics%lakes)
+        working_lake => lake_prognostics%lakes(i)%lake_pointer
+        if(working_lake%lake_type == overflowing_lake_type) then
+          lake_overflow = working_lake%excess_water
+        else
+          lake_overflow = 0.0_dp
+        end if
+        lake_volumes(i) = working_lake%lake_volume + &
+                          working_lake%unprocessed_water + &
+                          lake_overflow
+      end do
+end function get_lake_volume_list
+
 subroutine check_water_budget(lake_prognostics,lake_fields,initial_water_to_lakes)
   type(lakeprognostics), intent(inout) :: lake_prognostics
   type(lakefields), intent(inout) :: lake_fields
@@ -1988,7 +2263,8 @@ subroutine check_water_budget(lake_prognostics,lake_fields,initial_water_to_lake
     total_water_to_lakes = sum(lake_fields%water_to_lakes)
     total_inflow_minus_outflow =  total_water_to_lakes + &
                                  sum(lake_fields%lake_water_from_ocean) - &
-                                 sum(lake_fields%water_to_hd)
+                                 sum(lake_fields%water_to_hd) - &
+                                 sum(lake_fields%evaporation_from_lakes)
     if(present(initial_water_to_lakes)) then
       total_inflow_minus_outflow = total_inflow_minus_outflow + initial_water_to_lakes
     end if
@@ -2026,16 +2302,75 @@ subroutine run_lake_number_retrieval(lake_prognostics)
     end do
 end subroutine run_lake_number_retrieval
 
-function calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields) &
-    result(lake_fraction_on_surface_grid)
+subroutine calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields, &
+                                                   lake_fraction_on_surface_grid)
+  real(dp), pointer, dimension(:,:), intent(inout) :: lake_fraction_on_surface_grid
   type(lakefields), pointer, intent(in) :: lake_fields
   type(lakeparameters), pointer, intent(in) :: lake_parameters
-  real(dp), pointer, dimension(:,:) :: lake_fraction_on_surface_grid
-    allocate(lake_fraction_on_surface_grid(lake_parameters%nlat_surface_model, &
-                                           lake_parameters%nlon_surface_model))
     lake_fraction_on_surface_grid(:,:) = &
       real(lake_fields%number_lake_cells(:,:))&
       /real(lake_parameters%number_fine_grid_cells(:,:))
-end function calculate_lake_fraction_on_surface_grid
+end subroutine calculate_lake_fraction_on_surface_grid
+
+function get_lake_fraction_on_surface_grid(lake_parameters,lake_fields) &
+    result(lake_fraction_on_surface_grid)
+  real(dp), pointer, dimension(:,:) :: lake_fraction_on_surface_grid
+  type(lakefields), pointer, intent(in) :: lake_fields
+  type(lakeparameters), pointer, intent(in) :: lake_parameters
+    allocate(lake_fraction_on_surface_grid(lake_parameters%nlat_surface_model, &
+                                           lake_parameters%nlon_surface_model))
+    call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields, &
+                                                 lake_fraction_on_surface_grid)
+end function get_lake_fraction_on_surface_grid
+
+subroutine calculate_effective_lake_height_on_surface_grid(lake_parameters, &
+                                                           lake_fields)
+  type(lakefields), pointer, intent(inout) :: lake_fields
+  type(lakeparameters), pointer, intent(in) :: lake_parameters
+    lake_fields%effective_lake_height_on_surface_grid_from_lakes(:,:) = &
+      lake_fields%effective_volume_per_cell_on_surface_grid(:,:) / &
+      lake_parameters%cell_areas_on_surface_model_grid(:,:)
+end subroutine calculate_effective_lake_height_on_surface_grid
+
+subroutine set_lake_evaporation_for_testing(lake_parameters, &
+                                            lake_fields, &
+                                            lake_evaporation)
+  type(lakeparameters), pointer, intent(in) :: lake_parameters
+  type(lakefields), pointer, intent(inout) :: lake_fields
+  real(dp), allocatable, dimension(:,:), intent(in) :: lake_evaporation
+    call calculate_effective_lake_height_on_surface_grid(lake_parameters,lake_fields)
+    lake_fields%effective_lake_height_on_surface_grid_to_lakes(:,:) = &
+      lake_fields%effective_lake_height_on_surface_grid_from_lakes(:,:) - &
+      (lake_evaporation(:,:) / &
+       lake_parameters%cell_areas_on_surface_model_grid(:,:))
+end subroutine set_lake_evaporation_for_testing
+
+subroutine set_lake_evaporation(lake_parameters, &
+                                lake_fields, &
+                                height_of_water_evaporated)
+  type(lakeparameters), pointer, intent(in) :: lake_parameters
+  type(lakefields), pointer, intent(inout) :: lake_fields
+  real(dp), allocatable, dimension(:,:), intent(in) :: height_of_water_evaporated
+  real(dp) :: working_effective_lake_height_on_surface_grid
+  integer :: i,j
+    call calculate_effective_lake_height_on_surface_grid(lake_parameters,lake_fields)
+    lake_fields%effective_lake_height_on_surface_grid_to_lakes(:,:) = &
+      lake_fields%effective_lake_height_on_surface_grid_from_lakes
+    do j = 1,lake_parameters%nlon_surface_model
+      do i = 1,lake_parameters%nlat_surface_model
+        if (lake_fields%effective_lake_height_on_surface_grid_from_lakes(i,j) > 0.0) then
+          working_effective_lake_height_on_surface_grid = &
+            lake_fields%effective_lake_height_on_surface_grid_from_lakes(i,j) - &
+            height_of_water_evaporated(i,j)
+          if (working_effective_lake_height_on_surface_grid > 0.0) then
+            lake_fields%effective_lake_height_on_surface_grid_to_lakes(i,j) = &
+              working_effective_lake_height_on_surface_grid
+          else
+            lake_fields%effective_lake_height_on_surface_grid_to_lakes(i,j) = 0.0
+          end if
+        end if
+      end do
+    end do
+end subroutine set_lake_evaporation
 
 end module latlon_lake_model_mod

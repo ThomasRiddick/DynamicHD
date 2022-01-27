@@ -3,16 +3,16 @@ USE_NAG := False
 USE_INTEL := False
 FLAGS := -DUSE_LOGGING
 ifeq ($(shell uname -s),Darwin)
-GFORTRAN :=  /usr/local/Cellar/gcc/10.2.0_3/bin/gfortran-10
+GFORTRAN :=  /usr/local/Cellar/gcc@10/10.3.0/bin/gfortran-10
 NAGFORTRAN :=  /usr/local/bin/nagfor
 EXT_SOURCE :=$(shell echo ${HOME} )/Documents/code/
-GFORTRAN_NETCDF_F := /usr/local/Cellar/netcdf/4.7.4_2
+GFORTRAN_NETCDF_F := /usr/local/Cellar/netcdf/4.8.1
 NETCDF_F_LIB :=libnetcdff.dylib
 else ifeq ($(shell hostname -d),hpc.dkrz.de)
 GFORTRAN := $(shell which gfortran)
 NAGFORTRAN :=  $(shell which nagfor)
 INTELFORTRAN := $(shell which ifort)
-EXT_SOURCE :=$(shell echo ${HOME} )/HDancillarydata/code/
+EXT_SOURCE :=$(shell echo ${HOME} )/HDancillarydata_11Sept2019/code/
 GFORTRAN_NETCDF_F := /sw/rhel6-x64/netcdf/netcdf_fortran-4.4.4-gcc64
 NAG_NETCDF_F := /sw/rhel6-x64/netcdf/netcdf_fortran-4.4.2-static-nag60
 INTEL_NETCDF_F := /sw/rhel6-x64/netcdf/netcdf_fortran-4.4.3-intel14

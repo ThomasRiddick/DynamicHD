@@ -92,16 +92,23 @@ module latlon_hd_model_interface_mod
   end subroutine init_hd_model_for_testing
 
   subroutine run_hd_model(timesteps,runoffs,drainages,lake_evaporations,&
-                          working_directory)
+                          use_realistic_surface_coupling_in,working_directory, &
+                          lake_volumes_for_all_timesteps)
     integer, intent(in) :: timesteps
     real(dp)   ,dimension(:,:,:) :: runoffs
     real(dp)   ,dimension(:,:,:) :: drainages
     real(dp)   ,dimension(:,:,:), optional :: lake_evaporations
+    logical, intent(in), optional :: use_realistic_surface_coupling_in
     real(dp)   ,dimension(:,:,:), allocatable :: lake_evaporations_local
     character(len = *), intent(in),optional :: working_directory
     real(dp)   ,dimension(:,:), allocatable :: runoff
     real(dp)   ,dimension(:,:), allocatable :: drainage
     real(dp)   ,dimension(:,:), allocatable :: evaporation
+    real(dp)   ,dimension(:,:), allocatable :: lake_fraction_adjusted_evaporation
+    real(dp)   ,dimension(:,:), pointer     :: lake_fractions
+    real(dp)   ,dimension(:,:), optional, pointer :: lake_volumes_for_all_timesteps
+    real(dp)   ,dimension(:), pointer :: lake_volumes
+    logical :: use_realistic_surface_coupling
     integer :: i
     character(len = max_name_length) :: working_directory_local
       if (present(working_directory)) then
@@ -109,25 +116,51 @@ module latlon_hd_model_interface_mod
       else
         working_directory_local = ""
       end if
-      allocate(lake_evaporations_local,mold=runoffs)
-      if (present(lake_evaporations)) then
-        lake_evaporations_local(:,:,:) = lake_evaporations(:,:,:)
+      if (present(use_realistic_surface_coupling_in)) then
+        use_realistic_surface_coupling = use_realistic_surface_coupling_in
       else
-        lake_evaporations_local(:,:,:) = 0.0_dp
+        use_realistic_surface_coupling = .false.
+      end if
+      if (present(lake_evaporations)) then
+        allocate(lake_evaporations_local,mold=lake_evaporations)
+        lake_evaporations_local(:,:,:) = lake_evaporations(:,:,:)
+      else if (global_prognostics%using_lakes) then
+          allocate(lake_evaporations_local(get_surface_model_nlat_interface(), &
+                                           get_surface_model_nlon_interface(), &
+                                           size(runoffs,3)))
+          lake_evaporations_local(:,:,:) = 0.0_dp
       end if
       allocate(runoff(global_prognostics%river_parameters%nlat,&
                       global_prognostics%river_parameters%nlon))
       allocate(drainage(global_prognostics%river_parameters%nlat,&
                         global_prognostics%river_parameters%nlon))
-      allocate(evaporation(global_prognostics%river_parameters%nlat,&
-                           global_prognostics%river_parameters%nlon))
+      if (global_prognostics%using_lakes) then
+        allocate(evaporation(get_surface_model_nlat_interface(), &
+                             get_surface_model_nlon_interface()))
+        allocate(lake_fraction_adjusted_evaporation(get_surface_model_nlat_interface(), &
+                                                    get_surface_model_nlon_interface()))
+      end if
       do i = 1,timesteps
         runoff(:,:) = runoffs(:,:,i)
         drainage(:,:) = drainages(:,:,i)
-        evaporation(:,:) = lake_evaporations_local(:,:,i)
+        if (global_prognostics%using_lakes) then
+          evaporation(:,:) = lake_evaporations_local(:,:,i)
+          if (use_realistic_surface_coupling) then
+            lake_fractions => get_lake_fractions_interface()
+            lake_fraction_adjusted_evaporation(:,:) = evaporation(:,:) * lake_fractions(:,:)
+            call set_evaporation_to_lakes_interface(lake_fraction_adjusted_evaporation)
+            deallocate(lake_fractions)
+          else
+            call set_evaporation_to_lakes_for_testing_interface(evaporation)
+          end if
+        end if
         call set_runoff_and_drainage(global_prognostics,runoff,drainage)
-        call set_lake_evaporation(global_prognostics,evaporation)
         call run_hd(global_prognostics)
+        if (present(lake_volumes_for_all_timesteps)) then
+          lake_volumes => get_lake_volumes()
+          lake_volumes_for_all_timesteps(:,i) = lake_volumes(:)
+          deallocate(lake_volumes)
+        end if
         if ((i == 1 .or. i == timesteps .or. mod(i,365) == 0) .and. write_output) then
           call write_river_flow_field(working_directory_local, &
                                       global_prognostics%river_parameters,&
@@ -135,10 +168,13 @@ module latlon_hd_model_interface_mod
           call write_diagnostic_lake_volumes_interface(working_directory_local,i)
         end if
       end do
-      deallocate(lake_evaporations_local)
+      if (global_prognostics%using_lakes) then
+          deallocate(lake_evaporations_local)
+          deallocate(lake_fraction_adjusted_evaporation)
+          deallocate(evaporation)
+      end if
       deallocate(runoff)
       deallocate(drainage)
-      deallocate(evaporation)
   end subroutine
 
   function get_global_prognostics() result(value)

@@ -864,20 +864,24 @@ function handle_event(lake::Union{OverflowingLake,FillingLake},
   lake_parameters::LakeParameters = get_lake_parameters(lake)
   lake_fields::LakeFields = get_lake_fields(lake)
   lake_variables::LakeVariables = get_lake_variables(lake)
+  total_number_of_flooded_cells::Int64 =
+    lake_variables.number_of_flooded_cells+lake_variables.secondary_number_of_flooded_cells
   effective_volume_per_cell::Float64 =
     (lake_variables.lake_volume + lake_variables.secondary_lake_volume) /
-    (lake_variables.number_of_flooded_cells+lake_variables.secondary_number_of_flooded_cells +
-     (isa(lake,FillingLake) ? 1 : 0))
+    ( total_number_of_flooded_cells + ((isa(lake,FillingLake) ||
+                                       (total_number_of_flooded_cells == 0)) ? 1 : 0))
   working_cell_list::Vector{Coords} =
     calculate_effective_lake_volume_per_cell.consider_secondary_lake ?
     calculate_effective_lake_volume_per_cell.cell_list :
     lake_variables.filled_lake_cells
-  surface_model_coords::Coords =
-    get_corresponding_surface_model_grid_cell(lake_variables.current_cell_to_fill,
-                                              lake_parameters.grid_specific_lake_parameters)
-  set!(lake_fields.effective_volume_per_cell_on_surface_grid,surface_model_coords,
-       lake_fields.effective_volume_per_cell_on_surface_grid(surface_model_coords)+
-       effective_volume_per_cell)
+  if (! calculate_effective_lake_volume_per_cell.consider_secondary_lake)
+    surface_model_coords::Coords =
+      get_corresponding_surface_model_grid_cell(lake_variables.current_cell_to_fill,
+                                                lake_parameters.grid_specific_lake_parameters)
+    set!(lake_fields.effective_volume_per_cell_on_surface_grid,surface_model_coords,
+         lake_fields.effective_volume_per_cell_on_surface_grid(surface_model_coords)+
+         effective_volume_per_cell)
+  end
   for coords::Coords in working_cell_list
     surface_model_coords = get_corresponding_surface_model_grid_cell(coords,
                               lake_parameters.grid_specific_lake_parameters)
