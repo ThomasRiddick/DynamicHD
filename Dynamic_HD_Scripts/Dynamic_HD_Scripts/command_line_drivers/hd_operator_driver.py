@@ -452,7 +452,8 @@ class HDOperatorDrivers(object):
                                                 orography_variance_file=\
                                                 path.join(ancillary_data_path,'bin_toposig.dat'),
                                                 output_dir=path.join(working_dir,
-                                                                     'hd_flow_params'))
+                                                                     'hd_flow_params'),
+                                                production_run=True)
         dyn_hd_driver._generate_hd_file(rdir_file=path.splitext(rdirs_file)[0] + ".dat",
                                         lsmask_file=path.splitext(ls_mask)[0] + ".dat",
                                         null_file=\
@@ -465,7 +466,8 @@ class HDOperatorDrivers(object):
                                                   'grid_0_5.txt'),
                                         output_file=hdpara_filepath,
                                         paras_dir=path.join(working_dir,
-                                                            'hd_flow_params'))
+                                                            'hd_flow_params'),
+                                        production_run=True)
 
 def setup_and_run_hd_operator_driver_from_command_line_arguments(args):
     driver_object = HDOperatorDrivers()
