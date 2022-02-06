@@ -32,7 +32,7 @@ class Lake_Data_Extractor(object):
         print("max lat: {}".format(section_coords["max_lat"]))
         print("min lon: {}".format(section_coords["min_lon"]))
         print("max lon: {}".format(section_coords["max_lon"]))
-        print("Extracting course section:")
+        print("Extracting coarse section:")
         print("min lat: {}".format(coarse_section_coords["min_lat"]))
         print("max lat: {}".format(coarse_section_coords["max_lat"]))
         print("min lon: {}".format(coarse_section_coords["min_lon"]))

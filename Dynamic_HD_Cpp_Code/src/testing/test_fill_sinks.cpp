@@ -3807,14 +3807,14 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingSingleOrographyCellOneHundre
 }
 
 TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingTwobyTwoCellGridPartitionTest){
-	int nlat_course = 2;
-	int nlon_course = 2;
-	int nlat_fine = nlat_course*10;
-	int nlon_fine = nlon_course*10;
-	int scale_factor_lat = nlat_fine/nlat_course;
-	int scale_factor_lon = nlon_fine/nlon_course;
-	double* orography_out = new double [nlat_course*nlon_course];
-	for (auto i = 0; i < nlat_course*nlon_course; i++) {
+	int nlat_coarse = 2;
+	int nlon_coarse = 2;
+	int nlat_fine = nlat_coarse*10;
+	int nlon_fine = nlon_coarse*10;
+	int scale_factor_lat = nlat_fine/nlat_coarse;
+	int scale_factor_lon = nlon_fine/nlon_coarse;
+	double* orography_out = new double [nlat_coarse*nlon_coarse];
+	for (auto i = 0; i < nlat_coarse*nlon_coarse; i++) {
 		orography_out[i] = -999.0;
 	}
 	double* orography_in = new double[nlat_fine*nlon_fine] {
@@ -3863,7 +3863,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingTwobyTwoCellGridPartitionTes
 	};
 	partition_fine_orography(orography_in,landsea_in,true_sinks_in,
 			 	 	 	 	 nlat_fine,nlon_fine,orography_out,
-							 nlat_course,nlon_course,scale_factor_lat,
+							 nlat_coarse,nlon_coarse,scale_factor_lat,
 							 scale_factor_lon,test_part);
 	ASSERT_FALSE(test_failed);
 	delete[] orography_in;
@@ -3879,12 +3879,12 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingTwobyTwoCellGridTest){
 	int tarasov_separation_threshold_for_returning_to_same_edge_in = 5;
 	double tarasov_min_path_length_in = 3.0;
 	double  tarasov_include_corners_in_same_edge_criteria_in = true;
-	int nlat_course = 2;
-	int nlon_course = 2;
-	int nlat_fine = nlat_course*10;
-	int nlon_fine = nlon_course*10;
-	double* orography_out = new double [nlat_course*nlon_course];
-	for (auto i = 0; i < nlat_course*nlon_course; i++) {
+	int nlat_coarse = 2;
+	int nlon_coarse = 2;
+	int nlat_fine = nlat_coarse*10;
+	int nlon_fine = nlon_coarse*10;
+	double* orography_out = new double [nlat_coarse*nlon_coarse];
+	for (auto i = 0; i < nlat_coarse*nlon_coarse; i++) {
 		orography_out[i] = -999.0;
 	}
 	double* orography_in = new double[nlat_fine*nlon_fine] {
@@ -3918,7 +3918,7 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingTwobyTwoCellGridTest){
 		true_sinks_in[i] = false;
 	}
 	latlon_upscale_orography(orography_in,nlat_fine,nlon_fine,orography_out,
-							 nlat_course,nlon_course,method,landsea_in,true_sinks_in,
+							 nlat_coarse,nlon_coarse,method,landsea_in,true_sinks_in,
 							 add_slope_in,epsilon_in,
 							 tarasov_separation_threshold_for_returning_to_same_edge_in,
 							 tarasov_min_path_length_in,
@@ -3939,12 +3939,12 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingFourbyFourCellGridTest){
 	int tarasov_separation_threshold_for_returning_to_same_edge_in = 5;
 	double tarasov_min_path_length_in = 3.0;
 	double  tarasov_include_corners_in_same_edge_criteria_in = false;
-	int nlat_course = 4;
-	int nlon_course = 4;
-	int nlat_fine = nlat_course*10;
-	int nlon_fine = nlon_course*10;
-	double* orography_out = new double [nlat_course*nlon_course];
-	for (auto i = 0; i < nlat_course*nlon_course; i++) {
+	int nlat_coarse = 4;
+	int nlon_coarse = 4;
+	int nlat_fine = nlat_coarse*10;
+	int nlon_fine = nlon_coarse*10;
+	double* orography_out = new double [nlat_coarse*nlon_coarse];
+	for (auto i = 0; i < nlat_coarse*nlon_coarse; i++) {
 		orography_out[i] = -999.0;
 	}
 	double* orography_in = new double[nlat_fine*nlon_fine] {
@@ -4083,19 +4083,19 @@ TEST_F(FillSinksOrographyUpscalingTest,TestUpscalingFourbyFourCellGridTest){
 		false,false,false,false,false,false,false,false,false,false,   false,false,false,false,false,false,false,false,false,false,   false,false,false,false,false,false,false,false,false,false, false,false,false,false,false,false,false,false,false,false,
 		false,false,false,false,false,false,false,false,false,false,   false,false,false,false,false,false,false,false,false,false,   false,false,false,false,false,false,false,false,false,false, false,false,false,false,false,false,false,false,false,false
 	};
-	double* expected_output = new double [nlat_course*nlon_course] {
+	double* expected_output = new double [nlat_coarse*nlon_coarse] {
 		60.0,78.0,78.0,65.0,
 		99.0,52.0,55.0,52.0,
 		80.0,91.5,87.0,91.0,
 		58.0,53.0,60.0,60.0
 	};
 	latlon_upscale_orography(orography_in,nlat_fine,nlon_fine,orography_out,
-							 nlat_course,nlon_course,method,landsea_in,true_sinks_in,
+							 nlat_coarse,nlon_coarse,method,landsea_in,true_sinks_in,
 							 add_slope_in,epsilon_in,
 							 tarasov_separation_threshold_for_returning_to_same_edge_in,
 							 tarasov_min_path_length_in,
 							 tarasov_include_corners_in_same_edge_criteria_in);
-	for (auto i = 0; i < nlat_course*nlat_course; i++){
+	for (auto i = 0; i < nlat_coarse*nlat_coarse; i++){
 		EXPECT_EQ(orography_out[i],expected_output[i]);
 	}
 	delete[] orography_in;

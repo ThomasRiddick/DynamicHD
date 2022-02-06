@@ -102,13 +102,13 @@ class Test(unittest.TestCase):
             """
         with open(self.cotat_params_file_path,'w') as f:
             f.write(textwrap.dedent(cotat_params_text))
-        output_course_river_directions = \
+        output_coarse_river_directions = \
             cotat_plus_driver.run_cotat_plus(fine_rdirs_field=input_fine_river_directions_test_field,
                                              fine_total_cumulative_flow_field=\
                                              input_fine_total_cumulative_flow_test_field,
                                              cotat_plus_parameters_filepath=self.cotat_params_file_path,
-                                             course_grid_type='LatLong',nlat=5,nlong=5)
-        np.testing.assert_array_equal(output_course_river_directions.get_data(),
+                                             coarse_grid_type='LatLong',nlat=5,nlong=5)
+        np.testing.assert_array_equal(output_coarse_river_directions.get_data(),
                                       self.small_grid_expected_result,
                                       "Running scaling code over small 5 by 5 grid doesn't"
                                       " produce expected results")

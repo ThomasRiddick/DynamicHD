@@ -145,7 +145,7 @@ def relabel_outflow_catchment(catchments,original_outflow_coords,relabel_as_outf
                                                            data_catchment_field_original_scale,
                                                            data_original_scale_flowtocellfield=\
                                                            data_original_scale_flowtocellfield,
-                                                           data_course_coords=original_outflow_coords,
+                                                           data_coarse_coords=original_outflow_coords,
                                                            catchment_grid_changed=catchment_grid_changed,
                                                            data_original_scale_grid_type=\
                                                            data_original_scale_grid_type,
@@ -157,7 +157,7 @@ def relabel_outflow_catchment(catchments,original_outflow_coords,relabel_as_outf
                                                        data_catchment_field_original_scale,
                                                        data_original_scale_flowtocellfield=\
                                                        data_original_scale_flowtocellfield,
-                                                       data_course_coords=relabel_as_outflow_coords,
+                                                       data_coarse_coords=relabel_as_outflow_coords,
                                                        catchment_grid_changed=catchment_grid_changed,
                                                        data_original_scale_grid_type=\
                                                        data_original_scale_grid_type,
@@ -168,29 +168,29 @@ def relabel_outflow_catchment(catchments,original_outflow_coords,relabel_as_outf
 
 def find_data_catchment_number(data_catchment_field,
                                data_catchment_field_original_scale,
-                               data_original_scale_flowtocellfield,data_course_coords,
+                               data_original_scale_flowtocellfield,data_coarse_coords,
                                catchment_grid_changed,data_original_scale_grid_type,
                                data_original_scale_grid_kwargs,grid_type,**grid_kwargs):
     if not catchment_grid_changed:
-        data_catchment_num = data_catchment_field[data_course_coords]
+        data_catchment_num = data_catchment_field[data_coarse_coords]
         scale_factor = 1
     else:
-        scale_factor = calculate_scale_factor(course_grid_type=grid_type,
-                                              course_grid_kwargs = grid_kwargs,
+        scale_factor = calculate_scale_factor(coarse_grid_type=grid_type,
+                                              coarse_grid_kwargs = grid_kwargs,
                                               fine_grid_type=data_original_scale_grid_type,
                                               fine_grid_kwargs=data_original_scale_grid_kwargs)
         data_catchment_num = data_catchment_field_original_scale[\
             find_downscaled_outflow_coords(data_original_scale_flowtocellfield,
-                                           course_coords=data_course_coords,
+                                           coarse_coords=data_coarse_coords,
                                            scale_factor=scale_factor)]
     return data_catchment_num,scale_factor
 
-def find_downscaled_outflow_coords(original_scale_field,course_coords,scale_factor):
-    """Look for a river mouth in a fine scale field given course scale coordinates"""
-    search_area = original_scale_field[course_coords[0]*scale_factor:(course_coords[0]+1)*scale_factor,
-                                       course_coords[1]*scale_factor:(course_coords[1]+1)*scale_factor]
+def find_downscaled_outflow_coords(original_scale_field,coarse_coords,scale_factor):
+    """Look for a river mouth in a fine scale field given coarse scale coordinates"""
+    search_area = original_scale_field[coarse_coords[0]*scale_factor:(coarse_coords[0]+1)*scale_factor,
+                                       coarse_coords[1]*scale_factor:(coarse_coords[1]+1)*scale_factor]
     internal_coords = np.unravel_index(search_area.argmax(),(scale_factor,scale_factor))
-    mouth_coords = internal_coords[0]+course_coords[0]*scale_factor,internal_coords[1]+course_coords[1]*scale_factor
+    mouth_coords = internal_coords[0]+coarse_coords[0]*scale_factor,internal_coords[1]+coarse_coords[1]*scale_factor
     mouth_neighbors = np.copy(original_scale_field[mouth_coords[0]-1:mouth_coords[0]+2,
                                                    mouth_coords[1]-1:mouth_coords[1]+2])
     mouth_neighbors[1,1] = 0
@@ -253,10 +253,10 @@ def calculate_lon_label(x_index,offset,scale_factor=1,precision=1):
 def calc_displayed_plot_size(xlim,ylim):
     return (xlim[1] - xlim[0])*(ylim[0]-ylim[1])
 
-def calculate_scale_factor(course_grid_type,course_grid_kwargs,fine_grid_type,fine_grid_kwargs):
+def calculate_scale_factor(coarse_grid_type,coarse_grid_kwargs,fine_grid_type,fine_grid_kwargs):
     fine_grid_nlat = grid.makeGrid(fine_grid_type,**fine_grid_kwargs).get_grid_dimensions()[0]
-    course_grid_nlat = grid.makeGrid(course_grid_type,**course_grid_kwargs).get_grid_dimensions()[0]
-    return fine_grid_nlat/course_grid_nlat
+    coarse_grid_nlat = grid.makeGrid(coarse_grid_type,**coarse_grid_kwargs).get_grid_dimensions()[0]
+    return fine_grid_nlat/coarse_grid_nlat
 
 def find_ocean_basin_catchments(rdirs,catchments,areas=[]):
   ocean_catchments = catchments.copy()

@@ -14,24 +14,24 @@ from Dynamic_HD_Scripts.utilities import coordinate_scaling_utilities
 from Dynamic_HD_Scripts.interface.cpp_interface.libs \
     import upscale_orography_wrapper
 
-def drive_orography_upscaling(input_fine_orography_file,output_course_orography_file,
+def drive_orography_upscaling(input_fine_orography_file,output_coarse_orography_file,
                               landsea_file=None,true_sinks_file=None,
                               upscaling_parameters_filename=None,
-                              fine_grid_type='LatLong10min',course_grid_type='HD',
+                              fine_grid_type='LatLong10min',coarse_grid_type='HD',
                               input_orography_field_name=None,flip_landsea=False,
                               rotate_landsea=False,flip_true_sinks=False,rotate_true_sinks=False,
-                              fine_grid_kwargs={},**course_grid_kwargs):
+                              fine_grid_kwargs={},**coarse_grid_kwargs):
     """Drive the C++ sink filling code base to make a tarasov-like orography upscaling
 
     Arguments:
     input_fine_orography_file: string; full path to input fine orography file
-    output_course_orography_file: string; full path of target output course orography file
+    output_coarse_orography_file: string; full path of target output coarse orography file
     landsea_file: string; full path to input fine landsea mask file (optional)
     true_sinks_file: string; full path to input fine true sinks file (optional)
     upscaling_parameters_filename: string; full path to the orography upscaling parameter
         file (optional)
     fine_grid_type: string; code for the fine grid type to be upscaled from  (optional)
-    course_grid_type: string; code for the course grid type to be upscaled to (optional)
+    coarse_grid_type: string; code for the coarse grid type to be upscaled to (optional)
     input_orography_field_name: string; name of field in the input orography file (optional)
     flip_landsea: bool; flip the input landsea mask upside down
     rotate_landsea: bool; rotate the input landsea mask by 180 degrees along the horizontal axis
@@ -40,7 +40,7 @@ def drive_orography_upscaling(input_fine_orography_file,output_course_orography_
         horizontal axis
     fine_grid_kwargs:  keyword dictionary; the parameter of the fine grid to upscale
         from (if required)
-    **course_grid_kwargs: keyword dictionary; the parameters of the course grid to upscale
+    **coarse_grid_kwargs: keyword dictionary; the parameters of the coarse grid to upscale
         to (if required)
     Returns: Nothing.
     """
@@ -67,7 +67,7 @@ def drive_orography_upscaling(input_fine_orography_file,output_course_orography_
         tarasov_min_path_length_in = 2.0
         tarasov_include_corners_in_same_edge_criteria_in = False
     output_orography = field.makeEmptyField(field_type='Orography',dtype=np.float64,
-                                            grid_type=course_grid_type,**course_grid_kwargs)
+                                            grid_type=coarse_grid_type,**coarse_grid_kwargs)
     input_orography = iodriver.load_field(input_fine_orography_file,
                                           file_type=get_file_extension(input_fine_orography_file),
                                           field_type='Orography', unmask=True,
@@ -111,11 +111,11 @@ def drive_orography_upscaling(input_fine_orography_file,output_course_orography_
                                                 tarasov_min_path_length_in=tarasov_min_path_length_in,
                                                 tarasov_include_corners_in_same_edge_criteria_in=\
                                                 tarasov_include_corners_in_same_edge_criteria_in)
-    iodriver.write_field(output_course_orography_file,output_orography,
-                         file_type=get_file_extension(output_course_orography_file))
+    iodriver.write_field(output_coarse_orography_file,output_orography,
+                         file_type=get_file_extension(output_coarse_orography_file))
 
-def advanced_drive_orography_upscaling(input_fine_orography_file,output_course_orography_file,
-                                       input_orography_fieldname,output_course_orography_fieldname,
+def advanced_drive_orography_upscaling(input_fine_orography_file,output_coarse_orography_file,
+                                       input_orography_fieldname,output_coarse_orography_fieldname,
                                        landsea_file=None,
                                        true_sinks_file=None,landsea_fieldname=None,
                                        true_sinks_fieldname=None,
@@ -147,14 +147,14 @@ def advanced_drive_orography_upscaling(input_fine_orography_file,output_course_o
                                                      fieldname=input_orography_fieldname)
     nlat_fine,nlon_fine = input_orography.get_grid_dimensions()
     lat_pts_fine,lon_pts_fine = input_orography.get_grid_coordinates()
-    nlat_course,nlon_course,lat_pts_course,lon_pts_course = \
-        coordinate_scaling_utilities.generate_course_coords(nlat_fine,nlon_fine,
+    nlat_coarse,nlon_coarse,lat_pts_coarse,lon_pts_coarse = \
+        coordinate_scaling_utilities.generate_coarse_coords(nlat_fine,nlon_fine,
                                                             lat_pts_fine,lon_pts_fine,
                                                             scaling_factor)
     output_orography = field.makeEmptyField(field_type='Orography',dtype=np.float64,
-                                            grid_type='LatLong',nlat=nlat_course,
-                                            nlong=nlon_course)
-    output_orography.set_grid_coordinates([lat_pts_course,lon_pts_course])
+                                            grid_type='LatLong',nlat=nlat_coarse,
+                                            nlong=nlon_coarse)
+    output_orography.set_grid_coordinates([lat_pts_coarse,lon_pts_coarse])
     if landsea_file:
         landsea_mask = iodriver.advanced_field_loader(landsea_file,
                                                       field_type='Generic',
@@ -185,7 +185,7 @@ def advanced_drive_orography_upscaling(input_fine_orography_file,output_course_o
                                                 tarasov_min_path_length_in=tarasov_min_path_length_in,
                                                 tarasov_include_corners_in_same_edge_criteria_in=\
                                                 tarasov_include_corners_in_same_edge_criteria_in)
-    iodriver.advanced_field_writer(output_course_orography_file,output_orography)
+    iodriver.advanced_field_writer(output_coarse_orography_file,output_orography)
 
 def read_and_validate_config(upscaling_parameters_filename):
     """Reads and checks format of config file

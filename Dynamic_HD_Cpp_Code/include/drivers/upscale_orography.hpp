@@ -23,7 +23,7 @@ void latlon_upscale_orography_cython_interface(double*, int, int, double*, int, 
 void latlon_upscale_orography(double*,int,int,double*,int,int,int,bool*,bool*,bool,double,int,
 							 double,bool,bool=false);
 //Split up a fine orography into chunks such that these chunks map to point in the grid of the
-//course orography being generated and then run the supplied function over those points
+//coarse orography being generated and then run the supplied function over those points
 void partition_fine_orography(double*,bool*,bool*,int,int,double*,int,int,int,int,
 							  function<double(double*,bool*,bool*)>);
 

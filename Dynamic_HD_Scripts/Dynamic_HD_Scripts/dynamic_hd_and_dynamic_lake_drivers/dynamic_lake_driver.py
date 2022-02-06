@@ -792,11 +792,11 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
                                               rdirs_filename_10min,
                                               input_fine_cumulative_flow_filename=
                                               fine_cumulative_flow_filename,
-                                              output_course_rdirs_filename=
+                                              output_coarse_rdirs_filename=
                                               rdirs_filename_30min,
                                               input_fine_rdirs_fieldname="FDIR",
                                               input_fine_cumulative_flow_fieldname="cflow",
-                                              output_course_rdirs_fieldname="FDIR",
+                                              output_coarse_rdirs_fieldname="FDIR",
                                               cotat_plus_parameters_filename=
                                               cotat_plus_parameters_filename,
                                               output_file_label=file_label,
@@ -828,14 +828,14 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
                                      output_grid_type='HD',
                                      method='Mode', timeslice=None,
                                      scalenumbers=True)
-      transformed_course_rdirs_filename = path.splitext(rdirs_filename_30min)[0] + '_transf' +\
+      transformed_coarse_rdirs_filename = path.splitext(rdirs_filename_30min)[0] + '_transf' +\
                                           path.splitext(rdirs_filename_30min)[1]
       transformed_HD_filled_orography_filename = path.splitext(coarse_orography_filename)[0] + '_transf' +\
                                         path.splitext(coarse_orography_filename)[1]
       transformed_HD_ls_mask_filename = path.splitext(coarse_lsmask_filename)[0] + '_transf' +\
                                           path.splitext(coarse_lsmask_filename)[1]
       self._apply_transforms_to_field(input_filename=rdirs_filename_30min,
-                                      output_filename=transformed_course_rdirs_filename,
+                                      output_filename=transformed_coarse_rdirs_filename,
                                       flip_ud=False, rotate180lr=True, invert_data=False,
                                       timeslice=None, griddescfile=self.half_degree_grid_filepath,
                                       grid_type='HD')

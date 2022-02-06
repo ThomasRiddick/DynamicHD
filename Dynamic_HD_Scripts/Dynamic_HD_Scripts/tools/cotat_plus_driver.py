@@ -16,7 +16,7 @@ from Dynamic_HD_Scripts.base import iodriver
 from Dynamic_HD_Scripts.utilities import coordinate_scaling_utilities
 
 def run_cotat_plus(fine_rdirs_field,fine_total_cumulative_flow_field,cotat_plus_parameters_filepath,
-                   course_grid_type,**course_grid_kwargs):
+                   coarse_grid_type,**coarse_grid_kwargs):
     """Run the cotat plus fortran code using f2py for a lat-lon field
 
     Arguments:
@@ -25,10 +25,10 @@ def run_cotat_plus(fine_rdirs_field,fine_total_cumulative_flow_field,cotat_plus_
         the fine_rdirs_field) to be used in upscaling
     cotat_plus_parameter_filepath: string; the file path containing the namelist with the parameters
         for the cotat plus upscaling algorithm
-    course_grid_type: string; code for the course grid type to be upscaled to
-    **course_grid_kwargs(optional): keyword dictionary; the parameter of the course grid to
+    coarse_grid_type: string; code for the coarse grid type to be upscaled to
+    **coarse_grid_kwargs(optional): keyword dictionary; the parameter of the coarse grid to
         upscale to (if required)
-    Return: 2d ndarray; the upscaled river direction on the course grid
+    Return: 2d ndarray; the upscaled river direction on the coarse grid
 
     Compiles and runs the COTAT plus algorithm in Fortran using f2py for a lat-lon field
     """
@@ -43,43 +43,43 @@ def run_cotat_plus(fine_rdirs_field,fine_total_cumulative_flow_field,cotat_plus_
                                           func_name="cotat_plus_latlon_f2py_wrapper",
                                           additional_fortran_files=additional_fortran_filepaths,
                                           include_path=fortran_project_include_path)
-    course_grid = grid.makeGrid(course_grid_type,**course_grid_kwargs)
-    course_rdirs_field_raw = f2py_mngr.\
-        run_current_function_or_subroutine(course_grid.get_grid_dimensions()[0],
-                                           course_grid.get_grid_dimensions()[1],
+    coarse_grid = grid.makeGrid(coarse_grid_type,**coarse_grid_kwargs)
+    coarse_rdirs_field_raw = f2py_mngr.\
+        run_current_function_or_subroutine(coarse_grid.get_grid_dimensions()[0],
+                                           coarse_grid.get_grid_dimensions()[1],
                                            fine_rdirs_field.get_data().astype(np.int64,order='F'),
                                            fine_total_cumulative_flow_field.get_data().astype(np.int64,order='F'),
                                            cotat_plus_parameters_filepath)
-    course_rdirs_field = field.makeField(course_rdirs_field_raw.astype(np.float64),'RiverDirections',course_grid_type,
-                                         **course_grid_kwargs)
+    coarse_rdirs_field = field.makeField(coarse_rdirs_field_raw.astype(np.float64),'RiverDirections',coarse_grid_type,
+                                         **coarse_grid_kwargs)
     if fine_rdirs_field.grid_has_coordinates():
       nlat_fine,nlon_fine = fine_rdirs_field.get_grid_dimensions()
       lat_pts_fine,lon_pts_fine = fine_rdirs_field.get_grid_coordinates()
-      nlat_course,nlon_course = course_grid.get_grid_dimensions()
-      lat_pts_course,lon_pts_course = \
-        coordinate_scaling_utilities.generate_course_pts(nlat_fine,nlon_fine,
+      nlat_coarse,nlon_coarse = coarse_grid.get_grid_dimensions()
+      lat_pts_coarse,lon_pts_coarse = \
+        coordinate_scaling_utilities.generate_coarse_pts(nlat_fine,nlon_fine,
                                                          lat_pts_fine,lon_pts_fine,
-                                                         nlat_course,nlon_course)
-      course_rdirs_field.set_grid_coordinates([lat_pts_course,lon_pts_course])
-    return course_rdirs_field
+                                                         nlat_coarse,nlon_coarse)
+      coarse_rdirs_field.set_grid_coordinates([lat_pts_coarse,lon_pts_coarse])
+    return coarse_rdirs_field
 
 def cotat_plus_driver(input_fine_rdirs_filepath,input_fine_total_cumulative_flow_path,
-                      output_course_rdirs_filepath,cotat_plus_parameters_filepath,
-                      fine_grid_type,fine_grid_kwargs={},course_grid_type='HD',**course_grid_kwargs):
+                      output_coarse_rdirs_filepath,cotat_plus_parameters_filepath,
+                      fine_grid_type,fine_grid_kwargs={},coarse_grid_type='HD',**coarse_grid_kwargs):
     """Top level driver for the cotat plus algorithm
 
     Arguments:
     input_fine_rdirs_filepath: string; path to the file with fine river directions to upscale
     input_fine_total_cumulative_flow_path: string; path to the file with the fine scale cumulative
         flow from the fine river directions
-    output_course_rdirs_filepath: string; path to the file to write the upscaled course river directions to
+    output_coarse_rdirs_filepath: string; path to the file to write the upscaled coarse river directions to
     cotat_plus_parameters_filepath: string; the file path containing the namelist with the parameters
         for the cotat plus upscaling algorithm
     fine_grid_type: string; code for the fine grid type to upscale from
     **fine_grid_kwargs(optional): keyword dictionary; the parameter of the fine grid to
         upscale from
-    course_grid_type: string; code for the course grid type to be upscaled to
-    **course_grid_kwargs(optional): keyword dictionary; the parameter of the course grid to
+    coarse_grid_type: string; code for the coarse grid type to be upscaled to
+    **coarse_grid_kwargs(optional): keyword dictionary; the parameter of the coarse grid to
         upscale to (if required)
     Returns: Nothing
 
@@ -98,17 +98,17 @@ def cotat_plus_driver(input_fine_rdirs_filepath,input_fine_total_cumulative_flow
                             get_file_extension(input_fine_total_cumulative_flow_path),
                             field_type='CumulativeFlow',
                             grid_type=fine_grid_type,**fine_grid_kwargs)
-    course_rdirs_field = run_cotat_plus(fine_rdirs_field, fine_total_cumulative_flow_field,
-                                        cotat_plus_parameters_filepath,course_grid_type,
-                                        **course_grid_kwargs)
-    iodriver.write_field(output_course_rdirs_filepath, course_rdirs_field,
+    coarse_rdirs_field = run_cotat_plus(fine_rdirs_field, fine_total_cumulative_flow_field,
+                                        cotat_plus_parameters_filepath,coarse_grid_type,
+                                        **coarse_grid_kwargs)
+    iodriver.write_field(output_coarse_rdirs_filepath, coarse_rdirs_field,
                          file_type=iodriver.\
-                         get_file_extension(output_course_rdirs_filepath))
+                         get_file_extension(output_coarse_rdirs_filepath))
 
 def advanced_cotat_plus_driver(input_fine_rdirs_filepath,input_fine_total_cumulative_flow_path,
-                               output_course_rdirs_filepath, input_fine_rdirs_fieldname,
+                               output_coarse_rdirs_filepath, input_fine_rdirs_fieldname,
                                input_fine_total_cumulative_flow_fieldname,
-                               output_course_rdirs_fieldname,
+                               output_coarse_rdirs_fieldname,
                                cotat_plus_parameters_filepath,scaling_factor):
 
     fine_rdirs_field = iodriver.advanced_field_loader(input_fine_rdirs_filepath,
@@ -120,14 +120,14 @@ def advanced_cotat_plus_driver(input_fine_rdirs_filepath,input_fine_total_cumula
                                        fieldname=input_fine_total_cumulative_flow_fieldname)
     nlat_fine,nlon_fine = fine_rdirs_field.get_grid_dimensions()
     lat_pts_fine,lon_pts_fine = fine_rdirs_field.get_grid_coordinates()
-    nlat_course,nlon_course,lat_pts_course,lon_pts_course = \
-        coordinate_scaling_utilities.generate_course_coords(nlat_fine,nlon_fine,
+    nlat_coarse,nlon_coarse,lat_pts_coarse,lon_pts_coarse = \
+        coordinate_scaling_utilities.generate_coarse_coords(nlat_fine,nlon_fine,
                                                             lat_pts_fine,lon_pts_fine,
                                                             scaling_factor)
-    course_rdirs_field = run_cotat_plus(fine_rdirs_field, fine_total_cumulative_flow_field,
+    coarse_rdirs_field = run_cotat_plus(fine_rdirs_field, fine_total_cumulative_flow_field,
                                         cotat_plus_parameters_filepath,
-                                        course_grid_type="LatLong",nlat=nlat_course,
-                                        nlong=nlon_course)
-    course_rdirs_field.set_grid_coordinates([lat_pts_course,lon_pts_course])
-    iodriver.advanced_field_writer(output_course_rdirs_filepath, course_rdirs_field,
-                                   fieldname=output_course_rdirs_fieldname)
+                                        coarse_grid_type="LatLong",nlat=nlat_coarse,
+                                        nlong=nlon_coarse)
+    coarse_rdirs_field.set_grid_coordinates([lat_pts_coarse,lon_pts_coarse])
+    iodriver.advanced_field_writer(output_coarse_rdirs_filepath, coarse_rdirs_field,
+                                   fieldname=output_coarse_rdirs_fieldname)

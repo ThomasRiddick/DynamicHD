@@ -378,7 +378,7 @@ class TestIntelligentBurning(unittest.TestCase):
                                                      field_type='Orography',
                                                      grid_type='LatLong',
                                                      nlat=21,nlong=18)
-        course_orography_field = field.makeField(self.input_orog_field,
+        coarse_orography_field = field.makeField(self.input_orog_field,
                                                 field_type='Orography',
                                                 grid_type='LatLong',
                                                 nlat=7,nlong=6)
@@ -387,14 +387,14 @@ class TestIntelligentBurning(unittest.TestCase):
                                           grid_type='LatLong',
                                           nlat=21,nlong=18)
         burnt_orog = utilities.intelligently_burn_orography(input_fine_orography_field,
-                                                            course_orography_field,
+                                                            coarse_orography_field,
                                                             input_fine_fmap,
                                                             threshold=60,
                                                             region={'lat_min':0,
                                                                     'lat_max':6,
                                                                     'lon_min':0,
                                                                     'lon_max':5},
-                                                            course_grid_type='LatLong',
+                                                            coarse_grid_type='LatLong',
                                                             nlat=7,nlong=6)
         np.testing.assert_array_equal(self.expected_orog_field,
                                       burnt_orog.get_data(),
@@ -407,7 +407,7 @@ class TestIntelligentBurning(unittest.TestCase):
                                                      field_type='Orography',
                                                      grid_type='LatLong',
                                                      nlat=21,nlong=18)
-        course_orography_field = field.makeField(self.input_orog_field,
+        coarse_orography_field = field.makeField(self.input_orog_field,
                                                 field_type='Orography',
                                                 grid_type='LatLong',
                                                 nlat=7,nlong=6)
@@ -416,14 +416,14 @@ class TestIntelligentBurning(unittest.TestCase):
                                           grid_type='LatLong',
                                           nlat=21,nlong=18)
         burnt_orog = utilities.intelligently_burn_orography(input_fine_orography_field,
-                                                            course_orography_field,
+                                                            coarse_orography_field,
                                                             input_fine_fmap,
                                                             threshold=60,
                                                             region={'lat_min':4,
                                                                     'lat_max':6,
                                                                     'lon_min':3,
                                                                     'lon_max':5},
-                                                            course_grid_type='LatLong',
+                                                            coarse_grid_type='LatLong',
                                                             nlat=7,nlong=6)
         np.testing.assert_array_equal(burnt_orog.get_data(),
                                       self.expected_orog_field_bottomrightcorneronly,
@@ -436,7 +436,7 @@ class TestIntelligentBurning(unittest.TestCase):
                                                      field_type='Orography',
                                                      grid_type='LatLong',
                                                      nlat=21,nlong=18)
-        course_orography_field = field.makeField(self.input_orog_field,
+        coarse_orography_field = field.makeField(self.input_orog_field,
                                                 field_type='Orography',
                                                 grid_type='LatLong',
                                                 nlat=7,nlong=6)
@@ -445,14 +445,14 @@ class TestIntelligentBurning(unittest.TestCase):
                                           grid_type='LatLong',
                                           nlat=21,nlong=18)
         burnt_orog = utilities.intelligently_burn_orography(input_fine_orography_field,
-                                                            course_orography_field,
+                                                            coarse_orography_field,
                                                             input_fine_fmap,
                                                             threshold=60,
                                                             region={'lat_min':4,
                                                                     'lat_max':6,
                                                                     'lon_min':0,
                                                                     'lon_max':3},
-                                                            course_grid_type='LatLong',
+                                                            coarse_grid_type='LatLong',
                                                             nlat=7,nlong=6)
         np.testing.assert_array_equal(burnt_orog.get_data(),
                                       self.expected_orog_field_bottomleftcorneronly,
@@ -465,7 +465,7 @@ class TestIntelligentBurning(unittest.TestCase):
                                                      field_type='Orography',
                                                      grid_type='LatLong',
                                                      nlat=21,nlong=18)
-        course_orography_field = field.makeField(self.input_orog_field,
+        coarse_orography_field = field.makeField(self.input_orog_field,
                                                 field_type='Orography',
                                                 grid_type='LatLong',
                                                 nlat=7,nlong=6)
@@ -474,14 +474,14 @@ class TestIntelligentBurning(unittest.TestCase):
                                           grid_type='LatLong',
                                           nlat=21,nlong=18)
         burnt_orog = utilities.intelligently_burn_orography(input_fine_orography_field,
-                                                            course_orography_field,
+                                                            coarse_orography_field,
                                                             input_fine_fmap,
                                                             threshold=60,
                                                             region={'lat_min':2,
                                                                     'lat_max':4,
                                                                     'lon_min':2,
                                                                     'lon_max':3},
-                                                            course_grid_type='LatLong',
+                                                            coarse_grid_type='LatLong',
                                                             nlat=7,nlong=6)
         np.testing.assert_array_equal(burnt_orog.get_data(),
                                       self.expected_orog_field_middleonly,
@@ -494,7 +494,7 @@ class TestIntelligentBurning(unittest.TestCase):
                                                      field_type='Orography',
                                                      grid_type='LatLong',
                                                      nlat=21,nlong=18)
-        course_orography_field = field.makeField(self.input_orog_field,
+        coarse_orography_field = field.makeField(self.input_orog_field,
                                                 field_type='Orography',
                                                 grid_type='LatLong',
                                                 nlat=7,nlong=6)
@@ -503,14 +503,14 @@ class TestIntelligentBurning(unittest.TestCase):
                                           grid_type='LatLong',
                                           nlat=21,nlong=18)
         burnt_orog = utilities.intelligently_burn_orography(input_fine_orography_field,
-                                                            course_orography_field,
+                                                            coarse_orography_field,
                                                             input_fine_fmap,
                                                             threshold=60,
                                                             region={'lat_min':0,
                                                                     'lat_max':1,
                                                                     'lon_min':0,
                                                                     'lon_max':5},
-                                                            course_grid_type='LatLong',
+                                                            coarse_grid_type='LatLong',
                                                             nlat=7,nlong=6)
         np.testing.assert_array_equal(burnt_orog.get_data(),
                                       self.expected_orog_field_toponly,
@@ -523,7 +523,7 @@ class TestIntelligentBurning(unittest.TestCase):
                                                      field_type='Orography',
                                                      grid_type='LatLong',
                                                      nlat=21,nlong=18)
-        course_orography_field = field.makeField(self.\
+        coarse_orography_field = field.makeField(self.\
                                                  input_orog_field_some_points_lower_than_fine_orog,
                                                  field_type='Orography',
                                                  grid_type='LatLong',
@@ -533,14 +533,14 @@ class TestIntelligentBurning(unittest.TestCase):
                                           grid_type='LatLong',
                                           nlat=21,nlong=18)
         burnt_orog = utilities.intelligently_burn_orography(input_fine_orography_field,
-                                                            course_orography_field,
+                                                            coarse_orography_field,
                                                             input_fine_fmap,
                                                             threshold=60,
                                                             region={'lat_min':0,
                                                                     'lat_max':1,
                                                                     'lon_min':0,
                                                                     'lon_max':5},
-                                                            course_grid_type='LatLong',
+                                                            coarse_grid_type='LatLong',
                                                             nlat=7,nlong=6)
         np.testing.assert_array_equal(burnt_orog.get_data(),
                                       self.\
@@ -554,18 +554,18 @@ class TestIntelligentBurning(unittest.TestCase):
         test_regions_text_file = tmp_dir + '/test_regions_list.txt'
         test_fine_orog_file = tmp_dir + '/int_burn_test_fine_orog.nc'
         test_fine_fmap_file = tmp_dir + '/int_burn_test_fmap_orog.nc'
-        test_course_orog_file = tmp_dir + '/int_burn_test_course_orog.nc'
-        test_course_output_orog_file = tmp_dir + '/int_burn_test_course_output_orog.nc'
+        test_coarse_orog_file = tmp_dir + '/int_burn_test_coarse_orog.nc'
+        test_coarse_output_orog_file = tmp_dir + '/int_burn_test_coarse_output_orog.nc'
         #setup files
         try:
             os.stat(tmp_dir)
         except:
             os.mkdir(tmp_dir)
         with open(test_regions_text_file,'w') as f:
-            f.write("course_grid_type=LatLong \n"
+            f.write("coarse_grid_type=LatLong \n"
                     "fine_grid_type=LatLong \n"
-                    "course_grid_flipud=False \n"
-                    "course_grid_rotate180lr=False \n"
+                    "coarse_grid_flipud=False \n"
+                    "coarse_grid_rotate180lr=False \n"
                     "fine_grid_flipud = False \n"
                     "fine_grid_rotate180lr = False \n"
                     "#Trial Regions \n"
@@ -583,26 +583,26 @@ class TestIntelligentBurning(unittest.TestCase):
                                              grid_type='LatLong',
                                              nlat=21,nlong=18),
                              file_type=iodriver.get_file_extension(test_fine_fmap_file))
-        iodriver.write_field(test_course_orog_file,
+        iodriver.write_field(test_coarse_orog_file,
                              field.makeField(self.input_orog_field,
                                              field_type='Orography',
                                              grid_type='LatLong',
                                              nlat=7,nlong=6),
-                             file_type=iodriver.get_file_extension(test_course_orog_file))
+                             file_type=iodriver.get_file_extension(test_coarse_orog_file))
         #run intelligent burning code
         utilities.intelligent_orography_burning_driver(input_fine_orography_filename=test_fine_orog_file,
-                                                       input_course_orography_filename=test_course_orog_file,
+                                                       input_coarse_orography_filename=test_coarse_orog_file,
                                                        input_fine_fmap_filename=test_fine_fmap_file,
-                                                       output_course_orography_filename=test_course_output_orog_file,
+                                                       output_coarse_orography_filename=test_coarse_output_orog_file,
                                                        regions_to_burn_list_filename=test_regions_text_file,
                                                        fine_grid_type='LatLong',
-                                                       course_grid_type='LatLong',
+                                                       coarse_grid_type='LatLong',
                                                        fine_grid_kwargs={'nlat':21,'nlong':18},
                                                        **{'nlat':7,'nlong':6})
         #load results
-        loaded_results = iodriver.load_field(test_course_output_orog_file,
+        loaded_results = iodriver.load_field(test_coarse_output_orog_file,
                                              file_type=\
-                                             iodriver.get_file_extension(test_course_output_orog_file),
+                                             iodriver.get_file_extension(test_coarse_output_orog_file),
                                              field_type='Generic', grid_type='LatLong',nlat=7,nlong=6)
         np.testing.assert_array_equal(loaded_results.get_data(),
                                       self.expected_orog_field_driver,
@@ -615,18 +615,18 @@ class TestIntelligentBurning(unittest.TestCase):
         test_regions_text_file = tmp_dir + '/test_regions_list.txt'
         test_fine_orog_file = tmp_dir + '/int_burn_test_fine_orog.nc'
         test_fine_fmap_file = tmp_dir + '/int_burn_test_fmap_orog.nc'
-        test_course_orog_file = tmp_dir + '/int_burn_test_course_orog.nc'
-        test_course_output_orog_file = tmp_dir + '/int_burn_test_course_output_orog.nc'
+        test_coarse_orog_file = tmp_dir + '/int_burn_test_coarse_orog.nc'
+        test_coarse_output_orog_file = tmp_dir + '/int_burn_test_coarse_output_orog.nc'
         #setup files
         try:
             os.stat(tmp_dir)
         except:
             os.mkdir(tmp_dir)
         with open(test_regions_text_file,'w') as f:
-            f.write("course_grid_type=LatLong \n"
+            f.write("coarse_grid_type=LatLong \n"
                     "fine_grid_type=LatLong \n"
-                    "course_grid_flipud=True \n"
-                    "course_grid_rotate180lr=True \n"
+                    "coarse_grid_flipud=True \n"
+                    "coarse_grid_rotate180lr=True \n"
                     "fine_grid_flipud = False \n"
                     "fine_grid_rotate180lr = False \n"
                     "#Trial Regions \n"
@@ -644,26 +644,26 @@ class TestIntelligentBurning(unittest.TestCase):
                                              grid_type='LatLong',
                                              nlat=21,nlong=18),
                              file_type=iodriver.get_file_extension(test_fine_fmap_file))
-        iodriver.write_field(test_course_orog_file,
+        iodriver.write_field(test_coarse_orog_file,
                              field.makeField(self.input_orog_field_flipped_and_rotated,
                                              field_type='Orography',
                                              grid_type='LatLong',
                                              nlat=7,nlong=6),
-                             file_type=iodriver.get_file_extension(test_course_orog_file))
+                             file_type=iodriver.get_file_extension(test_coarse_orog_file))
         #run intelligent burning code
         utilities.intelligent_orography_burning_driver(input_fine_orography_filename=test_fine_orog_file,
-                                                       input_course_orography_filename=test_course_orog_file,
+                                                       input_coarse_orography_filename=test_coarse_orog_file,
                                                        input_fine_fmap_filename=test_fine_fmap_file,
-                                                       output_course_orography_filename=test_course_output_orog_file,
+                                                       output_coarse_orography_filename=test_coarse_output_orog_file,
                                                        regions_to_burn_list_filename=test_regions_text_file,
                                                        fine_grid_type='LatLong',
-                                                       course_grid_type='LatLong',
+                                                       coarse_grid_type='LatLong',
                                                        fine_grid_kwargs={'nlat':21,'nlong':18},
                                                        **{'nlat':7,'nlong':6})
         #load results
-        loaded_results = iodriver.load_field(test_course_output_orog_file,
+        loaded_results = iodriver.load_field(test_coarse_output_orog_file,
                                              file_type=\
-                                             iodriver.get_file_extension(test_course_output_orog_file),
+                                             iodriver.get_file_extension(test_coarse_output_orog_file),
                                              field_type='Generic', grid_type='LatLong',nlat=7,nlong=6)
         np.testing.assert_array_equal(loaded_results.get_data(),
                                       self.expected_orog_field_driver_flipped_and_rotated,
@@ -747,7 +747,7 @@ class TestTrueSinkDownScaling(unittest.TestCase):
                                                  [5.0,4.3,6.6,9.0, 5.0,4.5,8.0,3.3, 9.0,7.0,8.0,4.5],
                                                  [9.9,0.9,1.1,3.0, 3.0,3.0,9.1,2.0, 4.0,8.8,9.7,3.4]])
 
-    input_true_sinks_on_course_scale = np.array([[True,False,False],
+    input_true_sinks_on_coarse_scale = np.array([[True,False,False],
                                                  [False,True,True],
                                                  [True,False,False]])
 
@@ -770,7 +770,7 @@ class TestTrueSinkDownScaling(unittest.TestCase):
         """Test the downscale of a true sink within a field"""
         true_sinks_downscaled = utilities.downscale_true_sink_points(field.Orography(self.find_area_minima_test_input_orog,
                                                                                      grid='LatLong',nlat=12,nlong=12),
-                                                                     field.Field(self.input_true_sinks_on_course_scale,
+                                                                     field.Field(self.input_true_sinks_on_coarse_scale,
                                                                                  grid='LatLong',nlat=3,nlong=3))
         np.testing.assert_array_equal(true_sinks_downscaled,self.find_area_minima_test_expected_output,
                                       "Downscaling of true sinks doesn't produce expected results")
@@ -829,7 +829,7 @@ class TestUpscaling(unittest.TestCase):
                                                'LatLong',nlat=10,nlong=9)
 
     def testUpscaleFieldOfIntegerUsingMax(self):
-        """Test upscaling a field of integers by taking the max value in each course cell"""
+        """Test upscaling a field of integers by taking the max value in each coarse cell"""
         output_field = utilities.upscale_field(input_field=self.integer_input_field,
                                                output_grid_type='LatLong',
                                                method='Max',
@@ -837,7 +837,7 @@ class TestUpscaling(unittest.TestCase):
         np.testing.assert_array_equal(output_field.get_data(),self.integer_expected_output_field_max)
 
     def testUpscaleFieldOfIntegerUsingSum(self):
-        """Test upscaling a field of integers by taking the summed value in each course cell"""
+        """Test upscaling a field of integers by taking the summed value in each coarse cell"""
         output_field = utilities.upscale_field(input_field=self.integer_input_field,
                                                output_grid_type='LatLong',
                                                method='Sum',
@@ -845,7 +845,7 @@ class TestUpscaling(unittest.TestCase):
         np.testing.assert_array_equal(output_field.get_data(),self.integer_expected_output_field_sum)
 
     def testUpscaleFieldOfFloatUsingSum(self):
-        """Test upscaling a field of floats by taking the max value in each course cell"""
+        """Test upscaling a field of floats by taking the max value in each coarse cell"""
         output_field = utilities.upscale_field(input_field=self.float_input_field,
                                                output_grid_type='LatLong',
                                                method='Sum',
@@ -853,7 +853,7 @@ class TestUpscaling(unittest.TestCase):
         np.testing.assert_array_equal(output_field.get_data(),self.float_expected_output_field_sum)
 
     def testUpscaleFieldOfFloatUsingMax(self):
-        """Test upscaling a field of floats by taking the summed value in each course cell"""
+        """Test upscaling a field of floats by taking the summed value in each coarse cell"""
         output_field = utilities.upscale_field(input_field=self.float_input_field,
                                                output_grid_type='LatLong',
                                                method='Max',
@@ -861,7 +861,7 @@ class TestUpscaling(unittest.TestCase):
         np.testing.assert_array_equal(output_field.get_data(),self.float_expected_output_field_max)
 
     def testUpscaleFieldOfFloatUsingMaxWithScalingFactor(self):
-        """Test upscaling a field of floats by taking the max value in each course cell scaling by cell size"""
+        """Test upscaling a field of floats by taking the max value in each coarse cell scaling by cell size"""
         output_field = utilities.upscale_field(input_field=self.float_input_field,
                                                output_grid_type='LatLong',
                                                method='Max',
@@ -870,7 +870,7 @@ class TestUpscaling(unittest.TestCase):
         np.testing.assert_array_equal(output_field.get_data(),self.float_expected_output_field_max/15.0)
 
     def testUpscaleFieldOfIntegerUsingSumWithScalingFactor(self):
-        """Test upscaling a field of floats by taking the summed value in each course cell scaling by cell size"""
+        """Test upscaling a field of floats by taking the summed value in each coarse cell scaling by cell size"""
         output_field = utilities.upscale_field(input_field=self.integer_input_field,
                                                output_grid_type='LatLong',
                                                method='Sum',

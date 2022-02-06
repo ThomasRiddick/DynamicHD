@@ -20,18 +20,18 @@ class Test(unittest.TestCase):
 
     show_output = False
 
-    course_rdirs = np.array([[6,1,6,6,1],
+    coarse_rdirs = np.array([[6,1,6,6,1],
                              [8,4,4,8,7],
                              [1,-1,5,0,6],
                              [2,4,9,8,8],
                              [9,6,8,7,6]],dtype=np.float64)
 
-    course_cumulative_flow = np.array([[0,0,1,0,0],
+    coarse_cumulative_flow = np.array([[0,0,1,0,0],
                                        [0,2,1,0,1],
                                        [0,0,1,0,0],
                                        [0,0,0,1,0],
                                        [0,0,0,1,1]],dtype=np.float64)
-    course_catchments = np.array([[25,25,61,61,61],
+    coarse_catchments = np.array([[25,25,61,61,61],
                                   [25,25,25,61,61],
                                   [13,0,14,58,13],
                                   [9,9,58,19,13],
@@ -75,18 +75,18 @@ class Test(unittest.TestCase):
 
     def testUsingSmallGrid(self):
         """
-        Test using a small 5 by 5 grid as the course grid, 15 by 15 fine grid
+        Test using a small 5 by 5 grid as the coarse grid, 15 by 15 fine grid
 
         Same data was used in FRUIT unit testing
         """
 
-        course_rdirs_field = field.makeField(self.course_rdirs,
+        coarse_rdirs_field = field.makeField(self.coarse_rdirs,
                                              field_type='RiverDirections',
                                              grid_type='LatLong',nlat=5,nlong=5)
-        course_cumulative_flow_field = field.makeField(self.course_cumulative_flow,
+        coarse_cumulative_flow_field = field.makeField(self.coarse_cumulative_flow,
                                                        field_type='CumulativeFlow',
                                                        grid_type='LatLong',nlat=5,nlong=5)
-        course_catchments_field = field.makeField(self.course_catchments,
+        coarse_catchments_field = field.makeField(self.coarse_catchments,
                                                   field_type='Generic',
                                                   grid_type='LatLong',nlat=15,nlong=15)
         fine_rdirs_field = field.makeField(self.fine_rdirs,
@@ -95,12 +95,12 @@ class Test(unittest.TestCase):
         fine_cumulative_flow_field = field.makeField(self.fine_cumulative_flow,
                                                      field_type='CumulativeFlow',
                                                      grid_type='LatLong',nlat=15,nlong=15)
-        updated_output_course_river_directions =\
-            loop_breaker_driver.run_loop_breaker(course_rdirs_field, course_cumulative_flow_field,
-                                                 course_catchments_field, fine_rdirs_field,
+        updated_output_coarse_river_directions =\
+            loop_breaker_driver.run_loop_breaker(coarse_rdirs_field, coarse_cumulative_flow_field,
+                                                 coarse_catchments_field, fine_rdirs_field,
                                                  fine_cumulative_flow_field, self.loop_nums_list,
-                                                 course_grid_type='LatLong',nlat=5,nlong=5)
-        np.testing.assert_array_equal(updated_output_course_river_directions.get_data(), self.expected_results,
+                                                 coarse_grid_type='LatLong',nlat=5,nlong=5)
+        np.testing.assert_array_equal(updated_output_coarse_river_directions.get_data(), self.expected_results,
                                       "Testing the loop breaking code with a small test grid doesn't give"
                                       " expected results")
 

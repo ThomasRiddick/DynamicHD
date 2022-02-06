@@ -17,7 +17,7 @@
  */
 
 void latlon_upscale_orography_cython_interface(double* orography_in, int nlat_fine, int nlon_fine,
-							  	  	  	       double* orography_out, int nlat_course, int nlon_course,
+							  	  	  	       double* orography_out, int nlat_coarse, int nlon_coarse,
 											   int method, int* landsea_in_int,int* true_sinks_in_int,
 											   int add_slope_in, double epsilon_in,
 											   int tarasov_separation_threshold_for_returning_to_same_edge_in,
@@ -32,7 +32,7 @@ void latlon_upscale_orography_cython_interface(double* orography_in, int nlat_fi
 	for (auto i = 0; i < nlat_fine*nlon_fine;i++){
 		true_sinks_in[i] = bool(true_sinks_in_int[i]);
 	}
-	latlon_upscale_orography(orography_in,nlat_fine,nlon_fine,orography_out,nlat_course,nlon_course,
+	latlon_upscale_orography(orography_in,nlat_fine,nlon_fine,orography_out,nlat_coarse,nlon_coarse,
 							 method,landsea_in,true_sinks_in,add_slope_in,epsilon_in,
 							 tarasov_separation_threshold_for_returning_to_same_edge_in,
 							 tarasov_min_path_length_in,tarasov_include_corners_in_same_edge_criteria_in,
@@ -42,7 +42,7 @@ void latlon_upscale_orography_cython_interface(double* orography_in, int nlat_fi
 }
 
 void latlon_upscale_orography(double* orography_in, int nlat_fine, int nlon_fine,
-							  double* orography_out, int nlat_course, int nlon_course,
+							  double* orography_out, int nlat_coarse, int nlon_coarse,
 							  int method, bool* landsea_in,bool* true_sinks_in,
 							  bool add_slope_in, double epsilon_in,
 							  int tarasov_separation_threshold_for_returning_to_same_edge_in,
@@ -59,8 +59,8 @@ void latlon_upscale_orography(double* orography_in, int nlat_fine, int nlon_fine
 	const bool tarasov_mod = true;
 	const bool set_ls_as_no_data_flag = false;
 	const bool index_based_rdirs_only_in = false;
-	int scale_factor_lat = nlat_fine/nlat_course;
-	int scale_factor_lon = nlon_fine/nlon_course;
+	int scale_factor_lat = nlat_fine/nlat_coarse;
+	int scale_factor_lon = nlon_fine/nlon_coarse;
 	auto grid_params = new latlon_grid_params(scale_factor_lat,scale_factor_lon);
 	switch(method){
 		case 1:
@@ -86,7 +86,7 @@ void latlon_upscale_orography(double* orography_in, int nlat_fine, int nlon_fine
 				};
 				partition_fine_orography(orography_in,landsea_in,true_sinks_in,
 										 nlat_fine,nlon_fine,orography_out,
-										 nlat_course,nlon_course,scale_factor_lat,
+										 nlat_coarse,nlon_coarse,scale_factor_lat,
 										 scale_factor_lon,run_alg_1);
 			}
 			break;
@@ -123,7 +123,7 @@ void latlon_upscale_orography(double* orography_in, int nlat_fine, int nlon_fine
 				};
 				partition_fine_orography(orography_in,landsea_in,true_sinks_in,
 										 nlat_fine,nlon_fine,orography_out,
-										 nlat_course,nlon_course,scale_factor_lat,
+										 nlat_coarse,nlon_coarse,scale_factor_lat,
 										 scale_factor_lon,run_alg_4);
 			}
 			break;
@@ -135,17 +135,17 @@ void latlon_upscale_orography(double* orography_in, int nlat_fine, int nlon_fine
 }
 
 void partition_fine_orography(double* orography_in, bool* landsea_in, bool* true_sinks_in,int nlat_fine,
-							  int nlon_fine, double* orography_out, int nlat_course, int nlon_course,
+							  int nlon_fine, double* orography_out, int nlat_coarse, int nlon_coarse,
 							  int scale_factor_lat, int scale_factor_lon, function<double(double*,bool*,bool*)> func) {
 
 	double* orography_section = new double[scale_factor_lat*scale_factor_lon];
 	bool* landsea_section     = new bool[scale_factor_lat*scale_factor_lon];
 	bool* true_sinks_section  = new bool[scale_factor_lat*scale_factor_lon];
 	int tenth_of_total_points = 10;
-	if (nlat_course >= 10) tenth_of_total_points = nlat_course/10;
-	if (nlat_course >= 10) cout << "Each dot represents 10% completion:" << endl;
-	for (auto i = 0; i < nlat_course; i++) {
-		for (auto j = 0; j < nlon_course; j++) {
+	if (nlat_coarse >= 10) tenth_of_total_points = nlat_coarse/10;
+	if (nlat_coarse >= 10) cout << "Each dot represents 10% completion:" << endl;
+	for (auto i = 0; i < nlat_coarse; i++) {
+		for (auto j = 0; j < nlon_coarse; j++) {
 			for (auto ifine = 0; ifine < scale_factor_lat; ifine++){
 				for (auto jfine = 0; jfine < scale_factor_lon; jfine++) {
 					orography_section[ifine*scale_factor_lon + jfine] =
@@ -156,11 +156,11 @@ void partition_fine_orography(double* orography_in, bool* landsea_in, bool* true
 							true_sinks_in[(i*scale_factor_lat + ifine)*nlon_fine + (j*scale_factor_lon + jfine)];
 				}
 			}
-		orography_out[i*nlon_course + j] = func(orography_section,landsea_section,true_sinks_section);
+		orography_out[i*nlon_coarse + j] = func(orography_section,landsea_section,true_sinks_section);
 		}
 		if (i%tenth_of_total_points == 0 && ! (i == 0)) cout << ".";
 	}
-	if (nlat_course >= 10) cout << "." << endl;
+	if (nlat_coarse >= 10) cout << "." << endl;
 	delete[] orography_section;
 	delete[] landsea_section;
 	delete[] true_sinks_section;
