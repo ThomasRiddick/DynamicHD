@@ -975,11 +975,11 @@ class HDGridFunctionsTestCase(unittest.TestCase):
                                       " producing the expected output")
 
     def test_finding_area_minima(self):
-        """Test finding the minima within course scale cell boundaries on a fine orography"""
+        """Test finding the minima within coarse scale cell boundaries on a fine orography"""
         truesinks_downscaled = self.hdgrid.find_area_minima(self.find_area_minima_test_input_orog,
                                                             self.find_area_minima_test_input_coords,(4,4))
         np.testing.assert_array_equal(truesinks_downscaled,self.find_area_minima_test_expected_output,
-                                      "Finding minima of course scale cells is not producing expected results")
+                                      "Finding minima of coarse scale cells is not producing expected results")
 
     def test_getting_flagged_point_coords(self):
         """Test getting the coordinates of flagged points within an array of booleans"""

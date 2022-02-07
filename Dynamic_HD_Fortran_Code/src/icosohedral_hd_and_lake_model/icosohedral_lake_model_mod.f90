@@ -107,7 +107,7 @@ type :: lakeparameters
                                                                       ! merge
   integer, pointer, dimension(:) :: merge_points  ! Type of merge occuring at a point (or for most points
                                                   ! the no merge type)
-  integer, pointer, dimension(:) :: basin_numbers ! Variable on the course grid:
+  integer, pointer, dimension(:) :: basin_numbers ! Variable on the coarse grid:
                                                   ! Index of list of basins within a given coarse cell
   ! List Variable
   type(basinlist), pointer, dimension(:) :: basins ! A list of lakes/basins on the fine grid within a given coarse grid

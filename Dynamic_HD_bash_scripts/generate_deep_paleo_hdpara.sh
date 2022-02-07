@@ -102,11 +102,7 @@ fi
 #Move to working directory
 cd ${working_directory}
 
-#Make directory for parameter generation
-mkdir paragen
-
 #Select and Invert Mask
-
 
 if $is_coarser_than_half_degree || $is_half_degree ; then
 cat > fill_sinks.ini << EOF
@@ -151,7 +147,7 @@ cat > generate_hdpara_file.ini << EOF
 [general]
     operation:parameter_generation
     ancillary_data_path:${ancillary_data_path}
-    working_dir:${working_directory}/paragen
+    working_dir:${working_directory}
 [input_filepaths]
     landsea:$(pwd)/slm_30min_inverse.nc
     orography:$(pwd)/filled_orography_30min.nc
@@ -383,7 +379,7 @@ cat > generate_hdpara_file.ini << EOF
     operation:parameter_generation
 [parameter_generation]
     ancillary_data_path:${ancillary_data_path}
-    working_dir:${working_directory}/paragen
+    working_dir:${working_directory}
 [input_filepaths]
     landsea:$(pwd)/slm_30min_inverse.nc
     orography:$(pwd)/filled_orography_30min.nc

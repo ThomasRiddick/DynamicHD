@@ -1178,8 +1178,8 @@ class OutflowPlots(Plots):
             if ref_orog_filename and data_orog_original_scale_filename:
                 if super_fine_orog_filename:
                             data_to_super_fine_scale_factor = \
-                                pts.calculate_scale_factor(course_grid_type=data_original_scale_grid_type,
-                                                           course_grid_kwargs=data_original_scale_grid_kwargs,
+                                pts.calculate_scale_factor(coarse_grid_type=data_original_scale_grid_type,
+                                                           coarse_grid_kwargs=data_original_scale_grid_kwargs,
                                                            fine_grid_type=super_fine_orog_grid_type,
                                                            fine_grid_kwargs=super_fine_orog_grid_kwargs)
                             ref_to_super_fine_scale_factor = data_to_super_fine_scale_factor*scale_factor

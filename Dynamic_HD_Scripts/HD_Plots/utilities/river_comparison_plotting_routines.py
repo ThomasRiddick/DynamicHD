@@ -28,36 +28,36 @@ def find_catchment_numbers(ref_catchment_field,data_catchment_field,
                            grid_type='HD',**grid_kwargs):
     """Find the catchment number of a reference and a data catchment"""
     if use_original_scale_field_for_determining_data_and_ref_labels:
-        ref_course_coords=pair[0].get_coords()
+        ref_coarse_coords=pair[0].get_coords()
         ref_catchment_num =\
             pts.find_data_catchment_number(ref_catchment_field,
                                            ref_catchment_field_original_scale,
-                                           ref_original_scale_flowtocellfield,ref_course_coords,
+                                           ref_original_scale_flowtocellfield,ref_coarse_coords,
                                            catchment_grid_changed,ref_original_scale_grid_type,
                                            ref_original_scale_grid_kwargs,grid_type,**grid_kwargs)[0]
-        data_course_coords=pair[1].get_coords()
+        data_coarse_coords=pair[1].get_coords()
         data_catchment_num,scale_factor =\
             pts.find_data_catchment_number(data_catchment_field,
                                            data_catchment_field_original_scale,
-                                           data_original_scale_flowtocellfield,data_course_coords,
+                                           data_original_scale_flowtocellfield,data_coarse_coords,
                                            catchment_grid_changed,data_original_scale_grid_type,
                                            data_original_scale_grid_kwargs,grid_type,**grid_kwargs)
     elif swap_ref_and_data_when_finding_labels:
         data_catchment_num = data_catchment_field[pair[0].get_coords()]
-        ref_course_coords=pair[1].get_coords()
+        ref_coarse_coords=pair[1].get_coords()
         ref_catchment_num,scale_factor =\
             pts.find_data_catchment_number(ref_catchment_field,
                                            data_catchment_field_original_scale,
-                                           data_original_scale_flowtocellfield,ref_course_coords,
+                                           data_original_scale_flowtocellfield,ref_coarse_coords,
                                            catchment_grid_changed,data_original_scale_grid_type,
                                            data_original_scale_grid_kwargs,grid_type,**grid_kwargs)
     else:
         ref_catchment_num = ref_catchment_field[pair[0].get_coords()]
-        data_course_coords=pair[1].get_coords()
+        data_coarse_coords=pair[1].get_coords()
         data_catchment_num,scale_factor =\
             pts.find_data_catchment_number(data_catchment_field,
                                            data_catchment_field_original_scale,
-                                           data_original_scale_flowtocellfield,data_course_coords,
+                                           data_original_scale_flowtocellfield,data_coarse_coords,
                                            catchment_grid_changed,data_original_scale_grid_type,
                                            data_original_scale_grid_kwargs,grid_type,**grid_kwargs)
     return ref_catchment_num,data_catchment_num,scale_factor

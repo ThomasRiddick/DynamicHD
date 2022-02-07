@@ -8,8 +8,8 @@ from Dynamic_HD_Scripts.interface.fortran_interface import f2py_manager
 from Dynamic_HD_Scripts.context import fortran_project_source_path,fortran_project_object_path,fortran_project_include_path
 
 def run_flow(input_fine_river_directions,input_fine_total_cumulative_flow,
-             cotat_parameters_filepath,course_grid_type,
-             **course_grid_kwargs):
+             cotat_parameters_filepath,coarse_grid_type,
+             **coarse_grid_kwargs):
 
     additional_fortran_filenames = ["area_mod.o","coords_mod.o","cotat_parameters_mod.o","flow.o",
                                      "doubly_linked_list_mod.o","doubly_linked_list_link_mod.o",
@@ -21,5 +21,5 @@ def run_flow(input_fine_river_directions,input_fine_total_cumulative_flow,
                                           additional_fortran_files=additional_fortran_filepaths,
                                           include_path=fortran_project_include_path)
 
-    output_course_river_directions_latlon_indices = f2py_mngr.\
+    output_coarse_river_directions_latlon_indices = f2py_mngr.\
         run_current_function_or_subroutine(),

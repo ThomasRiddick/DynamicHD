@@ -715,14 +715,14 @@ def upscale_field_driver(input_filename,output_filename,input_grid_type,output_g
 
     Arguments:
     input_filename: string; full path to file with input fine scale field to upscale
-    output_filename: string; full path to file with output course scale upscaled field
+    output_filename: string; full path to file with output coarse scale upscaled field
     input_grid_type: string; the code for the type of the input fine grid
-    output_grid_type: string; the code for the type of the input course grid
+    output_grid_type: string; the code for the type of the input coarse grid
     method: string; upscaling method to use - see upscale_field for valid methods
     timeslice(optional): integer; timeslice to upscale if input file contains multiple timeslices
     input_grid_kwargs: dictionary; key word arguments specifying parameters of the fine input grid
         (if required)
-    output_grid_kwargs: dictionary; key word arguments specifying parameters of the course output grid
+    output_grid_kwargs: dictionary; key word arguments specifying parameters of the coarse output grid
         (if required)
     scalenumbers: scale numbers according to difference in size between the two grids
         (assuming a density-like number is being upscaled)
@@ -747,11 +747,11 @@ def upscale_field(input_field,output_grid_type,method,output_grid_kwargs,scalenu
 
     Arguments:
     input_field: Field object, input field to upscale
-    output_grid_type: string; the code for the grid type of the course
+    output_grid_type: string; the code for the grid type of the coarse
         grid to upscale to
     method: string, upscaling method to use - see defined method below
     output_grid_kwargs: dictionary; key word arguments specifying parameters of
-        the course grid type to upscale to (if required)
+        the coarse grid type to upscale to (if required)
     scalenumbers: scale numbers according to difference in size between the two grids
         (assuming a density-like number is being upscaled)
     Returns: Field object, the upscaled field
@@ -822,43 +822,43 @@ def check_for_value_wrapper(array,axis,value=5):
                                           func_name="check_for_value_{0}d".format(dims))
     return f2py_mngr.run_current_function_or_subroutine(array,value,*axis_lengths)
 
-def downscale_true_sink_points_driver(input_fine_orography_filename,input_course_truesinks_filename,
+def downscale_true_sink_points_driver(input_fine_orography_filename,input_coarse_truesinks_filename,
                                       output_fine_truesinks_filename,input_fine_orography_grid_type,
-                                      input_course_truesinks_grid_type,input_fine_orography_grid_kwargs={},
-                                      input_course_truesinks_grid_kwargs={},flip_course_grid_ud=False,
-                                      rotate_course_true_sink_about_polar_axis=False,
+                                      input_coarse_truesinks_grid_type,input_fine_orography_grid_kwargs={},
+                                      input_coarse_truesinks_grid_kwargs={},flip_coarse_grid_ud=False,
+                                      rotate_coarse_true_sink_about_polar_axis=False,
                                       downscaled_true_sink_modifications_filename=None,
-                                      course_true_sinks_modifications_filename=None):
+                                      coarse_true_sinks_modifications_filename=None):
     """Load input, drive the process of downscale a true sinks a field and write output
 
     Argument:
     input_fine_orography_filename: string; full path to input fine orography
-    input_course_truesinks_filename: string; full path to input true sinks array file
+    input_coarse_truesinks_filename: string; full path to input true sinks array file
     output_fine_truesinks_filename: string; full path to target output true sinks array
         file to write to
     input_fine_orography_grid_type: string; the code for the grid type of the input
         orography to downscale the true sinks to
-    input_course_truesinks_grid_type: string; the code for the grid type of the input
-        course grid that the input true sinks are on
+    input_coarse_truesinks_grid_type: string; the code for the grid type of the input
+        coarse grid that the input true sinks are on
     input_fine_orography_grid_kwargs: dictionary; key word arguments specifying
         parameters of the fine input grid (if required)
-    input_course_truesinks_grid_kwargs: dictionary; key word arguments specifying
-        parameters of the course input grid (if required)
-    flip_course_grid_ud: boolean; flip the course truesinks field about the
+    input_coarse_truesinks_grid_kwargs: dictionary; key word arguments specifying
+        parameters of the coarse input grid (if required)
+    flip_coarse_grid_ud: boolean; flip the coarse truesinks field about the
         equator
-    rotate_course_true_sink_about_polar_axis: boolean; rotate the course truesinks
+    rotate_coarse_true_sink_about_polar_axis: boolean; rotate the coarse truesinks
     field by 180 degrees about the pole
     downscaled_true_sink_modifications_filename: string; full path to text file (see
         apply_modifications_to_truesinks_field for the correct format) with the
         modification to apply to the downscaled truesinks
-    course_true_sinks_modifications_filename: string; full path to text file (see
+    coarse_true_sinks_modifications_filename: string; full path to text file (see
         apply_modifications_to_truesinks_field for the correct format) with the
         modification
-        to apply to the course truesinks before downscaling
+        to apply to the coarse truesinks before downscaling
     Returns: nothing
 
     Place the true sinks at the lowest point in the set of fine cells covered by the
-    course cell. Can make modifications both to the course true sinks field before
+    coarse cell. Can make modifications both to the coarse true sinks field before
     processing and the fine true sinks field after processing.
     """
 
@@ -867,44 +867,44 @@ def downscale_true_sink_points_driver(input_fine_orography_filename,input_course
                                                      field_type='Orography',
                                                      grid_type=input_fine_orography_grid_type,
                                                      **input_fine_orography_grid_kwargs)
-    input_course_truesinks_field = iodriver.load_field(input_course_truesinks_filename,
-                                                       file_type=iodriver.get_file_extension(input_course_truesinks_filename),
+    input_coarse_truesinks_field = iodriver.load_field(input_coarse_truesinks_filename,
+                                                       file_type=iodriver.get_file_extension(input_coarse_truesinks_filename),
                                                        field_type='Generic',
-                                                       grid_type=input_course_truesinks_grid_type,
-                                                       **input_course_truesinks_grid_kwargs)
-    if course_true_sinks_modifications_filename:
-        input_course_truesinks_field =\
+                                                       grid_type=input_coarse_truesinks_grid_type,
+                                                       **input_coarse_truesinks_grid_kwargs)
+    if coarse_true_sinks_modifications_filename:
+        input_coarse_truesinks_field =\
             field.Field(apply_modifications_to_truesinks_field(truesinks_field=\
-                                                               input_course_truesinks_field.get_data(),
+                                                               input_coarse_truesinks_field.get_data(),
                                                                true_sink_modifications_filename=\
-                                                               course_true_sinks_modifications_filename),
-                        grid=input_course_truesinks_grid_type,
-                        **input_course_truesinks_grid_kwargs)
-    if flip_course_grid_ud:
-        input_course_truesinks_field.flip_data_ud()
-    if rotate_course_true_sink_about_polar_axis:
-        input_course_truesinks_field.rotate_field_by_a_hundred_and_eighty_degrees()
+                                                               coarse_true_sinks_modifications_filename),
+                        grid=input_coarse_truesinks_grid_type,
+                        **input_coarse_truesinks_grid_kwargs)
+    if flip_coarse_grid_ud:
+        input_coarse_truesinks_field.flip_data_ud()
+    if rotate_coarse_true_sink_about_polar_axis:
+        input_coarse_truesinks_field.rotate_field_by_a_hundred_and_eighty_degrees()
     output_fine_truesinks_field = field.Field(downscale_true_sink_points(input_fine_orography_field,
-                                                                         input_course_truesinks_field),
+                                                                         input_coarse_truesinks_field),
                                               input_fine_orography_grid_type,
                                               **input_fine_orography_grid_kwargs)
 
     if downscaled_true_sink_modifications_filename:
-        #Assume that same orientation of grid for course and fine grid is used in mods files
-        #and it the course grid orientation - thus in this case flip fine grid and flip back
+        #Assume that same orientation of grid for coarse and fine grid is used in mods files
+        #and it the coarse grid orientation - thus in this case flip fine grid and flip back
         #after
-        if flip_course_grid_ud:
+        if flip_coarse_grid_ud:
             output_fine_truesinks_field.flip_data_ud()
-        if rotate_course_true_sink_about_polar_axis:
+        if rotate_coarse_true_sink_about_polar_axis:
             output_fine_truesinks_field.rotate_field_by_a_hundred_and_eighty_degrees()
         output_fine_truesinks_field =\
             field.Field(apply_modifications_to_truesinks_field(output_fine_truesinks_field.get_data(),
                                                                downscaled_true_sink_modifications_filename),
                         input_fine_orography_grid_type,
                         **input_fine_orography_grid_kwargs)
-        if rotate_course_true_sink_about_polar_axis:
+        if rotate_coarse_true_sink_about_polar_axis:
             output_fine_truesinks_field.rotate_field_by_a_hundred_and_eighty_degrees()
-        if flip_course_grid_ud:
+        if flip_coarse_grid_ud:
             output_fine_truesinks_field.flip_data_ud()
     iodriver.write_field(output_fine_truesinks_filename,
                          output_fine_truesinks_field,
@@ -947,29 +947,29 @@ def apply_modifications_to_truesinks_field(truesinks_field,
         truesinks_field[point[0],point[1]] = True
     return truesinks_field
 
-def downscale_true_sink_points(input_fine_orography_field,input_course_truesinks_field):
+def downscale_true_sink_points(input_fine_orography_field,input_coarse_truesinks_field):
     """Downscale a field of true sink points flags
 
     Arguments:
     input_fine_orography_field: Field object, the input fine orography field to place the
         downscaled true sinks in
-    input_course_truesinks_field: Field object, the input course true sinks field (as
+    input_coarse_truesinks_field: Field object, the input coarse true sinks field (as
         a logical field)
     Returns: Field object contain the logical fine true sinks field
 
-    Downscale true sinks by placing each course true sink at the mimima (of height) of
-        the set of fine orography pixels covered by the course cell.
+    Downscale true sinks by placing each coarse true sink at the mimima (of height) of
+        the set of fine orography pixels covered by the coarse cell.
     """
 
     nlat_fine,nlon_fine = input_fine_orography_field.grid.get_grid_dimensions()
-    nlat_course,nlon_course = input_course_truesinks_field.grid.get_grid_dimensions()
-    if nlat_course > nlat_fine or nlon_course > nlon_fine:
+    nlat_coarse,nlon_coarse = input_coarse_truesinks_field.grid.get_grid_dimensions()
+    if nlat_coarse > nlat_fine or nlon_coarse > nlon_fine:
         raise RuntimeError('Cannot use the downscale true sink points function to perform an upscaling')
-    if nlat_fine % nlat_course != 0 or nlon_fine % nlon_course !=0 :
+    if nlat_fine % nlat_coarse != 0 or nlon_fine % nlon_coarse !=0 :
         raise RuntimeError('Incompatible input and output grid dimensions')
-    scalingfactor_lat = nlat_fine // nlat_course
-    scalingfactor_lon = nlon_fine // nlon_course
-    flagged_points_coords = input_course_truesinks_field.get_flagged_points_coords()
+    scalingfactor_lat = nlat_fine // nlat_coarse
+    scalingfactor_lon = nlon_fine // nlon_coarse
+    flagged_points_coords = input_coarse_truesinks_field.get_flagged_points_coords()
     flagged_points_coords_scaled=[]
     for coord_pair in flagged_points_coords:
         lat_scaled = coord_pair[0]*scalingfactor_lat
@@ -987,16 +987,16 @@ def downscale_ls_seed_points_list_driver(input_ls_seed_points_list_filename,
     """Downscale a list of land sea mask ocean seeding points
 
     Arguments:
-    input_ls_seed_points_list_filename: string, input course land sea point list
+    input_ls_seed_points_list_filename: string, input coarse land sea point list
     output_ls_seed_points_list_filename: string, output fine land sea point list
-    factor: integer, difference in scale between course and fine grid
+    factor: integer, difference in scale between coarse and fine grid
     nlat_fine: integer, total number of latitude points
     nlon_fine: integer, total number of longitude points
     input_grid_type: string; the code for the type of the input fine grid
-    output_grid_type: string; the code for the type of the output course grid
+    output_grid_type: string; the code for the type of the output coarse grid
     Return: nothing
 
-    Checks that the grid type of the course and fine grid match then downscale
+    Checks that the grid type of the coarse and fine grid match then downscale
     using downscale_ls_seed_points_list.
     """
 
@@ -1009,7 +1009,7 @@ def downscale_ls_seed_points_list_driver(input_ls_seed_points_list_filename,
             if comment_line_pattern.match(line):
                 continue
             input_points_list.append(tuple(int(coord) for coord in line.strip().split(",")))
-    output_points_list = downscale_ls_seed_points_list(input_course_list=input_points_list,
+    output_points_list = downscale_ls_seed_points_list(input_coarse_list=input_points_list,
                                                        downscale_factor=factor,
                                                        nlat_fine=nlat_fine,
                                                        nlon_fine=nlon_fine)
@@ -1018,25 +1018,25 @@ def downscale_ls_seed_points_list_driver(input_ls_seed_points_list_filename,
         for entry in output_points_list:
             f.write("{0},{1}\n".format(entry[0],entry[1]))
 
-def downscale_ls_seed_points_list(input_course_list,downscale_factor,nlat_fine,nlon_fine):
+def downscale_ls_seed_points_list(input_coarse_list,downscale_factor,nlat_fine,nlon_fine):
     """Downscale a list of land sea seed points by scaling their coordinates
 
     Arguments:
-    input_course_list: list of tuples, a list of course latitude longitude coordinates
-    (latitude first) giving the position of the course land-sea seed points
+    input_coarse_list: list of tuples, a list of coarse latitude longitude coordinates
+    (latitude first) giving the position of the coarse land-sea seed points
     downscale_factor: integer, factor to downscale by
     nlat_fine: integer, total number of fine latitude points on the fine grid
     nlon_fine: integer, total number of fine longitude points on the fine grid
     Returns:  list of tuple, a list of fine latitude longitude coordinates (latitude
-        first) created by downscaling the course grid points
+        first) created by downscaling the coarse grid points
 
-    Each downscale course point is turned into a course cell size block of
+    Each downscale coarse point is turned into a coarse cell size block of
     fine points. Longitude is simply downscaled. Latitude is also inverted (the
     implied field of points flipped up down) during the process.
     """
 
     output_fine_list = []
-    for coords in input_course_list:
+    for coords in input_coarse_list:
         for i in range(downscale_factor):
             for j in range(downscale_factor):
                 output_fine_list.append((nlat_fine - i - 1 - coords[0]*downscale_factor,
@@ -1111,23 +1111,23 @@ def apply_orography_corrections(input_orography_filename,
                          orography_field,
                          file_type=iodriver.get_file_extension(output_orography_filename))
 
-def downscale_ls_mask_driver(input_course_ls_mask_filename,
+def downscale_ls_mask_driver(input_coarse_ls_mask_filename,
                              output_fine_ls_mask_filename,
                              input_flipud=False,
                              input_rotate180lr=False,
-                             course_grid_type='HD',fine_grid_type='LatLong10min',
-                             course_grid_kwargs={},**fine_grid_kwargs):
+                             coarse_grid_type='HD',fine_grid_type='LatLong10min',
+                             coarse_grid_kwargs={},**fine_grid_kwargs):
     """Drive process of downscaling a land-sea mask
 
     Arguments:
-    input_course_ls_mask_filename: string; full path to input course land sea mask file
+    input_coarse_ls_mask_filename: string; full path to input coarse land sea mask file
     output_fine_ls_mask_filename: string; full path to target fine land sea mask file
     input_flipud: boolean, flip the input land sea mask about the equator
     input_rotate180lr: boolean; rotate the input land sea mask by 180 degrees about
         the pole
-    course_grid_type: string; code for the course grid type of the input field
+    coarse_grid_type: string; code for the coarse grid type of the input field
     fine_grid_type: string;  code for the fine grid type of the output field
-    course_grid_kwargs: dictionary; key word argument dictionary for the course grid type
+    coarse_grid_kwargs: dictionary; key word argument dictionary for the coarse grid type
         of the input field (if required)
     fine_grid_kwargs: dictionary; key word arguments dictionary for the fine grid type of
         the output field (if required)
@@ -1136,31 +1136,31 @@ def downscale_ls_mask_driver(input_course_ls_mask_filename,
     Outflow field orientations is the same as input field orientation.
     """
 
-    input_course_ls_mask_field = iodriver.load_field(input_course_ls_mask_filename,
+    input_coarse_ls_mask_field = iodriver.load_field(input_coarse_ls_mask_filename,
                                                      file_type=iodriver.\
-                                                     get_file_extension(input_course_ls_mask_filename),
+                                                     get_file_extension(input_coarse_ls_mask_filename),
                                                      field_type='Generic',
-                                                     grid_type=course_grid_type,
-                                                     **course_grid_kwargs)
+                                                     grid_type=coarse_grid_type,
+                                                     **coarse_grid_kwargs)
     if input_flipud:
-        input_course_ls_mask_field.flip_data_ud()
+        input_coarse_ls_mask_field.flip_data_ud()
     if input_rotate180lr:
-        input_course_ls_mask_field.rotate_field_by_a_hundred_and_eighty_degrees()
-    output_fine_ls_mask_field = downscale_ls_mask(input_course_ls_mask_field,
+        input_coarse_ls_mask_field.rotate_field_by_a_hundred_and_eighty_degrees()
+    output_fine_ls_mask_field = downscale_ls_mask(input_coarse_ls_mask_field,
                                                   fine_grid_type,**fine_grid_kwargs)
     iodriver.write_field(output_fine_ls_mask_filename,output_fine_ls_mask_field,
                          file_type=iodriver.get_file_extension(output_fine_ls_mask_filename))
 
-def advanced_downscale_ls_mask_driver(input_course_ls_mask_filename,
+def advanced_downscale_ls_mask_driver(input_coarse_ls_mask_filename,
                                       output_fine_ls_mask_filename,
-                                      input_course_ls_mask_fieldname,
+                                      input_coarse_ls_mask_fieldname,
                                       output_fine_ls_mask_fieldname,
                                       fine_grid_type='LatLong10min',
                                       **fine_grid_kwargs):
     """Drive process of downscaling a land-sea mask using advanced loader/writer
 
     Arguments:
-    input_course_ls_mask_filename: string; full path to input course land sea mask file
+    input_coarse_ls_mask_filename: string; full path to input coarse land sea mask file
     output_fine_ls_mask_filename: string; full path to target fine land sea mask file
     fine_grid_type: string;  code for the fine grid type of the output field
     fine_grid_kwargs: dictionary; key word arguments dictionary for the fine grid type of
@@ -1170,85 +1170,85 @@ def advanced_downscale_ls_mask_driver(input_course_ls_mask_filename,
     Outflow field orientations is the same as input field orientation.
     """
 
-    input_course_ls_mask_field = iodriver.advanced_field_loader(input_course_ls_mask_filename,
+    input_coarse_ls_mask_field = iodriver.advanced_field_loader(input_coarse_ls_mask_filename,
                                                                 fieldname=
-                                                                input_course_ls_mask_fieldname)
-    output_fine_ls_mask_field = downscale_ls_mask(input_course_ls_mask_field,
+                                                                input_coarse_ls_mask_fieldname)
+    output_fine_ls_mask_field = downscale_ls_mask(input_coarse_ls_mask_field,
                                                   fine_grid_type,**fine_grid_kwargs)
     #scale_factor = (output_fine_ls_mask_field.get_grid().nlong/
-    #               input_course_ls_mask_field.get_grid().nlong)
-    #coarse_coords = input_course_ls_mask_field.get_grid().get_coordinates()
-    #fine_nlat = scale_factor*input_course_ls_mask_field.get_grid().nlat
-    #fine_nlong = scale_factor*input_course_ls_mask_field.get_grid().nlong
+    #               input_coarse_ls_mask_field.get_grid().nlong)
+    #coarse_coords = input_coarse_ls_mask_field.get_grid().get_coordinates()
+    #fine_nlat = scale_factor*input_coarse_ls_mask_field.get_grid().nlat
+    #fine_nlong = scale_factor*input_coarse_ls_mask_field.get_grid().nlong
     #output_fine_ls_mask.get_grid().set_coordinates()
     raise UserWarning("Coordinates not set for fine grid!")
     iodriver.advanced_field_writer(output_fine_ls_mask_filename,output_fine_ls_mask_field,
                                    fieldname=output_fine_ls_mask_fieldname)
 
-def downscale_ls_mask(input_course_ls_mask_field,fine_grid_type,**fine_grid_kwargs):
+def downscale_ls_mask(input_coarse_ls_mask_field,fine_grid_type,**fine_grid_kwargs):
     """Downscale a land-sea mask
 
     Arguments:
-    input_course_ls_mask_field: Field object; the input course field to downscale
+    input_coarse_ls_mask_field: Field object; the input coarse field to downscale
     fine_grid_type: string; the code of the grid type to downscale to
     fine_grid_kwargs: dictionary; key word dictionary for the grid type to be
         downscaled to (if required)
     Returns: The downscaled field in a Field object
 
     The downscaling is done crudely by assuming that all fine pixels/cells covered by
-    a course cell have the same land-sea value (1 or 0) as the course cell itself; thus
+    a coarse cell have the same land-sea value (1 or 0) as the coarse cell itself; thus
     this will produce a blocky land-sea mask on the fine grid with a granular size equal
-    to that of the course grid.
+    to that of the coarse grid.
     """
 
     nlat_fine,nlon_fine = grid.makeGrid(fine_grid_type,**fine_grid_kwargs).get_grid_dimensions()
-    nlat_course,nlon_course = input_course_ls_mask_field.grid.get_grid_dimensions()
-    if nlat_course > nlat_fine or nlon_course > nlon_fine:
+    nlat_coarse,nlon_coarse = input_coarse_ls_mask_field.grid.get_grid_dimensions()
+    if nlat_coarse > nlat_fine or nlon_coarse > nlon_fine:
         raise RuntimeError('Cannot use the downscale ls mask function to perform an upscaling')
-    if nlat_fine % nlat_course != 0 or nlon_fine % nlon_course !=0 :
+    if nlat_fine % nlat_coarse != 0 or nlon_fine % nlon_coarse !=0 :
         raise RuntimeError('Incompatible input and output grid dimensions')
-    scalingfactor_lat = nlat_fine // nlat_course
-    scalingfactor_lon = nlon_fine // nlon_course
+    scalingfactor_lat = nlat_fine // nlat_coarse
+    scalingfactor_lon = nlon_fine // nlon_coarse
     #this series of manipulations produces the required 'binary' upscaling
     #outer is the outer product
-    output_fine_ls_mask_flatted = np.outer(input_course_ls_mask_field.get_data().flatten(order='F'),
+    output_fine_ls_mask_flatted = np.outer(input_coarse_ls_mask_field.get_data().flatten(order='F'),
                                            np.ones(scalingfactor_lat,dtype=np.int32)).flatten(order='C')
     output_fine_ls_mask_flatted = np.outer(output_fine_ls_mask_flatted,
                                            np.ones(scalingfactor_lon,dtype=np.int32)).flatten(order='C')
-    output_fine_ls_mask = output_fine_ls_mask_flatted.reshape((scalingfactor_lon,nlat_fine,nlon_course),
+    output_fine_ls_mask = output_fine_ls_mask_flatted.reshape((scalingfactor_lon,nlat_fine,nlon_coarse),
                                                                order='F')
     output_fine_ls_mask = output_fine_ls_mask.swapaxes(0,1)
     output_fine_ls_mask = output_fine_ls_mask.reshape(nlat_fine,nlon_fine,order='F')
     return field.Field(np.ascontiguousarray(output_fine_ls_mask,dtype=np.int32),grid=fine_grid_type,
                        **fine_grid_kwargs)
 
-def intelligently_burn_orography(input_fine_orography_field,course_orography_field,
+def intelligently_burn_orography(input_fine_orography_field,coarse_orography_field,
                                  input_fine_fmap,threshold,region,
-                                 course_grid_type,**course_grid_kwargs):
+                                 coarse_grid_type,**coarse_grid_kwargs):
     """Intelligently burn an orography in a given reason using a given threshold
 
     Arguments:
     input_fine_orography_field: Field object; the input fine orography to take intelligent
         burning height values
-    course_orography_field: Field object; the input course orography to applying the burning
+    coarse_orography_field: Field object; the input coarse orography to applying the burning
         too
     input_fine_fmap: Field object; fine culumalative flow to cell to determine which fine cell are
         river cells (using the threshold)
     threshold: integer; the threshold using to decide if cumulative flow to a cell is high enough for
         it to be eligible for intelligent burning
     region: dictionary: a dictionary specifying the coordinate of a region on this grid type
-    course_grid_type: string; code for the the course grid type
-    course_grid_kwarg: dictionary; keyword parameter dictionary specifying parameters of the
-        course grid type (if required)
+    coarse_grid_type: string; code for the the coarse grid type
+    coarse_grid_kwarg: dictionary; keyword parameter dictionary specifying parameters of the
+        coarse grid type (if required)
     Returns: Orography with intelligent burning applied in a Field object
 
-    Intelligent burn course field by masking the pixels of a fine orography field inside a course cell
+    Intelligent burn coarse field by masking the pixels of a fine orography field inside a coarse cell
     where the flow is less than a given threshold in the comparable fine total cumulative flow field
-    then taking the highest height of the fine orography inside the course cell where it is not masked.
-    If this height is greater than that of the course cell itself in the course orography field then
-    replace the course orography field value with this height. So a river flowing through a course cell
+    then taking the highest height of the fine orography inside the coarse cell where it is not masked.
+    If this height is greater than that of the coarse cell itself in the coarse orography field then
+    replace the coarse orography field value with this height. So a river flowing through a coarse cell
     must pass over the maximum height of the river flowing through the pixels of a fine field equivalent
-    to the course field.
+    to the coarse field.
     """
 
     fmap_below_threshold_mask = \
@@ -1256,41 +1256,41 @@ def intelligently_burn_orography(input_fine_orography_field,course_orography_fie
     input_fine_orography_field.mask_field_with_external_mask(fmap_below_threshold_mask)
     input_fine_orography_field.fill_mask(input_fine_orography_field.get_no_data_value())
     intelligent_height_field = field.Orography(upscale_field(input_field=input_fine_orography_field,
-                                                             output_grid_type=course_grid_type,
+                                                             output_grid_type=coarse_grid_type,
                                                              method='Max',
-                                                             output_grid_kwargs=course_grid_kwargs,
+                                                             output_grid_kwargs=coarse_grid_kwargs,
                                                              scalenumbers=False).get_data(),
-                                               grid=course_grid_type,**course_grid_kwargs)
+                                               grid=coarse_grid_type,**coarse_grid_kwargs)
     intelligent_height_field.mask_no_data_points()
-    intelligent_height_field.mask_where_greater_than(course_orography_field)
+    intelligent_height_field.mask_where_greater_than(coarse_orography_field)
     intelligent_height_field.mask_outside_region(region)
-    course_orography_field.update_field_with_partially_masked_data(intelligent_height_field)
-    return course_orography_field
+    coarse_orography_field.update_field_with_partially_masked_data(intelligent_height_field)
+    return coarse_orography_field
 
 def intelligent_orography_burning_driver(input_fine_orography_filename,
-                                         input_course_orography_filename,
+                                         input_coarse_orography_filename,
                                          input_fine_fmap_filename,
-                                         output_course_orography_filename,
+                                         output_coarse_orography_filename,
                                          regions_to_burn_list_filename,
                                          change_print_out_limit = 200,
-                                         fine_grid_type=None,course_grid_type=None,
-                                         fine_grid_kwargs={},**course_grid_kwargs):
+                                         fine_grid_type=None,coarse_grid_type=None,
+                                         fine_grid_kwargs={},**coarse_grid_kwargs):
     """Drive intelligent burning of an orography
 
     Arguments:
     input_fine_orography_filename: string; full path to the fine orography field file to use as a reference
-    input_course_orography_filename: string; full path to the course orography field file to intelligently burn
+    input_coarse_orography_filename: string; full path to the coarse orography field file to intelligently burn
     input_fine_fmap_filename: string; full path to the fine cumulative flow field file to use as reference
-    output_course_orography_filename: string; full path to target file to write the output intelligently burned
+    output_coarse_orography_filename: string; full path to target file to write the output intelligently burned
         orogrpahy to
     regions_to_burn_list_filename: string; full path of list of regions to burn and the burning thershold to use
         for each region. See inside function the necessary format for the header and the necessary format to
         specifying each region to burn
     change_print_out_limit: integer; limit on the number of changes to the orography to individually print out
     fine_grid_type: string; code for the grid type of the fine grid
-    course_grid_type: string; code for teh grid type of the course grid
+    coarse_grid_type: string; code for teh grid type of the coarse grid
     fine_grid_kwargs: dictionary; key word dictionary specifying parameters of the fine grid (if required)
-    course_grid_kwargs: dictionary; key word dictionary specifying parameters of the course grid (if required)
+    coarse_grid_kwargs: dictionary; key word dictionary specifying parameters of the coarse grid (if required)
     Returns: nothing
 
     Reads input file, orientates field according to information on orientation supplied in corrections region file,
@@ -1303,12 +1303,12 @@ def intelligent_orography_burning_driver(input_fine_orography_filename,
                                                      field_type='Orography',
                                                      grid_type=fine_grid_type,
                                                      **fine_grid_kwargs)
-    input_course_orography_field = iodriver.load_field(input_course_orography_filename,
+    input_coarse_orography_field = iodriver.load_field(input_coarse_orography_filename,
                                                        file_type=\
-                                                       iodriver.get_file_extension(input_course_orography_filename),
+                                                       iodriver.get_file_extension(input_coarse_orography_filename),
                                                        field_type='Orography',
-                                                       grid_type=course_grid_type,
-                                                       **course_grid_kwargs)
+                                                       grid_type=coarse_grid_type,
+                                                       **coarse_grid_kwargs)
     input_fine_fmap_field = iodriver.load_field(input_fine_fmap_filename,
                                                 file_type=\
                                                 iodriver.get_file_extension(input_fine_fmap_filename),
@@ -1317,10 +1317,10 @@ def intelligent_orography_burning_driver(input_fine_orography_filename,
                                                 **fine_grid_kwargs)
     regions = []
     thresholds = []
-    first_line_pattern = re.compile(r"^course_grid_type *= *" + course_grid_type + r"$")
+    first_line_pattern = re.compile(r"^coarse_grid_type *= *" + coarse_grid_type + r"$")
     second_line_pattern = re.compile(r"^fine_grid_type *= *" + fine_grid_type + r"$")
-    third_line_pattern = re.compile(r"^course_grid_flipud *= *(True|true|TRUE|False|false|FALSE)$")
-    fourth_line_pattern = re.compile(r"^course_grid_rotate180lr *= *(True|true|TRUE|False|false|FALSE)$")
+    third_line_pattern = re.compile(r"^coarse_grid_flipud *= *(True|true|TRUE|False|false|FALSE)$")
+    fourth_line_pattern = re.compile(r"^coarse_grid_rotate180lr *= *(True|true|TRUE|False|false|FALSE)$")
     fifth_line_pattern = re.compile(r"^fine_grid_flipud *= *(True|true|TRUE|False|false|FALSE)$")
     sixth_line_pattern = re.compile(r"^fine_grid_rotate180lr *= *(True|true|TRUE|False|false|FALSE)$")
     comment_line_pattern = re.compile(r"^ *#.*$")
@@ -1328,7 +1328,7 @@ def intelligent_orography_burning_driver(input_fine_orography_filename,
     region_bound_pattern = re.compile(r"^ *([a-zA-Z0-9_]*) *= *([0-9]*) *$")
     with open(regions_to_burn_list_filename) as f:
         if not first_line_pattern.match(f.readline().strip()):
-            raise RuntimeError("List of regions to burn is not for correct course grid-type")
+            raise RuntimeError("List of regions to burn is not for correct coarse grid-type")
         if not second_line_pattern.match(f.readline().strip()):
             raise RuntimeError("List of regions to burn is not for correct fine grid-type")
         third_line_pattern_match = third_line_pattern.match(f.readline().strip())
@@ -1368,29 +1368,29 @@ def intelligent_orography_burning_driver(input_fine_orography_filename,
             regions.append(region)
             thresholds.append(threshold)
     if flipud:
-        input_course_orography_field.flip_data_ud()
+        input_coarse_orography_field.flip_data_ud()
     if rotate180lr:
-        input_course_orography_field.rotate_field_by_a_hundred_and_eighty_degrees()
+        input_coarse_orography_field.rotate_field_by_a_hundred_and_eighty_degrees()
     if fine_grid_flipud:
         input_fine_orography_field.flip_data_ud()
         input_fine_fmap_field.flip_data_ud()
     if fine_grid_rotate180lr:
         input_fine_orography_field.rotate_field_by_a_hundred_and_eighty_degrees()
         input_fine_fmap_field.rotate_field_by_a_hundred_and_eighty_degrees
-    output_course_orography = copy.deepcopy(input_course_orography_field)
+    output_coarse_orography = copy.deepcopy(input_coarse_orography_field)
     for region,threshold in zip(regions,thresholds):
         print("Intelligently burning region: {0} \n using the threshold {1}".format(region,threshold))
         #This is modified by the intelligently burn orography field so need to make a
         #copy to pass in each time
         working_fine_orography_field = copy.deepcopy(input_fine_orography_field)
-        output_course_orography = intelligently_burn_orography(working_fine_orography_field,
-                                                               course_orography_field=output_course_orography,
+        output_coarse_orography = intelligently_burn_orography(working_fine_orography_field,
+                                                               coarse_orography_field=output_coarse_orography,
                                                                input_fine_fmap=input_fine_fmap_field,
                                                                threshold=threshold, region=region,
-                                                               course_grid_type=course_grid_type,
-                                                               **course_grid_kwargs)
-        difference_in_orography_field = output_course_orography.get_data() - \
-                                        input_course_orography_field.get_data()
+                                                               coarse_grid_type=coarse_grid_type,
+                                                               **coarse_grid_kwargs)
+        difference_in_orography_field = output_coarse_orography.get_data() - \
+                                        input_coarse_orography_field.get_data()
         if np.count_nonzero(difference_in_orography_field) > change_print_out_limit:
             print("Intelligent burning makes more than {0} changes to orography".\
                 format(change_print_out_limit))
@@ -1399,17 +1399,17 @@ def intelligent_orography_burning_driver(input_fine_orography_filename,
             for change in changes_in_orography_field:
                 print("Changing the height of cell nlat={0},nlon={1} from {2}m to {3}m".\
                     format(change[0],change[1],
-                           input_course_orography_field.get_data()[tuple(change.tolist())],
-                           output_course_orography.get_data()[tuple(change.tolist())]))
+                           input_coarse_orography_field.get_data()[tuple(change.tolist())],
+                           output_coarse_orography.get_data()[tuple(change.tolist())]))
         #re-use the input orography field as a intermediary value holder
-        input_course_orography_field = copy.deepcopy(output_course_orography)
+        input_coarse_orography_field = copy.deepcopy(output_coarse_orography)
     if flipud:
-        output_course_orography.flip_data_ud()
+        output_coarse_orography.flip_data_ud()
     if rotate180lr:
-        output_course_orography.rotate_field_by_a_hundred_and_eighty_degrees()
-    iodriver.write_field(output_course_orography_filename,
-                         field=output_course_orography,
-                         file_type=iodriver.get_file_extension(output_course_orography_filename))
+        output_coarse_orography.rotate_field_by_a_hundred_and_eighty_degrees()
+    iodriver.write_field(output_coarse_orography_filename,
+                         field=output_coarse_orography,
+                         file_type=iodriver.get_file_extension(output_coarse_orography_filename))
 
 def generate_regular_landsea_mask_from_gaussian_landsea_mask(input_gaussian_latlon_lsmask_filename,
                                                              output_regular_latlon_mask_filename,

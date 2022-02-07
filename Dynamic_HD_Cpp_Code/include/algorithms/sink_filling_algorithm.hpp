@@ -32,7 +32,7 @@
  * every point is processed. For orography upscaling continue till a path reaches
  * an edge and meets the criteria for being a valid path and record the highest
  * point the path has passed over (this is recorded in the cell record and propagated
- * along the path) to as the new height of this cell on the course grid.
+ * along the path) to as the new height of this cell on the coarse grid.
  *
  * The information stored in cell varies from algorithm to algorithm. For a sink filling
  * all that is in principle needed is a height. For algorithm 4, the carving algorithm it
@@ -222,7 +222,7 @@ protected:
 	///upscaling
 	///Minimum length of a path to accept
 	double tarasov_min_path_length = 1.0;
-	///The height to set the course cell being processed to
+	///The height to set the coarse cell being processed to
 	double tarasov_area_height = no_data_value;
 	///Are corner count as part of an edge or not for the
 	///returning to the same edge criterion

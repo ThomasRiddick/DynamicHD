@@ -403,25 +403,25 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         valid_config = valid_config \
             if config.has_option("output_options","output_fine_flowtorivermouths") else False
         valid_config = valid_config \
-            if config.has_option("output_options","output_pre_loop_removal_course_rdirs") else False
+            if config.has_option("output_options","output_pre_loop_removal_coarse_rdirs") else False
         valid_config = valid_config \
-            if config.has_option("output_options","output_pre_loop_removal_course_flowtocell") else False
+            if config.has_option("output_options","output_pre_loop_removal_coarse_flowtocell") else False
         valid_config = valid_config \
-            if config.has_option("output_options","output_pre_loop_removal_course_flowtorivermouths") else False
+            if config.has_option("output_options","output_pre_loop_removal_coarse_flowtorivermouths") else False
         valid_config = valid_config \
-            if config.has_option("output_options","output_pre_loop_removal_course_catchments") else False
+            if config.has_option("output_options","output_pre_loop_removal_coarse_catchments") else False
         valid_config = valid_config \
-            if config.has_option("output_options","output_course_rdirs") else False
+            if config.has_option("output_options","output_coarse_rdirs") else False
         valid_config = valid_config \
-            if config.has_option("output_options","output_course_unfilled_orog") else False
+            if config.has_option("output_options","output_coarse_unfilled_orog") else False
         valid_config = valid_config \
-            if config.has_option("output_options","output_course_filled_orog") else False
+            if config.has_option("output_options","output_coarse_filled_orog") else False
         valid_config = valid_config \
-            if config.has_option("output_options","output_course_flowtocell") else False
+            if config.has_option("output_options","output_coarse_flowtocell") else False
         valid_config = valid_config \
-            if config.has_option("output_options","output_course_flowtorivermouths") else False
+            if config.has_option("output_options","output_coarse_flowtorivermouths") else False
         valid_config = valid_config \
-            if config.has_option("output_options","output_course_catchments") else False
+            if config.has_option("output_options","output_coarse_catchments") else False
         if not valid_config:
             raise RuntimeError("Invalid configuration file supplied")
         if not config.has_section("input_fieldname_options"):
@@ -747,7 +747,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         cotat_plus_parameters_filename = path.join(self.ancillary_data_path,'cotat_plus_standard_params.nl')
         rdirs_30min = run_cotat_plus(rdirs_10min, flowtocell_10min,
                                       cotat_plus_parameters_filename,'HD')
-        if config.getboolean("output_options","output_pre_loop_removal_course_rdirs"):
+        if config.getboolean("output_options","output_pre_loop_removal_coarse_rdirs"):
             if use_grid_info:
                 iodriver.advanced_field_writer(path.join(self.working_directory_path,
                                                          "30min_pre_loop_removal_rdirs.nc"),
@@ -780,7 +780,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                   find_cumulative_flow_at_outlets(rivermouths_30min.\
                                                                                   get_data()),
                                                   'Generic','HD')
-        if config.getboolean("output_options","output_pre_loop_removal_course_flowtocell"):
+        if config.getboolean("output_options","output_pre_loop_removal_coarse_flowtocell"):
             if use_grid_info:
                 iodriver.advanced_field_writer(path.join(self.working_directory_path,
                                                          "30min_pre_loop_removal_flowtocell.nc"),
@@ -793,7 +793,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                "30min_pre_loop_removal_flowtocell.nc"),
                                      flowtocell_30min,
                                      file_type=".nc")
-        if config.getboolean("output_options","output_pre_loop_removal_course_flowtorivermouths"):
+        if config.getboolean("output_options","output_pre_loop_removal_coarse_flowtorivermouths"):
             if use_grid_info:
                 iodriver.advanced_field_writer(path.join(self.working_directory_path,
                                                          "30min_pre_loop_removal_flowtorivermouths.nc"),
@@ -806,7 +806,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                "30min_pre_loop_removal_flowtorivermouths.nc"),
                                      flowtorivermouths_30min,
                                      file_type=".nc")
-        if config.getboolean("output_options","output_pre_loop_removal_course_catchments"):
+        if config.getboolean("output_options","output_pre_loop_removal_coarse_catchments"):
             if use_grid_info:
                 iodriver.advanced_field_writer(path.join(self.working_directory_path,
                                                          "30min_pre_loop_removal_catchments.nc"),
@@ -834,8 +834,8 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         rdirs_30min = run_loop_breaker(rdirs_30min,flowtocell_30min,
                                        catchments_30min,rdirs_10min,
                                        flowtocell_10min,loop_nums_list,
-                                       course_grid_type="HD")
-        if config.getboolean("output_options","output_course_rdirs"):
+                                       coarse_grid_type="HD")
+        if config.getboolean("output_options","output_coarse_rdirs"):
             if use_grid_info:
                 iodriver.advanced_field_writer(path.join(self.working_directory_path,
                                                          "30min_rdirs.nc"),
@@ -850,7 +850,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         #Upscale the orography to the HD grid for calculating the flow parameters
         orography_30min= utilities.upscale_field(orography_10min,"HD","Sum",{},
                                                  scalenumbers=True)
-        if config.getboolean("output_options","output_course_unfilled_orog"):
+        if config.getboolean("output_options","output_coarse_unfilled_orog"):
             if use_grid_info:
                 iodriver.advanced_field_writer(path.join(self.working_directory_path,
                                                          "30min_unfilled_orog.nc"),
@@ -880,7 +880,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                                                 dtype=np.int32),
                                                add_slope = False,
                                                epsilon = 0.0)
-        if config.getboolean("output_options","output_course_filled_orog"):
+        if config.getboolean("output_options","output_coarse_filled_orog"):
             if use_grid_info:
                 iodriver.advanced_field_writer(path.join(self.working_directory_path,
                                                          "30min_filled_orog.nc"),
@@ -895,16 +895,16 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         #Transform any necessary field into the necessary format and save ready for parameter generation
         if print_timing_info:
             time_before_parameter_generation = timer()
-        transformed_course_rdirs_filename = path.join(self.working_directory_path,"30minute_river_dirs_temp.nc")
+        transformed_coarse_rdirs_filename = path.join(self.working_directory_path,"30minute_river_dirs_temp.nc")
         transformed_HD_filled_orography_filename = path.join(self.working_directory_path,"30minute_filled_orog_temp.nc")
         transformed_HD_ls_mask_filename = path.join(self.working_directory_path,"30minute_ls_mask_temp.nc")
         half_degree_grid_filepath = path.join(self.ancillary_data_path,"grid_0_5.txt")
         if not use_grid_info:
             rdirs_30min.rotate_field_by_a_hundred_and_eighty_degrees()
-        iodriver.write_field(filename=transformed_course_rdirs_filename,
+        iodriver.write_field(filename=transformed_coarse_rdirs_filename,
                              field=rdirs_30min,
                              file_type=\
-                             iodriver.get_file_extension(transformed_course_rdirs_filename),
+                             iodriver.get_file_extension(transformed_coarse_rdirs_filename),
                              griddescfile=half_degree_grid_filepath)
         if not use_grid_info:
             orography_30min.rotate_field_by_a_hundred_and_eighty_degrees()
@@ -925,7 +925,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         #use a river direction file with coordinates as the hdparas.file
         if config.getboolean("general_options","generate_flow_parameters"):
             #Generate parameters
-            self._generate_flow_parameters(rdir_file=transformed_course_rdirs_filename,
+            self._generate_flow_parameters(rdir_file=transformed_coarse_rdirs_filename,
                                            topography_file=transformed_HD_filled_orography_filename,
                                            inner_slope_file=\
                                            path.join(self.ancillary_data_path,'bin_innerslope.dat'),
@@ -940,7 +940,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                            output_dir=path.join(self.working_directory_path,'paragen'),
                                            production_run=True)
             #Place parameters and rdirs into a hdparas.file
-            self._generate_hd_file(rdir_file=path.splitext(transformed_course_rdirs_filename)[0] + ".dat",
+            self._generate_hd_file(rdir_file=path.splitext(transformed_coarse_rdirs_filename)[0] + ".dat",
                                    lsmask_file=path.splitext(transformed_HD_ls_mask_filename)[0] + ".dat",
                                    null_file=\
                                    path.join(self.ancillary_data_path,'null.dat'),
@@ -953,7 +953,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                    production_run=True)
         else:
             #Use a river direction file including coordinates as the hdparas file
-            shutil.copy2(transformed_course_rdirs_filename,self.output_hdparas_filepath)
+            shutil.copy2(transformed_coarse_rdirs_filename,self.output_hdparas_filepath)
         if self.output_hdstart_filepath is not None:
             utilities.prepare_hdrestart_file_driver(base_hdrestart_filename=base_hd_restart_file,
                                                     output_hdrestart_filename=\
@@ -985,7 +985,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                   find_cumulative_flow_at_outlets(rivermouths_30min.\
                                                                                   get_data()),
                                                   'Generic','HD')
-        if config.getboolean("output_options","output_course_flowtocell"):
+        if config.getboolean("output_options","output_coarse_flowtocell"):
             if use_grid_info:
                 iodriver.advanced_field_writer(path.join(self.working_directory_path,
                                                          "30min_flowtocell.nc"),
@@ -997,7 +997,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                "30min_flowtocell.nc"),
                                      flowtocell_30min,
                                      file_type=".nc")
-        if config.getboolean("output_options","output_course_flowtorivermouths"):
+        if config.getboolean("output_options","output_coarse_flowtorivermouths"):
             if use_grid_info:
                 iodriver.advanced_field_writer(path.join(self.working_directory_path,
                                                          "30min_flowtorivermouths.nc"),
@@ -1009,7 +1009,7 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                "30min_flowtorivermouths.nc"),
                                      flowtorivermouths_30min,
                                      file_type=".nc")
-        if config.getboolean("output_options","output_course_catchments"):
+        if config.getboolean("output_options","output_coarse_catchments"):
             if use_grid_info:
                 iodriver.advanced_field_writer(path.join(self.working_directory_path,
                                                          "30min_catchments.nc"),

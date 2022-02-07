@@ -171,8 +171,8 @@ class Grid(object, metaclass=ABCMeta):
 
         Implementations should return the minima marked as True in a field that is otherwise
         false given in the same format as the input data object. This method is intended to
-        position true sinks points derived from a courser grid at the minima of the areas on
-        the fine grid corresponding to the position/cell of the points on the course grid.
+        position true sinks points derived from a coarser grid at the minima of the areas on
+        the fine grid corresponding to the position/cell of the points on the coarse grid.
         """
 
         pass
@@ -694,8 +694,8 @@ class LatLongGrid(Grid):
         area_size: the size of the rectangle (as a tuple comprising of the length along each axis)
         Returns: ndarray; with the minima in the supplied rectangles marked as True in a field
         that is otherwise false. This method is intended to position true sinks points derived
-        from a courser grid at the minima of the areas on the fine grid corresponding to the
-        position/cell of the points on the course grid.
+        from a coarser grid at the minima of the areas on the fine grid corresponding to the
+        position/cell of the points on the coarse grid.
         """
 
         minima = np.zeros_like(data,dtype=np.bool_)

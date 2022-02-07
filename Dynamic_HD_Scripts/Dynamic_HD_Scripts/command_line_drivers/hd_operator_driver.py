@@ -56,7 +56,7 @@ class HDOperatorDrivers(object):
                                                      input_fine_total_cumulative_flow_path=\
                                                      config.get("input_filepaths",
                                                                         "fine_cumulative_flow"),
-                                                     output_course_rdirs_filepath=\
+                                                     output_coarse_rdirs_filepath=\
                                                      config.get("output_filepaths",
                                                                         "coarse_rdirs_out"),
                                                      input_fine_rdirs_fieldname=\
@@ -65,7 +65,7 @@ class HDOperatorDrivers(object):
                                                      input_fine_total_cumulative_flow_fieldname=\
                                                      config.get("input_fieldnames",
                                                                         "fine_cumulative_flow"),
-                                                     output_course_rdirs_fieldname=\
+                                                     output_coarse_rdirs_fieldname=\
                                                      config.get("output_fieldnames",
                                                                         "coarse_rdirs_out"),
                                                      cotat_plus_parameters_filepath=\
@@ -76,13 +76,13 @@ class HDOperatorDrivers(object):
                                                                     "upscaling_factor")))
 
     def loop_breaking_driver(self,config):
-        loop_breaker_driver.advanced_loop_breaker_driver(input_course_rdirs_filepath=\
+        loop_breaker_driver.advanced_loop_breaker_driver(input_coarse_rdirs_filepath=\
                                                          config.get("input_filepaths",
                                                                     "coarse_rdirs"),
-                                                         input_course_cumulative_flow_filepath=\
+                                                         input_coarse_cumulative_flow_filepath=\
                                                          config.get("input_filepaths",
                                                                     "coarse_cumulative_flow"),
-                                                         input_course_catchments_filepath=\
+                                                         input_coarse_catchments_filepath=\
                                                          config.get("input_filepaths",
                                                                     "coarse_catchments"),
                                                          input_fine_rdirs_filepath=\
@@ -91,16 +91,16 @@ class HDOperatorDrivers(object):
                                                          input_fine_cumulative_flow_filepath=\
                                                          config.get("input_filepaths",
                                                                     "fine_cumulative_flow"),
-                                                         output_updated_course_rdirs_filepath=\
+                                                         output_updated_coarse_rdirs_filepath=\
                                                          config.get("output_filepaths",
                                                                     "coarse_rdirs_out"),
-                                                         input_course_rdirs_fieldname=\
+                                                         input_coarse_rdirs_fieldname=\
                                                          config.get("input_fieldnames",
                                                                     "coarse_rdirs"),
-                                                         input_course_cumulative_flow_fieldname=\
+                                                         input_coarse_cumulative_flow_fieldname=\
                                                          config.get("input_fieldnames",
                                                                     "coarse_cumulative_flow"),
-                                                         input_course_catchments_fieldname=\
+                                                         input_coarse_catchments_fieldname=\
                                                          config.get("input_fieldnames",
                                                                     "coarse_catchments"),
                                                          input_fine_rdirs_fieldname=\
@@ -109,7 +109,7 @@ class HDOperatorDrivers(object):
                                                          input_fine_cumulative_flow_fieldname=\
                                                          config.get("input_fieldnames",
                                                                     "fine_cumulative_flow"),
-                                                         output_updated_course_rdirs_fieldname=\
+                                                         output_updated_coarse_rdirs_fieldname=\
                                                          config.get("output_fieldnames",
                                                                     "coarse_rdirs_out"),
                                                          loop_nums_list_filepath=\
@@ -123,13 +123,13 @@ class HDOperatorDrivers(object):
         upscale_orography_driver.advanced_drive_orography_upscaling(input_fine_orography_file=\
                                                                     config.get("input_filepaths",
                                                                                        "fine_orography"),
-                                                                    output_course_orography_file=\
+                                                                    output_coarse_orography_file=\
                                                                     config.get("output_filepaths",
                                                                                        "coarse_orography"),
                                                                     input_orography_fieldname=\
                                                                     config.get("input_fieldnames",
                                                                                        "fine_orography"),
-                                                                    output_course_orography_fieldname=\
+                                                                    output_coarse_orography_fieldname=\
                                                                     config.get("output_fieldnames",
                                                                                        "coarse_orography"),
                                                                     landsea_file=\
@@ -452,7 +452,8 @@ class HDOperatorDrivers(object):
                                                 orography_variance_file=\
                                                 path.join(ancillary_data_path,'bin_toposig.dat'),
                                                 output_dir=path.join(working_dir,
-                                                                     'hd_flow_params'))
+                                                                     'hd_flow_params'),
+                                                production_run=True)
         dyn_hd_driver._generate_hd_file(rdir_file=path.splitext(rdirs_file)[0] + ".dat",
                                         lsmask_file=path.splitext(ls_mask)[0] + ".dat",
                                         null_file=\
@@ -465,7 +466,8 @@ class HDOperatorDrivers(object):
                                                   'grid_0_5.txt'),
                                         output_file=hdpara_filepath,
                                         paras_dir=path.join(working_dir,
-                                                            'hd_flow_params'))
+                                                            'hd_flow_params'),
+                                        production_run=True)
 
 def setup_and_run_hd_operator_driver_from_command_line_arguments(args):
     driver_object = HDOperatorDrivers()
