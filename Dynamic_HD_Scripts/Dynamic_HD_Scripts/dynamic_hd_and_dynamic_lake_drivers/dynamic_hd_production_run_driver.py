@@ -12,6 +12,7 @@ import os.path as path
 import numpy as np
 import configparser
 import shutil
+from mpi4py import MPI
 from timeit import default_timer as timer
 from Dynamic_HD_Scripts.base import field
 from Dynamic_HD_Scripts.base.field import Field, RiverDirections
@@ -21,13 +22,12 @@ from Dynamic_HD_Scripts.tools.flow_to_grid_cell import create_hypothetical_river
 from Dynamic_HD_Scripts.tools.cotat_plus_driver import run_cotat_plus
 from Dynamic_HD_Scripts.tools.loop_breaker_driver import run_loop_breaker
 from Dynamic_HD_Scripts.utilities import utilities
+from Dynamic_HD_Scripts.utilities.process_manager import ProcessManager
+from Dynamic_HD_Scripts.utilities.process_manager import using_mpi
+from Dynamic_HD_Scripts.utilities.process_manager import MPICommands
 from Dynamic_HD_Scripts.interface.cpp_interface.libs import fill_sinks_wrapper
 from Dynamic_HD_Scripts.dynamic_hd_and_dynamic_lake_drivers import dynamic_hd_driver as dyn_hd_dr
 
-from process_manager import ProcessManager
-from process_manager import using_mpi
-from process_manager import MPICommands
-from mpi4py import MPI
 
 class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
     """A class with methods used for running a production run of the dynamic HD generation code"""

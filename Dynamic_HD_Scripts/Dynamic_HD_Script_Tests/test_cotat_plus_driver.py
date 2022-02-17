@@ -13,15 +13,16 @@ import os
 import re
 import textwrap
 import subprocess
+from mpi4py import MPI
 from subprocess import CalledProcessError
 from Dynamic_HD_Scripts.base import field
 from Dynamic_HD_Scripts.tools import cotat_plus_driver
+from Dynamic_HD_Scripts.utilities.process_manager import ProcessManager
+from Dynamic_HD_Scripts.utilities.process_manager import using_mpi
+from Dynamic_HD_Scripts.utilities.process_manager import MPICommands
 from Dynamic_HD_Scripts import context as scripts_context
 from Dynamic_HD_Script_Tests.context import data_dir,valgrind_path
-from Dynamic_HD_Scripts.process_manager import ProcessManager
-from Dynamic_HD_Scripts.process_manager import using_mpi
-from Dynamic_HD_Scripts.process_manager import MPICommands
-from mpi4py import MPI
+
 
 class Test(unittest.TestCase):
     """Unit test object"""

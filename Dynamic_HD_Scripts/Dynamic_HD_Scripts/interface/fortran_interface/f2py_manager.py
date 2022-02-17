@@ -16,9 +16,9 @@ import re
 import shutil
 from distutils import core as distutils_core
 from subprocess import CalledProcessError
+from Dynamic_HD_Scripts.utilities.process_manager import using_mpi
 from Dynamic_HD_Scripts.context import shared_object_path, bin_path,build_path
 from sys import platform
-from process_manager import using_mpi
 
 class f2py_manager(object):
     """Manages a f2py fortran module.

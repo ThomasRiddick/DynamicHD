@@ -8,13 +8,13 @@ Created on Mar 24, 2017
 import cdo
 import unittest
 import os
+from mpi4py import MPI
 from Dynamic_HD_Scripts.dynamic_hd_and_dynamic_lake_drivers.dynamic_hd_production_run_driver \
     import Dynamic_HD_Production_Run_Drivers
+from Dynamic_HD_Scripts.utilities.process_manager import ProcessManager
+from Dynamic_HD_Scripts.utilities.process_manager import using_mpi
+from Dynamic_HD_Scripts.utilities.process_manager import MPICommands
 from Dynamic_HD_Script_Tests.context import data_dir
-from Dynamic_HD_Scripts.process_manager import ProcessManager
-from Dynamic_HD_Scripts.process_manager import using_mpi
-from Dynamic_HD_Scripts.process_manager import MPICommands
-from mpi4py import MPI
 
 
 class Test_Dynamic_HD_Production_Run_Drivers(unittest.TestCase):
