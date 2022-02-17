@@ -29,6 +29,7 @@ $(FRUIT_LOC)/fruit.f90 \
 ../src/check_return_code_netcdf_mod.f90 \
 ../src/parameters_mod.f90 \
 ../src/accumulate_flow_mod.f90 \
+../src/accumulate_flow_driver_mod.f90 \
 ../src/accumulate_flow_test_mod.f90 \
 ../src/latlon_hd_and_lake_model/latlon_lake_logger_mod.f90 \
 ../src/latlon_hd_and_lake_model/latlon_lake_model_mod.f90 \
@@ -51,6 +52,7 @@ $(FRUIT_LOC)/fruit.f90 \
 ../src/accumulate_flow_icon_simple_interface.f90 \
 ../src/cross_grid_mapper_latlon_to_icon_simple_interface.f90 \
 ../src/cross_grid_mapper.f90 \
+../src/convert_rdirs_to_indices.f90 \
 ../src/icosohedral_hd_and_lake_model/icosohedral_lake_model_mod.f90 \
 ../src/icosohedral_hd_and_lake_model/icosohedral_lake_model_io_mod.f90 \
 ../src/icosohedral_hd_and_lake_model/icosohedral_lake_model_interface_mod.f90 \
@@ -81,7 +83,9 @@ OBJS += \
 ./src/flow_accumulation_algorithm_mod.o \
 ./src/icon_to_latlon_landsea_downscaler.o \
 ./src/accumulate_flow_mod.o \
-./src/cross_grid_mapper.o
+./src/accumulate_flow_driver_mod.o \
+./src/cross_grid_mapper.o \
+./src/convert_rdirs_to_indices.o
 
 COTAT_PLUS_LATLON_TO_ICON_SIMPLE_INTERFACE_OBJS += \
 ./src/cotat_plus_latlon_to_icon_simple_interface.o \
@@ -202,6 +206,7 @@ MODS += \
 ./accumulate_flow_icon_simple_interface.mod \
 ./accumulate_flow_test_mod.mod \
 ./accumulate_flow_mod.mod \
+./accumulate_flow_driver_mod.mod \
 ./manual_fruit_basket.mod \
 ./manual_fruit_basket_driver.mod \
 ./flow_accumulation_algorithm_mod.mod \
@@ -225,27 +230,29 @@ MODS += \
 ./latlon_to_icon_loop_breaker_simple_interface.mod \
 ./cross_grid_mapper_latlon_to_icon_simple_interface.mod \
 ./cross_grid_mapper.mod \
+./convert_rdirs_to_indices.mod \
 ./icosohedral_lake_model_mod.mod \
 ./icosohedral_lake_model_io_mod.mod \
 ./icosohedral_lake_model_interface_mod.mod \
 ./icosohedral_hd_model_interface_mod.mod \
 ./icosohedral_hd_model_io_mod.mod \
 ./icosohedral_hd_model_mod.mod \
-./icosohedral_hd_model_driver.mod
+./icosohedral_hd_model_driver.mod \
+./grid_information_mod.mod
 
 # Each subdirectory must supply rules for building sources it contributes
 ifeq ($(FORTRAN),$(GFORTRAN))
 src/fruit.o: $(FRUIT_LOC)/fruit.f90
 	@echo 'Building file: $<'
 	@echo 'Invoking: GNU Fortran Compiler'
-	$(FORTRAN) -funderscoring -cpp -O0 -g -Wall -c -fmessage-length=0 -fPIC -o "$@" "$<" $(FLAGS)
+	$(FORTRAN) $(FLAGS) -funderscoring -cpp -O0 -g -Wall -c -fmessage-length=0 -fPIC -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 else
 src/fruit.o: $(FRUIT_LOC)/fruit.f90
 	@echo 'Building file: $<'
 	@echo 'Invoking: NAG Fortran Compiler'
-	$(FORTRAN) -O0 -g -c -o "$@" "$<" $(FLAGS)
+	$(FORTRAN) $(FLAGS) -O0 -g -c -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 endif
@@ -256,21 +263,21 @@ ifeq ($(FORTRAN),$(GFORTRAN))
 src/%.o: ../src/%.f90
 	@echo 'Building file: $<'
 	@echo 'Invoking: GNU Fortran Compiler'
-	$(FORTRAN) -funderscoring -cpp -O0 -g -Wall -c -fmessage-length=0 -fPIC -o "$@" "$<" "-I ../include" "-I $(NETCDF_F)/include" $(FLAGS)
+	$(FORTRAN) $(FLAGS) -funderscoring -cpp -O0 -g -Wall -c -fmessage-length=0 -fPIC -o "$@" "$<" "-I ../include" "-I $(NETCDF_F)/include"
 	@echo 'Finished building: $<'
 	@echo ' '
 else ifeq ($(FORTRAN),$(INTELFORTRAN))
 src/%.o: ../src/%.f90
 	@echo 'Invoking: Intel Fortran Compiler'
 	@echo 'Building file: $<'
-	$(FORTRAN) -O0 -fpp -g -c -o "$@" "$<" -I ../include -I $(NETCDF_F)/include $(FLAGS)
+	$(FORTRAN) $(FLAGS) -O0 -fpp -g -c -o "$@" "$<" "-I ../include" "-I $(NETCDF_F)/include"
 	@echo 'Finished building: $<'
 	@echo ' '
 else
 src/%.o: ../src/%.f90
 	@echo 'Invoking: NAG Fortran Compiler'
 	@echo 'Building file: $<'
-	$(FORTRAN) -O0 -fpp -g -c -o "$@" "$<" -I ../include -I $(NETCDF_F)/include $(FLAGS)
+	$(FORTRAN) $(FLAGS) -O0 -fpp -g -c -o "$@" "$<" "-I ../include" "-I $(NETCDF_F)/include"
 	@echo 'Finished building: $<'
 	@echo ' '
 endif
@@ -313,7 +320,9 @@ src/loop_breaker_mod.o: ../src/loop_breaker_mod.f90 src/coords_mod.o src/doubly_
 
 src/loop_breaker_test_mod.o: ../src/loop_breaker_test_mod.f90 src/fruit.o src/loop_breaker_mod.o
 
-src/accumulate_flow_mod.o: ../src/accumulate_flow_mod.f90 src/flow_accumulation_algorithm_mod.o
+src/accumulate_flow_mod.o: ../src/accumulate_flow_mod.f90 src/flow_accumulation_algorithm_mod.o src/convert_rdirs_to_indices.o
+
+src/accumulate_flow_driver_mod.o: ../src/accumulate_flow_driver_mod.f90 src/accumulate_flow_mod.o
 
 src/accumulate_flow_test_mod.o: ../src/accumulate_flow_test_mod.f90 src/accumulate_flow_mod.o src/fruit.o
 
@@ -377,6 +386,8 @@ src/cross_grid_mapper_latlon_to_icon_simple_interface.o: ../src/cross_grid_mappe
 
 src/accumulate_flow_icon_simple_interface.o: ../src/accumulate_flow_icon_simple_interface.f90  src/accumulate_flow_mod.o src/check_return_code_netcdf_mod.o
 
+src/convert_rdirs_to_indices.o: ../src/convert_rdirs_to_indices.f90
+
 src/icosohedral_hd_and_lake_model/icosohedral_hd_model_mod.o: ../src/icosohedral_hd_and_lake_model/icosohedral_hd_model_mod.f90 src/icosohedral_hd_and_lake_model/icosohedral_lake_model_interface_mod.o
 
 src/icosohedral_hd_and_lake_model/icosohedral_hd_model_io_mod.o: ../src/icosohedral_hd_and_lake_model/icosohedral_hd_model_io_mod.f90 src/icosohedral_hd_and_lake_model/icosohedral_hd_model_mod.o src/icosohedral_lake_model_mod/grid_information_mod.o
@@ -392,5 +403,3 @@ src/icosohedral_hd_and_lake_model/icosohedral_lake_model_interface_mod.o: ../src
 src/icosohedral_hd_and_lake_model/icosohedral_hd_model_driver.o: ../src/icosohedral_hd_and_lake_model/icosohedral_hd_model_driver.f90 src/icosohedral_hd_and_lake_model/icosohedral_hd_model_interface_mod.o src/parameters_mod.o
 
 src/icosohedral_lake_model_mod/grid_information_mod.o: ../src/icosohedral_hd_and_lake_model/grid_information_mod.f90
-
-

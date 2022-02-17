@@ -21,6 +21,7 @@ type, abstract :: flow_accumulation_algorithm
     class(coords),pointer :: no_flow_value
     integer :: max_neighbors
     integer :: no_bifurcation_value
+    logical :: search_for_loops = .true.
   contains
     private
     procedure :: init_flow_accumulation_algorithm
@@ -36,6 +37,7 @@ type, abstract :: flow_accumulation_algorithm
     procedure :: get_no_flow_value
     procedure :: check_for_bifurcations_in_cell
     procedure :: update_bifurcated_flow
+    procedure :: label_loop
     procedure, public :: destructor
     procedure(get_next_cell_coords), deferred :: get_next_cell_coords
     procedure(generate_coords_index), deferred :: generate_coords_index
@@ -103,12 +105,20 @@ type, extends(flow_accumulation_algorithm) :: latlon_flow_accumulation_algorithm
     class(subfield_ptr), pointer, dimension(:) :: bifurcated_next_cell_index_lat => null()
     class(subfield_ptr), pointer, dimension(:) :: bifurcated_next_cell_index_lon => null()
   contains
+    class(subfield), pointer :: river_directions => null()
+  contains
+    procedure :: latlon_init_flow_accumulation_algorithm
+    procedure :: latlon_destructor
     procedure :: generate_coords_index => latlon_generate_coords_index
     procedure :: assign_coords_to_link_array => latlon_assign_coords_to_link_array
     procedure :: get_next_cell_coords => latlon_get_next_cell_coords
     procedure :: is_bifurcated => latlon_is_bifurcated
     procedure :: get_next_cell_bifurcated_coords => latlon_get_next_cell_bifurcated_coords
 end type latlon_flow_accumulation_algorithm
+
+interface latlon_flow_accumulation_algorithm
+  procedure :: latlon_flow_accumulation_algorithm_constructor
+end interface latlon_flow_accumulation_algorithm
 
 type, extends(flow_accumulation_algorithm) :: icon_single_index_flow_accumulation_algorithm
   private
@@ -136,13 +146,45 @@ subroutine init_flow_accumulation_algorithm(this)
     call this%cumulative_flow%set_all(0)
 end subroutine init_flow_accumulation_algorithm
 
-subroutine latlon_init_flow_accumulation_algorithm(this)
+subroutine latlon_init_flow_accumulation_algorithm(this, &
+                                                   next_cell_index_lat, &
+                                                   next_cell_index_lon, &
+                                                   cumulative_flow)
   class(latlon_flow_accumulation_algorithm), intent(inout) :: this
+  class(*), dimension(:,:), pointer, intent(in) :: next_cell_index_lat
+  class(*), dimension(:,:), pointer, intent(in) :: next_cell_index_lon
+  class(*), dimension(:,:), pointer, intent(inout) :: cumulative_flow
+  class(*), dimension(:,:), pointer :: dependencies_data
+  type(latlon_section_coords), allocatable :: field_section_coords
+    allocate(field_section_coords)
+    field_section_coords = latlon_section_coords(1,1,size(next_cell_index_lat,1), &
+                                                     size(next_cell_index_lat,2))
+    this%next_cell_index_lat => latlon_subfield(next_cell_index_lat,field_section_coords,.true.)
+    this%next_cell_index_lon => latlon_subfield(next_cell_index_lon,field_section_coords,.true.)
+    this%cumulative_flow => latlon_subfield(cumulative_flow,field_section_coords,.true.)
+    allocate(integer::dependencies_data(size(next_cell_index_lat,1),&
+                                        size(next_cell_index_lon,2)))
+    this%dependencies => latlon_subfield(dependencies_data, &
+                                         field_section_coords,.true.)
     allocate(this%external_data_value,source=latlon_coords(-1,-1))
     allocate(this%flow_terminates_value,source=latlon_coords(-2,-2))
     allocate(this%no_data_value,source=latlon_coords(-3,-3))
     allocate(this%no_flow_value,source=latlon_coords(-4,-4))
+    call this%init_flow_accumulation_algorithm()
 end subroutine latlon_init_flow_accumulation_algorithm
+
+function latlon_flow_accumulation_algorithm_constructor(next_cell_index_lat, &
+                                                        next_cell_index_lon, &
+                                                        cumulative_flow) &
+                                                        result(constructor)
+  class(*), dimension(:,:), pointer, intent(in) :: next_cell_index_lat
+  class(*), dimension(:,:), pointer, intent(in) :: next_cell_index_lon
+  class(*), dimension(:,:), pointer, intent(inout) :: cumulative_flow
+  type(latlon_flow_accumulation_algorithm) :: constructor
+    call constructor%latlon_init_flow_accumulation_algorithm(next_cell_index_lat, &
+                                                             next_cell_index_lon, &
+                                                             cumulative_flow)
+end function latlon_flow_accumulation_algorithm_constructor
 
 subroutine icon_single_index_init_flow_accumulation_algorithm(this,field_section_coords, &
                                                               next_cell_index, &
@@ -154,7 +196,7 @@ subroutine icon_single_index_init_flow_accumulation_algorithm(this,field_section
   class(*), dimension(:,:), pointer, intent(in), optional :: bifurcated_next_cell_index
   class(*), dimension(:), pointer :: bifurcated_next_cell_index_slice
   class(*), dimension(:), pointer :: bifurcation_complete_slice
-  type(generic_1d_section_coords), intent(in) :: field_section_coords
+   type(generic_1d_section_coords), intent(in) :: field_section_coords
   class(*), dimension(:), pointer :: dependencies_data
   integer :: i
     this%max_neighbors = 12
@@ -221,11 +263,18 @@ subroutine destructor(this)
     call this%q%destructor()
 end subroutine destructor
 
+subroutine latlon_destructor(this)
+  class(latlon_flow_accumulation_algorithm), intent(inout) :: this
+    deallocate(this%next_cell_index_lat)
+    deallocate(this%next_cell_index_lon)
+    call this%destructor
+end subroutine latlon_destructor
+
 subroutine icon_single_index_destructor(this)
   class(icon_single_index_flow_accumulation_algorithm), intent(inout) :: this
     deallocate(this%next_cell_index)
     call this%destructor
-end subroutine
+end subroutine icon_single_index_destructor
 
 subroutine generate_cumulative_flow(this,set_links)
   class(flow_accumulation_algorithm), intent(inout) :: this
@@ -233,6 +282,7 @@ subroutine generate_cumulative_flow(this,set_links)
     call this%dependencies%for_all(set_dependencies_wrapper,this)
     call this%dependencies%for_all(add_cells_to_queue_wrapper,this)
     call this%process_queue()
+    if (this%search_for_loops) call this%dependencies%for_all(check_for_loops_wrapper,this)
     if (set_links) call this%dependencies%for_all_edge_cells(follow_paths_wrapper,this)
 end subroutine generate_cumulative_flow
 
@@ -374,6 +424,24 @@ subroutine process_queue(this)
   end do
 end subroutine process_queue
 
+subroutine check_for_loops_wrapper(this,cell_coords)
+  class(*), intent(inout) :: this
+  class(coords), pointer, intent(inout) :: cell_coords
+  class(*), pointer :: dependency_ptr
+    select type(this)
+    class is (flow_accumulation_algorithm)
+      dependency_ptr => this%dependencies%get_value(cell_coords)
+      select type(dependency_ptr)
+      type is (integer)
+        if (dependency_ptr /= 0) then
+          call this%label_loop(cell_coords)
+        end if
+      end select
+    end select
+    deallocate(dependency_ptr)
+    deallocate(cell_coords)
+end subroutine check_for_loops_wrapper
+
 subroutine follow_paths_wrapper(this,initial_coords)
   class(*), intent(inout) :: this
   class(coords), pointer, intent(inout) :: initial_coords
@@ -410,6 +478,25 @@ subroutine follow_paths(this,initial_coords)
   end do
   deallocate(initial_coords)
 end subroutine follow_paths
+
+subroutine label_loop(this,start_coords)
+  class(flow_accumulation_algorithm), intent(in) :: this
+  class(coords), pointer :: start_coords
+  class(coords), pointer :: current_coords
+  class(coords), pointer :: new_current_coords
+    allocate(current_coords,source=start_coords)
+    do
+      call this%dependencies%set_value(current_coords,0)
+      call this%cumulative_flow%set_value(current_coords,0)
+      new_current_coords => this%get_next_cell_coords(current_coords)
+      deallocate(current_coords)
+      if (new_current_coords%are_equal_to(start_coords)) then
+        deallocate(new_current_coords)
+        exit
+      end if
+      current_coords => new_current_coords
+    end do
+end subroutine label_loop
 
   function get_external_flow_value(this) result(external_data_value)
     class(flow_accumulation_algorithm), intent(in) :: this
@@ -452,6 +539,8 @@ end subroutine follow_paths
                                         next_cell_coords_lon_ptr))
         end select
       end select
+      deallocate(next_cell_coords_lat_ptr)
+      deallocate(next_cell_coords_lon_ptr)
   end function latlon_get_next_cell_coords
 
   function latlon_generate_coords_index(this,coords_in) result(index)

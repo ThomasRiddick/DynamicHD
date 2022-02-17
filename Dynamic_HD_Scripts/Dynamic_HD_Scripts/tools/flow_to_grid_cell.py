@@ -17,7 +17,7 @@ from Dynamic_HD_Scripts.context import fortran_source_path
 
 def create_hypothetical_river_paths_map(riv_dirs,lsmask=None,use_f2py_func=True,
                                         use_f2py_sparse_iterator=False,nlat=360,nlong=720,
-                                        sparse_fraction=0.5):
+                                        sparse_fraction=0.5,use_new_method=False):
     """Create map of cumulative flow to cell from a field of river directions
 
     Inputs:
@@ -58,22 +58,45 @@ def create_hypothetical_river_paths_map(riv_dirs,lsmask=None,use_f2py_func=True,
     else:
         riv_dirs = np.array(riv_dirs,copy=True,dtype=int)
     paths_map = np.zeros((nlat+2,nlong),dtype=np.int32,order='F')
-    if use_f2py_func:
-        f2py_kernel = f2py_mg.f2py_manager(path.join(fortran_source_path,
-                                                     'mod_iterate_paths_map.f90'),
-                                           func_name='iterate_paths_map')
-        iterate_paths_map_function = f2py_kernel.run_current_function_or_subroutine
+    if use_f2py_func and use_new_method:
+        additional_fortran_filenames = ["accumulate_flow_mod.o","coords_mod.o",
+                                        "flow_accumulation_algorithm_mod.o",
+                                        "convert_rdirs_to_indices.o",
+                                        "doubly_linked_list_mod.o",
+                                        "doubly_linked_list_link_mod.o",
+                                        "subfield_mod.o",
+                                        "unstructured_grid_mod.o",
+                                        "precision_mod.o"]
+        additional_fortran_filepaths = [path.join(fortran_project_object_path,filename) for filename in\
+                                        additional_fortran_filenames]
+        f2py_mngr = f2py_mg.f2py_manager(path.join(fortran_project_source_path,"accumulate_flow_driver_mod.f90"),
+                                              func_name="accumulate_flow_latlon_f2py_wrapper",
+                                              additional_fortran_files=additional_fortran_filepaths,
+                                              include_path=fortran_project_include_path)
+        paths_map = f2py_mngr.\
+        run_current_function_or_subroutine(np.asfortranarray(riv_dirs),
+                                           *riv_dirs.shape)
+        #Make a minor postprocessing correction
+        paths_map[np.logical_and(np.logical_or(riv_dirs == 5,
+                                               riv_dirs == 0),
+                                 paths_map == 0)] = 1
     else:
-        iterate_paths_map_function = iterate_paths_map
-    while iterate_paths_map_function(riv_dirs,paths_map,nlat,nlong):
-        remaining_points = paths_map.size - np.count_nonzero(paths_map)
+        if use_f2py_func:
+            f2py_kernel = f2py_mg.f2py_manager(path.join(fortran_source_path,
+                                                         'mod_iterate_paths_map.f90'),
+                                               func_name='iterate_paths_map')
+            iterate_paths_map_function = f2py_kernel.run_current_function_or_subroutine
+        else:
+            iterate_paths_map_function = iterate_paths_map
+        while iterate_paths_map_function(riv_dirs,paths_map,nlat,nlong):
+            remaining_points = paths_map.size - np.count_nonzero(paths_map)
         print("Remaining points to process: {0}".format(remaining_points))
-        if use_f2py_sparse_iterator and remaining_points/float(paths_map.size) < sparse_fraction:
-            f2py_sparse_iterator = f2py_mg.f2py_manager(path.join(fortran_source_path,
-                                                                  'mod_iterate_paths_map.f90'),
-                                                        func_name='sparse_iterator')
-            f2py_sparse_iterator.run_current_function_or_subroutine(riv_dirs,paths_map,nlat,nlong)
-            break
+            if use_f2py_sparse_iterator and remaining_points/float(paths_map.size) < sparse_fraction:
+                f2py_sparse_iterator = f2py_mg.f2py_manager(path.join(fortran_source_path,
+                                                                      'mod_iterate_paths_map.f90'),
+                                                            func_name='sparse_iterator')
+                f2py_sparse_iterator.run_current_function_or_subroutine(riv_dirs,paths_map,nlat,nlong)
+                break
     return paths_map[1:-1,:]
 
 def iterate_paths_map(riv_dirs,paths_map,nlat=360,nlong=720):

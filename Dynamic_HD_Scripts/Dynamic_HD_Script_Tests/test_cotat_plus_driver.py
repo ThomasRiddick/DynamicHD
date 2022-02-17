@@ -18,6 +18,10 @@ from Dynamic_HD_Scripts.base import field
 from Dynamic_HD_Scripts.tools import cotat_plus_driver
 from Dynamic_HD_Scripts import context as scripts_context
 from Dynamic_HD_Script_Tests.context import data_dir,valgrind_path
+from Dynamic_HD_Scripts.process_manager import ProcessManager
+from Dynamic_HD_Scripts.process_manager import using_mpi
+from Dynamic_HD_Scripts.process_manager import MPICommands
+from mpi4py import MPI
 
 class Test(unittest.TestCase):
     """Unit test object"""
@@ -138,4 +142,15 @@ class Test(unittest.TestCase):
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
-    unittest.main()
+    if using_mpi():
+        comm = MPI.COMM_WORLD
+        rank = comm.Get_rank()
+        if rank == 0:
+            unittest.main(exit=False)
+            command = MPICommands.EXIT
+            comm.bcast(command, root=0)
+        else:
+            process_manager = ProcessManager(comm)
+            process_manager.wait_for_commands()
+    else:
+      unittest.main()

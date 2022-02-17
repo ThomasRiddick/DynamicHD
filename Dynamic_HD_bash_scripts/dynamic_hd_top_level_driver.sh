@@ -2,6 +2,7 @@
 set -e
 
 echo "Running Version 3.10 of the Dynamic HD Parameters Generation Code"
+start_time=$(date +%s%N)
 
 #Define module loading function
 function load_module
@@ -306,13 +307,20 @@ fi
 #Setup correct python path
 export PYTHONPATH=${source_directory}/Dynamic_HD_Scripts:${PYTHONPATH}
 
+#Set Open MPI Fortran compiler
+export OMPI_FC=/sw/rhel6-x64/gcc/gcc-6.2.0/bin/gfortran
+
 #Call compilation script
 ${source_directory}/Dynamic_HD_bash_scripts/compile_dynamic_hd_code.sh ${compilation_required} ${compile_only} ${source_directory} ${working_directory} true "compile_only"
 
 if ! ${compile_only} ; then
+	#Set enviromental variable
+    export USE_MPI_IN_PYTHON=false
 	#Run
 	echo "Running Dynamic HD Code" 1>&2
+	setup_end_time=$(date +%s%N)
 	python ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/dynamic_hd_and_dynamic_lake_drivers/dynamic_hd_production_run_driver.py ${input_orography_filepath} ${input_ls_mask_filepath} ${present_day_base_orography_filepath} ${glacier_mask_filepath} ${output_hdpara_filepath} ${ancillary_data_directory} ${working_directory} ${output_hdstart_filepath}
+    computation_end_time=$(date +%s%N)
 
 	#Delete paragen directory if it exists
 	if [[ -d "${working_directory}/paragen" ]]; then
@@ -341,4 +349,9 @@ if ! ${compile_only} ; then
 			mv  $file ${diagnostic_output_directory}/$(basename ${file} .nc)_${diagnostic_output_label}.nc
 		done
 	fi
+	cleanup_end_time=$(date +%s%N)
+	echo "Total top level script total run time: " $(((cleanup_end_time-start_time)/1000000)) " ms"
+	echo "Setup time: " $(((setup_end_time-start_time)/1000000)) " ms"
+	echo "Computation time: " $(((computation_end_time-setup_end_time)/1000000)) " ms"
+	echo "Clean-up time: " $(((cleanup_end_time-computation_end_time)/1000000)) " ms"
 fi

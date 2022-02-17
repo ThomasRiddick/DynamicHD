@@ -629,6 +629,7 @@ subroutine lakefieldsdestructor(this)
     deallocate(this%water_to_lakes)
     deallocate(this%water_to_hd)
     deallocate(this%cells_with_lakes_index)
+    deallocate(this%lake_water_from_ocean)
 end subroutine lakefieldsdestructor
 
 ! Initialise a lake prognostics object by constructing the master list of lake objects
