@@ -40,13 +40,20 @@ def run_loop_breaker(coarse_rdirs,coarse_cumulative_flow,coarse_catchments,fine_
     may contain three or more cells).
     """
 
-    additional_fortran_filenames = ["coords_mod.o","doubly_linked_list_mod.o","break_loops_mod.o",
-                                    "doubly_linked_list_link_mod.o","field_section_mod.o",
-                                    "loop_breaker_mod.o","unstructured_grid_mod.o",
-                                    "map_non_coincident_grids_mod.o","subfield_mod.o"]
+    additional_fortran_filenames = ["base/coords_mod.o",
+                                    "base/doubly_linked_list_mod.o",
+                                    "algorithms/break_loops_mod.o",
+                                    "base/doubly_linked_list_link_mod.o",
+                                    "base/field_section_mod.o",
+                                    "algorithms/loop_breaker_mod.o",
+                                    "base/unstructured_grid_mod.o",
+                                    "algorithms/map_non_coincident_grids_mod.o",
+                                    "base/subfield_mod.o"]
     additional_fortran_filepaths = [path.join(fortran_project_object_path,filename) for filename in\
                                     additional_fortran_filenames]
-    f2py_mngr = f2py_manager.f2py_manager(path.join(fortran_project_source_path,"break_loops_driver_mod.f90"),
+    f2py_mngr = f2py_manager.f2py_manager(path.join(fortran_project_source_path,
+                                                    "drivers",
+                                                    "break_loops_driver_mod.f90"),
                                           func_name="break_loops_latlon_f2py_wrapper",
                                           additional_fortran_files=additional_fortran_filepaths,
                                           include_path=fortran_project_include_path)

@@ -11,12 +11,20 @@ def run_flow(input_fine_river_directions,input_fine_total_cumulative_flow,
              cotat_parameters_filepath,coarse_grid_type,
              **coarse_grid_kwargs):
 
-    additional_fortran_filenames = ["area_mod.o","coords_mod.o","cotat_parameters_mod.o","flow.o",
-                                     "doubly_linked_list_mod.o","doubly_linked_list_link_mod.o",
-                                     "field_section_mod.o","precision_mod.o","subfield_mod.o"]
+    additional_fortran_filenames = ["base/area_mod.o",
+                                    "base/coords_mod.o",
+                                    "algorithms/cotat_parameters_mod.o",
+                                    "algorithms/flow.o",
+                                    "base/doubly_linked_list_mod.o",
+                                    "base/doubly_linked_list_link_mod.o",
+                                    "base/field_section_mod.o",
+                                    "base/precision_mod.o",
+                                    "base/subfield_mod.o"]
     additional_fortran_filepaths = [path.join(fortran_project_object_path,filename) for filename in\
                                     additional_fortran_filenames]
-    f2py_mngr = f2py_manager.f2py_manager(path.join(fortran_project_source_path,"flow_driver_mod.f90"),
+    f2py_mngr = f2py_manager.f2py_manager(path.join(fortran_project_source_path,
+                                                    "drivers",
+                                                    "flow_driver_mod.f90"),
                                           func_name="flow_latlon_f2py_wrapper",
                                           additional_fortran_files=additional_fortran_filepaths,
                                           include_path=fortran_project_include_path)

@@ -14,6 +14,9 @@ from Dynamic_HD_Scripts.interface.fortran_interface \
 from Dynamic_HD_Scripts.base import field
 from Dynamic_HD_Scripts.base import iodriver
 from Dynamic_HD_Scripts.context import fortran_source_path
+from Dynamic_HD_Scripts.context import fortran_project_object_path
+from Dynamic_HD_Scripts.context import fortran_project_source_path
+from Dynamic_HD_Scripts.context import fortran_project_include_path
 
 def create_hypothetical_river_paths_map(riv_dirs,lsmask=None,use_f2py_func=True,
                                         use_f2py_sparse_iterator=False,nlat=360,nlong=720,
@@ -59,17 +62,20 @@ def create_hypothetical_river_paths_map(riv_dirs,lsmask=None,use_f2py_func=True,
         riv_dirs = np.array(riv_dirs,copy=True,dtype=int)
     paths_map = np.zeros((nlat+2,nlong),dtype=np.int32,order='F')
     if use_f2py_func and use_new_method:
-        additional_fortran_filenames = ["accumulate_flow_mod.o","coords_mod.o",
-                                        "flow_accumulation_algorithm_mod.o",
-                                        "convert_rdirs_to_indices.o",
-                                        "doubly_linked_list_mod.o",
-                                        "doubly_linked_list_link_mod.o",
-                                        "subfield_mod.o",
-                                        "unstructured_grid_mod.o",
-                                        "precision_mod.o"]
+        additional_fortran_filenames = ["algorithms/accumulate_flow_mod.o",
+                                        "base/coords_mod.o",
+                                        "algorithms/flow_accumulation_algorithm_mod.o",
+                                        "base/convert_rdirs_to_indices.o",
+                                        "base/doubly_linked_list_mod.o",
+                                        "base/doubly_linked_list_link_mod.o",
+                                        "base/subfield_mod.o",
+                                        "base/unstructured_grid_mod.o",
+                                        "base/precision_mod.o"]
         additional_fortran_filepaths = [path.join(fortran_project_object_path,filename) for filename in\
                                         additional_fortran_filenames]
-        f2py_mngr = f2py_mg.f2py_manager(path.join(fortran_project_source_path,"accumulate_flow_driver_mod.f90"),
+        f2py_mngr = f2py_mg.f2py_manager(path.join(fortran_project_source_path,
+                                                   "drivers",
+                                                   "accumulate_flow_driver_mod.f90"),
                                               func_name="accumulate_flow_latlon_f2py_wrapper",
                                               additional_fortran_files=additional_fortran_filepaths,
                                               include_path=fortran_project_include_path)
@@ -90,7 +96,6 @@ def create_hypothetical_river_paths_map(riv_dirs,lsmask=None,use_f2py_func=True,
             iterate_paths_map_function = iterate_paths_map
         while iterate_paths_map_function(riv_dirs,paths_map,nlat,nlong):
             remaining_points = paths_map.size - np.count_nonzero(paths_map)
-        print("Remaining points to process: {0}".format(remaining_points))
             if use_f2py_sparse_iterator and remaining_points/float(paths_map.size) < sparse_fraction:
                 f2py_sparse_iterator = f2py_mg.f2py_manager(path.join(fortran_source_path,
                                                                       'mod_iterate_paths_map.f90'),

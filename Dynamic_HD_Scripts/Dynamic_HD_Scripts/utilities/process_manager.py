@@ -6,9 +6,9 @@ Created on Thu 1, 2020
 '''
 from mpi4py import MPI
 import os
-import f2py_manager
+from Dynamic_HD_Scripts.interface.fortran_interface import f2py_manager
 import os.path as path
-from context import fortran_project_source_path,fortran_project_object_path,fortran_project_include_path
+from Dynamic_HD_Scripts.context import fortran_project_source_path,fortran_project_object_path,fortran_project_include_path
 
 def using_mpi():
     use_mpi_in_python = os.environ.get('USE_MPI_IN_PYTHON')
@@ -38,6 +38,7 @@ class ProcessManager(object):
 
     def run_cotat_plus(self):
         f2py_mngr = f2py_manager.f2py_manager(path.join(fortran_project_source_path,
+                                                        "drivers",
                                                         "cotat_plus_driver_mod.f90"),
                                               func_name="cotat_plus_latlon_f2py_worker_wrapper",
                                               no_compile=True)
