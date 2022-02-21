@@ -31,6 +31,11 @@ if $compilation_required ; then
   echo "Compiling Fortran code" 1>&2
   mkdir -p ${source_directory}/Dynamic_HD_Fortran_Code/Release
   mkdir -p ${source_directory}/Dynamic_HD_Fortran_Code/Release/src
+  mkdir -p ${source_directory}/Dynamic_HD_Fortran_Code/Release/src/algorithms
+  mkdir -p ${source_directory}/Dynamic_HD_Fortran_Code/Release/src/base
+  mkdir -p ${source_directory}/Dynamic_HD_Fortran_Code/Release/src/command_line_drivers
+  mkdir -p ${source_directory}/Dynamic_HD_Fortran_Code/Release/src/drivers
+  mkdir -p ${source_directory}/Dynamic_HD_Fortran_Code/Release/src/testing
   cd ${source_directory}/Dynamic_HD_Fortran_Code/Release
   make -f ../makefile clean
   make -f ../makefile ${make_argument}

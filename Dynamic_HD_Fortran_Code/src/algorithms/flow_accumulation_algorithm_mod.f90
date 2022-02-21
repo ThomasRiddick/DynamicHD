@@ -104,7 +104,6 @@ type, extends(flow_accumulation_algorithm) :: latlon_flow_accumulation_algorithm
     class(subfield), pointer :: next_cell_index_lon => null()
     class(subfield_ptr), pointer, dimension(:) :: bifurcated_next_cell_index_lat => null()
     class(subfield_ptr), pointer, dimension(:) :: bifurcated_next_cell_index_lon => null()
-  contains
     class(subfield), pointer :: river_directions => null()
   contains
     procedure :: latlon_init_flow_accumulation_algorithm

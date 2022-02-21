@@ -625,7 +625,6 @@ subroutine lakefieldsdestructor(this)
   class(lakefields), intent(inout) :: this
     deallocate(this%completed_lake_cells)
     deallocate(this%lake_numbers)
-    deallocate(this%lake_water_from_ocean)
     deallocate(this%water_to_lakes)
     deallocate(this%water_to_hd)
     deallocate(this%cells_with_lakes_index)
