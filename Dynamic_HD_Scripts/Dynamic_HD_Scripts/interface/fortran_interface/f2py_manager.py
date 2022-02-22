@@ -73,7 +73,8 @@ class f2py_manager(object):
         if sys.platform == "darwin":
             cython_extension = '.cpython-39-darwin.so'
         else:
-            cython_extension = '.cpython-39-x86_64-linux-gnu.so'
+            cython_extension = ".cpython-{0}{1}-x86_64-linux-gnu.so".format(sys.version_info.major,
+                                                                            sys.version_info.minor)
         self.shared_object_file_path = os.path.join(shared_object_path,
                                                     self.fortran_module_name+cython_extension)
         self.sources = [self.fortran_file_name]
