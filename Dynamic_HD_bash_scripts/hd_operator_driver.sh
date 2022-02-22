@@ -107,7 +107,7 @@ if [[ -z ${source_directory} ]]; then
 fi
 
 if ! [[ -d $source_directory ]]; then
-	echo "Source directory does not exist." 1>&2
+	echo "Source directory (${source_directory}) does not exist." 1>&2
 
 fi
 
@@ -118,7 +118,7 @@ if [[ $no_conda == "true" ]] || [[ $no_conda == "t" ]]; then
 elif [[ $no_conda == "false" ]] || [[ $no_conda == "f" ]]; then
 	no_conda=false
 else
-	echo "Format of no_conda flag is unknown, please use True/False or T/F" 1>&2
+	echo "Format of no_conda flag (${no_conda}) is unknown, please use True/False or T/F" 1>&2
 	exit 1
 fi
 
@@ -128,7 +128,7 @@ if [[ $no_modules == "true" ]] || [[ $no_modules == "t" ]]; then
 elif [[ $no_modules == "false" ]] || [[ $no_modules == "f" ]]; then
 	no_modules=false
 else
-	echo "Format of no_modules flag is unknown, please use True/False or T/F" 1>&2
+	echo "Format of no_modules flag (${no_modules})is unknown, please use True/False or T/F" 1>&2
 	exit 1
 fi
 shopt -u nocasematch

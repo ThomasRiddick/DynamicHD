@@ -128,9 +128,46 @@ struct IcosohedralGridInputData <: GridSpecificInputData
   end
 end
 
-function generate_parameters(input_filepaths::Dict,
-                             output_hdpara_filepath::AbstractString)
+struct Configuration
+  riverflow_formula::RiverFlowFormula
+  overlandflow_formula::OverlandFlowFormula
+  baseflow_formula::BaseFlowFormula
+end Configuration
+
+function load_configuration(input_filepaths::Dict)
+  println("Loading: " * input_filepaths["configuration_filepath"])
+  formulae::Dict{DataType,Formula} = Dict{DataType,Formula}()
+  for line in eachline(input_filepaths["configuration_filepath"])
+    formula::Formula = getfield(HDParameterGeneration,Symbol(line))
+    formulae[supertype(formula)] = formula()
+  end
+  return Configuration(formulae[RiverFlowFormula],
+                       formulae[OverlandFlowFormula],
+                       formulae[BaseFlowFormula])
+end
+
+function parameter_generation_driver(input_filepaths::Dict,
+                                     output_hdpara_filepath::AbstractString)
+  configuration::Configuration = load_configuration(input_filepaths)
   input_data::InputData,grid::Grid = load_input_data(input_filepaths)
+  number_of_riverflow_reservoirs::Array,
+  riverflow_retention_coefficients::Array,
+  number_of_overlandflow_reservoirs::Array,
+  overlandflow_retention_coefficients::Array,
+  number_of_baseflow_reservoirs::Array,
+  baseflow_retention_coefficients::Array = generate_parameters(configuration,input_data,grid)
+  write_hdpara_file(output_hdpara_filepath,input_data,
+                    number_of_riverflow_reservoirs,
+                    riverflow_retention_coefficients,
+                    number_of_overlandflow_reservoirs,
+                    overlandflow_retention_coefficients,
+                    number_of_baseflow_reservoirs,
+                    baseflow_retention_coefficients)
+end
+
+function generate_parameters(configuration::Configuration,
+                             input_data::InputData,
+                             grid::Grid)
   grid_dimensions::Tuple{Int64} = get_grid_dimensions(grid)
   number_of_riverflow_reservoirs = SharedArray{Float64}(grid_dimensions)
   riverflow_retention_coefficients = SharedArray{Float64}(grid_dimensions)
@@ -144,14 +181,14 @@ function generate_parameters(input_filepaths::Dict,
       height_change::Float64 = calculate_height_change(i,input_data)
       number_of_riverflow_reservoirs[i],
       riverflow_retention_coefficients[i] =
-        generate_riverflow_parameters(i,riverflow_formula,distance,height)
+        generate_riverflow_parameters(i,configuration.riverflow_formula,distance,height)
       number_of_overlandflow_reservoirs[i],
       overlandflow_retention_coefficients[i] =
-        generate_overlandflow_parameters(i,overlandflow_formula,distance,height
+        generate_overlandflow_parameters(i,configuration.overlandflow_formula,distance,height
                                          input_data)
       number_of_baseflow_reservoirs[i],
       baseflow_retention_coefficients[i]=
-        generate_baseflow_parameters(i,baseflow_formula,distance,height,input_data)
+        generate_baseflow_parameters(i,configuration.baseflow_formula,distance,height,input_data)
     else
       number_of_riverflow_reservoirs[i] = 0
       riverflow_retention_coefficients[i] = 0.0
@@ -161,13 +198,12 @@ function generate_parameters(input_filepaths::Dict,
       baseflow_retention_coefficients[i] = 0.0
     end
   end
-  write_hdpara_file(output_hdpara_filepath,input_data,
-                    sdata(number_of_riverflow_reservoirs),
-                    sdata(riverflow_retention_coefficients),
-                    sdata(number_of_overlandflow_reservoirs),
-                    sdata(overlandflow_retention_coefficients),
-                    sdata(number_of_baseflow_reservoirs),
-                    sdata(baseflow_retention_coefficients))
+  return sdata(number_of_riverflow_reservoirs),
+         sdata(riverflow_retention_coefficients),
+         sdata(number_of_overlandflow_reservoirs),
+         sdata(overlandflow_retention_coefficients),
+         sdata(number_of_baseflow_reservoirs),
+         sdata(baseflow_retention_coefficients)
 end
 
 function calculate_height_change(i::CartesianIndices,input_data::InputData)
