@@ -108,7 +108,7 @@ if ! [[ -e $input_ls_mask_filepath ]] || ! [[ -e $input_orography_filepath ]] ||
 fi
 
 if ! [[ -e $config_filepath ]]; then
-	echo "Config file does not exist" 1>&2
+	echo "Config file (${config_filepath}) does not exist" 1>&2
 	exit 1
 fi
 
@@ -238,7 +238,11 @@ export LD_LIBRARY_PATH=/Users/thomasriddick/anaconda3/pkgs/netcdf-cxx4-4.3.0-h70
 export LD_LIBRARY_PATH="/sw/rhel6-x64/netcdf/netcdf_fortran-4.4.4-gcc64/lib:/sw/rhel6-x64/netcdf/netcdf_cxx-4.3.0-gcc64/lib:${LD_LIBRARY_PATH}"
 
 if ! $no_modules && ! $no_conda ; then
-	load_module anaconda3/.bleeding_edge
+	if [[ $(hostname -d) == "hpc.dkrz.de" ]]; then
+		load_module anaconda3/.bleeding_edge
+	else
+		load_module anaconda3
+	fi
 fi
 
 if ! $no_conda ; then

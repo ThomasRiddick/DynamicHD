@@ -177,7 +177,7 @@ if ! [[ -d $working_directory ]]; then
 fi
 
 if ! [[ -d $source_directory ]]; then
-  echo "Source directory does not exist." 1>&2
+  echo "Source directory (${source_directory}) does not exist." 1>&2
   exit 1
 fi
 
@@ -188,7 +188,7 @@ if [[ ${no_conda} == "true" ]] || [[ $no_conda == "t" ]]; then
 elif [[ $no_conda == "false" ]] || [[ $no_conda == "f" ]]; then
   no_conda=false
 else
-  echo "Format of no_conda flag is unknown, please use True/False or T/F" 1>&2
+  echo "Format of no_conda flag (${no_conda}) is unknown, please use True/False or T/F" 1>&2
   exit 1
 fi
 
@@ -198,7 +198,7 @@ if [[ $no_modules == "true" ]] || [[ $no_modules == "t" ]]; then
 elif [[ $no_modules == "false" ]] || [[ $no_modules == "f" ]]; then
   no_modules=false
 else
-  echo "Format of no_modules flag is unknown, please use True/False or T/F" 1>&2
+  echo "Format of no_modules flag ($no_modules}) is unknown, please use True/False or T/F" 1>&2
   exit 1
 fi
 
@@ -208,7 +208,7 @@ if [[ $no_env_gen == "true" ]] || [[ $no_env_gen == "t" ]]; then
 elif [[ $no_env_gen == "false" ]] || [[ $no_env_gen == "f" ]]; then
         no_env_gen=false
 else
-        echo "Format of no_env_gen flag is unknown, please use True/False or T/F" 1>&2
+        echo "Format of no_env_gen flag (${no_env_gen}) is unknown, please use True/False or T/F" 1>&2
         exit 1
 fi
 
@@ -250,7 +250,11 @@ export LD_LIBRARY_PATH="/sw/rhel6-x64/netcdf/netcdf_fortran-4.4.4-gcc64/lib:/sw/
 export DYLD_LIBRARY_PATH=$LD_LIBRARY_PATH:$DYLD_LIBRARY_PATH
 
 if ! $no_modules && ! $no_conda ; then
-  load_module anaconda3/.bleeding_edge
+  if [[ $(hostname -d) == "hpc.dkrz.de" ]]; then
+    load_module anaconda3/.bleeding_edge
+  else
+    load_module anaconda3
+  fi
 fi
 
 if ! $no_conda && ! $no_env_gen ; then

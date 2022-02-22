@@ -155,7 +155,7 @@ config_file="${ancillary_data_directory}/top_level_driver.cfg"
 # Check config file exists  and has correct format
 
 if ! [[ -f ${config_file} ]]; then
-	echo "Top level script config file doesn't exist!"
+	echo "Top level script config file (${config_file}) doesn't exist!"
 	exit 1
 fi
 
@@ -194,7 +194,7 @@ if ! ${compile_only} ; then
 fi
 
 if ! [[ -d $source_directory ]]; then
-	echo "Source directory does not exist." 1>&2
+	echo "Source directory ($source_directory) does not exist." 1>&2
 	exit 1
 fi
 
@@ -205,7 +205,7 @@ if [[ $no_conda == "true" ]] || [[ $no_conda == "t" ]]; then
 elif [[ $no_conda == "false" ]] || [[ $no_conda == "f" ]]; then
 	no_conda=false
 else
-	echo "Format of no_conda flag is unknown, please use True/False or T/F" 1>&2
+	echo "Format of no_conda flag (${no_conda}) is unknown, please use True/False or T/F" 1>&2
 	exit 1
 fi
 
@@ -215,7 +215,7 @@ if [[ $no_modules == "true" ]] || [[ $no_modules == "t" ]]; then
 elif [[ $no_modules == "false" ]] || [[ $no_modules == "f" ]]; then
 	no_modules=false
 else
-	echo "Format of no_modules flag is unknown, please use True/False or T/F" 1>&2
+	echo "Format of no_modules flag (${no_modules}) is unknown, please use True/False or T/F" 1>&2
 	exit 1
 fi
 
@@ -225,7 +225,7 @@ if [[ $no_env_gen == "true" ]] || [[ $no_env_gen == "t" ]]; then
 elif [[ $no_env_gen == "false" ]] || [[ $no_env_gen == "f" ]]; then
         no_env_gen=false
 else
-        echo "Format of no_env_gen flag is unknown, please use True/False or T/F" 1>&2
+        echo "Format of no_env_gen flag (${no_env_gen}) is unknown, please use True/False or T/F" 1>&2
         exit 1
 fi
 
@@ -248,20 +248,31 @@ if ! ${compile_only} ; then
 fi
 
 #Check for locks if necesssary and set the compilation_required flag accordingly
-exec 200>"${source_directory}/compilation.lock"
-if $first_timestep ; then
-	if flock -x -n 200 ; then
-		compilation_required=true
-	elif $compile_only ; then
-		echo "Can't compile - previous version of code still running" 1>&2
-		exit 1
+if [[ $(hostname -d) == "hpc.dkrz.de" ]]; then
+	exec 200>"${source_directory}/compilation.lock"
+	if $first_timestep ; then
+		if flock -x -n 200 ; then
+			compilation_required=true
+		elif $compile_only ; then
+			echo "Can't compile - previous version of code still running" 1>&2
+			exit 1
+		else
+			flock -s 200
+			compilation_required=false
+		fi
 	else
 		flock -s 200
 		compilation_required=false
 	fi
 else
-	flock -s 200
-	compilation_required=false
+	echo "Warning: Flock disabled - Doesn't work on Linux desktop system"
+	echo "                        - manually check you aren't trying to"
+	echo "                        - recompile during compilation!"
+	if $first_timestep ; then
+		compilation_required=true
+	else
+		compilation_required=false
+	fi
 fi
 
 #Switch off compilation if no_compile option selected
@@ -284,7 +295,11 @@ if ! $no_modules ; then
 fi
 
 if ! $no_modules && ! $no_conda ; then
-	load_module anaconda3/.bleeding_edge
+	if [[ $(hostname -d) == "hpc.dkrz.de" ]]; then
+		load_module anaconda3/.bleeding_edge
+	else
+		load_module anaconda3
+	fi
 fi
 
 if ! $no_conda && ! $no_env_gen ; then
@@ -301,7 +316,11 @@ fi
 
 #Load a new version of gcc that doesn't have the polymorphic variable bug
 if ! $no_modules ; then
-	load_module gcc/6.2.0
+	if [[ $(hostname -d) == "hpc.dkrz.de" ]]; then
+		load_module gcc/6.2.0
+	else
+		load_module gcc/6.3.0
+	fi
 fi
 
 #Setup correct python path

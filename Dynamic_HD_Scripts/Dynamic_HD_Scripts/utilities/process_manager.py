@@ -14,7 +14,7 @@ def using_mpi():
     use_mpi_in_python = os.environ.get('USE_MPI_IN_PYTHON')
     if use_mpi_in_python is not None:
         return (use_mpi_in_python.lower() == "true" or
-                use_mpi_in_python.get('USE_MPI_IN_PYTHON').lower() == "t")
+                use_mpi_in_python.lower() == "t")
     else:
         return False
 

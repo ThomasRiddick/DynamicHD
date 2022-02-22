@@ -8,6 +8,16 @@ clean :
 		-$(RM) ./interface/cpp_interface/libs/*.so
 		-$(RM) ./interface/cpp_interface/build
 		-$(RM) ./interface/cpp_interface/__pycache__
+		-$(RM) ./interface/cpp_interface/compute_catchments_wrapper.cpp
+		-$(RM) ./interface/cpp_interface/create_connected_lsmask_wrapper.cpp
+		-$(RM) ./interface/cpp_interface/create_orography_wrapper.cpp
+		-$(RM) ./interface/cpp_interface/determine_river_directions_wrapper.cpp
+		-$(RM) ./interface/cpp_interface/evaluate_basins_wrapper.cpp
+		-$(RM) ./interface/cpp_interface/fill_sinks_wrapper.cpp
+		-$(RM) ./interface/cpp_interface/fill_sinks_wrapper_low_mem.cpp
+		-$(RM) ./interface/cpp_interface/follow_streams_wrapper.cpp
+		-$(RM) ./interface/cpp_interface/lake_operators_wrapper.cpp
+		-$(RM) ./interface/cpp_interface/upscale_orography_wrapper.cpp
 		-$(RM) ./interface/fortran_interface/__pycache__
 		-$(RM) ./utilities/__pycache__
 		-$(RM) ./tools/__pycache__

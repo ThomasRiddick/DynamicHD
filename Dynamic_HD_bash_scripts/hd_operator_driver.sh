@@ -88,7 +88,7 @@ fi
 
 # Check config file exists and has correct format (if a config file has been specified)
 if ! [[ -f ${config_file} ]]; then
-	echo "Top level script config file doesn't exist!"
+	echo "Top level script config file (${config_file}) doesn't exist!"
 	exit 1
 fi
 
@@ -167,7 +167,11 @@ if ! $no_modules ; then
 fi
 
 if ! $no_modules && ! $no_conda ; then
-	load_module anaconda3/.bleeding_edge
+	if [[ $(hostname -d) == "hpc.dkrz.de" ]]; then
+		load_module anaconda3/.bleeding_edge
+	else
+		load_module anaconda3
+	fi
 fi
 
 if ! $no_conda ; then

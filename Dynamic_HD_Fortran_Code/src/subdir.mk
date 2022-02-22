@@ -296,7 +296,7 @@ src/algorithms/cotat_parameters_mod.o: ../src/algorithms/cotat_parameters_mod.f9
 
 src/algorithms/cotat_plus.o: ../src/algorithms/cotat_plus.f90 src/base/area_mod.o src/base/coords_mod.o src/algorithms/cotat_parameters_mod.o src/algorithms/map_non_coincident_grids_mod.o
 
-src/algorithms/map_non_coincident_grids_mod.o: ../src/algorithms/map_non_coincident_grids_mod.f90 src/base/precision_mod.o src/base/coords_mod.o src/base/field_section_mod.o src/base/subfield_mod.o src/pointer_mod.o
+src/algorithms/map_non_coincident_grids_mod.o: ../src/algorithms/map_non_coincident_grids_mod.f90 src/base/precision_mod.o src/base/coords_mod.o src/base/field_section_mod.o src/base/subfield_mod.o src/base/pointer_mod.o
 
 src/drivers/cotat_plus_driver_mod.o: ../src/drivers/cotat_plus_driver_mod.f90 src/algorithms/cotat_plus.o src/algorithms/map_non_coincident_grids_mod.o
 
@@ -342,7 +342,7 @@ src/algorithms/flow_accumulation_algorithm_mod.o: ../src/algorithms/flow_accumul
 
 src/unstructured_grid_mod.o: ../src/unstructured_grid_mod.f90
 
-src/pointer_mod.o: ../src/pointer_mod.f90
+src/base/pointer_mod.o: ../src/base/pointer_mod.f90
 
 src/check_return_code_netcdf_mod.o: ../src/check_return_code_netcdf_mod.f90
 

@@ -8,7 +8,7 @@ compile_only=${2}
 source_directory=${3}
 working_directory=${4}
 prep_paragen_code=${5}
-make_argument=${6:="compile_only"}
+make_argument=${6:-"compile_only"}
 
 #Compile C++ and Fortran Code if this is the first timestep
 if $compilation_required ; then

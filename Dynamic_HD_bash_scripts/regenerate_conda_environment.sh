@@ -24,7 +24,11 @@ fi
 
 if ! $no_modules ; then
   unload_module netcdf_c
-  load_module anaconda3/.bleeding_edge
+  if [[ $(hostname -d) == "hpc.dkrz.de" ]]; then
+    load_module anaconda3/.bleeding_edge
+  else
+    load_module anaconda3
+  fi
 fi
 
 conda-env remove -n dyhdenv3

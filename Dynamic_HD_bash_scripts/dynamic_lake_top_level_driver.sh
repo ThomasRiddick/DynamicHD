@@ -160,7 +160,7 @@ config_file="${ancillary_data_directory}/top_level_driver.cfg"
 # Check config file exists  and has correct format
 
 if ! [[ -f ${config_file} ]]; then
-	echo "Top level script config file doesn't exist!"
+	echo "Top level script config file (${config_file}) doesn't exist!"
 	exit 1
 fi
 
@@ -181,7 +181,7 @@ fi
 python_config_file="${ancillary_data_directory}/dynamic_lake_production_driver.cfg"
 # Check if python config file exists
 if ! [[ -f ${python_config_file} ]]; then
-	echo "Python config file doesn't exist!"
+	echo "Python config file (${python_config_file}) doesn't exist!"
 	exit 1
 fi
 
@@ -213,7 +213,7 @@ if [[ $no_conda == "true" ]] || [[ $no_conda == "t" ]]; then
 elif [[ $no_conda == "false" ]] || [[ $no_conda == "f" ]]; then
 	no_conda=false
 else
-	echo "Format of no_conda flag is unknown, please use True/False or T/F" 1>&2
+	echo "Format of no_conda flag (${no_conda}) is unknown, please use True/False or T/F" 1>&2
 	exit 1
 fi
 
@@ -223,7 +223,7 @@ if [[ $no_modules == "true" ]] || [[ $no_modules == "t" ]]; then
 elif [[ $no_modules == "false" ]] || [[ $no_modules == "f" ]]; then
 	no_modules=false
 else
-	echo "Format of no_modules flag is unknown, please use True/False or T/F" 1>&2
+	echo "Format of no_modules flag (${no_modules}) is unknown, please use True/False or T/F" 1>&2
 	exit 1
 fi
 shopt -u nocasematch
@@ -277,7 +277,11 @@ if ! $no_modules ; then
 fi
 
 if ! $no_modules && ! $no_conda ; then
-	load_module anaconda3/.bleeding_edge
+	if [[ $(hostname -d) == "hpc.dkrz.de" ]]; then
+		load_module anaconda3/.bleeding_edge
+	else
+		load_module anaconda3
+	fi
 fi
 
 if ! $no_conda ; then
