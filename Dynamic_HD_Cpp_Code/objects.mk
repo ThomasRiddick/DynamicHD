@@ -6,6 +6,7 @@ FS_ICON_SI_OBJS :=
 CC_ICON_SI_OBJS :=
 DRD_ICON_SI_OBJS :=
 EB_ICON_SI_OBJS :=
+BRB_ICON_SI_OBJS :=
 
 
 ifeq ($(shell uname -s),Darwin)

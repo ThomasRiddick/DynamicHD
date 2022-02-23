@@ -330,7 +330,7 @@ src/testing/manual_fruit_basket.o: ../src/testing/manual_fruit_basket.f90 src/te
 
 src/testing/manual_fruit_basket_driver.o: ../src/testing/manual_fruit_basket_driver.f90 src/testing/fruit.o src/testing/manual_fruit_basket.o
 
-src/command_line_drivers/cotat_plus_latlon_to_icon_simple_interface.o: ../src/command_line_drivers/cotat_plus_latlon_to_icon_simple_interface.f90 src/algorithms/cotat_plus.o src/check_return_code_netcdf_mod.o
+src/command_line_drivers/cotat_plus_latlon_to_icon_simple_interface.o: ../src/command_line_drivers/cotat_plus_latlon_to_icon_simple_interface.f90 src/algorithms/cotat_plus.o src/base/check_return_code_netcdf_mod.o
 
 src/base/precision_mod.o: ../src/base/precision_mod.f90
 
@@ -344,7 +344,7 @@ src/unstructured_grid_mod.o: ../src/unstructured_grid_mod.f90
 
 src/base/pointer_mod.o: ../src/base/pointer_mod.f90
 
-src/check_return_code_netcdf_mod.o: ../src/check_return_code_netcdf_mod.f90
+src/base/check_return_code_netcdf_mod.o: ../src/base/check_return_code_netcdf_mod.f90
 
 src/parameters_mod.o: ../src/parameters_mod.f90
 
@@ -360,7 +360,7 @@ src/latlon_hd_and_lake_model/latlon_lake_model_mod.o: ../src/latlon_hd_and_lake_
 
 src/latlon_hd_and_lake_model/latlon_lake_model_interface_mod.o: ../src/latlon_hd_and_lake_model/latlon_lake_model_interface_mod.f90 src/latlon_hd_and_lake_model/latlon_lake_model_mod.o src/latlon_hd_and_lake_model/latlon_lake_model_io_mod.o
 
-src/latlon_hd_and_lake_model/latlon_lake_model_io_mod.o: ../src/latlon_hd_and_lake_model/latlon_lake_model_io_mod.f90   src/latlon_hd_and_lake_model/latlon_lake_model_mod.o src/parameters_mod.o src/check_return_code_netcdf_mod.o
+src/latlon_hd_and_lake_model/latlon_lake_model_io_mod.o: ../src/latlon_hd_and_lake_model/latlon_lake_model_io_mod.f90   src/latlon_hd_and_lake_model/latlon_lake_model_mod.o src/parameters_mod.o src/base/check_return_code_netcdf_mod.o
 
 src/latlon_hd_and_lake_model/latlon_lake_model_retrieve_lake_numbers.o: ../src/latlon_hd_and_lake_model/latlon_lake_model_retrieve_lake_numbers.f90 src/latlon_hd_and_lake_model/latlon_lake_model_mod.o src/latlon_hd_and_lake_model/latlon_lake_model_io_mod.o src/parameters_mod.o
 
@@ -376,13 +376,13 @@ src/testing/map_non_coincident_grids_test_mod.o: ../src/testing/map_non_coincide
 
 src/algorithms/icon_to_latlon_landsea_downscaler.o: ../src/algorithms/icon_to_latlon_landsea_downscaler.f90
 
-src/icon_to_latlon_landsea_downscaler_simple_interface.o: ../src/icon_to_latlon_landsea_downscaler_simple_interface.f90 src/icon_to_latlon_landsea_downscaler.o src/check_return_code_netcdf_mod.o
+src/icon_to_latlon_landsea_downscaler_simple_interface.o: ../src/icon_to_latlon_landsea_downscaler_simple_interface.f90 src/icon_to_latlon_landsea_downscaler.o src/base/check_return_code_netcdf_mod.o
 
-src/cross_grid_mapper.o: ../src/cross_grid_mapper.f90 src/base/precision_mod.o src/check_return_code_netcdf_mod.o src/base/coords_mod.o src/map_non_coincident_grids_mod.o
+src/cross_grid_mapper.o: ../src/cross_grid_mapper.f90 src/base/precision_mod.o src/base/check_return_code_netcdf_mod.o src/base/coords_mod.o src/map_non_coincident_grids_mod.o
 
-src/cross_grid_mapper_latlon_to_icon_simple_interface.o: ../src/cross_grid_mapper_latlon_to_icon_simple_interface.f90 src/check_return_code_netcdf_mod.o ../src/cross_grid_mapper.f90
+src/cross_grid_mapper_latlon_to_icon_simple_interface.o: ../src/cross_grid_mapper_latlon_to_icon_simple_interface.f90 src/base/check_return_code_netcdf_mod.o ../src/cross_grid_mapper.f90
 
-src/accumulate_flow_icon_simple_interface.o: ../src/accumulate_flow_icon_simple_interface.f90  src/accumulate_flow_mod.o src/check_return_code_netcdf_mod.o
+src/accumulate_flow_icon_simple_interface.o: ../src/accumulate_flow_icon_simple_interface.f90  src/accumulate_flow_mod.o src/base/check_return_code_netcdf_mod.o
 
 src/base/convert_rdirs_to_indices.o: ../src/base/convert_rdirs_to_indices.f90
 
@@ -394,7 +394,7 @@ src/icosohedral_hd_and_lake_model/icosohedral_hd_model_interface_mod.o: ../src/i
 
 src/icosohedral_hd_and_lake_model/icosohedral_lake_model_mod.o: ../src/icosohedral_hd_and_lake_model/icosohedral_lake_model_mod.f90
 
-src/icosohedral_hd_and_lake_model/icosohedral_lake_model_io_mod.o: ../src/icosohedral_hd_and_lake_model/icosohedral_lake_model_io_mod.f90   src/icosohedral_hd_and_lake_model/icosohedral_lake_model_mod.o src/parameters_mod.o src/check_return_code_netcdf_mod.o src/icosohedral_hd_and_lake_model/grid_information_mod.o
+src/icosohedral_hd_and_lake_model/icosohedral_lake_model_io_mod.o: ../src/icosohedral_hd_and_lake_model/icosohedral_lake_model_io_mod.f90   src/icosohedral_hd_and_lake_model/icosohedral_lake_model_mod.o src/parameters_mod.o src/base/check_return_code_netcdf_mod.o src/icosohedral_hd_and_lake_model/grid_information_mod.o
 
 src/icosohedral_hd_and_lake_model/icosohedral_lake_model_interface_mod.o: ../src/icosohedral_hd_and_lake_model/icosohedral_lake_model_interface_mod.f90 src/icosohedral_hd_and_lake_model/icosohedral_lake_model_mod.o src/icosohedral_hd_and_lake_model/icosohedral_lake_model_io_mod.o src/icosohedral_hd_and_lake_model/grid_information_mod.o
 

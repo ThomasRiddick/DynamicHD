@@ -114,7 +114,6 @@ CPP_DEPS += \
 ./src/algorithms/river_direction_determination_algorithm.d \
 ./src/algorithms/orography_creation_algorithm.d \
 ./src/algorithms/stream_following_algorithm.d \
-./src/algorithms/evaluate_basins_simple_interface.d \
 ./src/drivers/create_connected_lsmask.d \
 ./src/drivers/fill_sinks.d \
 ./src/drivers/upscale_orography.d \
