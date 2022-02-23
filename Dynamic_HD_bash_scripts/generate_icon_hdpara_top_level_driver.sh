@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "Running Version 1.1 of the ICON HD Parameters Generation Code"
+echo "Running Version 1.3 of the ICON HD Parameters Generation Code"
 
 #Define module loading function
 function load_module
