@@ -22,7 +22,8 @@ def guess_bound(coord,tolerance=1.0):
         return 360.0
     else:
         warn("Bounds of input data can't be inferred - is this a regional grid?")
-        return coord
+        warn("Setting bounds to nearest degree")
+        return float(round(coord))
 
 def generate_coarse_coords(nlat_fine,nlon_fine,
                            lat_pts_fine,lon_pts_fine,
@@ -43,7 +44,7 @@ def generate_coarse_pts(nlat_fine,nlon_fine,
     lon_max_bound_fine = guess_bound(lon_pts_fine[-1])
     lat_step_coarse = (lat_max_bound_fine - lat_min_bound_fine)/nlat_coarse
     lon_step_coarse = (lon_max_bound_fine - lon_min_bound_fine)/nlon_coarse
-    if lat_min_bound_fine > 0:
+    if lat_min_bound_fine > lat_max_bound_fine:
         lat_pts_coarse = np.linspace(lat_min_bound_fine-0.5*lat_step_coarse,
                                      lat_max_bound_fine+0.5*lat_step_coarse,
                                      num=nlat_coarse,endpoint=True)

@@ -309,19 +309,17 @@ def advanced_field_writer(target_filename,field,fieldname='field_value',clobber=
             field.grid.lat_points is not None):
           temp_file, temp_filename = tempfile.mkstemp(suffix=".txt",text=False)
           with os.fdopen(temp_file,'w') as f:
+              lon_range = float(round(field.grid.lon_points[-1] - field.grid.lon_points[0]))
+              lat_range = float(round(field.grid.lat_points[-1] - field.grid.lat_points[0]))
               f.writelines([s + '\n' for s in
                            ["gridtype = lonlat",
                             "gridsize = {}".format(field.grid.nlat*field.grid.nlong),
                             "xsize = {}".format(field.grid.nlong),
                             "ysize = {}".format(field.grid.nlat),
                             "xfirst = {}".format(field.grid.lon_points[0]),
-                            "xinc = {}".format(math.copysign(360.0/field.grid.nlong,
-                                                             field.grid.lon_points[1]-
-                                                             field.grid.lon_points[0])),
+                            "xinc = {}".format(lon_range/field.grid.nlong),
                             "yfirst = {}".format(field.grid.lat_points[0]),
-                            "yinc = {}".format(math.copysign(180.0/field.grid.nlat,
-                                                             field.grid.lat_points[1]-
-                                                             field.grid.lat_points[0]))]])
+                            "yinc = {}".format(lat_range/field.grid.nlat)]])
         if not multiple_fields:
           write_field(filename=target_filename,
                       field=field,
