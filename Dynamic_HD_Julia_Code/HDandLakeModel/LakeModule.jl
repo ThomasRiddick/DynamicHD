@@ -489,7 +489,7 @@ function handle_event(prognostic_fields::RiverAndLakePrognosticFields,run_lake::
   fill!(lake_fields.effective_volume_per_cell_on_surface_grid,0.0)
   for_all(lake_parameters.surface_model_grid) do coords::Coords
     number_lake_cells::Int64 = lake_fields.number_lake_cells(coords)
-    if evaporation_on_surface_grid(coords) > 0.0 && number_lake_cells > 0
+    if evaporation_on_surface_grid(coords) != 0.0 && number_lake_cells > 0
       map_index::Int64 = lake_parameters.surface_cell_to_fine_cell_map_numbers(coords)
       evaporation_per_lake_cell::Float64 = evaporation_on_surface_grid(coords)/number_lake_cells
       if map_index != 0
@@ -557,7 +557,11 @@ function handle_event(prognostic_fields::RiverAndLakePrognosticFields,run_lake::
     lake_index::Int64 = lake_variables.lake_number
     if ! lake_fields.evaporation_applied[lake_index]
       evaporation::Float64 = lake_fields.evaporation_from_lakes[lake_index]
-      lake_prognostics.lakes[lake_index] = handle_event(lake,RemoveWater(evaporation))
+      if evaporation > 0
+        lake_prognostics.lakes[lake_index] = handle_event(lake,RemoveWater(evaporation))
+      elseif evaporation < 0
+        lake_prognostics.lakes[lake_index] = handle_event(lake,AddWater(-1.0*evaporation))
+      end
       lake_fields.evaporation_applied[lake_index] = true
     end
   end
