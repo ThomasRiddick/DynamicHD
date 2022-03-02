@@ -1116,7 +1116,7 @@ subroutine run_lakes(lake_parameters,lake_prognostics,lake_fields)
     do j = 1,lake_parameters%nlon_surface_model
       do i = 1,lake_parameters%nlat_surface_model
         number_lake_cells = lake_fields%number_lake_cells(i,j)
-        if ((lake_fields%evaporation_on_surface_grid(i,j) > 0.0) .and. &
+        if ((lake_fields%evaporation_on_surface_grid(i,j) /= 0.0) .and. &
             (number_lake_cells > 0)) then
           map_index = lake_parameters%surface_cell_to_fine_cell_map_numbers(i,j)
           evaporation_per_lake_cell = lake_fields%evaporation_on_surface_grid(i,j)/number_lake_cells
@@ -1194,7 +1194,11 @@ subroutine run_lakes(lake_parameters,lake_prognostics,lake_fields)
       working_lake => lake_prognostics%lakes(i)%lake_pointer
       if (.not. lake_fields%evaporation_applied(i)) then
         evaporation = lake_fields%evaporation_from_lakes(i)
-        call working_lake%remove_water(evaporation)
+        if (evaporation > 0.0_dp) then
+          call working_lake%remove_water(evaporation)
+        else if (evaporation < 0.0_dp) then
+          call working_lake%add_water(-1.0*evaporation)
+        end if
         lake_fields%evaporation_applied(i) = .true.
       end if
     end do
@@ -2304,24 +2308,13 @@ end subroutine run_lake_number_retrieval
 
 subroutine calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields, &
                                                    lake_fraction_on_surface_grid)
-  real(dp), pointer, dimension(:,:), intent(inout) :: lake_fraction_on_surface_grid
+  real(dp), dimension(:,:), intent(inout) :: lake_fraction_on_surface_grid
   type(lakefields), pointer, intent(in) :: lake_fields
   type(lakeparameters), pointer, intent(in) :: lake_parameters
     lake_fraction_on_surface_grid(:,:) = &
       real(lake_fields%number_lake_cells(:,:))&
       /real(lake_parameters%number_fine_grid_cells(:,:))
 end subroutine calculate_lake_fraction_on_surface_grid
-
-function get_lake_fraction_on_surface_grid(lake_parameters,lake_fields) &
-    result(lake_fraction_on_surface_grid)
-  real(dp), pointer, dimension(:,:) :: lake_fraction_on_surface_grid
-  type(lakefields), pointer, intent(in) :: lake_fields
-  type(lakeparameters), pointer, intent(in) :: lake_parameters
-    allocate(lake_fraction_on_surface_grid(lake_parameters%nlat_surface_model, &
-                                           lake_parameters%nlon_surface_model))
-    call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields, &
-                                                 lake_fraction_on_surface_grid)
-end function get_lake_fraction_on_surface_grid
 
 subroutine calculate_effective_lake_height_on_surface_grid(lake_parameters, &
                                                            lake_fields)

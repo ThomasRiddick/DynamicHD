@@ -528,10 +528,10 @@ function  get_lake_volumes_interface() result(lake_volumes)
     lake_volumes => get_lake_volumes()
 end function get_lake_volumes_interface
 
-function  get_lake_fractions_interface() result(lake_fractions)
-  real(dp), pointer, dimension(:,:) :: lake_fractions
-    lake_fractions => get_lake_fractions()
-end function get_lake_fractions_interface
+subroutine  get_lake_fraction_interface(lake_fraction)
+  real(dp), dimension(:,:), intent(inout) :: lake_fraction
+    call get_lake_fraction(lake_fraction)
+end subroutine get_lake_fraction_interface
 
 
 ! function handle_event(prognostic_fields::prognosticfields,

@@ -105,7 +105,7 @@ module latlon_hd_model_interface_mod
     real(dp)   ,dimension(:,:), allocatable :: drainage
     real(dp)   ,dimension(:,:), allocatable :: evaporation
     real(dp)   ,dimension(:,:), allocatable :: lake_fraction_adjusted_evaporation
-    real(dp)   ,dimension(:,:), pointer     :: lake_fractions
+    real(dp)   ,dimension(:,:), allocatable :: lake_fractions
     real(dp)   ,dimension(:,:), optional, pointer :: lake_volumes_for_all_timesteps
     real(dp)   ,dimension(:), pointer :: lake_volumes
     logical :: use_realistic_surface_coupling
@@ -120,6 +120,10 @@ module latlon_hd_model_interface_mod
         use_realistic_surface_coupling = use_realistic_surface_coupling_in
       else
         use_realistic_surface_coupling = .false.
+      end if
+      if (global_prognostics%using_lakes) then
+        allocate(lake_fractions(get_surface_model_nlat_interface(), &
+                                get_surface_model_nlon_interface()))
       end if
       if (present(lake_evaporations)) then
         allocate(lake_evaporations_local,mold=lake_evaporations)
@@ -146,10 +150,9 @@ module latlon_hd_model_interface_mod
         if (global_prognostics%using_lakes) then
           evaporation(:,:) = lake_evaporations_local(:,:,i)
           if (use_realistic_surface_coupling) then
-            lake_fractions => get_lake_fractions_interface()
+            call get_lake_fraction_interface(lake_fractions)
             lake_fraction_adjusted_evaporation(:,:) = evaporation(:,:) * lake_fractions(:,:)
             call set_evaporation_to_lakes_interface(lake_fraction_adjusted_evaporation)
-            deallocate(lake_fractions)
           else
             call set_evaporation_to_lakes_for_testing_interface(evaporation)
           end if
@@ -172,6 +175,7 @@ module latlon_hd_model_interface_mod
           deallocate(lake_evaporations_local)
           deallocate(lake_fraction_adjusted_evaporation)
           deallocate(evaporation)
+          deallocate(lake_fractions)
       end if
       deallocate(runoff)
       deallocate(drainage)

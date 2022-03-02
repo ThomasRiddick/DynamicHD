@@ -193,11 +193,12 @@ function get_lake_volumes() result(lake_volumes)
     lake_volumes => get_lake_volume_list(global_lake_prognostics)
 end function get_lake_volumes
 
-function get_lake_fractions() result(lake_fractions)
-  real(dp), pointer, dimension(:,:) :: lake_fractions
-    lake_fractions => get_lake_fraction_on_surface_grid(global_lake_parameters, &
-                                                        global_lake_fields)
-end function get_lake_fractions
+subroutine get_lake_fraction(lake_fraction)
+  real(dp), dimension(:,:), intent(inout) :: lake_fraction
+    call calculate_lake_fraction_on_surface_grid(global_lake_parameters, &
+                                                 global_lake_fields, &
+                                                 lake_fraction)
+end subroutine get_lake_fraction
 
 subroutine set_lake_evaporation_for_testing_interface(lake_evaporation)
   real(dp), allocatable, dimension(:,:), intent(in) :: lake_evaporation

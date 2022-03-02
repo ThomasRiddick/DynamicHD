@@ -172,7 +172,7 @@ subroutine testLakeModel1
    integer :: no_merge_mtype,connection_merge_not_set_flood_merge_as_secondary
    real(dp),dimension(:), pointer :: lake_volumes
    real(dp), dimension(:,:), pointer :: diagnostic_lake_volumes
-   real(dp), dimension(:,:), pointer :: lake_fractions
+   real(dp), dimension(:,:), allocatable :: lake_fractions
    real(dp) :: step_length
    integer :: nlat,nlon
    integer :: nlat_coarse,nlon_coarse
@@ -193,6 +193,7 @@ subroutine testLakeModel1
       nlon_coarse = 3
       nlat_surface_model = 3
       nlon_surface_model = 3
+      allocate(lake_fractions(nlat_surface_model,nlon_surface_model))
       allocate(flow_directions(nlat_coarse,nlon_coarse))
       flow_directions = transpose(reshape((/ &
                                   -2,6,2, &
@@ -631,8 +632,8 @@ subroutine testLakeModel1
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(expected_river_inflow,river_fields%river_inflow,3,3,0.0000000001_dp)
       call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,3,3,0.0000000001_dp)
       call assert_equals(expected_water_to_hd,lake_fields_out%water_to_hd,3,3,0.00001_dp)
@@ -734,7 +735,7 @@ subroutine testLakeModel2
   integer :: connection_merge_not_set_flood_merge_as_secondary
   real(dp),dimension(:), pointer :: lake_volumes
   real(dp), dimension(:,:), pointer :: diagnostic_lake_volumes
-  real(dp), dimension(:,:), pointer :: lake_fractions
+  real(dp), dimension(:,:), allocatable :: lake_fractions
   real(dp) :: step_length
   integer :: nlat,nlon
   integer :: nlat_coarse,nlon_coarse
@@ -756,6 +757,7 @@ subroutine testLakeModel2
     nlon_coarse = 4
     nlat_surface_model = 3
     nlon_surface_model = 3
+    allocate(lake_fractions(nlat_surface_model,nlon_surface_model))
     allocate(flow_directions(nlat_coarse,nlon_coarse))
     flow_directions = transpose(reshape((/ -2, 4, 2, 2, &
                                             6,-2,-2, 2, &
@@ -1656,8 +1658,8 @@ subroutine testLakeModel2
     diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-    lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+    call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
     call assert_equals(expected_river_inflow,river_fields%river_inflow,&
                        nlat_coarse,nlon_coarse,0.0000000001_dp)
     call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,4,4,0.0000000001_dp)
@@ -1775,7 +1777,7 @@ subroutine testLakeModel3
   integer :: connection_merge_not_set_flood_merge_as_secondary
   real(dp),dimension(:), pointer :: lake_volumes
   real(dp), dimension(:,:), pointer :: diagnostic_lake_volumes
-  real(dp), dimension(:,:), pointer :: lake_fractions
+  real(dp), dimension(:,:), allocatable :: lake_fractions
   real(dp) :: step_length
   integer :: nlat,nlon
   integer :: nlat_coarse,nlon_coarse
@@ -1795,6 +1797,7 @@ subroutine testLakeModel3
       nlon_coarse = 4
       nlat_surface_model = 3
       nlon_surface_model = 3
+      allocate(lake_fractions(nlat_surface_model,nlon_surface_model))
       allocate(flow_directions(nlat_coarse,nlon_coarse))
       flow_directions = transpose(reshape((/ -2, 4, 2, 2, &
                                               6,-2,-2, 2, &
@@ -2805,8 +2808,8 @@ subroutine testLakeModel3
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(expected_intermediate_river_inflow,river_fields%river_inflow,&
                          4,4,0.0000000001_dp)
       call assert_equals(expected_intermediate_water_to_ocean,river_fields%water_to_ocean,4,4,0.00001_dp)
@@ -2819,7 +2822,6 @@ subroutine testLakeModel3
       call assert_equals(expected_intermediate_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
       call assert_equals(expected_intermediate_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,3,3)
-      deallocate(lake_fractions)
       call run_hd_model(5000,runoffs_copy,drainages_copy,evaporations_set_two)
       lake_prognostics_out => get_lake_prognostics()
       lake_fields_out => get_lake_fields()
@@ -2850,8 +2852,8 @@ subroutine testLakeModel3
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(expected_river_inflow,river_fields%river_inflow,&
                          4,4,0.0000000001_dp)
       call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,4,4,0.00001_dp)
@@ -3017,7 +3019,7 @@ subroutine testLakeModel4
    integer :: connection_merge_not_set_flood_merge_as_secondary
    real(dp),dimension(:), pointer :: lake_volumes
    real(dp), dimension(:,:), pointer :: diagnostic_lake_volumes
-   real(dp), dimension(:,:), pointer :: lake_fractions
+   real(dp), dimension(:,:), allocatable :: lake_fractions
    integer :: nlat_coarse,nlon_coarse
    integer :: nlat_surface_model,nlon_surface_model
    integer :: nlat,nlon
@@ -3033,6 +3035,7 @@ subroutine testLakeModel4
       nlon_coarse = 3
       nlat_surface_model = 2
       nlon_surface_model = 2
+      allocate(lake_fractions(nlat_surface_model,nlon_surface_model))
       seconds_per_day = 86400.0_dp
       allocate(flow_directions(nlat_coarse,nlon_coarse))
       flow_directions = transpose(reshape((/-2,6,2,&
@@ -3766,8 +3769,8 @@ subroutine testLakeModel4
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
 
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(first_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(first_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -3781,7 +3784,6 @@ subroutine testLakeModel4
       call assert_equals(first_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,2,2)
       call assert_equals(first_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,2,2)
-      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
@@ -3816,8 +3818,8 @@ subroutine testLakeModel4
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(second_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(second_intermediate_expected_water_to_ocean,river_fields%water_to_ocean,&
                          3,3,0.00001_dp)
@@ -3832,7 +3834,6 @@ subroutine testLakeModel4
       call assert_equals(second_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,2,2)
       call assert_equals(second_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,2,2)
-      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
 
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
@@ -3868,8 +3869,8 @@ subroutine testLakeModel4
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(third_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(third_intermediate_expected_water_to_ocean, &
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -3884,7 +3885,6 @@ subroutine testLakeModel4
       call assert_equals(third_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,2,2)
       call assert_equals(third_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,2,2)
-      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
 
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
@@ -3920,8 +3920,8 @@ subroutine testLakeModel4
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(fourth_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(fourth_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -3934,7 +3934,6 @@ subroutine testLakeModel4
       call assert_equals(fourth_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,2,2)
       call assert_equals(fourth_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,2,2)
-      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
 
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
@@ -3970,8 +3969,8 @@ subroutine testLakeModel4
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(fifth_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(fifth_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -3984,7 +3983,6 @@ subroutine testLakeModel4
       call assert_equals(fifth_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,2,2)
       call assert_equals(fifth_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,2,2)
-      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
 
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
@@ -4020,8 +4018,8 @@ subroutine testLakeModel4
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,3,3,0.00001_dp)
       call assert_equals(expected_water_to_hd,lake_fields_out%water_to_hd,3,3)
@@ -4215,7 +4213,7 @@ subroutine testLakeModel5
    integer :: connection_merge_not_set_flood_merge_as_secondary
    real(dp),dimension(:), pointer :: lake_volumes
    real(dp), dimension(:,:), pointer :: diagnostic_lake_volumes
-   real(dp), dimension(:,:), pointer :: lake_fractions
+   real(dp), dimension(:,:), allocatable :: lake_fractions
    integer :: nlat_coarse,nlon_coarse
    integer :: nlat_surface_model,nlon_surface_model
    integer :: nlat,nlon
@@ -4231,6 +4229,7 @@ subroutine testLakeModel5
       nlon_coarse = 3
       nlat_surface_model = 2
       nlon_surface_model = 2
+      allocate(lake_fractions(nlat_surface_model,nlon_surface_model))
       seconds_per_day = 86400.0_dp
       allocate(flow_directions(nlat_coarse,nlon_coarse))
       flow_directions = transpose(reshape((/-2,6,2,&
@@ -4962,8 +4961,8 @@ subroutine testLakeModel5
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(first_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(first_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -4978,7 +4977,6 @@ subroutine testLakeModel5
       call assert_equals(first_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,2,2)
       call assert_equals(first_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,2,2)
-      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -5016,8 +5014,8 @@ subroutine testLakeModel5
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(second_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(second_intermediate_expected_water_to_ocean, &
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -5031,7 +5029,6 @@ subroutine testLakeModel5
       call assert_equals(second_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,2,2)
       call assert_equals(second_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,2,2)
-      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -5069,8 +5066,8 @@ subroutine testLakeModel5
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(third_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(third_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -5085,7 +5082,6 @@ subroutine testLakeModel5
       call assert_equals(third_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,2,2)
       call assert_equals(third_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,2,2)
-      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -5123,8 +5119,8 @@ subroutine testLakeModel5
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(fourth_intermediate_expected_river_inflow,&
                          river_fields%river_inflow,3,3)
       call assert_equals(fourth_intermediate_expected_water_to_ocean,&
@@ -5139,7 +5135,6 @@ subroutine testLakeModel5
       call assert_equals(fourth_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,2,2)
       call assert_equals(fourth_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,2,2)
-      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -5177,8 +5172,8 @@ subroutine testLakeModel5
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(fifth_intermediate_expected_river_inflow,&
                          river_fields%river_inflow,3,3)
       call assert_equals(fifth_intermediate_expected_water_to_ocean,&
@@ -5192,7 +5187,6 @@ subroutine testLakeModel5
       call assert_equals(fifth_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,2,2)
       call assert_equals(fifth_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,2,2)
-      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -5230,8 +5224,8 @@ subroutine testLakeModel5
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,3,3,0.00001_dp)
       call assert_equals(expected_water_to_hd,lake_fields_out%water_to_hd,3,3)
@@ -5496,7 +5490,7 @@ subroutine testLakeModel6
    integer :: connection_merge_not_set_flood_merge_as_secondary
    real(dp),dimension(:), pointer :: lake_volumes
    real(dp), dimension(:,:), pointer :: diagnostic_lake_volumes
-   real(dp), dimension(:,:), pointer :: lake_fractions
+   real(dp), dimension(:,:), allocatable :: lake_fractions
    integer :: nlat_coarse,nlon_coarse
    integer :: nlat_surface_model,nlon_surface_model
    integer :: nlat,nlon
@@ -5512,6 +5506,7 @@ subroutine testLakeModel6
       nlon_coarse = 3
       nlat_surface_model = 2
       nlon_surface_model = 2
+      allocate(lake_fractions(nlat_surface_model,nlon_surface_model))
       seconds_per_day = 86400.0_dp
       allocate(flow_directions(nlat_coarse,nlon_coarse))
       flow_directions = transpose(reshape((/-2,6,2,&
@@ -6773,8 +6768,8 @@ subroutine testLakeModel6
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(first_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(first_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -6789,7 +6784,6 @@ subroutine testLakeModel6
       call assert_equals(first_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,2,2)
       call assert_equals(first_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,2,2)
-      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -6827,8 +6821,8 @@ subroutine testLakeModel6
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(second_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(second_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -6843,7 +6837,6 @@ subroutine testLakeModel6
       call assert_equals(second_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,2,2)
       call assert_equals(second_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,2,2)
-      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -6881,8 +6874,8 @@ subroutine testLakeModel6
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(third_intermediate_expected_river_inflow, river_fields%river_inflow,3,3)
       call assert_equals(third_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -6897,7 +6890,6 @@ subroutine testLakeModel6
       call assert_equals(third_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,2,2)
       call assert_equals(third_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,2,2)
-      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -6935,8 +6927,8 @@ subroutine testLakeModel6
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(fourth_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(fourth_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -6951,7 +6943,6 @@ subroutine testLakeModel6
       call assert_equals(fourth_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,2,2)
       call assert_equals(fourth_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,2,2)
-      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -6989,8 +6980,8 @@ subroutine testLakeModel6
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(fifth_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(fifth_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -7005,7 +6996,6 @@ subroutine testLakeModel6
       call assert_equals(fifth_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,2,2)
       call assert_equals(fifth_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,2,2)
-      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -7043,8 +7033,8 @@ subroutine testLakeModel6
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(sixth_intermediate_expected_river_inflow,&
                          river_fields%river_inflow,3,3)
       call assert_equals(sixth_intermediate_expected_water_to_ocean,&
@@ -7060,7 +7050,6 @@ subroutine testLakeModel6
       call assert_equals(sixth_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,2,2)
       call assert_equals(sixth_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,2,2)
-      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -7098,8 +7087,8 @@ subroutine testLakeModel6
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(sixth_intermediate_expected_river_inflow, river_fields%river_inflow,3,3)
       call assert_equals(sixth_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -7114,7 +7103,6 @@ subroutine testLakeModel6
       call assert_equals(sixth_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,2,2)
       call assert_equals(sixth_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,2,2)
-      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -7152,8 +7140,8 @@ subroutine testLakeModel6
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(seven_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(seven_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -7168,7 +7156,6 @@ subroutine testLakeModel6
       call assert_equals(seven_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,2,2)
       call assert_equals(seven_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,2,2)
-      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -7206,8 +7193,8 @@ subroutine testLakeModel6
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(eight_intermediate_expected_river_inflow,&
                          river_fields%river_inflow,3,3)
       call assert_equals(eight_intermediate_expected_water_to_ocean,&
@@ -7223,7 +7210,6 @@ subroutine testLakeModel6
       call assert_equals(eight_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,2,2)
       call assert_equals(eight_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,2,2)
-      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -7261,8 +7247,8 @@ subroutine testLakeModel6
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(nine_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(nine_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -7277,7 +7263,6 @@ subroutine testLakeModel6
       call assert_equals(nine_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,2,2)
       call assert_equals(nine_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,2,2)
-      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -7315,8 +7300,8 @@ subroutine testLakeModel6
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(ten_intermediate_expected_river_inflow,&
                          river_fields%river_inflow,3,3)
       call assert_equals(ten_intermediate_expected_water_to_ocean,&
@@ -7332,7 +7317,6 @@ subroutine testLakeModel6
       call assert_equals(ten_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,2,2)
       call assert_equals(ten_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,2,2)
-      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -7370,8 +7354,8 @@ subroutine testLakeModel6
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(eleven_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(eleven_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -7387,7 +7371,6 @@ subroutine testLakeModel6
       call assert_equals(eleven_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,2,2)
       call assert_equals(eleven_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,2,2)
-      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -7425,8 +7408,8 @@ subroutine testLakeModel6
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(twelve_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(twelve_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -7442,7 +7425,6 @@ subroutine testLakeModel6
       call assert_equals(twelve_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,2,2)
       call assert_equals(twelve_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,2,2)
-      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -7480,8 +7462,8 @@ subroutine testLakeModel6
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(expected_river_inflow, river_fields%river_inflow,3,3)
       call assert_equals(expected_water_to_ocean,&
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -7723,7 +7705,7 @@ subroutine testLakeModel7
    integer :: connection_merge_not_set_flood_merge_as_secondary
    real(dp),dimension(:), pointer :: lake_volumes
    real(dp), dimension(:,:), pointer :: diagnostic_lake_volumes
-   real(dp), dimension(:,:), pointer :: lake_fractions
+   real(dp), dimension(:,:), allocatable :: lake_fractions
    integer :: nlat_coarse,nlon_coarse
    integer :: nlat_surface_model,nlon_surface_model
    integer :: nlat,nlon
@@ -7739,6 +7721,7 @@ subroutine testLakeModel7
       nlon_coarse = 3
       nlat_surface_model = 3
       nlon_surface_model = 3
+      allocate(lake_fractions(nlat_surface_model,nlon_surface_model))
       seconds_per_day = 86400.0_dp
       allocate(flow_directions(nlat_coarse,nlon_coarse))
       flow_directions = transpose(reshape((/-2,6,2,&
@@ -8338,8 +8321,8 @@ subroutine testLakeModel7
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(first_intermediate_expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(first_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,3,3,0.00001_dp)
@@ -8355,7 +8338,6 @@ subroutine testLakeModel7
       call assert_equals(first_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
       call assert_equals(first_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,3,3)
-      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -8393,8 +8375,8 @@ subroutine testLakeModel7
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(second_intermediate_expected_river_inflow,&
                          river_fields%river_inflow,3,3)
       call assert_equals(second_intermediate_expected_water_to_ocean,&
@@ -8412,7 +8394,6 @@ subroutine testLakeModel7
       call assert_equals(second_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
       call assert_equals(second_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,3,3)
-      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -8450,8 +8431,8 @@ subroutine testLakeModel7
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(expected_river_inflow,river_fields%river_inflow,3,3)
       call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,3,3,0.00001_dp)
       call assert_equals(expected_water_to_hd,lake_fields_out%water_to_hd,3,3)
@@ -8605,7 +8586,7 @@ subroutine testLakeModel8
    integer :: connection_merge_not_set_flood_merge_as_secondary
    real(dp),dimension(:), pointer :: lake_volumes
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
-   real(dp), dimension(:,:), pointer :: lake_fractions
+   real(dp), dimension(:,:), allocatable :: lake_fractions
    integer,dimension(:,:), pointer :: merge_points
    real(dp),dimension(:,:),pointer :: cell_areas_on_surface_model_grid
    integer :: nlat_coarse, nlon_coarse
@@ -8624,6 +8605,7 @@ subroutine testLakeModel8
       nlon_coarse = 4
       nlat_surface_model = 3
       nlon_surface_model = 3
+      allocate(lake_fractions(nlat_surface_model,nlon_surface_model))
       allocate(flow_directions(nlat_coarse,nlon_coarse))
       flow_directions = transpose(reshape((/-2,4,2,2,&
                                             6,-2,-2,2,&
@@ -9947,8 +9929,8 @@ subroutine testLakeModel8
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(first_intermediate_expected_river_inflow,river_fields%river_inflow,4,4)
       call assert_equals(first_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,4,4,0.00001_dp)
@@ -9962,7 +9944,6 @@ subroutine testLakeModel8
       call assert_equals(first_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
       call assert_equals(first_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,3,3)
-      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -10000,8 +9981,8 @@ subroutine testLakeModel8
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(second_intermediate_expected_river_inflow,river_fields%river_inflow,4,4)
       call assert_equals(second_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,4,4,0.00001_dp)
@@ -10015,7 +9996,6 @@ subroutine testLakeModel8
       call assert_equals(second_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
       call assert_equals(second_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,3,3)
-      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -10053,8 +10033,8 @@ subroutine testLakeModel8
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals( third_intermediate_expected_river_inflow,river_fields%river_inflow,4,4)
       call assert_equals( third_intermediate_expected_water_to_ocean,&
                           river_fields%water_to_ocean,4,4,0.00001_dp)
@@ -10068,7 +10048,6 @@ subroutine testLakeModel8
       call assert_equals( third_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
       call assert_equals( third_intermediate_expected_number_fine_grid_cells, &
                           lake_parameters%number_fine_grid_cells,3,3)
-      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -10106,8 +10085,8 @@ subroutine testLakeModel8
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals( expected_river_inflow,river_fields%river_inflow,4,4)
       call assert_equals( expected_water_to_ocean,river_fields%water_to_ocean,4,4,0.00001_dp)
       call assert_equals( expected_water_to_hd,lake_fields_out%water_to_hd,4,4)
@@ -10245,7 +10224,7 @@ subroutine testLakeModel9
    integer :: connection_merge_not_set_flood_merge_as_secondary
    real(dp),dimension(:), pointer :: lake_volumes
    real(dp), dimension(:,:), pointer :: diagnostic_lake_volumes
-   real(dp), dimension(:,:), pointer :: lake_fractions
+   real(dp), dimension(:,:), allocatable :: lake_fractions
    integer :: nlat_coarse, nlon_coarse
    integer :: nlat_surface_model,nlon_surface_model
    integer :: nlat,nlon
@@ -10262,6 +10241,7 @@ subroutine testLakeModel9
       nlon_coarse = 4
       nlat_surface_model = 3
       nlon_surface_model = 3
+      allocate(lake_fractions(nlat_surface_model,nlon_surface_model))
       allocate(flow_directions(nlat_coarse,nlon_coarse))
       flow_directions = transpose(reshape((/-2,4,2,2, &
                                             6,-2,-2,2, &
@@ -11198,8 +11178,8 @@ subroutine testLakeModel9
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals( expected_river_inflow,river_fields%river_inflow,4,4)
       call assert_equals( expected_water_to_ocean,river_fields%water_to_ocean,4,4,0.00001_dp)
       call assert_equals( expected_water_to_hd,lake_fields_out%water_to_hd,4,4)
@@ -11306,7 +11286,7 @@ subroutine testLakeModel10
    integer :: connection_merge_not_set_flood_merge_as_primary
    integer :: connection_merge_not_set_flood_merge_as_secondary
    real(dp), dimension(:,:), pointer :: diagnostic_lake_volumes
-   real(dp), dimension(:,:), pointer :: lake_fractions
+   real(dp), dimension(:,:), allocatable :: lake_fractions
    integer :: nlat_coarse, nlon_coarse
    integer :: nlat_surface_model,nlon_surface_model
    integer :: nlat,nlon
@@ -11324,6 +11304,7 @@ subroutine testLakeModel10
       nlon_coarse = 4
       nlat_surface_model = 3
       nlon_surface_model = 3
+      allocate(lake_fractions(nlat_surface_model,nlon_surface_model))
       allocate(flow_directions(nlat_coarse,nlon_coarse))
       flow_directions = transpose(reshape((/ &
                                             -2,4,2,2, &
@@ -12241,8 +12222,8 @@ subroutine testLakeModel10
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(expected_river_inflow,river_fields%river_inflow,4,4)
       call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,4,4,0.00001_dp)
       call assert_equals(expected_water_to_hd,lake_fields_out%water_to_hd,4,4)
@@ -12369,7 +12350,7 @@ subroutine testLakeModel11
    integer :: connection_merge_not_set_flood_merge_as_primary
    integer :: connection_merge_not_set_flood_merge_as_secondary
    real(dp), dimension(:,:), pointer :: diagnostic_lake_volumes
-   real(dp), dimension(:,:), pointer :: lake_fractions
+   real(dp), dimension(:,:), allocatable :: lake_fractions
    integer :: nlat_coarse, nlon_coarse
    integer :: nlat_surface_model,nlon_surface_model
    integer :: nlat,nlon
@@ -12387,6 +12368,7 @@ subroutine testLakeModel11
       nlon_coarse = 4
       nlat_surface_model = 3
       nlon_surface_model = 3
+      allocate(lake_fractions(nlat_surface_model,nlon_surface_model))
       allocate(flow_directions(nlat_coarse,nlon_coarse))
       flow_directions = transpose(reshape((/-2,4,2,2,&
                                             8,-2,-2,2,&
@@ -13589,8 +13571,8 @@ subroutine testLakeModel11
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(first_intermediate_expected_river_inflow, river_fields%river_inflow,4,4)
       call assert_equals(first_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,4,4,0.00001_dp)
@@ -13605,7 +13587,6 @@ subroutine testLakeModel11
       call assert_equals(first_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
       call assert_equals(first_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,3,3)
-      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -13643,8 +13624,8 @@ subroutine testLakeModel11
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(second_intermediate_expected_river_inflow,river_fields%river_inflow,4,4)
       call assert_equals(second_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,4,4,0.00001_dp)
@@ -13658,7 +13639,6 @@ subroutine testLakeModel11
       call assert_equals(second_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
       call assert_equals(second_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,3,3)
-      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -13696,8 +13676,8 @@ subroutine testLakeModel11
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(expected_river_inflow,river_fields%river_inflow,4,4)
       call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,4,4,0.00001_dp)
       call assert_equals(expected_water_to_hd,lake_fields_out%water_to_hd,4,4)
@@ -13824,7 +13804,7 @@ subroutine testLakeModel12
    integer :: connection_merge_not_set_flood_merge_as_primary
    integer :: connection_merge_not_set_flood_merge_as_secondary
    real(dp), dimension(:,:), pointer :: diagnostic_lake_volumes
-   real(dp), dimension(:,:), pointer :: lake_fractions
+   real(dp), dimension(:,:), allocatable :: lake_fractions
    integer :: nlat_coarse, nlon_coarse
    integer :: nlat_surface_model,nlon_surface_model
    integer :: nlat,nlon
@@ -13842,6 +13822,7 @@ subroutine testLakeModel12
       nlon_coarse = 4
       nlat_surface_model = 3
       nlon_surface_model = 3
+      allocate(lake_fractions(nlat_surface_model,nlon_surface_model))
       allocate(flow_directions(nlat_coarse,nlon_coarse))
       flow_directions = transpose(reshape((/ &
                                             -2,4,2,2, &
@@ -14779,8 +14760,8 @@ subroutine testLakeModel12
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(expected_river_inflow,river_fields%river_inflow,4,4)
       call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,4,4,0.00001_dp)
       call assert_equals(expected_water_to_hd,lake_fields_out%water_to_hd,4,4)
@@ -14887,7 +14868,7 @@ subroutine testLakeModel13
    integer :: connection_merge_not_set_flood_merge_as_primary
    integer :: connection_merge_not_set_flood_merge_as_secondary
    real(dp), dimension(:,:), pointer :: diagnostic_lake_volumes
-   real(dp), dimension(:,:), pointer :: lake_fractions
+   real(dp), dimension(:,:), allocatable :: lake_fractions
    integer :: nlat_coarse, nlon_coarse
    integer :: nlat_surface_model,nlon_surface_model
    integer :: nlat,nlon
@@ -14905,6 +14886,7 @@ subroutine testLakeModel13
       nlon_coarse = 4
       nlat_surface_model = 3
       nlon_surface_model = 3
+      allocate(lake_fractions(nlat_surface_model,nlon_surface_model))
       allocate(flow_directions(nlat_coarse,nlon_coarse))
       flow_directions = transpose(reshape((/ &
                                             -2,4,2,2, &
@@ -15823,8 +15805,8 @@ subroutine testLakeModel13
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(expected_river_inflow,river_fields%river_inflow,4,4)
       call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,4,4,0.00001_dp)
       call assert_equals(expected_water_to_hd,lake_fields_out%water_to_hd,4,4)
@@ -15951,7 +15933,7 @@ subroutine testLakeModel14
    integer :: connection_merge_not_set_flood_merge_as_secondary
    real(dp),dimension(:), pointer :: lake_volumes
    real(dp), dimension(:,:), pointer :: diagnostic_lake_volumes
-   real(dp), dimension(:,:), pointer :: lake_fractions
+   real(dp), dimension(:,:), allocatable :: lake_fractions
    integer :: nlat_coarse, nlon_coarse
    integer :: nlat_surface_model,nlon_surface_model
    integer :: nlat,nlon
@@ -15969,6 +15951,7 @@ subroutine testLakeModel14
       nlon_coarse = 4
       nlat_surface_model = 3
       nlon_surface_model = 3
+      allocate(lake_fractions(nlat_surface_model,nlon_surface_model))
       allocate(flow_directions(nlat_coarse,nlon_coarse))
       flow_directions = transpose(reshape((/ -2,4,2,2,&
                                             6,-2,-2,2,&
@@ -17170,8 +17153,8 @@ subroutine testLakeModel14
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(first_intermediate_expected_river_inflow,river_fields%river_inflow,4,4,&
                          0.00000001_dp)
       call assert_equals(first_intermediate_expected_water_to_ocean,&
@@ -17187,7 +17170,6 @@ subroutine testLakeModel14
       call assert_equals(first_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
       call assert_equals(first_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,3,3)
-      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -17225,8 +17207,8 @@ subroutine testLakeModel14
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(second_intermediate_expected_river_inflow,river_fields%river_inflow,4,4)
       call assert_equals(second_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,4,4,0.00001_dp)
@@ -17240,7 +17222,6 @@ subroutine testLakeModel14
       call assert_equals(second_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
       call assert_equals(second_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,3,3)
-      deallocate(lake_fractions)
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -17278,8 +17259,8 @@ subroutine testLakeModel14
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(expected_river_inflow,river_fields%river_inflow,4,4)
       call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,4,4,0.00001_dp)
       call assert_equals(expected_water_to_hd,lake_fields_out%water_to_hd,4,4)
@@ -17392,7 +17373,7 @@ subroutine testLakeModel15
    real(dp),dimension(:,:), pointer :: initial_spillover_to_rivers
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
    real(dp),dimension(:), pointer :: lake_volumes
-   real(dp),dimension(:,:), pointer :: lake_fractions
+   real(dp),dimension(:,:), allocatable :: lake_fractions
    real(dp),dimension(:,:), pointer :: expected_river_inflow
    real(dp),dimension(:,:), pointer :: expected_water_to_ocean
    real(dp),dimension(:,:), pointer :: expected_water_to_hd
@@ -17471,6 +17452,7 @@ subroutine testLakeModel15
       nlon_coarse = 4
       nlat_surface_model = 3
       nlon_surface_model = 3
+      allocate(lake_fractions(nlat_surface_model,nlon_surface_model))
       allocate(flow_directions(nlat_coarse,nlon_coarse))
       flow_directions = transpose(reshape((/ 3,2,2,1, &
                                              6,6,-2,4, &
@@ -19023,8 +19005,8 @@ subroutine testLakeModel15
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(first_intermediate_expected_river_inflow,river_fields%river_inflow,4,4,&
                          0.00000001_dp)
       call assert_equals(first_intermediate_expected_water_to_ocean,&
@@ -19041,7 +19023,6 @@ subroutine testLakeModel15
       call assert_equals(first_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,3,3)
       deallocate(diagnostic_lake_volumes)
-      deallocate(lake_fractions)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
@@ -19079,8 +19060,8 @@ subroutine testLakeModel15
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(second_intermediate_expected_river_inflow,river_fields%river_inflow,4,4,&
                          0.00000001_dp)
       call assert_equals(second_intermediate_expected_water_to_ocean,&
@@ -19097,7 +19078,6 @@ subroutine testLakeModel15
       call assert_equals(second_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,3,3)
       deallocate(diagnostic_lake_volumes)
-      deallocate(lake_fractions)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
@@ -19135,8 +19115,8 @@ subroutine testLakeModel15
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(third_intermediate_expected_river_inflow,river_fields%river_inflow,4,4,&
                          0.00000001_dp)
       call assert_equals(third_intermediate_expected_water_to_ocean,&
@@ -19153,7 +19133,6 @@ subroutine testLakeModel15
       call assert_equals(third_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,3,3)
       deallocate(diagnostic_lake_volumes)
-      deallocate(lake_fractions)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
@@ -19191,8 +19170,8 @@ subroutine testLakeModel15
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(fourth_intermediate_expected_river_inflow,river_fields%river_inflow,4,4,&
                          0.00000001_dp)
       call assert_equals(fourth_intermediate_expected_water_to_ocean,&
@@ -19209,7 +19188,6 @@ subroutine testLakeModel15
       call assert_equals(fourth_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,3,3)
       deallocate(diagnostic_lake_volumes)
-      deallocate(lake_fractions)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
@@ -19383,8 +19361,8 @@ subroutine testLakeModel15
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(expected_river_inflow,river_fields%river_inflow,4,4,&
                          0.00000001_dp)
       call assert_equals(expected_water_to_ocean,&
@@ -20538,7 +20516,7 @@ subroutine testLakeModel17
    real(dp),dimension(:,:,:), pointer :: lake_evaporations
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
    real(dp),dimension(:), pointer :: lake_volumes
-   real(dp),dimension(:,:), pointer :: lake_fractions
+   real(dp),dimension(:,:), allocatable :: lake_fractions
    real(dp),dimension(:,:), pointer :: lake_volumes_all_timesteps
    real(dp),dimension(:,:), pointer :: expected_lake_volumes_all_timesteps
       use_realistic_surface_coupling_in = .true.
@@ -20546,6 +20524,7 @@ subroutine testLakeModel17
       nlon_coarse = 4
       nlat_surface_model = 3
       nlon_surface_model = 3
+      allocate(lake_fractions(nlat_surface_model,nlon_surface_model))
       no_merge_mtype = 0
       connection_merge_as_secondary_flood_merge_not_set = 7
       connection_merge_not_set_flood_merge_as_primary = 9
@@ -22656,8 +22635,8 @@ subroutine testLakeModel17
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(first_intermediate_expected_river_inflow,river_fields%river_inflow,4,4,&
                          0.00000001_dp)
       call assert_equals(first_intermediate_expected_water_to_ocean,&
@@ -22674,7 +22653,6 @@ subroutine testLakeModel17
       call assert_equals(first_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,3,3)
       deallocate(diagnostic_lake_volumes)
-      deallocate(lake_fractions)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
@@ -22712,8 +22690,8 @@ subroutine testLakeModel17
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
     call assert_equals(second_intermediate_expected_river_inflow,river_fields%river_inflow,4,4,&
                          0.00000001_dp)
       call assert_equals(second_intermediate_expected_water_to_ocean,&
@@ -22730,7 +22708,6 @@ subroutine testLakeModel17
       call assert_equals(second_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,3,3)
       deallocate(diagnostic_lake_volumes)
-      deallocate(lake_fractions)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
@@ -22768,8 +22745,8 @@ subroutine testLakeModel17
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(third_intermediate_expected_river_inflow,river_fields%river_inflow,4,4,&
                          0.00000001_dp)
       call assert_equals(third_intermediate_expected_water_to_ocean,&
@@ -22786,7 +22763,6 @@ subroutine testLakeModel17
       call assert_equals(third_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,3,3)
       deallocate(diagnostic_lake_volumes)
-      deallocate(lake_fractions)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
@@ -22824,8 +22800,8 @@ subroutine testLakeModel17
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(fourth_intermediate_expected_river_inflow,river_fields%river_inflow,4,4,&
                          0.00000001_dp)
       call assert_equals(fourth_intermediate_expected_water_to_ocean,&
@@ -22842,7 +22818,6 @@ subroutine testLakeModel17
       call assert_equals(fourth_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,3,3)
       deallocate(diagnostic_lake_volumes)
-      deallocate(lake_fractions)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
@@ -22880,8 +22855,8 @@ subroutine testLakeModel17
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(fifth_intermediate_expected_river_inflow,river_fields%river_inflow,4,4,&
                          0.00000001_dp)
       call assert_equals(fifth_intermediate_expected_water_to_ocean,&
@@ -22898,7 +22873,6 @@ subroutine testLakeModel17
       call assert_equals(fifth_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,3,3)
       deallocate(diagnostic_lake_volumes)
-      deallocate(lake_fractions)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
@@ -22936,8 +22910,8 @@ subroutine testLakeModel17
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(sixth_intermediate_expected_river_inflow,river_fields%river_inflow,4,4,&
                          0.00000001_dp)
       call assert_equals(sixth_intermediate_expected_water_to_ocean,&
@@ -22954,7 +22928,6 @@ subroutine testLakeModel17
       call assert_equals(sixth_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,3,3)
       deallocate(diagnostic_lake_volumes)
-      deallocate(lake_fractions)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
@@ -22992,8 +22965,8 @@ subroutine testLakeModel17
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(seventh_intermediate_expected_river_inflow,river_fields%river_inflow,4,4,&
                          0.00000001_dp)
       call assert_equals(seventh_intermediate_expected_water_to_ocean,&
@@ -23010,7 +22983,6 @@ subroutine testLakeModel17
       call assert_equals(seventh_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,3,3)
       deallocate(diagnostic_lake_volumes)
-      deallocate(lake_fractions)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
@@ -23052,8 +23024,8 @@ subroutine testLakeModel17
       diagnostic_lake_volumes => calculate_diagnostic_lake_volumes(lake_parameters,&
                                                                    lake_prognostics_out,&
                                                                    lake_fields_out)
-      lake_fractions => get_lake_fraction_on_surface_grid(lake_parameters, &
-                                                                lake_fields_out)
+      call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
+                                                   lake_fractions)
       call assert_equals(expected_river_inflow,river_fields%river_inflow,4,4,&
                          0.00000001_dp)
       call assert_equals(expected_water_to_ocean,&
