@@ -1,6 +1,10 @@
 module latlon_hd_model_mod
 
+#ifdef TRANSPOSED_LAKE_MODEL
+use latlon_lake_model_interface_switcher_mod
+#else
 use latlon_lake_model_interface_mod
+#endif
 
 implicit none
 

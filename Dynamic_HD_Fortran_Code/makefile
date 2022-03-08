@@ -3,6 +3,7 @@ USE_NAG := False
 USE_INTEL := False
 FLAGS := -DUSE_LOGGING
 USE_MPI ?= False
+COMPILE_TRANSPOSED_LAKE_MODEL ?= False
 ifeq ($(shell uname -s),Darwin)
 ifeq ($(USE_MPI),True)
 GFORTRAN :=  /usr/local/bin/mpifort
@@ -13,6 +14,10 @@ NAGFORTRAN :=  /usr/local/bin/nagfor
 EXT_SOURCE :=$(shell echo ${HOME} )/Documents/code/
 GFORTRAN_NETCDF_F := /usr/local/Cellar/netcdf/4.8.1
 NETCDF_F_LIB :=libnetcdff.dylib
+ifeq ($(COMPILE_TRANSPOSED_LAKE_MODEL),True)
+TRANSPOSED_SOURCE_CODE_LOC := /Users/thomasriddick/Documents/Work/switched_code
+FLAGS := -DTRANSPOSED_LAKE_MODEL
+endif
 ifeq ($(USE_MPI),True)
 FLAGS := -DUSE_MPI -m64
 endif

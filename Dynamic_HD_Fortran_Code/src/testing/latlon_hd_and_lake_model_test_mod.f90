@@ -110,7 +110,7 @@ end subroutine testHdModel
 subroutine testLakeModel1
    use latlon_hd_model_interface_mod
    use latlon_hd_model_mod
-   use latlon_lake_model_io_mod
+   use latlon_lake_model_io_mod, only : add_offset
    type(riverparameters), pointer :: river_parameters
    type(riverprognosticfields), pointer:: river_fields
    type(lakeparameters),pointer :: lake_parameters
@@ -671,7 +671,7 @@ end subroutine testLakeModel1
 subroutine testLakeModel2
   use latlon_hd_model_interface_mod
   use latlon_hd_model_mod
-  use latlon_lake_model_io_mod
+  use latlon_lake_model_io_mod, only : add_offset
   type(riverparameters), pointer :: river_parameters
   type(riverprognosticfields), pointer :: river_fields
   type(lakeparameters),pointer :: lake_parameters
@@ -1660,6 +1660,10 @@ subroutine testLakeModel2
                                                                    lake_fields_out)
     call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
+#ifdef TRANSPOSED_LAKE_MODEL
+    call renumber_lakes(lake_fields_out)
+    call reorder_lake_volumes(lake_volumes)
+#endif
     call assert_equals(expected_river_inflow,river_fields%river_inflow,&
                        nlat_coarse,nlon_coarse,0.0000000001_dp)
     call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,4,4,0.0000000001_dp)
@@ -1698,7 +1702,7 @@ end subroutine testLakeModel2
 subroutine testLakeModel3
  use latlon_hd_model_interface_mod
   use latlon_hd_model_mod
-  use latlon_lake_model_io_mod
+  use latlon_lake_model_io_mod, only: add_offset
   type(riverparameters), pointer :: river_parameters
   type(riverprognosticfields), pointer :: river_fields
   type(lakeparameters),pointer :: lake_parameters
@@ -2810,6 +2814,10 @@ subroutine testLakeModel3
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
+#ifdef TRANSPOSED_LAKE_MODEL
+      call renumber_lakes(lake_fields_out)
+      call reorder_lake_volumes(lake_volumes)
+#endif
       call assert_equals(expected_intermediate_river_inflow,river_fields%river_inflow,&
                          4,4,0.0000000001_dp)
       call assert_equals(expected_intermediate_water_to_ocean,river_fields%water_to_ocean,4,4,0.00001_dp)
@@ -2854,6 +2862,10 @@ subroutine testLakeModel3
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
+#ifdef TRANSPOSED_LAKE_MODEL
+      call renumber_lakes(lake_fields_out)
+      call reorder_lake_volumes(lake_volumes)
+#endif
       call assert_equals(expected_river_inflow,river_fields%river_inflow,&
                          4,4,0.0000000001_dp)
       call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,4,4,0.00001_dp)
@@ -2908,7 +2920,7 @@ end subroutine testLakeModel3
 subroutine testLakeModel4
    use latlon_hd_model_interface_mod
    use latlon_hd_model_mod
-   use latlon_lake_model_io_mod
+   use latlon_lake_model_io_mod, only: add_offset
    real(dp) :: seconds_per_day
    type(riverparameters), pointer :: river_parameters
   type(lakeparameters),pointer :: lake_parameters
@@ -4102,7 +4114,7 @@ end subroutine testLakeModel4
 subroutine testLakeModel5
    use latlon_hd_model_interface_mod
    use latlon_hd_model_mod
-   use latlon_lake_model_io_mod
+   use latlon_lake_model_io_mod, only: add_offset
    real(dp) :: seconds_per_day
    type(riverparameters), pointer :: river_parameters
   type(lakeparameters),pointer :: lake_parameters
@@ -5308,7 +5320,7 @@ end subroutine testLakeModel5
 subroutine testLakeModel6
    use latlon_hd_model_interface_mod
    use latlon_hd_model_mod
-   use latlon_lake_model_io_mod
+   use latlon_lake_model_io_mod, only: add_offset
    real(dp) :: seconds_per_day
    type(riverparameters), pointer :: river_parameters
   type(lakeparameters),pointer :: lake_parameters
@@ -7619,7 +7631,7 @@ end subroutine testLakeModel6
 subroutine testLakeModel7
    use latlon_hd_model_interface_mod
    use latlon_hd_model_mod
-   use latlon_lake_model_io_mod
+   use latlon_lake_model_io_mod, only: add_offset
    real(dp) :: seconds_per_day
    type(riverparameters), pointer :: river_parameters
   type(lakeparameters),pointer :: lake_parameters
@@ -8491,7 +8503,7 @@ end subroutine testLakeModel7
 subroutine testLakeModel8
    use latlon_hd_model_interface_mod
    use latlon_hd_model_mod
-   use latlon_lake_model_io_mod
+   use latlon_lake_model_io_mod, only: add_offset
    real(dp) :: seconds_per_day
    type(riverparameters), pointer :: river_parameters
   type(lakeparameters),pointer :: lake_parameters
@@ -9931,6 +9943,10 @@ subroutine testLakeModel8
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
+#ifdef TRANSPOSED_LAKE_MODEL
+      call renumber_lakes(lake_fields_out)
+      call reorder_lake_volumes(lake_volumes)
+#endif
       call assert_equals(first_intermediate_expected_river_inflow,river_fields%river_inflow,4,4)
       call assert_equals(first_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,4,4,0.00001_dp)
@@ -9983,6 +9999,10 @@ subroutine testLakeModel8
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
+#ifdef TRANSPOSED_LAKE_MODEL
+      call renumber_lakes(lake_fields_out)
+      call reorder_lake_volumes(lake_volumes)
+#endif
       call assert_equals(second_intermediate_expected_river_inflow,river_fields%river_inflow,4,4)
       call assert_equals(second_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,4,4,0.00001_dp)
@@ -10035,6 +10055,10 @@ subroutine testLakeModel8
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
+#ifdef TRANSPOSED_LAKE_MODEL
+      call renumber_lakes(lake_fields_out)
+      call reorder_lake_volumes(lake_volumes)
+#endif
       call assert_equals( third_intermediate_expected_river_inflow,river_fields%river_inflow,4,4)
       call assert_equals( third_intermediate_expected_water_to_ocean,&
                           river_fields%water_to_ocean,4,4,0.00001_dp)
@@ -10087,6 +10111,10 @@ subroutine testLakeModel8
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
+#ifdef TRANSPOSED_LAKE_MODEL
+      call renumber_lakes(lake_fields_out)
+      call reorder_lake_volumes(lake_volumes)
+#endif
       call assert_equals( expected_river_inflow,river_fields%river_inflow,4,4)
       call assert_equals( expected_water_to_ocean,river_fields%water_to_ocean,4,4,0.00001_dp)
       call assert_equals( expected_water_to_hd,lake_fields_out%water_to_hd,4,4)
@@ -10157,7 +10185,7 @@ end subroutine testLakeModel8
 subroutine testLakeModel9
    use latlon_hd_model_interface_mod
    use latlon_hd_model_mod
-   use latlon_lake_model_io_mod
+   use latlon_lake_model_io_mod, only: add_offset
    type(riverparameters), pointer :: river_parameters
   type(lakeparameters),pointer :: lake_parameters
    type(lakefields), pointer :: lake_fields_out
@@ -11180,6 +11208,10 @@ subroutine testLakeModel9
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
+#ifdef TRANSPOSED_LAKE_MODEL
+      call renumber_lakes(lake_fields_out)
+      call reorder_lake_volumes(lake_volumes)
+#endif
       call assert_equals( expected_river_inflow,river_fields%river_inflow,4,4)
       call assert_equals( expected_water_to_ocean,river_fields%water_to_ocean,4,4,0.00001_dp)
       call assert_equals( expected_water_to_hd,lake_fields_out%water_to_hd,4,4)
@@ -11220,7 +11252,7 @@ end subroutine testLakeModel9
 subroutine testLakeModel10
    use latlon_hd_model_interface_mod
    use latlon_hd_model_mod
-   use latlon_lake_model_io_mod
+   use latlon_lake_model_io_mod, only: add_offset
    type(riverparameters), pointer :: river_parameters
   type(lakeparameters),pointer :: lake_parameters
    type(lakefields), pointer :: lake_fields_out
@@ -12224,6 +12256,10 @@ subroutine testLakeModel10
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
+#ifdef TRANSPOSED_LAKE_MODEL
+      call renumber_lakes(lake_fields_out)
+      call reorder_lake_volumes(lake_volumes)
+#endif
       call assert_equals(expected_river_inflow,river_fields%river_inflow,4,4)
       call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,4,4,0.00001_dp)
       call assert_equals(expected_water_to_hd,lake_fields_out%water_to_hd,4,4)
@@ -12264,7 +12300,7 @@ end subroutine testLakeModel10
 subroutine testLakeModel11
    use latlon_hd_model_interface_mod
    use latlon_hd_model_mod
-   use latlon_lake_model_io_mod
+   use latlon_lake_model_io_mod, only: add_offset
    type(riverparameters), pointer :: river_parameters
   type(lakeparameters),pointer :: lake_parameters
    type(lakefields), pointer :: lake_fields_out
@@ -13573,6 +13609,10 @@ subroutine testLakeModel11
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
+#ifdef TRANSPOSED_LAKE_MODEL
+      call renumber_lakes(lake_fields_out)
+      call reorder_lake_volumes(lake_volumes)
+#endif
       call assert_equals(first_intermediate_expected_river_inflow, river_fields%river_inflow,4,4)
       call assert_equals(first_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,4,4,0.00001_dp)
@@ -13626,6 +13666,10 @@ subroutine testLakeModel11
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
+#ifdef TRANSPOSED_LAKE_MODEL
+      call renumber_lakes(lake_fields_out)
+      call reorder_lake_volumes(lake_volumes)
+#endif
       call assert_equals(second_intermediate_expected_river_inflow,river_fields%river_inflow,4,4)
       call assert_equals(second_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,4,4,0.00001_dp)
@@ -13678,6 +13722,10 @@ subroutine testLakeModel11
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
+#ifdef TRANSPOSED_LAKE_MODEL
+      call renumber_lakes(lake_fields_out)
+      call reorder_lake_volumes(lake_volumes)
+#endif
       call assert_equals(expected_river_inflow,river_fields%river_inflow,4,4)
       call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,4,4,0.00001_dp)
       call assert_equals(expected_water_to_hd,lake_fields_out%water_to_hd,4,4)
@@ -13738,7 +13786,7 @@ end subroutine testLakeModel11
 subroutine testLakeModel12
    use latlon_hd_model_interface_mod
    use latlon_hd_model_mod
-   use latlon_lake_model_io_mod
+   use latlon_lake_model_io_mod, only: add_offset
    type(riverparameters), pointer :: river_parameters
   type(lakeparameters),pointer :: lake_parameters
    type(lakefields), pointer :: lake_fields_out
@@ -14762,6 +14810,10 @@ subroutine testLakeModel12
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
+#ifdef TRANSPOSED_LAKE_MODEL
+      call renumber_lakes(lake_fields_out)
+      call reorder_lake_volumes(lake_volumes)
+#endif
       call assert_equals(expected_river_inflow,river_fields%river_inflow,4,4)
       call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,4,4,0.00001_dp)
       call assert_equals(expected_water_to_hd,lake_fields_out%water_to_hd,4,4)
@@ -14802,7 +14854,7 @@ end subroutine testLakeModel12
 subroutine testLakeModel13
    use latlon_hd_model_interface_mod
    use latlon_hd_model_mod
-   use latlon_lake_model_io_mod
+   use latlon_lake_model_io_mod, only: add_offset
    type(riverparameters), pointer :: river_parameters
    type(lakeparameters),pointer :: lake_parameters
    type(lakefields), pointer :: lake_fields_out
@@ -15807,6 +15859,10 @@ subroutine testLakeModel13
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
+#ifdef TRANSPOSED_LAKE_MODEL
+      call renumber_lakes(lake_fields_out)
+      call reorder_lake_volumes(lake_volumes)
+#endif
       call assert_equals(expected_river_inflow,river_fields%river_inflow,4,4)
       call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,4,4,0.00001_dp)
       call assert_equals(expected_water_to_hd,lake_fields_out%water_to_hd,4,4)
@@ -15847,7 +15903,7 @@ end subroutine testLakeModel13
 subroutine testLakeModel14
    use latlon_hd_model_interface_mod
    use latlon_hd_model_mod
-   use latlon_lake_model_io_mod
+   use latlon_lake_model_io_mod, only: add_offset
    type(riverparameters), pointer :: river_parameters
    type(lakeparameters),pointer :: lake_parameters
    type(lakefields), pointer :: lake_fields_out
@@ -17155,6 +17211,10 @@ subroutine testLakeModel14
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
+#ifdef TRANSPOSED_LAKE_MODEL
+      call renumber_lakes(lake_fields_out)
+      call reorder_lake_volumes(lake_volumes)
+#endif
       call assert_equals(first_intermediate_expected_river_inflow,river_fields%river_inflow,4,4,&
                          0.00000001_dp)
       call assert_equals(first_intermediate_expected_water_to_ocean,&
@@ -17209,6 +17269,10 @@ subroutine testLakeModel14
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
+#ifdef TRANSPOSED_LAKE_MODEL
+      call renumber_lakes(lake_fields_out)
+      call reorder_lake_volumes(lake_volumes)
+#endif
       call assert_equals(second_intermediate_expected_river_inflow,river_fields%river_inflow,4,4)
       call assert_equals(second_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,4,4,0.00001_dp)
@@ -17261,6 +17325,10 @@ subroutine testLakeModel14
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
+#ifdef TRANSPOSED_LAKE_MODEL
+      call renumber_lakes(lake_fields_out)
+      call reorder_lake_volumes(lake_volumes)
+#endif
       call assert_equals(expected_river_inflow,river_fields%river_inflow,4,4)
       call assert_equals(expected_water_to_ocean,river_fields%water_to_ocean,4,4,0.00001_dp)
       call assert_equals(expected_water_to_hd,lake_fields_out%water_to_hd,4,4)
@@ -17321,7 +17389,7 @@ end subroutine testLakeModel14
 subroutine testLakeModel15
    use latlon_hd_model_interface_mod
    use latlon_hd_model_mod
-   use latlon_lake_model_io_mod
+   use latlon_lake_model_io_mod, only: add_offset
    type(riverparameters), pointer :: river_parameters
    type(lakeparameters),pointer :: lake_parameters
    type(lakefields), pointer :: lake_fields_out
@@ -19456,7 +19524,7 @@ end subroutine testLakeModel15
 subroutine testLakeModel16
    use latlon_hd_model_interface_mod
    use latlon_hd_model_mod
-   use latlon_lake_model_io_mod
+   use latlon_lake_model_io_mod, only: add_offset
    type(riverparameters), pointer :: river_parameters
    type(lakeparameters),pointer :: lake_parameters
    type(riverprognosticfields), pointer :: river_fields
@@ -20371,7 +20439,7 @@ end subroutine testLakeModel16
 subroutine testLakeModel17
    use latlon_hd_model_interface_mod
    use latlon_hd_model_mod
-   use latlon_lake_model_io_mod
+   use latlon_lake_model_io_mod, only: add_offset
    type(riverparameters), pointer :: river_parameters
    type(lakeparameters),pointer :: lake_parameters
    type(lakefields), pointer :: lake_fields_out
@@ -22073,6 +22141,50 @@ subroutine testLakeModel17
          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
          (/nlon,nlat/)))
       allocate(third_intermediate_expected_diagnostic_lake_volumes(nlat,nlon))
+#ifdef TRANSPOSED_LAKE_MODEL
+      third_intermediate_expected_diagnostic_lake_volumes = transpose(reshape((/ &
+              0.0,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,     &
+                 0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  0.0,   0.0, &
+         0.0,  0.0,   0.0, 247.76, 247.76, 247.76,   0.0, 247.76, 247.76,   0.00, 247.76,   &
+          247.76, 247.76, 247.76,   0.0,   0.0, 143.57, 143.57, 143.57,   0.0, &
+         0.0, 64.67,  0.0, 247.76, 247.76, 247.76, 247.76, 247.76, 247.76, 247.76, 247.76,  &
+          247.76, 247.76, 247.76,   0.0,   0.0, 143.57, 143.57, 143.57,   0.0, &
+         0.0, 64.67,  0.0, 247.76, 247.76, 247.76,   0.0, 247.76, 247.76, 247.76, 247.76,   &
+          247.76, 247.76, 247.76,   0.0,   0.0, 143.57, 143.57, 143.57,   0.0, &
+         0.0, 64.67,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, 247.76,  &
+          247.76, 247.76,   0.0,   0.0, 143.57, 143.57, 143.57,   0.0, &
+         0.0, 64.67,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, 247.76,  &
+          247.76, 247.76,   0.0,   0.0,   0.0, 143.57,   0.0,     0.0, &
+         0.0, 64.67,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   &
+          247.76,   0.0,     0.0,   0.0, 143.57, 143.57, 143.57,   0.0, &
+         0.0, 64.67,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, 247.76,  &
+          247.76, 247.76,   0.0,   0.0, 143.57, 143.57, 143.57,   0.0, &
+         0.0, 64.67,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, 247.76,  &
+          247.76, 247.76,   0.0,   0.0, 143.57, 143.57, 143.57,   0.0, &
+         0.0, 64.67,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, 247.76,  &
+          247.76, 247.76,   0.0,   0.0, 143.57, 143.57, 143.57,   0.0, &
+         0.0, 64.67,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, 247.76,  &
+          247.76, 247.76,   0.0,   0.0, 143.57, 143.57, 143.57,   0.0, &
+         0.0, 64.67,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, 247.76,  &
+          247.76, 247.76,   0.0,   0.0, 143.57, 143.57, 143.57,   0.0, &
+         0.0, 64.67,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, 247.76,  &
+          247.76, 247.76,   0.0,   0.0, 143.57, 143.57, 143.57,   0.0, &
+         0.0,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   &
+          0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+         0.0, 43.67,  43.67,  43.67,  43.67,  43.67,  43.67,  43.67,  43.67,  43.67,   0.0, &
+           0.0,   0.0,      0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+         0.0, 43.67,  43.67,  43.67,  43.67,  43.67,  43.67,  43.67,  43.67,  43.67,  43.67,&
+           43.67,  43.67,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+         0.0, 43.67,  43.67,  43.67,  43.67,  43.67,  43.67,  43.67,  43.67,  43.67,  43.67,&
+           43.67,  43.67,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+         0.0, 43.67,  43.67,  43.67,  43.67,  43.67,  43.67,  43.67,  43.67,  43.67,  43.67,&
+           43.67,  43.67,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+         0.0,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   &
+            0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0, &
+         0.0,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   &
+            0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0   /), &
+         (/nlon,nlat/)))
+#else
       third_intermediate_expected_diagnostic_lake_volumes = transpose(reshape((/ &
               0.0,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,     &
                  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,  0.0,   0.0, &
@@ -22115,6 +22227,7 @@ subroutine testLakeModel17
          0.0,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   &
             0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0   /), &
          (/nlon,nlat/)))
+#endif
       allocate(third_intermediate_expected_lake_fractions(3,3))
       third_intermediate_expected_lake_fractions = transpose(reshape((/ &
           0.3611111111, 0.5625,   0.3611111111, &
@@ -22135,6 +22248,12 @@ subroutine testLakeModel17
          (/3,3/)))
       allocate(third_intermediate_expected_lake_volumes(7))
       third_intermediate_expected_lake_volumes = (/64.6667, 43.6667, 27.0, 203.809, 18.0, 79.5243, 63.0/)
+#ifdef TRANSPOSED_LAKE_MODEL
+      third_intermediate_expected_lake_volumes(4) = third_intermediate_expected_lake_volumes(4) &
+                                                     - 1.048588769
+      third_intermediate_expected_lake_volumes(6) = third_intermediate_expected_lake_volumes(6) &
+                                                     + 1.048588769
+#endif
 
       allocate(fourth_intermediate_expected_river_inflow(4,4))
       fourth_intermediate_expected_river_inflow = transpose(reshape((/ &
@@ -22204,6 +22323,50 @@ subroutine testLakeModel17
          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0   /), &
          (/nlon,nlat/)))
       allocate(fourth_intermediate_expected_diagnostic_lake_volumes(nlat,nlon))
+#ifdef TRANSPOSED_LAKE_MODEL
+      fourth_intermediate_expected_diagnostic_lake_volumes = transpose(reshape((/ &
+              0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    &
+              0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+         0.0,   0.0,    0.0,  244.26, 244.26, 244.26,   0.0,  244.26, 244.26,   0.0,  244.26,&
+          244.26, 244.26, 244.26,   0.0,    0.0,  141.35, 141.35, 141.35,   0.0, &
+         0.0,  63.95,   0.0,  244.26, 244.26, 244.26, 244.26, 244.26, 244.26, 244.26, 244.26,&
+          244.26, 244.26, 244.26,   0.0,    0.0,  141.35, 141.35, 141.35,   0.0, &
+         0.0,  63.95,   0.0,  244.26, 244.26, 244.26,   0.00, 244.26, 244.26, 244.26, 244.26,&
+          244.26, 244.26, 244.26,   0.0,    0.0,  141.35, 141.35, 141.35,   0.0, &
+         0.0,  63.95,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+          244.26, 244.26, 244.26,   0.0,    0.0,  141.35, 141.35, 141.35,   0.0, &
+         0.0,  63.95,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+          244.26, 244.26, 244.26,   0.0,    0.0,    0.0,  141.35,   0.0,    0.0, &
+         0.0,  63.95,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+            0.0,  244.26,   0.0,    0.0,    0.0,  141.35, 141.35, 141.35,   0.0, &
+         0.0,  63.95,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+          244.26, 244.26, 244.26,   0.0,    0.0,  141.35, 141.35, 141.35,   0.0, &
+         0.0,  63.95,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+          244.26, 244.26, 244.26,   0.0,    0.0,  141.35, 141.35, 141.35,   0.0, &
+         0.0,  63.95,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+          244.26, 244.26, 244.26,   0.0,    0.0,  141.35, 141.35, 141.35,   0.0, &
+         0.0,  63.95,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+          244.26, 244.26, 244.26,   0.0,    0.0,  141.35, 141.35, 141.35,   0.0, &
+         0.0,  63.95,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+          244.26, 244.26, 244.26,   0.0,    0.0,  141.35, 141.35, 141.35,   0.0, &
+         0.0,  63.95,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+          244.26, 244.26, 244.26,   0.0,    0.0,  141.35, 141.35, 141.35,   0.0, &
+         0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+            0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+         0.0,  40.72,  40.72,  40.72,  40.72,  40.72,  40.72,  40.72,  40.72,  40.72,   0.0, &
+            0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+         0.0,  40.72,  40.72,  40.72,  40.72,  40.72,  40.72,  40.72,  40.72,  40.72,  40.72,&
+           40.72,  40.72,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+         0.0,  40.72,  40.72,  40.72,  40.72,  40.72,  40.72,  40.72,  40.72,  40.72,  40.72,&
+           40.72,  40.72,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+         0.0,  40.72,  40.72,  40.72,  40.72,  40.72,  40.72,  40.72,  40.72,  40.72,  40.72,&
+           40.72,  40.72,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+         0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+            0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+         0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
+            0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0  /), &
+         (/nlon,nlat/)))
+#else
       fourth_intermediate_expected_diagnostic_lake_volumes = transpose(reshape((/ &
               0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    &
               0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
@@ -22246,6 +22409,7 @@ subroutine testLakeModel17
          0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, &
             0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0  /), &
          (/nlon,nlat/)))
+#endif
         allocate(fourth_intermediate_expected_lake_fractions(3,3))
         fourth_intermediate_expected_lake_fractions = transpose(reshape((/ &
             0.3611111111, 0.5625,   0.3611111111, &
@@ -22266,6 +22430,12 @@ subroutine testLakeModel17
          (/3,3/)))
       allocate(fourth_intermediate_expected_lake_volumes(7))
       fourth_intermediate_expected_lake_volumes= (/63.9514, 40.7153, 27.0, 200.309, 18.0, 77.309, 63.0/)
+#ifdef TRANSPOSED_LAKE_MODEL
+      fourth_intermediate_expected_lake_volumes(4) = fourth_intermediate_expected_lake_volumes(4) &
+                                                     - 1.048588769
+      fourth_intermediate_expected_lake_volumes(6) = fourth_intermediate_expected_lake_volumes(6) &
+                                                     + 1.048588769
+#endif
 
       allocate(fifth_intermediate_expected_river_inflow(4,4))
       fifth_intermediate_expected_river_inflow = transpose(reshape((/ &
@@ -22377,6 +22547,7 @@ subroutine testLakeModel17
          (/3,3/)))
       allocate(fifth_intermediate_expected_lake_volumes(7))
       fifth_intermediate_expected_lake_volumes= (/16.7431, 0.0, 0.0, 47.1085, 0.0, 4.47049, 0.0/)
+
       allocate(sixth_intermediate_expected_river_inflow(4,4))
       sixth_intermediate_expected_river_inflow = transpose(reshape((/ &
           0.0, 0.0, 0.0, 0.0, &
@@ -22637,6 +22808,10 @@ subroutine testLakeModel17
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
+#ifdef TRANSPOSED_LAKE_MODEL
+      call renumber_lakes_two(lake_fields_out)
+      call reorder_lake_volumes_two(lake_volumes)
+#endif
       call assert_equals(first_intermediate_expected_river_inflow,river_fields%river_inflow,4,4,&
                          0.00000001_dp)
       call assert_equals(first_intermediate_expected_water_to_ocean,&
@@ -22692,7 +22867,11 @@ subroutine testLakeModel17
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
-    call assert_equals(second_intermediate_expected_river_inflow,river_fields%river_inflow,4,4,&
+#ifdef TRANSPOSED_LAKE_MODEL
+      call renumber_lakes_two(lake_fields_out)
+      call reorder_lake_volumes_two(lake_volumes)
+#endif
+      call assert_equals(second_intermediate_expected_river_inflow,river_fields%river_inflow,4,4,&
                          0.00000001_dp)
       call assert_equals(second_intermediate_expected_water_to_ocean,&
                          river_fields%water_to_ocean,4,4,0.00001_dp)
@@ -22747,6 +22926,10 @@ subroutine testLakeModel17
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
+#ifdef TRANSPOSED_LAKE_MODEL
+      call renumber_lakes_two(lake_fields_out)
+      call reorder_lake_volumes_two(lake_volumes)
+#endif
       call assert_equals(third_intermediate_expected_river_inflow,river_fields%river_inflow,4,4,&
                          0.00000001_dp)
       call assert_equals(third_intermediate_expected_water_to_ocean,&
@@ -22802,6 +22985,10 @@ subroutine testLakeModel17
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
+#ifdef TRANSPOSED_LAKE_MODEL
+      call renumber_lakes_two(lake_fields_out)
+      call reorder_lake_volumes_two(lake_volumes)
+#endif
       call assert_equals(fourth_intermediate_expected_river_inflow,river_fields%river_inflow,4,4,&
                          0.00000001_dp)
       call assert_equals(fourth_intermediate_expected_water_to_ocean,&
@@ -22857,6 +23044,10 @@ subroutine testLakeModel17
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
+#ifdef TRANSPOSED_LAKE_MODEL
+      call renumber_lakes_two(lake_fields_out)
+      call reorder_lake_volumes_two(lake_volumes)
+#endif
       call assert_equals(fifth_intermediate_expected_river_inflow,river_fields%river_inflow,4,4,&
                          0.00000001_dp)
       call assert_equals(fifth_intermediate_expected_water_to_ocean,&
@@ -22912,6 +23103,10 @@ subroutine testLakeModel17
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
+#ifdef TRANSPOSED_LAKE_MODEL
+      call renumber_lakes_two(lake_fields_out)
+      call reorder_lake_volumes_two(lake_volumes)
+#endif
       call assert_equals(sixth_intermediate_expected_river_inflow,river_fields%river_inflow,4,4,&
                          0.00000001_dp)
       call assert_equals(sixth_intermediate_expected_water_to_ocean,&
@@ -22967,6 +23162,10 @@ subroutine testLakeModel17
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
+#ifdef TRANSPOSED_LAKE_MODEL
+      call renumber_lakes_two(lake_fields_out)
+      call reorder_lake_volumes_two(lake_volumes)
+#endif
       call assert_equals(seventh_intermediate_expected_river_inflow,river_fields%river_inflow,4,4,&
                          0.00000001_dp)
       call assert_equals(seventh_intermediate_expected_water_to_ocean,&
@@ -23026,6 +23225,10 @@ subroutine testLakeModel17
                                                                    lake_fields_out)
       call calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields_out, &
                                                    lake_fractions)
+#ifdef TRANSPOSED_LAKE_MODEL
+      call renumber_lakes_two(lake_fields_out)
+      call reorder_lake_volumes_two(lake_volumes)
+#endif
       call assert_equals(expected_river_inflow,river_fields%river_inflow,4,4,&
                          0.00000001_dp)
       call assert_equals(expected_water_to_ocean,&
@@ -23142,7 +23345,7 @@ end subroutine testLakeModel17
 
 subroutine testLakeNumberRetrieval
   use latlon_lake_model_mod
-  use latlon_lake_model_io_mod
+  use latlon_lake_model_io_mod, only: add_offset
   use latlon_lake_model_retrieve_lake_numbers
   type(lakeparameters),  pointer :: lake_parameters
   type(lakeprognostics), pointer :: lake_prognostics
