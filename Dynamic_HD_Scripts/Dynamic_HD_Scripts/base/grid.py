@@ -966,6 +966,7 @@ def makeGrid(grid_type,**kwargs):
                  'LatLong2min':{'type':LatLongGrid,'params':{'nlat':5400,'nlong':10800}},
                  'LatLong1min':{'type':LatLongGrid,'params':{'nlat':10800,'nlong':21600}},
                  'LatLong30sec':{'type':LatLongGrid,'params':{'nlat':21600,'nlong':43200}},
+                 'T31':{'type':LatLongGrid,'params':{'nlat':48,'nlong':96}},
                  'T63':{'type':LatLongGrid,'params':{'nlat':96,'nlong':192}},
                  'T106':{'type':LatLongGrid,'params':{'nlat':160,'nlong':320}}}
     grid_types = {'LatLong':LatLongGrid}
