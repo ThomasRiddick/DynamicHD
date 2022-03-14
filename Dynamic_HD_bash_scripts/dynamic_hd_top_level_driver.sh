@@ -37,6 +37,7 @@ case ${1} in
 	-c | --compile)
 		compile_only=true
 		first_timestep=true
+		working_directory=$(pwd)
 		shift
 		ancillary_data_directory=${1}
 		if [[ $# -ne 1 ]]; then
