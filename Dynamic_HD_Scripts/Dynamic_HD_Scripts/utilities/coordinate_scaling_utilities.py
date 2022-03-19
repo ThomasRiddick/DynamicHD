@@ -44,13 +44,8 @@ def generate_coarse_pts(nlat_fine,nlon_fine,
     lon_max_bound_fine = guess_bound(lon_pts_fine[-1])
     lat_step_coarse = (lat_max_bound_fine - lat_min_bound_fine)/nlat_coarse
     lon_step_coarse = (lon_max_bound_fine - lon_min_bound_fine)/nlon_coarse
-    if lat_min_bound_fine > lat_max_bound_fine:
-        lat_pts_coarse = np.linspace(lat_min_bound_fine-0.5*lat_step_coarse,
-                                     lat_max_bound_fine+0.5*lat_step_coarse,
-                                     num=nlat_coarse,endpoint=True)
-    else:
-        lat_pts_coarse = np.linspace(lat_min_bound_fine+0.5*lat_step_coarse,
-                                     lat_max_bound_fine-0.5*lat_step_coarse,
+    lat_pts_coarse = np.linspace(lat_min_bound_fine+0.5*lat_step_coarse,
+                                 lat_max_bound_fine-0.5*lat_step_coarse,
                                      num=nlat_coarse,endpoint=True)
     lon_pts_coarse = np.linspace(lon_min_bound_fine+0.5*lon_step_coarse,
                                  lon_max_bound_fine-0.5*lon_step_coarse,
