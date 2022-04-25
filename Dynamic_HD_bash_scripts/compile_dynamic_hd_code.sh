@@ -64,8 +64,8 @@ fi
 if $compilation_required; then
   cd ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/interface/cpp_interface
   echo "Compiling Cython Modules" 1>&2
-  python ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/interface/cpp_interface/setup_fill_sinks.py clean --all
-  python ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/interface/cpp_interface/setup_fill_sinks.py build_ext --inplace -f
+  python3 ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/interface/cpp_interface/setup_fill_sinks.py clean --all
+  python3 ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/interface/cpp_interface/setup_fill_sinks.py build_ext --inplace -f
   cd - 2>&1 > /dev/null
 fi
 

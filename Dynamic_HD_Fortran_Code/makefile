@@ -37,6 +37,22 @@ NETCDF_F_LIB :=libnetcdff.so
 ifeq ($(USE_MPI),True)
 FLAGS := -DUSE_MPI -m64
 endif
+else ifeq ($(shell hostname -d),atos.local)
+ifeq ($(USE_MPI),True)
+GFORTRAN := $(shell which mpifort)
+else
+GFORTRAN := $(shell which gfortran)
+endif
+NAGFORTRAN :=  $(shell which nagfor)
+INTELFORTRAN := $(shell which ifort)
+#EXT_SOURCE :=$(shell echo ${HOME} )/HDancillarydata_11Sept2019/code/
+GFORTRAN_NETCDF_F :=..#/sw/rhel6-x64/netcdf/netcdf_fortran-4.4.4-gcc64
+NAG_NETCDF_F :=..#/sw/rhel6-x64/netcdf/netcdf_fortran-4.4.2-static-nag60
+INTEL_NETCDF_F :=..#/sw/rhel6-x64/netcdf/netcdf_fortran-4.4.3-intel14
+NETCDF_F_LIB :=..#libnetcdff.so
+ifeq ($(USE_MPI),True)
+FLAGS := -DUSE_MPI -m64
+endif
 else ifeq ($(shell uname -s),Linux)
 GFORTRAN := $(shell which gfortran)
 NAGFORTRAN :=  $(shell which nagfor)

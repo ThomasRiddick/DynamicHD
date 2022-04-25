@@ -8,7 +8,7 @@ start_time=$(date +%s%N)
 function load_module
 {
 module_name=$1
-if [[ $(hostname -d) == "hpc.dkrz.de" ]]; then
+if [[ $(hostname -d) == "hpc.dkrz.de" ]] || [[ $(hostname -d) == "atos.local" ]]; then
 	module load ${module_name}
 else
 	eval "eval `/usr/bin/tclsh /sw/share/Modules-4.2.1/libexec/modulecmd.tcl bash load ${module_name}`"
@@ -249,7 +249,7 @@ if ! ${compile_only} ; then
 fi
 
 #Check for locks if necesssary and set the compilation_required flag accordingly
-if [[ $(hostname -d) == "hpc.dkrz.de" ]]; then
+if [[ $(hostname -d) == "hpc.dkrz.de" ]] || [[ $(hostname -d) == "atos.local" ]] ; then
 	exec 200>"${source_directory}/compilation.lock"
 	if $first_timestep ; then
 		if flock -x -n 200 ; then
@@ -298,6 +298,8 @@ fi
 if ! $no_modules && ! $no_conda ; then
 	if [[ $(hostname -d) == "hpc.dkrz.de" ]]; then
 		load_module anaconda3/.bleeding_edge
+	elif [[ $(hostname -d) == "atos.local" ]]; then
+                load_module python3
 	else
 		load_module anaconda3
 	fi
@@ -319,6 +321,8 @@ fi
 if ! $no_modules ; then
 	if [[ $(hostname -d) == "hpc.dkrz.de" ]]; then
 		load_module gcc/6.2.0
+        elif [[ $(hostname -d) == "atos.local" ]]; then
+                load_module gcc/11.2.0-gcc-11.2.0
 	else
 		load_module gcc/6.3.0
 	fi
@@ -339,7 +343,7 @@ if ! ${compile_only} ; then
 	#Run
 	echo "Running Dynamic HD Code" 1>&2
 	setup_end_time=$(date +%s%N)
-	python ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/dynamic_hd_and_dynamic_lake_drivers/dynamic_hd_production_run_driver.py ${input_orography_filepath} ${input_ls_mask_filepath} ${present_day_base_orography_filepath} ${glacier_mask_filepath} ${output_hdpara_filepath} ${ancillary_data_directory} ${working_directory} ${output_hdstart_filepath}
+	python3 ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/dynamic_hd_and_dynamic_lake_drivers/dynamic_hd_production_run_driver.py ${input_orography_filepath} ${input_ls_mask_filepath} ${present_day_base_orography_filepath} ${glacier_mask_filepath} ${output_hdpara_filepath} ${ancillary_data_directory} ${working_directory} ${output_hdstart_filepath}
     computation_end_time=$(date +%s%N)
 
 	#Delete paragen directory if it exists

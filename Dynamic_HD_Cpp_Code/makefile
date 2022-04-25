@@ -12,6 +12,13 @@ FLAGS :=-pthread -DUSE_NETCDFCPP
 NETCDFC := /sw/rhel6-x64/netcdf/netcdf_c-4.6.1-gcc64
 NETCDFCXX := /sw/rhel6-x64/netcdf/netcdf_cxx-4.3.0-gcc64
 INCLUDE := -isystem"$(NETCDFCXX)/include" -isystem"$(NETCDFC)/include"
+else ifeq ($(shell hostname -d),atos.local)
+GPLUSPLUS :=  /sw/spack-levante/gcc-11.2.0-7jcqrc/bin/gcc
+STDLIB_OPT :=
+FLAGS :=-pthread #-DUSE_NETCDFCPP
+#NETCDFC := /sw/rhel6-x64/netcdf/netcdf_c-4.6.1-gcc64
+#NETCDFCXX := /sw/rhel6-x64/netcdf/netcdf_cxx-4.3.0-gcc64
+#INCLUDE := -isystem"$(NETCDFCXX)/include" -isystem"$(NETCDFC)/include"
 else ifeq ($(shell uname -s),Linux)
 GPLUSPLUS := $(shell which g++)
 STDLIB_OPT :=

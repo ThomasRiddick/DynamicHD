@@ -22,9 +22,14 @@ if platform == "linux" or platform == "linux2":
     extra_compile_args = ['-std=gnu++11',
                           "-isystem" + netcdfcxx + "/include",
                           "-isystem" + netcdfc +"/include"]
-    extra_links_args = ['-static-libstdc++',"-shared",
-                        "-isystem" + netcdfcxx + "/include",
-                        "-isystem" + netcdfc +"/include"]
+    if socket.getfqdn().endswith("atos.local"):
+        extra_links_args = ["-shared",
+                            "-isystem" + netcdfcxx + "/include",
+                            "-isystem" + netcdfc +"/include"]
+    else:
+        extra_links_args = ['-static-libstdc++',"-shared",
+                            "-isystem" + netcdfcxx + "/include",
+                            "-isystem" + netcdfc +"/include"]
     if socket.getfqdn().endswith(".hpc.dkrz.de"):
       os.environ["LDSHARED"] = "/sw/rhel6-x64/gcc/binutils-2.26-gccsys/bin/ld"
 elif platform == "darwin":

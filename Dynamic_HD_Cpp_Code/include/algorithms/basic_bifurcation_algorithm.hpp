@@ -4,6 +4,7 @@
 #include <vector>
 #include <queue>
 #include <climits>
+#include <map>
 #include "base/priority_cell_queue.hpp"
 #include "base/enums.hpp"
 #include "base/coords.hpp"
