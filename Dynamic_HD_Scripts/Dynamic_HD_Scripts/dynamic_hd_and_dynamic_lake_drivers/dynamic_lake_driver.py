@@ -1019,27 +1019,30 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
                                                  river_directions_fieldname)
 
     def connect_catchments_for_transient_run(self):
+      #base_filepath = "/Users/thomasriddick/Documents/data/lake_analysis_runs/lake_analysis_one_21_Jun_2021/lakes/results"
       base_filepath = "/Users/thomasriddick/Documents/data/lake_analysis_runs/lake_analysis_one_21_Jun_2021/lakes/results"
       #dates = range(15990,15980,-10)
-      #dates = range(11000,10990,-10)
+      dates = range(11000,6000,-10)
       dates = [0]
       for date in dates:
+        #river_directions_filepath = ("{0}/diag_version_13_date_{1}/30min_rdirs.nc".format(base_filepath,date))
+        #coarse_catchments_filepath = ("{0}/diag_version_13_date_{1}/30min_catchments.nc".format(base_filepath,date))
         river_directions_filepath = ("{0}/diag_version_13_date_{1}/30min_rdirs.nc".format(base_filepath,date))
         coarse_catchments_filepath = ("{0}/diag_version_13_date_{1}/30min_catchments.nc".format(base_filepath,date))
+        river_directions_fieldname = "rdirs"
         coarse_catchments_fieldname = "catchments"
-        # cc.advanced_main(filename=river_directions_filepath,
-        #                  fieldname="rdirs",
-        #                  output_filename=coarse_catchments_filepath,
-        #                  output_fieldname="catchments",
-        #                  loop_logfile=("{0}/loops_log_{1}.txt".format(base_filepath,date)),
-        #                  use_cpp_alg=True)
+        cc.advanced_main(filename=river_directions_filepath,
+                         fieldname="rdirs",
+                         output_filename=coarse_catchments_filepath,
+                         output_fieldname="catchments",
+                         loop_logfile=("{0}/loops_log_{1}.txt".format(base_filepath,date)),
+                         use_cpp_alg=True)
         lake_parameters_filepath = ("{0}/lakeparas_version_13_date_{1}.nc".format(base_filepath,date))
         basin_numbers_filepath = ("{0}/diag_version_13_date_{1}/basin_catchment_numbers.nc".format(base_filepath,date))
         connected_coarse_catchments_out_filename = ("{0}/diag_version_13_date_{1}/30min_connected_catchments.nc".\
                                                     format(base_filepath,date))
         connected_coarse_catchments_out_fieldname = "catchments"
         basin_catchment_numbers_fieldname = "basin_catchment_numbers"
-        river_directions_fieldname = "rdirs"
         cumulative_flow_filename=("{0}/diag_version_13_date_{1}/30min_flowtocell.nc".format(base_filepath,date))
         cumulative_flow_fieldname="cumulative_flow"
         cumulative_flow_out_filename=("{0}/diag_version_13_date_{1}/30min"

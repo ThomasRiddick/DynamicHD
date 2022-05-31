@@ -38,7 +38,8 @@ class Dynamic_Lake_Correction_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Driver
                                                   version=None,
                                                   original_orog_corrections_filename=None,
                                                   new_orography_corrections_filename=None,
-                                                  true_sinks_filename=None):
+                                                  true_sinks_filename=None,
+                                                  original_orog_corrections_fieldname=None):
         tstart = time.time()
         if version is None:
             file_label = self._generate_file_label()
@@ -119,7 +120,9 @@ class Dynamic_Lake_Correction_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Driver
                                                        corrected_orography_filename=
                                                        intermediary_orography_filename,
                                                        original_orography_fieldname=
-                                                       "orog")
+                                                       "orog",
+                                                       orography_corrections_fieldname=
+                                                       original_orog_corrections_fieldname)
         # utilities.advanced_replace_corrected_orog_with_orig_for_glcted_grid_points_drivers(
         #   input_corrected_orography_file=intermediary_orography_filename,
         #   input_original_orography_file=original_orography_filename,
@@ -347,7 +350,10 @@ def main():
     Select runs by uncommenting them and also the revelant object instantation.
     """
     lake_correction_drivers = Dynamic_Lake_Correction_Production_Run_Drivers()
-    lake_correction_drivers.no_intermediaries_lake_corrections_driver()
+    lake_correction_drivers.no_intermediaries_lake_corrections_driver(
+        original_orog_corrections_filename=join(lake_correction_drivers.orography_corrections_fields_path,
+                                                "orog_corrs_field_generate_corrections_for_upscaled_MeritHydro_0k_20220326_121152.nc"),
+        original_orog_corrections_fieldname="orog_corrections")
 
 if __name__ == '__main__':
     main()

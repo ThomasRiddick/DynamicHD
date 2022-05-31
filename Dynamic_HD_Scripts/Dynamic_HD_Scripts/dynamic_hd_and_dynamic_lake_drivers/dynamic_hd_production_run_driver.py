@@ -139,10 +139,12 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         self.original_orography_filename=path.join(self.orography_path,"10min-topo-present-from-virna.nc")
         self.original_ls_mask_filename=path.join(self.ls_masks_path,"10min-mask-present-from-virna.nc")
         self.output_hdparas_filepath="/Users/thomasriddick/Documents/data/temp/hdpara_{0}.nc".format(file_label)
-        self.ancillary_data_path="/Users/thomasriddick/Documents/data/HDancillarydata_original_version"
+        self.ancillary_data_path=("/Users/thomasriddick/Documents/data/"
+                                 "hd_ancillary_data_dirs/HDancillarydata_original_version")
         self.working_directory_path="/Users/thomasriddick/Documents/data/temp/temp_workdir_2016_data"
         self.output_hdstart_filepath="/Users/thomasriddick/Documents/data/temp/hdstart_{0}.nc".format(file_label)
-        self.python_config_filename=path.join("/Users/thomasriddick/Documents/data/HDancillarydata/"
+        self.python_config_filename=path.join("/Users/thomasriddick/Documents/data/"
+                                              "hd_ancillary_data_dirs/HDancillarydata/"
                                               "dynamic_hd_production_driver.cfg")
         self.tarasov_based_orog_correction=False
         self.non_standard_orog_correction_filename=None
@@ -157,10 +159,12 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         self.original_orography_filename=path.join(self.orography_path,"OR-topography-present_data_from_virna_2017.nc")
         self.original_ls_mask_filename=path.join(self.ls_masks_path,"OR-remapped-mask-present_data_from_virna_2017.nc")
         self.output_hdparas_filepath="/Users/thomasriddick/Documents/data/temp/hdpara_{0}.nc".format(file_label)
-        self.ancillary_data_path="/Users/thomasriddick/Documents/data/HDancillarydata_original_version"
+        self.ancillary_data_path=("/Users/thomasriddick/Documents/data/hd_ancillary_data_dirs/"
+                                  "HDancillarydata_original_version")
         self.working_directory_path="/Users/thomasriddick/Documents/data/temp/temp_workdir_2017_data"
         self.output_hdstart_filepath="/Users/thomasriddick/Documents/data/temp/hdstart_{0}.nc".format(file_label)
-        self.python_config_filename=path.join("/Users/thomasriddick/Documents/data/HDancillarydata/"
+        self.python_config_filename=path.join("/Users/thomasriddick/Documents/data/"
+                                              "hd_ancillary_data_dirs/HDancillarydata/"
                                               "dynamic_hd_production_driver.cfg")
         self.tarasov_based_orog_correction=False
         self.non_standard_orog_correction_filename=None
@@ -177,10 +181,12 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         self.original_ls_mask_filename=path.join(self.ls_masks_path,
                                                  "OR-remapped-mask-present_data_from_virna_13_04_17.nc")
         self.output_hdparas_filepath="/Users/thomasriddick/Documents/data/temp/hdpara_{0}.nc".format(file_label)
-        self.ancillary_data_path="/Users/thomasriddick/Documents/data/HDancillarydata_original_version"
+        self.ancillary_data_path=("/Users/thomasriddick/Documents/data/"
+                                  "hd_ancillary_data_dirs/HDancillarydata_original_version")
         self.working_directory_path="/Users/thomasriddick/Documents/data/temp/temp_workdir_2017_data"
         self.output_hdstart_filepath="/Users/thomasriddick/Documents/data/temp/hdstart_{0}.nc".format(file_label)
-        self.python_config_filename=path.join("/Users/thomasriddick/Documents/data/HDancillarydata/"
+        self.python_config_filename=path.join("/Users/thomasriddick/Documents/data/"
+                                              "hd_ancillary_data_dirs/HDancillarydata/"
                                               "dynamic_hd_production_driver.cfg")
         self.tarasov_based_orog_correction=False
         self.non_standard_orog_correction_filename=None
@@ -201,10 +207,11 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         self.glacier_mask_filename=path.join(self.orography_path,
                                              "Ice6g_c_VM5a_10min_0k.nc")
         self.output_hdparas_filepath="/Users/thomasriddick/Documents/data/temp/hdpara_{0}.nc".format(file_label)
-        self.ancillary_data_path="/Users/thomasriddick/Documents/data/HDancillarydata"
+        self.ancillary_data_path="/Users/thomasriddick/Documents/data/hd_ancillary_data_dirs/HDancillarydata"
         self.working_directory_path="/Users/thomasriddick/Documents/data/temp/temp_workdir_2017_data"
         self.output_hdstart_filepath="/Users/thomasriddick/Documents/data/temp/hdstart_{0}.nc".format(file_label)
-        self.python_config_filename=path.join("/Users/thomasriddick/Documents/data/HDancillarydata/"
+        self.python_config_filename=path.join("/Users/thomasriddick/Documents/data/"
+                                              "hd_ancillary_data_dirs/HDancillarydata/"
                                               "dynamic_hd_production_driver.cfg")
         self.tarasov_based_orog_correction=True
         self.non_standard_orog_correction_filename=None
@@ -225,10 +232,11 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         self.glacier_mask_filename=path.join(self.orography_path,
                                              "Ice6g_c_VM5a_10min_21k.nc")
         self.output_hdparas_filepath="/Users/thomasriddick/Documents/data/temp/hdpara_{0}.nc".format(file_label)
-        self.ancillary_data_path="/Users/thomasriddick/Documents/data/HDancillarydata"
+        self.ancillary_data_path="/Users/thomasriddick/Documents/data/hd_ancillary_data_dirs/HDancillarydata"
         self.working_directory_path="/Users/thomasriddick/Documents/data/temp/temp_workdir_2017_data"
         self.output_hdstart_filepath="/Users/thomasriddick/Documents/data/temp/hdstart_{0}.nc".format(file_label)
-        self.python_config_filename=path.join("/Users/thomasriddick/Documents/data/HDancillarydata/"
+        self.python_config_filename=path.join("/Users/thomasriddick/Documents/data/"
+                                              "hd_ancillary_data_dirs/HDancillarydata/"
                                               "dynamic_hd_production_driver.cfg")
         self.tarasov_based_orog_correction=True
         self.non_standard_orog_correction_filename=None
@@ -249,10 +257,10 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         self.glacier_mask_filename=path.join(self.orography_path,
                                              "Ice6g_c_VM5a_10min_0k.nc")
         self.output_hdparas_filepath="/Users/thomasriddick/Documents/data/temp/hdpara_{0}.nc".format(file_label)
-        self.ancillary_data_path="/Users/thomasriddick/Documents/data/HDancillarydata"
+        self.ancillary_data_path="/Users/thomasriddick/Documents/data/hd_ancillary_data_dirs/HDancillarydata"
         self.working_directory_path="/Users/thomasriddick/Documents/data/temp/temp_workdir_2017_data"
         self.output_hdstart_filepath="/Users/thomasriddick/Documents/data/temp/hdstart_{0}.nc".format(file_label)
-        self.python_config_filename=path.join("/Users/thomasriddick/Documents/data/"
+        self.python_config_filename=path.join("/Users/thomasriddick/Documents/data/hd_ancillary_data_dirs/"
                                               "HDancillarydata_specified_fieldnames/"
                                               "dynamic_hd_production_driver.cfg")
         self.tarasov_based_orog_correction=True
@@ -274,10 +282,10 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         self.glacier_mask_filename=path.join(self.orography_path,
                                              "Ice6g_c_VM5a_10min_21k.nc")
         self.output_hdparas_filepath="/Users/thomasriddick/Documents/data/temp/hdpara_{0}.nc".format(file_label)
-        self.ancillary_data_path="/Users/thomasriddick/Documents/data/HDancillarydata"
+        self.ancillary_data_path="/Users/thomasriddick/Documents/data/hd_ancillary_data_dirs/HDancillarydata"
         self.working_directory_path="/Users/thomasriddick/Documents/data/temp/temp_workdir_2017_data"
         self.output_hdstart_filepath="/Users/thomasriddick/Documents/data/temp/hdstart_{0}.nc".format(file_label)
-        self.python_config_filename=path.join("/Users/thomasriddick/Documents/data/"
+        self.python_config_filename=path.join("/Users/thomasriddick/Documents/data/hd_ancillary_data_dirs/"
                                               "HDancillarydata_specified_fieldnames/"
                                               "dynamic_hd_production_driver.cfg")
         self.tarasov_based_orog_correction=True
@@ -299,10 +307,11 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         self.glacier_mask_filename=path.join(self.orography_path,
                                              "Ice6g_c_VM5a_10min_0k.nc")
         self.output_hdparas_filepath="/Users/thomasriddick/Documents/data/temp/hdpara_{0}.nc".format(file_label)
-        self.ancillary_data_path="/Users/thomasriddick/Documents/data/HDancillarydata"
+        self.ancillary_data_path="/Users/thomasriddick/Documents/data/hd_ancillary_data_dirs/HDancillarydata"
         self.working_directory_path="/Users/thomasriddick/Documents/data/temp/temp_workdir_2017_data"
         self.output_hdstart_filepath="/Users/thomasriddick/Documents/data/temp/hdstart_{0}.nc".format(file_label)
-        self.python_config_filename=path.join("/Users/thomasriddick/Documents/data/HDancillarydata_grid_info/"
+        self.python_config_filename=path.join("/Users/thomasriddick/Documents/data/"
+                                              "hd_ancillary_data_dirs/HDancillarydata_grid_info/"
                                               "dynamic_hd_production_driver.cfg")
         self.tarasov_based_orog_correction=True
         self.non_standard_orog_correction_filename=None
@@ -323,10 +332,11 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         self.glacier_mask_filename=path.join(self.orography_path,
                                              "Ice6g_c_VM5a_10min_21k.nc")
         self.output_hdparas_filepath="/Users/thomasriddick/Documents/data/temp/hdpara_{0}.nc".format(file_label)
-        self.ancillary_data_path="/Users/thomasriddick/Documents/data/HDancillarydata"
+        self.ancillary_data_path="/Users/thomasriddick/Documents/data/hd_ancillary_data_dirs/HDancillarydata"
         self.working_directory_path="/Users/thomasriddick/Documents/data/temp/temp_workdir_2017_data"
         self.output_hdstart_filepath="/Users/thomasriddick/Documents/data/temp/hdstart_{0}.nc".format(file_label)
-        self.python_config_filename=path.join("/Users/thomasriddick/Documents/data/HDancillarydata_grid_info/"
+        self.python_config_filename=path.join("/Users/thomasriddick/Documents/data/"
+                                              "hd_ancillary_data_dirs/HDancillarydata_grid_info/"
                                               "dynamic_hd_production_driver.cfg")
         self.tarasov_based_orog_correction=True
         self.non_standard_orog_correction_filename=None
@@ -347,10 +357,10 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         self.glacier_mask_filename=path.join(self.orography_path,
                                              "Ice6g_c_VM5a_10min_0k.nc")
         self.output_hdparas_filepath="/Users/thomasriddick/Documents/data/temp/hdpara_{0}.nc".format(file_label)
-        self.ancillary_data_path="/Users/thomasriddick/Documents/data/HDancillarydata"
+        self.ancillary_data_path="/Users/thomasriddick/Documents/data/hd_ancillary_data_dirs/HDancillarydata"
         self.working_directory_path="/Users/thomasriddick/Documents/data/temp/temp_workdir_2017_data"
         self.output_hdstart_filepath="/Users/thomasriddick/Documents/data/temp/hdstart_{0}.nc".format(file_label)
-        self.python_config_filename=path.join("/Users/thomasriddick/Documents/data/"
+        self.python_config_filename=path.join("/Users/thomasriddick/Documents/data/hd_ancillary_data_dirs/"
                                               "HDancillarydata_specified_fieldnames_grid_info/"
                                               "dynamic_hd_production_driver.cfg")
         self.tarasov_based_orog_correction=True
@@ -372,10 +382,10 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         self.glacier_mask_filename=path.join(self.orography_path,
                                              "Ice6g_c_VM5a_10min_21k.nc")
         self.output_hdparas_filepath="/Users/thomasriddick/Documents/data/temp/hdpara_{0}.nc".format(file_label)
-        self.ancillary_data_path="/Users/thomasriddick/Documents/data/HDancillarydata"
+        self.ancillary_data_path="/Users/thomasriddick/Documents/data/hd_ancillary_data_dirs/HDancillarydata"
         self.working_directory_path="/Users/thomasriddick/Documents/data/temp/temp_workdir_2017_data"
         self.output_hdstart_filepath="/Users/thomasriddick/Documents/data/temp/hdstart_{0}.nc".format(file_label)
-        self.python_config_filename=path.join("/Users/thomasriddick/Documents/data/"
+        self.python_config_filename=path.join("/Users/thomasriddick/Documents/data/hd_ancillary_data_dirs/"
                                               "HDancillarydata_specified_fieldnames_grid_info/"
                                               "dynamic_hd_production_driver.cfg")
         self.tarasov_based_orog_correction=True

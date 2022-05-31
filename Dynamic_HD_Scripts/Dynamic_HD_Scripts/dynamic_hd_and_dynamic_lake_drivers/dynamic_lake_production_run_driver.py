@@ -220,6 +220,10 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
             if config.has_option("input_fieldname_options","input_reference_present_day_fieldname") else False
         value_config = value_config \
             if config.has_option("input_fieldname_options","input_orography_corrections_fieldname") else False
+        value_config = value_config \
+            if config.has_option("input_fieldname_options","input_surface_lat_index_fieldname") else False
+        value_config = value_config \
+            if config.has_option("input_fieldname_options","input_surface_lon_index_fieldname") else False
         if not valid_config:
             raise RuntimeError("Invalid configuration file supplied")
         if not config.has_section("general_options"):
@@ -277,11 +281,12 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                  "ls_mask_no_intermediaries_lake_corrections_driver_20200726_181304_grid.nc")
         self.output_hdparas_filepath="/Users/thomasriddick/Documents/data/temp/hdpara_{0}_pd.nc".format(file_label)
         self.output_hdstart_filepath="/Users/thomasriddick/Documents/data/temp/hdstart_{0}_pd.nc".format(file_label)
-        self.ancillary_data_path="/Users/thomasriddick/Documents/data/HDancillarydata_lakes"
+        self.ancillary_data_path="/Users/thomasriddick/Documents/data/hd_ancillary_data_dirs/HDancillarydata_lakes"
         self.working_directory_path="/Users/thomasriddick/Documents/data/temp/temp_workdir_pd"
         self.output_lakeparas_filepath = "/Users/thomasriddick/Documents/data/temp/lakeparas_{0}_pd.nc".format(file_label)
         self.output_lakestart_filepath = "/Users/thomasriddick/Documents/data/temp/lakestart_{0}_pd.nc".format(file_label)
-        self.input_water_to_redistribute_filepath="/Users/thomasriddick/Documents/data/laketestdata/lake_volumes_pmt0531_Tom_41091231.nc"
+        self.input_water_to_redistribute_filepath=("/Users/thomasriddick/Documents/data/"
+                                                   "simulation_data/laketestdata/lake_volumes_pmt0531_Tom_41091231.nc")
         self.python_config_filename=path.join(self.ancillary_data_path,
                                               "dynamic_lake_production_driver.cfg")
         self.tarasov_based_orog_correction=True
@@ -297,19 +302,20 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         """Trial run using data from main topo scripting for 14440k"""
         super(Dynamic_Lake_Production_Run_Drivers,self).__init__()
         file_label = self._generate_file_label()
-        data_directory = "/Users/thomasriddick/Documents/data/laketestdata/files_for_14440_timeslice"
+        data_directory = "/Users/thomasriddick/Documents/data/simulation_data/laketestdata/files_for_14440_timeslice"
         self.original_orography_filename=data_directory+ "/GLAC1D_Top01_surf_14440.nc"
         self.original_ls_mask_filename=data_directory+"/landsea_14440k_inv.nc"
         self.output_hdparas_filepath=("/Users/thomasriddick/Documents/data/temp/"
                                       "temp_workdir_lake_14440/hdpara_{0}_14440.nc".format(file_label))
         self.output_hdstart_filepath=("/Users/thomasriddick/Documents/data/temp/"
                                       "temp_workdir_lake_14440/hdstart_{0}_14440.nc".format(file_label))
-        self.ancillary_data_path=("/Users/thomasriddick/Documents/data/laketestdata/"
-                                  "files_for_14440_timeslice/HDancillarydata_lakes")
+        self.ancillary_data_path=("/Users/thomasriddick/Documents/data/simulation_data/laketestdata/"
+                                  "files_for_14440_timeslice/hd_ancillary_data_dirs/HDancillarydata_lakes")
         self.working_directory_path="/Users/thomasriddick/Documents/data/temp/temp_workdir_lake_14440"
         self.output_lakeparas_filepath = "/Users/thomasriddick/Documents/data/temp/temp_workdir_lake_14440/lakeparas_{0}_14440.nc".format(file_label)
         self.output_lakestart_filepath = "/Users/thomasriddick/Documents/data/temp/temp_workdir_lake_14440/lakestart_{0}_14440.nc".format(file_label)
-        self.input_water_to_redistribute_filepath="/Users/thomasriddick/Documents/data/laketestdata/lake_volumes_pmt0531_Tom_41091231.nc"
+        self.input_water_to_redistribute_filepath=("/Users/thomasriddick/Documents/data/simulation_data"
+                                                   "/laketestdata/lake_volumes_pmt0531_Tom_41091231.nc")
         self.python_config_filename=path.join(self.ancillary_data_path,
                                               "dynamic_lake_production_driver.cfg")
         self.tarasov_based_orog_correction=True
@@ -323,20 +329,21 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         file_label = self._generate_file_label()
         self.original_orography_filename=("/Users/thomasriddick/Documents/data/HDdata/orographys/generated/"
                                           "updated_orog__extracted_for_0k_prepare_basins_from_glac1D_20210205_135817_1250.nc")
-        self.original_ls_mask_filename=("/Users/thomasriddick/Documents/data/laketestdata/"
+        self.original_ls_mask_filename=("/Users/thomasriddick/Documents/data/simulation_data/laketestdata/"
                                         "ls_mask_prepare_basins_from_glac1D_20201123_200519_1250_grid.nc")
         self.output_hdparas_filepath="/Users/thomasriddick/Documents/data/temp/hdpara_{0}_deglac.nc".format(file_label)
         self.output_hdstart_filepath="/Users/thomasriddick/Documents/data/temp/hdstart_{0}_deglac.nc".format(file_label)
-        self.ancillary_data_path="/Users/thomasriddick/Documents/data/HDancillarydata_lakes"
+        self.ancillary_data_path="/Users/thomasriddick/Documents/data/hd_ancillary_data_dirs/HDancillarydata_lakes"
         self.working_directory_path="/Users/thomasriddick/Documents/data/temp/temp_workdir_lake_deglac"
         self.output_lakeparas_filepath = "/Users/thomasriddick/Documents/data/temp/lakeparas_{0}_deglac.nc".format(file_label)
         self.output_lakestart_filepath = "/Users/thomasriddick/Documents/data/temp/lakestart_{0}_deglac.nc".format(file_label)
-        self.input_water_to_redistribute_filepath="/Users/thomasriddick/Documents/data/laketestdata/lake_volumes_pmt0531_Tom_41091231.nc"
+        self.input_water_to_redistribute_filepath=("/Users/thomasriddick/Documents/data/simulation_data/"
+                                                   "laketestdata/lake_volumes_pmt0531_Tom_41091231.nc")
         self.python_config_filename=path.join(self.ancillary_data_path,
                                               "dynamic_lake_production_driver.cfg")
         self.tarasov_based_orog_correction=True
         self.glacier_mask_filename=("/Users/thomasriddick/Documents/"
-                                    "data/transient_sim_data/1/GLAC1D_ICEM_10min_1250.nc")
+                                    "data/simulation_data/transient_sim_data/1/GLAC1D_ICEM_10min_1250.nc")
         self.present_day_base_orography_filename=("/Users/thomasriddick/Documents/data/HDdata/orographys/generated/"
                                                   "updated_orog__extracted_for_1250prepare_basins_from_glac1D_20210205_135817_1250.nc")
         self.compile_paragen_and_hdfile()
@@ -361,6 +368,8 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         ref_hd_paras_file = path.join(self.ancillary_data_path,"hd_file_ten_minute_data_from_virna_0k_ALG4_sinkless_no_"
                                       "true_sinks_oceans_lsmask_plus_upscale_rdirs_20170116_123858_to_use_as_"
                                       "hdparas_ref.nc")
+        surface_to_10min_map_filename = path.join(self.ancillary_data_path,
+                                                  "t31_to_ten_min_map.nc")
         if self.present_day_base_orography_filename:
             present_day_reference_orography_filename = path.join(self.ancillary_data_path,
                                                                  "ice5g_v1_2_00_0k_10min.nc")
@@ -755,6 +764,17 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
             time_before_basin_evaluation = timer()
         #Generate Minima
         minima = field.Field(rdirs_10min.extract_truesinks(),grid=rdirs_10min.get_grid())
+        #Load 10 minute to surface grid mapping
+        corresponding_surface_cell_lat_index = \
+            iodriver.advanced_field_loader(surface_to_10min_map_filename,
+                                           field_type='Generic',
+                                           fieldname=config.get("input_fieldname_options",
+                                                                "input_surface_lat_index_fieldname"))
+        corresponding_surface_cell_lon_index = \
+            iodriver.advanced_field_loader(surface_to_10min_map_filename,
+                                           field_type='Generic',
+                                           fieldname=config.get("input_fieldname_options",
+                                                                "input_surface_lon_index_fieldname"))
         #Run Basin Evaluation
         input_cell_areas = iodriver.advanced_field_loader(cell_areas_filename_10min,
                                                           field_type='Generic',
@@ -874,6 +894,8 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                            additional_flood_redirect_lon_index,
                            additional_connect_redirect_lat_index,
                            additional_connect_redirect_lon_index,
+                           corresponding_surface_cell_lat_index,
+                           corresponding_surface_cell_lon_index,
                            flood_local_redirect,
                            connect_local_redirect,
                            additional_flood_local_redirect,
@@ -897,6 +919,8 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                           'additional_flood_redirect_lon_index',
                                           'additional_connect_redirect_lat_index',
                                           'additional_connect_redirect_lon_index',
+                                          'corresponding_surface_cell_lat_index',
+                                          'corresponding_surface_cell_lon_index',
                                           'flood_local_redirect',
                                           'connect_local_redirect',
                                           'additional_flood_local_redirect',

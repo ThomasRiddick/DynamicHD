@@ -202,6 +202,140 @@ class Dynamic_HD_Drivers(object):
 
         return "_".join([str(inspect.stack()[1][3]),datetime.datetime.now().strftime("%Y%m%d_%H%M%S")])
 
+    @staticmethod
+    def generate_present_day_river_directions_with_original_true_sink_set(orography_filepath,
+                                                                          landsea_mask_filepath,
+                                                                          glacier_mask_filepath,
+                                                                          orography_corrections_filepath,
+                                                                          output_dir):
+        truesinks_filename = ("/Users/thomasriddick/Documents/data/HDdata/truesinks/"
+                              "truesinks_ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless_glcc_olson_lsmask_0k_20191014_173825_with_grid.nc")
+        cotat_plus_parameters_filepath = ("/Users/thomasriddick/Documents/workspace/"
+                                          "Dynamic_HD_Code/Dynamic_HD_Resources/cotat_plus_standard_params.nl")
+        present_day_reference_orography_filepath = ("/Users/thomasriddick/Documents/data/HDancillarydata/"
+                                                    "ice5g_v1_2_00_0k_10min.nc")
+        rebased_orography_filename = path.join(output_dir,"10min_rebased_orog.nc")
+        first_corrected_orography_filename = path.join(output_dir,"10min_corrected_orog_one.nc")
+        second_corrected_orography_filename = path.join(output_dir,"10min_corrected_orog_two.nc")
+        fine_rdirs_filename = path.join(output_dir,"10min_rdirs.nc")
+        fine_catchments_filename = path.join(output_dir,"10min_catchments.nc")
+        fine_cflow_filename = path.join(output_dir,"10min_flowtocell.nc")
+        coarse_catchments_filename = path.join(output_dir,"30min_pre_loop_removal_catchments.nc")
+        loops_log_filename = path.join(output_dir,"30min_pre_loop_removal_loops_log.txt")
+        coarse_cflow_filename = path.join(output_dir,"30min_pre_loop_removal_flowtocell.nc")
+        coarse_rdirs_filename = path.join(output_dir,"30min_pre_loop_removal_rdirs.nc")
+        updated_coarse_rdirs_filename = path.join(output_dir,"30min_rdirs.nc")
+        updated_coarse_catchments_filename = path.join(output_dir,"30min_catchments.nc")
+        updated_loops_log_filename = path.join(output_dir,"30min_loops_log.txt")
+        updated_coarse_cflow_filename = path.join(output_dir,"30min_flowtocell.nc")
+        updated_coarse_rmouth_cflow_filename = path.join(output_dir,"30min_rmouth_flowtocell.nc")
+        original_orography_fieldname = "Topo"
+        orography_corrections_fieldname = "orog"
+        present_day_reference_orography_fieldname = "orog"
+        glacier_mask_fieldname = "glac"
+        ls_mask_fieldname = "slm"
+        truesinks_fieldname = "true_sinks"
+        utilities.advanced_rebase_orography_driver(orography_filepath,
+                                                   present_day_base_orography_filename=orography_filepath,
+                                                   present_day_reference_orography_filename=
+                                                   present_day_reference_orography_filepath,
+                                                   rebased_orography_filename=
+                                                   rebased_orography_filename ,
+                                                   orography_fieldname=original_orography_fieldname,
+                                                   present_day_base_orography_fieldname=
+                                                   original_orography_fieldname,
+                                                   present_day_reference_orography_fieldname=
+                                                   present_day_reference_orography_fieldname,
+                                                   rebased_orography_fieldname="z")
+        utilities.advanced_apply_orog_correction_field(rebased_orography_filename ,
+                                                       orography_corrections_filepath,
+                                                       first_corrected_orography_filename,
+                                                       original_orography_fieldname="z",
+                                                       orography_corrections_fieldname=
+                                                       orography_corrections_fieldname,
+                                                       corrected_orography_fieldname="z")
+        utilities.\
+            advanced_replace_corrected_orog_with_orig_for_glcted_grid_points_drivers(first_corrected_orography_filename,
+                rebased_orography_filename,
+                glacier_mask_filepath,
+                second_corrected_orography_filename,
+                input_corrected_orography_fieldname="z",
+                input_original_orography_fieldname="z",
+                input_glacier_mask_fieldname=glacier_mask_fieldname,
+                out_orography_fieldname="z")
+        fill_sinks_driver.advanced_sinkless_flow_directions_generator(second_corrected_orography_filename,
+                                                                      fine_rdirs_filename,
+                                                                      fieldname="z",
+                                                                      output_fieldname="rdir",
+                                                                      ls_mask_filename=
+                                                                      landsea_mask_filepath,
+                                                                      truesinks_filename=
+                                                                      truesinks_filename,
+                                                                      catchment_nums_filename=
+                                                                      fine_catchments_filename,
+                                                                      ls_mask_fieldname=ls_mask_fieldname,
+                                                                      truesinks_fieldname=truesinks_fieldname,
+                                                                      catchment_fieldname="catch")
+        flow_to_grid_cell.advanced_main(rdirs_filename=fine_rdirs_filename,
+                                        output_filename=fine_cflow_filename,
+                                        rdirs_fieldname="rdir",
+                                        output_fieldname="acc")
+        cotat_plus_driver.advanced_cotat_plus_driver(fine_rdirs_filename,
+                                                     fine_cflow_filename,
+                                                     coarse_rdirs_filename,
+                                                     input_fine_rdirs_fieldname="rdir",
+                                                     input_fine_total_cumulative_flow_fieldname="acc",
+                                                     output_coarse_rdirs_fieldname="rdir",
+                                                     cotat_plus_parameters_filepath=
+                                                     cotat_plus_parameters_filepath,
+                                                     scaling_factor=3)
+
+        compute_catchments.advanced_main(coarse_rdirs_filename,"rdir",
+                         coarse_catchments_filename,"catch",
+                         loop_logfile=loops_log_filename,
+                         use_cpp_alg=True)
+        flow_to_grid_cell.advanced_main(rdirs_filename=coarse_rdirs_filename,
+                                        output_filename=coarse_cflow_filename,
+                                        rdirs_fieldname='rdir',
+                                        output_fieldname='acc')
+        loop_breaker_driver.advanced_loop_breaker_driver(
+            input_coarse_rdirs_filepath=coarse_rdirs_filename,
+            input_coarse_cumulative_flow_filepath=coarse_cflow_filename,
+            input_coarse_catchments_filepath=coarse_catchments_filename,
+            input_fine_rdirs_filepath=fine_rdirs_filename,
+            input_fine_cumulative_flow_filepath=fine_cflow_filename,
+            output_updated_coarse_rdirs_filepath=updated_coarse_rdirs_filename,
+            input_coarse_rdirs_fieldname="rdir",
+            input_coarse_cumulative_flow_fieldname="acc",
+            input_coarse_catchments_fieldname="catch",
+            input_fine_rdirs_fieldname="rdir",
+            input_fine_cumulative_flow_fieldname="acc",
+            output_updated_coarse_rdirs_fieldname="rdir",
+            loop_nums_list_filepath=loops_log_filename,
+            scaling_factor=3)
+        compute_catchments.advanced_main(updated_coarse_rdirs_filename,"rdir",
+                         updated_coarse_catchments_filename,"catch",
+                         loop_logfile=updated_loops_log_filename,
+                         use_cpp_alg=True)
+        flow_to_grid_cell.advanced_main(rdirs_filename=updated_coarse_rdirs_filename,
+                                        output_filename=updated_coarse_cflow_filename,
+                                        rdirs_fieldname='rdir',
+                                        output_fieldname='acc')
+        river_mouth_marking_driver.\
+        advanced_flow_to_rivermouth_calculation_driver(input_river_directions_filename=
+                                                       updated_coarse_rdirs_filename,
+                                                       input_flow_to_cell_filename=
+                                                       updated_coarse_cflow_filename,
+                                                       output_flow_to_river_mouths_filename=
+                                                       updated_coarse_rmouth_cflow_filename,
+                                                       input_river_directions_fieldname=
+                                                       "rdir",
+                                                       input_flow_to_cell_fieldname=
+                                                       "acc",
+                                                       output_flow_to_river_mouths_fieldname=
+                                                       "acc")
+
+
     def _prepare_topography(self,orog_nc_file,grid_file,weights_file,output_file,lsmask_file):
         """Run the prepare topography script
 
@@ -3956,6 +4090,26 @@ class ETOPO2v2DataDrivers(Ten_Minute_Data_From_Virna_Driver):
                                                                                                   original_orography_fieldname=\
                                                                                                   'field_value')
 
+class UpscaledMERIThydroDrivers(Dynamic_HD_Drivers):
+
+    def generate_corrections_for_upscaled_MeritHydro_0k(self):
+        """Using the MERIT hydro 3 second data upscaled to 10 minutes
+        """
+
+        file_label = self._generate_file_label()
+        original_orography_filename = path.join(self.orography_path,"ice5g_v1_2_00_0k_10min.nc")
+        upscaled_MERIT_orography_filename = path.join(self.orography_path,"tarasov_upscaled",
+                                                      "MERITdem_hydroupscaled_to_10min_global_g.nc")
+        orography_filename = self.corrected_orography_filepath + file_label + '.nc'
+        orography_corrections_field_filename = self.generated_orography_corrections_fields_path +\
+                                                file_label + '.nc'
+        utilities.advanced_orog_correction_field_generator(original_orography_filename,
+                                                           upscaled_MERIT_orography_filename,
+                                                           orography_corrections_field_filename,
+                                                           original_orography_fieldname="orog",
+                                                           corrected_orography_fieldname="z",
+                                                           orography_corrections_fieldname="orog_corrections")
+
 def main():
     """Select the revelant runs to make
 
@@ -3988,8 +4142,8 @@ def main():
     #etopo1_data_drivers = ETOPO1_Data_Drivers()
     #etopo1_data_drivers.etopo1_data_all_points()
     #etopo1_data_drivers.etopo1_data_ALG4_sinkless()
-    utilities_drivers = Utilities_Drivers()
-    utilities_drivers.make_1000m_depth_contour_mask_from_ICE6G()
+    #utilities_drivers = Utilities_Drivers()
+    #utilities_drivers.make_1000m_depth_contour_mask_from_ICE6G()
     #utilities_drivers.make_hdpara_for_pt_boundary_rdirs()
     #utilities_drivers.make_hdpara_for_pt_boundary_rdirs_scotese()
     #utilities_drivers.add_grid_to_corrected_orography()
@@ -4070,6 +4224,9 @@ def main():
     #ice6g_data_drivers.ICE6g_0k_ALG4_sinkless_no_true_sinks_mpiom_lsmask_plus_upscale_rdirs_tarasov_orog_corrs()
     #etopo2v2_data_drivers = ETOPO2v2DataDrivers()
     #etopo2v2_data_drivers.ETOPO2v2_upscaled_to_10min_grid()
+    #upscaled_MERIThydro_drivers = UpscaledMERIThydroDrivers()
+    #upscaled_MERIThydro_drivers.generate_corrections_for_upscaled_MeritHydro_0k()
+    pass
 
 if __name__ == '__main__':
     main()

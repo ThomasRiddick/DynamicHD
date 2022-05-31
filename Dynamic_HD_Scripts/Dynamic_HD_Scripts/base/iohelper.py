@@ -193,7 +193,7 @@ class NetCDF4FileIOHelper(IOHelper):
                                          'lake_field','river_flow',
                                          'basin_catchment_numbers','rdirs','lsm',
                                          "cumulative_flow","catchments",
-                                         "cumulative_flow_to_ocean"]
+                                         "cumulative_flow_to_ocean","acc","catch","rdir"]
             else:
                 potential_field_names = [fieldname]
             for potential_field_name in potential_field_names:
