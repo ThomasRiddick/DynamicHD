@@ -7,14 +7,14 @@ echo "Running Version 1.1 of the ICON HD Parameters Generation Code"
 function load_module
 {
 module_name=$1
-if [[ $(hostname -d) == "hpc.dkrz.de" ]]; then
+if [[ $(hostname -d) == "atos.local" ]]; then
   module load ${module_name}
 else
   eval "eval `/usr/bin/tclsh /sw/share/Modules-4.2.1/libexec/modulecmd.tcl bash load ${module_name}`"
 fi
 }
 
-#Define module unloading function (only works on hpc)
+#Define module unloading function (only works on levante)
 function unload_module
 {
 module_name=$1
@@ -233,7 +233,7 @@ cd ${working_directory}
 #Setup conda environment
 echo "Setting up environment"
 if ! $no_modules ; then
-  if [[ $(hostname -d) == "hpc.dkrz.de" ]]; then
+  if [[ $(hostname -d) == "atos.local" ]]; then
     source /sw/rhel6-x64/etc/profile.mistral
     unload_module netcdf_c
       unload_module imagemagick
@@ -250,8 +250,8 @@ export LD_LIBRARY_PATH="/sw/rhel6-x64/netcdf/netcdf_fortran-4.4.4-gcc64/lib:/sw/
 export DYLD_LIBRARY_PATH=$LD_LIBRARY_PATH:$DYLD_LIBRARY_PATH
 
 if ! $no_modules && ! $no_conda ; then
-  if [[ $(hostname -d) == "hpc.dkrz.de" ]]; then
-    load_module anaconda3/.bleeding_edge
+  if [[ $(hostname -d) == "atos.local" ]]; then
+    load_module python3
   else
     load_module anaconda3
   fi
@@ -271,8 +271,8 @@ fi
 
 #Load a new version of gcc that doesn't have the polymorphic variable bug
 if ! $no_modules ; then
-  if [[ $(hostname -d) == "hpc.dkrz.de" ]]; then
-    load_module gcc/6.2.0
+  if [[ $(hostname -d) == "atos.local" ]]; then
+    load_module gcc/11.2.0-gcc-11.2.0
   else
     load_module gcc/6.3.0
   fi
