@@ -6,7 +6,7 @@ no_modules=${1}
 function load_module
 {
 module_name=$1
-if [[ $(hostname -d) == "hpc.dkrz.de" ]]; then
+if [[ $(hostname -d) == "atos.local" ]]; then
   module load ${module_name}
 else
   eval "eval `/usr/bin/tclsh /sw/share/Modules-4.2.1/libexec/modulecmd.tcl bash load ${module_name}`"
@@ -23,9 +23,21 @@ fi
 }
 
 if ! $no_modules ; then
-  unload_module netcdf_c
-  if [[ $(hostname -d) == "hpc.dkrz.de" ]]; then
-    load_module anaconda3/.bleeding_edge
+  if [[ $(hostname -d) == "atos.local" ]]; then
+    source /etc/profile
+    unload_module netcdf_c
+    unload_module imagemagick
+    unload_module cdo/1.7.0-magicsxx-gcc48
+    unload_module python
+  else
+    unload_module netcdf_c
+    load_module anaconda3
+  fi
+fi
+
+if ! $no_modules; then
+  if [[ $(hostname -d) == "atos.local" ]]; then
+    load_module python3
   else
     load_module anaconda3
   fi
