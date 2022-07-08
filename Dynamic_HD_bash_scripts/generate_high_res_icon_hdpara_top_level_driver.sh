@@ -315,7 +315,7 @@ rm -f paragen/paragen_icon_driver
 rmdir paragen || true
 mkdir paragen
 ${source_directory}/Dynamic_HD_bash_scripts/parameter_generation_scripts/generate_icon_hd_file_driver.sh ${working_directory}/paragen ${source_directory}/Dynamic_HD_bash_scripts/parameter_generation_scripts/fortran ${working_directory} grid_in_temp.nc mask_in_temp.nc ${next_cell_index_filepath} orography_filled.nc ${bifurcate_rivers} ${next_cell_index_bifurcated_filepath} ${number_of_outflows_filepath}
-${source_directory}/Dynamic_HD_bash_scripts/adjust_icon_k_parameters.sh  ${working_directory}/paragen/hdpara_icon.nc ${output_hdpara_filepath} "r2b9"
+${source_directory}/Dynamic_HD_bash_scripts/adjust_icon_k_parameters.sh  ${working_directory}/paragen/hdpara_icon.nc ${output_hdpara_filepath} "r2b10"
 
 #Clean up temporary files
 rm -f paragen/area_dlat_dlon.txt
