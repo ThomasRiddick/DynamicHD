@@ -104,8 +104,8 @@ function read_lake_parameters(instant_throughflow)&
     write(*,*) "Loading lake parameters from file: " // trim(lake_params_filename)
     nlat_coarse = 360
     nlon_coarse = 720
-    nlat_surface_model = 1
-    nlon_surface_model = 1
+    nlat_surface_model = 48
+    nlon_surface_model = 96
 
     call check_return_code(nf90_open(lake_params_filename,nf90_nowrite,ncid))
 
@@ -116,7 +116,7 @@ function read_lake_parameters(instant_throughflow)&
     call check_return_code(nf90_inquire_dimension(ncid,dimid,len=nlon))
 
     allocate(temp_real_array(nlon,nlat))
-    allocate(temp_real_array_surface(nlat_surface_model,nlon_surface_model))
+    allocate(temp_real_array_surface(nlon_surface_model,nlat_surface_model))
     allocate(temp_integer_array(nlon,nlat))
 
     call check_return_code(nf90_inq_varid(ncid,'lake_centers',varid))
@@ -254,13 +254,11 @@ function read_lake_parameters(instant_throughflow)&
     call check_return_code(nf90_get_var(ncid, varid,temp_integer_array))
     allocate(corresponding_surface_cell_lat_index(nlat,nlon))
     corresponding_surface_cell_lat_index  = transpose(temp_integer_array)
-    call add_offset(corresponding_surface_cell_lat_index,1,(/-1/))
 
     call check_return_code(nf90_inq_varid(ncid,'corresponding_surface_cell_lon_index',varid))
     call check_return_code(nf90_get_var(ncid, varid,temp_integer_array))
     allocate(corresponding_surface_cell_lon_index(nlat,nlon))
     corresponding_surface_cell_lon_index  = transpose(temp_integer_array)
-    call add_offset(corresponding_surface_cell_lon_index,1,(/-1/))
 
     call check_return_code(nf90_inq_varid(ncid,'merge_points',varid))
     call check_return_code(nf90_get_var(ncid, varid,temp_integer_array))

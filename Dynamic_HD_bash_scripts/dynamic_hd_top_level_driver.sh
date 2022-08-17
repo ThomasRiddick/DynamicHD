@@ -8,7 +8,7 @@ start_time=$(date +%s%N)
 function load_module
 {
 module_name=$1
-if [[ $(hostname -d) == "hpc.dkrz.de" ]] || [[ $(hostname -d) == "atos.local" ]]; then
+if [[ $(hostname -d) == "atos.local" ]]; then
 	module load ${module_name}
 else
 	eval "eval `/usr/bin/tclsh /sw/share/Modules-4.2.1/libexec/modulecmd.tcl bash load ${module_name}`"
@@ -249,7 +249,7 @@ if ! ${compile_only} ; then
 fi
 
 #Check for locks if necesssary and set the compilation_required flag accordingly
-if [[ $(hostname -d) == "hpc.dkrz.de" ]] || [[ $(hostname -d) == "atos.local" ]] ; then
+if  [[ $(hostname -d) == "atos.local" ]] ; then
 	exec 200>"${source_directory}/compilation.lock"
 	if $first_timestep ; then
 		if flock -x -n 200 ; then
@@ -284,21 +284,19 @@ fi
 #Setup conda environment
 echo "Setting up environment"
 if ! $no_modules ; then
-	if [[ $(hostname -d) == "hpc.dkrz.de" ]]; then
-		source /sw/rhel6-x64/etc/profile.mistral
-		unload_module netcdf_c
-	    unload_module imagemagick
-		unload_module cdo/1.7.0-magicsxx-gcc48
-	    unload_module python
+  	if [[ $(hostname -d) == "atos.local" ]]; then
+    		source /etc/profile
+    		unload_module netcdf_c
+      		unload_module imagemagick
+    		unload_module cdo/1.7.0-magicsxx-gcc48
+      		unload_module python
 	else
 		export MODULEPATH="/sw/common/Modules:/client/Modules"
 	fi
 fi
 
 if ! $no_modules && ! $no_conda ; then
-	if [[ $(hostname -d) == "hpc.dkrz.de" ]]; then
-		load_module anaconda3/.bleeding_edge
-	elif [[ $(hostname -d) == "atos.local" ]]; then
+	if [[ $(hostname -d) == "atos.local" ]]; then
                 load_module python3
 	else
 		load_module anaconda3
@@ -319,9 +317,7 @@ fi
 
 #Load a new version of gcc that doesn't have the polymorphic variable bug
 if ! $no_modules ; then
-	if [[ $(hostname -d) == "hpc.dkrz.de" ]]; then
-		load_module gcc/6.2.0
-        elif [[ $(hostname -d) == "atos.local" ]]; then
+        if [[ $(hostname -d) == "atos.local" ]]; then
                 load_module gcc/11.2.0-gcc-11.2.0
 	else
 		load_module gcc/6.3.0

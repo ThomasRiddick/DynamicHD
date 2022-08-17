@@ -48,6 +48,10 @@ subroutine initialise_latlon_lake_logger(this)
     this%timestep_total_output = 0
 end subroutine initialise_latlon_lake_logger
 
+subroutine delete_logger
+    deallocate(global_lake_logger)
+end subroutine delete_logger
+
 subroutine increment_timestep(this)
   class(latlon_lake_logger) :: this
     this%timestep = this%timestep+1

@@ -2,6 +2,9 @@ module latlon_lake_model_interface_mod
 
 use latlon_lake_model_mod
 use latlon_lake_model_io_mod
+#ifdef USE_LOGGING
+  use latlon_lake_logger_mod
+#endif
 
 implicit none
 
@@ -118,6 +121,9 @@ subroutine init_lake_model_test(lake_parameters,initial_water_to_lake_centers, &
 end subroutine init_lake_model_test
 
 subroutine clean_lake_model()
+#ifdef USE_LOGGING
+  call delete_logger
+#endif
   call global_lake_fields%lakefieldsdestructor()
   call global_lake_prognostics%lakeprognosticsdestructor()
   call global_lake_parameters%lakeparametersdestructor()
