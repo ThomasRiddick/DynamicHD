@@ -64,6 +64,16 @@ class Icon_Coarse_River_Directions_Creation_Drivers(dyn_hd_dr.Dynamic_HD_Drivers
         self.\
         no_intermediaries_combine_hydrosheds_plus_rdirs_from_corrected_orog_driver()
 
+    def _check_config_section_is_valid(self,config,section_name):
+        if not config.has_section(section_name):
+            raise RuntimeError("Invalid configuration file supplied"
+                               " - section {} missing".format(section_name))
+
+    def _check_config_option_is_valid(self,config,section_name,option_name):
+        if not config.has_option(section_name,option_name):
+            raise RuntimeError("Invalid configuration file supplied"
+                               " - option {}:{} missing".format(section_name,
+                                                                option_name))
 
     def _read_and_validate_config(self):
         """Reads and checks format of config file
@@ -72,20 +82,16 @@ class Icon_Coarse_River_Directions_Creation_Drivers(dyn_hd_dr.Dynamic_HD_Drivers
         Returns: ConfigParser object; the read and checked configuration
         """
 
-        valid_config = True
         config = configparser.ConfigParser()
         print("Read python driver options from file {0}".format(self.python_config_filename))
         config.read(self.python_config_filename)
-        valid_config = valid_config \
-            if config.has_section("input_options") else False
-        valid_config = valid_config \
-            if config.has_option("input_options",
-                                 "ten_minute_corrected_orography_filename") else False
-        valid_config = valid_config \
-            if config.has_option("input_options",
-                                 "ten_minute_hydrosheds_au_auf_sa_river_directions_filename") else False
-        if not valid_config:
-            raise RuntimeError("Invalid configuration file supplied")
+        self._check_config_section_is_valid(config,"input_options")
+        self._check_config_option_is_valid(config,
+                                           "input_options",
+                                           "ten_minute_corrected_orography_filename")
+        self._check_config_option_is_valid(config,
+                                           "input_options",
+                                           "ten_minute_hydrosheds_au_auf_sa_river_directions_filename")
         if not config.has_section("input_fieldname_options"):
             config.add_section("input_fieldname_options")
         if not config.has_option("input_fieldname_options","input_truesinks_fieldname"):

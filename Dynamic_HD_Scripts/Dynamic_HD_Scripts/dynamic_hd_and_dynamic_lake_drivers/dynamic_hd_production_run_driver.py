@@ -394,6 +394,17 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         self.no_intermediaries_ten_minute_data_ALG4_no_true_sinks_plus_upscale_rdirs_driver()
         return self.output_hdparas_filepath,self.output_hdstart_filepath
 
+    def _check_config_section_is_valid(self,config,section_name):
+        if not config.has_section(section_name):
+            raise RuntimeError("Invalid configuration file supplied"
+                               " - section {} missing".format(section_name))
+
+    def _check_config_option_is_valid(self,config,section_name,option_name):
+        if not config.has_option(section_name,option_name):
+            raise RuntimeError("Invalid configuration file supplied"
+                               " - option {}:{} missing".format(section_name,
+                                                                option_name))
+
     def _read_and_validate_config(self):
         """Reads and checks format of config file
 
@@ -401,44 +412,55 @@ class Dynamic_HD_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         Returns: ConfigParser object; the read and checked configuration
         """
 
-        valid_config = True
         config = configparser.ConfigParser()
         print("Read python driver options from file {0}".format(self.python_config_filename))
         config.read(self.python_config_filename)
-        valid_config = valid_config \
-            if config.has_section("output_options") else False
-        valid_config = valid_config \
-            if config.has_option("output_options","output_corrected_orog") else False
-        valid_config = valid_config \
-            if config.has_option("output_options","output_fine_rdirs") else False
-        valid_config = valid_config \
-            if config.has_option("output_options","output_fine_catchments") else False
-        valid_config = valid_config \
-            if config.has_option("output_options","output_fine_flowtocell") else False
-        valid_config = valid_config \
-            if config.has_option("output_options","output_fine_flowtorivermouths") else False
-        valid_config = valid_config \
-            if config.has_option("output_options","output_pre_loop_removal_coarse_rdirs") else False
-        valid_config = valid_config \
-            if config.has_option("output_options","output_pre_loop_removal_coarse_flowtocell") else False
-        valid_config = valid_config \
-            if config.has_option("output_options","output_pre_loop_removal_coarse_flowtorivermouths") else False
-        valid_config = valid_config \
-            if config.has_option("output_options","output_pre_loop_removal_coarse_catchments") else False
-        valid_config = valid_config \
-            if config.has_option("output_options","output_coarse_rdirs") else False
-        valid_config = valid_config \
-            if config.has_option("output_options","output_coarse_unfilled_orog") else False
-        valid_config = valid_config \
-            if config.has_option("output_options","output_coarse_filled_orog") else False
-        valid_config = valid_config \
-            if config.has_option("output_options","output_coarse_flowtocell") else False
-        valid_config = valid_config \
-            if config.has_option("output_options","output_coarse_flowtorivermouths") else False
-        valid_config = valid_config \
-            if config.has_option("output_options","output_coarse_catchments") else False
-        if not valid_config:
-            raise RuntimeError("Invalid configuration file supplied")
+        self._check_config_section_is_valid(config,"output_options")
+        self._check_config_option_is_valid(config,
+                                           "output_options",
+                                           "output_corrected_orog")
+        self._check_config_option_is_valid(config,
+                                           "output_options",
+                                           "output_fine_rdirs")
+        self._check_config_option_is_valid(config,
+                                           "output_options",
+                                           "output_fine_catchments")
+        self._check_config_option_is_valid(config,
+                                           "output_options",
+                                           "output_fine_flowtocell")
+        self._check_config_option_is_valid(config,
+                                           "output_options",
+                                           "output_fine_flowtorivermouths")
+        self._check_config_option_is_valid(config,
+                                           "output_options",
+                                           "output_pre_loop_removal_coarse_rdirs")
+        self._check_config_option_is_valid(config,
+                                           "output_options",
+                                           "output_pre_loop_removal_coarse_flowtocell")
+        self._check_config_option_is_valid(config,
+                                           "output_options",
+                                           "output_pre_loop_removal_coarse_flowtorivermouths")
+        self._check_config_option_is_valid(config,
+                                           "output_options",
+                                           "output_pre_loop_removal_coarse_catchments")
+        self._check_config_option_is_valid(config,
+                                          "output_options",
+                                          "output_coarse_rdirs")
+        self._check_config_option_is_valid(config,
+                                          "output_options",
+                                          "output_coarse_unfilled_orog")
+        self._check_config_option_is_valid(config,
+                                          "output_options",
+                                          "output_coarse_filled_orog")
+        self._check_config_option_is_valid(config,
+                                          "output_options",
+                                          "output_coarse_flowtocell")
+        self._check_config_option_is_valid(config,
+                                          "output_options",
+                                          "output_coarse_flowtorivermouths")
+        self._check_config_option_is_valid(config,
+                                          "output_options",
+                                          "output_coarse_catchments")
         if not config.has_section("input_fieldname_options"):
             config.add_section("input_fieldname_options")
         if not config.has_option("input_fieldname_options","input_orography_fieldname"):
