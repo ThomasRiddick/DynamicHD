@@ -46,7 +46,8 @@ class Dynamic_Lake_Correction_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Driver
         else:
             file_label = "{}_{}".format(version,datetime.datetime.now().strftime("%Y%m%d_%H%M%S"))
         ls_mask_filename = join(self.ls_masks_path,"generated",
-                                "ls_mask_make_1000m_depth_contour_mask_from_ICE6G_20200721_144332.nc")
+                                "ls_mask_make_1000m_depth_contour_mask_from_"
+                                "ICE6G_20200721_144332_with_casp.nc")
         ls_mask_fieldname = "lsm"
         original_orography_filename = join(self.orography_path,
                                            "ice5g_v1_2_00_0k_10min.nc")

@@ -202,18 +202,49 @@ class Dynamic_HD_Drivers(object):
 
         return "_".join([str(inspect.stack()[1][3]),datetime.datetime.now().strftime("%Y%m%d_%H%M%S")])
 
-    @staticmethod
-    def generate_present_day_river_directions_with_original_true_sink_set(orography_filepath,
+    @classmethod
+    def generate_present_day_river_directions_with_original_true_sink_set(cls,
+                                                                          orography_filepath,
                                                                           landsea_mask_filepath,
                                                                           glacier_mask_filepath,
                                                                           orography_corrections_filepath,
-                                                                          output_dir):
+                                                                          output_dir,
+                                                                          orography_fieldname="Topo",
+                                                                          landsea_mask_fieldname="slm",
+                                                                          glacier_mask_fieldname="glac",
+                                                                          orography_corrections_fieldname="orog",
+                                                                          truesinks_fieldname="true_sinks"):
         truesinks_filename = ("/Users/thomasriddick/Documents/data/HDdata/truesinks/"
                               "truesinks_ICE5G_and_tarasov_upscaled_srtm30plus_north_america_only_data_ALG4_sinkless_glcc_olson_lsmask_0k_20191014_173825_with_grid.nc")
+        cls.generate_present_day_river_directions_with_true_sinks(orography_filepath,
+                                                                  landsea_mask_filepath,
+                                                                  glacier_mask_filepath,
+                                                                  orography_corrections_filepath,
+                                                                  output_dir,
+                                                                  truesinks_filepath=
+                                                                  truesinks_filename,
+                                                                  orography_fieldname=orography_fieldname,
+                                                                  landsea_mask_fieldname=landsea_mask_fieldname,
+                                                                  glacier_mask_fieldname=glacier_mask_fieldname,
+                                                                  orography_corrections_fieldname=orography_corrections_fieldname,
+                                                                  truesinks_fieldname=truesinks_fieldname)
+
+    @staticmethod
+    def generate_present_day_river_directions_with_true_sinks(orography_filepath,
+                                                              landsea_mask_filepath,
+                                                              glacier_mask_filepath,
+                                                              orography_corrections_filepath,
+                                                              output_dir,
+                                                              truesinks_filepath,
+                                                              orography_fieldname="Topo",
+                                                              landsea_mask_fieldname="slm",
+                                                              glacier_mask_fieldname="glac",
+                                                              orography_corrections_fieldname="orog",
+                                                              truesinks_fieldname="true_sinks"):
         cotat_plus_parameters_filepath = ("/Users/thomasriddick/Documents/workspace/"
                                           "Dynamic_HD_Code/Dynamic_HD_Resources/cotat_plus_standard_params.nl")
-        present_day_reference_orography_filepath = ("/Users/thomasriddick/Documents/data/HDancillarydata/"
-                                                    "ice5g_v1_2_00_0k_10min.nc")
+        present_day_reference_orography_filepath = ("/Users/thomasriddick/Documents/data/hd_ancillary_data_dirs/"
+                                                    "HDancillarydata/ice5g_v1_2_00_0k_10min.nc")
         rebased_orography_filename = path.join(output_dir,"10min_rebased_orog.nc")
         first_corrected_orography_filename = path.join(output_dir,"10min_corrected_orog_one.nc")
         second_corrected_orography_filename = path.join(output_dir,"10min_corrected_orog_two.nc")
@@ -229,12 +260,8 @@ class Dynamic_HD_Drivers(object):
         updated_loops_log_filename = path.join(output_dir,"30min_loops_log.txt")
         updated_coarse_cflow_filename = path.join(output_dir,"30min_flowtocell.nc")
         updated_coarse_rmouth_cflow_filename = path.join(output_dir,"30min_rmouth_flowtocell.nc")
-        original_orography_fieldname = "Topo"
-        orography_corrections_fieldname = "orog"
+        original_orography_fieldname = orography_fieldname
         present_day_reference_orography_fieldname = "orog"
-        glacier_mask_fieldname = "glac"
-        ls_mask_fieldname = "slm"
-        truesinks_fieldname = "true_sinks"
         utilities.advanced_rebase_orography_driver(orography_filepath,
                                                    present_day_base_orography_filename=orography_filepath,
                                                    present_day_reference_orography_filename=
@@ -270,10 +297,10 @@ class Dynamic_HD_Drivers(object):
                                                                       ls_mask_filename=
                                                                       landsea_mask_filepath,
                                                                       truesinks_filename=
-                                                                      truesinks_filename,
+                                                                      truesinks_filepath,
                                                                       catchment_nums_filename=
                                                                       fine_catchments_filename,
-                                                                      ls_mask_fieldname=ls_mask_fieldname,
+                                                                      ls_mask_fieldname=landsea_mask_fieldname,
                                                                       truesinks_fieldname=truesinks_fieldname,
                                                                       catchment_fieldname="catch")
         flow_to_grid_cell.advanced_main(rdirs_filename=fine_rdirs_filename,
@@ -1978,6 +2005,18 @@ class Utilities_Drivers(Dynamic_HD_Drivers):
         iodriver.advanced_field_writer(output_lsmask_filepath,field=lsmask,
                                        fieldname="lsm")
 
+    def add_caspian_to_1000m_depth_contour_mask_from_ICE6G(self):
+        lsm_from_1000m_depth_contour_filename = path.join(self.ls_masks_path,"generated",
+                                                           "ls_mask_make_1000m_depth_contour_mask_from_ICE6G_20200721_144332.nc")
+        lsm_from_1000m_depth_contour_with_casp_filename = path.join(self.ls_masks_path,"generated",
+                                                                    "ls_mask_make_1000m_depth_contour_mask_from_ICE6G_20200721_"
+                                                                    "144332_with_casp.nc")
+        lsm_from_1000m_depth_contour = iodriver.advanced_field_loader(lsm_from_1000m_depth_contour_filename,
+                                                                      fieldname="lsm")
+        lsm_from_1000m_depth_contour.get_data()[308-1,1385-1] = 1
+        iodriver.advanced_field_writer(lsm_from_1000m_depth_contour_with_casp_filename,
+                                       field=lsm_from_1000m_depth_contour,
+                                       fieldname="lsm")
 
 class Original_HD_Model_RFD_Drivers(Dynamic_HD_Drivers):
     """Drive processes using the present day manually corrected river directions currently in JSBACH"""
@@ -4142,8 +4181,9 @@ def main():
     #etopo1_data_drivers = ETOPO1_Data_Drivers()
     #etopo1_data_drivers.etopo1_data_all_points()
     #etopo1_data_drivers.etopo1_data_ALG4_sinkless()
-    #utilities_drivers = Utilities_Drivers()
+    utilities_drivers = Utilities_Drivers()
     #utilities_drivers.make_1000m_depth_contour_mask_from_ICE6G()
+    utilities_drivers.add_caspian_to_1000m_depth_contour_mask_from_ICE6G()
     #utilities_drivers.make_hdpara_for_pt_boundary_rdirs()
     #utilities_drivers.make_hdpara_for_pt_boundary_rdirs_scotese()
     #utilities_drivers.add_grid_to_corrected_orography()

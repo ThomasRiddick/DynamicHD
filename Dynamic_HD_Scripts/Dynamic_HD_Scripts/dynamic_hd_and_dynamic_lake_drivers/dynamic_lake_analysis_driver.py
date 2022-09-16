@@ -54,7 +54,8 @@ class Dynamic_Lake_Analysis_Run_Framework(object):
                  clear_lake_results=False,
                  clear_river_results=False,
                  clear_river_default_orog_corrs_results=False,
-                 generate_present_day_rivers_with_original_sink_set=False):
+                 generate_present_day_rivers_with_original_sink_set=False,
+                 generate_present_day_rivers_with_true_sinks=False):
         self.base_directory = base_directory
         self.lakes_directory = join(base_directory,"lakes")
         self.rivers_directory = join(base_directory,"rivers")
@@ -145,6 +146,8 @@ class Dynamic_Lake_Analysis_Run_Framework(object):
         self.run_clear_river_default_orog_corrs_results = clear_river_default_orog_corrs_results
         self.generate_present_day_rivers_with_original_sink_set = \
             generate_present_day_rivers_with_original_sink_set
+        self.generate_present_day_rivers_with_true_sinks = \
+            generate_present_day_rivers_with_true_sinks
         self.dyn_lake_driver = Dynamic_Lake_Production_Run_Drivers(input_orography_filepath=None,
                                                                    input_ls_mask_filepath=None,
                                                                    input_water_to_redistribute_filepath=None,
@@ -418,6 +421,36 @@ class Dynamic_Lake_Analysis_Run_Framework(object):
             self.dyn_hd_driver.store_diagnostics(join(self.rivers_directory,
                                                  "results","default_orog_corrs","diag_{}".format(slice_label)))
             self.dyn_hd_driver.python_config_filename = old_python_config_filename
+            default_corrections_filepath = join(self.ancillary_data_directory,
+                                                "default_orog_corrs_ancillaries",
+                                                "orog_corrs_field_ICE5G_and_tarasov_upscaled_"
+                                                "srtm30plus_north_america_only_data_ALG4_sinkless"
+                                                "_glcc_olson_lsmask_0k_20170517_003802_with_grid.nc")
+            if self.generate_present_day_rivers_with_original_sink_set and slice_time == 0 :
+                os.mkdir(join(self.rivers_directory,"results","default_orog_corrs",
+                              "diag_{}_original_truesinks".format(slice_label)))
+                Dynamic_HD_Drivers.\
+                    generate_present_day_river_directions_with_original_true_sink_set(orography_filepath,
+                        landsea_mask_filepath,glacier_mask_filepath,
+                        default_corrections_filepath,
+                        output_dir=join(self.rivers_directory,"results","default_orog_corrs",
+                                        "diag_{}_original_truesinks".format(slice_label)),
+                        orography_corrections_fieldname="field_value")
+            if self.generate_present_day_rivers_with_true_sinks and slice_time == 0 :
+                true_sinks_filename = join(self.corrections_directory,"true_sinks_fields",
+                                           "true_sinks_field_version_{}.nc".\
+                                           format(self.corrections_version))
+                os.mkdir(join(self.rivers_directory,"results","default_orog_corrs",
+                              "diag_{}_with_truesinks".format(slice_label)))
+                Dynamic_HD_Drivers.\
+                    generate_present_day_river_directions_with_true_sinks(orography_filepath,
+                        landsea_mask_filepath,glacier_mask_filepath,
+                        default_corrections_filepath,
+                        output_dir=join(self.rivers_directory,"results","default_orog_corrs",
+                                        "diag_{}_with_truesinks".format(slice_label)),
+                        truesinks_filepath=true_sinks_filename,
+                        orography_corrections_fieldname="field_value")
+
         if self.generate_present_day_rivers_with_original_sink_set and slice_time == 0 :
             os.mkdir(join(self.rivers_directory,"results",
                           "diag_{}_original_truesinks".format(slice_label)))
@@ -428,6 +461,20 @@ class Dynamic_Lake_Analysis_Run_Framework(object):
                      self.corrections_file_for_current_version),
                      output_dir=join(self.rivers_directory,"results",
                                      "diag_{}_original_truesinks".format(slice_label)))
+        if self.generate_present_day_rivers_with_true_sinks and slice_time == 0 :
+            true_sinks_filename = join(self.corrections_directory,"true_sinks_fields",
+                                       "true_sinks_field_version_{}.nc".\
+                                       format(self.corrections_version))
+            os.mkdir(join(self.rivers_directory,"results",
+                          "diag_{}_with_truesinks".format(slice_label)))
+            Dynamic_HD_Drivers.\
+                generate_present_day_river_directions_with_true_sinks(orography_filepath,
+                    landsea_mask_filepath,glacier_mask_filepath,
+                    (self.base_corrections_filepath if self.corrections_version == 0 else
+                     self.corrections_file_for_current_version),
+                     output_dir=join(self.rivers_directory,"results",
+                                     "diag_{}_with_truesinks".format(slice_label)),
+                     truesinks_filepath=true_sinks_filename)
 
     def driver_transient_run(self,start_date=0,end_date=0,slice_spacing = 10,
                              dates_to_run_in=None):
@@ -521,26 +568,6 @@ class Dynamic_Lake_Analysis_Run_Framework(object):
                 os.remove(join(self.rivers_directory,"results","default_orog_corrs",folder,file))
             os.rmdir(join(self.rivers_directory,"results","default_orog_corrs",folder))
 
-    def generate_present_day_rdirs_with_original_sink_set(self,
-                                                          slice_label,
-                                                          orography_filepath,
-                                                          landsea_mask_filepath,
-                                                          glacier_mask_filepath):
-        non_standard_orog_correction_filename=\
-            (self.base_corrections_filepath if self.corrections_version == 0 else
-             self.corrections_file_for_current_version)
-        if not os.path.isdir(join(self.rivers_directory,
-                                  "results","with_original_true_sinks")):
-                os.mkdir(join(self.rivers_directory,
-                              "results","with_original_true_sinks"))
-        output_dir = join(self.rivers_directory,
-                          "results","with_original_true_sinks","diag_{}".format(slice_label))
-        os.mkdir(output_dir)
-        generate_present_day_river_directions_with_original_true_sink_set(orography_filepath,
-                                                                          landsea_mask_filepath,
-                                                                          glacier_mask_filepath,
-                                                                          output_dir)
-
 def setup_and_run_lake_analysis_from_command_line_arguments(args):
     """Setup and run tools for the dynamic lake analysis from command line arguments"""
     driver_object = Dynamic_Lake_Analysis_Run_Framework(**vars(args))
@@ -597,6 +624,8 @@ def parse_arguments():
                         action="store_true")
     parser.add_argument('--generate-present-day-rivers-with-original-sink-set',
                         action="store_true")
+    parser.add_argument('--generate-present-day-rivers-with-true-sinks',
+                        action="store_true")
     #Adding the variables to a namespace other than that of the parser keeps the namespace clean
     #and allows us to pass it directly to main
     parser.parse_args(namespace=args)
@@ -615,7 +644,8 @@ def parse_arguments():
                      "-T --orography-filepath-template, "
                      "-L --landsea-mask-filepath-template and "
                      "-G --glacier-mask-filepath-template")
-    if (args.generate_present_day_rivers_with_original_sink_set and
+    if ((args.generate_present_day_rivers_with_original_sink_set or
+         args.generate_present_day_rivers_with_true_sinks) and
         args.skip_current_day_time_slice):
         raise RuntimeError("Incompatible options")
     if args.generate_lake_orography_corrections and args.apply_orography_tweaks:
