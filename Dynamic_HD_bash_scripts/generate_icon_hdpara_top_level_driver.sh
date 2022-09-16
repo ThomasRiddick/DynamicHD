@@ -112,6 +112,11 @@ if ! [[ -e $config_filepath ]]; then
 	exit 1
 fi
 
+if ! [[ -e $cotat_params_file ]]; then
+	echo "COTAT parameters file (${cotat_params_file}) does not exist" 1>&2
+	exit 1
+fi
+
 if ! [[ -d ${output_hdpara_filepath%/*} ]]; then
 	echo "Filepath of output hdpara.nc does not exist" 1>&2
 	exit 1
@@ -234,8 +239,10 @@ if ! $no_modules ; then
 fi
 
 export LD_LIBRARY_PATH="/sw/stretch-x64/netcdf/netcdf_fortran-4.4.4-gcc63/lib:/sw/stretch-x64/netcdf/netcdf_c-4.6.1/lib:/sw/stretch-x64/netcdf/netcdf_cxx-4.3.0-gccsys/lib:${LD_LIBRARY_PATH}"
+export LD_LIBRARY_PATH="/sw/spack-levante/netcdf-fortran-4.5.3-l2ulgp/lib":${LD_LIBRARY_PATH}
 export LD_LIBRARY_PATH=/Users/thomasriddick/anaconda3/pkgs/netcdf-cxx4-4.3.0-h703b707_9/lib:/Users/thomasriddick/anaconda3/lib:${LD_LIBRARY_PATH}
-export LD_LIBRARY_PATH="/sw/rhel6-x64/netcdf/netcdf_fortran-4.4.4-gcc64/lib:/sw/rhel6-x64/netcdf/netcdf_cxx-4.3.0-gcc64/lib:${LD_LIBRARY_PATH}"
+export LD_LIBRARY_PATH="${HOME}/sw-spack/netcdf-cxx4-4.3.1-d54zya/lib":"${HOME}/sw-spack/netcdf-c-4.8.1-khy3ru/lib":${LD_LIBRARY_PATH}
+export DYLD_LIBRARY_PATH=$LD_LIBRARY_PATH:$DYLD_LIBRARY_PATH
 
 if ! $no_modules && ! $no_conda ; then
 	if [[ $(hostname -d) == "atos.local" ]]; then
@@ -350,7 +357,7 @@ done
   cp ${input_ls_mask_filepath} mask_in_temp.nc
   ${source_directory}/Dynamic_HD_Cpp_Code/Release/Fill_Sinks_Icon_SI_Exec ${input_orography_filepath} ${input_ls_mask_filepath} zeros_temp.nc orography_filled.nc ${grid_file} "z" "cell_sea_land_mask" "acc" 0 0 0.0 1 0
   ${source_directory}/Dynamic_HD_bash_scripts/parameter_generation_scripts/generate_icon_hd_file_driver.sh ${working_directory}/paragen ${source_directory}/Dynamic_HD_bash_scripts/parameter_generation_scripts/fortran ${working_directory} grid_in_temp.nc mask_in_temp.nc ${icon_final_filepath}  orography_filled.nc
-  cp paragen/hdpara_icon.nc ${output_hdpara_filepath}
+${source_directory}/Dynamic_HD_bash_scripts/adjust_icon_k_parameters.sh  ${working_directory}/paragen/hdpara_icon.nc ${output_hdpara_filepath} "r2b4"
   #Clean up temporary files
   rm -f paragen/area_dlat_dlon.txt
   rm -f paragen/ddir.inp

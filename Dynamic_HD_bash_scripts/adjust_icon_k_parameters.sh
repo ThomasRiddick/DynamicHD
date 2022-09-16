@@ -13,6 +13,11 @@ elif [[ ${resolution} == 'r2b8' ]]; then
   arf_k_adjustment_thres=0.1
   new_alf_k=4.82
   alf_k_adjustment_thres=8.0
+elif [[ ${resolution} == 'r2b3' ]]; then
+  new_arf_k=0.54
+  arf_k_adjustment_thres=2.5
+  new_alf_k=98.0
+  alf_k_adjustment_thres=400.0
 elif [[ ${resolution} == 'r2b4' ]]; then
   new_arf_k=0.25
   arf_k_adjustment_thres=1.0
