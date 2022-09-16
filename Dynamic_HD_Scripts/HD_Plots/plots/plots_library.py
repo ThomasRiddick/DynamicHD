@@ -19,8 +19,10 @@ import textwrap
 import os.path
 import math
 import copy
+from HD_Plots.utilities import plotting_tools as pts
 from netCDF4 import Dataset
 from Dynamic_HD_Scripts.base import iodriver
+from Dynamic_HD_Scripts.base.iodriver import advanced_field_loader
 from Dynamic_HD_Scripts.base import iohelper as iohlpr
 from Dynamic_HD_Scripts.base import field
 from Dynamic_HD_Scripts.base import grid
@@ -687,6 +689,259 @@ class OutflowPlots(Plots):
                                                                        self.catchment_and_outflows_mods_list_extension)
         self.temp_label = 'temp_' + datetime.datetime.now().strftime("%Y%m%d_%H%M%S%f") + "_"
 
+    def AdvancedOutFlowComparisonPlotHelpers(self,
+                                             reference_rmouth_outflows_filename,
+                                             data_rmouth_outflows_filename,
+                                             ref_flowmaps_filename,
+                                             data_flowmaps_filename,
+                                             ref_rdirs_filename,
+                                             data_rdirs_filename,
+                                             ref_catchment_filename,
+                                             data_catchment_filename,
+                                             ref_orog_filename,
+                                             data_orog_filename,
+                                             super_fine_orog_filename=None,
+                                             super_fine_data_flowmap_filename=None,
+                                             external_ls_mask_filename=None,
+                                             additional_matches_list_filename=None,
+                                             catchment_and_outflows_mods_list_filename=None,
+                                             rivers_to_plot=None,
+                                             matching_parameter_set='default',
+                                             select_only_rivers_in=None,
+                                             allow_new_true_sinks=False,
+                                             alternative_catchment_bounds=None,
+                                             use_simplified_catchment_colorscheme=False,
+                                             use_simplified_flowmap_colorscheme=False,
+                                             use_upscaling_labels=False,
+                                             swap_ref_and_data_when_finding_labels=False,
+                                             super_fine_orog_grid_type='LatLong1min',
+                                             grid_type='HD',
+                                             super_fine_orog_grid_kwargs={},
+                                             **grid_kwargs):
+        """Help produce a comparison of two fields of river outflow data"""
+        ref_catchment_field = advanced_field_loader(ref_catchment_filename,
+                                                    time_slice=None,
+                                                    fieldname="catch",
+                                                    adjust_orientation=True)
+        data_catchment_field = advanced_field_loader(data_catchment_filename,
+                                                     time_slice=None,
+                                                     fieldname="catch",
+                                                     adjust_orientation=True)
+        ref_flowtocellfield = advanced_field_loader(ref_flowmaps_filename,
+                                                    time_slice=None,
+                                                    fieldname="acc",
+                                                    adjust_orientation=True)
+        data_flowtocellfield = advanced_field_loader(data_flowmaps_filename,
+                                                     time_slice=None,
+                                                     fieldname="acc",
+                                                     adjust_orientation=True)
+        ref_rdirs_field = advanced_field_loader(ref_rdirs_filename,
+                                                time_slice=None,
+                                                fieldname="rdir",
+                                                adjust_orientation=True)
+        data_rdirs_field = advanced_field_loader(data_rdirs_filename,
+                                                 time_slice=None,
+                                                 fieldname="rdir",
+                                                 adjust_orientation=True)
+        ref_orog_field = advanced_field_loader(ref_orog_filename,
+                                               time_slice=None,
+                                               fieldname="z",
+                                               adjust_orientation=True)
+        data_orog_field = advanced_field_loader(data_orog_filename,
+                                                time_slice=None,
+                                                fieldname="z",
+                                                adjust_orientation=True)
+        super_fine_orog_field = advanced_field_loader(super_fine_orog_filename,
+                                                      time_slice=None,
+                                                      fieldname="z",
+                                                      adjust_orientation=True)
+
+        super_fine_flowtocellfield = None
+        if external_ls_mask_filename is not None:
+            external_ls_mask = advanced_field_loader(external_ls_mask_filename,
+                                                     time_slice=None,
+                                                     fieldname="lsmask",
+                                                     adjust_orientation=True)
+        else:
+            external_ls_mask = None
+        scale_factor = 1.0
+        catchment_grid_changed = False
+        temp_file_list = []
+        if catchment_and_outflows_mods_list_filename:
+            ref_outflow_field = advanced_field_loader(reference_rmouth_outflows_filename,
+                                                      time_slice=None,
+                                                      fieldname="acc",
+                                                      adjust_orientation=True)
+            data_outflow_field = advanced_field_loader(data_rmouth_outflows_filename,
+                                                       time_slice=None,
+                                                       fieldname="acc",
+                                                       adjust_orientation=True)
+            ref_catchment_field, ref_outflow_field, data_catchment_field, data_outflow_field =\
+                rc_pts.modify_catchments_and_outflows(ref_catchments=ref_catchment_field,
+                                                      ref_outflows=ref_outflow_field,
+                                                      ref_flowmap=ref_flowtocellfield,
+                                                      ref_rdirs = ref_rdirs_field,
+                                                      data_catchments=data_catchment_field,
+                                                      data_outflows=data_outflow_field,
+                                                      catchment_and_outflows_modifications_list_filename=\
+                                                      catchment_and_outflows_mods_list_filename,
+                                                      original_scale_catchment=\
+                                                      None,
+                                                      original_scale_flowmap=\
+                                                      None,
+                                                      catchment_grid_changed=False,
+                                                      swap_ref_and_data_when_finding_labels=\
+                                                      swap_ref_and_data_when_finding_labels,
+                                                      original_scale_grid_type=\
+                                                      None,
+                                                      original_scale_grid_kwargs=\
+                                                      None,
+                                                      grid_type=grid_type,**grid_kwargs)
+            reference_rmouth_outflows_filename=os.path.join(self.scratch_dir,
+                                                            self.temp_label + os.path.\
+                                                            basename(reference_rmouth_outflows_filename))
+            data_rmouth_outflows_filename=os.path.join(self.scratch_dir,
+                                                       self.temp_label + os.path.\
+                                                       basename(reference_rmouth_outflows_filename))
+            temp_file_list.append(reference_rmouth_outflows_filename)
+            temp_file_list.append(data_rmouth_outflows_filename)
+            iodriver.advanced_field_writer(reference_rmouth_outflows_filename,
+                                           ref_outflow_field,
+                                           fieldname="acc")
+            iodriver.advanced_field_writer(data_rmouth_outflows_filename,
+                                           data_outflow_field,
+                                           fieldname="acc")
+        matchedpairs, unresolved_conflicts  = mtch_rm.advanced_main(reference_rmouth_outflows_filename,
+                                                                    data_rmouth_outflows_filename,
+                                                                    'acc',"acc",
+                                                                    param_set=matching_parameter_set)
+        if additional_matches_list_filename:
+            additional_matches = mtch_rm.load_additional_manual_matches(additional_matches_list_filename,
+                                                                        reference_rmouth_outflows_filename,
+                                                                        data_rmouth_outflows_filename,
+                                                                        grid_type=grid_type,
+                                                                        **grid_kwargs)
+            matchedpairs.extend(additional_matches)
+        interactive_plots = Interactive_Plots()
+        super_fine_grid = grid.makeGrid(super_fine_orog_grid_type,
+                                        **super_fine_orog_grid_kwargs)
+        ref_grid = grid.makeGrid(grid_type,**grid_kwargs)
+        fine_grid = grid.makeGrid(grid_type,**grid_kwargs)
+        river_names = []
+        for pair in matchedpairs:
+            if pair[0].get_lat() > 310*3:
+                continue
+            if select_only_rivers_in == "North America":
+                if(pair[0].get_lat() > 156*3 or pair[0].get_lon() > 260*3):
+                    continue
+            print("Ref Point: " + str(pair[0]) + "Matches: " + str(pair[1]))
+            if rivers_to_plot is not None:
+                if not (pair[0].get_lat(),pair[0].get_lon()) in rivers_to_plot:
+                    continue
+            formatted_river_name = pts.generate_label_for_river(pair,scale_factor=6,
+                                                                river_names=river_names)
+            fig = plt.figure(formatted_river_name + " - Overview",figsize=(25,12.5))
+            fig.suptitle(formatted_river_name)
+            ax = plt.subplot(222)
+            rc_pts.plot_river_rmouth_flowmap(ax=ax,
+                                             ref_flowtocellfield=ref_flowtocellfield.get_data(),
+                                             data_flowtocellfield=data_flowtocellfield.get_data(),
+                                             rdirs_field=ref_rdirs_field.get_data(),
+                                             pair=pair,colors=self.colors,
+                                             point_label_coords_scaling=3)
+            ax_hist = plt.subplot(221)
+            ax_catch = plt.subplot(223)
+            catchment_section,catchment_bounds,scale_factor = \
+                rc_pts.plot_catchment_and_histogram_for_river(ax_hist=ax_hist,ax_catch=ax_catch,
+                                                              ref_catchment_field=ref_catchment_field.get_data(),
+                                                              data_catchment_field=data_catchment_field.get_data(),
+                                                              data_catchment_field_original_scale=\
+                                                              data_catchment_field.get_data(),
+                                                              data_original_scale_flowtocellfield=\
+                                                              data_flowtocellfield.get_data(),
+                                                              rdirs_field=ref_rdirs_field.get_data(),
+                                                              data_rdirs_field=data_rdirs_field.get_data(),
+                                                              pair=pair,
+                                                              catchment_grid_changed=catchment_grid_changed,
+                                                              swap_ref_and_data_when_finding_labels=\
+                                                              swap_ref_and_data_when_finding_labels,
+                                                              colors=self.colors,
+                                                              ref_grid=ref_grid,
+                                                              grid_type=grid_type,
+                                                              alternative_catchment_bounds=\
+                                                              alternative_catchment_bounds,
+                                                              use_simplified_catchment_colorscheme=\
+                                                              use_simplified_catchment_colorscheme,
+                                                              use_upscaling_labels=\
+                                                              use_upscaling_labels,
+                                                              allow_new_sink_points=\
+                                                              allow_new_true_sinks,
+                                                              external_landsea_mask=\
+                                                              external_ls_mask,
+                                                              ref_original_scale_flowtocellfield=\
+                                                              ref_flowtocellfield,
+                                                              ref_catchment_field_original_scale=\
+                                                              ref_catchment_field,
+                                                              use_original_scale_field_for_determining_data_and_ref_labels=\
+                                                              False,
+                                                              return_catchment_plotter=\
+                                                              False,
+                                                              data_original_scale_grid_type=\
+                                                              grid_type,
+                                                              ref_original_scale_grid_type=\
+                                                              grid_type,
+                                                              data_original_scale_grid_kwargs=\
+                                                              grid_kwargs,
+                                                              ref_original_scale_grid_kwargs=\
+                                                              grid_kwargs,
+                                                              **grid_kwargs)
+            ax = plt.subplot(224)
+            rc_pts.plot_whole_river_flowmap(ax=ax,pair=pair,
+                                            ref_flowtocellfield=ref_flowtocellfield.get_data(),
+                                            data_flowtocellfield=data_flowtocellfield.get_data(),
+                                            rdirs_field=ref_rdirs_field.get_data(),
+                                            data_rdirs_field=data_rdirs_field.get_data(),
+                                            catchment_bounds=catchment_bounds,colors=self.colors,
+                                            simplified_flowmap_plot=use_simplified_flowmap_colorscheme,
+                                            allow_new_sink_points=allow_new_true_sinks)
+            if super_fine_orog_filename:
+                ref_to_super_fine_scale_factor = \
+                    pts.calculate_scale_factor(coarse_grid_type=grid_type,
+                                               coarse_grid_kwargs=grid_kwargs,
+                                               fine_grid_type=super_fine_orog_grid_type,
+                                               fine_grid_kwargs=super_fine_orog_grid_kwargs)
+            else:
+                ref_to_super_fine_scale_factor=None
+            interactive_plots.setup_plots(catchment_section,
+                                          ref_orog_field.get_data(),
+                                          data_orog_field.get_data(),
+                                          ref_flowtocellfield.get_data(),
+                                          data_flowtocellfield.get_data(),
+                                          ref_rdirs_field.get_data(),
+                                          super_fine_orog_field.get_data(),
+                                          super_fine_flowtocellfield.get_data()
+                                          if super_fine_flowtocellfield is not None else None,
+                                          pair, catchment_bounds,
+                                          scale_factor,
+                                          ref_to_super_fine_scale_factor,
+                                          ref_grid_offset_adjustment=ref_grid.\
+                                          get_longitude_offset_adjustment(),
+                                          fine_grid_offset_adjustment=fine_grid.\
+                                          get_longitude_offset_adjustment(),
+                                          super_fine_grid_offset_adjustment=super_fine_grid.\
+                                          get_longitude_offset_adjustment(),
+                                          point_label_coords_scaling=3,
+                                          river_name=formatted_river_name)
+        print("Unresolved Conflicts: ")
+        for conflict in unresolved_conflicts:
+            print(" Conflict:")
+            for pair in conflict:
+                print("  Ref Point" + str(pair[0]) + "Matches" + str(pair[1]))
+        for temp_file in temp_file_list:
+            if os.path.basename(temp_file).startswith("temp_"):
+                print("Deleting File: {0}".format(temp_file))
+                os.remove(temp_file)
+
     def OutFlowComparisonPlotHelpers(self,reference_rmouth_outflows_filename,
                                      data_rmouth_outflows_filename,
                                      ref_flowmaps_filename,data_flowmaps_filename,
@@ -727,6 +982,7 @@ class OutflowPlots(Plots):
                                      ref_original_scale_grid_type='HD',
                                      grid_type='HD',data_original_scale_grid_type='HD',
                                      super_fine_orog_grid_type='HD',
+                                     no_data_path_prefixes=False,
                                      data_original_scale_grid_kwargs={},
                                      ref_original_scale_grid_kwargs={},
                                      super_fine_orog_grid_kwargs={},
@@ -739,20 +995,32 @@ class OutflowPlots(Plots):
             ref_catchments_filepath = os.path.join(self.catchments_data_directory,
                                                    ref_catchment_filename)
         if data_catchment_filename:
-            data_catchment_filepath = os.path.join(self.catchments_data_directory,
-                                                   data_catchment_filename)
+            if no_data_path_prefixes:
+                data_catchment_filepath = data_catchment_filename
+            else:
+                data_catchment_filepath = os.path.join(self.catchments_data_directory,
+                                                       data_catchment_filename)
         if data_rdirs_filename:
-            data_rdirs_filepath =  os.path.join(self.rdirs_data_directory,
-                                                data_rdirs_filename)
+            if no_data_path_prefixes:
+                data_rdirs_filepath =  data_rdirs_filename
+            else:
+                data_rdirs_filepath =  os.path.join(self.rdirs_data_directory,
+                                                    data_rdirs_filename)
         if ref_orog_filename:
             ref_orog_filepath = os.path.join(self.orog_data_directory,
                                              ref_orog_filename)
         if data_orog_original_scale_filename:
-            data_orog_original_scale_filepath = os.path.join(self.orog_data_directory,
-                                                             data_orog_original_scale_filename)
+            if no_data_path_prefixes:
+                data_orog_original_scale_filepath = data_orog_original_scale_filename
+            else:
+                data_orog_original_scale_filepath = os.path.join(self.orog_data_directory,
+                                                                 data_orog_original_scale_filename)
         if data_catchment_original_scale_filename:
-            data_catchment_original_scale_filepath = os.path.join(self.catchments_data_directory,
-                                                                  data_catchment_original_scale_filename)
+            if no_data_path_prefixes:
+                data_catchment_original_scale_filepath = data_catchment_original_scale_filename
+            else:
+                data_catchment_original_scale_filepath = os.path.join(self.catchments_data_directory,
+                                                                      data_catchment_original_scale_filename)
         if ref_catchment_original_scale_filename:
             ref_catchment_original_scale_filepath = os.path.join(self.catchments_data_directory,
                                                                  ref_catchment_original_scale_filename)
@@ -875,12 +1143,12 @@ class OutflowPlots(Plots):
             if rotate_super_fine_orog:
                 super_fine_orog_field = np.roll(super_fine_orog_field,
                                                 np.size(super_fine_orog_field,
-                                                        axis=1)/2,
+                                                        axis=1)//2,
                                                 axis=1)
                 if super_fine_data_flowmap is not None:
                     super_fine_data_flowmap = np.roll(super_fine_data_flowmap,
                                                       np.size(super_fine_data_flowmap,
-                                                              axis=1)/2,
+                                                              axis=1)//2,
                                                       axis=1)
         else:
             super_fine_orog_field = None
@@ -914,49 +1182,49 @@ class OutflowPlots(Plots):
                 data_orog_original_scale_field = np.flipud(data_orog_original_scale_field)
         if rotate_ref_field:
             ref_flowtocellfield = np.roll(ref_flowtocellfield,
-                                          np.size(ref_flowtocellfield,axis=1)/2,
+                                          np.size(ref_flowtocellfield,axis=1)//2,
                                           axis=1)
             rdirs_field = np.roll(rdirs_field,
-                                  np.size(rdirs_field,axis=1)/2,
+                                  np.size(rdirs_field,axis=1)//2,
                                   axis=1)
             if ref_catchment_filename:
                 ref_catchment_field = np.roll(ref_catchment_field,
-                                              np.size(ref_catchment_field,axis=1)/2,
+                                              np.size(ref_catchment_field,axis=1)//2,
                                               axis=1)
                 if use_original_scale_field_for_determining_data_and_ref_labels:
                     ref_original_scale_flowtocellfield = np.roll(ref_original_scale_flowtocellfield,
                                                                  np.size(ref_original_scale_flowtocellfield,
-                                                                         axis=1)/2,
+                                                                         axis=1)//2,
                                                                  axis=1)
                     ref_catchment_field_original_scale = np.roll(ref_catchment_field_original_scale,
                                                                  np.size(ref_catchment_field_original_scale,
-                                                                         axis=1)/2,
+                                                                         axis=1)//2,
                                                                  axis=1)
         if rotate_data_field:
             data_flowtocellfield = np.roll(data_flowtocellfield,
-                                           np.size(data_flowtocellfield,axis=1)/2,
+                                           np.size(data_flowtocellfield,axis=1)//2,
                                            axis=1)
             if data_rdirs_filename:
                 data_rdirs_field = np.roll(data_rdirs_field,
-                                           np.size(data_rdirs_field,axis=1)/2,
+                                           np.size(data_rdirs_field,axis=1)//2,
                                            axis=1)
             if data_catchment_filename:
                 data_catchment_field = np.roll(data_catchment_field,
-                                              np.size(data_catchment_field,axis=1)/2,
+                                              np.size(data_catchment_field,axis=1)//2,
                                               axis=1)
                 if catchment_grid_changed:
                     data_original_scale_flowtocellfield = np.roll(data_original_scale_flowtocellfield,
                                                                   np.size(data_original_scale_flowtocellfield,
-                                                                          axis=1)/2,
+                                                                          axis=1)//2,
                                                                   axis=1)
                     data_catchment_field_original_scale = np.roll(data_catchment_field_original_scale,
                                                                   np.size(data_catchment_field_original_scale,
-                                                                          axis=1)/2,
+                                                                          axis=1)//2,
                                                                   axis=1)
             if data_orog_original_scale_filename:
                 data_orog_original_scale_field = np.roll(data_orog_original_scale_field,
                                                          np.size(data_orog_original_scale_field,
-                                                                 axis=1)/2,
+                                                                 axis=1)//2,
                                                          axis=1)
             else:
                 data_orog_original_scale_field = None
@@ -965,7 +1233,7 @@ class OutflowPlots(Plots):
         if rotate_external_ls_mask:
             external_ls_mask = np.roll(external_ls_mask,
                                        np.size(external_ls_mask,
-                                               axis=1)/2,
+                                               axis=1)//2,
                                        axis=1)
         temp_file_list = []
         if catchment_and_outflows_mods_list_filename:
@@ -995,9 +1263,9 @@ class OutflowPlots(Plots):
                                                       catchment_and_outflows_modifications_list_filename=\
                                                       catchment_and_outflows_mods_list_filepath,
                                                       original_scale_catchment=\
-                                                      data_catchment_field_original_scale,
+                                                      data_catchment_field_original_scale.get_data(),
                                                       original_scale_flowmap=\
-                                                      data_original_scale_flowtocellfield,
+                                                      data_original_scale_flowtocellfield.get_data(),
                                                       catchment_grid_changed=catchment_grid_changed,
                                                       swap_ref_and_data_when_finding_labels=\
                                                       swap_ref_and_data_when_finding_labels,
@@ -1511,6 +1779,209 @@ class OutflowPlots(Plots):
                                           select_only_rivers_in="North America",
                                           super_fine_orog_grid_type='LatLong1min',
                                           grid_type='HD',data_original_scale_grid_type='LatLong10min')
+
+    def Compare_Original_Corrections_vs_Upscaled_MERIT_DEM_0k(self):
+        reference_rmouth_outflows_filename= ("/Users/thomasriddick/Documents/data/lake_analysis_runs/"
+                                             "lake_analysis_one_21_Jun_2021/rivers/results/default_orog_corrs/"
+                                             "diag_version_29_date_0_original_truesinks/"
+                                             "10min_rmouth_flowtocell.nc")
+        data_rmouth_outflows_filename= ("/Users/thomasriddick/Documents/data/lake_analysis_runs/"
+                                        "lake_analysis_two_26_Mar_2022/"
+                                        "rivers/results/diag_version_0_date_0_original_truesinks/"
+                                        "10min_rmouth_flowtocell.nc")
+        ref_flowmaps_filename = ("/Users/thomasriddick/Documents/data/lake_analysis_runs/"
+                                 "lake_analysis_one_21_Jun_2021/rivers/results/default_orog_corrs/"
+                                 "diag_version_29_date_0_original_truesinks/"
+                                 "10min_flowtocell.nc")
+        data_flowmaps_filename = ("/Users/thomasriddick/Documents/data/lake_analysis_runs/"
+                                  "lake_analysis_two_26_Mar_2022/"
+                                  "rivers/results/diag_version_0_date_0_original_truesinks/"
+                                  "10min_flowtocell.nc")
+        ref_rdirs_filename = ("/Users/thomasriddick/Documents/data/lake_analysis_runs/"
+                              "lake_analysis_one_21_Jun_2021/rivers/results/default_orog_corrs/"
+                              "diag_version_29_date_0_original_truesinks/"
+                              "10min_rdirs.nc")
+        data_rdirs_filename = ("/Users/thomasriddick/Documents/data/lake_analysis_runs/"
+                               "lake_analysis_two_26_Mar_2022/"
+                               "rivers/results/diag_version_0_date_0_original_truesinks/10min_rdirs.nc")
+        ref_catchments_filename = ("/Users/thomasriddick/Documents/data/lake_analysis_runs/"
+                                   "lake_analysis_one_21_Jun_2021/rivers/results/default_orog_corrs/"
+                                   "diag_version_29_date_0_original_truesinks/"
+                                   "10min_catchments.nc")
+        data_catchments_filename = ("/Users/thomasriddick/Documents/data/lake_analysis_runs/"
+                                    "lake_analysis_two_26_Mar_2022/"
+                                    "rivers/results/diag_version_0_date_0_original_truesinks/"
+                                    "10min_catchments.nc")
+        ref_orog_filename = ("/Users/thomasriddick/Documents/data/lake_analysis_runs/"
+                             "lake_analysis_one_21_Jun_2021/rivers/results/default_orog_corrs/"
+                             "diag_version_29_date_0_original_truesinks/"
+                             "10min_corrected_orog_two.nc")
+        data_orog_filename = ("/Users/thomasriddick/Documents/data/lake_analysis_runs/"
+                              "lake_analysis_two_26_Mar_2022/"
+                              "rivers/results/diag_version_0_date_0_original_truesinks/"
+                              "10min_corrected_orog_two.nc")
+        super_fine_orog_filename = ("/Users/thomasriddick/Documents/data/HDdata/orographys/"
+                                    "ETOPO1_Ice_g_gmt4_grid_registered.nc")
+        super_fine_data_flowmap_filename = ("/Users/thomasriddick/Documents/data/HDdata/flowmaps/"
+                                            "flowmap_etopo1_data_ALG4_sinkless_20160603_112520.nc")
+        extra_matches_filename = None
+        catchment_and_outflow_mods_filename = None
+
+        self.AdvancedOutFlowComparisonPlotHelpers(reference_rmouth_outflows_filename,
+                                                  data_rmouth_outflows_filename,
+                                                  ref_flowmaps_filename,
+                                                  data_flowmaps_filename,
+                                                  ref_rdirs_filename,
+                                                  data_rdirs_filename,
+                                                  ref_catchments_filename,
+                                                  data_catchments_filename,
+                                                  ref_orog_filename,
+                                                  data_orog_filename,
+                                                  super_fine_orog_filename=super_fine_orog_filename,
+                                                  super_fine_data_flowmap_filename=super_fine_data_flowmap_filename,
+                                                  external_ls_mask_filename=None,
+                                                  additional_matches_list_filename=extra_matches_filename,
+                                                  catchment_and_outflows_mods_list_filename=
+                                                  catchment_and_outflow_mods_filename,
+                                                  rivers_to_plot=None,
+                                                  matching_parameter_set='minimal',
+                                                  select_only_rivers_in=None,
+                                                  allow_new_true_sinks=True,
+                                                  alternative_catchment_bounds=None,
+                                                  use_simplified_catchment_colorscheme=False,
+                                                  use_simplified_flowmap_colorscheme=False,
+                                                  use_upscaling_labels=False,
+                                                  swap_ref_and_data_when_finding_labels=False,
+                                                  super_fine_orog_grid_type='LatLong1min',
+                                                  grid_type='LatLong10min')
+
+    def Compare_Original_Corrections_vs_Upscaled_MERIT_DEM_0k_new_truesinks(self):
+        ref_base_dir = ("/Users/thomasriddick/Documents/data/lake_analysis_runs/"
+                        "lake_analysis_one_21_Jun_2021/rivers/results/"
+                        "default_orog_corrs/"
+                        "diag_version_29_date_0_original_truesinks")
+        data_base_dir = ("/Users/thomasriddick/Documents/data/lake_analysis_runs/"
+                         "lake_analysis_two_26_Mar_2022/"
+                         "rivers/results/diag_version_32_date_0_with_truesinks")
+        reference_rmouth_outflows_filename= os.path.join(ref_base_dir,
+                                                         "10min_rmouth_flowtocell.nc")
+        data_rmouth_outflows_filename= os.path.join(data_base_dir,
+                                                    "10min_rmouth_flowtocell.nc")
+        ref_flowmaps_filename = os.path.join(ref_base_dir,
+                                             "10min_flowtocell.nc")
+        data_flowmaps_filename = os.path.join(data_base_dir,
+                                              "10min_flowtocell.nc")
+        ref_rdirs_filename = os.path.join(ref_base_dir,
+                                          "10min_rdirs.nc")
+        data_rdirs_filename = os.path.join(data_base_dir,
+                                           "10min_rdirs.nc")
+        ref_catchments_filename = os.path.join(ref_base_dir,
+                                               "10min_catchments_ext.nc")
+        data_catchments_filename = os.path.join(data_base_dir,
+                                                "10min_catchments_ext.nc")
+        ref_orog_filename = os.path.join(ref_base_dir,
+                                         "10min_corrected_orog_two.nc")
+        data_orog_filename = os.path.join(data_base_dir,
+                                          "10min_corrected_orog_two.nc")
+        super_fine_orog_filename = ("/Users/thomasriddick/Documents/data/HDdata/orographys/"
+                                    "ETOPO1_Ice_g_gmt4_grid_registered.nc")
+        super_fine_data_flowmap_filename = ("/Users/thomasriddick/Documents/data/HDdata/flowmaps/"
+                                            "flowmap_etopo1_data_ALG4_sinkless_20160603_112520.nc")
+        extra_matches_filename = ("/Users/thomasriddick/Documents/data/HDdata/addmatches/"
+                                  "additional_matches_10min_upscaled_MERIT_rdirs_vs_modern_day.txt")
+        catchment_and_outflow_mods_filename = ("/Users/thomasriddick/Documents/data/HDdata/"
+                                               "catchmods/catch_and_outflow_mods_10min_upscaled_MERIT_rdirs_vs_modern_day.txt")
+        self.AdvancedOutFlowComparisonPlotHelpers(reference_rmouth_outflows_filename,
+                                                  data_rmouth_outflows_filename,
+                                                  ref_flowmaps_filename,
+                                                  data_flowmaps_filename,
+                                                  ref_rdirs_filename,
+                                                  data_rdirs_filename,
+                                                  ref_catchments_filename,
+                                                  data_catchments_filename,
+                                                  ref_orog_filename,
+                                                  data_orog_filename,
+                                                  super_fine_orog_filename=super_fine_orog_filename,
+                                                  super_fine_data_flowmap_filename=super_fine_data_flowmap_filename,
+                                                  external_ls_mask_filename=None,
+                                                  additional_matches_list_filename=extra_matches_filename,
+                                                  catchment_and_outflows_mods_list_filename=
+                                                  catchment_and_outflow_mods_filename,
+                                                  rivers_to_plot=None,
+                                                  matching_parameter_set='minimal',
+                                                  select_only_rivers_in=None,
+                                                  allow_new_true_sinks=True,
+                                                  alternative_catchment_bounds=None,
+                                                  use_simplified_catchment_colorscheme=False,
+                                                  use_simplified_flowmap_colorscheme=False,
+                                                  use_upscaling_labels=False,
+                                                  swap_ref_and_data_when_finding_labels=False,
+                                                  super_fine_orog_grid_type='LatLong1min',
+                                                  grid_type='LatLong10min')
+
+    def Compare_Original_Corrections_vs_Upscaled_MERIT_DEM_0k_new_truesinks_individual_rivers(self):
+        ref_base_dir = ("/Users/thomasriddick/Documents/data/lake_analysis_runs/"
+                        "lake_analysis_one_21_Jun_2021/rivers/results/"
+                        "default_orog_corrs/"
+                        "diag_version_29_date_0_original_truesinks")
+        data_base_dir = ("/Users/thomasriddick/Documents/data/lake_analysis_runs/"
+                         "lake_analysis_two_26_Mar_2022/"
+                         "rivers/results/diag_version_32_date_0_with_truesinks")
+        reference_rmouth_outflows_filename= os.path.join(ref_base_dir,
+                                                         "10min_rmouth_flowtocell.nc")
+        data_rmouth_outflows_filename= os.path.join(data_base_dir,
+                                                    "10min_rmouth_flowtocell.nc")
+        ref_flowmaps_filename = os.path.join(ref_base_dir,
+                                             "10min_flowtocell.nc")
+        data_flowmaps_filename = os.path.join(data_base_dir,
+                                              "10min_flowtocell.nc")
+        ref_rdirs_filename = os.path.join(ref_base_dir,
+                                          "10min_rdirs.nc")
+        data_rdirs_filename = os.path.join(data_base_dir,
+                                           "10min_rdirs.nc")
+        ref_catchments_filename = os.path.join(ref_base_dir,
+                                               "10min_catchments_ext.nc")
+        data_catchments_filename = os.path.join(data_base_dir,
+                                                "10min_catchments_ext.nc")
+        ref_orog_filename = os.path.join(ref_base_dir,
+                                         "10min_corrected_orog_two.nc")
+        data_orog_filename = os.path.join(data_base_dir,
+                                          "10min_corrected_orog_two.nc")
+        super_fine_orog_filename = ("/Users/thomasriddick/Documents/data/HDdata/orographys/"
+                                    "ETOPO1_Ice_g_gmt4_grid_registered.nc")
+        super_fine_data_flowmap_filename = ("/Users/thomasriddick/Documents/data/HDdata/flowmaps/"
+                                            "flowmap_etopo1_data_ALG4_sinkless_20160603_112520.nc")
+        extra_matches_filename = ("/Users/thomasriddick/Documents/data/HDdata/addmatches/"
+                                  "additional_matches_10min_upscaled_MERIT_rdirs_vs_modern_day_selected_catchments.txt")
+        catchment_and_outflow_mods_filename = ("/Users/thomasriddick/Documents/data/HDdata/"
+                                               "catchmods/catch_and_outflow_mods_10min_upscaled_MERIT_rdirs_vs_modern_day.txt")
+        self.AdvancedOutFlowComparisonPlotHelpers(reference_rmouth_outflows_filename,
+                                                  data_rmouth_outflows_filename,
+                                                  ref_flowmaps_filename,
+                                                  data_flowmaps_filename,
+                                                  ref_rdirs_filename,
+                                                  data_rdirs_filename,
+                                                  ref_catchments_filename,
+                                                  data_catchments_filename,
+                                                  ref_orog_filename,
+                                                  data_orog_filename,
+                                                  super_fine_orog_filename=super_fine_orog_filename,
+                                                  super_fine_data_flowmap_filename=super_fine_data_flowmap_filename,
+                                                  external_ls_mask_filename=None,
+                                                  additional_matches_list_filename=extra_matches_filename,
+                                                  catchment_and_outflows_mods_list_filename=
+                                                  catchment_and_outflow_mods_filename,
+                                                  rivers_to_plot=None,
+                                                  matching_parameter_set='no_matches',
+                                                  select_only_rivers_in=None,
+                                                  allow_new_true_sinks=True,
+                                                  alternative_catchment_bounds=None,
+                                                  use_simplified_catchment_colorscheme=False,
+                                                  use_simplified_flowmap_colorscheme=False,
+                                                  use_upscaling_labels=False,
+                                                  swap_ref_and_data_when_finding_labels=False,
+                                                  super_fine_orog_grid_type='LatLong1min',
+                                                  grid_type='LatLong10min')
 
     def Compare_Corrected_HD_Rdirs_And_Etopo1_ALG4_sinkless_directly_upscaled_fields(self):
         corrected_hd_rdirs_rmouthoutflow_file = os.path.join(self.rmouth_outflow_data_directory,
@@ -2212,6 +2683,7 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                                        difference_in_catchment_label="Discrepancy",
                                                        glacier_mask_filename=None,
                                                        extra_lsmask_filename=None,
+                                                       show_true_sinks=False,
                                                        fig_size=(12,5),
                                                        grid_type='HD',
                                                        glacier_mask_grid_type='LatLong10min',
@@ -2220,6 +2692,10 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                                        rotate_glacier_mask=False,
                                                        **grid_kwargs):
         """Help compare two two-colour flow maps"""
+        if grid_type == "LatLong10min":
+            scale_factor = 3
+        else:
+            scale_factor = 1
         if (rivers_to_plot_secondary_alt_color is not None):
             if (rivers_to_plot is None) or (rivers_to_plot_alt_color is None):
                 raise RuntimeError("Invalid options - Secondary alternative color set when primary and/or"
@@ -2264,12 +2740,14 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
             data_rdirs_field = None
         ref_rdirs_field = iodriver.load_field(ref_rdirs_filepath,
                                               file_type=iodriver.get_file_extension(ref_rdirs_filepath),
-                                              field_type='Generic',
+                                              field_type='RiverDirections',
                                               grid_type=grid_type,**grid_kwargs)
         if lsmask_filename:
             lsmask_field = iodriver.load_field(lsmask_filename,
                                                file_type=iodriver.get_file_extension(lsmask_filename),
                                                field_type='Generic', grid_type=grid_type,**grid_kwargs)
+        else:
+            lsmask_field = field.Field(ref_rdirs_field.get_lsmask(),grid="LatLong10min")
         if extra_lsmask_filename:
             extra_lsmask_field = iodriver.load_field(extra_lsmask_filename,
                                                      file_type=iodriver.
@@ -2336,42 +2814,32 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                 glacier_mask_field.flip_data_ud()
             if rotate_glacier_mask:
                 glacier_mask_field.rotate_field_by_a_hundred_and_eighty_degrees()
-        if lsmask_filename:
-            lsmask = lsmask_field.get_data()
-        if extra_lsmask_filename:
-            extra_lsmask = extra_lsmask_field.get_data()
-        flowmap_ref_field = flowmap_ref_field.get_data()
-        flowmap_data_field = flowmap_data_field.get_data()
-        data_catchment_field = data_catchment_field.get_data()
-        ref_catchment_field = ref_catchment_field.get_data()
-        if data_rdirs_filename:
-            data_rdirs_field = data_rdirs_field.get_data()
-        ref_rdirs_field = ref_rdirs_field.get_data()
-        if glacier_mask_filename:
-            glacier_mask_field = glacier_mask_field.get_data()
         plt.figure(figsize=fig_size)
         ax = plt.subplot(111)
         if extra_lsmask_filename:
             image_array,extra_lsmask =fmp_pts.\
-              make_basic_flowmap_comparison_plot(ax,flowmap_ref_field,
-                                                flowmap_data_field,
+              make_basic_flowmap_comparison_plot(ax,flowmap_ref_field.get_data(),
+                                                flowmap_data_field.get_data(),
                                                 minflowcutoff,
                                                 first_datasource_name,
                                                 second_datasource_name,
-                                                lsmask,
+                                                lsmask_field.get_data(),
                                                 return_image_array_instead_of_plotting=True,
                                                 glacier_mask=glacier_mask_field,
-                                                second_lsmask = extra_lsmask)
+                                                second_lsmask = extra_lsmask,
+                                                scale_factor=scale_factor)
         else:
             image_array =fmp_pts.\
-              make_basic_flowmap_comparison_plot(ax,flowmap_ref_field,
-                                                flowmap_data_field,
+              make_basic_flowmap_comparison_plot(ax,flowmap_ref_field.get_data(),
+                                                flowmap_data_field.get_data(),
                                                 minflowcutoff,
                                                 first_datasource_name,
                                                 second_datasource_name,
-                                                lsmask,
+                                                lsmask_field.get_data(),
                                                 return_image_array_instead_of_plotting=True,
-                                                glacier_mask=glacier_mask_field)
+                                                glacier_mask=glacier_mask_field.get_data()
+                                                             if glacier_mask_field is not None else None,
+                                                scale_factor=scale_factor)
         temp_file_list = []
         if catchment_and_outflows_mods_list_filename:
             ref_outflow_field = iodriver.load_field(reference_rmouth_outflows_filename,
@@ -2412,7 +2880,22 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                  field=data_outflow_field,
                                  file_type=iodriver.\
                                  get_file_extension(data_rmouth_outflows_filename))
-
+        #Using get data to convert field type causes confusion... possibly rewrite
+        if lsmask_filename:
+            lsmask = lsmask_field.get_data()
+        else:
+            lsmask = None
+        if extra_lsmask_filename:
+            extra_lsmask = extra_lsmask_field.get_data()
+        flowmap_ref_field = flowmap_ref_field.get_data()
+        flowmap_data_field = flowmap_data_field.get_data()
+        data_catchment_field = data_catchment_field.get_data()
+        ref_catchment_field = ref_catchment_field.get_data()
+        if data_rdirs_filename:
+            data_rdirs_field = data_rdirs_field.get_data()
+        ref_rdirs_field = ref_rdirs_field.get_data()
+        if glacier_mask_filename:
+            glacier_mask_field = glacier_mask_field.get_data()
         matchedpairs,_  = mtch_rm.main(reference_rmouth_outflows_filename=\
                                        reference_rmouth_outflows_filename,
                                        data_rmouth_outflows_filename=\
@@ -2429,7 +2912,7 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                                                         data_rmouth_outflows_filename,
                                                                         flip_data_field=flip_data,
                                                                         rotate_data_field=rotate_data,
-                                                                        grid_type='HD',**grid_kwargs)
+                                                                        grid_type=grid_type,**grid_kwargs)
             matchedpairs.extend(additional_matches)
         if additional_truesink_matches_list_filename:
             additional_matches = mtch_rm.load_additional_manual_truesink_matches(additional_truesink_matches_list_filepath,
@@ -2449,7 +2932,7 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                                                                  **grid_kwargs)
             matchedpairs.extend(additional_matches)
         for pair in matchedpairs:
-            if pair[0].get_lat() > 310:
+            if pair[0].get_lat() > 310*scale_factor:
                 continue
             alt_color_num = 8
             if (rivers_to_plot is not None) and (rivers_to_plot_alt_color is not None):
@@ -2488,17 +2971,26 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                                                           use_single_color_for_discrepancies,
                                                                           use_only_one_color_for_flowmap=\
                                                                           use_only_one_color_for_flowmap,
+                                                                          allow_new_sink_points=show_true_sinks,
                                                                           grid_type=grid_type,
                                                                           data_original_scale_grid_type=grid_type)
         if extra_lsmask_filename:
             image_array = fmp_pts.add_extra_flowmap(image_array,extra_lsmask)
+        if show_true_sinks:
+            image_array[np.logical_and(ref_rdirs_field == 5,
+                                       data_rdirs_field == 5)] = -4
+            image_array[np.logical_and(ref_rdirs_field == 5,
+                                       data_rdirs_field != 5)] = -5
+            image_array[np.logical_and(ref_rdirs_field != 5,
+                                       data_rdirs_field == 5)] = -6
         if remove_antartica:
-            image_array = image_array[:320]
+            image_array = image_array[:320*scale_factor]
         fmp_pts.plot_composite_image(ax,image_array,minflowcutoff,first_datasource_name,second_datasource_name,
                                      use_single_color_for_discrepancies,use_only_one_color_for_flowmap,use_title,
                                      colors=self.colors,difference_in_catchment_label=difference_in_catchment_label,
                                      flowmap_grid=flowmap_grid,plot_glaciers=True if glacier_mask_filename else False,
-                                     second_ls_mask=True if extra_lsmask_filename else False)
+                                     second_ls_mask=True if extra_lsmask_filename else False,
+                                     show_true_sinks=show_true_sinks)
         for temp_file in temp_file_list:
             if os.path.basename(temp_file).startswith("temp_"):
                 print("Deleting File: {0}".format(temp_file))
@@ -3358,6 +3850,426 @@ class FlowMapPlotsWithCatchments(FlowMapPlots):
                                                                                                 (14,320)],
                                                             grid_type='HD')
 
+    def compare_river_directions_with_dynriver_corrs_and_MERIThydro_derived_corrs(self):
+        """Compare the orog corrs from the dynamic river papers with the MERIT hydro derived ones"""
+        ref_base_dir = ("/Users/thomasriddick/Documents/data/lake_analysis_runs"
+                        "/lake_analysis_one_21_Jun_2021")
+        data_base_dir = ("/Users/thomasriddick/Documents/data/lake_analysis_runs/"
+                         "lake_analysis_two_26_Mar_2022")
+        ref_filename=os.path.join(ref_base_dir,
+                                  "rivers/results/diag_version_29_date_0",
+                                  "30min_flowtocell.nc")
+        data_filename=os.path.join(data_base_dir,
+                                  "rivers/results/diag_version_0_date_0",
+                                  "30min_flowtocell.nc")
+        lsmask_filename=os.path.join(self.ls_masks_data_directory,"generated",
+                                     "ls_mask_extract_ls_mask_from_corrected_HD_rdirs_20160504_142435.nc")
+        ref_catchment_filename=os.path.join(ref_base_dir,
+                                            "rivers/results/diag_version_29_date_0",
+                                            "30min_catchments.nc")
+        data_catchment_filename=os.path.join(data_base_dir,
+                                             "rivers/results/diag_version_0_date_0",
+                                             "30min_catchments.nc")
+        ref_rdirs_filename=os.path.join(ref_base_dir,
+                                        "rivers/results/diag_version_29_date_0",
+                                        "30min_rdirs.nc")
+        reference_rmouth_outflows_filename=os.path.join(ref_base_dir,
+                                                        "rivers/results/diag_version_29_date_0",
+                                                        "30min_flowtorivermouths.nc")
+        data_rmouth_outflows_filename=os.path.join(data_base_dir,
+                                                   "rivers/results/diag_version_0_date_0",
+                                                   "30min_flowtorivermouths.nc")
+        #glacier_mask_filename=os.path.join(self.orog_data_directory,"ice5g_v1_2_21_0k_10min.nc")
+        self.FlowMapTwoColourComparisonWithCatchmentsHelper(ref_flowmap_filename=ref_filename,
+                                                            data_flowmap_filename=data_filename,
+                                                            ref_catchment_filename=\
+                                                            ref_catchment_filename,
+                                                            data_catchment_filename=\
+                                                            data_catchment_filename,
+                                                            ref_rdirs_filename=\
+                                                            ref_rdirs_filename,
+                                                            data_rdirs_filename=None,
+                                                            reference_rmouth_outflows_filename=\
+                                                            reference_rmouth_outflows_filename,
+                                                            data_rmouth_outflows_filename=\
+                                                            data_rmouth_outflows_filename,
+                                                            lsmask_filename=lsmask_filename,
+                                                            minflowcutoff=80,
+                                                            flip_data=False,
+                                                            rotate_data=False,
+                                                            flip_ref=False,
+                                                            rotate_ref=False,
+                                                            lsmask_has_same_orientation_as_ref=False,
+                                                            flip_lsmask=False,rotate_lsmask=False,
+                                                            invert_ls_mask=False,
+                                                            first_datasource_name="old",
+                                                            second_datasource_name="MERIT derived",
+                                                            matching_parameter_set='extensive',
+                                                            catchment_and_outflows_mods_list_filename=\
+                                                            None,
+                                                            #"catch_and_outflow_mods_ice6g_vs_ice5g_lgm.txt",
+                                                            #additional_matches_list_filename=\
+                                                            #"additional_matches_ice6g_vs_ice5g_lgm.txt",
+                                                            use_single_color_for_discrepancies=True,
+                                                            use_only_one_color_for_flowmap=False,
+                                                            use_title=False,remove_antartica=True,
+                                                            difference_in_catchment_label="Difference",
+                                                            grid_type='HD')
+
+    def compare_river_directions_with_dynriver_corrs_and_MERIThydro_derived_corrs_original_ts(self):
+        """Compare the orog corrs from the paper with the ones derived from MERIThydro including original true sinks"""
+        ref_base_dir = ("/Users/thomasriddick/Documents/data/lake_analysis_runs"
+                        "/lake_analysis_one_21_Jun_2021")
+        data_base_dir = ("/Users/thomasriddick/Documents/data/lake_analysis_runs/"
+                         "lake_analysis_two_26_Mar_2022")
+        ref_filename=os.path.join(ref_base_dir,
+                                  "rivers/results/default_orog_corrs/diag_version_29_date_0_original_truesinks",
+                                  "30min_flowtocell.nc")
+        data_filename=os.path.join(data_base_dir,
+                                  "rivers/results/diag_version_0_date_0_original_truesinks",
+                                  "30min_flowtocell.nc")
+        lsmask_filename=os.path.join(self.ls_masks_data_directory,"generated",
+                                     "ls_mask_extract_ls_mask_from_corrected_HD_rdirs_20160504_142435.nc")
+        ref_catchment_filename=os.path.join(ref_base_dir,
+                                            "rivers/results/default_orog_corrs/diag_version_29_date_0_original_truesinks",
+                                            "30min_catchments.nc")
+        data_catchment_filename=os.path.join(data_base_dir,
+                                             "rivers/results/diag_version_0_date_0_original_truesinks",
+                                             "30min_catchments.nc")
+        ref_rdirs_filename=os.path.join(ref_base_dir,
+                                        "rivers/results/default_orog_corrs/"
+                                        "diag_version_29_date_0_original_truesinks",
+                                        "30min_rdirs.nc")
+        reference_rmouth_outflows_filename=os.path.join(ref_base_dir,
+                                                        "rivers/results/default_orog_corrs/"
+                                                        "diag_version_29_date_0_original_truesinks",
+                                                        "30min_rmouth_flowtocell.nc")
+        data_rmouth_outflows_filename=os.path.join(data_base_dir,
+                                                   "rivers/results/diag_version_0_date_0_original_truesinks",
+                                                   "30min_rmouth_flowtocell.nc")
+        #glacier_mask_filename=os.path.join(self.orog_data_directory,"ice5g_v1_2_21_0k_10min.nc")
+        self.FlowMapTwoColourComparisonWithCatchmentsHelper(ref_flowmap_filename=ref_filename,
+                                                            data_flowmap_filename=data_filename,
+                                                            ref_catchment_filename=\
+                                                            ref_catchment_filename,
+                                                            data_catchment_filename=\
+                                                            data_catchment_filename,
+                                                            ref_rdirs_filename=\
+                                                            ref_rdirs_filename,
+                                                            data_rdirs_filename=None,
+                                                            reference_rmouth_outflows_filename=\
+                                                            reference_rmouth_outflows_filename,
+                                                            data_rmouth_outflows_filename=\
+                                                            data_rmouth_outflows_filename,
+                                                            lsmask_filename=lsmask_filename,
+                                                            minflowcutoff=80,
+                                                            flip_data=False,
+                                                            rotate_data=False,
+                                                            flip_ref=False,
+                                                            rotate_ref=False,
+                                                            lsmask_has_same_orientation_as_ref=False,
+                                                            flip_lsmask=False,rotate_lsmask=False,
+                                                            invert_ls_mask=False,
+                                                            first_datasource_name="old",
+                                                            second_datasource_name="MERIT derived",
+                                                            matching_parameter_set='default',
+                                                            catchment_and_outflows_mods_list_filename=\
+                                                            None,
+                                                            #additional_matches_list_filename=\
+                                                            #"additional_matches_ice6g_vs_ice5g_lgm.txt",
+                                                            use_single_color_for_discrepancies=True,
+                                                            use_only_one_color_for_flowmap=False,
+                                                            use_title=False,remove_antartica=True,
+                                                            difference_in_catchment_label="Difference",
+                                                            grid_type='HD')
+
+    def compare_river_directions_with_dynriver_corrs_and_MERIThydro_derived_corrs_new_ts_10min(self):
+        """Compare the orog corrs from the paper with the ones derived from MERIThydro including original true sinks"""
+        ref_base_dir = ("/Users/thomasriddick/Documents/data/lake_analysis_runs/"
+                        "lake_analysis_one_21_Jun_2021/rivers/results/"
+                        "default_orog_corrs/"
+                        "diag_version_29_date_0_original_truesinks")
+        data_base_dir = ("/Users/thomasriddick/Documents/data/lake_analysis_runs/"
+                         "lake_analysis_two_26_Mar_2022/"
+                         "rivers/results/diag_version_32_date_0_with_truesinks")
+        ref_filename=os.path.join(ref_base_dir,"10min_flowtocell.nc")
+        data_filename=os.path.join(data_base_dir,"10min_flowtocell.nc")
+        #lsmask_filename=os.path.join(self.ls_masks_data_directory,"generated",
+        #                             "ls_mask_extract_ls_mask_from_corrected_HD_rdirs_20160504_142435.nc")
+        lsmask_filename=None
+        ref_catchment_filename=os.path.join(ref_base_dir,
+                                            "10min_catchments_ext.nc")
+        data_catchment_filename=os.path.join(data_base_dir,
+                                             "10min_catchments_ext.nc")
+        ref_rdirs_filename=os.path.join(ref_base_dir,
+                                        "10min_rdirs.nc")
+        data_rdirs_filename=os.path.join(data_base_dir,
+                                        "10min_rdirs.nc")
+        reference_rmouth_outflows_filename=os.path.join(ref_base_dir,
+                                                        "10min_rmouth_flowtocell.nc")
+        data_rmouth_outflows_filename=os.path.join(data_base_dir,
+                                                   "10min_rmouth_flowtocell.nc")
+        #glacier_mask_filename=os.path.join(self.orog_data_directory,"ice5g_v1_2_21_0k_10min.nc")
+        self.FlowMapTwoColourComparisonWithCatchmentsHelper(ref_flowmap_filename=ref_filename,
+                                                            data_flowmap_filename=data_filename,
+                                                            ref_catchment_filename=\
+                                                            ref_catchment_filename,
+                                                            data_catchment_filename=\
+                                                            data_catchment_filename,
+                                                            ref_rdirs_filename=\
+                                                            ref_rdirs_filename,
+                                                            data_rdirs_filename=None,
+                                                            reference_rmouth_outflows_filename=\
+                                                            reference_rmouth_outflows_filename,
+                                                            data_rmouth_outflows_filename=\
+                                                            data_rmouth_outflows_filename,
+                                                            lsmask_filename=lsmask_filename,
+                                                            minflowcutoff=80*9/3,
+                                                            flip_data=False,
+                                                            rotate_data=False,
+                                                            flip_ref=False,
+                                                            rotate_ref=False,
+                                                            lsmask_has_same_orientation_as_ref=False,
+                                                            flip_lsmask=False,rotate_lsmask=False,
+                                                            invert_ls_mask=False,
+                                                            first_datasource_name="old",
+                                                            second_datasource_name="MERIT derived",
+                                                            matching_parameter_set='minimal',
+                                                            additional_matches_list_filename=
+                                                            "/Users/thomasriddick/Documents/data/HDdata/"
+                                                            "addmatches/additional_matches_10min_upscaled_"
+                                                            "MERIT_rdirs_vs_modern_day_ext.txt",
+                                                            additional_truesink_matches_list_filename=
+                                                            "/Users/thomasriddick/Documents/data/HDdata/"
+                                                            "addmatches/addmatches_truesinks/"
+                                                            "additional_truesinks_matches_10min_upscaled_"
+                                                            "MERIT_rdirs_vs_modern_day.txt",
+                                                            catchment_and_outflows_mods_list_filename=\
+                                                            "/Users/thomasriddick/Documents/data/HDdata/"
+                                                            "catchmods/catch_and_outflow_mods_10min_upscaled_MERIT_rdirs_vs_modern_day.txt",
+                                                            use_single_color_for_discrepancies=True,
+                                                            use_only_one_color_for_flowmap=False,
+                                                            use_title=False,remove_antartica=False,
+                                                            difference_in_catchment_label="Difference",
+                                                            grid_type='LatLong10min')
+        self.FlowMapTwoColourComparisonWithCatchmentsHelper(ref_flowmap_filename=ref_filename,
+                                                            data_flowmap_filename=data_filename,
+                                                            ref_catchment_filename=\
+                                                            ref_catchment_filename,
+                                                            data_catchment_filename=\
+                                                            data_catchment_filename,
+                                                            ref_rdirs_filename=\
+                                                            ref_rdirs_filename,
+                                                            data_rdirs_filename=None,
+                                                            reference_rmouth_outflows_filename=\
+                                                            reference_rmouth_outflows_filename,
+                                                            data_rmouth_outflows_filename=\
+                                                            data_rmouth_outflows_filename,
+                                                            lsmask_filename=lsmask_filename,
+                                                            minflowcutoff=20*9/3,
+                                                            flip_data=False,
+                                                            rotate_data=False,
+                                                            flip_ref=False,
+                                                            rotate_ref=False,
+                                                            lsmask_has_same_orientation_as_ref=False,
+                                                            flip_lsmask=False,rotate_lsmask=False,
+                                                            invert_ls_mask=False,
+                                                            first_datasource_name="old",
+                                                            second_datasource_name="MERIT derived",
+                                                            matching_parameter_set='minimal',
+                                                            additional_matches_list_filename=
+                                                            "/Users/thomasriddick/Documents/data/HDdata/"
+                                                            "addmatches/additional_matches_10min_upscaled_"
+                                                            "MERIT_rdirs_vs_modern_day_ext.txt",
+                                                            additional_truesink_matches_list_filename=
+                                                            "/Users/thomasriddick/Documents/data/HDdata/"
+                                                            "addmatches/addmatches_truesinks/"
+                                                            "additional_truesinks_matches_10min_upscaled_"
+                                                            "MERIT_rdirs_vs_modern_day.txt",
+                                                            catchment_and_outflows_mods_list_filename=\
+                                                            "/Users/thomasriddick/Documents/data/HDdata/"
+                                                            "catchmods/catch_and_outflow_mods_10min_upscaled_MERIT_rdirs_vs_modern_day.txt",
+                                                            use_single_color_for_discrepancies=True,
+                                                            use_only_one_color_for_flowmap=False,
+                                                            use_title=False,remove_antartica=False,
+                                                            difference_in_catchment_label="Difference",
+                                                            grid_type='LatLong10min')
+        self.FlowMapTwoColourComparisonWithCatchmentsHelper(ref_flowmap_filename=ref_filename,
+                                                            data_flowmap_filename=data_filename,
+                                                            ref_catchment_filename=\
+                                                            ref_catchment_filename,
+                                                            data_catchment_filename=\
+                                                            data_catchment_filename,
+                                                            ref_rdirs_filename=\
+                                                            ref_rdirs_filename,
+                                                            data_rdirs_filename=\
+                                                            data_rdirs_filename,
+                                                            reference_rmouth_outflows_filename=\
+                                                            reference_rmouth_outflows_filename,
+                                                            data_rmouth_outflows_filename=\
+                                                            data_rmouth_outflows_filename,
+                                                            lsmask_filename=lsmask_filename,
+                                                            minflowcutoff=20*9/3,
+                                                            flip_data=False,
+                                                            rotate_data=False,
+                                                            flip_ref=False,
+                                                            rotate_ref=False,
+                                                            lsmask_has_same_orientation_as_ref=False,
+                                                            flip_lsmask=False,rotate_lsmask=False,
+                                                            invert_ls_mask=False,
+                                                            first_datasource_name="old",
+                                                            second_datasource_name="MERIT derived",
+                                                            matching_parameter_set='minimal',
+                                                            additional_matches_list_filename=
+                                                            "/Users/thomasriddick/Documents/data/HDdata/"
+                                                            "addmatches/additional_matches_10min_upscaled_"
+                                                            "MERIT_rdirs_vs_modern_day_ext.txt",
+                                                            additional_truesink_matches_list_filename=
+                                                            "/Users/thomasriddick/Documents/data/HDdata/"
+                                                            "addmatches/addmatches_truesinks/"
+                                                            "additional_truesinks_matches_10min_upscaled_"
+                                                            "MERIT_rdirs_vs_modern_day.txt",
+                                                            catchment_and_outflows_mods_list_filename=\
+                                                            "/Users/thomasriddick/Documents/data/HDdata/"
+                                                            "catchmods/catch_and_outflow_mods_10min_upscaled_MERIT_rdirs_vs_modern_day.txt",
+                                                            use_single_color_for_discrepancies=True,
+                                                            use_only_one_color_for_flowmap=False,
+                                                            use_title=False,remove_antartica=False,
+                                                            show_true_sinks=True,
+                                                            difference_in_catchment_label="Difference",
+                                                            grid_type='LatLong10min')
+        self.FlowMapTwoColourComparisonWithCatchmentsHelper(ref_flowmap_filename=ref_filename,
+                                                            data_flowmap_filename=data_filename,
+                                                            ref_catchment_filename=\
+                                                            ref_catchment_filename,
+                                                            data_catchment_filename=\
+                                                            data_catchment_filename,
+                                                            ref_rdirs_filename=\
+                                                            ref_rdirs_filename,
+                                                            data_rdirs_filename=\
+                                                            None,
+                                                            reference_rmouth_outflows_filename=\
+                                                            reference_rmouth_outflows_filename,
+                                                            data_rmouth_outflows_filename=\
+                                                            data_rmouth_outflows_filename,
+                                                            lsmask_filename=lsmask_filename,
+                                                            minflowcutoff=5*9/3,
+                                                            flip_data=False,
+                                                            rotate_data=False,
+                                                            flip_ref=False,
+                                                            rotate_ref=False,
+                                                            lsmask_has_same_orientation_as_ref=False,
+                                                            flip_lsmask=False,rotate_lsmask=False,
+                                                            invert_ls_mask=False,
+                                                            first_datasource_name="old",
+                                                            second_datasource_name="MERIT derived",
+                                                            matching_parameter_set='minimal',
+                                                            additional_matches_list_filename=
+                                                            "/Users/thomasriddick/Documents/data/HDdata/"
+                                                            "addmatches/additional_matches_10min_upscaled_"
+                                                            "MERIT_rdirs_vs_modern_day_ext.txt",
+                                                            additional_truesink_matches_list_filename=
+                                                            "/Users/thomasriddick/Documents/data/HDdata/"
+                                                            "addmatches/addmatches_truesinks/"
+                                                            "additional_truesinks_matches_10min_upscaled_"
+                                                            "MERIT_rdirs_vs_modern_day.txt",
+                                                            catchment_and_outflows_mods_list_filename=\
+                                                            "/Users/thomasriddick/Documents/data/HDdata/"
+                                                            "catchmods/catch_and_outflow_mods_10min_upscaled_MERIT_rdirs_vs_modern_day.txt",
+                                                            use_single_color_for_discrepancies=True,
+                                                            use_only_one_color_for_flowmap=False,
+                                                            use_title=False,remove_antartica=False,
+                                                            show_true_sinks=False,
+                                                            difference_in_catchment_label="Difference",
+                                                            grid_type='LatLong10min')
+        self.FlowMapTwoColourComparisonWithCatchmentsHelper(ref_flowmap_filename=ref_filename,
+                                                            data_flowmap_filename=data_filename,
+                                                            ref_catchment_filename=\
+                                                            ref_catchment_filename,
+                                                            data_catchment_filename=\
+                                                            data_catchment_filename,
+                                                            ref_rdirs_filename=\
+                                                            ref_rdirs_filename,
+                                                            data_rdirs_filename=\
+                                                            data_rdirs_filename,
+                                                            reference_rmouth_outflows_filename=\
+                                                            reference_rmouth_outflows_filename,
+                                                            data_rmouth_outflows_filename=\
+                                                            data_rmouth_outflows_filename,
+                                                            lsmask_filename=lsmask_filename,
+                                                            minflowcutoff=5*9/3,
+                                                            flip_data=False,
+                                                            rotate_data=False,
+                                                            flip_ref=False,
+                                                            rotate_ref=False,
+                                                            lsmask_has_same_orientation_as_ref=False,
+                                                            flip_lsmask=False,rotate_lsmask=False,
+                                                            invert_ls_mask=False,
+                                                            first_datasource_name="old",
+                                                            second_datasource_name="MERIT derived",
+                                                            matching_parameter_set='minimal',
+                                                            additional_matches_list_filename=
+                                                            "/Users/thomasriddick/Documents/data/HDdata/"
+                                                            "addmatches/additional_matches_10min_upscaled_"
+                                                            "MERIT_rdirs_vs_modern_day_ext.txt",
+                                                            additional_truesink_matches_list_filename=
+                                                            "/Users/thomasriddick/Documents/data/HDdata/"
+                                                            "addmatches/addmatches_truesinks/"
+                                                            "additional_truesinks_matches_10min_upscaled_"
+                                                            "MERIT_rdirs_vs_modern_day.txt",
+                                                            catchment_and_outflows_mods_list_filename=\
+                                                            "/Users/thomasriddick/Documents/data/HDdata/"
+                                                            "catchmods/catch_and_outflow_mods_10min_upscaled_MERIT_rdirs_vs_modern_day.txt",
+                                                            use_single_color_for_discrepancies=True,
+                                                            use_only_one_color_for_flowmap=False,
+                                                            use_title=False,remove_antartica=False,
+                                                            show_true_sinks=True,
+                                                            difference_in_catchment_label="Difference",
+                                                            grid_type='LatLong10min')
+        self.FlowMapTwoColourComparisonWithCatchmentsHelper(ref_flowmap_filename=ref_filename,
+                                                            data_flowmap_filename=data_filename,
+                                                            ref_catchment_filename=\
+                                                            ref_catchment_filename,
+                                                            data_catchment_filename=\
+                                                            data_catchment_filename,
+                                                            ref_rdirs_filename=\
+                                                            ref_rdirs_filename,
+                                                            data_rdirs_filename=\
+                                                            data_rdirs_filename,
+                                                            reference_rmouth_outflows_filename=\
+                                                            reference_rmouth_outflows_filename,
+                                                            data_rmouth_outflows_filename=\
+                                                            data_rmouth_outflows_filename,
+                                                            lsmask_filename=lsmask_filename,
+                                                            minflowcutoff=2*9/3,
+                                                            flip_data=False,
+                                                            rotate_data=False,
+                                                            flip_ref=False,
+                                                            rotate_ref=False,
+                                                            lsmask_has_same_orientation_as_ref=False,
+                                                            flip_lsmask=False,rotate_lsmask=False,
+                                                            invert_ls_mask=False,
+                                                            first_datasource_name="old",
+                                                            second_datasource_name="MERIT derived",
+                                                            matching_parameter_set='minimal',
+                                                            additional_matches_list_filename=
+                                                            "/Users/thomasriddick/Documents/data/HDdata/"
+                                                            "addmatches/additional_matches_10min_upscaled_"
+                                                            "MERIT_rdirs_vs_modern_day_ext.txt",
+                                                            additional_truesink_matches_list_filename=
+                                                            "/Users/thomasriddick/Documents/data/HDdata/"
+                                                            "addmatches/addmatches_truesinks/"
+                                                            "additional_truesinks_matches_10min_upscaled_"
+                                                            "MERIT_rdirs_vs_modern_day.txt",
+                                                            catchment_and_outflows_mods_list_filename=\
+                                                            "/Users/thomasriddick/Documents/data/HDdata/"
+                                                            "catchmods/catch_and_outflow_mods_10min_upscaled_MERIT_rdirs_vs_modern_day.txt",
+                                                            use_single_color_for_discrepancies=True,
+                                                            use_only_one_color_for_flowmap=False,
+                                                            use_title=False,remove_antartica=False,
+                                                            show_true_sinks=True,
+                                                            difference_in_catchment_label="Difference",
+                                                            grid_type='LatLong10min')
 class OrographyPlots(Plots):
     """A general base class for orography plots"""
 
@@ -3943,7 +4855,7 @@ def main():
     #flowmapplot.Upscaled_Rdirs_vs_Directly_Upscaled_fields_ICE5G_data_ALG4_corr_orog_downscaled_ls_mask_0k_FlowMap_comparison()
     #flowmapplot.Ten_Minute_Data_from_Virna_data_ALG4_corr_orog_downscaled_lsmask_no_sinks_21k_vs_0k_FlowMap_comparison()
     #flowmapplot.Upscaled_Rdirs_vs_Corrected_HD_Rdirs_ICE5G_data_ALG4_corr_orog_downscaled_ls_mask_0k_FlowMap_comparison()
-    #flowmapplotwithcatchment = FlowMapPlotsWithCatchments(save)
+    flowmapplotwithcatchment = FlowMapPlotsWithCatchments(save)
     #flowmapplotwithcatchment.Upscaled_Rdirs_vs_Corrected_HD_Rdirs_ICE5G_data_ALG4_corr_orog_downscaled_ls_mask_0k_FlowMap_comparison()
     #flowmapplotwithcatchment.compare_present_day_and_lgm_river_directions_with_catchments_virna_data_plus_tarasov_style_orog_corrs_for_both()
     #flowmapplotwithcatchment.compare_present_day_river_directions_with_catchments_virna_data_with_vs_without_tarasov_style_orog_corrs()
@@ -3959,7 +4871,10 @@ def main():
     #flowmapplotwithcatchment.compare_present_day_and_lgm_river_directions_with_catchments_ICE5G_plus_tarasov_style_orog_corrs_for_both()
     #flowmapplotwithcatchment.compare_present_day_and_lgm_river_directions_with_catchments_ICE6G_plus_tarasov_style_orog_corrs_for_both()
     #flowmapplotwithcatchment.compare_ICE5G_and_ICE6G_with_catchments_tarasov_style_orog_corrs_for_both()
-    #outflowplots = OutflowPlots(save)
+    #flowmapplotwithcatchment.compare_river_directions_with_dynriver_corrs_and_MERIThydro_derived_corrs()
+    #flowmapplotwithcatchment.compare_river_directions_with_dynriver_corrs_and_MERIThydro_derived_corrs_original_ts()
+    flowmapplotwithcatchment.compare_river_directions_with_dynriver_corrs_and_MERIThydro_derived_corrs_new_ts_10min()
+    outflowplots = OutflowPlots(save)
     #outflowplots.Compare_Upscaled_Rdirs_vs_Directly_Upscaled_fields_ICE5G_data_ALG4_corr_orog_downscaled_ls_mask_0k()
     #outflowplots.Compare_Corrected_HD_Rdirs_And_ICE5G_as_HD_data_ALG4_sinkless_all_points_0k()
     #outflowplots.Compare_Corrected_HD_Rdirs_And_ICE5G_as_HD_data_ALG4_true_sinks_all_points_0k()
@@ -3970,6 +4885,9 @@ def main():
     #outflowplots.Compare_Corrected_HD_Rdirs_And_Etopo1_ALG4_sinkless_directly_upscaled_fields()
     #outflowplots.Compare_Corrected_HD_Rdirs_And_Etopo1_ALG4_true_sinks_directly_upscaled_fields()
     #outflowplots.Compare_Corrected_HD_Rdirs_And_ICE5G_plus_tarasov_upscaled_srtm30_ALG4_corr_orog_0k_directly_upscaled_fields()
+    #outflowplots.Compare_Original_Corrections_vs_Upscaled_MERIT_DEM_0k()
+    outflowplots.Compare_Original_Corrections_vs_Upscaled_MERIT_DEM_0k_new_truesinks()
+    #outflowplots.Compare_Original_Corrections_vs_Upscaled_MERIT_DEM_0k_new_truesinks_individual_rivers()
     #outflowplots.Compare_ICE5G_with_and_without_tarasov_upscaled_srtm30_ALG4_corr_orog_0k_directly_upscaled_fields()
     #hd_output_plots = HDOutputPlots()
     #hd_output_plots.check_water_balance_of_1978_for_constant_forcing_of_0_01()
@@ -3981,10 +4899,10 @@ def main():
     #coupledrunoutputplots.ocean_grid_extended_present_day_rdirs_vs_ice6g_rdirs_lgm_run_discharge_plot()
     #coupledrunoutputplots.extended_present_day_rdirs_vs_ice6g_rdirs_lgm_echam()
     #coupledrunoutputplots.extended_present_day_rdirs_vs_ice6g_rdirs_lgm_mpiom_pem()
-    lake_plots = LakePlots()
+    #lake_plots = LakePlots()
     #lake_plots.plotLakeDepths()
     #lake_plots.LakeAndRiverMap()
-    lake_plots.LakeAndRiverMaps()
+    #lake_plots.LakeAndRiverMaps()
     if show:
         plt.show()
 

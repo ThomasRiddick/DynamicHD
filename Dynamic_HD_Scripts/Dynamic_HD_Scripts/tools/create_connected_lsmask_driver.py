@@ -23,10 +23,14 @@ def advanced_connected_lsmask_creation_driver(input_lsmask_filename,
                                               input_ls_seed_points_list_filename = None,
                                               use_diagonals_in=True,
                                               rotate_seeds_about_polar_axis=False,
-                                              flip_seeds_ud=False):
+                                              flip_seeds_ud=False,
+                                              adjust_lsmask_orientation=True,
+                                              grid_type="LatLong10min",
+                                              **grid_kwargs):
     lsmask = iodriver.advanced_field_loader(input_lsmask_filename,
                                             field_type='Generic',
-                                            fieldname=input_lsmask_fieldname)
+                                            fieldname=input_lsmask_fieldname,
+                                            adjust_orientation=adjust_lsmask_orientation)
     if input_ls_seed_points_filename:
         input_ls_seedpts = iodriver.advanced_field_loader(input_ls_seed_points_filename,
                                                           field_type='Generic',
@@ -34,13 +38,14 @@ def advanced_connected_lsmask_creation_driver(input_lsmask_filename,
                                                           input_ls_seed_points_fieldname,
                                                           adjust_orientation=False)
     else:
-        input_ls_seedpts = field.makeEmptyField('Generic',np.int32)
+        input_ls_seedpts = field.makeEmptyField('Generic',np.int32,
+                                                grid_type=grid_type,**grid_kwargs)
     if input_ls_seed_points_list_filename:
         points_list = []
         print("Reading input from {0}".format(input_ls_seed_points_list_filename))
         comment_line_pattern = re.compile(r"^ *#.*$")
         with open(input_ls_seed_points_list_filename) as f:
-            if f.readline().strip() != 'LatLong':
+            if "LatLong" not in f.readline().strip():
                 raise RuntimeError("List of landsea points being loaded is not for correct grid-type")
             for line in f:
                 if comment_line_pattern.match(line):

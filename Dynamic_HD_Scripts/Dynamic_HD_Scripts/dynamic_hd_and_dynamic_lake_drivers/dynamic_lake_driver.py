@@ -8,6 +8,8 @@ import os.path as path
 import numpy as np
 import time
 from Dynamic_HD_Scripts.base import iodriver
+from Dynamic_HD_Scripts.base.iodriver import advanced_field_loader
+from Dynamic_HD_Scripts.base.iodriver import advanced_field_writer
 from Dynamic_HD_Scripts.base import field
 from Dynamic_HD_Scripts.tools import determine_river_directions
 from Dynamic_HD_Scripts.tools import extract_lake_volumes
@@ -17,6 +19,7 @@ from Dynamic_HD_Scripts.tools import connect_coarse_lake_catchments as cclc
 from Dynamic_HD_Scripts.tools import dynamic_lake_operators
 from Dynamic_HD_Scripts.tools import fill_sinks_driver
 from Dynamic_HD_Scripts.tools import river_mouth_marking_driver
+from Dynamic_HD_Scripts.tools import create_connected_lsmask_driver as ccld
 from Dynamic_HD_Scripts.utilities import utilities
 from Dynamic_HD_Scripts.dynamic_hd_and_dynamic_lake_drivers import dynamic_hd_driver
 
@@ -1094,6 +1097,120 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
                                           basin_catchment_numbers_filepath,
                                           lake_volumes_out_filepath)
 
+    def add_10min_rmouth_to_transient_data(self):
+        basename_analysis_one = ("/Users/thomasriddick/Documents/data/lake_analysis_runs/"
+                                 "lake_analysis_two_26_Mar_2022/rivers/results/"
+                                 "diag_version_32_date_0_with_truesinks/")
+        basename_analysis_two = ("/Users/thomasriddick/Documents/data/lake_analysis_runs/"
+                                  "lake_analysis_one_21_Jun_2021/rivers/results/default_orog_corrs/"
+                                  "diag_version_29_date_0_with_truesinks//")
+        rdirs_list = [basename_analysis_one+"10min_rdirs.nc"]
+                      # basename_analysis_two+"10min_rdirs.nc"]
+        flow_to_cell_list = [basename_analysis_one+"10min_flowtocell.nc"]
+                             # basename_analysis_two+"10min_flowtocell.nc"]
+        output_list = [basename_analysis_one+"10min_rmouth_flowtocell.nc"]
+                       # basename_analysis_two+"10min_rmouth_flowtocell.nc"]
+        for rdirs_file,flow_to_cell_file,output_file in \
+             zip(rdirs_list,flow_to_cell_list,output_list):
+            river_mouth_marking_driver.\
+                advanced_flow_to_rivermouth_calculation_driver(input_river_directions_filename=rdirs_file,
+                                                               input_flow_to_cell_filename=flow_to_cell_file,
+                                                               output_flow_to_river_mouths_filename=output_file,
+                                                               input_river_directions_fieldname="rdir",
+                                                               input_flow_to_cell_fieldname="acc",
+                                                               output_flow_to_river_mouths_fieldname="acc")
+
+    def expand_transient_data_catchments_to_include_rmouth(self):
+        basename_analysis_one = ("/Users/thomasriddick/Documents/data/lake_analysis_runs/"
+                                 "lake_analysis_two_26_Mar_2022/rivers/results/"
+                                 "diag_version_32_date_0_with_truesinks/")
+        basename_analysis_two = ("/Users/thomasriddick/Documents/data/lake_analysis_runs/"
+                                 "lake_analysis_two_26_Mar_2022/"
+                                 "rivers/results/diag_version_0_date_0/")
+        ref_catchment_filename = join(basename_analysis_one,"10min_catchments.nc")
+        # data_catchment_filename = join(basename_analysis_two,"10min_catchments_grid.nc")
+        ref_rdirs_filename = join(basename_analysis_one,"10min_rdirs.nc")
+        # data_rdirs_filename = join(basename_analysis_two,"10min_rdirs_grid.nc")
+        ref_expanded_catchment_filename = join(basename_analysis_one,
+                                               "10min_catchments_ext.nc")
+        # data_expanded_catchment_filename = join(basename_analysis_two,
+        #                                         "10min_catchments_grid_ext.nc")
+        ref_catchment_field = advanced_field_loader(ref_catchment_filename,
+                                                    time_slice=None,
+                                                    fieldname="catch",
+                                                    adjust_orientation=True)
+        # data_catchment_field = advanced_field_loader(data_catchment_filename,
+        #                                              time_slice=None,
+        #                                              fieldname="catch",
+        #                                              adjust_orientation=True)
+        ref_rdirs_field = advanced_field_loader(ref_rdirs_filename,
+                                                time_slice=None,
+                                                fieldname="rdir",
+                                                adjust_orientation=True)
+        # data_rdirs_field = advanced_field_loader(data_rdirs_filename,
+        #                                          time_slice=None,
+        #                                          fieldname="rdir",
+        #                                          adjust_orientation=True)
+        for coords in zip(*(np.nonzero(ref_rdirs_field.get_data() == 0.0))):
+            utilities.expand_catchment_to_include_rivermouths(ref_rdirs_field.get_data(),
+                                                              ref_catchment_field.get_data(),
+                                                              coords)
+        # for coords in zip(*(np.nonzero(data_rdirs_field.get_data() == 0.0))):
+        #     utilities.expand_catchment_to_include_rivermouths(data_rdirs_field.get_data(),
+        #                                                       data_catchment_field.get_data(),
+        #                                                       coords)
+        iodriver.advanced_field_writer(ref_expanded_catchment_filename,
+                                       ref_catchment_field,
+                                       fieldname="catch")
+        # iodriver.advanced_field_writer(data_expanded_catchment_filename,
+        #                                data_catchment_field,
+        #                                fieldname="catch")
+
+    def remove_no_data_values_from_upscaled_MERIT_correction_set(self):
+        input_upscaled_correction_set_filename = ("/Users/thomasriddick/Documents/data/HDdata/"
+                                                  "orogcorrsfields/orog_corrs_field_generate_"
+                                                  "corrections_for_upscaled_MeritHydro_0k_20220326_121152_rn.nc")
+        output_upscaled_correction_set_filename = ("/Users/thomasriddick/Documents/data/HDdata/"
+                                                   "orogcorrsfields/orog_corrs_field_generate_"
+                                                   "corrections_for_upscaled_MeritHydro_0k_20220326_121152_rn_adjusted.nc")
+        upscaled_orography_filename = ("/Users/thomasriddick/Documents/data/HDdata/"
+                                       "orographys/tarasov_upscaled/"
+                                       "MERITdem_hydroupscaled_to_10min_global_g.nc")
+        upscaled_correction_set = advanced_field_loader(input_upscaled_correction_set_filename,
+                                                        time_slice=None,
+                                                        fieldname="orog",
+                                                        adjust_orientation=True)
+        upscaled_orography = advanced_field_loader(upscaled_orography_filename,
+                                                   time_slice=None,
+                                                   fieldname="z",
+                                                   adjust_orientation=True)
+        upscaled_correction_set.get_data()[upscaled_orography.get_data() == -9999.0] = 0.0
+        iodriver.advanced_field_writer(output_upscaled_correction_set_filename,
+                                       upscaled_correction_set,
+                                       fieldname="orog")
+
+    def remove_disconnected_points_from_slm(self):
+        input_lsmask_filename = ("/Users/thomasriddick/Documents/data/"
+                                 "simulation_data/lake_transient_data/run_1/"
+                                 "10min_slm_0_old.nc")
+        output_lsmask_filename =  ("/Users/thomasriddick/Documents/data/"
+                                   "simulation_data/lake_transient_data/run_1/"
+                                   "10min_slm_0_disconnected_points_removed.nc")
+        input_ls_seed_points_list_filename = ("/Users/thomasriddick/Documents/data/HDdata/"
+                                              "lsseedpoints/lsseedpoints_downscale_HD_ls_seed"
+                                              "_points_to_10min_lat_lon_true_seas_inc_casp_only_20160718_114402.txt")
+        ccld.advanced_connected_lsmask_creation_driver(input_lsmask_filename,
+                                                       output_lsmask_filename,
+                                                       input_lsmask_fieldname="slm",
+                                                       output_lsmask_fieldname="slm",
+                                                       input_ls_seed_points_list_filename =
+                                                       input_ls_seed_points_list_filename,
+                                                       use_diagonals_in=True,
+                                                       rotate_seeds_about_polar_axis=True,
+                                                       flip_seeds_ud=False,
+                                                       adjust_lsmask_orientation=False)
+
+
 def main():
     """Select the revelant runs to make
 
@@ -1113,8 +1230,12 @@ def main():
     #lake_drivers.prepare_basins_from_glac1D()
     #lake_drivers.extract_lake_volumes_from_glac1D_basins()
     #lake_drivers.connect_catchments_for_glac1D()
-    lake_drivers.connect_catchments_for_transient_run()
-    lake_drivers.extract_volumes_for_transient_run()
+    #lake_drivers.connect_catchments_for_transient_run()
+    #lake_drivers.extract_volumes_for_transient_run()
+    lake_drivers.add_10min_rmouth_to_transient_data()
+    lake_drivers.expand_transient_data_catchments_to_include_rmouth()
+    #lake_drivers.remove_no_data_values_from_upscaled_MERIT_correction_set()
+    #lake_drivers.remove_disconnected_points_from_slm()
 
 if __name__ == '__main__':
     main()

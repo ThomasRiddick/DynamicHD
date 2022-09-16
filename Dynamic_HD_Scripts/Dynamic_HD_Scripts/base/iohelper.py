@@ -164,10 +164,13 @@ class NetCDF4FileIOHelper(IOHelper):
             if check_for_grid_info:
                 latitudes = None
                 longitudes = None
-                fields = dataset.get_variables_by_attributes(name='lat')
+                for latitude_names in ['lat','y']:
+                    fields = dataset.get_variables_by_attributes(name=latitude_names)
+                    if len(fields) >= 1:
+                        break
                 if len(fields) == 1:
                     latitudes = fields[0][:]
-                    for longitude_names in ['lon','long']:
+                    for longitude_names in ['lon','long','x']:
                         fields = dataset.get_variables_by_attributes(name=longitude_names)
                         if len(fields) >= 1:
                             break

@@ -67,6 +67,7 @@ class Interactive_Plots(object):
 
         self.scale_factor = 1
         self.ref_to_super_fine_scale_factor = 1
+        self.point_label_coords_scaling = 1
         self.catchment_bounds = None
         self.catchment_section = None
         self.ref_orog_field = None
@@ -81,7 +82,8 @@ class Interactive_Plots(object):
                     ref_flowtocellfield,data_flowtocellfield,rdirs_field,super_fine_orog_field,
                     super_fine_data_flowtocellfield,pair,catchment_bounds,scale_factor,
                     ref_to_super_fine_scale_factor,ref_grid_offset_adjustment=0,
-                    fine_grid_offset_adjustment=0,super_fine_grid_offset_adjustment=0):
+                    fine_grid_offset_adjustment=0,super_fine_grid_offset_adjustment=0,
+                    point_label_coords_scaling=1,river_name=None):
         """Setup the set of interactive plots and bind on events to callbacks
 
         Arguments:
@@ -112,7 +114,12 @@ class Interactive_Plots(object):
         self.super_fine_orog_field = super_fine_orog_field
         self.super_fine_data_flowtocellfield = super_fine_data_flowtocellfield
         self.pair = pair
-        plt.figure(figsize=(25,14))
+        self.point_label_coords_scaling = point_label_coords_scaling
+        if river_name:
+            fig = plt.figure(river_name + " - Interactive",figsize=(25,14))
+            fig.suptitle(river_name)
+        else:
+            plt.figure(figsize=(25,14))
         gs=gridspec.GridSpec(6,9,width_ratios=[8,1,1.5,8,1,1.5,8,1,1],height_ratios=[12,1,1,1,1,1])
         ax = plt.subplot(gs[0,0])
         ax2 = plt.subplot(gs[0,3])
@@ -125,16 +132,21 @@ class Interactive_Plots(object):
                               format_coords=True,
                               lat_offset=self.catchment_bounds[0],
                               lon_offset=self.catchment_bounds[2],
-                              colors=None)
+                              colors=None,
+                              point_label_coords_scaling=self.point_label_coords_scaling)
         def format_fn_y(tick_val,tick_pos,offset=self.catchment_bounds[0]):
-            return pts.calculate_lat_label(tick_val,offset)
-        self.y_formatter_funcs.append(format_fn_y)
+            return pts.calculate_lat_label(tick_val,offset/self.point_label_coords_scaling,
+                                           scale_factor=self.point_label_coords_scaling,
+                                           precision=1)
+        self.y_formatter_funcs.append(FuncFormatter(format_fn_y))
         def format_fn_x(tick_val,tick_pos,offset=self.catchment_bounds[2] +
                         ref_grid_offset_adjustment):
-            return pts.calculate_lon_label(tick_val,offset)
-        self.x_formatter_funcs.append(format_fn_x)
-        ax_catch.yaxis.set_major_formatter(FuncFormatter(format_fn_y))
-        ax_catch.xaxis.set_major_formatter((FuncFormatter(format_fn_x)))
+            return pts.calculate_lon_label(tick_val,offset/self.point_label_coords_scaling,
+                                           scale_factor=self.point_label_coords_scaling,
+                                           precision=1)
+        self.x_formatter_funcs.append(FuncFormatter(format_fn_x))
+        ax_catch.yaxis.set_major_formatter(self.y_formatter_funcs[-1])
+        ax_catch.xaxis.set_major_formatter(self.x_formatter_funcs[-1])
         plt.setp(ax_catch.xaxis.get_ticklabels(),rotation='vertical')
         ref_orog_field_section = ref_orog_field[self.catchment_bounds[0]:self.catchment_bounds[1],
                                                 self.catchment_bounds[2]:self.catchment_bounds[3]]
@@ -183,37 +195,50 @@ class Interactive_Plots(object):
         def_num_levels = 50
         rc_pts.plot_orography_section(ax,cax1,ref_orog_field_section,
                                       ref_field_min,ref_field_max,
-                                      pair[0].get_lat(),pair[0].get_lon(),
+                                      pair[0].get_lat()/self.point_label_coords_scaling,
+                                      pair[0].get_lon()/self.point_label_coords_scaling,
                                       new_cb=True,num_levels=def_num_levels,
                                       lat_offset=self.catchment_bounds[0],
-                                      lon_offset=self.catchment_bounds[2])
-        ax.yaxis.set_major_formatter(FuncFormatter(format_fn_y))
-        ax.xaxis.set_major_formatter(FuncFormatter(format_fn_x))
+                                      lon_offset=self.catchment_bounds[2],
+                                      point_label_coords_scaling=self.point_label_coords_scaling)
+        ax.yaxis.set_major_formatter(self.y_formatter_funcs[-1])
+        ax.xaxis.set_major_formatter(self.x_formatter_funcs[-1])
         plt.setp(ax.xaxis.get_ticklabels(),rotation='vertical')
         rc_pts.plot_orography_section(ax2,cax2,data_orog_original_scale_field_section,
                                       ref_field_min,ref_field_max,
-                                      pair[0].get_lat(),pair[0].get_lon(),
+                                      pair[0].get_lat()/self.point_label_coords_scaling,
+                                      pair[0].get_lon()/self.point_label_coords_scaling,
                                       new_cb=True,num_levels=def_num_levels,
                                       lat_offset=self.catchment_bounds[0]*self.scale_factor,
-                                      lon_offset=self.catchment_bounds[2]*self.scale_factor)
+                                      lon_offset=self.catchment_bounds[2]*self.scale_factor,
+                                      point_label_coords_scaling=self.scale_factor*self.point_label_coords_scaling)
         def format_fn_y_scaled(tick_val,tick_pos,offset=self.catchment_bounds[0]):
-            return pts.calculate_lat_label(tick_val,offset,scale_factor=self.scale_factor)
-        self.y_scaled_formatter_funcs.append(format_fn_y_scaled)
-        ax2.yaxis.set_major_formatter(FuncFormatter(format_fn_y_scaled))
+            return pts.calculate_lat_label(tick_val,offset/self.point_label_coords_scaling,
+                                           scale_factor=self.scale_factor*
+                                           self.point_label_coords_scaling,
+                                           precision=1)
+        self.y_scaled_formatter_funcs.append(FuncFormatter(format_fn_y_scaled))
+        ax2.yaxis.set_major_formatter(self.y_scaled_formatter_funcs[-1])
         def format_fn_x_scaled(tick_val,tick_pos,offset=self.catchment_bounds[2] +
                                fine_grid_offset_adjustment):
-            return pts.calculate_lon_label(tick_val,offset,scale_factor=self.scale_factor)
-        self.x_scaled_formatter_funcs.append(format_fn_x_scaled)
-        ax2.xaxis.set_major_formatter(FuncFormatter(format_fn_x_scaled))
+            return pts.calculate_lon_label(tick_val,offset/self.point_label_coords_scaling,
+                                           scale_factor=self.scale_factor*
+                                           self.point_label_coords_scaling,
+                                           precision=1)
+        self.x_scaled_formatter_funcs.append(FuncFormatter(format_fn_x_scaled))
+        ax2.xaxis.set_major_formatter(self.x_scaled_formatter_funcs[-1])
         def format_fn_y_super_fine_scaled(tick_val,tick_pos,offset=self.catchment_bounds[0]):
-            return pts.calculate_lat_label(tick_val,offset,
-                                           scale_factor=self.ref_to_super_fine_scale_factor)
-        self.y_super_fine_scaled_formatter_funcs.append(format_fn_y_super_fine_scaled)
+            return pts.calculate_lat_label(tick_val,offset/self.point_label_coords_scaling,
+                                           scale_factor=self.ref_to_super_fine_scale_factor*
+                                                        self.point_label_coords_scaling)
+        self.y_super_fine_scaled_formatter_funcs.append(FuncFormatter(format_fn_y_super_fine_scaled))
         def format_fn_x_super_fine_scaled(tick_val,tick_pos,offset=self.catchment_bounds[2] +
                                           super_fine_grid_offset_adjustment):
-            return pts.calculate_lon_label(tick_val,offset,
-                                           scale_factor=self.ref_to_super_fine_scale_factor)
-        self.x_super_fine_scaled_formatter_funcs.append(format_fn_x_super_fine_scaled)
+            return pts.calculate_lon_label(tick_val,offset/self.point_label_coords_scaling,
+                                           scale_factor=self.ref_to_super_fine_scale_factor*
+                                                        self.point_label_coords_scaling,
+                                           precision=1)
+        self.x_super_fine_scaled_formatter_funcs.append(FuncFormatter(format_fn_x_super_fine_scaled))
         plt.setp(ax2.xaxis.get_ticklabels(),rotation='vertical')
         ax3 = plt.subplot(gs[2,0])
         ax4 = plt.subplot(gs[3,0])
@@ -229,7 +254,7 @@ class Interactive_Plots(object):
         min_height = Slider(ax3,'Minimum Height (m)',ref_field_min,ref_field_max,valinit=ref_field_min)
         max_height = Slider(ax4,'Maximum Height (m)',ref_field_min,ref_field_max,valinit=ref_field_max,
                             slidermin=min_height)
-        num_levels_slider = Slider(ax7,'Number of\nContour Levels',2,100,valinit=def_num_levels)
+        num_levels_slider = Slider(ax7,'Number of\nContour Levels',2,100,valinit=def_num_levels,valstep=1)
         fmap_threshold_slider = Slider(ax9,"Flowmap Threshold",1,min(np.max(ref_flowtocellfield_section),200),valinit=50)
         reset_height_range_button = Button(ax5,"Reset",color='lightgrey',hovercolor='grey')
         linear_colors_buttons = CheckButtons(ax8,["Uniform Linear Colors"],[False])
@@ -323,9 +348,10 @@ class Update(object):
                               format_coords=True,
                               lat_offset=self.lat_offset,
                               lon_offset=self.lon_offset,
-                              colors=None)
-        ax_catch.yaxis.set_major_formatter(FuncFormatter(self.po.y_formatter_funcs[self.orog_plot_num]))
-        ax_catch.xaxis.set_major_formatter(FuncFormatter(self.po.x_formatter_funcs[self.orog_plot_num]))
+                              colors=None,
+                              point_label_coords_scaling=self.po.point_label_coords_scaling)
+        ax_catch.yaxis.set_major_formatter(self.po.y_formatter_funcs[self.orog_plot_num])
+        ax_catch.xaxis.set_major_formatter(self.po.x_formatter_funcs[self.orog_plot_num])
         plt.setp(ax_catch.xaxis.get_ticklabels(),rotation='vertical')
         ax = plt.subplot(self.po.orog_gridspecs[self.orog_plot_num][0,0])
         if self.po.use_super_fine_orog_flags[self.orog_plot_num]:
@@ -349,14 +375,15 @@ class Update(object):
                                           section=self.po.ref_orog_field_sections[self.orog_plot_num],
                                           min_height=self.po.min_heights[self.orog_plot_num].val,
                                           max_height=self.po.max_heights[self.orog_plot_num].val,
-                                          outflow_lat=self.po.orog_rmouth_coords[self.orog_plot_num][0],
-                                          outflow_lon=self.po.orog_rmouth_coords[self.orog_plot_num][1],
+                                          outflow_lat=(self.po.orog_rmouth_coords[self.orog_plot_num][0]+0.5)/self.po.point_label_coords_scaling,
+                                          outflow_lon=(self.po.orog_rmouth_coords[self.orog_plot_num][1]+0.5)/self.po.point_label_coords_scaling,
                                           new_cb=False,num_levels=self.po.num_levels_sliders[self.orog_plot_num].val,
                                           plot_type=self.po.plot_type_radio_buttons_list[self.orog_plot_num].value_selected,
                                           alpha=alpha,cmap_name=cmap_name,
-                                          lat_offset=self.lat_offset, lon_offset=self.lon_offset)
-            ax.yaxis.set_major_formatter(FuncFormatter(self.po.y_formatter_funcs[self.orog_plot_num]))
-            ax.xaxis.set_major_formatter(FuncFormatter(self.po.x_formatter_funcs[self.orog_plot_num]))
+                                          lat_offset=self.lat_offset, lon_offset=self.lon_offset,
+                                          point_label_coords_scaling=self.po.point_label_coords_scaling)
+            ax.yaxis.set_major_formatter(self.po.y_formatter_funcs[self.orog_plot_num])
+            ax.xaxis.set_major_formatter(self.po.x_formatter_funcs[self.orog_plot_num])
         elif (self.po.secondary_orog_radio_buttons_list[self.orog_plot_num].value_selected ==
             'Super Fine Scale Orography'):
             self.po.use_super_fine_orog_flags[self.orog_plot_num] = True
@@ -364,15 +391,17 @@ class Update(object):
                                           section=self.po.super_fine_orog_field_sections[self.orog_plot_num],
                                           min_height=self.po.min_heights[self.orog_plot_num].val,
                                           max_height=self.po.max_heights[self.orog_plot_num].val,
-                                          outflow_lat=self.po.orog_rmouth_coords[self.orog_plot_num][0],
-                                          outflow_lon=self.po.orog_rmouth_coords[self.orog_plot_num][1],
+                                          outflow_lat=(self.po.orog_rmouth_coords[self.orog_plot_num][0]+0.5)/self.po.point_label_coords_scaling,
+                                          outflow_lon=(self.po.orog_rmouth_coords[self.orog_plot_num][1]+0.5)/self.po.point_label_coords_scaling,
                                           new_cb=False,num_levels=self.po.num_levels_sliders[self.orog_plot_num].val,
                                           plot_type=self.po.plot_type_radio_buttons_list[self.orog_plot_num].value_selected,
                                           alpha=alpha,cmap_name=cmap_name,
                                           lat_offset=self.lat_offset*self.po.ref_to_super_fine_scale_factor,
-                                          lon_offset=self.lon_offset*self.po.ref_to_super_fine_scale_factor)
-            ax.yaxis.set_major_formatter(FuncFormatter(self.po.y_super_fine_scaled_formatter_funcs[self.orog_plot_num]))
-            ax.xaxis.set_major_formatter(FuncFormatter(self.po.x_super_fine_scaled_formatter_funcs[self.orog_plot_num]))
+                                          lon_offset=self.lon_offset*self.po.ref_to_super_fine_scale_factor,
+                                          point_label_coords_scaling=self.po.ref_to_super_fine_scale_factor*
+                                                                     self.po.point_label_coords_scaling)
+            ax.yaxis.set_major_formatter(self.po.y_super_fine_scaled_formatter_funcs[self.orog_plot_num])
+            ax.xaxis.set_major_formatter(self.po.x_super_fine_scaled_formatter_funcs[self.orog_plot_num])
         else:
             raise RuntimeError('Unknown radio button value selected!')
         plt.setp(ax.xaxis.get_ticklabels(),rotation='vertical')
@@ -385,14 +414,15 @@ class Update(object):
                                       section=self.po.data_orog_original_scale_field_sections[self.orog_plot_num],
                                       min_height=self.po.min_heights[self.orog_plot_num].val,
                                       max_height=self.po.max_heights[self.orog_plot_num].val,
-                                      outflow_lat=self.po.orog_rmouth_coords[self.orog_plot_num][0],
-                                      outflow_lon=self.po.orog_rmouth_coords[self.orog_plot_num][1],
+                                      outflow_lat=(self.po.orog_rmouth_coords[self.orog_plot_num][0]+0.5)/self.po.point_label_coords_scaling,
+                                      outflow_lon=(self.po.orog_rmouth_coords[self.orog_plot_num][1]+0.5)/self.po.point_label_coords_scaling,
                                       new_cb=False,num_levels=self.po.num_levels_sliders[self.orog_plot_num].val,
                                       plot_type=self.po.plot_type_radio_buttons_list[self.orog_plot_num].value_selected,
                                       cmap_name=cmap_name,lat_offset=self.lat_offset*self.po.scale_factor,
-                                      lon_offset=self.lon_offset*self.po.scale_factor)
-        ax2.yaxis.set_major_formatter(FuncFormatter(self.po.y_scaled_formatter_funcs[self.orog_plot_num]))
-        ax2.xaxis.set_major_formatter(FuncFormatter(self.po.x_scaled_formatter_funcs[self.orog_plot_num]))
+                                      lon_offset=self.lon_offset*self.po.scale_factor,
+                                      point_label_coords_scaling=self.po.scale_factor*self.po.point_label_coords_scaling)
+        ax2.yaxis.set_major_formatter(self.po.y_scaled_formatter_funcs[self.orog_plot_num])
+        ax2.xaxis.set_major_formatter(self.po.x_scaled_formatter_funcs[self.orog_plot_num])
         plt.setp(ax2.xaxis.get_ticklabels(),rotation='vertical')
         cax_fmap = plt.subplot(self.po.orog_gridspecs[self.orog_plot_num][3:5,7])
         ax13 = plt.subplot(self.po.orog_gridspecs[self.orog_plot_num][5,3])
@@ -542,9 +572,9 @@ class Match_Right_Scaling(object):
             ax.set_ylim(ylim_scaled,emit=False)
         elif (self.po.secondary_orog_radio_buttons_list[self.orog_plot_num].value_selected ==
             'Super Fine Scale Orography'):
-            xlim_scaled_to_super_fine = tuple(i*self.po.ref_to_super_fine_scale_factor/self.po.scale_factor
+            xlim_scaled_to_super_fine = tuple(i*self.po.ref_to_super_fine_scale_factor//self.po.scale_factor
                                               for i in xlim)
-            ylim_scaled_to_super_fine = tuple(i*self.po.ref_to_super_fine_scale_factor/self.po.scale_factor
+            ylim_scaled_to_super_fine = tuple(i*self.po.ref_to_super_fine_scale_factor//self.po.scale_factor
                                               for i in ylim)
             ax.set_xlim(xlim_scaled_to_super_fine,emit=False)
             ax.set_ylim(ylim_scaled_to_super_fine,emit=False)
@@ -575,8 +605,8 @@ class Match_Left_Scaling(object):
         ylim = ax.get_ylim()
         if (self.po.secondary_orog_radio_buttons_list[self.orog_plot_num].value_selected ==
             'Super Fine Scale Orography'):
-            xlim = tuple(round(i/self.po.ref_to_super_fine_scale_factor) for i in xlim)
-            ylim = tuple(round(i/self.po.ref_to_super_fine_scale_factor) for i in ylim)
+            xlim = tuple(int(round(i/self.po.ref_to_super_fine_scale_factor)) for i in xlim)
+            ylim = tuple(int(round(i/self.po.ref_to_super_fine_scale_factor)) for i in ylim)
             xlim = (max(xlim[0],-0.5),
                        min(xlim[1],
                            self.po.ref_orog_field_sections[self.orog_plot_num].shape[1] - 0.5))

@@ -1778,3 +1778,20 @@ def apply_dated_based_sill_height_corrections(input_orography,
         print("Correcting height of lat={0},lon={1} to {2} m at date {3}".format(*coords,height,
                                                                                  current_date))
         orography_field.get_data()[coords] += height
+
+def expand_catchment_to_include_rivermouths(rdirs,catchments,mouth_coords):
+    dir_to_centre = [[3,2,1],
+                     [6,5,4],
+                     [9,8,7]]
+    assigned_catchment_number = 0
+    mouth_neighbors = rdirs[mouth_coords[0]-1:mouth_coords[0]+2,
+                            mouth_coords[1]-1:mouth_coords[1]+2]
+    catchments_slice = catchments[mouth_coords[0]-1:mouth_coords[0]+2,
+                                  mouth_coords[1]-1:mouth_coords[1]+2]
+    for nbr_coords in np.argwhere(mouth_neighbors == dir_to_centre):
+        if assigned_catchment_number != 0:
+            nbr_catchment = catchments_slice[tuple(nbr_coords)]
+            catchments[catchments == nbr_catchment] = assigned_catchment_number
+        else:
+            assigned_catchment_number = catchments_slice[tuple(nbr_coords)]
+            catchments[tuple(mouth_coords)] = assigned_catchment_number

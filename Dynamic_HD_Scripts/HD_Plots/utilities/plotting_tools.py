@@ -9,8 +9,10 @@ Created on Feb 5, 2016
 import matplotlib.pyplot as plt
 import numpy as np
 import math
+import itertools
 from Dynamic_HD_Scripts.base import grid
 from Dynamic_HD_Scripts.base import field
+from HD_Plots.utilities import river_names
 
 
 class OrogCoordFormatter(object):
@@ -32,9 +34,11 @@ class OrogCoordFormatter(object):
                 format(int(round(xpos+self.xoffset)),
                        int(round(ypos+self.yoffset)),
                        calculate_lon_label(xpos,self.xoffset/self.scale_factor,
-                                           scale_factor=self.scale_factor).replace('$^{\circ}$',""),
+                                           scale_factor=self.scale_factor,
+                                           precision=2),
                        calculate_lat_label(ypos,self.yoffset/self.scale_factor,
-                                           scale_factor=self.scale_factor).replace('$^{\circ}$',""))
+                                           scale_factor=self.scale_factor,
+                                           precision=2))
 
 class LonAxisFormatter(object):
     """Class that creates an object to call to give longitude axis tick labels"""
@@ -68,12 +72,12 @@ def remove_ticks(ax=None):
 
     params = {'axis'       :'both',
               'which'      :'both',
-              'bottom'     :'off',
-              'top'        :'off',
-              'left'       :'off',
-              'right'      :'off',
-              'labelleft'  :'off',
-              'labelbottom':'off'}
+              'bottom'     : False,
+              'top'        : False,
+              'left'       : False,
+              'right'      : False,
+              'labelleft'  : False,
+              'labelbottom': False}
     if ax:
         ax.tick_params(**params)
     else:
@@ -225,30 +229,26 @@ def move_outflow(outflows,original_outflow_coords,new_outflow_coords,
 def calculate_lat_label(y_index,offset,scale_factor=1,precision=1):
     """
 
-    A scale factor of 1 is for the half degree grid. The offset due to the center of the first
-    cell being at 0 on the plot and 1/2 cell width down from the pole in reality is accounted
-    for in this function and doesn't need to be included in the offset. Notice offsets are
+    A scale factor of 1 is for the half degree grid. Notice offsets are
     assumed to be prescaled to the 1/2 degree scale - be careful this may be unexpected behaviour.
-    This is a historical artifact.
+    This is a historical artifact. Using unicode for the degree symbol is more portable
+    than latex.
     """
-
     return (lambda y: "{:.{prec}f}".format((0.5*y - 90)*(-1 if y < 180 else 1),prec=precision)
-                            + r'$^{\circ}$ ' + (('N' if y < 180 else '') if y <=180 else 'S'))(((y_index+0.5)/scale_factor)+offset)
+                            + u'\u00B0 ' + (('N' if y < 180 else '') if y <=180 else 'S'))((y_index/scale_factor)+offset)
 
 def calculate_lon_label(x_index,offset,scale_factor=1,precision=1):
     """
 
-    A scale factor of 1 is for the half degree grid. The offset due to the center of the first
-    cell being at 0 on the plot and 1/2 cell width long from true date line (exact opposite of
-    greenwich meridian) in reality is accounted for in this function and doesn't need to be
-    included in the offset. Note however some other grid (10minute) don't include such an offset
-    and therefore in these cases a compensating offset needs to be added to remove this. Notice
+    A scale factor of 1 is for the half degree grid.  Notice
     offsets are assumed to be prescaled to the 1/2 degree scale - be careful this may be unexpected
-    behaviour. This is a historical artifact.
+    behaviour. This is a historical artifact. Using unicode for the degree symbol is more portable
+    than latex.
     """
 
     return (lambda x: "{:.{prec}f}".format((0.5*x-180)*(-1 if x < 360 else 1),prec=precision)
-                            + r'$^{\circ}$ ' + (('W' if ((x > 0) and (x < 360)) else '') if (x <= 360 or x >= 720) else 'E'))(((x_index+0.5)/scale_factor)+offset)
+                            + u'\u00B0 ' + (('W' if ((x > 0) and (x < 360)) else '') if (x <= 360 or x >= 720) else 'E'))((x_index/scale_factor)+
+                                offset)
 
 def calc_displayed_plot_size(xlim,ylim):
     return (xlim[1] - xlim[0])*(ylim[0]-ylim[1])
@@ -256,7 +256,7 @@ def calc_displayed_plot_size(xlim,ylim):
 def calculate_scale_factor(coarse_grid_type,coarse_grid_kwargs,fine_grid_type,fine_grid_kwargs):
     fine_grid_nlat = grid.makeGrid(fine_grid_type,**fine_grid_kwargs).get_grid_dimensions()[0]
     coarse_grid_nlat = grid.makeGrid(coarse_grid_type,**coarse_grid_kwargs).get_grid_dimensions()[0]
-    return fine_grid_nlat/coarse_grid_nlat
+    return fine_grid_nlat//coarse_grid_nlat
 
 def find_ocean_basin_catchments(rdirs,catchments,areas=[]):
   ocean_catchments = catchments.copy()
@@ -273,4 +273,24 @@ def find_ocean_basin_catchments(rdirs,catchments,areas=[]):
       ocean_basin_catchments.get_data()[catchments.get_data() == catchment] = i
   return ocean_basin_catchments
 
+def guess_river_name(outflow_lat,outflow_lon,search_radius=1.0):
+    """Guess the name of a river from the position of its mouth"""
+    potential_names = []
+    for name,coords in river_names.river_names_and_mouth_positions.items():
+        if ((coords[0] - (outflow_lat -90))**2)+((coords[1] - (outflow_lon - 180))**2) <= search_radius**2:
+            potential_names.append(name)
+    if not potential_names:
+        potential_names.append("Unknown")
+    return " or ".join(potential_names)
 
+def generate_label_for_river(pair,scale_factor,river_names,search_radius=1.0):
+    river_name = guess_river_name(pair[0].get_lat()/scale_factor,
+                                  pair[0].get_lon()/scale_factor)
+    formatted_river_name = river_name
+    for i in itertools.count(start=1):
+        if not formatted_river_name in river_names:
+            river_names.append(formatted_river_name)
+            break
+        else:
+            formatted_river_name = river_name + " {}".format(i)
+    return formatted_river_name

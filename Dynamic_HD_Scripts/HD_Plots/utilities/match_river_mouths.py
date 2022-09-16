@@ -12,6 +12,7 @@ import copy
 import sys
 import re
 from Dynamic_HD_Scripts.base import iodriver
+from Dynamic_HD_Scripts.base.iodriver import advanced_field_loader
 
 class Params(object):
     """
@@ -36,7 +37,9 @@ class Params(object):
          'extensive':self.init_extensive_params,
          'very_extensive':self.init_very_extensive_params,
          'area_extensive':self.init_area_extensive_params,
-         'magnitude_extensive':self.init_magnitdue_extensive}[paramset]()
+         'minimal':self.init_minimal_params,
+         'magnitude_extensive':self.init_magnitude_extensive,
+         'no_matches':self.init_no_match_params}[paramset]()
 
     def init_default_params(self):
         self.max_complexity = 15
@@ -84,9 +87,17 @@ class Params(object):
         self.range = 10
         self.minflow= 80
 
-    def init_magnitdue_extensive(self):
+    def init_magnitude_extensive(self):
         self.init_default_params()
         self.minflow = 100
+
+    def init_minimal_params(self):
+        self.init_default_params()
+        self.minflow = 135*9
+
+    def init_no_match_params(self):
+        self.init_default_params()
+        self.minflow = float('inf')
 
 class RiverMouth(object):
     """Class representing a river mouth, including coordinates,outflow (in num cells), an ID and matching params"""
@@ -492,5 +503,20 @@ def main(reference_rmouth_outflows_filename, data_rmouth_outflows_filename,
         reference_field.flip_data_ud()
     if rotate_ref_field:
         reference_field.rotate_field_by_a_hundred_and_eighty_degrees()
+    params = Params(param_set)
+    return generate_matches(reference_field.get_data(), data_field.get_data(),params)
+
+def advanced_main(reference_rmouth_outflows_filename, data_rmouth_outflows_filename,
+                  reference_rmouth_outflows_fieldname, data_rmouth_outflows_fieldname,
+                  param_set='default'):
+    """Top level river mouth matching routine. Deals with file handling"""
+    reference_field = advanced_field_loader(reference_rmouth_outflows_filename,
+                                            time_slice=None,
+                                            fieldname=reference_rmouth_outflows_fieldname,
+                                            adjust_orientation=True)
+    data_field = advanced_field_loader(data_rmouth_outflows_filename,
+                                       time_slice=None,
+                                       fieldname=data_rmouth_outflows_fieldname,
+                                       adjust_orientation=True)
     params = Params(param_set)
     return generate_matches(reference_field.get_data(), data_field.get_data(),params)

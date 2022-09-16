@@ -33,6 +33,9 @@ class ColorPalette(object):
                                                                       'green']
         self.extra_sea_color = ['cadetblue']
         self.extra_land_color = ['moccasin']
+        self.common_truesink = ['white']
+        self.ref_truesink = ['aqua']
+        self.data_truesink = ['gold']
 
     def initialize_gmd_paper_palette(self):
         """Initialize the color palette for the GMD paper"""
