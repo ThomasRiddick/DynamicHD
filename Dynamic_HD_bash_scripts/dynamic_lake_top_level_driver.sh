@@ -178,11 +178,6 @@ if [[ -z ${source_directory} ]]; then
 	exit 1
 fi
 
-if ! [[ -f ${extra_fields_filepath} ]]; then
-	echo "Extra fields file (${extra_fields_filepath}) doesn't exist" 1>&2
-	exit 1
-fi
-
 python_config_file="${ancillary_data_directory}/dynamic_lake_production_driver.cfg"
 # Check if python config file exists
 if ! [[ -f ${python_config_file} ]]; then
@@ -340,10 +335,6 @@ fi
 #Run
 echo "Running Dynamic HD Code" 1>&2
 python ${source_directory}/Dynamic_HD_Scripts/Dynamic_HD_Scripts/dynamic_hd_and_dynamic_lake_drivers/dynamic_lake_production_run_driver.py ${input_orography_filepath} ${input_ls_mask_filepath} ${input_lake_volumes_filepath} ${present_day_base_orography_filepath} ${glacier_mask_filepath} ${working_directory}/hdpara_out_temp.nc ${output_lakepara_filepath} ${ancillary_data_directory} ${working_directory} ${output_lakestart_filepath} ${output_hdstart_argument}
-
-#Add extra fields to lake parameters file; this would be better integrated into python script
-cdo merge ${output_lakepara_filepath} ${extra_fields_filepath} lakepara_out_temp.nc
-mv lakepara_out_temp.nc ${output_lakepara_filepath}
 
 #Change lake centers FDIR from 5 to -2
 ncap2 -s 'where(FDIR == 5.0) FDIR=-2.0' hdpara_out_temp.nc ${output_hdpara_filepath}
