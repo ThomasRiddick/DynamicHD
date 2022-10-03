@@ -74,6 +74,6 @@ ncatted -a istep,global,c,l,1 hdstart_temp3.nc hdstart_temp4.nc
 ncatted -a hd_steps_per_day,global,c,l,1 hdstart_temp4.nc hdstart_temp5.nc
 ncatted -a riverflow_timestep,global,c,l,4 hdstart_temp5.nc ${output_hdstart_filepath}
 #Delete temporary files and change back to original directory
-rm hdstart_temp.nc hdstart_temp2.nc hdstart_temp3.nc hdstart_temp4
-rm hdstart_temp5 move_res_to_rflow_inst.txt rdirs.nc
+rm hdstart_temp.nc hdstart_temp2.nc hdstart_temp3.nc hdstart_temp4.nc
+rm hdstart_temp5.nc move_res_to_rflow_inst.txt rdirs.nc
 cd -
