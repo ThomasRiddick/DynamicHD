@@ -27,3 +27,7 @@ connect_coarse_lake_catchments.pyc
 *.pyc
 create_connected_lsmask_wrapper.cpp
 fill_sinks_wrapper.cpp
+determine_river_directions_wrapper.cpp
+evaluate_basins_wrapper.cpp
+lake_operators_wrapper.cpp
+upscale_orography_wrapper.cpp

@@ -596,17 +596,18 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                                                     use_f2py_sparse_iterator=True,
                                                                                     nlat=nlat30,
                                                                                     nlong=nlong30),
-                                                                                    grid='HD')
+                                                                                    grid=rdirs_30min.get_grid())
         catchments_30min = comp_catchs.compute_catchments_cpp(rdirs_30min.get_data(),
                                                               loops_log_30min_filename)
         catchments_30min = field.Field(comp_catchs.renumber_catchments_by_size(catchments_30min,
                                                                                loops_log_30min_filename),
-                                       grid="HD")
-        rivermouths_30min = field.makeField(rdirs_30min.get_river_mouths(),'Generic','HD')
+                                       grid=rdirs_30min.get_grid())
+        rivermouths_30min = field.makeField(rdirs_30min.get_river_mouths(),'Generic',
+                                            rdirs_30min.get_grid())
         flowtorivermouths_30min = field.makeField(flowtocell_30min.\
                                                   find_cumulative_flow_at_outlets(rivermouths_30min.\
                                                                                   get_data()),
-                                                  'Generic','HD')
+                                                  'Generic',flowtocell_30min.get_grid())
         if config.getboolean("output_options","output_pre_loop_removal_coarse_flowtocell"):
             iodriver.advanced_field_writer(path.join(self.working_directory_path,
                                                      "30min_pre_loop_removal_flowtocell.nc"),
@@ -657,7 +658,8 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                              fieldname=config.get("output_fieldname_options",
                                                                   "output_30min_unfilled_orog"))
         #Extract HD ls mask from river directions
-        ls_mask_30min = field.RiverDirections(rdirs_30min.get_lsmask(),grid='HD')
+        ls_mask_30min = field.RiverDirections(rdirs_30min.get_lsmask(),
+                                              grid=rdirs_30min.get_grid())
         #Fill HD orography for parameter generation
         if print_timing_info:
             time_before_coarse_sink_filling = timer()
@@ -751,17 +753,19 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                                                     use_f2py_sparse_iterator=True,
                                                                                     nlat=nlat30,
                                                                                     nlong=nlong30),
-                                                                                    grid='HD')
+                                                                                    grid=rdirs_30min.get_grid())
         catchments_30min = comp_catchs.compute_catchments_cpp(rdirs_30min.get_data(),
                                                               loops_log_30min_filename)
         catchments_30min = field.Field(comp_catchs.renumber_catchments_by_size(catchments_30min,
                                                                                loops_log_30min_filename),
-                                       grid="HD")
-        rivermouths_30min = field.makeField(rdirs_30min.get_river_mouths(),'Generic','HD')
+                                       grid=rdirs_30min.get_grid())
+        rivermouths_30min = field.makeField(rdirs_30min.get_river_mouths(),'Generic',
+                                            rdirs_30min.get_grid())
         flowtorivermouths_30min = field.makeField(flowtocell_30min.\
                                                   find_cumulative_flow_at_outlets(rivermouths_30min.\
                                                                                   get_data()),
-                                                  'Generic','HD')
+                                                  'Generic',
+                                                  flowtocell_30min.get_grid())
         if config.getboolean("output_options","output_coarse_flowtocell"):
             iodriver.advanced_field_writer(path.join(self.working_directory_path,
                                                        "30min_flowtocell.nc"),
