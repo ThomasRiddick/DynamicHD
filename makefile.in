@@ -1,0 +1,9 @@
+#Used by configure to create a makefile
+
+all:
+	make -C Dynamic_HD_Fortran_Code/Release -f ../makefile tools_only
+	make -C Dynamic_HD_Cpp_Code/Release -f ../makefile tools_only
+
+clean:
+	make -C Dynamic_HD_Fortran_Code/Release -f ../makefile clean
+	make -C Dynamic_HD_Cpp_Code/Release -f ../makefile clean
