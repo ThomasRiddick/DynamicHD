@@ -1,2 +1,2 @@
 
-cp Makefile.in Makefile
+cp makefile.in makefile
