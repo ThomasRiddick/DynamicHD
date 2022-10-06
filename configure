@@ -1,2 +1,17 @@
+#!/bin/bash
 
-cp makefile.in makefile
+GPLUSPLUS=$1
+NETCDFC=$2
+NETCDFCXX=$3
+GFORTRAN=$4
+NETCDF_F=$5
+NETCDF_F_LIB=$6
+
+rm makefile || true
+
+sed "s/REPLACE_WITH_GPP/${GPLUSPLUS}/
+     s/REPLACE_WITH_NCDFC/${NETCDFC}/
+     s/REPLACE_WITH_NCDFCPP/${NETCDFCXX}/
+     s/REPLACE_WITH_GFOR/${GFORTRAN}/
+     s/REPLACE_WITH_NCDFF/${NETCDF_F}/
+     s/REPLACE_WITH_NCDFF_LIB/${NETCDF_F_LIB}/" makefile.in makefile

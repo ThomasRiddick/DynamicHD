@@ -6,12 +6,14 @@ FLAGS := -DPROCESSED_CELL_COUNTER -DUSE_NETCDFCPP -DDARWIN
 NETCDFCXX := /Users/thomasriddick/anaconda3/pkgs/netcdf-cxx4-4.3.0-h703b707_9
 INCLUDE := -I"$(NETCDFCXX)/include"
 else ifeq ($(shell hostname -d),atos.local)
-GPLUSPLUS :=  /sw/spack-levante/gcc-11.2.0-7jcqrc/bin/g++
 STDLIB_OPT :=
 FLAGS :=-pthread -DUSE_NETCDFCPP
+INCLUDE := -isystem"$(NETCDFCXX)/include" -isystem"$(NETCDFC)/include"
+ifneq ($(USE_SETTINGS_FROM_CONFIGURE),True)
+GPLUSPLUS :=  /sw/spack-levante/gcc-11.2.0-7jcqrc/bin/g++
 NETCDFC := $(HOME)/sw-spack/netcdf-c-4.8.1-khy3ru
 NETCDFCXX := $(HOME)/sw-spack/netcdf-cxx4-4.3.1-d54zya
-INCLUDE := -isystem"$(NETCDFCXX)/include" -isystem"$(NETCDFC)/include"
+endif
 else ifeq ($(shell uname -s),Linux)
 GPLUSPLUS := $(shell which g++)
 STDLIB_OPT :=

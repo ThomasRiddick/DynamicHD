@@ -1,0 +1,14 @@
+#!/bin/bash
+#Wrapper to run configure on Levante for GCC 11.2.0
+
+#For Cpp code
+GPLUSPLUS=/sw/spack-levante/gcc-11.2.0-7jcqrc/bin/g++
+NETCDFC=$(HOME)/sw-spack/netcdf-c-4.8.1-khy3ru
+NETCDFCXX=$(HOME)/sw-spack/netcdf-cxx4-4.3.1-d54zya
+
+#For Fortran code
+GFORTRAN=/sw/spack-levante/gcc-11.2.0-7jcqrc/bin/gfortran
+NETCDF_F=/sw/spack-levante/netcdf-fortran-4.5.3-l2ulgp
+NETCDF_F_LIB=libnetcdff.so
+
+../../configure $GPLUSPLUS $NETCDFC $NETCDFCXX $GFORTRAN $NETCDF_F $NETCDF_F_LIB

@@ -1,9 +1,20 @@
 #Used by configure to create a makefile
 
+.PHONY: clean all
+
+GPLUSPLUS := REPLACE_WITH_GPP
+NETCDFC := REPLACE_WITH_NCDFC
+NETCDFCXX := REPLACE_WITH_NCDFCPP
+GFORTRAN := REPLACE_WITH_GFOR
+NETCDF_F := REPLACE_WITH_NCDFF
+NETCDF_F_LIB := REPLACE_WITH_NCDFF_LIB
+
 all:
 	make -C Dynamic_HD_Fortran_Code/Release -f ../makefile tools_only
 	make -C Dynamic_HD_Cpp_Code/Release -f ../makefile tools_only
+	make -C Dynamic_HD_Scripts all
 
 clean:
 	make -C Dynamic_HD_Fortran_Code/Release -f ../makefile clean
 	make -C Dynamic_HD_Cpp_Code/Release -f ../makefile clean
+	make -C Dynamic_HD_Scripts clean
