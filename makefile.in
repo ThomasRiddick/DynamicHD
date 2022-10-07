@@ -12,9 +12,9 @@ export NETCDF_F_LIB := REPLACE_WITH_NCDFF_LIB-
 all:
 	make -C Dynamic_HD_Fortran_Code/Release -f ../makefile tools_only
 	make -C Dynamic_HD_Cpp_Code/Release -f ../makefile tools_only
-	make -C Dynamic_HD_Scripts all
+	#make -C Dynamic_HD_Scripts all
 
 clean:
 	make -C Dynamic_HD_Fortran_Code/Release -f ../makefile clean
 	make -C Dynamic_HD_Cpp_Code/Release -f ../makefile clean
-	make -C Dynamic_HD_Scripts clean
+	#make -C Dynamic_HD_Scripts clean
