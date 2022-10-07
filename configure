@@ -10,11 +10,11 @@ GFORTRAN=$4
 NETCDF_F=$5
 NETCDF_F_LIB=$6
 
-rm makefile > /dev/null || true
+rm makefile 2>&1 /dev/null || true
 
-sed "s%REPLACE_WITH_GPP%${GPLUSPLUS}%
-     s%REPLACE_WITH_NCDFC%${NETCDFC}%
-     s%REPLACE_WITH_NCDFCPP%${NETCDFCXX}%
-     s%REPLACE_WITH_GFOR%${GFORTRAN}%
-     s%REPLACE_WITH_NCDFF%${NETCDF_F}%
-     s%REPLACE_WITH_NCDFF_LIB%${NETCDF_F_LIB}%" makefile.in > makefile
+sed "s%REPLACE_WITH_GPP-%${GPLUSPLUS}%
+     s%REPLACE_WITH_NCDFC-%${NETCDFC}%
+     s%REPLACE_WITH_NCDFCPP-%${NETCDFCXX}%
+     s%REPLACE_WITH_GFOR-%${GFORTRAN}%
+     s%REPLACE_WITH_NCDFF-%${NETCDF_F}%
+     s%REPLACE_WITH_NCDFF_LIB-%${NETCDF_F_LIB}%" makefile.in > makefile
