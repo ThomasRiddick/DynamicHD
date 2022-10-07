@@ -1,5 +1,8 @@
 #!/bin/bash
 #Wrapper to run configure on Levante for GCC 11.2.0
+set -e
+
+cd $(dirname -- "$0" )
 
 #For Cpp code
 GPLUSPLUS=/sw/spack-levante/gcc-11.2.0-7jcqrc/bin/g++
