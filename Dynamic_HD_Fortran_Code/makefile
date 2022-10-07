@@ -25,15 +25,19 @@ else ifeq ($(shell hostname -d),atos.local)
 ifeq ($(USE_MPI),True)
 GFORTRAN := $(shell which mpifort)
 else
+ifneq ($(USE_SETTINGS_FROM_CONFIGURE),True)
 GFORTRAN := /sw/spack-levante/gcc-11.2.0-bcn7mb/bin/gfortran
+endif
 endif
 NAGFORTRAN :=  $(shell which nagfor)
 INTELFORTRAN := $(shell which ifort)
 #EXT_SOURCE :=$(shell echo ${HOME} )/HDancillarydata_11Sept2019/code/
+ifneq ($(USE_SETTINGS_FROM_CONFIGURE),True)
 GFORTRAN_NETCDF_F :=/sw/spack-levante/netcdf-fortran-4.5.3-l2ulgp
+NETCDF_F_LIB :=libnetcdff.so
+endif
 NAG_NETCDF_F :=..#/sw/rhel6-x64/netcdf/netcdf_fortran-4.4.2-static-nag60
 INTEL_NETCDF_F :=..#/sw/rhel6-x64/netcdf/netcdf_fortran-4.4.3-intel14
-NETCDF_F_LIB :=libnetcdff.so
 ifeq ($(USE_MPI),True)
 FLAGS := -DUSE_MPI -m64
 endif
