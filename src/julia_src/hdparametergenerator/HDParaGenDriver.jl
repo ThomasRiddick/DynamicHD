@@ -1,5 +1,5 @@
 push!(LOAD_PATH, "/Users/thomasriddick/Documents/workspace/Dynamic_HD_Code/"
-                  "Dynamic_HD_Julia_Code/HDParameterGenerator")
+                  "src/julia_src/hdparametergenerator/")
 using ArgParse
 
 function pass_arguments()
