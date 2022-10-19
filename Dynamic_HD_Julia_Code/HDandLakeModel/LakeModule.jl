@@ -71,6 +71,17 @@ struct CalculateEffectiveLakeVolumePerCell <: Event
   end
 end
 
+struct CalculateTrueLakeDepths <: Event
+  consider_secondary_lake::Bool
+  cell_list::Vector{Coords}
+  function CalculateTrueLakeDepths(cell_list::Vector{Coords})
+    return new(true,cell_list)
+  end
+  function CalculateTrueLakeDepths()
+    return new(false,Vector{Coords}[])
+  end
+end
+
 struct CheckWaterBudget <: Event
   total_initial_water_volume::Float64
 end
@@ -903,6 +914,45 @@ function handle_event(lake::SubsumedLake,
   lake_variables.other_lakes[lake.primary_lake_number] =
     handle_event(lake_variables.other_lakes[lake.primary_lake_number],
                  CalculateEffectiveLakeVolumePerCell(lake_variables.filled_lake_cells))
+  return lake
+end
+
+function handle_event(lake::Union{OverflowingLake,FillingLake},
+    calculate_true_lake_depths::CalculateTrueLakeDepths)
+  lake_parameters::LakeParameters = get_lake_parameters(lake)
+  lake_fields::LakeFields = get_lake_fields(lake)
+  lake_variables::LakeVariables = get_lake_variables(lake)
+  current_cell_to_fill_height::Float64 = cell_height ????
+  total_number_of_flooded_cells::Int64 =
+    lake_variables.number_of_flooded_cells+lake_variables.secondary_number_of_flooded_cells
+  volume_above_sill_or_current_filling_cell::Float64 =
+  depth_above_sill_or_current_filling_cell::Float64 =
+    volume_above_sill_or_current_filling_cell /
+    ( total_number_of_flooded_cells + ((isa(lake,FillingLake) ||
+                                       (total_number_of_flooded_cells == 0)) ? 1 : 0))
+  working_cell_list::Vector{Coords} =
+    calculate_true_lake_depth.consider_secondary_lake ?
+    calculate_true_lake_depths.cell_list :
+    lake_variables.filled_lake_cells
+  if (! calculate_true_lake_depths.consider_secondary_lake)
+    set!(lake_fields.true_lake_depths,lake_variables.current_cell_to_fill,
+         depth_above_sill_or_current_filling_cell)
+  end
+  for coords::Coords in working_cell_list
+    set!(lake_fields.true_lake_depths,
+         depth_above_sill_or_current_filling_cell + current_cell_to_fill_height -
+         cell_height ????)
+  end
+
+  return lake
+end
+
+function handle_event(lake::SubsumedLake,
+    calculate_true_lake_depths::CalculateTrueLakeDepths)
+  lake_variables::LakeVariables = get_lake_variables(lake)
+  lake_variables.other_lakes[lake.primary_lake_number] =
+    handle_event(lake_variables.other_lakes[lake.primary_lake_number],
+                 CalculateTrueLakeDepths(lake_variables.filled_lake_cells))
   return lake
 end
 

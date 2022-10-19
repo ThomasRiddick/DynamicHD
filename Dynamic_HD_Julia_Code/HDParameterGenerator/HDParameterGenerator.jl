@@ -1,6 +1,7 @@
 module HDParameterGenerator
 
 using SharedArrays
+using Distributed: @distributed
 
 abstract type Grid end
 
@@ -9,11 +10,15 @@ struct LatLonGrid <: Grid
   nlon::Int64
   lats::Array{Float64,1}
   lons::Array{Float64,1}
-  grid_dimensions::Tuple{Int64}
+  dlat::Array{Float64,1}
+  dlon::Float64
+  grid_dimensions::Tuple{Int64,Int64}
   function LatLonGrid(nlat::Int64,nlon::Int64,
                       lats::Array{Float64,1},lons::Array{Float64,1})
-    grid_dimensions::Tuple{Int64} = (nlat,nlon)
-    new(nlat,nlon,lats,lons,grid_dimensions)
+    grid_dimensions::Tuple{Int64,Int64} = (nlat,nlon)
+    dlat::Array{Float64,1} = [x-y for (x,y) in zip(lats[2:nlat],lats[1:nlat-1])]
+    dlon::Float64 = lons[2] - lons[1]
+    new(nlat,nlon,lats,lons,dlat,dlon,grid_dimensions)
   end
 end
 
@@ -31,45 +36,110 @@ struct UnstructuredGrid <: Grid
 end
 
 get_grid_dimensions(obj::T) where {T <: Grid} =
-  obj.grid_dimensions::Tuple{Int64}
+  obj.grid_dimensions::Tuple
 
 struct CommonParameters
-  minimum_height_threshold::Float64 = 0.0
-  default_height_change::Float64 = 0.0
-  alpha::Float64 = 0.1
-  C::Float64 = 2.0
-end CommonParameters
+  minimum_height_threshold::Float64
+  default_height_change::Float64
+  alpha::Float64
+  C::Float64
+  function CommonParameters()
+    minimum_height_threshold::Float64 = 0.0
+    default_height_change::Float64 = 0.0
+    alpha::Float64 = 0.1
+    C::Float64 = 2.0
+    new(minimum_height_threshold,default_height_change,
+        alpha,C)
+  end
+end
 
-abstract Type Formula end
+abstract type Formula end
 
-abstract Type RiverFlowFormula <: Formula end
+abstract type RiverFlowFormula <: Formula end
 
 struct RiverFlowSausen <: RiverFlowFormula
+  riverflow_dx::Float64
+  riverflow_v0::Float64
+  riverflow_k0::Float64
+  common_parameters::CommonParameters
+  function RiverFlowSausen()
   riverflow_dx::Float64 = 228000.0
   riverflow_v0::Float64 = 1.0039
   riverflow_k0::Float64 = 0.4112
-  common_parameters::CommonParameters
+  common_parameters::CommonParameters = CommonParameters()
+    new(riverflow_dx,riverflow_v0,
+        riverflow_k0,common_parameters)
+  end
 end
 
-abstract Type OverlandFlowFormula <: Formula end
+abstract type OverlandFlowFormula <: Formula end
 
 struct OverlandFlowSausen <: OverlandFlowFormula
-  overlandflow_dx::Float64 = 171000.0
-  overlandflow_v0::Float64 = 1.0885
-  overlandflow_k0::Float64 = 16.8522
-  overlandflow_torneaelven_k_multiplier::Float64 = 3.0
+  overlandflow_dx::Float64
+  overlandflow_v0::Float64
+  overlandflow_k0::Float64
+  overlandflow_torneaelven_k_multiplier::Float64
   common_parameters::CommonParameters
+  function OverlandFlowSausen()
+    overlandflow_dx::Float64 = 171000.0
+    overlandflow_v0::Float64 = 1.0885
+    overlandflow_k0::Float64 = 16.8522
+    overlandflow_torneaelven_k_multiplier::Float64 = 3.0
+    common_parameters::CommonParameters = CommonParameters()
+    new(overlandflow_dx,overlandflow_v0,
+        overlandflow_k0,overlandflow_torneaelven_k_multiplier,
+        common_parameters)
+  end
 end
 
-abstract Type BaseFlowFormula <: Formula end
+abstract type BaseFlowFormula <: Formula end
 
 struct BaseFlowConstant <: BaseFlowFormula
-  baseflow_k0::Float64 = 300.0
+  baseflow_k0::Float64
+  function BaseFlowConstant()
+    baseflow_k0::Float64 = 300.0
+    new(baseflow_k0)
+  end
 end
 
 struct BaseFlowDistanceAndOrography <: BaseFlowFormula
-  baseflow_k0::Float64 = 300.0
-  baseflow_d0::Float64 = 50000.0
+  baseflow_k0::Float64
+  baseflow_d0::Float64
+  function BaseFlowDistanceAndOrography()
+    baseflow_k0::Float64 = 300.0
+    baseflow_d0::Float64 = 50000.0
+    new(baseflow_k0,baseflow_d0)
+  end
+end
+
+abstract type GridSpecificInputData end
+
+struct LatLonGridInputData <: GridSpecificInputData
+  dlat::Float64
+  dlon::SharedArray{Float64}
+  river_directions::SharedArray{Int64}
+  function LatLonGridInputData(river_directions::Array{Int64},grid::LatLonGrid)
+    #Need formula for thiS!!!!
+    dlat::Float64 = abs(grid.lats[2] - grid.lats[1])* 1.0
+    dlon::SharedArray{Float64} = SharedArray{Float64}((grid.nlat))
+    for i in eachindex(grid.lats)
+      #Need formula for thiS!!!!
+      dlon[i] = abs(grid.lons[2] - grid.lons[1])* 1.0
+    end
+    new(dlat,dlon,convert(SharedArray{Int64},river_directions))
+  end
+end
+
+struct IcosohedralGridInputData <: GridSpecificInputData
+  lat::SharedArray{Float64}
+  lon::SharedArray{Float64}
+  next_cell_index::SharedArray{Int64}
+  function IcosohedralGridInputData(next_cell_index::Array{Int64},
+                                    grid::UnstructuredGrid)
+    lat::SharedArray{Float64} = convert(SharedArray{Float64},grid.clat)
+    lon::SharedArray{Float64} = convert(SharedArray{Float64},grid.clon)
+    new(lat,lon,convert(SharedArray{Int64},next_cell_index))
+  end
 end
 
 struct InputData
@@ -86,7 +156,7 @@ struct InputData
                      innerslope::Array{Float64},
                      orography_variance::Array{Float64},
                      river_directions::Array{Int64},
-                     cell_areas::Array{Float64}
+                     cell_areas::Array{Float64},
                      grid::Grid)
     if isa(grid,LatLonGrid)
       grid_specific_input_data = LatLonGridInputData(river_directions,grid)
@@ -94,45 +164,19 @@ struct InputData
       grid_specific_input_data = IcosohedralGridInputData(river_directions,grid)
     end
     new(convert(SharedArray{Bool},landsea_mask),convert(SharedArray{Bool},glacier_mask),
-        convert(SharedArray{Float64},orography),convert(SharedArray{Float64},innerslope))
+        convert(SharedArray{Float64},orography),convert(SharedArray{Float64},innerslope),
         convert(SharedArray{Float64},orography_variance),
         convert(SharedArray{Float64},cell_areas),grid_specific_input_data)
   end
 end
 
-abstract Type GridSpecificInputData end
 
-struct LatLonGridInputData <: GridSpecificInputData
-  dlat::Float64
-  dlon::SharedArray{Float64}
-  river_directions::SharedArray{Float64}
-  function LatLonGridInputData(river_directions::Array{Int64},grid::LatLonGrid)
-    dlat::Float64 = abs(grid.lats[2] - grid.lats[1])* FORMULA FOR THIS IS?
-    dlon::SharedArray{Float64} = SharedArray{Float64}((grid.nlat))
-    for i in eachindex(grid.lats)
-      dlon[i] = abs(grid.lons[2] - grid.lons[1])* FORMULA FOR THIS IS?
-    end
-    new(dlat,dlon,convert(SharedArray{Int64},river_directions))
-  end
-end
-
-struct IcosohedralGridInputData <: GridSpecificInputData
-  lat::SharedArray{Float64}
-  lon::SharedArray{Float64}
-  next_cell_index::SharedArray{Float64}
-  function IcosohedralGridInputData(next_cell_index::Array{Int64},
-                                    grid::UnstructuredGrid)
-    lat::SharedArray{Float64} = convert(SharedArray{Float64,grid.clat)
-    lon::SharedArray{Float64} = convert(SharedArray{Float64,grid.clon)
-    new(lat,lon,convert(SharedArray{Int64},next_cell_index))
-  end
-end
 
 struct Configuration
   riverflow_formula::RiverFlowFormula
   overlandflow_formula::OverlandFlowFormula
   baseflow_formula::BaseFlowFormula
-end Configuration
+end
 
 function load_configuration(input_filepaths::Dict)
   println("Loading: " * input_filepaths["configuration_filepath"])
@@ -146,29 +190,12 @@ function load_configuration(input_filepaths::Dict)
                        formulae[BaseFlowFormula])
 end
 
-function parameter_generation_driver(input_filepaths::Dict,
-                                     output_hdpara_filepath::AbstractString)
-  configuration::Configuration = load_configuration(input_filepaths)
-  input_data::InputData,grid::Grid = load_input_data(input_filepaths)
-  number_of_riverflow_reservoirs::Array,
-  riverflow_retention_coefficients::Array,
-  number_of_overlandflow_reservoirs::Array,
-  overlandflow_retention_coefficients::Array,
-  number_of_baseflow_reservoirs::Array,
-  baseflow_retention_coefficients::Array = generate_parameters(configuration,input_data,grid)
-  write_hdpara_file(output_hdpara_filepath,input_data,
-                    number_of_riverflow_reservoirs,
-                    riverflow_retention_coefficients,
-                    number_of_overlandflow_reservoirs,
-                    overlandflow_retention_coefficients,
-                    number_of_baseflow_reservoirs,
-                    baseflow_retention_coefficients)
-end
+
 
 function generate_parameters(configuration::Configuration,
                              input_data::InputData,
                              grid::Grid)
-  grid_dimensions::Tuple{Int64} = get_grid_dimensions(grid)
+  grid_dimensions::Tuple = get_grid_dimensions(grid)
   number_of_riverflow_reservoirs = SharedArray{Float64}(grid_dimensions)
   riverflow_retention_coefficients = SharedArray{Float64}(grid_dimensions)
   number_of_overlandflow_reservoirs = SharedArray{Float64}(grid_dimensions)
@@ -177,18 +204,20 @@ function generate_parameters(configuration::Configuration,
   baseflow_retention_coefficients = SharedArray{Float64}(grid_dimensions)
   @sync @distributed for i in eachindex(input_data.landsea_mask)
     if ( ! input_data.landsea_mask[i] || ! input_data.glacier_mask[i] )
-      distance::Float64 = calculate_distance(i,input_data)
+      distance::Float64 = calculate_distance(i,input_data,grid)
       height_change::Float64 = calculate_height_change(i,input_data)
       number_of_riverflow_reservoirs[i],
       riverflow_retention_coefficients[i] =
-        generate_riverflow_parameters(i,configuration.riverflow_formula,distance,height)
+        generate_riverflow_parameters(i,configuration.riverflow_formula,distance,height,
+                                      grid)
       number_of_overlandflow_reservoirs[i],
       overlandflow_retention_coefficients[i] =
-        generate_overlandflow_parameters(i,configuration.overlandflow_formula,distance,height
-                                         input_data)
+        generate_overlandflow_parameters(i,configuration.overlandflow_formula,distance,height,
+                                         input_data,grid)
       number_of_baseflow_reservoirs[i],
       baseflow_retention_coefficients[i]=
-        generate_baseflow_parameters(i,configuration.baseflow_formula,distance,height,input_data)
+        generate_baseflow_parameters(i,configuration.baseflow_formula,distance,height,input_data,
+                                     grid)
     else
       number_of_riverflow_reservoirs[i] = 0
       riverflow_retention_coefficients[i] = 0.0
@@ -206,18 +235,20 @@ function generate_parameters(configuration::Configuration,
          sdata(baseflow_retention_coefficients)
 end
 
-function calculate_height_change(i::CartesianIndices,input_data::InputData)
-  next_cell::CartesianIndices = input_data.get_next_cell_coords(i)
+function calculate_height_change(i::Int64,input_data::InputData,grid::Grid)
+  next_cell::CartesianIndices =
+    get_next_cell_coords(input_data.grid_specific_input_data.river_directions[i],grid)
   height_change = orography(i) - orography(next_cell)
   return height_change
 end
 
-function calculate_distance(i::CartesianIndices,input_data::InputData)
-  next_cell::CartesianIndices = input_data.get_next_cell_coords(i)
+function calculate_distance(i::Int64,input_data::InputData,
+                            grid::Grid)
   earth_radius::Float64 = 6371000.0
   local distance::Float64
-  if size(i) = 2
-    river_direction::Int64 = input_data.river_directions(i)
+  if isa(grid,LatLonGrid)
+    river_direction::Int64 =
+      input_data.grid_specific_input_data.river_directions[i]
     local lat_index_change::Int64
     local lon_index_change::Int64
     if river_direction <= 3
@@ -227,38 +258,47 @@ function calculate_distance(i::CartesianIndices,input_data::InputData)
     else
       lat_index_change = 0
     end
-    if river_direction == 7 or
-       river_direction == 4 or
+    if river_direction == 7 ||
+       river_direction == 4 ||
        river_direction == 1
       lon_index_change = -1
-    else if river_direction == 9 or
-            river_direction == 6 or
+    elseif river_direction == 9 ||
+            river_direction == 6 ||
             river_direction == 3
       lon_index_change = 1
     else
       lon_index_change = 0
     end
-    distance = (((lat_index_change^2)*(input_data.dlat^2))+
-                ((lon_index_change^2)*(input_data.dlon(i)^2))
+    distance = (((lat_index_change^2)*(grid.dlat[i]^2))+
+                ((lon_index_change^2)*(grid.dlon^2)))
   else
-    working_dlat::Float64 = abs(input_data.lon(j) - input_data.lon(i))
+    working_dlat::Float64 = abs(grid.clon(j) - grid.clon(i))
     if working_dlat > 300
       working_dlat = abs(working_dlat - 360)
-    end if
+    end
     pi_factor::Float64 = pi/180.0
     earths_radius::Float64 = 6371000.0
     dlon::Float64 = working_dlat*pi_factor*
-                    cos(pi_factor*(input_data.lat(j)+input_data.lat(i))/2)*earths_radius
-    dlat::Float64 = abs(input_data.lat(i)+input_data.lat(i))*pi_factor*earths_radius
+                    cos(pi_factor*(grid.clat(j)+grid.clat(i))/2)*earths_radius
+    dlat::Float64 = abs(grid.clat(i)+grid.clat(i))*pi_factor*earths_radius
     distance = sqrt(dlat^2+dlon^2)
   end
   return distance
 end
 
+function get_next_cell_coords(river_direction)
+FILL IN!!!
+end
+
+function get_next_cell_coords()
+FILL IN!!!
+end
+
 function generate_riverflow_parameters(i::CartesianIndices,formula::RiverFlowSausen,
-                                       distance::Float64,height_change::Float64)
+                                       distance::Float64,height_change::Float64,
+                                       grid::Grid)
   local number_of_riverflow_reservoirs::Float64
-  if size(i) == 2
+  if isa(grid,LatLonGrid)
     number_of_riverflow_reservoirs = 5.478720
   else
     number_of_riverflow_reservoirs = 5.0
@@ -275,8 +315,8 @@ end
 
 function generate_overlandflow_parameters(i::CartesianIndices,formula::OverlandFlowSausen,
                                           distance::Float64,height_change::Float64,
-                                          input_data::InputData)
-  if size(i) == 2
+                                          input_data::InputData,grid::Grid)
+  if isa(grid,LatLonGrid)
     number_of_overlandflow_reservoirs = 1.1107
   else
     number_of_overlandflow_reservoirs = 1.0
@@ -285,7 +325,7 @@ function generate_overlandflow_parameters(i::CartesianIndices,formula::OverlandF
     height_change = formula.common_parameters.default_height_change
   end
   if input_data.innerslope[i] > 0
-    if size(i) == 2
+    if isa(grid,LatLonGrid)
       dx0 = sqrt(input_data.dlat^2 + input_data.dlon[i]^2)
     else
       dx0 = distance
@@ -299,20 +339,20 @@ function generate_overlandflow_parameters(i::CartesianIndices,formula::OverlandF
            ((height_change/distance)^formula.common_parameters.alpha)
     overlandflow_retention_coefficient = (formula.overlandflow_k0*distance/
                                           formula.overlandflow_dx)*(formula.overlandflow_v0/vsau)
-  end if
+  end
   overlandflow_retention_coefficient *= formula.overlandflow_torneaelven_k_multiplier
   return number_of_overlandflow_reservoirs,overlandflow_retention_coefficient
 end
 
 function generate_baseflow_parameters(i::CartesianIndices,formula::BaseFlowConstant,
                                       distance::Float64,height_change::Float64,
-                                      input_data::InputData)
+                                      input_data::InputData,grid::Grid)
   return 1.0,formula.baseflow_k0
 end
 
 function generate_baseflow_parameters(i::CartesianIndices,formula::BaseFlowDistanceAndOrography,
                                       distance::Float64,height_change::Float64,
-                                      input_data::InputData)
+                                      input_data::InputData,grid::Grid)
   bb = (input_data.orography_variance - 100.0)/(input_data.orography_variance + 1000.0)
   if bb < 0.01
     bb = 0.01
