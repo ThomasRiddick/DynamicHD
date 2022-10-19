@@ -1,11 +1,11 @@
 RM := rm -rf
-.PHONY: clean
+.PHONY: clean all
 
 all:
     cd interface/cpp_interface
     echo "Compiling Cython Modules" 1>&2
-    python3 ./interface/cpp_interface/setup_fill_sinks.py clean --all
-    python3 ./interface/cpp_interface/setup_fill_sinks.py build_ext --inplace -f
+    python3 setup_fill_sinks.py clean --all
+    python3 setup_fill_sinks.py build_ext --inplace -f
   	cd - 2>&1 >/dev/null
 clean :
 		-$(RM) ./bin/f2py_setup_wrapper.py

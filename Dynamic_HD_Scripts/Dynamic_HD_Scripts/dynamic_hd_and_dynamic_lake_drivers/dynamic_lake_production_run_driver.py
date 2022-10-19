@@ -435,12 +435,19 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                          present_day_base_orography,
                                                          present_day_reference_orography=\
                                                          present_day_reference_orography)
+
+        iodriver.advanced_field_writer("/Users/thomasriddick/Documents/data/temp/"
+                                       "temp_orog_rebased.nc",orography_10min,
+                                       fieldname="z")
         orography_corrections_10min =  iodriver.advanced_field_loader(orography_corrections_filename,
                                                                       fieldname=config.get("input_fieldname_options",
                                                                                            "input_orography_corrections_fieldname"),
                                                                       field_type='Orography')
         orography_uncorrected_10min = orography_10min.copy()
         orography_10min.add(orography_corrections_10min)
+        iodriver.advanced_field_writer("/Users/thomasriddick/Documents/data/temp/"
+                                       "temp_orog_directly_after_corrs.nc",orography_10min,
+                                       fieldname="z")
         truesinks = field.Field(np.empty((1,1),dtype=np.int32),grid='HD')
         if print_timing_info:
             time_before_glacier_mask_application = timer()
@@ -456,6 +463,18 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                                                 orography_uncorrected_10min,
                                                                                 input_glacier_mask=
                                                                                 glacier_mask_10min)
+            iodriver.advanced_field_writer("/Users/thomasriddick/Documents/data/temp/"
+                                           "temp_orog_after_glac_rep.nc",orography_10min,
+                                           fieldname="z")
+            iodriver.advanced_field_writer("/Users/thomasriddick/Documents/data/temp/"
+                                           "glacier_mask_10min.nc",glacier_mask_10min,
+                                           fieldname="glac")
+            glacier_mask_10min_bin = glacier_mask_10min.copy()
+            glacier_mask_10min_bin.convert_to_binary_mask(0.0,exact_threshold_converts_to_one=False)
+            iodriver.advanced_field_writer("/Users/thomasriddick/Documents/data/temp/"
+                                           "glacier_mask_logical_10min.nc",
+                                           glacier_mask_10min_bin,
+                                           fieldname="glac")
             orography_10min.change_dtype(np.float64)
             orography_10min.make_contiguous()
             inverted_glacier_mask_10min = glacier_mask_10min.copy()

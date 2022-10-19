@@ -105,5 +105,5 @@ clean:
 	-$(RM) $(CC_DEPS)$(C++_DEPS)$(EXECUTABLES)$(OBJS)$(USER_OBJS)$(TEST_OBJS)$(FS_ICON_SI_OBJS)$(CC_ICON_SI_OBJS)$(DRD_ICON_SI_OBJS)$(EB_ICON_SI_OBJS)$(BRB_ICON_SI_OBJS)$(C_UPPER_DEPS)$(CXX_DEPS)$(CPP_DEPS)$(C_DEPS)
 	-@echo ' '
 
-.PHONY: all clean dependents
+.PHONY: all clean tools_only compile_only
 .SECONDARY:

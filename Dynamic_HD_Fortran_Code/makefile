@@ -170,5 +170,5 @@ clean:
 	-$(RM) $(MODS)
 	-@echo ' '
 
-.PHONY: all clean dependents
+.PHONY: all clean compile_only tools_only
 .SECONDARY:

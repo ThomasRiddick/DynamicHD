@@ -231,7 +231,7 @@ class Field(object):
 
         return type(self)(input_field=self.data.copy(),grid=self.grid)
 
-    def convert_to_binary_mask(self,threshold=50):
+    def convert_to_binary_mask(self,threshold=50,exact_threshold_converts_to_one=True):
         """Convert this field to binary mask by converting points above threshold to 1 and all others to zero
 
         Arguments:
@@ -240,8 +240,12 @@ class Field(object):
         """
 
         temporary_data_copy = np.zeros(self.data.shape)
-        temporary_data_copy[self.data >= threshold] = 1
-        temporary_data_copy[self.data <  threshold] = 0
+        if exact_threshold_converts_to_one:
+            temporary_data_copy[self.data >= threshold] = 1
+            temporary_data_copy[self.data <  threshold] = 0
+        else:
+            temporary_data_copy[self.data > threshold] = 1
+            temporary_data_copy[self.data <= threshold] = 0
         self.data = temporary_data_copy
 
     def orient_data(self):

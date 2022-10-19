@@ -208,10 +208,16 @@ class NetCDF4FileIOHelper(IOHelper):
                     field_slice = fields[0][timeslice,:,:]
                 else:
                     field_slice = fields[0][:]
-                if unmask:
-                    return np.asarray(field_slice.reshape(grid.get_grid_dimensions()))
+                if grid_type=="generic_1d":
+                    if unmask:
+                        return np.asarray(field_slice)
+                    else:
+                        return np.asanyarray(field_slice)
                 else:
-                    return np.asanyarray(field_slice.reshape(grid.get_grid_dimensions()))
+                    if unmask:
+                        return np.asarray(field_slice.reshape(grid.get_grid_dimensions()))
+                    else:
+                        return np.asanyarray(field_slice.reshape(grid.get_grid_dimensions()))
             elif len(fields) > 1:
                 raise RuntimeError('File {0} contains multiple fields'.format(filename))
             else:

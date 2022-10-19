@@ -87,6 +87,7 @@ class InteractiveTimeslicePlots:
                  zoomed_section_bounds,
                  zero_slice_only_one=False,
                  zero_slice_only_two=False):
+        plt.rcParams["backend"] = "TkAgg"
         self.plot_types = {"comp":self.catchment_and_cflow_comp_plot,
                            "none":self.no_plot,
                            "cflow1":self.cflow_plot_one,

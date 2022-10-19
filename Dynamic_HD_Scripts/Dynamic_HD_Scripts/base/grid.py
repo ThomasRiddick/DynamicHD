@@ -332,6 +332,132 @@ class Grid(object, metaclass=ABCMeta):
     def convert_data_to_code(data_section,field_name,data_type,language):
         pass
 
+class Generic1DGrid(Grid):
+
+    def __init__(self):
+        pass
+
+    def extend_mask_to_neighbours(self,changes_mask):
+        pass
+
+    def compute_flow_directions(self,data):
+        pass
+
+    def get_number_of_masked_neighbors(self,data):
+        pass
+
+    def get_grid_dimensions(self):
+        pass
+
+    def set_grid_dimensions(self):
+        pass
+
+    def mask_insignificant_gradient_changes(self,gradient_changes,old_gradients,
+                                            gc_method,**kwargs):
+        pass
+
+    def calculate_gradients(self,orography):
+        pass
+
+    def mark_river_mouths(self,flow_direction_data):
+        pass
+
+    def flip_ud(self,data):
+        pass
+
+    def one_hundred_eighty_degree_longitude_translation(self,data):
+        pass
+
+    def find_area_minima(self,data,area_corner_coords_list,area_size):
+        pass
+
+    def get_flagged_points_coords(self,data):
+        pass
+
+    def flag_point(self,data,coords):
+        pass
+
+    def create_empty_field(self,dtype):
+        pass
+
+    def mask_outside_region(self,data,region):
+        pass
+
+    def replace_zeros_with_highest_valued_neighbor(self,data):
+        pass
+
+    def get_scale_factor_for_geographic_coords(self):
+        pass
+
+    def has_orientation_information(self):
+        pass
+
+    def needs_ud_flip(self):
+        pass
+
+    def needs_rotation_by_a_hundred_and_eighty_degrees(self):
+        pass
+
+    def set_coordinates(self,coordinates):
+        pass
+
+    def get_coordinates(self):
+        pass
+
+    def find_all_local_minima(self):
+        pass
+
+    def get_npoints(self):
+        """Return total number of points in the grid"""
+        pass
+
+    def add_wrapping_halo(self):
+        pass
+
+    def remove_wrapping_halo(self):
+        pass
+
+    def extract_data(self,data,section_coords,field_name,data_type,language):
+        data_section = data[section_coords["min"]:
+                            section_coords["max"]+1]
+        return self.convert_data_to_code(data_section,field_name,data_type,language)
+
+    def convert_data_to_code(self,data_section,field_name,data_type,language):
+        np.set_printoptions(precision=3,threshold=np.inf)
+        data_as_string = np.array2string(data_section,
+                                         separator="," if (language == "Fortran" or
+                                                           language == "Python") else " ",
+                                         max_line_width=1000)
+        np.set_printoptions(precision=8,threshold=1000)
+        julia_data_types = { "integer":"Int64","double":"Float64"}
+        python_data_types = { "integer":"np.int64","double":"np.float64"}
+        formats_for_languages = {
+                                "Fortran": lambda data_as_string,field_name,data_type:
+                                "allocate({field_name}({ncells}))\n"
+                                "{field_name} = transpose(reshape((/ &\n"
+                                "{data_as_string} /), &"
+                                "(/{ncells}/)))".format(field_name=field_name,
+                                                        data_as_string=data_as_string,
+                                                        ncells=data_section.shape[0]),
+                                "Julia": lambda data_as_string,field_name,data_type:
+                                "{field_name}::Field{data_type} ="
+                                "UnstructuredField{data_type}(TYPE_grid,\n"
+                                "{data_type}[ {data_as_string} ])".\
+                                format(field_name=field_name,
+                                       data_as_string=data_as_string,
+                                       data_type=julia_data_types[data_type]),
+                                "Python": lambda data_as_string,field_name,data_type:
+                                "{field_name} =  np.asarray("
+                                "{data_as_string},\n"
+                                "dtype=np.{data_type}, order='C')".\
+                                format(field_name=field_name,
+                                       data_as_string=data_as_string,
+                                       data_type=python_data_types[data_type])}
+        data_as_code = formats_for_languages[language](data_as_string,field_name,data_type)
+        if language == "Fortran":
+            data_as_code = re.sub("],","&",data_as_code,count=0)
+        return "\n" + data_as_code + "\n"
+
 class LatLongGrid(Grid):
     """Class that stores information on and functions to work with a Latitude-Longitude grid.
 
@@ -909,7 +1035,7 @@ class LatLongGrid(Grid):
         np.set_printoptions(precision=3,threshold=np.inf)
         data_as_string = np.array2string(data_section,
                                          separator="," if (language == "Fortran" or
-                                                           language == "Python") else None,
+                                                           language == "Python") else " ",
                                          max_line_width=1000)
         np.set_printoptions(precision=8,threshold=1000)
         julia_data_types = { "integer":"Int64","double":"Float64"}
@@ -968,7 +1094,8 @@ def makeGrid(grid_type,**kwargs):
                  'LatLong30sec':{'type':LatLongGrid,'params':{'nlat':21600,'nlong':43200}},
                  'T31':{'type':LatLongGrid,'params':{'nlat':48,'nlong':96}},
                  'T63':{'type':LatLongGrid,'params':{'nlat':96,'nlong':192}},
-                 'T106':{'type':LatLongGrid,'params':{'nlat':160,'nlong':320}}}
+                 'T106':{'type':LatLongGrid,'params':{'nlat':160,'nlong':320}},
+                 'Generic1D':{'type':Generic1DGrid,'params':{}}}
     grid_types = {'LatLong':LatLongGrid}
     if grid_type in list(shortcuts.keys()):
         underlying_grid_type = shortcuts[grid_type]['type']

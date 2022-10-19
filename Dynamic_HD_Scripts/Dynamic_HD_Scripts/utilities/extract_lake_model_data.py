@@ -252,10 +252,6 @@ class Lake_Data_Extractor(object):
             print(extracted_data)
 
 def main():
-    """Select the revelant runs to make
-
-    Select runs by uncommenting them and also the revelant object instantation.
-    """
     lake_data_extractor = Lake_Data_Extractor()
     lake_data_extractor.extract_data_to_run_lake_model(lake_parameters_filepath=
                                                        "/Users/thomasriddick/Documents/"

@@ -351,7 +351,7 @@ class Dynamic_Lake_Analysis_Run_Framework(object):
             #Use a random file for now
             warnings.warn("Using dummy water to redistribute file")
             self.dyn_lake_driver.input_water_to_redistribute_filepath=\
-            "/Users/thomasriddick/Documents/data/laketestdata/lake_volumes_pmt0531_Tom_41091231.nc"
+            "/Users/thomasriddick/Documents/data/simulation_data/laketestdata/lake_volumes_pmt0531_Tom_41091231.nc"
             self.dyn_lake_driver.output_hdparas_filepath=\
                 join(self.lakes_directory,
                      "results","hdpara_{}.nc".format(slice_label))

@@ -1083,14 +1083,14 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
 
     def extract_volumes_for_transient_run(self):
       base_filepath = "/Users/thomasriddick/Documents/data/lake_analysis_runs/lake_analysis_one_21_Jun_2021/lakes/results"
-      #dates = range(15990,10990,-10)
+      dates = range(15000,11000,-100)
       #dates = range(15990,15980,-10)
-      dates = [0]
+      #dates = [0]
       for date in dates:
-        lake_parameters_filepath = ("{0}/lakeparas_version_13_date_{1}.nc".format(base_filepath,date))
-        basin_catchment_numbers_filepath = ("{0}/diag_version_13_date_{1}/"
+        lake_parameters_filepath = ("{0}/lakeparas_version_33_date_{1}.nc".format(base_filepath,date))
+        basin_catchment_numbers_filepath = ("{0}/diag_version_33_date_{1}/"
                                             "basin_catchment_numbers.nc".format(base_filepath,date))
-        lake_volumes_out_filepath = ("{0}/diag_version_13_date_{1}/"
+        lake_volumes_out_filepath = ("{0}/diag_version_33_date_{1}/"
                                      "10min_lake_volumes.nc".format(base_filepath,date))
         extract_lake_volumes.\
             lake_volume_extraction_driver(lake_parameters_filepath,
@@ -1098,73 +1098,77 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
                                           lake_volumes_out_filepath)
 
     def add_10min_rmouth_to_transient_data(self):
-        basename_analysis_one = ("/Users/thomasriddick/Documents/data/lake_analysis_runs/"
-                                 "lake_analysis_two_26_Mar_2022/rivers/results/"
-                                 "diag_version_32_date_0_with_truesinks/")
-        basename_analysis_two = ("/Users/thomasriddick/Documents/data/lake_analysis_runs/"
-                                  "lake_analysis_one_21_Jun_2021/rivers/results/default_orog_corrs/"
-                                  "diag_version_29_date_0_with_truesinks//")
-        rdirs_list = [basename_analysis_one+"10min_rdirs.nc"]
-                      # basename_analysis_two+"10min_rdirs.nc"]
-        flow_to_cell_list = [basename_analysis_one+"10min_flowtocell.nc"]
-                             # basename_analysis_two+"10min_flowtocell.nc"]
-        output_list = [basename_analysis_one+"10min_rmouth_flowtocell.nc"]
-                       # basename_analysis_two+"10min_rmouth_flowtocell.nc"]
-        for rdirs_file,flow_to_cell_file,output_file in \
-             zip(rdirs_list,flow_to_cell_list,output_list):
-            river_mouth_marking_driver.\
-                advanced_flow_to_rivermouth_calculation_driver(input_river_directions_filename=rdirs_file,
-                                                               input_flow_to_cell_filename=flow_to_cell_file,
-                                                               output_flow_to_river_mouths_filename=output_file,
-                                                               input_river_directions_fieldname="rdir",
-                                                               input_flow_to_cell_fieldname="acc",
-                                                               output_flow_to_river_mouths_fieldname="acc")
+            basename_analysis_two = ("/Users/thomasriddick/Documents/data/lake_analysis_runs/"
+                                      "lake_analysis_one_21_Jun_2021/rivers/results/default_orog_corrs/"
+                                      "diag_version_33_date_0_with_truesinks/")
+            rdirs_list = [basename_analysis_one+"10min_rdirs.nc"]
+                          # basename_analysis_two+"10min_rdirs.nc"]
+            flow_to_cell_list = [basename_analysis_one+"10min_flowtocell.nc"]
+                                 # basename_analysis_two+"10min_flowtocell.nc"]
+            output_list = [basename_analysis_one+"10min_rmouth_flowtocell.nc"]
+                           # basename_analysis_two+"10min_rmouth_flowtocell.nc"]
+            for rdirs_file,flow_to_cell_file,output_file in \
+                 zip(rdirs_list,flow_to_cell_list,output_list):
+                river_mouth_marking_driver.\
+                    advanced_flow_to_rivermouth_calculation_driver(input_river_directions_filename=rdirs_file,
+                                                                   input_flow_to_cell_filename=flow_to_cell_file,
+                                                                   output_flow_to_river_mouths_filename=output_file,
+                                                                   input_river_directions_fieldname="rdir",
+                                                                   input_flow_to_cell_fieldname="acc",
+                                                                   output_flow_to_river_mouths_fieldname="acc")
 
     def expand_transient_data_catchments_to_include_rmouth(self):
-        basename_analysis_one = ("/Users/thomasriddick/Documents/data/lake_analysis_runs/"
-                                 "lake_analysis_two_26_Mar_2022/rivers/results/"
-                                 "diag_version_32_date_0_with_truesinks/")
-        basename_analysis_two = ("/Users/thomasriddick/Documents/data/lake_analysis_runs/"
-                                 "lake_analysis_two_26_Mar_2022/"
-                                 "rivers/results/diag_version_0_date_0/")
-        ref_catchment_filename = join(basename_analysis_one,"10min_catchments.nc")
-        # data_catchment_filename = join(basename_analysis_two,"10min_catchments_grid.nc")
-        ref_rdirs_filename = join(basename_analysis_one,"10min_rdirs.nc")
-        # data_rdirs_filename = join(basename_analysis_two,"10min_rdirs_grid.nc")
-        ref_expanded_catchment_filename = join(basename_analysis_one,
-                                               "10min_catchments_ext.nc")
-        # data_expanded_catchment_filename = join(basename_analysis_two,
-        #                                         "10min_catchments_grid_ext.nc")
-        ref_catchment_field = advanced_field_loader(ref_catchment_filename,
+        dates = range(15000,11000,-100)
+        #dates = range(15990,15980,-10)
+        #dates = [0]
+        for date in dates:
+            # basename_analysis_one = ("/Users/thomasriddick/Documents/data/lake_analysis_runs/"
+            #                          "lake_analysis_two_26_Mar_2022/rivers/results/"
+            #                          "diag_version_33_date_{}_with_truesinks/".format(date))
+            basename_analysis_one = ("/Users/thomasriddick/Documents/data/lake_analysis_runs/"
+                                     "lake_analysis_two_26_Mar_2022/rivers/results/"
+                                     "diag_version_33_date_{}/".format(date))
+            # basename_analysis_two = ("/Users/thomasriddick/Documents/data/lake_analysis_runs/"
+            #                          "lake_analysis_two_26_Mar_2022/"
+            #                          "rivers/results/diag_version_0_date_0/")
+            ref_catchment_filename = join(basename_analysis_one,"10min_catchments.nc")
+            # data_catchment_filename = join(basename_analysis_two,"10min_catchments_grid.nc")
+            ref_rdirs_filename = join(basename_analysis_one,"10min_rdirs.nc")
+            # data_rdirs_filename = join(basename_analysis_two,"10min_rdirs_grid.nc")
+            ref_expanded_catchment_filename = join(basename_analysis_one,
+                                                   "10min_catchments_ext.nc")
+            # data_expanded_catchment_filename = join(basename_analysis_two,
+            #                                         "10min_catchments_grid_ext.nc")
+            ref_catchment_field = advanced_field_loader(ref_catchment_filename,
+                                                        time_slice=None,
+                                                        fieldname="catchments",
+                                                        adjust_orientation=True)
+            # data_catchment_field = advanced_field_loader(data_catchment_filename,
+            #                                              time_slice=None,
+            #                                              fieldname="catch",
+            #                                              adjust_orientation=True)
+            ref_rdirs_field = advanced_field_loader(ref_rdirs_filename,
                                                     time_slice=None,
-                                                    fieldname="catch",
+                                                    fieldname="rdir",
                                                     adjust_orientation=True)
-        # data_catchment_field = advanced_field_loader(data_catchment_filename,
-        #                                              time_slice=None,
-        #                                              fieldname="catch",
-        #                                              adjust_orientation=True)
-        ref_rdirs_field = advanced_field_loader(ref_rdirs_filename,
-                                                time_slice=None,
-                                                fieldname="rdir",
-                                                adjust_orientation=True)
-        # data_rdirs_field = advanced_field_loader(data_rdirs_filename,
-        #                                          time_slice=None,
-        #                                          fieldname="rdir",
-        #                                          adjust_orientation=True)
-        for coords in zip(*(np.nonzero(ref_rdirs_field.get_data() == 0.0))):
-            utilities.expand_catchment_to_include_rivermouths(ref_rdirs_field.get_data(),
-                                                              ref_catchment_field.get_data(),
-                                                              coords)
-        # for coords in zip(*(np.nonzero(data_rdirs_field.get_data() == 0.0))):
-        #     utilities.expand_catchment_to_include_rivermouths(data_rdirs_field.get_data(),
-        #                                                       data_catchment_field.get_data(),
-        #                                                       coords)
-        iodriver.advanced_field_writer(ref_expanded_catchment_filename,
-                                       ref_catchment_field,
-                                       fieldname="catch")
-        # iodriver.advanced_field_writer(data_expanded_catchment_filename,
-        #                                data_catchment_field,
-        #                                fieldname="catch")
+            # data_rdirs_field = advanced_field_loader(data_rdirs_filename,
+            #                                          time_slice=None,
+            #                                          fieldname="rdir",
+            #                                          adjust_orientation=True)
+            for coords in zip(*(np.nonzero(ref_rdirs_field.get_data() == 0.0))):
+                utilities.expand_catchment_to_include_rivermouths(ref_rdirs_field.get_data(),
+                                                                  ref_catchment_field.get_data(),
+                                                                  coords)
+            # for coords in zip(*(np.nonzero(data_rdirs_field.get_data() == 0.0))):
+            #     utilities.expand_catchment_to_include_rivermouths(data_rdirs_field.get_data(),
+            #                                                       data_catchment_field.get_data(),
+            #                                                       coords)
+            iodriver.advanced_field_writer(ref_expanded_catchment_filename,
+                                           ref_catchment_field,
+                                           fieldname="catch")
+            # iodriver.advanced_field_writer(data_expanded_catchment_filename,
+            #                                data_catchment_field,
+            #                                fieldname="catch")
 
     def remove_no_data_values_from_upscaled_MERIT_correction_set(self):
         input_upscaled_correction_set_filename = ("/Users/thomasriddick/Documents/data/HDdata/"
@@ -1232,7 +1236,7 @@ def main():
     #lake_drivers.connect_catchments_for_glac1D()
     #lake_drivers.connect_catchments_for_transient_run()
     #lake_drivers.extract_volumes_for_transient_run()
-    lake_drivers.add_10min_rmouth_to_transient_data()
+    #lake_drivers.add_10min_rmouth_to_transient_data()
     lake_drivers.expand_transient_data_catchments_to_include_rmouth()
     #lake_drivers.remove_no_data_values_from_upscaled_MERIT_correction_set()
     #lake_drivers.remove_disconnected_points_from_slm()
