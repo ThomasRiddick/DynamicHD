@@ -42,14 +42,16 @@ ifeq ($(USE_MPI),True)
 FLAGS := -DUSE_MPI -m64
 endif
 else ifeq ($(shell uname -s),Linux)
+ifneq ($(USE_SETTINGS_FROM_CONFIGURE),True)
 GFORTRAN := $(shell which gfortran)
+GFORTRAN_NETCDF_F := /sw/stretch-x64/netcdf/netcdf_fortran-4.4.4-gcc63
+NETCDF_F_LIB :=libnetcdff.so
+endif
 NAGFORTRAN :=  $(shell which nagfor)
 INTELFORTRAN := $(shell which ifort)
 EXT_SOURCE :=$(shell echo ${HOME} )/HDancillarydata/code/
-GFORTRAN_NETCDF_F := /sw/stretch-x64/netcdf/netcdf_fortran-4.4.4-gcc63
 NAG_NETCDF_F := /sw/stretch-x64/netcdf/netcdf_fortran-4.4.4-nag70
 INTEL_NETCDF_F := /sw/stretch-x64/netcdf/netcdf_fortran-4.4.4-intel17
-NETCDF_F_LIB :=libnetcdff.so
 else
 $(error OS $(shell uname -s) not recognised)
 endif

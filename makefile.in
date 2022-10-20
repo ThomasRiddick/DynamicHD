@@ -15,7 +15,7 @@ CPP_RELEASE_DIR := Dynamic_HD_Cpp_Code/Release
 all: $(FORTRAN_RELEASE_DIR) $(CPP_RELEASE_DIR)
 	make -C Dynamic_HD_Fortran_Code/Release -f ../makefile tools_only
 	make -C Dynamic_HD_Cpp_Code/Release -f ../makefile tools_only
-	#make -C Dynamic_HD_Scripts/Dynamic_HD_Scripts all
+	make -C Dynamic_HD_Scripts/Dynamic_HD_Scripts all
 
 clean: $(FORTRAN_RELEASE_DIR) $(CPP_RELEASE_DIR)
 	make -C Dynamic_HD_Fortran_Code/Release -f ../makefile clean

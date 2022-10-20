@@ -15,12 +15,14 @@ NETCDFC := $(HOME)/sw-spack/netcdf-c-4.8.1-khy3ru
 NETCDFCXX := $(HOME)/sw-spack/netcdf-cxx4-4.3.1-d54zya
 endif
 else ifeq ($(shell uname -s),Linux)
-GPLUSPLUS := $(shell which g++)
 STDLIB_OPT :=
 FLAGS :=-pthread -DUSE_NETCDFCPP
+INCLUDE := -isystem"$(NETCDFCXX)/include" -isystem"$(NETCDFC)/include"
+ifneq ($(USE_SETTINGS_FROM_CONFIGURE),True)
+GPLUSPLUS := $(shell which g++)
 NETCDFC := /sw/stretch-x64/netcdf/netcdf_c-4.6.1
 NETCDFCXX := /sw/stretch-x64/netcdf/netcdf_cxx-4.3.0-gccsys
-INCLUDE := -isystem"$(NETCDFCXX)/include" -isystem"$(NETCDFC)/include"
+endif
 else
 $(error OS $(uname -s) not recognised)
 endif
