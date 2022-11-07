@@ -261,6 +261,8 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
             config.set("general_options","generate_flow_parameters","True")
         if not config.has_option("general_options","print_timing_information"):
             config.set("general_options","print_timing_information","False")
+        if not config.has_option("general_options","use_gradual_transitions"):
+            config.set("general_options","use_gradual_transitions","True")
         if not config.has_section("output_fieldname_options"):
             config.add_section("output_fieldname_options")
         if not config.has_option("output_fieldname_options","output_10min_corrected_orog_fieldname"):
@@ -436,18 +438,12 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                          present_day_reference_orography=\
                                                          present_day_reference_orography)
 
-        iodriver.advanced_field_writer("/Users/thomasriddick/Documents/data/temp/"
-                                       "temp_orog_rebased.nc",orography_10min,
-                                       fieldname="z")
         orography_corrections_10min =  iodriver.advanced_field_loader(orography_corrections_filename,
                                                                       fieldname=config.get("input_fieldname_options",
                                                                                            "input_orography_corrections_fieldname"),
                                                                       field_type='Orography')
         orography_uncorrected_10min = orography_10min.copy()
         orography_10min.add(orography_corrections_10min)
-        iodriver.advanced_field_writer("/Users/thomasriddick/Documents/data/temp/"
-                                       "temp_orog_directly_after_corrs.nc",orography_10min,
-                                       fieldname="z")
         truesinks = field.Field(np.empty((1,1),dtype=np.int32),grid='HD')
         if print_timing_info:
             time_before_glacier_mask_application = timer()
@@ -456,25 +452,27 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                                 fieldname=config.get("input_fieldname_options",
                                                                                      "input_glacier_mask_fieldname"),
                                                                 field_type='Orography')
-            orography_10min = utilities.\
-            replace_corrected_orography_with_original_for_glaciated_grid_points(input_corrected_orography=\
-                                                                                orography_10min,
-                                                                                input_original_orography=\
-                                                                                orography_uncorrected_10min,
-                                                                                input_glacier_mask=
-                                                                                glacier_mask_10min)
-            iodriver.advanced_field_writer("/Users/thomasriddick/Documents/data/temp/"
-                                           "temp_orog_after_glac_rep.nc",orography_10min,
-                                           fieldname="z")
-            iodriver.advanced_field_writer("/Users/thomasriddick/Documents/data/temp/"
-                                           "glacier_mask_10min.nc",glacier_mask_10min,
-                                           fieldname="glac")
+            if config.get("general_options",
+                          "use_gradual_transitions"):
+                glacier_mask_as_bool_10min = glacier_mask_10min.copy()
+                glacier_mask_as_bool_10min.change_dtype(bool)
+                orography_10min = utilities.\
+                    replace_corrected_orography_with_original_for_glaciated_points_with_gradual_transition(
+                    input_corrected_orography=orography_10min,
+                    input_original_orography=orography_uncorrected_10min,
+                    input_base_orography=present_day_base_orography,
+                    input_glacier_mask=glacier_mask_as_bool_10min,
+                    blend_to_threshold=75.0,blend_from_threshold=25.0)
+            else:
+                orography_10min = utilities.\
+                replace_corrected_orography_with_original_for_glaciated_grid_points(input_corrected_orography=\
+                                                                                    orography_10min,
+                                                                                    input_original_orography=\
+                                                                                    orography_uncorrected_10min,
+                                                                                    input_glacier_mask=
+                                                                                    glacier_mask_10min)
             glacier_mask_10min_bin = glacier_mask_10min.copy()
             glacier_mask_10min_bin.convert_to_binary_mask(0.0,exact_threshold_converts_to_one=False)
-            iodriver.advanced_field_writer("/Users/thomasriddick/Documents/data/temp/"
-                                           "glacier_mask_logical_10min.nc",
-                                           glacier_mask_10min_bin,
-                                           fieldname="glac")
             orography_10min.change_dtype(np.float64)
             orography_10min.make_contiguous()
             inverted_glacier_mask_10min = glacier_mask_10min.copy()

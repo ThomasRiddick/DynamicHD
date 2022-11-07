@@ -1100,7 +1100,7 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
     def add_10min_rmouth_to_transient_data(self):
             basename_analysis_two = ("/Users/thomasriddick/Documents/data/lake_analysis_runs/"
                                       "lake_analysis_one_21_Jun_2021/rivers/results/default_orog_corrs/"
-                                      "diag_version_33_date_0_with_truesinks/")
+                                      "diag_version_34_date_0_with_truesinks/")
             rdirs_list = [basename_analysis_one+"10min_rdirs.nc"]
                           # basename_analysis_two+"10min_rdirs.nc"]
             flow_to_cell_list = [basename_analysis_one+"10min_flowtocell.nc"]
@@ -1127,7 +1127,7 @@ class Dynamic_Lake_Drivers(dynamic_hd_driver.Dynamic_HD_Drivers):
             #                          "diag_version_33_date_{}_with_truesinks/".format(date))
             basename_analysis_one = ("/Users/thomasriddick/Documents/data/lake_analysis_runs/"
                                      "lake_analysis_two_26_Mar_2022/rivers/results/"
-                                     "diag_version_33_date_{}/".format(date))
+                                     "diag_version_34_date_{}/".format(date))
             # basename_analysis_two = ("/Users/thomasriddick/Documents/data/lake_analysis_runs/"
             #                          "lake_analysis_two_26_Mar_2022/"
             #                          "rivers/results/diag_version_0_date_0/")

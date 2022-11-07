@@ -878,6 +878,117 @@ class TestUpscaling(unittest.TestCase):
                                                scalenumbers=True)
         np.testing.assert_array_equal(output_field.get_data(),self.integer_expected_output_field_sum/6.0)
 
+class TestBlendedGlaciatedPointReplacement(unittest.TestCase):
+    """Tests of replacing glaciated points with uncorrected data with gradual transition"""
+
+    input_corrected_orography = field.Orography(np.array([[2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0, 2.0],
+                                                          [2.0,3.0,3.0, 3.0,3.0,3.0, 3.0,3.0,3.0, 2.0],
+                                                          [2.0,3.0,4.0, 4.0,4.0,4.0, 4.0,3.0,3.0, 2.0],
+                                                          [2.0,3.0,4.0, 5.0,5.0,5.0, 4.0,3.0,3.0, 2.0],
+                                                          [2.0,3.0,4.0, 5.0,6.0,5.0, 4.0,3.0,3.0, 2.0],
+                                                          [2.0,3.0,4.0, 5.0,6.0,5.0, 4.0,3.0,3.0, 2.0],
+                                                          [2.0,3.0,4.0, 5.0,5.0,5.0, 4.0,3.0,3.0, 2.0],
+                                                          [2.0,3.0,4.0, 4.0,4.0,4.0, 4.0,3.0,3.0, 2.0],
+                                                          [2.0,3.0,3.0, 3.0,3.0,3.0, 3.0,3.0,3.0, 2.0],
+                                                          [2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0, 2.0]],
+                                                          dtype=np.float64),'LatLong',nlat=10,nlong=10)
+    input_original_orography  = field.Orography(np.array([[12.0,12.0,12.0, 12.0,12.0,12.0, 12.0,12.0,12.0, 12.0],
+                                                          [12.0,13.0,23.0, 23.0,23.0,23.0, 23.0,13.0,13.0, 12.0],
+                                                          [12.0,13.0,34.0, 34.0,34.0,34.0, 34.0,13.0,13.0, 12.0],
+                                                          [12.0,13.0,34.0, 45.0,45.0,45.0, 34.0,13.0,13.0, 12.0],
+                                                          [12.0,13.0,34.0, 45.0,56.0,45.0, 34.0,13.0,13.0, 12.0],
+                                                          [12.0,13.0,34.0, 45.0,56.0,45.0, 34.0,13.0,13.0, 12.0],
+                                                          [12.0,13.0,34.0, 45.0,45.0,45.0, 34.0,13.0,13.0, 12.0],
+                                                          [12.0,13.0,34.0, 34.0,34.0,34.0, 34.0,13.0,13.0, 12.0],
+                                                          [12.0,13.0,23.0, 23.0,23.0,23.0, 23.0,13.0,13.0, 12.0],
+                                                          [12.0,12.0,12.0, 12.0,12.0,12.0, 12.0,12.0,12.0, 12.0]],
+                                                          dtype=np.float64),'LatLong',nlat=10,nlong=10)
+
+    input_base_orography = \
+        field.Orography(np.array([[12.0,12.0,12.0, 12.0,12.0,12.0, 12.0,12.0,12.0, 12.0],
+                                  [12.0,13.0,13.0, 13.0,13.0,13.0, 13.0,13.0,13.0, 12.0],
+                                  [12.0,13.0,14.0, 14.0,14.0,14.0, 14.0,13.0,13.0, 12.0],
+                                  [12.0,13.0,14.0, 15.0,15.0,15.0, 14.0,13.0,13.0, 12.0],
+                                  [12.0,13.0,14.0, 15.0,16.0,15.0, 14.0,13.0,13.0, 12.0],
+                                  [12.0,13.0,14.0, 15.0,16.0,15.0, 14.0,13.0,13.0, 12.0],
+                                  [12.0,13.0,14.0, 15.0,15.0,15.0, 14.0,13.0,13.0, 12.0],
+                                  [12.0,13.0,14.0, 14.0,14.0,14.0, 14.0,13.0,13.0, 12.0],
+                                  [12.0,13.0,13.0, 13.0,13.0,13.0, 13.0,13.0,13.0, 12.0],
+                                  [12.0,12.0,12.0, 12.0,12.0,12.0, 12.0,12.0,12.0, 12.0]],
+                                  dtype=np.float64),'LatLong',nlat=10,nlong=10)
+    input_glacier_mask = field.Orography(np.array([[False,False,False, False,False,False, False,False,False,  False],
+                                                   [False, True, True, True,True,True,    True,True,True,      True],
+                                                   [False,False, True, True,True,True,    True,True,True,     False],
+                                                   [False, True, True, True,True,True,    True,True,True,      True],
+                                                   [False,False, True, True,True,True,    True,True,True,     False],
+                                                   [False, True, True, True,True,True,    True,True,True,      True],
+                                                   [False,False, True, True,True,True,    True,True,True,     False],
+                                                   [False, True, True, True,True,True,    True,True,True,      True],
+                                                   [False,False, True, True,True,True,    True,True,True,     False],
+                                                   [False,False,False, False,False,False, False, False,False, False]],
+                                                   dtype=bool),'LatLong',nlat=10,nlong=10)
+
+    expected_result_without_gradual_transition = \
+        np.array([[2.0,2.0,2.0, 2.0,2.0,2.0,       2.0,2.0,2.0, 2.0],
+                  [2.0,13.0,23.0, 23.0,23.0,23.0, 23.0,13.0,13.0, 12.0],
+                  [2.0, 3.0,34.0, 34.0,34.0,34.0,     34.0,13.0,13.0, 2.0],
+                  [2.0,13.0,34.0, 45.0,45.0,45.0,     34.0,13.0,13.0, 12.0],
+                  [2.0, 3.0,34.0, 45.0,56.0,45.0,     34.0,13.0,13.0, 2.0],
+                  [2.0,13.0,34.0, 45.0,56.0,45.0,     34.0,13.0,13.0, 12.0],
+                  [2.0, 3.0,34.0, 45.0,45.0,45.0,     34.0,13.0,13.0, 2.0],
+                  [2.0,13.0,34.0, 34.0,34.0,34.0,  34.0,13.0,13.0, 12.0],
+                  [2.0, 3.0,23.0, 23.0,23.0,23.0,      23.0,13.0,13.0, 2.0],
+                  [2.0,2.0,2.0, 2.0,2.0,2.0,       2.0,2.0,2.0, 2.0]])
+
+    expected_result_with_transition_starting_at_zero = \
+        np.array([[2.0,2.0,2.0, 2.0,2.0,2.0,       2.0,2.0,2.0, 2.0],
+                  [2.0, 3.0,8.0, 8.0,8.0,8.0, 8.0, 3.0,3.0, 2.0],
+                  [2.0, 3.0,19.0, 19.0,19.0,19.0,     19.0,3.0,3.0, 2.0],
+                  [2.0, 3.0,19.0, 35.0,35.0,35.0,     19.0,3.0,3.0, 2.0],
+                  [2.0, 3.0,19.0, 35.0,56.0,35.0,     19.0,3.0,3.0, 2.0],
+                  [2.0, 3.0,19.0, 35.0,56.0,35.0,     19.0,3.0,3.0, 2.0],
+                  [2.0, 3.0,19.0, 35.0,35.0,35.0,     19.0,3.0,3.0, 2.0],
+                  [2.0, 3.0,19.0, 19.0,19.0,19.0,  19.0,3.0,3.0, 2.0],
+                  [2.0, 3.0,8.0, 8.0,8.0,8.0,      8.0,3.0,3.0, 2.0],
+                  [2.0,2.0,2.0, 2.0,2.0,2.0,       2.0,2.0,2.0, 2.0]])
+
+    expected_result_with_transition_starting_above_zero = \
+        np.array([[2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0, 2.0],
+                  [2.0,3.0,3.0, 3.0,3.0,3.0, 3.0,3.0,3.0, 2.0],
+                  [2.0,3.0,4.0, 4.0,4.0,4.0, 4.0,3.0,3.0, 2.0],
+                  [2.0,3.0,4.0, 25.0,25.0,25.0, 4.0,3.0,3.0, 2.0],
+                  [2.0,3.0,4.0, 25.0,56.0,25.0, 4.0,3.0,3.0, 2.0],
+                  [2.0,3.0,4.0, 25.0,56.0,25.0, 4.0,3.0,3.0, 2.0],
+                  [2.0,3.0,4.0, 25.0,25.0,25.0, 4.0,3.0,3.0, 2.0],
+                  [2.0,3.0,4.0, 4.0,4.0,4.0, 4.0,3.0,3.0, 2.0],
+                  [2.0,3.0,3.0, 3.0,3.0,3.0, 3.0,3.0,3.0, 2.0],
+                  [2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0, 2.0]])
+
+    def testWithoutGradualTransition(self):
+        orography = utilities.\
+        replace_corrected_orography_with_original_for_glaciated_points_with_gradual_transition(
+            self.input_corrected_orography,self.input_original_orography,self.input_base_orography,
+            self.input_glacier_mask,blend_to_threshold=0,blend_from_threshold=0)
+        np.testing.assert_array_equal(orography.get_data(),
+                                      self.expected_result_without_gradual_transition)
+
+
+    def testWithGradualTransitionStartAtZero(self):
+        orography = utilities.\
+        replace_corrected_orography_with_original_for_glaciated_points_with_gradual_transition(
+            self.input_corrected_orography,self.input_original_orography,self.input_base_orography,
+            self.input_glacier_mask,blend_to_threshold=40.0,blend_from_threshold=0.0)
+        np.testing.assert_array_equal(orography.get_data(),
+                                      self.expected_result_with_transition_starting_at_zero)
+
+    def testWithGradualTransitionStartAboveZero(self):
+        orography = utilities.\
+        replace_corrected_orography_with_original_for_glaciated_points_with_gradual_transition(
+            self.input_corrected_orography,self.input_original_orography,self.input_base_orography,
+            self.input_glacier_mask,blend_to_threshold=40.0,blend_from_threshold=20.0)
+        np.testing.assert_array_equal(orography.get_data(),
+                                      self.expected_result_with_transition_starting_above_zero)
+
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
     unittest.main()

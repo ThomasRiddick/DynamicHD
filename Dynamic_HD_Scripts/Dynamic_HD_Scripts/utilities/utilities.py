@@ -77,6 +77,33 @@ def replace_corrected_orography_with_original_for_glaciated_grid_points(input_co
     input_original_orography.update_field_with_partially_masked_data(input_corrected_orography)
     return input_original_orography
 
+def replace_corrected_orography_with_original_for_glaciated_points_with_gradual_transition(input_corrected_orography,
+                                                                                           input_original_orography,
+                                                                                           input_base_orography,
+                                                                                           input_glacier_mask,
+                                                                                           blend_to_threshold,
+                                                                                           blend_from_threshold):
+    """Replace a corrected orography with the original orography at points that are glaciated
+
+    Arguments:
+    input_corrected_orography: Field object; the corrected orography where correction are applied
+        to both glaciated and unglaciated points
+    input_original_orography: Field object; the original orography to use for glaciated points
+    input_reference_orography: Field object; the base present day orography the original orography
+                               was produced from
+    input_glacier_mask: Field object; a binary glacial mask where glacier is 1/True and non-glacier
+        is 0/False
+    Returns: An orography using the corrected orography for non-glaciated points and the original
+        orography for glaciated points with blended edges
+    """
+    input_corrected_orography_copy = input_corrected_orography.copy()
+    input_corrected_orography_copy.replace_glaciated_points_gradual_transition(input_glacier_mask,
+                                                                               input_original_orography,
+                                                                               input_base_orography,
+                                                                               blend_to_threshold,
+                                                                               blend_from_threshold)
+    return input_corrected_orography_copy
+
 def replace_corrected_orography_with_original_for_glaciated_grid_points_drivers(input_corrected_orography_file,
                                                                                 input_original_orography_file,
                                                                                 input_glacier_mask_file,

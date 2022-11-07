@@ -365,6 +365,7 @@ class Orography(Field):
     generate_ls_mask
     find_area_minima
     mask_where_greater_than
+    replace_glaciated_points_gradual_transition
     """
 
     #Best to use a whole number an order of magnitude deeper than the
@@ -533,6 +534,39 @@ class Orography(Field):
                                                      np.greater(self.data,
                                                         second_orography_field.get_data())),
                                        self.data,copy=False)
+
+    def replace_glaciated_points_gradual_transition(self,
+                                                    input_glacier_mask,
+                                                    input_original_orography,
+                                                    input_base_orography,
+                                                    blend_to_threshold,
+                                                    blend_from_threshold):
+
+        input_glacier_mask_data = input_glacier_mask.get_data()
+        input_original_orography_data = input_original_orography.get_data()
+        input_base_orography_data = input_base_orography.get_data()
+        if blend_to_threshold == blend_from_threshold:
+            blending_factor_data = 1.0
+        else:
+            blending_factor_data =   np.divide(input_original_orography_data - blend_from_threshold -
+                                               input_base_orography_data,
+                                               blend_to_threshold-blend_from_threshold)
+        blended_glacier_orography_data = np.select([input_original_orography_data>
+                                                    blend_to_threshold+input_base_orography_data,
+                                                    np.logical_and(input_original_orography_data<=
+                                                                   blend_to_threshold+input_base_orography_data,
+                                                                   input_original_orography_data>=
+                                                                   blend_from_threshold+input_base_orography_data),
+                                                    input_original_orography_data<
+                                                    blend_from_threshold+input_base_orography_data],
+                                                    [input_original_orography_data,
+                                                    np.multiply(1.0-blending_factor_data,self.data)+
+                                                    np.multiply(blending_factor_data,
+                                                                input_original_orography_data),
+                                                    self.data])
+        self.data = np.select([np.logical_not(input_glacier_mask_data),
+                                               input_glacier_mask_data],
+                              [self.data,blended_glacier_orography_data])
 
 class RiverDirections(Field):
     """A subclass of field with various method specific to river directions
