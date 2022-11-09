@@ -56,7 +56,8 @@ class Test_Dynamic_HD_Production_Run_Drivers(unittest.TestCase):
                            "paragen/paragen.inp","paragen/riv_n.dat","paragen/slope.dat",
                            "10min_catchments.nc","10min_corrected_orog.nc",
                            "10min_flowtocell.nc","10min_flowtorivermouths.nc",
-                           "10min_rdirs.nc","30min_catchments.nc",
+                           "10min_rdirs.nc","10min_lake_volumes.nc",
+                           "30min_catchments.nc","30min_connected_catchments.nc",
                            "30min_filled_orog.nc","30min_flowtocell.nc",
                            "30min_flowtorivermouths.nc","30min_pre_loop_removal_catchments.nc",
                            "30min_pre_loop_removal_flowtocell.nc",
@@ -65,7 +66,9 @@ class Test_Dynamic_HD_Production_Run_Drivers(unittest.TestCase):
                            "30min_unfilled_orog.nc","30minute_filled_orog_temp.dat",
                            "30minute_filled_orog_temp.nc","30minute_ls_mask_temp.dat",
                            "30minute_ls_mask_temp.nc","30minute_river_dirs_temp.dat",
-                           "30minute_river_dirs_temp.nc","basin_catchment_numbers_temp.nc",
+                           "30minute_river_dirs_temp.nc","30min_flowtocell_connected.nc",
+                           "30min_flowtorivermouths_connected.nc",
+                           "basin_catchment_numbers_temp.nc",
                            "loops_10min.log","loops_30min.log"]
         directories_to_remove = self.temp_dirs
         for directory in directories_to_remove:
