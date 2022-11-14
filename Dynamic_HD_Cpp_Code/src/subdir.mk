@@ -14,7 +14,8 @@ CPP_SRCS += \
 ../src/algorithms/stream_following_algorithm.cpp \
 ../src/algorithms/carved_river_direction_burning_algorithm.cpp \
 ../src/algorithms/orography_creation_algorithm.cpp \
-../src/algorithms/basic_bifurcation_algorithms.cpp \
+../src/algorithms/basic_bifurcation_algorithm.cpp \
+../src/algorithms/bifurcation_algorithm.cpp \
 ../src/drivers/filter_out_shallow_lakes.cpp \
 ../src/drivers/redistribute_water.cpp \
 ../src/drivers/determine_river_directions.cpp \
@@ -59,6 +60,7 @@ USER_OBJS += \
 ./src/algorithms/stream_following_algorithm.o \
 ./src/algorithms/orography_creation_algorithm.o \
 ./src/algorithms/basic_bifurcation_algorithm.o \
+./src/algorithms/bifurcation_algorithm.o \
 ./src/drivers/create_connected_lsmask.o \
 ./src/drivers/fill_sinks.o \
 ./src/drivers/upscale_orography.o \
@@ -114,6 +116,8 @@ CPP_DEPS += \
 ./src/algorithms/river_direction_determination_algorithm.d \
 ./src/algorithms/orography_creation_algorithm.d \
 ./src/algorithms/stream_following_algorithm.d \
+./src/algorithms/bifurcation_algorithm.d \
+./src/algorithms/basic_bifurcation_algorithm.d \
 ./src/drivers/create_connected_lsmask.d \
 ./src/drivers/fill_sinks.d \
 ./src/drivers/upscale_orography.d \

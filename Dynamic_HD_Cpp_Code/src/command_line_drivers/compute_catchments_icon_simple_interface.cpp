@@ -54,6 +54,9 @@ void print_help(){
   cout << "loop log file path - Full path to text file to write loops to" << endl;
   cout << "sort catchments by size flag - renumber the catchments so they are ordered by size"
        << "from the largest to the smallest" << endl;
+  cout << "Subcatchment list file path (optional) - Instead of generating full catchment set only"
+       << "generate the subset of catchments for the points (no necessarily river mouths) listed in"
+       << "this file" << endl;
 }
 
 int main(int argc, char *argv[]){
@@ -72,7 +75,7 @@ int main(int argc, char *argv[]){
     cout << "Run with option -h for help" << endl;
     exit(EXIT_FAILURE);
   }
-  if(argc>8) {
+  if(argc>9) {
     cout << "Too many arguments" << endl;
     print_usage();
     cout << "Run with option -h for help" << endl;
@@ -83,21 +86,32 @@ int main(int argc, char *argv[]){
   string grid_params_filepath(argv[3]);
   string next_cell_index_fieldname(argv[4]);
   bool use_secondary_neighbors_in;
-  if (argc == 6 || argc == 7 || argc == 8) {
+  if (argc == 6 || argc == 7 || argc == 8 || argc == 9) {
     string use_secondary_neighbors_string(argv[5]);
     use_secondary_neighbors_in = bool(stoi(use_secondary_neighbors_string));
   } else use_secondary_neighbors_in = true;
   if (use_secondary_neighbors_in) cout << "Using secondary neighbors" << endl;
   string loop_log_filepath;
-  if (argc == 7 || argc == 8) {
+  if (argc == 7 || argc == 8 || argc == 9) {
     loop_log_filepath = argv[6];
     output_loop_file = true;
   }
   bool sort_catchments_by_size;
-  if (argc == 8){
+  if (argc == 8 || argc == 9){
     string sort_catchments_by_size_string(argv[7]);
     sort_catchments_by_size = bool(stoi(sort_catchments_by_size_string));
   } else sort_catchments_by_size = false;
+  bool generate_selected_subcatchments_only;
+  string subcatchment_list_filepath;
+  if (argc == 9){
+    subcatchment_list_filepath = argv[8];
+    generate_selected_subcatchments_only = true;
+    if (output_loop_file){
+      cout << "Loops not searched for when creating catchments for selected cells only" <<
+              "Loop log file path argument ignored!" << endl;
+      output_loop_file = false;
+    }
+  } else generate_selected_subcatchments_only = false;
   ifstream ofile(catchment_numbers_out_filepath.c_str());
   if (ofile){
     cout << "Outfile already exists - please delete or specify a different name" << endl;
@@ -130,7 +144,23 @@ int main(int argc, char *argv[]){
   auto alg = catchment_computation_algorithm_icon_single_index();
   alg.setup_fields(catchment_numbers_out,
                    next_cell_index_in,grid_params_in);
-  alg.compute_catchments();
+  if (! generate_selected_subcatchments_only) alg.compute_catchments();
+  else {
+    cout << "Reading selected cells from:" << endl;
+    cout << subcatchment_list_filepath << endl;
+    vector<int> selected_cells = vector<int>();
+    ifstream subcatchment_list_file(subcatchment_list_filepath);
+    string line;
+    while (getline(subcatchment_list_file,line)) {
+      selected_cells.push_back(stoi(line));
+    }
+    int catchment_number = 0;
+    for(vector<int>::iterator i = selected_cells.begin();
+                              i != selected_cells.end(); ++i){
+      catchment_number++;
+      alg.compute_cell_catchment(*i,catchment_number);
+    }
+  }
   if (sort_catchments_by_size) alg.renumber_catchments_by_size();
   vector<int>* loop_numbers = nullptr;
   if (output_loop_file) loop_numbers = alg.identify_loops();

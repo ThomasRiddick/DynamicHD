@@ -18,6 +18,7 @@
 /** Stores the orography, position and order of addition for a grid cell as an object
  * (which can be queued)*/
 class cell{
+protected:
 	//The value of orography of this cell
 	double orography;
 	//The coordinates of this cell
@@ -169,5 +170,49 @@ inline basin_cell* basin_cell::clone(){
 	return new basin_cell(get_orography(),height_type,
 	           						get_cell_coords()->clone());
 }
+
+class reconnect_cell : public cell {
+public:
+	//Constructor
+	reconnect_cell(bool in_same_catchment_in, int cumulative_flow_in,
+	               coords* cell_coords_in) :
+								 cell(0.0,cell_coords_in),
+		 						 in_same_catchment(in_same_catchment_in),
+		 						 cumulative_flow(cumulative_flow_in) {}
+	//Clone operator
+	reconnect_cell* clone();
+	///Overloaded equals operator
+	reconnect_cell operator= (const reconnect_cell&);
+	///Overloaded greater than operator
+	friend bool operator> (const reconnect_cell&,const reconnect_cell&);
+	///Overloaded less than operator
+	friend bool operator< (const reconnect_cell&,const reconnect_cell&);
+	///Overloaded greater than or equals to operator
+	friend bool operator>= (const reconnect_cell&,const reconnect_cell&);
+	///Overloaded less than or equals to operator
+	friend bool operator<= (const reconnect_cell&,const reconnect_cell&);
+	//Overloaded streaming operator
+	friend ostream& operator<<(ostream& out, reconnect_cell& cell_object) {
+		return out << "Cell in Same Catchment?: " << cell_object.in_same_catchment << " "
+							 << "Cell Coords: " << *cell_object.cell_coords;
+	}
+	//Getter
+	bool get_in_same_catchment(){return in_same_catchment;}
+	bool get_cumulative_flow(){return cumulative_flow;}
+private:
+	bool in_same_catchment;
+	int cumulative_flow;
+};
+
+inline reconnect_cell* reconnect_cell::clone(){
+	return new reconnect_cell(get_cumulative_flow(),get_in_same_catchment(),
+	                          get_cell_coords()->clone());
+}
+
+class compare_reconnect_cells{
+public:
+	///Operator that compares two cell objects
+	bool operator() (reconnect_cell* lhs,reconnect_cell* rhs){return *lhs>*rhs;}
+};
 
 #endif /* CELL_HPP_ */

@@ -30,6 +30,8 @@ protected:
 	void add_outflows_to_queue();
 	void add_loop_cells_to_queue();
 	void find_loop_in_catchment();
+	void compute_cell_catchment(coords* target_cell_coords_in,
+                              int catchment_number_in);
 	virtual bool check_if_neighbor_is_upstream() = 0;
 	virtual bool check_for_outflow(coords* cell_coords) = 0;
 	virtual bool check_for_loops(coords* cell_coords) = 0;
@@ -73,6 +75,8 @@ public:
 	bool check_for_loops(coords* cell_coords);
 	bool check_if_neighbor_is_upstream();
 	coords* calculate_downstream_coords(coords* initial_coords);
+	void compute_cell_catchment(int target_cell_coords_in,
+                              int catchment_number_in);
 	field<int>* next_cell_index = nullptr;
 	const int true_sink_value = -5;
 	const int outflow_value = -1;

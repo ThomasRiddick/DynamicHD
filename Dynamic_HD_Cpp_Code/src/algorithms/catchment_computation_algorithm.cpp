@@ -229,3 +229,27 @@ void catchment_computation_algorithm::renumber_catchments_by_size() {
 			(*catchment_sizes)[(*catchment_numbers)(coords_in) - 1].second;
 	});
 }
+
+void catchment_computation_algorithm::compute_cell_catchment(coords* target_cell_coords_in,
+                                                             int catchment_number_in) {
+	catchment_number = catchment_number_in;
+	q.push(new landsea_cell(target_cell_coords_in));
+	completed_cells->set_all(false);
+	while ( ! q.empty()) {
+		center_cell = q.front();
+		q.pop();
+		center_coords = center_cell->get_cell_coords();
+		(*catchment_numbers)(center_coords) = catchment_number;
+		(*completed_cells)(center_coords) = true;
+		process_neighbors();
+		delete center_cell;
+	}
+}
+
+void catchment_computation_algorithm_icon_single_index::
+		  compute_cell_catchment(int target_cell_coords_in,
+                             int catchment_number_in) {
+		catchment_computation_algorithm::
+			compute_cell_catchment(new generic_1d_coords(target_cell_coords_in),
+			                       catchment_number_in);
+}

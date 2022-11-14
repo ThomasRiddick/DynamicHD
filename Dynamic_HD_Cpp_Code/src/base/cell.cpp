@@ -38,3 +38,39 @@ bool operator< (const cell& lhs_cell,const cell& rhs_cell) {
 //(if is functioning correctly)
 bool operator>= (const cell& lhs_cell,const cell& rhs_cell) { return lhs_cell.orography >= rhs_cell.orography;}
 bool operator<= (const cell& lhs_cell,const cell& rhs_cell) { return lhs_cell.orography <= rhs_cell.orography;}
+
+reconnect_cell reconnect_cell::operator= (const reconnect_cell& cell_in){
+  return reconnect_cell(cell_in);
+}
+
+bool operator> (const reconnect_cell& lhs_cell,const reconnect_cell& rhs_cell) {
+  if (lhs_cell.in_same_catchment != rhs_cell.in_same_catchment)
+    return rhs_cell.in_same_catchment;
+  else if (lhs_cell.cumulative_flow != rhs_cell.cumulative_flow)
+    return lhs_cell.cumulative_flow > rhs_cell.cumulative_flow;
+  else if (lhs_cell.k < 0 || rhs_cell.k < 0) return lhs_cell.k < rhs_cell.k;
+  else return lhs_cell.k > rhs_cell.k;
+}
+
+bool operator< (const reconnect_cell& lhs_cell,const reconnect_cell& rhs_cell) {
+  if (lhs_cell.in_same_catchment != rhs_cell.in_same_catchment)
+    return lhs_cell.in_same_catchment;
+  else if (lhs_cell.cumulative_flow != rhs_cell.cumulative_flow)
+    return lhs_cell.cumulative_flow < rhs_cell.cumulative_flow;
+  else if (lhs_cell.k < 0 || rhs_cell.k < 0) return lhs_cell.k > rhs_cell.k;
+  else return lhs_cell.k < rhs_cell.k;
+}
+
+//Do not implement the total order condition for >= and <= as there is no concept of equals for total order
+//(if is functioning correctly)
+bool operator>= (const reconnect_cell& lhs_cell,const reconnect_cell& rhs_cell) {
+  if (lhs_cell.in_same_catchment != rhs_cell.in_same_catchment)
+    return rhs_cell.in_same_catchment;
+  else return lhs_cell.cumulative_flow >= rhs_cell.cumulative_flow;
+}
+
+bool operator<= (const reconnect_cell& lhs_cell,const reconnect_cell& rhs_cell) {
+  if (lhs_cell.in_same_catchment != rhs_cell.in_same_catchment)
+    return lhs_cell.in_same_catchment;
+  else return lhs_cell.cumulative_flow <= rhs_cell.cumulative_flow;
+}
