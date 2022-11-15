@@ -11,7 +11,7 @@ import numpy as np
 from abc import ABCMeta, abstractmethod
 from Dynamic_HD_Scripts.tools import flow_to_grid_cell
 from Dynamic_HD_Scripts.interface.fortran_interface import f2py_manager
-from Dynamic_HD_Script_Tests.context import fortran_source_path
+from tests.context import fortran_source_path
 
 class CreateHypotheticalRiverPathsMap(unittest.TestCase):
     """Tests of high level routine using small river directions maps"""

@@ -11,7 +11,7 @@ import os
 from Dynamic_HD_Scripts.base import iodriver
 from Dynamic_HD_Scripts.base import field
 from Dynamic_HD_Scripts.utilities import utilities
-from Dynamic_HD_Script_Tests.context import data_dir
+from tests.context import data_dir
 
 class TestReservoirSizeInitialisation(unittest.TestCase):
     """Test the initialisation of the size of HD reservoirs"""

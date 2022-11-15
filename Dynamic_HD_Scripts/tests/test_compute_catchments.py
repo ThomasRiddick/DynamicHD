@@ -12,7 +12,7 @@ import textwrap
 import os
 from Dynamic_HD_Scripts.tools import compute_catchments as cc
 from Dynamic_HD_Scripts.interface.fortran_interface import f2py_manager as f2py_mg
-from Dynamic_HD_Script_Tests.context import fortran_source_path,data_dir
+from tests.context import fortran_source_path,data_dir
 
 class RelabelCatchmentTestCase(unittest.TestCase):
     """Class containing tests of the relabelling of catchments into desceding order of size"""

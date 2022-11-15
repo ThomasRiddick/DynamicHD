@@ -13,7 +13,7 @@ import os
 from os.path import join
 from Dynamic_HD_Scripts.base import iodriver
 from Dynamic_HD_Scripts.base import field
-from Dynamic_HD_Script_Tests.context import data_dir
+from tests.context import data_dir
 
 
 class Test(unittest.TestCase):

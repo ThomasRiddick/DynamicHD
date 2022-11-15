@@ -16,7 +16,7 @@ from Dynamic_HD_Scripts.base import iohelper
 from Dynamic_HD_Scripts.base import grid as gd
 from Dynamic_HD_Scripts.base import field as fld
 from Dynamic_HD_Scripts.interface.fortran_interface import f2py_manager
-from Dynamic_HD_Script_Tests.context import fortran_source_path,data_dir
+from tests.context import fortran_source_path,data_dir
 
 class IOHelperTestCase(unittest.TestCase):
     """Tests of the input and output module"""

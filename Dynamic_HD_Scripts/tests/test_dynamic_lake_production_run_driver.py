@@ -3,7 +3,7 @@ import unittest
 import os
 from Dynamic_HD_Scripts.dynamic_hd_and_dynamic_lake_drivers.dynamic_lake_production_run_driver \
     import Dynamic_Lake_Production_Run_Drivers
-from Dynamic_HD_Script_Tests.context import data_dir
+from tests.context import data_dir
 
 class Test_Dynamic_HD_Production_Run_Drivers(unittest.TestCase):
     """Test creating hdpara and hdrestart files for production runs"""
@@ -20,11 +20,9 @@ class Test_Dynamic_HD_Production_Run_Drivers(unittest.TestCase):
     hdstart_offline_run_result_for_comparison_deglac = os.path.join(data_dir,"HDdata",
                                                                     "hdrestartfiles",
                                                                     "hdstart_trial_run_for_mid_deglaciation_20210208_184134_deglac.nc")
-    lakepara_offline_run_result_for_comparison_pd  = os.path.join(data_dir,"HDdata",
-                                                                  "lakeparafiles",
-                                                                  "lakeparas_trial_run_for_present_day_20210209_130759_pd.nc")
-    lakestart_offline_run_result_for_comparison_pd = os.path.join(data_dir,"HDdata",
-                                                                  "lakestartfiles",
+    lakepara_offline_run_result_for_comparison_pd  = os.path.join(data_dir,"unit_test_data",
+                                                                  "lakeparas_trial_run_for_present_day_20221111_161953_pd.nc")
+    lakestart_offline_run_result_for_comparison_pd = os.path.join(data_dir,"unit_test_data",
                                                                   "lakestart_trial_run_for_present_day_20210209_130759_pd.nc")
     hdpara_offline_run_result_for_comparison_pd  = os.path.join(data_dir,"HDdata",
                                                                 "hdfiles","hdpara_trial_run_for_present_day_20210209_130759_pd.nc")
@@ -46,7 +44,7 @@ class Test_Dynamic_HD_Production_Run_Drivers(unittest.TestCase):
 
     def tearDown(self):
         """Unit test tear down function"""
-        self.clean_up()
+        #self.clean_up()
 
     def clean_up(self):
         files_to_remove = ["paragen/bas_k.dat","paragen/global.inp","paragen/over_k.dat",

@@ -21,7 +21,7 @@ from Dynamic_HD_Scripts.utilities.process_manager import ProcessManager
 from Dynamic_HD_Scripts.utilities.process_manager import using_mpi
 from Dynamic_HD_Scripts.utilities.process_manager import MPICommands
 from Dynamic_HD_Scripts import context as scripts_context
-from Dynamic_HD_Script_Tests.context import data_dir,valgrind_path
+from tests.context import data_dir,valgrind_path
 
 
 class Test(unittest.TestCase):

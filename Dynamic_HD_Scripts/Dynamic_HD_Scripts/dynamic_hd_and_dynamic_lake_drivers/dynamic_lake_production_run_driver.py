@@ -262,7 +262,7 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         if not config.has_option("general_options","print_timing_information"):
             config.set("general_options","print_timing_information","False")
         if not config.has_option("general_options","use_gradual_transitions"):
-            config.set("general_options","use_gradual_transitions","True")
+            config.set("general_options","use_gradual_transitions","False")
         if not config.has_section("output_fieldname_options"):
             config.add_section("output_fieldname_options")
         if not config.has_option("output_fieldname_options","output_10min_corrected_orog_fieldname"):
@@ -452,8 +452,8 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                                 fieldname=config.get("input_fieldname_options",
                                                                                      "input_glacier_mask_fieldname"),
                                                                 field_type='Orography')
-            if config.get("general_options",
-                          "use_gradual_transitions"):
+            if config.getboolean("general_options",
+                                 "use_gradual_transitions"):
                 glacier_mask_as_bool_10min = glacier_mask_10min.copy()
                 glacier_mask_as_bool_10min.change_dtype(bool)
                 orography_10min = utilities.\
@@ -464,6 +464,7 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                     input_glacier_mask=glacier_mask_as_bool_10min,
                     blend_to_threshold=75.0,blend_from_threshold=25.0)
             else:
+                print("this bit runs")
                 orography_10min = utilities.\
                 replace_corrected_orography_with_original_for_glaciated_grid_points(input_corrected_orography=\
                                                                                     orography_10min,
@@ -471,8 +472,6 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                                                     orography_uncorrected_10min,
                                                                                     input_glacier_mask=
                                                                                     glacier_mask_10min)
-            glacier_mask_10min_bin = glacier_mask_10min.copy()
-            glacier_mask_10min_bin.convert_to_binary_mask(0.0,exact_threshold_converts_to_one=False)
             orography_10min.change_dtype(np.float64)
             orography_10min.make_contiguous()
             inverted_glacier_mask_10min = glacier_mask_10min.copy()
@@ -489,8 +488,9 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                    true_sinks_in = np.ascontiguousarray(truesinks.get_data(),
                                                                                         dtype=np.int32),
                                                    add_slope = False,epsilon = 0.0)
-        orography_10min.mask_field_with_external_mask(ls_mask_10min.get_data())
-        orography_10min.fill_mask(self.ocean_floor_depth)
+        print("Important Fix Disabled!!!!!!!!!!!!")
+        #orography_10min.mask_field_with_external_mask(ls_mask_10min.get_data())
+        #orography_10min.fill_mask(self.ocean_floor_depth)
         if config.getboolean("output_options","output_corrected_orog"):
             iodriver.advanced_field_writer(path.join(self.working_directory_path,
                                                        "10min_corrected_orog.nc"),

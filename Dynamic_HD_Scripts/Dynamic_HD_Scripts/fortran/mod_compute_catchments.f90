@@ -44,7 +44,8 @@ IMPLICIT NONE
 
 !Variables with intent IN
 !File to log the location of any loops found in
-CHARACTER(LEN=*), INTENT(INOUT)           :: log_file_for_loops
+!Note - Doesn't work if INTENT is changed to INOUT
+CHARACTER(LEN=*), INTENT(IN)           :: log_file_for_loops
 !Field of river flow direction (labelled according to directions on a numeric
 !keypad)
 INTEGER, INTENT(IN)                         :: nlong !number of longitude points

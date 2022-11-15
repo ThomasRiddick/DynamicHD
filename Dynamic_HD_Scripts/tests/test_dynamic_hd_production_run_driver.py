@@ -14,41 +14,41 @@ from Dynamic_HD_Scripts.dynamic_hd_and_dynamic_lake_drivers.dynamic_hd_productio
 from Dynamic_HD_Scripts.utilities.process_manager import ProcessManager
 from Dynamic_HD_Scripts.utilities.process_manager import using_mpi
 from Dynamic_HD_Scripts.utilities.process_manager import MPICommands
-from Dynamic_HD_Script_Tests.context import data_dir
+from tests.context import data_dir
 
 
 class Test_Dynamic_HD_Production_Run_Drivers(unittest.TestCase):
     """Test creating hdpara and hdrestart files for production runs"""
 
     hdpara_offline_run_result_for_comparison_2016_data  = os.path.join(data_dir,
-        "HDdata/hdfiles/generated/hd_file_ten_minute_data_from_virna_0k_ALG4"
+        "unit_test_data","hd_file_ten_minute_data_from_virna_0k_ALG4"
         "_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_20170419_125745.nc")
     hdstart_offline_run_result_for_comparison_2016_data = os.path.join(data_dir,
-        "HDdata/hdrestartfiles/generated/hd_restart_file_ten_minute_data_from_virna_0k_"
+        "unit_test_data","hd_restart_file_ten_minute_data_from_virna_0k_"
         "ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_20170419_125745.nc")
     hdpara_offline_run_result_for_comparison_2017_data  = os.path.join(data_dir,
-        "HDdata/hdfiles/generated/hd_file_ten_minute_data_from_virna_0k_2017v_ALG4_sinkless_no_true_sinks_"
+        "unit_test_data","hd_file_ten_minute_data_from_virna_0k_2017v_ALG4_sinkless_no_true_sinks_"
         "oceans_lsmask_plus_upscale_rdirs_20170420_114224.nc")
     hdstart_offline_run_result_for_comparison_2017_data = os.path.join(data_dir,
-        "HDdata/hdrestartfiles/generated/hd_restart_file_ten_minute_data_from_virna_0k_2017v_ALG4_sinkless_no_true"
+        "unit_test_data","hd_restart_file_ten_minute_data_from_virna_0k_2017v_ALG4_sinkless_no_true"
         "_sinks_oceans_lsmask_plus_upscale_rdirs_20170420_114224.nc")
     hdpara_offline_run_result_for_comparison_13_04_2017_data  = os.path.join(data_dir,
-        "HDdata/hdfiles/generated/hd_file_ten_minute_data_from_virna_0k_13_04_2017v_ALG4_sinkless_no_true_sinks"
+        "unit_test_data","hd_file_ten_minute_data_from_virna_0k_13_04_2017v_ALG4_sinkless_no_true_sinks"
         "_oceans_lsmask_plus_upscale_rdirs_20170420_115401.nc")
     hdstart_offline_run_result_for_comparison_13_04_2017_data = os.path.join(data_dir,
-        "HDdata/hdrestartfiles/generated/hd_restart_file_ten_minute_data_from_virna_0k_13_04_2017v_"
+        "unit_test_data","hd_restart_file_ten_minute_data_from_virna_0k_13_04_2017v_"
         "ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_rdirs_20170420_115401.nc")
     hdpara_offline_run_result_for_comparison_ice6g_0k_data = os.path.join(data_dir,
-        "HDdata/hdfiles/generated/hd_file_ICE6g_0k_ALG4_sinkless_no_true_sinks_oceans"
+        "unit_test_data","hd_file_ICE6g_0k_ALG4_sinkless_no_true_sinks_oceans"
         "_lsmask_plus_upscale_rdirs_tarasov_orog_corrs_20170612_202721.nc")
     hdstart_offline_run_result_for_comparison_ice6g_0k_data = os.path.join(data_dir,
-        "HDdata/hdrestartfiles/generated/hd_restart_file_ICE6g_0k_ALG4_sinkless_no_true_sinks_oceans_"
+        "unit_test_data","hd_restart_file_ICE6g_0k_ALG4_sinkless_no_true_sinks_oceans_"
         "lsmask_plus_upscale_rdirs_tarasov_orog_corrs_20170612_202721.nc")
     hdpara_offline_run_result_for_comparison_ice6g_21k_data = os.path.join(data_dir,
-        "HDdata/hdfiles/generated/hd_file_ICE6g_lgm_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_"
+        "unit_test_data","hd_file_ICE6g_lgm_ALG4_sinkless_no_true_sinks_oceans_lsmask_plus_upscale_"
         "rdirs_tarasov_orog_corrs_20170612_202559.nc")
     hdstart_offline_run_result_for_comparison_ice6g_21k_data = os.path.join(data_dir,
-        "HDdata/hdrestartfiles/generated/hd_restart_file_ICE6g_lgm_ALG4_sinkless_no_true_sinks_oceans_lsmask"
+        "unit_test_data","hd_restart_file_ICE6g_lgm_ALG4_sinkless_no_true_sinks_oceans_lsmask"
         "_plus_upscale_rdirs_tarasov_orog_corrs_20170612_202559.nc")
 
     def setUp(self):

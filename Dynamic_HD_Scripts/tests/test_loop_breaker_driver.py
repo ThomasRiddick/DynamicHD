@@ -13,7 +13,7 @@ from subprocess import CalledProcessError
 from Dynamic_HD_Scripts.base import field
 from Dynamic_HD_Scripts.tools import loop_breaker_driver
 from Dynamic_HD_Scripts import context as scripts_context
-from Dynamic_HD_Script_Tests import context
+from tests import context
 
 class Test(unittest.TestCase):
     """Unit test object"""
