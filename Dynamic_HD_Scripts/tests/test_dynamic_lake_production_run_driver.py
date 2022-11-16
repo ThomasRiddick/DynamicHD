@@ -8,26 +8,22 @@ from tests.context import data_dir
 class Test_Dynamic_HD_Production_Run_Drivers(unittest.TestCase):
     """Test creating hdpara and hdrestart files for production runs"""
 
-    lakepara_offline_run_result_for_comparison_deglac  = os.path.join(data_dir,"HDdata",
-                                                                      "lakeparafiles",
-                                                                      "lakeparas_trial_run_for_mid_deglaciation_20210205_144804_deglac.nc")
-    lakestart_offline_run_result_for_comparison_deglac = os.path.join(data_dir,"HDdata",
-                                                                      "lakestartfiles",
-                                                                      "lakestart_trial_run_for_mid_deglaciation_20210208_184134_deglac.nc")
-    hdpara_offline_run_result_for_comparison_deglac  = os.path.join(data_dir,"HDdata",
-                                                                    "hdfiles",
-                                                                    "hdpara_trial_run_for_mid_deglaciation_20210208_184134_deglac.nc")
-    hdstart_offline_run_result_for_comparison_deglac = os.path.join(data_dir,"HDdata",
-                                                                    "hdrestartfiles",
-                                                                    "hdstart_trial_run_for_mid_deglaciation_20210208_184134_deglac.nc")
+    lakepara_offline_run_result_for_comparison_deglac  = os.path.join(data_dir,"unit_test_data",
+                                                                      "lakeparas_trial_run_for_mid_deglaciation_20221116_113050_deglac.nc")
+    lakestart_offline_run_result_for_comparison_deglac = os.path.join(data_dir,"unit_test_data",
+                                                                      "lakestart_trial_run_for_mid_deglaciation_20221116_113050_deglac.nc")
+    hdpara_offline_run_result_for_comparison_deglac  = os.path.join(data_dir,"unit_test_data",
+                                                                    "hdpara_trial_run_for_mid_deglaciation_20221116_113050_deglac.nc")
+    hdstart_offline_run_result_for_comparison_deglac = os.path.join(data_dir,"unit_test_data",
+                                                                    "hdstart_trial_run_for_mid_deglaciation_20221116_113050_deglac.nc")
     lakepara_offline_run_result_for_comparison_pd  = os.path.join(data_dir,"unit_test_data",
-                                                                  "lakeparas_trial_run_for_present_day_20221111_161953_pd.nc")
+                                                                  "lakeparas_trial_run_for_present_day_20221115_190605_pd.nc")
     lakestart_offline_run_result_for_comparison_pd = os.path.join(data_dir,"unit_test_data",
-                                                                  "lakestart_trial_run_for_present_day_20210209_130759_pd.nc")
-    hdpara_offline_run_result_for_comparison_pd  = os.path.join(data_dir,"HDdata",
-                                                                "hdfiles","hdpara_trial_run_for_present_day_20210209_130759_pd.nc")
-    hdstart_offline_run_result_for_comparison_pd = os.path.join(data_dir,"HDdata",
-                                                                "hdrestartfiles","hdstart_trial_run_for_present_day_20210209_130759_pd.nc")
+                                                                  "lakestart_trial_run_for_present_day_20221115_190605_pd.nc")
+    hdpara_offline_run_result_for_comparison_pd  = os.path.join(data_dir,"unit_test_data",
+                                                                "hdpara_trial_run_for_present_day_20221115_190605_pd.nc")
+    hdstart_offline_run_result_for_comparison_pd = os.path.join(data_dir,"unit_test_data",
+                                                                "hdstart_trial_run_for_present_day_20221115_190605_pd.nc")
 
     def setUp(self):
         """Class constructor. Create a Dynamic_HD_Production_Run_Driver object."""
@@ -44,7 +40,7 @@ class Test_Dynamic_HD_Production_Run_Drivers(unittest.TestCase):
 
     def tearDown(self):
         """Unit test tear down function"""
-        #self.clean_up()
+        self.clean_up()
 
     def clean_up(self):
         files_to_remove = ["paragen/bas_k.dat","paragen/global.inp","paragen/over_k.dat",
@@ -89,12 +85,22 @@ class Test_Dynamic_HD_Production_Run_Drivers(unittest.TestCase):
         (output_hdparas_filepath,output_hdstart_filepath,
          output_lakeparas_filepath,output_lakestart_filepath) =\
             self.driver.trial_run_for_present_day()
+        #sinfon tests for file existance and validity ... diff does not output an error
+        #if file doesn't exist!
+        self.cdo_instance.sinfon(input=[output_hdparas_filepath,
+                          self.hdpara_offline_run_result_for_comparison_pd])
         hdpara_diff_out = self.cdo_instance.diff(input=[output_hdparas_filepath,
                           self.hdpara_offline_run_result_for_comparison_pd])
+        self.cdo_instance.sinfon(input=[output_hdstart_filepath,
+                            self.hdstart_offline_run_result_for_comparison_pd])
         hdstart_diff_out  = self.cdo_instance.diff(input=[output_hdstart_filepath,
                             self.hdstart_offline_run_result_for_comparison_pd])
+        self.cdo_instance.sinfon(input=[output_lakeparas_filepath,
+                                        self.lakepara_offline_run_result_for_comparison_pd])
         lakepara_diff_out = self.cdo_instance.diff(input=[output_lakeparas_filepath,
-                            self.lakepara_offline_run_result_for_comparison_pd])
+                                 self.lakepara_offline_run_result_for_comparison_pd])
+        self.cdo_instance.sinfon(input=[output_lakestart_filepath,
+                                 self.lakestart_offline_run_result_for_comparison_pd])
         lakestart_diff_out  = self.cdo_instance.diff(input=[output_lakestart_filepath,
                               self.lakestart_offline_run_result_for_comparison_pd])
         self.assertTrue(not hdpara_diff_out and hdpara_diff_out is not None,
@@ -111,12 +117,22 @@ class Test_Dynamic_HD_Production_Run_Drivers(unittest.TestCase):
         (output_hdparas_filepath,output_hdstart_filepath,
          output_lakeparas_filepath,output_lakestart_filepath) =\
             self.driver.trial_run_for_mid_deglaciation()
+        #sinfon tests for file existance and validity ... diff does not output an error
+        #if file doesn't exist!
+        self.cdo_instance.sinfon(input=[output_hdparas_filepath,
+                                 self.hdpara_offline_run_result_for_comparison_deglac])
         hdpara_diff_out = self.cdo_instance.diff(input=[output_hdparas_filepath,
                           self.hdpara_offline_run_result_for_comparison_deglac])
+        self.cdo_instance.sinfon(input=[output_hdstart_filepath,
+                                 self.hdstart_offline_run_result_for_comparison_deglac ])
         hdstart_diff_out  = self.cdo_instance.diff(input=[output_hdstart_filepath,
                             self.hdstart_offline_run_result_for_comparison_deglac ])
+        self.cdo_instance.sinfon(input=[output_lakeparas_filepath,
+                                 self.lakepara_offline_run_result_for_comparison_deglac])
         lakepara_diff_out = self.cdo_instance.diff(input=[output_lakeparas_filepath,
                             self.lakepara_offline_run_result_for_comparison_deglac])
+        self.cdo_instance.sinfon(input=[output_lakestart_filepath,
+                                        self.lakestart_offline_run_result_for_comparison_deglac])
         lakestart_diff_out  = self.cdo_instance.diff(input=[output_lakestart_filepath,
                               self.lakestart_offline_run_result_for_comparison_deglac])
         self.assertTrue(not hdpara_diff_out and hdpara_diff_out is not None,
