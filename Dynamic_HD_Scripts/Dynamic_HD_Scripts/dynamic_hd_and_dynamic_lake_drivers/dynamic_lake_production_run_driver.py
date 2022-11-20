@@ -324,6 +324,8 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         self.glacier_mask_filename==path.join(self.orography_path,"Ice6g_c_VM5a_10min_0k.nc")
         self.present_day_base_orography_filename=path.join(self.orography_path,
                                                            "Ice6g_c_VM5a_10min_0k.nc")
+        self.non_standard_orog_correction_filename=path.join(self.ancillary_data_path,
+                                                             "ice5g_0k_lake_corrs_no_intermediaries_lake_corrections_driver_20200726_181304.nc")
         self.compile_paragen_and_hdfile()
         self.no_intermediaries_dynamic_lake_driver()
         return (self.output_hdparas_filepath,self.output_hdstart_filepath,
@@ -352,6 +354,8 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         self.tarasov_based_orog_correction=True
         self.glacier_mask_filename=data_directory+"/glac01_14440.nc"
         self.present_day_base_orography_filename=data_directory+"/GLAC1D_Top01_surf_0000.nc"
+        self.non_standard_orog_correction_filename=path.join(self.ancillary_data_path,
+                                                             "ice5g_0k_lake_corrs_no_intermediaries_lake_corrections_driver_20200726_181304.nc")
         self.compile_paragen_and_hdfile()
         self.no_intermediaries_dynamic_lake_driver()
 
@@ -377,6 +381,8 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                     "data/simulation_data/transient_sim_data/1/GLAC1D_ICEM_10min_1250.nc")
         self.present_day_base_orography_filename=("/Users/thomasriddick/Documents/data/HDdata/orographys/generated/"
                                                   "updated_orog__extracted_for_1250prepare_basins_from_glac1D_20210205_135817_1250.nc")
+        self.non_standard_orog_correction_filename=path.join(self.ancillary_data_path,
+                                                             "ice5g_0k_lake_corrs_no_intermediaries_lake_corrections_driver_20200726_181304.nc")
         self.compile_paragen_and_hdfile()
         self.no_intermediaries_dynamic_lake_driver()
         return (self.output_hdparas_filepath,self.output_hdstart_filepath,
@@ -408,7 +414,7 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
             orography_corrections_filename = self.non_standard_orog_correction_filename
         else:
             orography_corrections_filename = path.join(self.ancillary_data_path,
-                                                       "ice5g_0k_lake_corrs_no_intermediaries_lake_corrections_driver_20200726_181304.nc")
+                                                       "lake_analysis_two_26_Mar_2022_correction_field_version_34.nc")
         #Change ls mask to correct type
         ls_mask_10min = iodriver.advanced_field_loader(self.original_ls_mask_filename,
                                                        field_type='Generic',
