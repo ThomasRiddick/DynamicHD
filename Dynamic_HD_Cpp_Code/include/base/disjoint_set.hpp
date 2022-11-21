@@ -9,33 +9,28 @@
 
 using namespace std;
 
-class element {
+class set {
   protected:
     int label;
-    element* parent = nullptr;
-    element* root = nullptr;
+    int size;
+    set* root = nullptr;
   public:
-    element(int label_in) : label(label_in) {parent = this; root = this}
-    element* get_parent(){ return parent;}
-    element* get_root(){ return root;}
-    void set_parent(element* x){ parent = x;}
-    void set_root(element* x){ root = x; }
+    set(int label_in) : label(label_in), size(1) {parent = this; root = this}
+    set* get_root(){ return root;}
+    void set_root(set* x){ root = x; }
+    void increase_size(int size_increment_in) {size = size+size_increment_in;}
+    int get_size() { return size;}
 }
 
-class disjoint_set{
+class disjoint_sets{
   protected:
-    num_elements;
-    vector<element*> elements;
+    vector<set*> sets;
+    vector<int> set_indices;
   public:
-    disjoint_set() : num_elements(0) {}
-    disjoint_set(num_elements_in) {
-      num_elements = 0;
-      for (int i=0;i<num_elements_in;i++){
-        add_element();
-      }
-    }
-    element* find_root(element* x);
-    void link(element* x,element* y);
-    element* add_element();
-    element* get_element(int label_in){ return elements[label_in - 1];}
+    disjoint_sets() {}
+    set* find_root(set* x);
+    bool link(set* x,set* y);
+    bool make_new_link(int label_x, int label_y);
+    set* add_set(int label_in);
+    set* get_set(int label_in);
 }

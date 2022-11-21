@@ -19,7 +19,9 @@ using namespace std;
 
 class basin_evaluation_algorithm {
 public:
+  ///Class destructor
 	virtual ~basin_evaluation_algorithm();
+  ///Setup the fields common to all version of the class
 	void setup_fields(bool* minima_in,
                     double* raw_orography_in,
                     double* corrected_orography_in,
@@ -35,10 +37,13 @@ public:
                     merge_types* merge_points_in,
                     grid_params* grid_params_in,
                     grid_params* coarse_grid_params_in);
-  // Setup a sink filling algorithm to use to determine the order to process basins in
+  /// Setup a sink filling algorithm to use to determine the order to process basins in
   void setup_sink_filling_algorithm(sink_filling_algorithm_4* sink_filling_alg_in);
+  ///Main routine to evaluate basins
 	void evaluate_basins();
+  ///Retrieve the lake numbers field
   int* retrieve_lake_numbers();
+  ///Method to test adding minima to queue
 	queue<cell*> test_add_minima_to_queue(double* raw_orography_in,
                                         double* corrected_orography_in,
                                         bool* minima_in,
@@ -46,32 +51,48 @@ public:
                                         sink_filling_alg_in,
                                         grid_params* grid_params_in,
                                         grid_params* coarse_grid_params_in);
+  ///Method to testing processing neighbors
 	priority_cell_queue test_process_neighbors(coords* center_coords_in,
                                              bool*   completed_cells_in,
                                              double* raw_orography_in,
                                              double* corrected_orography_in,
                                              grid_params* grid_params_in);
+  /// Method to test processing neighbors during the search algorithm used to
+  /// find and set non-local redirects
 	queue<landsea_cell*> test_search_process_neighbors(coords* search_coords_in,
 	                                                   bool* search_completed_cells_in,
 	                              										 grid_params* grid_params_in);
 protected:
+  ///Virtual setter for flood next cell index of previous cell
 	virtual void set_previous_cells_flood_next_cell_index(coords* coords_in) = 0;
+  ///Virtual setter for connect next cell index of previous cell
   virtual void set_previous_cells_connect_next_cell_index(coords* coords_in) = 0;
+  ///Virtual setter for flood force merge index of previous cell
 	virtual void set_previous_cells_flood_force_merge_index(coords* coords_in) = 0;
+  ///Virtual setter for connect force merge index of previous cell
   virtual void set_previous_cells_connect_force_merge_index(coords* coords_in) = 0;
+  ///Virtual setter for redirect index of previous cell
   virtual void set_previous_cells_redirect_index(coords* initial_fine_coords,
                                                  coords* target_coords,
                                                  height_types height_type,
                                                  bool use_additional_fields=false) = 0;
+  ///Virtual getter for the next cell to fill in the filling order for a given cell
 	virtual coords* get_cells_next_cell_index_as_coords(coords* coords_in,
                                                       height_types height_type_in) = 0;
+  ///Virtual getter for the redirect index for a given cell
   virtual coords* get_cells_redirect_index_as_coords(coords* coords_in,
                                                      height_types height_type_in,
                                                      bool use_additional_fields) = 0;
+  ///Virtual getter for the force merge index for a given cell
   virtual coords* get_cells_next_force_merge_index_as_coords(coords* coords_in,
                                                       height_types height_type_in) = 0;
+  /// Returns a true if this cell is a sink or ocean cell and also sets the downstream
+  /// coordinates of this cell
 	virtual bool check_for_sinks_and_set_downstream_coords(coords* coords_in) = 0;
+  /// Check if given coords are sink in the coarse river directions
   virtual bool coarse_cell_is_sink(coords* coords_in) = 0;
+  /// If cell is already flooded simply return true, if it is connected push it as a
+  /// potential cell to flood and return true otherwise return false
   bool skip_center_cell();
 	void evaluate_basin();
   void initialize_basin();
