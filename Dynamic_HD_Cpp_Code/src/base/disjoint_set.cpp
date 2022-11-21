@@ -3,7 +3,7 @@
 using namespace std;
 
 void disjoint_set::find_root(element* x){
-  if (x->get_root()->get_root() == x->get_root()) return x->get_root()
+  if (x->get_root()->get_root() == x->get_root()) return x->get_root();
   element* root = x;
   while (root->get_root() != root){
     root = root->get_root();
