@@ -202,22 +202,22 @@ function generate_parameters(configuration::Configuration,
   overlandflow_retention_coefficients = SharedArray{Float64}(grid_dimensions)
   number_of_baseflow_reservoirs = SharedArray{Float64}(grid_dimensions)
   baseflow_retention_coefficients = SharedArray{Float64}(grid_dimensions)
-  @sync @distributed for i in eachindex(input_data.landsea_mask)
+  @sync @distributed for i in CartesianIndices(input_data.landsea_mask)
     if ( ! input_data.landsea_mask[i] || ! input_data.glacier_mask[i] )
       distance::Float64 = calculate_distance(i,input_data,grid)
-      height_change::Float64 = calculate_height_change(i,input_data)
+      height_change::Float64 = calculate_height_change(i,input_data,grid)
       number_of_riverflow_reservoirs[i],
       riverflow_retention_coefficients[i] =
-        generate_riverflow_parameters(i,configuration.riverflow_formula,distance,height,
-                                      grid)
+        generate_riverflow_parameters(i,configuration.riverflow_formula,distance,
+                                      height_change,grid)
       number_of_overlandflow_reservoirs[i],
       overlandflow_retention_coefficients[i] =
-        generate_overlandflow_parameters(i,configuration.overlandflow_formula,distance,height,
-                                         input_data,grid)
+        generate_overlandflow_parameters(i,configuration.overlandflow_formula,distance,
+                                         height_change,input_data,grid)
       number_of_baseflow_reservoirs[i],
       baseflow_retention_coefficients[i]=
-        generate_baseflow_parameters(i,configuration.baseflow_formula,distance,height,input_data,
-                                     grid)
+        generate_baseflow_parameters(i,configuration.baseflow_formula,distance,
+                                     height_change,input_data,grid)
     else
       number_of_riverflow_reservoirs[i] = 0
       riverflow_retention_coefficients[i] = 0.0
@@ -235,66 +235,71 @@ function generate_parameters(configuration::Configuration,
          sdata(baseflow_retention_coefficients)
 end
 
-function calculate_height_change(i::Int64,input_data::InputData,grid::Grid)
-  next_cell::CartesianIndices =
-    get_next_cell_coords(input_data.grid_specific_input_data.river_directions[i],grid)
-  height_change = orography(i) - orography(next_cell)
+function calculate_height_change(i::CartesianIndex,input_data::InputData,grid::Grid)
+  next_cell::CartesianIndex =
+    get_next_cell_coords(i,input_data,grid)
+  height_change = input_data.orography[i] - input_data.orography[next_cell]
   return height_change
 end
 
-function calculate_distance(i::Int64,input_data::InputData,
-                            grid::Grid)
+function calculate_distance(i::CartesianIndex,input_data::InputData,
+                            grid::LatLonGrid)
   earth_radius::Float64 = 6371000.0
-  local distance::Float64
-  if isa(grid,LatLonGrid)
-    river_direction::Int64 =
-      input_data.grid_specific_input_data.river_directions[i]
-    local lat_index_change::Int64
-    local lon_index_change::Int64
-    if river_direction <= 3
-      lat_index_change = 1
-    elseif river_direction >= 7
-      lat_index_change = -1
-    else
-      lat_index_change = 0
-    end
-    if river_direction == 7 ||
-       river_direction == 4 ||
-       river_direction == 1
-      lon_index_change = -1
-    elseif river_direction == 9 ||
-            river_direction == 6 ||
-            river_direction == 3
-      lon_index_change = 1
-    else
-      lon_index_change = 0
-    end
-    distance = (((lat_index_change^2)*(grid.dlat[i]^2))+
-                ((lon_index_change^2)*(grid.dlon^2)))
+  river_direction::Int64 =
+    input_data.grid_specific_input_data.river_directions[i]
+  local lat_index_change::Int64
+  local lon_index_change::Int64
+  if river_direction <= 3
+    lat_index_change = 1
+  elseif river_direction >= 7
+    lat_index_change = -1
   else
-    working_dlat::Float64 = abs(grid.clon(j) - grid.clon(i))
-    if working_dlat > 300
-      working_dlat = abs(working_dlat - 360)
-    end
-    pi_factor::Float64 = pi/180.0
-    earths_radius::Float64 = 6371000.0
-    dlon::Float64 = working_dlat*pi_factor*
-                    cos(pi_factor*(grid.clat(j)+grid.clat(i))/2)*earths_radius
-    dlat::Float64 = abs(grid.clat(i)+grid.clat(i))*pi_factor*earths_radius
-    distance = sqrt(dlat^2+dlon^2)
+    lat_index_change = 0
   end
+  if river_direction == 7 ||
+     river_direction == 4 ||
+     river_direction == 1
+    lon_index_change = -1
+  elseif river_direction == 9 ||
+          river_direction == 6 ||
+          river_direction == 3
+    lon_index_change = 1
+  else
+    lon_index_change = 0
+  end
+  distance::Float64 = (((lat_index_change^2)*(grid.dlat[i]^2))+
+                       ((lon_index_change^2)*(grid.dlon^2)))
   return distance
 end
 
-function get_next_cell_coords(river_direction)
-FILL IN!!!
+function calculate_distance(i::CartesianIndex,input_data::InputData,
+                            grid::UnstructuredGrid)
+  earth_radius::Float64 = 6371000.0
+  working_dlat::Float64 = abs(grid.clon(j) - grid.clon(i))
+  if working_dlat > 300
+    working_dlat = abs(working_dlat - 360)
+  end
+  pi_factor::Float64 = pi/180.0
+  earths_radius::Float64 = 6371000.0
+  dlon::Float64 = working_dlat*pi_factor*
+                  cos(pi_factor*(grid.clat(j)+grid.clat(i))/2)*earths_radius
+  dlat::Float64 = abs(grid.clat(i)+grid.clat(i))*pi_factor*earths_radius
+  distance::Float64 = sqrt(dlat^2+dlon^2)
+  return distance
 end
 
-function get_next_cell_coords()
-FILL IN!!!
+function get_next_cell_coords(i::CartesianIndex,input_data::InputData,
+                              grid::LatLonGrid)
+  println("NOT WORKING PROPERLY")
+  return i::CartesianIndex
 end
 
-function generate_riverflow_parameters(i::CartesianIndices,formula::RiverFlowSausen,
+function get_next_cell_coords(i::CartesianIndex,input_data::InputData,
+                              grid::UnstructuredGrid)
+  return CartesianIndex(input_data.grid_specific_input_data.next_cell_index[i])::CartesianIndex
+end
+
+function generate_riverflow_parameters(i::CartesianIndex,formula::RiverFlowSausen,
                                        distance::Float64,height_change::Float64,
                                        grid::Grid)
   local number_of_riverflow_reservoirs::Float64
@@ -313,7 +318,7 @@ function generate_riverflow_parameters(i::CartesianIndices,formula::RiverFlowSau
   return number_of_riverflow_reservoirs,riverflow_retention_coefficient
 end
 
-function generate_overlandflow_parameters(i::CartesianIndices,formula::OverlandFlowSausen,
+function generate_overlandflow_parameters(i::CartesianIndex,formula::OverlandFlowSausen,
                                           distance::Float64,height_change::Float64,
                                           input_data::InputData,grid::Grid)
   if isa(grid,LatLonGrid)
@@ -326,7 +331,7 @@ function generate_overlandflow_parameters(i::CartesianIndices,formula::OverlandF
   end
   if input_data.innerslope[i] > 0
     if isa(grid,LatLonGrid)
-      dx0 = sqrt(input_data.dlat^2 + input_data.dlon[i]^2)
+      dx0 = sqrt(grid.dlat[i]^2 + grid.dlon^2)
     else
       dx0 = distance
     end
@@ -344,16 +349,16 @@ function generate_overlandflow_parameters(i::CartesianIndices,formula::OverlandF
   return number_of_overlandflow_reservoirs,overlandflow_retention_coefficient
 end
 
-function generate_baseflow_parameters(i::CartesianIndices,formula::BaseFlowConstant,
+function generate_baseflow_parameters(i::CartesianIndex,formula::BaseFlowConstant,
                                       distance::Float64,height_change::Float64,
                                       input_data::InputData,grid::Grid)
   return 1.0,formula.baseflow_k0
 end
 
-function generate_baseflow_parameters(i::CartesianIndices,formula::BaseFlowDistanceAndOrography,
+function generate_baseflow_parameters(i::CartesianIndex,formula::BaseFlowDistanceAndOrography,
                                       distance::Float64,height_change::Float64,
                                       input_data::InputData,grid::Grid)
-  bb = (input_data.orography_variance - 100.0)/(input_data.orography_variance + 1000.0)
+  bb = (input_data.orography_variance[i] - 100.0)/(input_data.orography_variance[i] + 1000.0)
   if bb < 0.01
     bb = 0.01
   end
