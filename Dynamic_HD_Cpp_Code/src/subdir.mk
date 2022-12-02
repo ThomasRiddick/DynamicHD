@@ -2,6 +2,8 @@
 CPP_SRCS += \
 ../src/base/cell.cpp \
 ../src/base/grid.cpp \
+../src/base/disjoint_set.cpp \
+../src/base/merges_and_redirects.cpp \
 ../src/algorithms/connected_lsmask_generation_algorithm.cpp \
 ../src/algorithms/basin_evaluation_algorithm.cpp \
 ../src/algorithms/lake_filling_algorithm.cpp \
@@ -9,7 +11,6 @@ CPP_SRCS += \
 ../src/algorithms/water_redistribution_algorithm.cpp \
 ../src/algorithms/catchment_computation_algorithm.cpp \
 ../src/algorithms/reduce_connected_areas_to_points_algorithm.cpp \
-../src/algorithms/basin_post_processing_algorithm.cpp \
 ../src/algorithms/river_direction_determination_algorithm.cpp \
 ../src/algorithms/stream_following_algorithm.cpp \
 ../src/algorithms/carved_river_direction_burning_algorithm.cpp \
@@ -47,6 +48,8 @@ CPP_SRCS += \
 USER_OBJS += \
 ./src/base/cell.o \
 ./src/base/grid.o \
+./src/base/disjoint_set.o \
+./src/base/merges_and_redirects.o \
 ./src/algorithms/sink_filling_algorithm.o \
 ./src/algorithms/connected_lsmask_generation_algorithm.o \
 ./src/algorithms/carved_river_direction_burning_algorithm.o \
@@ -54,7 +57,6 @@ USER_OBJS += \
 ./src/algorithms/catchment_computation_algorithm.o \
 ./src/algorithms/lake_filling_algorithm.o \
 ./src/algorithms/basin_evaluation_algorithm.o \
-./src/algorithms/basin_post_processing_algorithm.o \
 ./src/algorithms/river_direction_determination_algorithm.o \
 ./src/algorithms/water_redistribution_algorithm.o \
 ./src/algorithms/stream_following_algorithm.o \
@@ -104,13 +106,14 @@ TEST_OBJS += \
 CPP_DEPS += \
 ./src/base/cell.d \
 ./src/base/grid.d \
+./src/base/disjoint_set.d \
+./src/base/merges_and_redirects.d \
 ./src/algorithms/connected_lsmask_generation_algorithm.d \
 ./src/algorithms/carved_river_direction_burning_algorithm.d \
 ./src/algorithms/reduce_connected_areas_to_points_algorithm.d \
 ./src/algorithms/sink_filling_algorithm.d \
 ./src/algorithms/catchment_computation_algorithm.d \
 ./src/algorithms/basin_evaluation_algorithm.d \
-./src/algorithms/basin_post_processing_algorithm.d \
 ./src/algorithms/lake_filling_algorithm.d \
 ./src/algorithms/water_redistribution_algorithm.d \
 ./src/algorithms/river_direction_determination_algorithm.d \

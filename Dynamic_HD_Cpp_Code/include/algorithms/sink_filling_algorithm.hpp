@@ -255,6 +255,8 @@ protected:
 	//Used to assist in the acceleration of algorithm 1 (to denote a suspected sill point)
 	//has been added to the main priority queue from the plain slope queue
 	bool requeued = false;
+	//Used to prevent no data cells being processed needlessly
+	bool nbr_orog_is_no_data = false;
 };
 
 /**
