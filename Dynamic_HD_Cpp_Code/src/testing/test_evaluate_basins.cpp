@@ -17,6 +17,25 @@
 
 namespace basin_evaluation_unittests {
 
+// Convert old data to new merge scheme
+enum merge_types {no_merge = 0,
+                  connection_merge_as_primary_flood_merge_as_primary = 1,
+                  connection_merge_as_primary_flood_merge_as_secondary,
+                  connection_merge_as_primary_flood_merge_not_set,
+                  connection_merge_as_primary_flood_merge_as_both,
+                  connection_merge_as_secondary_flood_merge_as_primary,
+                  connection_merge_as_secondary_flood_merge_as_secondary,
+                  connection_merge_as_secondary_flood_merge_not_set,
+                  connection_merge_as_secondary_flood_merge_as_both,
+                  connection_merge_not_set_flood_merge_as_primary,
+                  connection_merge_not_set_flood_merge_as_secondary,
+                  connection_merge_not_set_flood_merge_as_both,
+                  connection_merge_as_both_flood_merge_as_primary,
+                  connection_merge_as_both_flood_merge_as_secondary,
+                  connection_merge_as_both_flood_merge_not_set,
+                  connection_merge_as_both_flood_merge_as_both,
+                  null_mtype};
+
 class BasinEvaluationTest : public ::testing::Test {
  protected:
 

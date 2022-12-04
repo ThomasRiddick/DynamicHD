@@ -24,23 +24,7 @@ void latlon_evaluate_basins_cython_wrapper(int* minima_in_int,
                                            int* flood_next_cell_lon_index_in,
                                            int* connect_next_cell_lat_index_in,
                                            int* connect_next_cell_lon_index_in,
-                                           int* flood_force_merge_lat_index_in,
-                                           int* flood_force_merge_lon_index_in,
-                                           int* connect_force_merge_lat_index_in,
-                                           int* connect_force_merge_lon_index_in,
-                                           int* flood_redirect_lat_index_in,
-                                           int* flood_redirect_lon_index_in,
-                                           int* connect_redirect_lat_index_in,
-                                           int* connect_redirect_lon_index_in,
-                                           int* additional_flood_redirect_lat_index_in,
-                                           int* additional_flood_redirect_lon_index_in,
-                                           int* additional_connect_redirect_lat_index_in,
-                                           int* additional_connect_redirect_lon_index_in,
-                                           int* flood_local_redirect_out_int,
-                                           int* connect_local_redirect_out_int,
-                                           int* additional_flood_local_redirect_out_int,
-                                           int* additional_connect_local_redirect_out_int,
-                                           int* merge_points_out_int,
+                                           string merge_and_redirect_indices_filepath,
                                            int nlat_fine, int nlon_fine,
                                            int nlat_coarse,int nlon_coarse,
                                            int* basin_catchment_numbers_in){
@@ -48,14 +32,6 @@ void latlon_evaluate_basins_cython_wrapper(int* minima_in_int,
   for (int i = 0; i < nlat_fine*nlon_fine; i++) {
     minima_in[i] = bool(minima_in_int[i]);
   }
-  auto flood_local_redirect_in = new bool[nlat_fine*nlon_fine];
-  std::fill_n(flood_local_redirect_in,nlat_fine*nlon_fine,false);
-  auto connect_local_redirect_in = new bool[nlat_fine*nlon_fine];
-  std::fill_n(connect_local_redirect_in,nlat_fine*nlon_fine,false);
-  auto additional_flood_local_redirect_in = new bool[nlat_fine*nlon_fine];
-  std::fill_n(additional_flood_local_redirect_in,nlat_fine*nlon_fine,false);
-  auto additional_connect_local_redirect_in = new bool[nlat_fine*nlon_fine];
-  std::fill_n(additional_connect_local_redirect_in,nlat_fine*nlon_fine,false);
   latlon_evaluate_basins(minima_in,
                          raw_orography_in,
                          corrected_orography_in,
@@ -70,32 +46,10 @@ void latlon_evaluate_basins_cython_wrapper(int* minima_in_int,
                          flood_next_cell_lon_index_in,
                          connect_next_cell_lat_index_in,
                          connect_next_cell_lon_index_in,
-                         flood_force_merge_lat_index_in,
-                         flood_force_merge_lon_index_in,
-                         connect_force_merge_lat_index_in,
-                         connect_force_merge_lon_index_in,
-                         flood_redirect_lat_index_in,
-                         flood_redirect_lon_index_in,
-                         connect_redirect_lat_index_in,
-                         connect_redirect_lon_index_in,
-                         additional_flood_redirect_lat_index_in,
-                         additional_flood_redirect_lon_index_in,
-                         additional_connect_redirect_lat_index_in,
-                         additional_connect_redirect_lon_index_in,
-                         flood_local_redirect_in,
-                         connect_local_redirect_in,
-                         additional_flood_local_redirect_in,
-                         additional_connect_local_redirect_in,
-                         merge_points_out_int,
+                         merge_and_redirect_indices_filepath,
                          nlat_fine, nlon_fine,
                          nlat_coarse,nlon_coarse,
                          basin_catchment_numbers_in);
-  for (int i = 0; i < nlat_fine*nlon_fine; i++) {
-    flood_local_redirect_out_int[i] = int(flood_local_redirect_in[i]);
-    connect_local_redirect_out_int[i] = int(connect_local_redirect_in[i]);
-    additional_flood_local_redirect_out_int[i] = int(additional_flood_local_redirect_in[i]);
-    additional_connect_local_redirect_out_int[i] = int(additional_connect_local_redirect_in[i]);
-  }
 }
 
 void latlon_evaluate_basins(bool* minima_in,
@@ -112,23 +66,7 @@ void latlon_evaluate_basins(bool* minima_in,
                             int* flood_next_cell_lon_index_in,
                             int* connect_next_cell_lat_index_in,
                             int* connect_next_cell_lon_index_in,
-                            int* flood_force_merge_lat_index_in,
-                            int* flood_force_merge_lon_index_in,
-                            int* connect_force_merge_lat_index_in,
-                            int* connect_force_merge_lon_index_in,
-                            int* flood_redirect_lat_index_in,
-                            int* flood_redirect_lon_index_in,
-                            int* connect_redirect_lat_index_in,
-                            int* connect_redirect_lon_index_in,
-                            int* additional_flood_redirect_lat_index_in,
-                            int* additional_flood_redirect_lon_index_in,
-                            int* additional_connect_redirect_lat_index_in,
-                            int* additional_connect_redirect_lon_index_in,
-                            bool* flood_local_redirect_in,
-                            bool* connect_local_redirect_in,
-                            bool* additional_flood_local_redirect_in,
-                            bool* additional_connect_local_redirect_in,
-                            int* merge_points_out_int,
+                            string merge_and_redirect_indices_filepath,
                             int nlat_fine, int nlon_fine,
                             int nlat_coarse,int nlon_coarse,
                             int* basin_catchment_numbers_in){
@@ -138,7 +76,6 @@ void latlon_evaluate_basins(bool* minima_in,
   auto grid_params_in = new latlon_grid_params((nlat_fine+2*scale_factor),nlon_fine);
   auto coarse_grid_params_in = new latlon_grid_params(nlat_coarse+2,
                                                       nlon_coarse);
-  merge_types* merge_points_in = new merge_types[(nlat_fine+2*scale_factor)*nlon_fine];
   bool* minima_in_ext = new bool[(nlat_fine+2*scale_factor)*nlon_fine];
   double* raw_orography_in_ext = new double[(nlat_fine+2*scale_factor)*nlon_fine];
   double* corrected_orography_in_ext = new double[(nlat_fine+2*scale_factor)*nlon_fine];
@@ -159,38 +96,6 @@ void latlon_evaluate_basins(bool* minima_in,
   fill_n(connect_next_cell_lat_index_in_ext,(nlat_fine+2*scale_factor)*nlon_fine,-1);
   int* connect_next_cell_lon_index_in_ext = new int[(nlat_fine+2*scale_factor)*nlon_fine];
   fill_n(connect_next_cell_lon_index_in_ext,(nlat_fine+2*scale_factor)*nlon_fine,-1);
-  int* flood_force_merge_lat_index_in_ext  = new int[(nlat_fine+2*scale_factor)*nlon_fine];
-  fill_n(flood_force_merge_lat_index_in_ext,(nlat_fine+2*scale_factor)*nlon_fine,-1);
-  int* flood_force_merge_lon_index_in_ext  = new int[(nlat_fine+2*scale_factor)*nlon_fine];
-  fill_n(flood_force_merge_lon_index_in_ext,(nlat_fine+2*scale_factor)*nlon_fine,-1);
-  int* connect_force_merge_lat_index_in_ext  = new int[(nlat_fine+2*scale_factor)*nlon_fine];
-  fill_n(connect_force_merge_lat_index_in_ext,(nlat_fine+2*scale_factor)*nlon_fine,-1);
-  int* connect_force_merge_lon_index_in_ext  = new int[(nlat_fine+2*scale_factor)*nlon_fine];
-  fill_n(connect_force_merge_lon_index_in_ext,(nlat_fine+2*scale_factor)*nlon_fine,-1);
-  int* flood_redirect_lat_index_in_ext  = new int[(nlat_fine+2*scale_factor)*nlon_fine];
-  fill_n(flood_redirect_lat_index_in_ext,(nlat_fine+2*scale_factor)*nlon_fine,-1);
-  int* flood_redirect_lon_index_in_ext  = new int[(nlat_fine+2*scale_factor)*nlon_fine];
-  fill_n(flood_redirect_lon_index_in_ext,(nlat_fine+2*scale_factor)*nlon_fine,-1);
-  int* connect_redirect_lat_index_in_ext  = new int[(nlat_fine+2*scale_factor)*nlon_fine];
-  fill_n(connect_redirect_lat_index_in_ext,(nlat_fine+2*scale_factor)*nlon_fine,-1);
-  int* connect_redirect_lon_index_in_ext  = new int[(nlat_fine+2*scale_factor)*nlon_fine];
-  fill_n(connect_redirect_lon_index_in_ext,(nlat_fine+2*scale_factor)*nlon_fine,-1);
-  int* additional_flood_redirect_lat_index_in_ext  = new int[(nlat_fine+2*scale_factor)*nlon_fine];
-  fill_n(additional_flood_redirect_lat_index_in_ext,(nlat_fine+2*scale_factor)*nlon_fine,-1);
-  int* additional_flood_redirect_lon_index_in_ext  = new int[(nlat_fine+2*scale_factor)*nlon_fine];
-  fill_n(additional_flood_redirect_lon_index_in_ext,(nlat_fine+2*scale_factor)*nlon_fine,-1);
-  int* additional_connect_redirect_lat_index_in_ext  = new int[(nlat_fine+2*scale_factor)*nlon_fine];
-  fill_n(additional_connect_redirect_lat_index_in_ext,(nlat_fine+2*scale_factor)*nlon_fine,-1);
-  int* additional_connect_redirect_lon_index_in_ext  = new int[(nlat_fine+2*scale_factor)*nlon_fine];
-  fill_n(additional_connect_redirect_lon_index_in_ext,(nlat_fine+2*scale_factor)*nlon_fine,-1);
-  bool* flood_local_redirect_in_ext  = new bool[(nlat_fine+2*scale_factor)*nlon_fine];
-  fill_n(flood_local_redirect_in_ext,(nlat_fine+2*scale_factor)*nlon_fine,false);
-  bool* connect_local_redirect_in_ext  = new bool[(nlat_fine+2*scale_factor)*nlon_fine];
-  fill_n(connect_local_redirect_in_ext,(nlat_fine+2*scale_factor)*nlon_fine,false);
-  bool* additional_flood_local_redirect_in_ext  = new bool[(nlat_fine+2*scale_factor)*nlon_fine];
-  fill_n(additional_flood_local_redirect_in_ext,(nlat_fine+2*scale_factor)*nlon_fine,false);
-  bool* additional_connect_local_redirect_in_ext  = new bool[(nlat_fine+2*scale_factor)*nlon_fine];
-  fill_n(additional_connect_local_redirect_in_ext,(nlat_fine+2*scale_factor)*nlon_fine,false);
   int* basin_catchment_numbers_in_ext = nullptr;
   if (basin_catchment_numbers_in){
       basin_catchment_numbers_in_ext  = new int[(nlat_fine+2*scale_factor)*nlon_fine];
@@ -284,23 +189,6 @@ void latlon_evaluate_basins(bool* minima_in,
                    flood_next_cell_lon_index_in_ext,
                    connect_next_cell_lat_index_in_ext,
                    connect_next_cell_lon_index_in_ext,
-                   flood_force_merge_lat_index_in_ext,
-                   flood_force_merge_lon_index_in_ext,
-                   connect_force_merge_lat_index_in_ext,
-                   connect_force_merge_lon_index_in_ext,
-                   flood_redirect_lat_index_in_ext,
-                   flood_redirect_lon_index_in_ext,
-                   connect_redirect_lat_index_in_ext,
-                   connect_redirect_lon_index_in_ext,
-                   additional_flood_redirect_lat_index_in_ext,
-                   additional_flood_redirect_lon_index_in_ext,
-                   additional_connect_redirect_lat_index_in_ext,
-                   additional_connect_redirect_lon_index_in_ext,
-                   flood_local_redirect_in_ext,
-                   connect_local_redirect_in_ext,
-                   additional_flood_local_redirect_in_ext,
-                   additional_connect_local_redirect_in_ext,
-                   merge_points_in,
                    grid_params_in,
                    coarse_grid_params_in);
   alg.setup_sink_filling_algorithm(sink_filling_alg_4);
@@ -309,7 +197,6 @@ void latlon_evaluate_basins(bool* minima_in,
     basin_catchment_numbers_in_ext = alg.retrieve_lake_numbers();
   }
   for (int i = scale_factor*nlon_fine; i < (nlat_fine+scale_factor)*nlon_fine; i++) {
-    merge_points_out_int[i-scale_factor*nlon_fine] = int(merge_points_in[i]);
     connection_volume_thresholds_in[i-scale_factor*nlon_fine] = connection_volume_thresholds_in_ext[i];
     flood_volume_thresholds_in[i-scale_factor*nlon_fine] = flood_volume_thresholds_in_ext[i];
     flood_next_cell_lat_index_in[i-scale_factor*nlon_fine]  =
@@ -318,34 +205,6 @@ void latlon_evaluate_basins(bool* minima_in,
     connect_next_cell_lat_index_in[i-scale_factor*nlon_fine] =
       max(connect_next_cell_lat_index_in_ext[i] - scale_factor,-1);
     connect_next_cell_lon_index_in[i-scale_factor*nlon_fine] = connect_next_cell_lon_index_in_ext[i];
-    flood_force_merge_lat_index_in[i-scale_factor*nlon_fine] =
-      max(flood_force_merge_lat_index_in_ext[i] - scale_factor,-1);
-    flood_force_merge_lon_index_in[i-scale_factor*nlon_fine] = flood_force_merge_lon_index_in_ext[i];
-    connect_force_merge_lat_index_in[i-scale_factor*nlon_fine] =
-      max(connect_force_merge_lat_index_in_ext[i] - scale_factor,-1);
-    connect_force_merge_lon_index_in[i-scale_factor*nlon_fine] = connect_force_merge_lon_index_in_ext[i];
-    flood_redirect_lat_index_in[i-scale_factor*nlon_fine] =
-      max(flood_redirect_lat_index_in_ext[i] - (flood_local_redirect_in_ext[i] ? scale_factor : 1),-1);
-    flood_redirect_lon_index_in[i-scale_factor*nlon_fine] = flood_redirect_lon_index_in_ext[i];
-    connect_redirect_lat_index_in[i-scale_factor*nlon_fine] =
-      max(connect_redirect_lat_index_in_ext[i] - (connect_local_redirect_in_ext[i] ? scale_factor : 1),-1);
-    connect_redirect_lon_index_in[i-scale_factor*nlon_fine] = connect_redirect_lon_index_in_ext[i];
-    additional_flood_redirect_lat_index_in[i-scale_factor*nlon_fine] =
-      max(additional_flood_redirect_lat_index_in_ext[i]  -
-          (additional_flood_local_redirect_in_ext[i] ? scale_factor : 1),-1);
-    additional_flood_redirect_lon_index_in[i-scale_factor*nlon_fine] =
-      additional_flood_redirect_lon_index_in_ext[i];
-    additional_connect_redirect_lat_index_in[i-scale_factor*nlon_fine] =
-      max(additional_connect_redirect_lat_index_in_ext[i] -
-          (additional_connect_local_redirect_in_ext[i] ? scale_factor : 1),-1);
-    additional_connect_redirect_lon_index_in[i-scale_factor*nlon_fine] =
-      additional_connect_redirect_lon_index_in_ext[i];
-    flood_local_redirect_in[i-scale_factor*nlon_fine] = flood_local_redirect_in_ext[i];
-    connect_local_redirect_in[i-scale_factor*nlon_fine] =connect_local_redirect_in_ext[i];
-    additional_flood_local_redirect_in[i-scale_factor*nlon_fine] =
-      additional_flood_local_redirect_in_ext[i];
-    additional_connect_local_redirect_in[i-scale_factor*nlon_fine] =
-      additional_connect_local_redirect_in_ext[i];
     if(basin_catchment_numbers_in){
       basin_catchment_numbers_in[i-scale_factor*nlon_fine] =
         basin_catchment_numbers_in_ext[i];
@@ -367,17 +226,7 @@ void icon_single_index_evaluate_basins(bool* minima_in,
                                        int* coarse_catchment_nums_in,
                                        int* flood_next_cell_index_in,
                                        int* connect_next_cell_index_in,
-                                       int* flood_force_merge_index_in,
-                                       int* connect_force_merge_index_in,
-                                       int* flood_redirect_index_in,
-                                       int* connect_redirect_index_in,
-                                       int* additional_flood_redirect_index_in,
-                                       int* additional_connect_redirect_index_in,
-                                       bool* flood_local_redirect_in,
-                                       bool* connect_local_redirect_in,
-                                       bool* additional_flood_local_redirect_in,
-                                       bool* additional_connect_local_redirect_in,
-                                       int* merge_points_out_int,
+                                       string merge_and_redirect_indices_filepath,
                                        int ncells_fine_in,
                                        int ncells_coarse_in,
                                        int* fine_neighboring_cell_indices_in,
@@ -395,21 +244,10 @@ void icon_single_index_evaluate_basins(bool* minima_in,
                                                                  coarse_secondary_neighboring_cell_indices_in);
   grid_params_in->set_mapping_to_coarse_grid(mapping_from_fine_to_coarse_grid);
   auto alg = icon_single_index_basin_evaluation_algorithm();
-  merge_types* merge_points_in = new merge_types[ncells_fine_in];
   fill_n(connection_volume_thresholds_in,ncells_fine_in,0.0);
   fill_n(flood_volume_thresholds_in,ncells_fine_in,0.0);
   fill_n(flood_next_cell_index_in,ncells_fine_in,-1);
   fill_n(connect_next_cell_index_in,ncells_fine_in,-1);
-  fill_n(flood_force_merge_index_in,ncells_fine_in,-1);
-  fill_n(connect_force_merge_index_in,ncells_fine_in,-1);
-  fill_n(flood_redirect_index_in,ncells_fine_in,-1);
-  fill_n(connect_redirect_index_in,ncells_fine_in,-1);
-  fill_n(additional_flood_redirect_index_in,ncells_fine_in,-1);
-  fill_n(additional_connect_redirect_index_in,ncells_fine_in,-1);
-  fill_n(flood_local_redirect_in,ncells_fine_in,-1);
-  fill_n(connect_local_redirect_in,ncells_fine_in,-1);
-  fill_n(additional_flood_local_redirect_in,ncells_fine_in,-1);
-  fill_n(additional_connect_local_redirect_in,ncells_fine_in,-1);
   auto sink_filling_alg_4 = new sink_filling_algorithm_4_icon_single_index();
   int* next_cell_index_dummy_in = new int[ncells_fine_in];
   int* catchment_nums_dummy_in = new int[ncells_fine_in];
@@ -440,17 +278,6 @@ void icon_single_index_evaluate_basins(bool* minima_in,
                    coarse_catchment_nums_in,
                    flood_next_cell_index_in,
                    connect_next_cell_index_in,
-                   flood_force_merge_index_in,
-                   connect_force_merge_index_in,
-                   flood_redirect_index_in,
-                   connect_redirect_index_in,
-                   additional_flood_redirect_index_in,
-                   additional_connect_redirect_index_in,
-                   flood_local_redirect_in,
-                   connect_local_redirect_in,
-                   additional_flood_local_redirect_in,
-                   additional_connect_local_redirect_in,
-                   merge_points_in,
                    grid_params_in,
                    coarse_grid_params_in);
   alg.setup_sink_filling_algorithm(sink_filling_alg_4);
@@ -458,9 +285,6 @@ void icon_single_index_evaluate_basins(bool* minima_in,
   if(basin_catchment_numbers_in){
     std::copy_n(alg.retrieve_lake_numbers(),ncells_fine_in,
                 basin_catchment_numbers_in);
-  }
-  for (int i = 0; i < ncells_fine_in; i++){
-    merge_points_out_int[i] = int(merge_points_in[i]);
   }
   delete grid_params_in;
   delete coarse_grid_params_in;

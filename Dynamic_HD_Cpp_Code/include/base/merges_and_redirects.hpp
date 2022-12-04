@@ -55,9 +55,9 @@ protected:
   vector<merge_and_redirect_indices*> primary_merge_and_redirect_indices;
   merge_and_redirect_indices* secondary_merge_and_redirect_indices = nullptr;
   bool unmatched_secondary_merge = false;
-  function<merge_and_redirect_indices*(coords*)>* merge_and_redirect_indices_factory = nullptr;
+  function<merge_and_redirect_indices*(coords*)> merge_and_redirect_indices_factory = nullptr;
 public:
-  collected_merge_and_redirect_indices(function<merge_and_redirect_indices*(coords*)>*
+  collected_merge_and_redirect_indices(function<merge_and_redirect_indices*(coords*)>
                                        merge_and_redirect_indices_factory_in) :
     merge_and_redirect_indices_factory(merge_and_redirect_indices_factory_in) {}
   void set_unmatched_secondary_merge(bool unmatched_secondary_merge_in)
@@ -65,19 +65,22 @@ public:
   bool get_unmatched_secondary_merge(){ return unmatched_secondary_merge; }
   void set_secondary_merge_target_coords(coords* target_coords)
     { secondary_merge_and_redirect_indices =
-        (*merge_and_redirect_indices_factory)(target_coords); }
+        merge_and_redirect_indices_factory(target_coords); }
   void set_next_primary_merge_target_index(coords* target_coords) {
     primary_merge_and_redirect_indices.
-      push_back((*merge_and_redirect_indices_factory)(target_coords));
+      push_back(merge_and_redirect_indices_factory(target_coords));
   }
   merge_and_redirect_indices* get_latest_primary_merge_and_redirect_indices() {
     return primary_merge_and_redirect_indices.back();
+  }
+  merge_and_redirect_indices* get_secondary_merge_and_redirect_indices() {
+    return secondary_merge_and_redirect_indices;
   }
 };
 
 class merges_and_redirects {
 public:
-  merges_and_redirects(function<merge_and_redirect_indices*(coords*)>*
+  merges_and_redirects(function<merge_and_redirect_indices*(coords*)>
                        merge_and_redirect_indices_factory_in) :
     next_free_connect_index(0), next_free_flood_index(0),
     merge_and_redirect_indices_factory(merge_and_redirect_indices_factory_in) {}
@@ -94,7 +97,7 @@ protected:
   field<int>* flood_merge_and_redirect_indices_index = nullptr;
   vector<collected_merge_and_redirect_indices*> connect_merge_and_redirect_indices;
   vector<collected_merge_and_redirect_indices*> flood_merge_and_redirect_indices;
-  function<merge_and_redirect_indices*(coords*)>* merge_and_redirect_indices_factory = nullptr;
+  function<merge_and_redirect_indices*(coords*)> merge_and_redirect_indices_factory = nullptr;
 };
 
 #endif /*MERGES_AND_REDIRECTS_HPP_*/

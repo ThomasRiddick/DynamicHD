@@ -65,16 +65,9 @@ protected:
 	virtual void set_previous_cells_flood_next_cell_index(coords* coords_in) = 0;
   ///Virtual setter for connect next cell index of previous cell
   virtual void set_previous_cells_connect_next_cell_index(coords* coords_in) = 0;
-  ///Virtual setter for redirect index of previous cell
-  virtual void set_previous_cells_redirect_index(coords* initial_fine_coords,
-                                                 coords* target_coords,
-                                                 height_types height_type) = 0;
   ///Virtual getter for the next cell to fill in the filling order for a given cell
 	virtual coords* get_cells_next_cell_index_as_coords(coords* coords_in,
                                                       height_types height_type_in) = 0;
-  ///Virtual getter for the redirect index for a given cell
-  virtual coords* get_cells_redirect_index_as_coords(coords* coords_in,
-                                                     height_types height_type_in) = 0;
   /// Returns a true if this cell is a sink or ocean cell and also sets the downstream
   /// coordinates of this cell
 	virtual bool check_for_sinks_and_set_downstream_coords(coords* coords_in) = 0;
@@ -115,23 +108,26 @@ protected:
   void process_secondary_merge();
   void reprocess_secondary_merge(int root_secondary_basin_number,
                                  int target_primary_basin_number);
-  void set_primary_merge();
+  void set_primary_merge(merge_and_redirect_indices* working_redirect,
+                         int target_basin_number_in);
 	void set_remaining_redirects();
-	void set_secondary_redirect();
-	void set_primary_redirect(int target_basin_number);
-  void set_previous_cells_redirect_type(coords* initial_fine_coords,height_types height_type,
-                                        redirect_type local_redirect);
-	void find_and_set_non_local_redirect_index_from_coarse_catchment_num(coords* initial_center_coords,
-	                                                                		 coords* current_center_coords,
-                                                                       height_types initial_center_height_type,
-	                                                     								 int coarse_catchment_number);
+	void set_secondary_redirect(merge_and_redirect_indices* working_redirect,
+                              coords* redirect_coords,
+                              coords* target_basin_center_coords,
+                              height_types redirect_height_type);
+  void set_preliminary_secondary_redirect();
+	void set_primary_redirect(merge_and_redirect_indices* working_redirect,
+                            int target_basin_number_in);
+	void find_and_set_non_local_redirect_index_from_coarse_catchment_num(merge_and_redirect_indices*
+                                                                       working_redirect,
+                                                                       coords* current_center_coords,
+                                                                       int coarse_catchment_number);
 	void search_process_neighbors();
 	void search_process_neighbor();
   void process_additional_merges_at_same_level(bool look_for_primary_merge);
-	void find_and_set_previous_cells_non_local_redirect_index(coords* initial_center_coords,
-	                                                     			coords* current_center_coords,
-	                                                     			coords* catchment_center_coords,
-                                                            height_types initial_center_height_type);
+	void find_and_set_previous_cells_non_local_redirect_index(merge_and_redirect_indices* working_redirect,
+                                                            coords* current_center_coords,
+                                                            coords* target_basin_center_coords);
   vector<queue<coords*>*> minima_coords_queues;
 	queue<cell*> minima_q;
 	priority_cell_queue q;
@@ -176,12 +172,11 @@ protected:
   vector<vector<pair<coords*,bool>>> basin_connect_and_fill_orders;
   vector<pair<coords*,bool>> basin_connect_and_fill_order;
   disjoint_sets basin_connections;
-  merges_and_redirects basin_merges_and_redirects;
+  merges_and_redirects* basin_merges_and_redirects = nullptr;
   height_types new_center_cell_height_type;
   height_types center_cell_height_type;
   height_types previous_filled_cell_height_type;
   sink_filling_algorithm_4* sink_filling_alg;
-
 	int basin_number;
   int basin_prior_fine_catchment_num;
   bool skipped_previous_center_cell;
@@ -244,6 +239,7 @@ public:
                                            coords* center_coords_in,
                                            coords* previous_filled_cell_coords_in,
                                            height_types previous_filled_cell_height_type_in,
+                                           int target_basin_number_in,
                                            grid_params* grid_params_in,
                                            grid_params* coarse_grid_params_in);
 	void test_set_secondary_redirect(int* flood_next_cell_lat_index_in,
@@ -257,6 +253,7 @@ public:
                                    coords* new_center_coords_in,
                                    coords* center_coords_in,
                                    coords* previous_filled_cell_coords_in,
+                                   coords* target_basin_center_coords_in,
                                    height_types& previous_filled_cell_height_type_in,
                                    grid_params* grid_params_in);
 	void test_set_remaining_redirects(vector<coords*> basin_catchment_centers_in,
@@ -276,15 +273,10 @@ public:
 private:
 	void set_previous_cells_flood_next_cell_index(coords* coords_in);
   void set_previous_cells_connect_next_cell_index(coords* coords_in);
-	void set_previous_cells_redirect_index(coords* initial_fine_coords,
-                                         coords* target_coords,
-                                         height_types height_type);
 	bool check_for_sinks_and_set_downstream_coords(coords* coords_in);
   bool coarse_cell_is_sink(coords* coords_in);
 	coords* get_cells_next_cell_index_as_coords(coords* coords_in,
                                               height_types height_type_in);
-  coords* get_cells_redirect_index_as_coords(coords* coords_in,
-                                             height_types height_type_in);
   void output_diagnostics_for_grid_section(int min_lat,int max_lat,
                                            int min_lon,int max_lon);
 	field<double>* prior_fine_rdirs = nullptr;
@@ -315,15 +307,10 @@ public:
 private:
   void set_previous_cells_flood_next_cell_index(coords* coords_in);
   void set_previous_cells_connect_next_cell_index(coords* coords_in);
-  void set_previous_cells_redirect_index(coords* initial_fine_coords,
-                                         coords* target_coords,
-                                         height_types height_type);
   bool check_for_sinks_and_set_downstream_coords(coords* coords_in);
   bool coarse_cell_is_sink(coords* coords_in);
   coords* get_cells_next_cell_index_as_coords(coords* coords_in,
                                               height_types height_type_in);
-  coords* get_cells_redirect_index_as_coords(coords* coords_in,
-                                             height_types height_type_in);
   void output_diagnostics_for_grid_section(int min_lat,int max_lat,
                                            int min_lon,int max_lon);
   field<int>* prior_fine_rdirs = nullptr;
