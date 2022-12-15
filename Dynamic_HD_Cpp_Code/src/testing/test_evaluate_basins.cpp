@@ -50,10 +50,11 @@ class BasinEvaluationTest : public ::testing::Test {
 };
 
 TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueOne) {
+  // Test adding three minima to the queue for 9 by 9 array
   auto grid_params_in = new latlon_grid_params(9,9,true);
   auto coarse_grid_params_in = new latlon_grid_params(3,3,true);
-  double* raw_orography_in = new double[9*9] {2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
-                                              2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
+  double* raw_orography_in = new double[9*9] {2.0,3.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
+                                              3.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
                                               2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
 //
                                               2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
@@ -63,8 +64,8 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueOne) {
                                               2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
                                               2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
                                               2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0};
-  double* corrected_orography_in = new double[9*9] {0.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
-                                                    2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
+  double* corrected_orography_in = new double[9*9] {0.0,3.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
+                                                    3.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
                                                     2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
 //
                                                     2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
@@ -102,6 +103,8 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueOne) {
   landsea_in[0] = true;
   bool* true_sinks_in = new bool[9*9];
   fill_n(true_sinks_in,9*9,false);
+  int* prior_fine_catchments_in = new int[9*9];
+  fill_n(prior_fine_catchments_in,9*9,1);
   int* next_cell_lat_index_in = new int[9*9];
   int* next_cell_lon_index_in = new int[9*9];
   short* rdirs_in = new short[9*9];
@@ -121,6 +124,7 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueOne) {
   q = basin_eval.test_add_minima_to_queue(raw_orography_in,
                                           corrected_orography_in,
                                           minima_in,
+                                          prior_fine_catchments_in,
                                           alg4,
                                           grid_params_in,
                                           coarse_grid_params_in);
@@ -146,10 +150,12 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueOne) {
 }
 
 TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueTwo) {
+  // Test adding three minima to the queue for 9 by 9 array where flood and
+  // connect heights sometimes differ
   auto grid_params_in = new latlon_grid_params(9,9,true);
   auto coarse_grid_params_in = new latlon_grid_params(3,3,true);
-  double* raw_orography_in = new double[9*9] {2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
-                                              2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
+  double* raw_orography_in = new double[9*9] {2.0,3.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
+                                              3.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
                                               2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
 //
                                               2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
@@ -159,8 +165,8 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueTwo) {
                                               2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
                                               2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
                                               2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0};
-  double* corrected_orography_in = new double[9*9] {2.0,2.0,2.0, 2.0,2.0,2.0, 1.0,2.0,2.0,
-                                                    2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
+  double* corrected_orography_in = new double[9*9] {2.0,3.0,2.0, 2.0,2.0,2.0, 1.0,2.0,2.0,
+                                                    3.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
                                                     2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
 //
                                                     2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
@@ -198,6 +204,8 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueTwo) {
   landsea_in[0] = true;
   bool* true_sinks_in = new bool[9*9];
   fill_n(true_sinks_in,9*9,false);
+  int* prior_fine_catchments_in = new int[9*9];
+  fill_n(prior_fine_catchments_in,9*9,1);
   int* next_cell_lat_index_in = new int[9*9];
   int* next_cell_lon_index_in = new int[9*9];
   short* rdirs_in = new short[9*9];
@@ -217,6 +225,7 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueTwo) {
   q = basin_eval.test_add_minima_to_queue(raw_orography_in,
                                           corrected_orography_in,
                                           minima_in,
+                                          prior_fine_catchments_in,
                                           alg4,
                                           grid_params_in,
                                           coarse_grid_params_in);
@@ -242,10 +251,12 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueTwo) {
 }
 
 TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueThree) {
+  // Test adding four minima to the queue for 9 by 9 array where flood and
+  // connect heights sometimes differ
   auto grid_params_in = new latlon_grid_params(9,9,true);
   auto coarse_grid_params_in = new latlon_grid_params(3,3,true);
-  double* raw_orography_in = new double[9*9] {2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
-                                              2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
+  double* raw_orography_in = new double[9*9] {2.0,3.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
+                                              3.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
                                               2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
 //
                                               2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
@@ -255,8 +266,8 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueThree) {
                                               2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
                                               2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
                                               2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0};
-  double* corrected_orography_in = new double[9*9] {2.0,2.0,2.0, 2.0,2.0,2.0, 1.0,2.0,2.0,
-                                                    2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
+  double* corrected_orography_in = new double[9*9] {2.0,3.0,2.0, 2.0,2.0,2.0, 1.0,2.0,2.0,
+                                                    3.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
                                                     2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
 //
                                                     2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
@@ -294,6 +305,8 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueThree) {
   landsea_in[0] = true;
   bool* true_sinks_in = new bool[9*9];
   fill_n(true_sinks_in,9*9,false);
+  int* prior_fine_catchments_in = new int[9*9];
+  fill_n(prior_fine_catchments_in,9*9,1);
   int* next_cell_lat_index_in = new int[9*9];
   int* next_cell_lon_index_in = new int[9*9];
   short* rdirs_in = new short[9*9];
@@ -313,6 +326,7 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueThree) {
   q = basin_eval.test_add_minima_to_queue(raw_orography_in,
                                           corrected_orography_in,
                                           minima_in,
+                                          prior_fine_catchments_in,
                                           alg4,
                                           grid_params_in,
                                           coarse_grid_params_in);
@@ -338,6 +352,9 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueThree) {
 }
 
 TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueFour) {
+  // Test adding four minima to the queue for 9 by 9 array where flood and
+  // connect heights sometimes differ; some minima are place next to edges of
+  // the array
   auto grid_params_in = new latlon_grid_params(9,9,true);
   auto coarse_grid_params_in = new latlon_grid_params(3,3,true);
   double* raw_orography_in = new double[9*9] {2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
@@ -349,8 +366,8 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueFour) {
                                               2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
 //
                                               2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
-                                              2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
-                                              2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0};
+                                              2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,3.0,
+                                              2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,3.0,0.0};
   double* corrected_orography_in = new double[9*9] {2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
                                                     2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
                                                     2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
@@ -360,8 +377,8 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueFour) {
                                                     2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
 //
                                                     2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
-                                                    2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
-                                                    2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0};
+                                                    2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,3.0,
+                                                    2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,3.0,0.0};
   bool* minima_in = new bool[9*9] { true,false,false, false,false,false, false,false,false,
                                    false,false,false, false,false,false, false,false,false,
                                    false,false,false, false,false,false, false, true,false,
@@ -390,6 +407,8 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueFour) {
   landsea_in[9*9-1] = true;
   bool* true_sinks_in = new bool[9*9];
   fill_n(true_sinks_in,9*9,false);
+  int* prior_fine_catchments_in = new int[9*9];
+  fill_n(prior_fine_catchments_in,9*9,1);
   int* next_cell_lat_index_in = new int[9*9];
   int* next_cell_lon_index_in = new int[9*9];
   short* rdirs_in = new short[9*9];
@@ -409,6 +428,7 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueFour) {
   q = basin_eval.test_add_minima_to_queue(raw_orography_in,
                                           corrected_orography_in,
                                           minima_in,
+                                          prior_fine_catchments_in,
                                           alg4,
                                           grid_params_in,
                                           coarse_grid_params_in);
@@ -436,8 +456,8 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueFour) {
 TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueFive) {
   auto grid_params_in = new latlon_grid_params(9,9,true);
   auto coarse_grid_params_in = new latlon_grid_params(3,3,true);
-  double* raw_orography_in = new double[9*9] {2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
-                                              2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
+  double* raw_orography_in = new double[9*9] {2.0,3.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
+                                              3.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
                                               2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
 //
                                               2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
@@ -447,8 +467,8 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueFive) {
                                               2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
                                               2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
                                               2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0};
-  double* corrected_orography_in = new double[9*9] {2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
-                                                    2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
+  double* corrected_orography_in = new double[9*9] {2.0,3.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
+                                                    3.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
                                                     2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
 //
                                                     2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
@@ -488,6 +508,8 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueFive) {
   fill_n(true_sinks_in,9*9,false);
   int* next_cell_lat_index_in = new int[9*9];
   int* next_cell_lon_index_in = new int[9*9];
+  int* prior_fine_catchments_in = new int[9*9];
+  fill_n(prior_fine_catchments_in,9*9,1);
   short* rdirs_in = new short[9*9];
   int* catchment_nums_in = new int[9*9];
   queue<cell*> q;
@@ -505,6 +527,7 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueFive) {
   q = basin_eval.test_add_minima_to_queue(raw_orography_in,
                                           corrected_orography_in,
                                           minima_in,
+                                          prior_fine_catchments_in,
                                           alg4,
                                           grid_params_in,
                                           coarse_grid_params_in);
@@ -530,10 +553,12 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueFive) {
 }
 
 TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueSix) {
+  // Test adding four minima to the queue for 9 by 9 array; one next to
+  // an edge
   auto grid_params_in = new latlon_grid_params(9,9,true);
   auto coarse_grid_params_in = new latlon_grid_params(3,3,true);
-  double* raw_orography_in = new double[9*9] {2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
-                                              2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
+  double* raw_orography_in = new double[9*9] {2.0,3.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
+                                              3.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
                                               2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
 //
                                               2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
@@ -543,8 +568,8 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueSix) {
                                               2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
                                               2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
                                               2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0};
-  double* corrected_orography_in = new double[9*9] {2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
-                                                    2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
+  double* corrected_orography_in = new double[9*9] {2.0,3.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
+                                                    3.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
                                                     2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
 //
                                                     2.0,2.0,2.0, 2.0,2.0,2.0, 2.0,2.0,2.0,
@@ -582,6 +607,8 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueSix) {
   landsea_in[0] = true;
   bool* true_sinks_in = new bool[9*9];
   fill_n(true_sinks_in,9*9,false);
+  int* prior_fine_catchments_in = new int[9*9];
+  fill_n(prior_fine_catchments_in,9*9,1);
   int* next_cell_lat_index_in = new int[9*9];
   int* next_cell_lon_index_in = new int[9*9];
   short* rdirs_in = new short[9*9];
@@ -601,6 +628,7 @@ TEST_F(BasinEvaluationTest, TestAddingMinimaToQueueSix) {
   q = basin_eval.test_add_minima_to_queue(raw_orography_in,
                                           corrected_orography_in,
                                           minima_in,
+                                          prior_fine_catchments_in,
                                           alg4,
                                           grid_params_in,
                                           coarse_grid_params_in);
@@ -4948,6 +4976,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellEighteen) {
 }
 
 TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectOne) {
+  //A single primary merge with a simply non-local redirect
   auto grid_params_in = new latlon_grid_params(9,9,false);
   auto coarse_grid_params_in = new latlon_grid_params(3,3,false);
   int* basin_catchment_numbers_in = new int[9*9] {3,3,3, 3,3,8, 8,8,9,
@@ -4967,145 +4996,57 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectOne) {
   double* prior_coarse_rdirs_in = new double[3*3] {5.0,5.0,5.0,
                                                    5.0,5.0,5.0,
                                                    5.0,5.0,5.0 };
-  int* flood_force_merge_lat_index_in = new int[9*9];
-  std::fill_n(flood_force_merge_lat_index_in,9*9,-1);
-  int* flood_force_merge_lon_index_in = new int[9*9];
-  std::fill_n(flood_force_merge_lon_index_in,9*9,-1);
-  int* connect_force_merge_lat_index_in = new int[9*9];
-  std::fill_n(connect_force_merge_lat_index_in,9*9,-1);
-  int* connect_force_merge_lon_index_in = new int[9*9];
-  std::fill_n(connect_force_merge_lon_index_in,9*9,-1);
-  int* flood_redirect_lat_index_in = new int[9*9];
-  std::fill_n(flood_redirect_lat_index_in,9*9,-1);
-  int* flood_redirect_lon_index_in = new int[9*9];
-  std::fill_n(flood_redirect_lon_index_in,9*9,-1);
-  int* connect_redirect_lat_index_in = new int[9*9];
-  std::fill_n(connect_redirect_lat_index_in,9*9,-1);
-  int* connect_redirect_lon_index_in = new int[9*9];
-  std::fill_n(connect_redirect_lon_index_in,9*9,-1);
-  height_types previous_filled_cell_height_type_in = flood_height;
-  bool* flood_local_redirect_in = new bool[9*9];
-  std::fill_n(flood_local_redirect_in,9*9,false);
-  bool* connect_local_redirect_in = new bool[9*9];
-  std::fill_n(connect_local_redirect_in,9*9,false);
-  merge_types* merge_points_in = new merge_types[9*9];
-  std::fill_n(merge_points_in,9*9,no_merge);
-  merge_types* merge_points_expected_out = new merge_types[9*9]{
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-//
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-//
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, connection_merge_not_set_flood_merge_as_primary,no_merge,no_merge,
-    no_merge,no_merge,no_merge};
-  int* flood_force_merge_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  8,-1,-1, -1,-1,-1};
-  int* flood_force_merge_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, 6,-1,-1, -1,-1,-1};
-  int* connect_force_merge_lat_index_expected_out = new int[9*9];
-  std::fill_n(connect_force_merge_lat_index_expected_out,9*9,-1);
-  int* connect_force_merge_lon_index_expected_out = new int[9*9];
-  std::fill_n(connect_force_merge_lon_index_expected_out,9*9,-1);
-  int* flood_redirect_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  2,-1,-1, -1,-1,-1};
-  int* flood_redirect_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  bool* flood_local_redirect_expected_out = new bool[9*9]
-                                     {false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false};
-  bool* connect_local_redirect_expected_out = new bool[9*9]
-                                     {false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false};
+  int flood_index = 0;
+  field<int>* connect_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  field<int>* flood_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  connect_merge_and_redirect_indices_index->set_all(-1);
+  flood_merge_and_redirect_indices_index->set_all(-1);
+  vector<collected_merge_and_redirect_indices*>*
+    connect_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<collected_merge_and_redirect_indices*>*
+    flood_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<merge_and_redirect_indices*>* primary_merges = nullptr;
+  merge_and_redirect_indices* primary_merge;
+  merge_and_redirect_indices* secondary_merge;
+  collected_merge_and_redirect_indices* collected_indices = nullptr;
+  secondary_merge =
+          new latlon_merge_and_redirect_indices(new latlon_coords(8,4),
+                                                new latlon_coords(8,4),
+                                                true);
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(8,6)) = flood_index;
+  flood_index++;
+  primary_merge =
+          new latlon_merge_and_redirect_indices(new latlon_coords(8,6),
+                                                new latlon_coords(2,1),
+                                                false);
+  secondary_merge = nullptr;
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  primary_merges->push_back(primary_merge);
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(8,3)) = flood_index;
+  flood_index++;
+  merges_and_redirects merges_and_redirects_expected_out =
+          merges_and_redirects(connect_merge_and_redirect_indices_index,
+                               flood_merge_and_redirect_indices_index,
+                               connect_merge_and_redirect_indices_vector,
+                               flood_merge_and_redirect_indices_vector,
+                               grid_params_in);
   coords* new_center_coords_in = new latlon_coords(5,2);
   coords* center_coords_in = new latlon_coords(6,3);
   coords* previous_filled_cell_coords_in = new latlon_coords(8,3);
+  height_types previous_filled_cell_height_type_in = flood_height;
   vector<coords*> basin_catchment_centers_in;
   basin_catchment_centers_in.push_back(new latlon_coords(1,1));
   basin_catchment_centers_in.push_back(new latlon_coords(1,1));
@@ -5121,63 +5062,18 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectOne) {
                                                  prior_coarse_rdirs_in,
                                                  basin_catchment_numbers_in,
                                                  coarse_catchment_nums_in,
-                                                 flood_force_merge_lat_index_in,
-                                                 flood_force_merge_lon_index_in,
-                                                 connect_force_merge_lat_index_in,
-                                                 connect_force_merge_lon_index_in,
-                                                 flood_redirect_lat_index_in,
-                                                 flood_redirect_lon_index_in,
-                                                 connect_redirect_lat_index_in,
-                                                 connect_redirect_lon_index_in,
-                                                 flood_local_redirect_in,
-                                                 connect_local_redirect_in,
-                                                 merge_points_in,
                                                  new_center_coords_in,
                                                  center_coords_in,
                                                  previous_filled_cell_coords_in,
                                                  previous_filled_cell_height_type_in,
                                                  grid_params_in,
                                                  coarse_grid_params_in);
-  EXPECT_TRUE(field<int>(flood_force_merge_lat_index_in,grid_params_in)
-              == field<int>(flood_force_merge_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_force_merge_lon_index_in,grid_params_in)
-              == field<int>(flood_force_merge_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_force_merge_lat_index_in,grid_params_in)
-              == field<int>(connect_force_merge_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_force_merge_lon_index_in,grid_params_in)
-              == field<int>(connect_force_merge_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lat_index_in,grid_params_in)
-              == field<int>(flood_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lon_index_in,grid_params_in)
-              == field<int>(flood_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lat_index_in,grid_params_in)
-              == field<int>(connect_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lon_index_in,grid_params_in)
-              == field<int>(connect_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(flood_local_redirect_in,grid_params_in)
-              == field<bool>(flood_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(connect_local_redirect_in,grid_params_in)
-              == field<bool>(connect_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<merge_types>(merge_points_in,grid_params_in)
-              == field<merge_types>(merge_points_expected_out,grid_params_in));
+  merges_and_redirects* merges_and_redirects_out =
+    basin_eval.get_basin_merges_and_redirects();
+  EXPECT_TRUE(merges_and_redirects_expected_out ==
+              *merges_and_redirects_out);
   delete grid_params_in; delete coarse_grid_params_in;
   delete[] basin_catchment_numbers_in; delete[] coarse_catchment_nums_in;
-  delete[] flood_force_merge_lat_index_in; delete[] flood_force_merge_lon_index_in;
-  delete[] connect_force_merge_lat_index_in; delete[] connect_force_merge_lon_index_in;
-  delete[] flood_redirect_lat_index_in; delete[] flood_redirect_lon_index_in;
-  delete[] connect_redirect_lat_index_in; delete[] connect_redirect_lon_index_in;
-  delete[] flood_local_redirect_in; delete[] connect_local_redirect_in;
-  delete[] merge_points_in; delete[] merge_points_expected_out;
-  delete[] flood_force_merge_lat_index_expected_out;
-  delete[] flood_force_merge_lon_index_expected_out;
-  delete[] connect_force_merge_lat_index_expected_out;
-  delete[] connect_force_merge_lon_index_expected_out;
-  delete[] flood_redirect_lat_index_expected_out;
-  delete[] flood_redirect_lon_index_expected_out;
-  delete[] connect_redirect_lat_index_expected_out;
-  delete[] connect_redirect_lon_index_expected_out;
-  delete[] flood_local_redirect_expected_out;
-  delete[] connect_local_redirect_expected_out;
   delete[] prior_coarse_rdirs_in;
   delete new_center_coords_in; delete center_coords_in; delete previous_filled_cell_coords_in;
   while (! basin_catchment_centers_in.empty()){
@@ -5207,142 +5103,44 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectTwo) {
   double* prior_coarse_rdirs_in = new double[3*3] {5.0,5.0,5.0,
                                                    5.0,5.0,5.0,
                                                    5.0,5.0,5.0 };
-  int* flood_force_merge_lat_index_in = new int[9*9];
-  std::fill_n(flood_force_merge_lat_index_in,9*9,-1);
-  int* flood_force_merge_lon_index_in = new int[9*9];
-  std::fill_n(flood_force_merge_lon_index_in,9*9,-1);
-  int* connect_force_merge_lat_index_in = new int[9*9];
-  std::fill_n(connect_force_merge_lat_index_in,9*9,-1);
-  int* connect_force_merge_lon_index_in = new int[9*9];
-  std::fill_n(connect_force_merge_lon_index_in,9*9,-1);
-  int* flood_redirect_lat_index_in = new int[9*9];
-  std::fill_n(flood_redirect_lat_index_in,9*9,-1);
-  int* flood_redirect_lon_index_in = new int[9*9];
-  std::fill_n(flood_redirect_lon_index_in,9*9,-1);
-  int* connect_redirect_lat_index_in = new int[9*9];
-  std::fill_n(connect_redirect_lat_index_in,9*9,-1);
-  int* connect_redirect_lon_index_in = new int[9*9];
-  std::fill_n(connect_redirect_lon_index_in,9*9,-1);
   height_types previous_filled_cell_height_type_in = flood_height;
-  bool* flood_local_redirect_in = new bool[9*9];
-  std::fill_n(flood_local_redirect_in,9*9,false);
-  bool* connect_local_redirect_in = new bool[9*9];
-  std::fill_n(connect_local_redirect_in,9*9,false);
-  merge_types* merge_points_in = new merge_types[9*9];
-  std::fill_n(merge_points_in,9*9,no_merge);
-  merge_types* merge_points_expected_out = new merge_types[9*9]{
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,connection_merge_not_set_flood_merge_as_primary,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-//
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-//
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge};
-  int* flood_force_merge_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* flood_force_merge_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1, 5,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_force_merge_lat_index_expected_out = new int[9*9];
-  std::fill_n(connect_force_merge_lat_index_expected_out,9*9,-1);
-  int* connect_force_merge_lon_index_expected_out = new int[9*9];
-  std::fill_n(connect_force_merge_lon_index_expected_out,9*9,-1);
-  int* flood_redirect_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1, 1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* flood_redirect_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1, 5,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  bool* flood_local_redirect_expected_out = new bool[9*9]
-                                     {false,false,false, false,false,false, false, true,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false};
-  bool* connect_local_redirect_expected_out = new bool[9*9]
-                                     {false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false};
+  int flood_index = 0;
+  field<int>* connect_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  field<int>* flood_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  connect_merge_and_redirect_indices_index->set_all(-1);
+  flood_merge_and_redirect_indices_index->set_all(-1);
+  vector<collected_merge_and_redirect_indices*>*
+    connect_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<collected_merge_and_redirect_indices*>*
+    flood_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<merge_and_redirect_indices*>* primary_merges = nullptr;
+  merge_and_redirect_indices* primary_merge;
+  merge_and_redirect_indices* secondary_merge;
+  collected_merge_and_redirect_indices* collected_indices = nullptr;
+
+  primary_merge =
+          new latlon_merge_and_redirect_indices(new latlon_coords(1,5),
+                                                new latlon_coords(1,5),
+                                                true);
+  secondary_merge = nullptr;
+
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  primary_merges->push_back(primary_merge);
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(0,7)) = flood_index;
+  flood_index++;
+  merges_and_redirects merges_and_redirects_expected_out =
+          merges_and_redirects(connect_merge_and_redirect_indices_index,
+                               flood_merge_and_redirect_indices_index,
+                               connect_merge_and_redirect_indices_vector,
+                               flood_merge_and_redirect_indices_vector,
+                               grid_params_in);
   coords* new_center_coords_in = new latlon_coords(0,5);
   coords* center_coords_in = new latlon_coords(1,3);
   coords* previous_filled_cell_coords_in = new latlon_coords(0,7);
@@ -5361,63 +5159,19 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectTwo) {
                                                  prior_coarse_rdirs_in,
                                                  basin_catchment_numbers_in,
                                                  coarse_catchment_nums_in,
-                                                 flood_force_merge_lat_index_in,
-                                                 flood_force_merge_lon_index_in,
-                                                 connect_force_merge_lat_index_in,
-                                                 connect_force_merge_lon_index_in,
-                                                 flood_redirect_lat_index_in,
-                                                 flood_redirect_lon_index_in,
-                                                 connect_redirect_lat_index_in,
-                                                 connect_redirect_lon_index_in,
-                                                 flood_local_redirect_in,
-                                                 connect_local_redirect_in,
-                                                 merge_points_in,
                                                  new_center_coords_in,
                                                  center_coords_in,
                                                  previous_filled_cell_coords_in,
                                                  previous_filled_cell_height_type_in,
                                                  grid_params_in,
                                                  coarse_grid_params_in);
-  EXPECT_TRUE(field<int>(flood_force_merge_lat_index_in,grid_params_in)
-              == field<int>(flood_force_merge_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_force_merge_lon_index_in,grid_params_in)
-              == field<int>(flood_force_merge_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_force_merge_lat_index_in,grid_params_in)
-              == field<int>(connect_force_merge_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_force_merge_lon_index_in,grid_params_in)
-              == field<int>(connect_force_merge_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lat_index_in,grid_params_in)
-              == field<int>(flood_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lon_index_in,grid_params_in)
-              == field<int>(flood_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lat_index_in,grid_params_in)
-              == field<int>(connect_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lon_index_in,grid_params_in)
-              == field<int>(connect_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(flood_local_redirect_in,grid_params_in)
-              == field<bool>(flood_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(connect_local_redirect_in,grid_params_in)
-              == field<bool>(connect_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<merge_types>(merge_points_in,grid_params_in)
-              == field<merge_types>(merge_points_expected_out,grid_params_in));
+  merges_and_redirects* merges_and_redirects_out =
+    basin_eval.get_basin_merges_and_redirects();
+  EXPECT_TRUE(merges_and_redirects_expected_out ==
+              *merges_and_redirects_out);
+  EXPECT_TRUE(false);
   delete grid_params_in; delete coarse_grid_params_in;
   delete[] basin_catchment_numbers_in; delete[] coarse_catchment_nums_in;
-  delete[] flood_force_merge_lat_index_in; delete[] flood_force_merge_lon_index_in;
-  delete[] connect_force_merge_lat_index_in; delete[] connect_force_merge_lon_index_in;
-  delete[] flood_redirect_lat_index_in; delete[] flood_redirect_lon_index_in;
-  delete[] connect_redirect_lat_index_in; delete[] connect_redirect_lon_index_in;
-  delete[] flood_local_redirect_in; delete[] connect_local_redirect_in;
-  delete[] merge_points_in; delete[] merge_points_expected_out;
-  delete[] flood_force_merge_lat_index_expected_out;
-  delete[] flood_force_merge_lon_index_expected_out;
-  delete[] connect_force_merge_lat_index_expected_out;
-  delete[] connect_force_merge_lon_index_expected_out;
-  delete[] flood_redirect_lat_index_expected_out;
-  delete[] flood_redirect_lon_index_expected_out;
-  delete[] connect_redirect_lat_index_expected_out;
-  delete[] connect_redirect_lon_index_expected_out;
-  delete[] flood_local_redirect_expected_out;
-  delete[] connect_local_redirect_expected_out;
   delete[] prior_coarse_rdirs_in;
   delete new_center_coords_in; delete center_coords_in; delete previous_filled_cell_coords_in;
   while (! basin_catchment_centers_in.empty()){
@@ -5428,6 +5182,7 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectTwo) {
 }
 
 TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectThree) {
+  //Test setting a single local primary merge and redirect
   auto grid_params_in = new latlon_grid_params(9,9,false);
   auto coarse_grid_params_in = new latlon_grid_params(3,3,false);
   int* basin_catchment_numbers_in = new int[9*9] {3,3,3, 3,3,8, 8,8,9,
@@ -5447,142 +5202,56 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectThree) {
   double* prior_coarse_rdirs_in = new double[3*3] {5.0,5.0,5.0,
                                                    5.0,5.0,5.0,
                                                    5.0,5.0,5.0 };
-  int* flood_force_merge_lat_index_in = new int[9*9];
-  std::fill_n(flood_force_merge_lat_index_in,9*9,-1);
-  int* flood_force_merge_lon_index_in = new int[9*9];
-  std::fill_n(flood_force_merge_lon_index_in,9*9,-1);
-  int* connect_force_merge_lat_index_in = new int[9*9];
-  std::fill_n(connect_force_merge_lat_index_in,9*9,-1);
-  int* connect_force_merge_lon_index_in = new int[9*9];
-  std::fill_n(connect_force_merge_lon_index_in,9*9,-1);
-  int* flood_redirect_lat_index_in = new int[9*9];
-  std::fill_n(flood_redirect_lat_index_in,9*9,-1);
-  int* flood_redirect_lon_index_in = new int[9*9];
-  std::fill_n(flood_redirect_lon_index_in,9*9,-1);
-  int* connect_redirect_lat_index_in = new int[9*9];
-  std::fill_n(connect_redirect_lat_index_in,9*9,-1);
-  int* connect_redirect_lon_index_in = new int[9*9];
-  std::fill_n(connect_redirect_lon_index_in,9*9,-1);
   height_types previous_filled_cell_height_type_in = flood_height;
-  bool* flood_local_redirect_in = new bool[9*9];
-  std::fill_n(flood_local_redirect_in,9*9,false);
-  bool* connect_local_redirect_in = new bool[9*9];
-  std::fill_n(connect_local_redirect_in,9*9,false);
-  merge_types* merge_points_in = new merge_types[9*9];
-  std::fill_n(merge_points_in,9*9,no_merge);
-  merge_types* merge_points_expected_out = new merge_types[9*9]{
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-//
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,connection_merge_not_set_flood_merge_as_primary,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-//
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge};
-  int* flood_force_merge_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1, 4,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* flood_force_merge_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1, 8,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_force_merge_lat_index_expected_out = new int[9*9];
-  std::fill_n(connect_force_merge_lat_index_expected_out,9*9,-1);
-  int* connect_force_merge_lon_index_expected_out = new int[9*9];
-  std::fill_n(connect_force_merge_lon_index_expected_out,9*9,-1);
-  int* flood_redirect_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1, 4,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* flood_redirect_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1, 8,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  bool* flood_local_redirect_expected_out = new bool[9*9]
-                                     {false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false, true,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false};
-  bool* connect_local_redirect_expected_out = new bool[9*9]
-                                     {false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false};
+  int flood_index = 0;
+  field<int>* connect_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  field<int>* flood_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  connect_merge_and_redirect_indices_index->set_all(-1);
+  flood_merge_and_redirect_indices_index->set_all(-1);
+  vector<collected_merge_and_redirect_indices*>*
+    connect_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<collected_merge_and_redirect_indices*>*
+    flood_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<merge_and_redirect_indices*>* primary_merges = nullptr;
+  merge_and_redirect_indices* primary_merge;
+  merge_and_redirect_indices* secondary_merge;
+  collected_merge_and_redirect_indices* collected_indices = nullptr;
+  secondary_merge =
+          new latlon_merge_and_redirect_indices(new latlon_coords(1,5),
+                                                new latlon_coords(0,1),
+                                                false);
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(4,8)) = flood_index;
+  flood_index++;
+  primary_merge =
+          new latlon_merge_and_redirect_indices(new latlon_coords(4,8),
+                                                new latlon_coords(4,8),
+                                                true);
+  secondary_merge = nullptr;
+
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  primary_merges->push_back(primary_merge);
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(4,1)) = flood_index;
+  flood_index++;
+
+  merges_and_redirects merges_and_redirects_expected_out =
+          merges_and_redirects(connect_merge_and_redirect_indices_index,
+                               flood_merge_and_redirect_indices_index,
+                               connect_merge_and_redirect_indices_vector,
+                               flood_merge_and_redirect_indices_vector,
+                               grid_params_in);
   coords* new_center_coords_in = new latlon_coords(3,7);
   coords* center_coords_in = new latlon_coords(3,6);
   coords* previous_filled_cell_coords_in = new latlon_coords(4,1);
@@ -5601,63 +5270,19 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectThree) {
                                                  prior_coarse_rdirs_in,
                                                  basin_catchment_numbers_in,
                                                  coarse_catchment_nums_in,
-                                                 flood_force_merge_lat_index_in,
-                                                 flood_force_merge_lon_index_in,
-                                                 connect_force_merge_lat_index_in,
-                                                 connect_force_merge_lon_index_in,
-                                                 flood_redirect_lat_index_in,
-                                                 flood_redirect_lon_index_in,
-                                                 connect_redirect_lat_index_in,
-                                                 connect_redirect_lon_index_in,
-                                                 flood_local_redirect_in,
-                                                 connect_local_redirect_in,
-                                                 merge_points_in,
                                                  new_center_coords_in,
                                                  center_coords_in,
                                                  previous_filled_cell_coords_in,
                                                  previous_filled_cell_height_type_in,
                                                  grid_params_in,
                                                  coarse_grid_params_in);
-  EXPECT_TRUE(field<int>(flood_force_merge_lat_index_in,grid_params_in)
-              == field<int>(flood_force_merge_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_force_merge_lon_index_in,grid_params_in)
-              == field<int>(flood_force_merge_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_force_merge_lat_index_in,grid_params_in)
-              == field<int>(connect_force_merge_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_force_merge_lon_index_in,grid_params_in)
-              == field<int>(connect_force_merge_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lat_index_in,grid_params_in)
-              == field<int>(flood_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lon_index_in,grid_params_in)
-              == field<int>(flood_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lat_index_in,grid_params_in)
-              == field<int>(connect_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lon_index_in,grid_params_in)
-              == field<int>(connect_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(flood_local_redirect_in,grid_params_in)
-              == field<bool>(flood_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(connect_local_redirect_in,grid_params_in)
-              == field<bool>(connect_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<merge_types>(merge_points_in,grid_params_in)
-              == field<merge_types>(merge_points_expected_out,grid_params_in));
+  merges_and_redirects* merges_and_redirects_out =
+    basin_eval.get_basin_merges_and_redirects();
+
+  EXPECT_TRUE(merges_and_redirects_expected_out ==
+              *merges_and_redirects_out);
   delete grid_params_in; delete coarse_grid_params_in;
   delete[] basin_catchment_numbers_in; delete[] coarse_catchment_nums_in;
-  delete[] flood_force_merge_lat_index_in; delete[] flood_force_merge_lon_index_in;
-  delete[] connect_force_merge_lat_index_in; delete[] connect_force_merge_lon_index_in;
-  delete[] flood_redirect_lat_index_in; delete[] flood_redirect_lon_index_in;
-  delete[] connect_redirect_lat_index_in; delete[] connect_redirect_lon_index_in;
-  delete[] flood_local_redirect_in; delete[] connect_local_redirect_in;
-  delete[] merge_points_in; delete[] merge_points_expected_out;
-  delete[] flood_force_merge_lat_index_expected_out;
-  delete[] flood_force_merge_lon_index_expected_out;
-  delete[] connect_force_merge_lat_index_expected_out;
-  delete[] connect_force_merge_lon_index_expected_out;
-  delete[] flood_redirect_lat_index_expected_out;
-  delete[] flood_redirect_lon_index_expected_out;
-  delete[] connect_redirect_lat_index_expected_out;
-  delete[] connect_redirect_lon_index_expected_out;
-  delete[] flood_local_redirect_expected_out;
-  delete[] connect_local_redirect_expected_out;
   delete[] prior_coarse_rdirs_in;
   delete new_center_coords_in; delete center_coords_in; delete previous_filled_cell_coords_in;
   while (! basin_catchment_centers_in.empty()){
@@ -5687,142 +5312,55 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectFour) {
   double* prior_coarse_rdirs_in = new double[3*3] {5.0,5.0,5.0,
                                                    5.0,5.0,5.0,
                                                    5.0,5.0,5.0 };
-  int* flood_force_merge_lat_index_in = new int[9*9];
-  std::fill_n(flood_force_merge_lat_index_in,9*9,-1);
-  int* flood_force_merge_lon_index_in = new int[9*9];
-  std::fill_n(flood_force_merge_lon_index_in,9*9,-1);
-  int* connect_force_merge_lat_index_in = new int[9*9];
-  std::fill_n(connect_force_merge_lat_index_in,9*9,-1);
-  int* connect_force_merge_lon_index_in = new int[9*9];
-  std::fill_n(connect_force_merge_lon_index_in,9*9,-1);
-  int* flood_redirect_lat_index_in = new int[9*9];
-  std::fill_n(flood_redirect_lat_index_in,9*9,-1);
-  int* flood_redirect_lon_index_in = new int[9*9];
-  std::fill_n(flood_redirect_lon_index_in,9*9,-1);
-  int* connect_redirect_lat_index_in = new int[9*9];
-  std::fill_n(connect_redirect_lat_index_in,9*9,-1);
-  int* connect_redirect_lon_index_in = new int[9*9];
-  std::fill_n(connect_redirect_lon_index_in,9*9,-1);
   height_types previous_filled_cell_height_type_in = flood_height;
-  bool* flood_local_redirect_in = new bool[9*9];
-  std::fill_n(flood_local_redirect_in,9*9,false);
-  bool* connect_local_redirect_in = new bool[9*9];
-  std::fill_n(connect_local_redirect_in,9*9,false);
-  merge_types* merge_points_in = new merge_types[9*9];
-  std::fill_n(merge_points_in,9*9,no_merge);
-  merge_types* merge_points_expected_out = new merge_types[9*9]{
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    connection_merge_not_set_flood_merge_as_primary,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-//
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-//
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge};
-  int* flood_force_merge_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1,  4,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* flood_force_merge_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, 8,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_force_merge_lat_index_expected_out = new int[9*9];
-  std::fill_n(connect_force_merge_lat_index_expected_out,9*9,-1);
-  int* connect_force_merge_lon_index_expected_out = new int[9*9];
-  std::fill_n(connect_force_merge_lon_index_expected_out,9*9,-1);
-  int* flood_redirect_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, 4,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* flood_redirect_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, 8,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  bool* flood_local_redirect_expected_out = new bool[9*9]
-                                     {false,false,false, false,false,false,  true,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false};
-  bool* connect_local_redirect_expected_out = new bool[9*9]
-                                     {false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false};
+  int flood_index = 0;
+  field<int>* connect_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  field<int>* flood_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  connect_merge_and_redirect_indices_index->set_all(-1);
+  flood_merge_and_redirect_indices_index->set_all(-1);
+  vector<collected_merge_and_redirect_indices*>*
+    connect_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<collected_merge_and_redirect_indices*>*
+    flood_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<merge_and_redirect_indices*>* primary_merges = nullptr;
+  merge_and_redirect_indices* primary_merge;
+  merge_and_redirect_indices* secondary_merge;
+  collected_merge_and_redirect_indices* collected_indices = nullptr;
+  secondary_merge =
+          new latlon_merge_and_redirect_indices(new latlon_coords(1,5),
+                                                new latlon_coords(0,2),
+                                                false);
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(4,8)) = flood_index;
+  flood_index++;
+  primary_merge =
+          new latlon_merge_and_redirect_indices(new latlon_coords(4,8),
+                                                new latlon_coords(4,8),
+                                                true);
+  secondary_merge = nullptr;
+
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  primary_merges->push_back(primary_merge);
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(0,6)) = flood_index;
+  flood_index++;
+  merges_and_redirects merges_and_redirects_expected_out =
+          merges_and_redirects(connect_merge_and_redirect_indices_index,
+                               flood_merge_and_redirect_indices_index,
+                               connect_merge_and_redirect_indices_vector,
+                               flood_merge_and_redirect_indices_vector,
+                               grid_params_in);
   coords* new_center_coords_in = new latlon_coords(3,8);
   coords* center_coords_in = new latlon_coords(5,6);
   coords* previous_filled_cell_coords_in = new latlon_coords(0,6);
@@ -5841,63 +5379,19 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectFour) {
                                                  prior_coarse_rdirs_in,
                                                  basin_catchment_numbers_in,
                                                  coarse_catchment_nums_in,
-                                                 flood_force_merge_lat_index_in,
-                                                 flood_force_merge_lon_index_in,
-                                                 connect_force_merge_lat_index_in,
-                                                 connect_force_merge_lon_index_in,
-                                                 flood_redirect_lat_index_in,
-                                                 flood_redirect_lon_index_in,
-                                                 connect_redirect_lat_index_in,
-                                                 connect_redirect_lon_index_in,
-                                                 flood_local_redirect_in,
-                                                 connect_local_redirect_in,
-                                                 merge_points_in,
                                                  new_center_coords_in,
                                                  center_coords_in,
                                                  previous_filled_cell_coords_in,
                                                  previous_filled_cell_height_type_in,
                                                  grid_params_in,
                                                  coarse_grid_params_in);
-  EXPECT_TRUE(field<int>(flood_force_merge_lat_index_in,grid_params_in)
-              == field<int>(flood_force_merge_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_force_merge_lon_index_in,grid_params_in)
-              == field<int>(flood_force_merge_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_force_merge_lat_index_in,grid_params_in)
-              == field<int>(connect_force_merge_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_force_merge_lon_index_in,grid_params_in)
-              == field<int>(connect_force_merge_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lat_index_in,grid_params_in)
-              == field<int>(flood_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lon_index_in,grid_params_in)
-              == field<int>(flood_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lat_index_in,grid_params_in)
-              == field<int>(connect_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lon_index_in,grid_params_in)
-              == field<int>(connect_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(flood_local_redirect_in,grid_params_in)
-              == field<bool>(flood_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(connect_local_redirect_in,grid_params_in)
-              == field<bool>(connect_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<merge_types>(merge_points_in,grid_params_in)
-              == field<merge_types>(merge_points_expected_out,grid_params_in));
+  merges_and_redirects* merges_and_redirects_out =
+    basin_eval.get_basin_merges_and_redirects();
+
+  EXPECT_TRUE(merges_and_redirects_expected_out ==
+              *merges_and_redirects_out);
   delete grid_params_in; delete coarse_grid_params_in;
   delete[] basin_catchment_numbers_in; delete[] coarse_catchment_nums_in;
-  delete[] flood_force_merge_lat_index_in; delete[] flood_force_merge_lon_index_in;
-  delete[] connect_force_merge_lat_index_in; delete[] connect_force_merge_lon_index_in;
-  delete[] flood_redirect_lat_index_in; delete[] flood_redirect_lon_index_in;
-  delete[] connect_redirect_lat_index_in; delete[] connect_redirect_lon_index_in;
-  delete[] flood_local_redirect_in; delete[] connect_local_redirect_in;
-  delete[] merge_points_in; delete[] merge_points_expected_out;
-  delete[] flood_force_merge_lat_index_expected_out;
-  delete[] flood_force_merge_lon_index_expected_out;
-  delete[] connect_force_merge_lat_index_expected_out;
-  delete[] connect_force_merge_lon_index_expected_out;
-  delete[] flood_redirect_lat_index_expected_out;
-  delete[] flood_redirect_lon_index_expected_out;
-  delete[] connect_redirect_lat_index_expected_out;
-  delete[] connect_redirect_lon_index_expected_out;
-  delete[] flood_local_redirect_expected_out;
-  delete[] connect_local_redirect_expected_out;
   delete[] prior_coarse_rdirs_in;
   delete new_center_coords_in; delete center_coords_in; delete previous_filled_cell_coords_in;
   while (! basin_catchment_centers_in.empty()){
@@ -5927,142 +5421,55 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectFive) {
   double* prior_coarse_rdirs_in = new double[3*3] {5.0,5.0,5.0,
                                                    5.0,5.0,5.0,
                                                    5.0,5.0,5.0 };
-  int* flood_force_merge_lat_index_in = new int[9*9];
-  std::fill_n(flood_force_merge_lat_index_in,9*9,-1);
-  int* flood_force_merge_lon_index_in = new int[9*9];
-  std::fill_n(flood_force_merge_lon_index_in,9*9,-1);
-  int* connect_force_merge_lat_index_in = new int[9*9];
-  std::fill_n(connect_force_merge_lat_index_in,9*9,-1);
-  int* connect_force_merge_lon_index_in = new int[9*9];
-  std::fill_n(connect_force_merge_lon_index_in,9*9,-1);
-  int* flood_redirect_lat_index_in = new int[9*9];
-  std::fill_n(flood_redirect_lat_index_in,9*9,-1);
-  int* flood_redirect_lon_index_in = new int[9*9];
-  std::fill_n(flood_redirect_lon_index_in,9*9,-1);
-  int* connect_redirect_lat_index_in = new int[9*9];
-  std::fill_n(connect_redirect_lat_index_in,9*9,-1);
-  int* connect_redirect_lon_index_in = new int[9*9];
-  std::fill_n(connect_redirect_lon_index_in,9*9,-1);
   height_types previous_filled_cell_height_type_in = flood_height;
-  bool* flood_local_redirect_in = new bool[9*9];
-  std::fill_n(flood_local_redirect_in,9*9,false);
-  bool* connect_local_redirect_in = new bool[9*9];
-  std::fill_n(connect_local_redirect_in,9*9,false);
-  merge_types* merge_points_in = new merge_types[9*9];
-  std::fill_n(merge_points_in,9*9,no_merge);
-  merge_types* merge_points_expected_out = new merge_types[9*9]{
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-//
-    no_merge,connection_merge_not_set_flood_merge_as_primary,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-//
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge};
-  int* flood_force_merge_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1, 1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* flood_force_merge_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1, 1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* connect_force_merge_lat_index_expected_out = new int[9*9];
-  std::fill_n(connect_force_merge_lat_index_expected_out,9*9,-1);
-  int* connect_force_merge_lon_index_expected_out = new int[9*9];
-  std::fill_n(connect_force_merge_lon_index_expected_out,9*9,-1);
-  int* flood_redirect_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1, 1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* flood_redirect_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1, 1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  bool* flood_local_redirect_expected_out = new bool[9*9]
-                                     {false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false, true,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false};
-  bool* connect_local_redirect_expected_out = new bool[9*9]
-                                     {false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false};
+  int flood_index = 0;
+  field<int>* connect_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  field<int>* flood_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  connect_merge_and_redirect_indices_index->set_all(-1);
+  flood_merge_and_redirect_indices_index->set_all(-1);
+  vector<collected_merge_and_redirect_indices*>*
+    connect_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<collected_merge_and_redirect_indices*>*
+    flood_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<merge_and_redirect_indices*>* primary_merges = nullptr;
+  merge_and_redirect_indices* primary_merge;
+  merge_and_redirect_indices* secondary_merge;
+  collected_merge_and_redirect_indices* collected_indices = nullptr;
+  secondary_merge =
+          new latlon_merge_and_redirect_indices(new latlon_coords(1,5),
+                                                new latlon_coords(0,1),
+                                                false);
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(1,1)) = flood_index;
+  flood_index++;
+  primary_merge =
+          new latlon_merge_and_redirect_indices(new latlon_coords(1,1),
+                                                new latlon_coords(1,1),
+                                                true);
+  secondary_merge = nullptr;
+
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  primary_merges->push_back(primary_merge);
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(3,1)) = flood_index;
+  flood_index++;
+  merges_and_redirects merges_and_redirects_expected_out =
+          merges_and_redirects(connect_merge_and_redirect_indices_index,
+                               flood_merge_and_redirect_indices_index,
+                               connect_merge_and_redirect_indices_vector,
+                               flood_merge_and_redirect_indices_vector,
+                               grid_params_in);
   coords* new_center_coords_in = new latlon_coords(2,2);
   coords* center_coords_in = new latlon_coords(2,0);
   coords* previous_filled_cell_coords_in = new latlon_coords(3,1);
@@ -6081,63 +5488,19 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectFive) {
                                                  prior_coarse_rdirs_in,
                                                  basin_catchment_numbers_in,
                                                  coarse_catchment_nums_in,
-                                                 flood_force_merge_lat_index_in,
-                                                 flood_force_merge_lon_index_in,
-                                                 connect_force_merge_lat_index_in,
-                                                 connect_force_merge_lon_index_in,
-                                                 flood_redirect_lat_index_in,
-                                                 flood_redirect_lon_index_in,
-                                                 connect_redirect_lat_index_in,
-                                                 connect_redirect_lon_index_in,
-                                                 flood_local_redirect_in,
-                                                 connect_local_redirect_in,
-                                                 merge_points_in,
                                                  new_center_coords_in,
                                                  center_coords_in,
                                                  previous_filled_cell_coords_in,
                                                  previous_filled_cell_height_type_in,
                                                  grid_params_in,
                                                  coarse_grid_params_in);
-  EXPECT_TRUE(field<int>(flood_force_merge_lat_index_in,grid_params_in)
-              == field<int>(flood_force_merge_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_force_merge_lon_index_in,grid_params_in)
-              == field<int>(flood_force_merge_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_force_merge_lat_index_in,grid_params_in)
-              == field<int>(connect_force_merge_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_force_merge_lon_index_in,grid_params_in)
-              == field<int>(connect_force_merge_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lat_index_in,grid_params_in)
-              == field<int>(flood_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lon_index_in,grid_params_in)
-              == field<int>(flood_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lat_index_in,grid_params_in)
-              == field<int>(connect_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lon_index_in,grid_params_in)
-              == field<int>(connect_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(flood_local_redirect_in,grid_params_in)
-              == field<bool>(flood_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(connect_local_redirect_in,grid_params_in)
-              == field<bool>(connect_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<merge_types>(merge_points_in,grid_params_in)
-              == field<merge_types>(merge_points_expected_out,grid_params_in));
+  merges_and_redirects* merges_and_redirects_out =
+    basin_eval.get_basin_merges_and_redirects();
+
+  EXPECT_TRUE(merges_and_redirects_expected_out ==
+              *merges_and_redirects_out);
   delete grid_params_in; delete coarse_grid_params_in;
   delete[] basin_catchment_numbers_in; delete[] coarse_catchment_nums_in;
-  delete[] flood_force_merge_lat_index_in; delete[] flood_force_merge_lon_index_in;
-  delete[] connect_force_merge_lat_index_in; delete[] connect_force_merge_lon_index_in;
-  delete[] flood_redirect_lat_index_in; delete[] flood_redirect_lon_index_in;
-  delete[] connect_redirect_lat_index_in; delete[] connect_redirect_lon_index_in;
-  delete[] flood_local_redirect_in; delete[] connect_local_redirect_in;
-  delete[] merge_points_in; delete[] merge_points_expected_out;
-  delete[] flood_force_merge_lat_index_expected_out;
-  delete[] flood_force_merge_lon_index_expected_out;
-  delete[] connect_force_merge_lat_index_expected_out;
-  delete[] connect_force_merge_lon_index_expected_out;
-  delete[] flood_redirect_lat_index_expected_out;
-  delete[] flood_redirect_lon_index_expected_out;
-  delete[] connect_redirect_lat_index_expected_out;
-  delete[] connect_redirect_lon_index_expected_out;
-  delete[] flood_local_redirect_expected_out;
-  delete[] connect_local_redirect_expected_out;
   delete[] prior_coarse_rdirs_in;
   delete new_center_coords_in; delete center_coords_in; delete previous_filled_cell_coords_in;
   while (! basin_catchment_centers_in.empty()){
@@ -6167,142 +5530,55 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectSix) {
   double* prior_coarse_rdirs_in = new double[3*3] {5.0,5.0,5.0,
                                                    5.0,5.0,5.0,
                                                    5.0,5.0,5.0 };
-  int* flood_force_merge_lat_index_in = new int[9*9];
-  std::fill_n(flood_force_merge_lat_index_in,9*9,-1);
-  int* flood_force_merge_lon_index_in = new int[9*9];
-  std::fill_n(flood_force_merge_lon_index_in,9*9,-1);
-  int* connect_force_merge_lat_index_in = new int[9*9];
-  std::fill_n(connect_force_merge_lat_index_in,9*9,-1);
-  int* connect_force_merge_lon_index_in = new int[9*9];
-  std::fill_n(connect_force_merge_lon_index_in,9*9,-1);
-  int* flood_redirect_lat_index_in = new int[9*9];
-  std::fill_n(flood_redirect_lat_index_in,9*9,-1);
-  int* flood_redirect_lon_index_in = new int[9*9];
-  std::fill_n(flood_redirect_lon_index_in,9*9,-1);
-  int* connect_redirect_lat_index_in = new int[9*9];
-  std::fill_n(connect_redirect_lat_index_in,9*9,-1);
-  int* connect_redirect_lon_index_in = new int[9*9];
-  std::fill_n(connect_redirect_lon_index_in,9*9,-1);
   height_types previous_filled_cell_height_type_in = flood_height;
-  bool* flood_local_redirect_in = new bool[9*9];
-  std::fill_n(flood_local_redirect_in,9*9,false);
-  bool* connect_local_redirect_in = new bool[9*9];
-  std::fill_n(connect_local_redirect_in,9*9,false);
-  merge_types* merge_points_in = new merge_types[9*9];
-  std::fill_n(merge_points_in,9*9,no_merge);
-  merge_types* merge_points_expected_out = new merge_types[9*9]{
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-//
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-//
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,connection_merge_not_set_flood_merge_as_primary,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge};
-  int* flood_force_merge_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1, 8,-1, -1,-1,-1, -1,-1,-1};
-  int* flood_force_merge_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1, 6,-1, -1,-1,-1, -1,-1,-1};
-  int* connect_force_merge_lat_index_expected_out = new int[9*9];
-  std::fill_n(connect_force_merge_lat_index_expected_out,9*9,-1);
-  int* connect_force_merge_lon_index_expected_out = new int[9*9];
-  std::fill_n(connect_force_merge_lon_index_expected_out,9*9,-1);
-  int* flood_redirect_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1, 2,-1,  -1,-1,-1, -1,-1,-1};
-  int* flood_redirect_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1, 1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  bool* flood_local_redirect_expected_out = new bool[9*9]
-                                     {false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false};
-  bool* connect_local_redirect_expected_out = new bool[9*9]
-                                     {false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false};
+  int flood_index = 0;
+  field<int>* connect_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  field<int>* flood_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  connect_merge_and_redirect_indices_index->set_all(-1);
+  flood_merge_and_redirect_indices_index->set_all(-1);
+  vector<collected_merge_and_redirect_indices*>*
+    connect_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<collected_merge_and_redirect_indices*>*
+    flood_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<merge_and_redirect_indices*>* primary_merges = nullptr;
+  merge_and_redirect_indices* primary_merge;
+  merge_and_redirect_indices* secondary_merge;
+  collected_merge_and_redirect_indices* collected_indices = nullptr;
+  secondary_merge =
+          new latlon_merge_and_redirect_indices(new latlon_coords(1,1),
+                                                new latlon_coords(1,0),
+                                                false);
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(8,6)) = flood_index;
+  flood_index++;
+  primary_merge =
+          new latlon_merge_and_redirect_indices(new latlon_coords(8,6),
+                                                new latlon_coords(2,1),
+                                                false);
+  secondary_merge = nullptr;
+
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  primary_merges->push_back(primary_merge);
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(8,1)) = flood_index;
+  flood_index++;
+  merges_and_redirects merges_and_redirects_expected_out =
+          merges_and_redirects(connect_merge_and_redirect_indices_index,
+                               flood_merge_and_redirect_indices_index,
+                               connect_merge_and_redirect_indices_vector,
+                               flood_merge_and_redirect_indices_vector,
+                               grid_params_in);
   coords* new_center_coords_in = new latlon_coords(5,1);
   coords* center_coords_in = new latlon_coords(6,0);
   coords* previous_filled_cell_coords_in = new latlon_coords(8,1);
@@ -6321,63 +5597,19 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectSix) {
                                                  prior_coarse_rdirs_in,
                                                  basin_catchment_numbers_in,
                                                  coarse_catchment_nums_in,
-                                                 flood_force_merge_lat_index_in,
-                                                 flood_force_merge_lon_index_in,
-                                                 connect_force_merge_lat_index_in,
-                                                 connect_force_merge_lon_index_in,
-                                                 flood_redirect_lat_index_in,
-                                                 flood_redirect_lon_index_in,
-                                                 connect_redirect_lat_index_in,
-                                                 connect_redirect_lon_index_in,
-                                                 flood_local_redirect_in,
-                                                 connect_local_redirect_in,
-                                                 merge_points_in,
                                                  new_center_coords_in,
                                                  center_coords_in,
                                                  previous_filled_cell_coords_in,
                                                  previous_filled_cell_height_type_in,
                                                  grid_params_in,
                                                  coarse_grid_params_in);
-  EXPECT_TRUE(field<int>(flood_force_merge_lat_index_in,grid_params_in)
-              == field<int>(flood_force_merge_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_force_merge_lon_index_in,grid_params_in)
-              == field<int>(flood_force_merge_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_force_merge_lat_index_in,grid_params_in)
-              == field<int>(connect_force_merge_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_force_merge_lon_index_in,grid_params_in)
-              == field<int>(connect_force_merge_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lat_index_in,grid_params_in)
-              == field<int>(flood_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lon_index_in,grid_params_in)
-              == field<int>(flood_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lat_index_in,grid_params_in)
-              == field<int>(connect_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lon_index_in,grid_params_in)
-              == field<int>(connect_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(flood_local_redirect_in,grid_params_in)
-              == field<bool>(flood_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(connect_local_redirect_in,grid_params_in)
-              == field<bool>(connect_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<merge_types>(merge_points_in,grid_params_in)
-              == field<merge_types>(merge_points_expected_out,grid_params_in));
+  merges_and_redirects* merges_and_redirects_out =
+    basin_eval.get_basin_merges_and_redirects();
+
+  EXPECT_TRUE(merges_and_redirects_expected_out ==
+              *merges_and_redirects_out);
   delete grid_params_in; delete coarse_grid_params_in;
   delete[] basin_catchment_numbers_in; delete[] coarse_catchment_nums_in;
-  delete[] flood_force_merge_lat_index_in; delete[] flood_force_merge_lon_index_in;
-  delete[] connect_force_merge_lat_index_in; delete[] connect_force_merge_lon_index_in;
-  delete[] flood_redirect_lat_index_in; delete[] flood_redirect_lon_index_in;
-  delete[] connect_redirect_lat_index_in; delete[] connect_redirect_lon_index_in;
-  delete[] flood_local_redirect_in; delete[] connect_local_redirect_in;
-  delete[] merge_points_in; delete[] merge_points_expected_out;
-  delete[] flood_force_merge_lat_index_expected_out;
-  delete[] flood_force_merge_lon_index_expected_out;
-  delete[] connect_force_merge_lat_index_expected_out;
-  delete[] connect_force_merge_lon_index_expected_out;
-  delete[] flood_redirect_lat_index_expected_out;
-  delete[] flood_redirect_lon_index_expected_out;
-  delete[] connect_redirect_lat_index_expected_out;
-  delete[] connect_redirect_lon_index_expected_out;
-  delete[] flood_local_redirect_expected_out;
-  delete[] connect_local_redirect_expected_out;
   delete[] prior_coarse_rdirs_in;
   delete new_center_coords_in; delete center_coords_in; delete previous_filled_cell_coords_in;
   while (! basin_catchment_centers_in.empty()){
@@ -6407,141 +5639,55 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectSeven) {
   double* prior_coarse_rdirs_in = new double[3*3] {5.0,5.0,5.0,
                                                    5.0,5.0,5.0,
                                                    5.0,5.0,5.0 };
-  int* flood_force_merge_lat_index_in = new int[9*9];
-  std::fill_n(flood_force_merge_lat_index_in,9*9,-1);
-  int* flood_force_merge_lon_index_in = new int[9*9];
-  std::fill_n(flood_force_merge_lon_index_in,9*9,-1);
-  int* connect_force_merge_lat_index_in = new int[9*9];
-  std::fill_n(connect_force_merge_lat_index_in,9*9,-1);
-  int* connect_force_merge_lon_index_in = new int[9*9];
-  std::fill_n(connect_force_merge_lon_index_in,9*9,-1);
-  int* flood_redirect_lat_index_in = new int[9*9];
-  std::fill_n(flood_redirect_lat_index_in,9*9,-1);
-  int* flood_redirect_lon_index_in = new int[9*9];
-  std::fill_n(flood_redirect_lon_index_in,9*9,-1);
-  int* connect_redirect_lat_index_in = new int[9*9];
-  std::fill_n(connect_redirect_lat_index_in,9*9,-1);
-  int* connect_redirect_lon_index_in = new int[9*9];
-  std::fill_n(connect_redirect_lon_index_in,9*9,-1);
   height_types previous_filled_cell_height_type_in = flood_height;
-  bool* flood_local_redirect_in = new bool[9*9];
-  std::fill_n(flood_local_redirect_in,9*9,false);
-  bool* connect_local_redirect_in = new bool[9*9];
-  std::fill_n(connect_local_redirect_in,9*9,false);
-  merge_types* merge_points_in = new merge_types[9*9];
-  std::fill_n(merge_points_in,9*9,no_merge);
-  merge_types* merge_points_expected_out = new merge_types[9*9]{
-    no_merge,no_merge,no_merge, connection_merge_not_set_flood_merge_as_primary,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-//
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-//
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge};
-  int* flood_force_merge_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1,  8,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* flood_force_merge_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1,  6,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_force_merge_lat_index_expected_out = new int[9*9];
-  std::fill_n(connect_force_merge_lat_index_expected_out,9*9,-1);
-  int* connect_force_merge_lon_index_expected_out = new int[9*9];
-  std::fill_n(connect_force_merge_lon_index_expected_out,9*9,-1);
-  int* flood_redirect_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1,  2,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* flood_redirect_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1,  2,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  bool* flood_local_redirect_expected_out = new bool[9*9]
-                                     {false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false};
-  bool* connect_local_redirect_expected_out = new bool[9*9]
-                                     {false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false};
+  int flood_index = 0;
+  field<int>* connect_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  field<int>* flood_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  connect_merge_and_redirect_indices_index->set_all(-1);
+  flood_merge_and_redirect_indices_index->set_all(-1);
+  vector<collected_merge_and_redirect_indices*>*
+    connect_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<collected_merge_and_redirect_indices*>*
+    flood_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<merge_and_redirect_indices*>* primary_merges = nullptr;
+  merge_and_redirect_indices* primary_merge;
+  merge_and_redirect_indices* secondary_merge;
+  collected_merge_and_redirect_indices* collected_indices = nullptr;
+  secondary_merge =
+          new latlon_merge_and_redirect_indices(new latlon_coords(1,1),
+                                                new latlon_coords(1,0),
+                                                false);
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(8,6)) = flood_index;
+  flood_index++;
+  primary_merge =
+          new latlon_merge_and_redirect_indices(new latlon_coords(8,6),
+                                                new latlon_coords(2,2),
+                                                false);
+  secondary_merge = nullptr;
+
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  primary_merges->push_back(primary_merge);
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(0,3)) = flood_index;
+  flood_index++;
+  merges_and_redirects merges_and_redirects_expected_out =
+          merges_and_redirects(connect_merge_and_redirect_indices_index,
+                               flood_merge_and_redirect_indices_index,
+                               connect_merge_and_redirect_indices_vector,
+                               flood_merge_and_redirect_indices_vector,
+                               grid_params_in);
   coords* new_center_coords_in = new latlon_coords(5,1);
   coords* center_coords_in = new latlon_coords(0,4);
   coords* previous_filled_cell_coords_in = new latlon_coords(0,3);
@@ -6560,63 +5706,19 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectSeven) {
                                                  prior_coarse_rdirs_in,
                                                  basin_catchment_numbers_in,
                                                  coarse_catchment_nums_in,
-                                                 flood_force_merge_lat_index_in,
-                                                 flood_force_merge_lon_index_in,
-                                                 connect_force_merge_lat_index_in,
-                                                 connect_force_merge_lon_index_in,
-                                                 flood_redirect_lat_index_in,
-                                                 flood_redirect_lon_index_in,
-                                                 connect_redirect_lat_index_in,
-                                                 connect_redirect_lon_index_in,
-                                                           flood_local_redirect_in,
-                                                 connect_local_redirect_in,
-                                                 merge_points_in,
                                                  new_center_coords_in,
                                                  center_coords_in,
                                                  previous_filled_cell_coords_in,
                                                  previous_filled_cell_height_type_in,
                                                  grid_params_in,
                                                  coarse_grid_params_in);
-  EXPECT_TRUE(field<int>(flood_force_merge_lat_index_in,grid_params_in)
-              == field<int>(flood_force_merge_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_force_merge_lon_index_in,grid_params_in)
-              == field<int>(flood_force_merge_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_force_merge_lat_index_in,grid_params_in)
-              == field<int>(connect_force_merge_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_force_merge_lon_index_in,grid_params_in)
-              == field<int>(connect_force_merge_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lat_index_in,grid_params_in)
-              == field<int>(flood_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lon_index_in,grid_params_in)
-              == field<int>(flood_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lat_index_in,grid_params_in)
-              == field<int>(connect_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lon_index_in,grid_params_in)
-              == field<int>(connect_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(flood_local_redirect_in,grid_params_in)
-              == field<bool>(flood_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(connect_local_redirect_in,grid_params_in)
-              == field<bool>(connect_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<merge_types>(merge_points_in,grid_params_in)
-              == field<merge_types>(merge_points_expected_out,grid_params_in));
+  merges_and_redirects* merges_and_redirects_out =
+    basin_eval.get_basin_merges_and_redirects();
+
+  EXPECT_TRUE(merges_and_redirects_expected_out ==
+              *merges_and_redirects_out);
   delete grid_params_in; delete coarse_grid_params_in;
   delete[] basin_catchment_numbers_in; delete[] coarse_catchment_nums_in;
-  delete[] flood_force_merge_lat_index_in; delete[] flood_force_merge_lon_index_in;
-  delete[] connect_force_merge_lat_index_in; delete[] connect_force_merge_lon_index_in;
-  delete[] flood_redirect_lat_index_in; delete[] flood_redirect_lon_index_in;
-  delete[] connect_redirect_lat_index_in; delete[] connect_redirect_lon_index_in;
-  delete[] flood_local_redirect_in; delete[] connect_local_redirect_in;
-  delete[] merge_points_in; delete[] merge_points_expected_out;
-  delete[] flood_force_merge_lat_index_expected_out;
-  delete[] flood_force_merge_lon_index_expected_out;
-  delete[] connect_force_merge_lat_index_expected_out;
-  delete[] connect_force_merge_lon_index_expected_out;
-  delete[] flood_redirect_lat_index_expected_out;
-  delete[] flood_redirect_lon_index_expected_out;
-  delete[] connect_redirect_lat_index_expected_out;
-  delete[] connect_redirect_lon_index_expected_out;
-  delete[] flood_local_redirect_expected_out;
-  delete[] connect_local_redirect_expected_out;
   delete[] prior_coarse_rdirs_in;
   delete new_center_coords_in; delete center_coords_in; delete previous_filled_cell_coords_in;
   while (! basin_catchment_centers_in.empty()){
@@ -6646,142 +5748,55 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectEight) {
   double* prior_coarse_rdirs_in = new double[3*3] {5.0,5.0,5.0,
                                                    5.0,5.0,5.0,
                                                    5.0,5.0,5.0 };
-  int* flood_force_merge_lat_index_in = new int[9*9];
-  std::fill_n(flood_force_merge_lat_index_in,9*9,-1);
-  int* flood_force_merge_lon_index_in = new int[9*9];
-  std::fill_n(flood_force_merge_lon_index_in,9*9,-1);
-  int* connect_force_merge_lat_index_in = new int[9*9];
-  std::fill_n(connect_force_merge_lat_index_in,9*9,-1);
-  int* connect_force_merge_lon_index_in = new int[9*9];
-  std::fill_n(connect_force_merge_lon_index_in,9*9,-1);
-  int* flood_redirect_lat_index_in = new int[9*9];
-  std::fill_n(flood_redirect_lat_index_in,9*9,-1);
-  int* flood_redirect_lon_index_in = new int[9*9];
-  std::fill_n(flood_redirect_lon_index_in,9*9,-1);
-  int* connect_redirect_lat_index_in = new int[9*9];
-  std::fill_n(connect_redirect_lat_index_in,9*9,-1);
-  int* connect_redirect_lon_index_in = new int[9*9];
-  std::fill_n(connect_redirect_lon_index_in,9*9,-1);
   height_types previous_filled_cell_height_type_in = flood_height;
-  bool* flood_local_redirect_in = new bool[9*9];
-  std::fill_n(flood_local_redirect_in,9*9,false);
-  bool* connect_local_redirect_in = new bool[9*9];
-  std::fill_n(connect_local_redirect_in,9*9,false);
-  merge_types* merge_points_in = new merge_types[9*9];
-  std::fill_n(merge_points_in,9*9,no_merge);
-  merge_types* merge_points_expected_out = new merge_types[9*9]{
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-//
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-//
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,connection_merge_not_set_flood_merge_as_primary,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge};
-  int* flood_force_merge_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1, 1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* flood_force_merge_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1, 5,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_force_merge_lat_index_expected_out = new int[9*9];
-  std::fill_n(connect_force_merge_lat_index_expected_out,9*9,-1);
-  int* connect_force_merge_lon_index_expected_out = new int[9*9];
-  std::fill_n(connect_force_merge_lon_index_expected_out,9*9,-1);
-  int* flood_redirect_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1, 0,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* flood_redirect_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1, 1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  bool* flood_local_redirect_expected_out = new bool[9*9]
-                                     {false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false};
-  bool* connect_local_redirect_expected_out = new bool[9*9]
-                                     {false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false};
+  int flood_index = 0;
+  field<int>* connect_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  field<int>* flood_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  connect_merge_and_redirect_indices_index->set_all(-1);
+  flood_merge_and_redirect_indices_index->set_all(-1);
+  vector<collected_merge_and_redirect_indices*>*
+    connect_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<collected_merge_and_redirect_indices*>*
+    flood_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<merge_and_redirect_indices*>* primary_merges = nullptr;
+  merge_and_redirect_indices* primary_merge;
+  merge_and_redirect_indices* secondary_merge;
+  collected_merge_and_redirect_indices* collected_indices = nullptr;
+  secondary_merge =
+          new latlon_merge_and_redirect_indices(new latlon_coords(4,8),
+                                                new latlon_coords(1,2),
+                                                false);
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(1,5)) = flood_index;
+  flood_index++;
+  primary_merge =
+          new latlon_merge_and_redirect_indices(new latlon_coords(1,5),
+                                                new latlon_coords(0,1),
+                                                false);
+  secondary_merge = nullptr;
+
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  primary_merges->push_back(primary_merge);
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(6,7)) = flood_index;
+  flood_index++;
+  merges_and_redirects merges_and_redirects_expected_out =
+          merges_and_redirects(connect_merge_and_redirect_indices_index,
+                               flood_merge_and_redirect_indices_index,
+                               connect_merge_and_redirect_indices_vector,
+                               flood_merge_and_redirect_indices_vector,
+                               grid_params_in);
   coords* new_center_coords_in = new latlon_coords(0,7);
   coords* center_coords_in = new latlon_coords(8,8);
   coords* previous_filled_cell_coords_in = new latlon_coords(6,7);
@@ -6800,63 +5815,19 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectEight) {
                                                  prior_coarse_rdirs_in,
                                                  basin_catchment_numbers_in,
                                                  coarse_catchment_nums_in,
-                                                 flood_force_merge_lat_index_in,
-                                                 flood_force_merge_lon_index_in,
-                                                 connect_force_merge_lat_index_in,
-                                                 connect_force_merge_lon_index_in,
-                                                 flood_redirect_lat_index_in,
-                                                 flood_redirect_lon_index_in,
-                                                 connect_redirect_lat_index_in,
-                                                 connect_redirect_lon_index_in,
-                                                 flood_local_redirect_in,
-                                                 connect_local_redirect_in,
-                                                 merge_points_in,
                                                  new_center_coords_in,
                                                  center_coords_in,
                                                  previous_filled_cell_coords_in,
                                                  previous_filled_cell_height_type_in,
                                                  grid_params_in,
                                                  coarse_grid_params_in);
-  EXPECT_TRUE(field<int>(flood_force_merge_lat_index_in,grid_params_in)
-              == field<int>(flood_force_merge_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_force_merge_lon_index_in,grid_params_in)
-              == field<int>(flood_force_merge_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_force_merge_lat_index_in,grid_params_in)
-              == field<int>(connect_force_merge_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_force_merge_lon_index_in,grid_params_in)
-              == field<int>(connect_force_merge_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lat_index_in,grid_params_in)
-              == field<int>(flood_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lon_index_in,grid_params_in)
-              == field<int>(flood_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lat_index_in,grid_params_in)
-              == field<int>(connect_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lon_index_in,grid_params_in)
-              == field<int>(connect_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(flood_local_redirect_in,grid_params_in)
-              == field<bool>(flood_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(connect_local_redirect_in,grid_params_in)
-              == field<bool>(connect_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<merge_types>(merge_points_in,grid_params_in)
-              == field<merge_types>(merge_points_expected_out,grid_params_in));
+  merges_and_redirects* merges_and_redirects_out =
+    basin_eval.get_basin_merges_and_redirects();
+
+  EXPECT_TRUE(merges_and_redirects_expected_out ==
+              *merges_and_redirects_out);
   delete grid_params_in; delete coarse_grid_params_in;
   delete[] basin_catchment_numbers_in; delete[] coarse_catchment_nums_in;
-  delete[] flood_force_merge_lat_index_in; delete[] flood_force_merge_lon_index_in;
-  delete[] connect_force_merge_lat_index_in; delete[] connect_force_merge_lon_index_in;
-  delete[] flood_redirect_lat_index_in; delete[] flood_redirect_lon_index_in;
-  delete[] connect_redirect_lat_index_in; delete[] connect_redirect_lon_index_in;
-  delete[] flood_local_redirect_in; delete[] connect_local_redirect_in;
-  delete[] merge_points_in; delete[] merge_points_expected_out;
-  delete[] flood_force_merge_lat_index_expected_out;
-  delete[] flood_force_merge_lon_index_expected_out;
-  delete[] connect_force_merge_lat_index_expected_out;
-  delete[] connect_force_merge_lon_index_expected_out;
-  delete[] flood_redirect_lat_index_expected_out;
-  delete[] flood_redirect_lon_index_expected_out;
-  delete[] connect_redirect_lat_index_expected_out;
-  delete[] connect_redirect_lon_index_expected_out;
-  delete[] flood_local_redirect_expected_out;
-  delete[] connect_local_redirect_expected_out;
   delete[] prior_coarse_rdirs_in;
   delete new_center_coords_in; delete center_coords_in; delete previous_filled_cell_coords_in;
   while (! basin_catchment_centers_in.empty()){
@@ -6886,142 +5857,55 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectNine) {
   double* prior_coarse_rdirs_in = new double[3*3] {5.0,5.0,5.0,
                                                    5.0,5.0,5.0,
                                                    5.0,5.0,5.0 };
-  int* flood_force_merge_lat_index_in = new int[9*9];
-  std::fill_n(flood_force_merge_lat_index_in,9*9,-1);
-  int* flood_force_merge_lon_index_in = new int[9*9];
-  std::fill_n(flood_force_merge_lon_index_in,9*9,-1);
-  int* connect_force_merge_lat_index_in = new int[9*9];
-  std::fill_n(connect_force_merge_lat_index_in,9*9,-1);
-  int* connect_force_merge_lon_index_in = new int[9*9];
-  std::fill_n(connect_force_merge_lon_index_in,9*9,-1);
-  int* flood_redirect_lat_index_in = new int[9*9];
-  std::fill_n(flood_redirect_lat_index_in,9*9,-1);
-  int* flood_redirect_lon_index_in = new int[9*9];
-  std::fill_n(flood_redirect_lon_index_in,9*9,-1);
-  int* connect_redirect_lat_index_in = new int[9*9];
-  std::fill_n(connect_redirect_lat_index_in,9*9,-1);
-  int* connect_redirect_lon_index_in = new int[9*9];
-  std::fill_n(connect_redirect_lon_index_in,9*9,-1);
   height_types previous_filled_cell_height_type_in = flood_height;
-  bool* flood_local_redirect_in = new bool[9*9];
-  std::fill_n(flood_local_redirect_in,9*9,false);
-  bool* connect_local_redirect_in = new bool[9*9];
-  std::fill_n(connect_local_redirect_in,9*9,false);
-  merge_types* merge_points_in = new merge_types[9*9];
-  std::fill_n(merge_points_in,9*9,no_merge);
-  merge_types* merge_points_expected_out = new merge_types[9*9]{
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-//
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-//
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,connection_merge_not_set_flood_merge_as_primary, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge};
-  int* flood_force_merge_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1, 8,  -1,-1,-1, -1,-1,-1};
-  int* flood_force_merge_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1, 6,  -1,-1,-1, -1,-1,-1};
-  int* connect_force_merge_lat_index_expected_out = new int[9*9];
-  std::fill_n(connect_force_merge_lat_index_expected_out,9*9,-1);
-  int* connect_force_merge_lon_index_expected_out = new int[9*9];
-  std::fill_n(connect_force_merge_lon_index_expected_out,9*9,-1);
-  int* flood_redirect_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1, 2,  -1,-1,-1, -1,-1,-1};
-  int* flood_redirect_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1, 1,  -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  bool* flood_local_redirect_expected_out = new bool[9*9]
-                                     {false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false};
-  bool* connect_local_redirect_expected_out = new bool[9*9]
-                                     {false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false};
+  int flood_index = 0;
+  field<int>* connect_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  field<int>* flood_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  connect_merge_and_redirect_indices_index->set_all(-1);
+  flood_merge_and_redirect_indices_index->set_all(-1);
+  vector<collected_merge_and_redirect_indices*>*
+    connect_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<collected_merge_and_redirect_indices*>*
+    flood_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<merge_and_redirect_indices*>* primary_merges = nullptr;
+  merge_and_redirect_indices* primary_merge;
+  merge_and_redirect_indices* secondary_merge;
+  collected_merge_and_redirect_indices* collected_indices = nullptr;
+  secondary_merge =
+          new latlon_merge_and_redirect_indices(new latlon_coords(8,4),
+                                                new latlon_coords(2,1),
+                                                false);
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(8,6)) = flood_index;
+  flood_index++;
+  primary_merge =
+          new latlon_merge_and_redirect_indices(new latlon_coords(8,6),
+                                                new latlon_coords(2,1),
+                                                false);
+  secondary_merge = nullptr;
+
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  primary_merges->push_back(primary_merge);
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(8,2)) = flood_index;
+  flood_index++;
+  merges_and_redirects merges_and_redirects_expected_out =
+          merges_and_redirects(connect_merge_and_redirect_indices_index,
+                               flood_merge_and_redirect_indices_index,
+                               connect_merge_and_redirect_indices_vector,
+                               flood_merge_and_redirect_indices_vector,
+                               grid_params_in);
   coords* new_center_coords_in = new latlon_coords(5,2);
   coords* center_coords_in = new latlon_coords(6,3);
   coords* previous_filled_cell_coords_in = new latlon_coords(8,2);
@@ -7040,63 +5924,19 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectNine) {
                                                  prior_coarse_rdirs_in,
                                                  basin_catchment_numbers_in,
                                                  coarse_catchment_nums_in,
-                                                 flood_force_merge_lat_index_in,
-                                                 flood_force_merge_lon_index_in,
-                                                 connect_force_merge_lat_index_in,
-                                                 connect_force_merge_lon_index_in,
-                                                 flood_redirect_lat_index_in,
-                                                 flood_redirect_lon_index_in,
-                                                 connect_redirect_lat_index_in,
-                                                 connect_redirect_lon_index_in,
-                                                 flood_local_redirect_in,
-                                                 connect_local_redirect_in,
-                                                 merge_points_in,
                                                  new_center_coords_in,
                                                  center_coords_in,
                                                  previous_filled_cell_coords_in,
                                                  previous_filled_cell_height_type_in,
                                                  grid_params_in,
                                                  coarse_grid_params_in);
-  EXPECT_TRUE(field<int>(flood_force_merge_lat_index_in,grid_params_in)
-              == field<int>(flood_force_merge_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_force_merge_lon_index_in,grid_params_in)
-              == field<int>(flood_force_merge_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_force_merge_lat_index_in,grid_params_in)
-              == field<int>(connect_force_merge_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_force_merge_lon_index_in,grid_params_in)
-              == field<int>(connect_force_merge_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lat_index_in,grid_params_in)
-              == field<int>(flood_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lon_index_in,grid_params_in)
-              == field<int>(flood_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lat_index_in,grid_params_in)
-              == field<int>(connect_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lon_index_in,grid_params_in)
-              == field<int>(connect_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(flood_local_redirect_in,grid_params_in)
-              == field<bool>(flood_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(connect_local_redirect_in,grid_params_in)
-              == field<bool>(connect_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<merge_types>(merge_points_in,grid_params_in)
-              == field<merge_types>(merge_points_expected_out,grid_params_in));
+  merges_and_redirects* merges_and_redirects_out =
+    basin_eval.get_basin_merges_and_redirects();
+
+  EXPECT_TRUE(merges_and_redirects_expected_out ==
+              *merges_and_redirects_out);
   delete grid_params_in; delete coarse_grid_params_in;
   delete[] basin_catchment_numbers_in; delete[] coarse_catchment_nums_in;
-  delete[] flood_force_merge_lat_index_in; delete[] flood_force_merge_lon_index_in;
-  delete[] connect_force_merge_lat_index_in; delete[] connect_force_merge_lon_index_in;
-  delete[] flood_redirect_lat_index_in; delete[] flood_redirect_lon_index_in;
-  delete[] connect_redirect_lat_index_in; delete[] connect_redirect_lon_index_in;
-  delete[] flood_local_redirect_in; delete[] connect_local_redirect_in;
-  delete[] merge_points_in; delete[] merge_points_expected_out;
-  delete[] flood_force_merge_lat_index_expected_out;
-  delete[] flood_force_merge_lon_index_expected_out;
-  delete[] connect_force_merge_lat_index_expected_out;
-  delete[] connect_force_merge_lon_index_expected_out;
-  delete[] flood_redirect_lat_index_expected_out;
-  delete[] flood_redirect_lon_index_expected_out;
-  delete[] connect_redirect_lat_index_expected_out;
-  delete[] connect_redirect_lon_index_expected_out;
-  delete[] flood_local_redirect_expected_out;
-  delete[] connect_local_redirect_expected_out;
   delete[] prior_coarse_rdirs_in;
   delete new_center_coords_in; delete center_coords_in; delete previous_filled_cell_coords_in;
   while (! basin_catchment_centers_in.empty()){
@@ -7126,142 +5966,55 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectTen) {
   double* prior_coarse_rdirs_in = new double[3*3] {5.0,5.0,5.0,
                                                    5.0,5.0,5.0,
                                                    5.0,5.0,5.0 };
-  int* flood_force_merge_lat_index_in = new int[9*9];
-  std::fill_n(flood_force_merge_lat_index_in,9*9,-1);
-  int* flood_force_merge_lon_index_in = new int[9*9];
-  std::fill_n(flood_force_merge_lon_index_in,9*9,-1);
-  int* connect_force_merge_lat_index_in = new int[9*9];
-  std::fill_n(connect_force_merge_lat_index_in,9*9,-1);
-  int* connect_force_merge_lon_index_in = new int[9*9];
-  std::fill_n(connect_force_merge_lon_index_in,9*9,-1);
-  int* flood_redirect_lat_index_in = new int[9*9];
-  std::fill_n(flood_redirect_lat_index_in,9*9,-1);
-  int* flood_redirect_lon_index_in = new int[9*9];
-  std::fill_n(flood_redirect_lon_index_in,9*9,-1);
-  int* connect_redirect_lat_index_in = new int[9*9];
-  std::fill_n(connect_redirect_lat_index_in,9*9,-1);
-  int* connect_redirect_lon_index_in = new int[9*9];
-  std::fill_n(connect_redirect_lon_index_in,9*9,-1);
   height_types previous_filled_cell_height_type_in = flood_height;
-  bool* flood_local_redirect_in = new bool[9*9];
-  std::fill_n(flood_local_redirect_in,9*9,false);
-  bool* connect_local_redirect_in = new bool[9*9];
-  std::fill_n(connect_local_redirect_in,9*9,false);
-  merge_types* merge_points_in = new merge_types[9*9];
-  std::fill_n(merge_points_in,9*9,no_merge);
-  merge_types* merge_points_expected_out = new merge_types[9*9]{
-    connection_merge_not_set_flood_merge_as_primary,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-//
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-//
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge};
-  int* flood_force_merge_lat_index_expected_out = new int[9*9]
-                                              { 1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* flood_force_merge_lon_index_expected_out = new int[9*9]
-                                              { 5,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_force_merge_lat_index_expected_out = new int[9*9];
-  std::fill_n(connect_force_merge_lat_index_expected_out,9*9,-1);
-  int* connect_force_merge_lon_index_expected_out = new int[9*9];
-  std::fill_n(connect_force_merge_lon_index_expected_out,9*9,-1);
-  int* flood_redirect_lat_index_expected_out = new int[9*9]
-                                              { 1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* flood_redirect_lon_index_expected_out = new int[9*9]
-                                              { 5,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  bool* flood_local_redirect_expected_out = new bool[9*9]
-                                     { true,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false};
-  bool* connect_local_redirect_expected_out = new bool[9*9]
-                                     {false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false};
+  int flood_index = 0;
+  field<int>* connect_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  field<int>* flood_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  connect_merge_and_redirect_indices_index->set_all(-1);
+  flood_merge_and_redirect_indices_index->set_all(-1);
+  vector<collected_merge_and_redirect_indices*>*
+    connect_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<collected_merge_and_redirect_indices*>*
+    flood_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<merge_and_redirect_indices*>* primary_merges = nullptr;
+  merge_and_redirect_indices* primary_merge;
+  merge_and_redirect_indices* secondary_merge;
+  collected_merge_and_redirect_indices* collected_indices = nullptr;
+  secondary_merge =
+          new latlon_merge_and_redirect_indices(new latlon_coords(1,1),
+                                                new latlon_coords(1,1),
+                                                true);
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(1,5)) = flood_index;
+  flood_index++;
+  primary_merge =
+          new latlon_merge_and_redirect_indices(new latlon_coords(1,5),
+                                                new latlon_coords(1,5),
+                                                true);
+  secondary_merge = nullptr;
+
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  primary_merges->push_back(primary_merge);
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(0,0)) = flood_index;
+  flood_index++;
+  merges_and_redirects merges_and_redirects_expected_out =
+          merges_and_redirects(connect_merge_and_redirect_indices_index,
+                               flood_merge_and_redirect_indices_index,
+                               connect_merge_and_redirect_indices_vector,
+                               flood_merge_and_redirect_indices_vector,
+                               grid_params_in);
   coords* new_center_coords_in = new latlon_coords(0,5);
   coords* center_coords_in = new latlon_coords(1,3);
   coords* previous_filled_cell_coords_in = new latlon_coords(0,0);
@@ -7280,63 +6033,19 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectTen) {
                                                  prior_coarse_rdirs_in,
                                                  basin_catchment_numbers_in,
                                                  coarse_catchment_nums_in,
-                                                 flood_force_merge_lat_index_in,
-                                                 flood_force_merge_lon_index_in,
-                                                 connect_force_merge_lat_index_in,
-                                                 connect_force_merge_lon_index_in,
-                                                 flood_redirect_lat_index_in,
-                                                 flood_redirect_lon_index_in,
-                                                 connect_redirect_lat_index_in,
-                                                 connect_redirect_lon_index_in,
-                                                 flood_local_redirect_in,
-                                                 connect_local_redirect_in,
-                                                 merge_points_in,
                                                  new_center_coords_in,
                                                  center_coords_in,
                                                  previous_filled_cell_coords_in,
                                                  previous_filled_cell_height_type_in,
                                                  grid_params_in,
                                                  coarse_grid_params_in);
-  EXPECT_TRUE(field<int>(flood_force_merge_lat_index_in,grid_params_in)
-              == field<int>(flood_force_merge_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_force_merge_lon_index_in,grid_params_in)
-              == field<int>(flood_force_merge_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_force_merge_lat_index_in,grid_params_in)
-              == field<int>(connect_force_merge_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_force_merge_lon_index_in,grid_params_in)
-              == field<int>(connect_force_merge_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lat_index_in,grid_params_in)
-              == field<int>(flood_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lon_index_in,grid_params_in)
-              == field<int>(flood_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lat_index_in,grid_params_in)
-              == field<int>(connect_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lon_index_in,grid_params_in)
-              == field<int>(connect_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(flood_local_redirect_in,grid_params_in)
-              == field<bool>(flood_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(connect_local_redirect_in,grid_params_in)
-              == field<bool>(connect_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<merge_types>(merge_points_in,grid_params_in)
-              == field<merge_types>(merge_points_expected_out,grid_params_in));
+  merges_and_redirects* merges_and_redirects_out =
+    basin_eval.get_basin_merges_and_redirects();
+
+  EXPECT_TRUE(merges_and_redirects_expected_out ==
+              *merges_and_redirects_out);
   delete grid_params_in; delete coarse_grid_params_in;
   delete[] basin_catchment_numbers_in; delete[] coarse_catchment_nums_in;
-  delete[] flood_force_merge_lat_index_in; delete[] flood_force_merge_lon_index_in;
-  delete[] connect_force_merge_lat_index_in; delete[] connect_force_merge_lon_index_in;
-  delete[] flood_redirect_lat_index_in; delete[] flood_redirect_lon_index_in;
-  delete[] connect_redirect_lat_index_in; delete[] connect_redirect_lon_index_in;
-  delete[] flood_local_redirect_in; delete[] connect_local_redirect_in;
-  delete[] merge_points_in; delete[] merge_points_expected_out;
-  delete[] flood_force_merge_lat_index_expected_out;
-  delete[] flood_force_merge_lon_index_expected_out;
-  delete[] connect_force_merge_lat_index_expected_out;
-  delete[] connect_force_merge_lon_index_expected_out;
-  delete[] flood_redirect_lat_index_expected_out;
-  delete[] flood_redirect_lon_index_expected_out;
-  delete[] connect_redirect_lat_index_expected_out;
-  delete[] connect_redirect_lon_index_expected_out;
-  delete[] flood_local_redirect_expected_out;
-  delete[] connect_local_redirect_expected_out;
   delete[] prior_coarse_rdirs_in;
   delete new_center_coords_in; delete center_coords_in; delete previous_filled_cell_coords_in;
   while (! basin_catchment_centers_in.empty()){
@@ -7366,142 +6075,55 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectEleven) {
   double* prior_coarse_rdirs_in = new double[3*3] {5.0,5.0,5.0,
                                                    5.0,5.0,5.0,
                                                    5.0,5.0,5.0 };
-  int* flood_force_merge_lat_index_in = new int[9*9];
-  std::fill_n(flood_force_merge_lat_index_in,9*9,-1);
-  int* flood_force_merge_lon_index_in = new int[9*9];
-  std::fill_n(flood_force_merge_lon_index_in,9*9,-1);
-  int* connect_force_merge_lat_index_in = new int[9*9];
-  std::fill_n(connect_force_merge_lat_index_in,9*9,-1);
-  int* connect_force_merge_lon_index_in = new int[9*9];
-  std::fill_n(connect_force_merge_lon_index_in,9*9,-1);
-  int* flood_redirect_lat_index_in = new int[9*9];
-  std::fill_n(flood_redirect_lat_index_in,9*9,-1);
-  int* flood_redirect_lon_index_in = new int[9*9];
-  std::fill_n(flood_redirect_lon_index_in,9*9,-1);
-  int* connect_redirect_lat_index_in = new int[9*9];
-  std::fill_n(connect_redirect_lat_index_in,9*9,-1);
-  int* connect_redirect_lon_index_in = new int[9*9];
-  std::fill_n(connect_redirect_lon_index_in,9*9,-1);
   height_types previous_filled_cell_height_type_in = flood_height;
-  bool* flood_local_redirect_in = new bool[9*9];
-  std::fill_n(flood_local_redirect_in,9*9,false);
-  bool* connect_local_redirect_in = new bool[9*9];
-  std::fill_n(connect_local_redirect_in,9*9,false);
-  merge_types* merge_points_in = new merge_types[9*9];
-  std::fill_n(merge_points_in,9*9,no_merge);
-  merge_types* merge_points_expected_out = new merge_types[9*9]{
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-//
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,connection_merge_not_set_flood_merge_as_primary,no_merge,
-    no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-//
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge};
-  int* flood_force_merge_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1, 4,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* flood_force_merge_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1, 8,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_force_merge_lat_index_expected_out = new int[9*9];
-  std::fill_n(connect_force_merge_lat_index_expected_out,9*9,-1);
-  int* connect_force_merge_lon_index_expected_out = new int[9*9];
-  std::fill_n(connect_force_merge_lon_index_expected_out,9*9,-1);
-  int* flood_redirect_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1, 4,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* flood_redirect_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1, 8,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  bool* flood_local_redirect_expected_out = new bool[9*9]
-                                     {false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false, true,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false};
-  bool* connect_local_redirect_expected_out = new bool[9*9]
-                                     {false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false};
+  int flood_index = 0;
+  field<int>* connect_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  field<int>* flood_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  connect_merge_and_redirect_indices_index->set_all(-1);
+  flood_merge_and_redirect_indices_index->set_all(-1);
+  vector<collected_merge_and_redirect_indices*>*
+    connect_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<collected_merge_and_redirect_indices*>*
+    flood_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<merge_and_redirect_indices*>* primary_merges = nullptr;
+  merge_and_redirect_indices* primary_merge;
+  merge_and_redirect_indices* secondary_merge;
+  collected_merge_and_redirect_indices* collected_indices = nullptr;
+  secondary_merge =
+          new latlon_merge_and_redirect_indices(new latlon_coords(1,5),
+                                                new latlon_coords(0,2),
+                                                false);
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(4,8)) = flood_index;
+  flood_index++;
+  primary_merge =
+          new latlon_merge_and_redirect_indices(new latlon_coords(4,8),
+                                                new latlon_coords(4,8),
+                                                true);
+  secondary_merge = nullptr;
+
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  primary_merges->push_back(primary_merge);
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(4,4)) = flood_index;
+  flood_index++;
+  merges_and_redirects merges_and_redirects_expected_out =
+          merges_and_redirects(connect_merge_and_redirect_indices_index,
+                               flood_merge_and_redirect_indices_index,
+                               connect_merge_and_redirect_indices_vector,
+                               flood_merge_and_redirect_indices_vector,
+                               grid_params_in);
   coords* new_center_coords_in = new latlon_coords(3,7);
   coords* center_coords_in = new latlon_coords(3,6);
   coords* previous_filled_cell_coords_in = new latlon_coords(4,4);
@@ -7520,63 +6142,19 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectEleven) {
                                                  prior_coarse_rdirs_in,
                                                  basin_catchment_numbers_in,
                                                  coarse_catchment_nums_in,
-                                                 flood_force_merge_lat_index_in,
-                                                 flood_force_merge_lon_index_in,
-                                                 connect_force_merge_lat_index_in,
-                                                 connect_force_merge_lon_index_in,
-                                                 flood_redirect_lat_index_in,
-                                                 flood_redirect_lon_index_in,
-                                                 connect_redirect_lat_index_in,
-                                                 connect_redirect_lon_index_in,
-                                                 flood_local_redirect_in,
-                                                 connect_local_redirect_in,
-                                                 merge_points_in,
                                                  new_center_coords_in,
                                                  center_coords_in,
                                                  previous_filled_cell_coords_in,
                                                  previous_filled_cell_height_type_in,
                                                  grid_params_in,
                                                  coarse_grid_params_in);
-  EXPECT_TRUE(field<int>(flood_force_merge_lat_index_in,grid_params_in)
-              == field<int>(flood_force_merge_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_force_merge_lon_index_in,grid_params_in)
-              == field<int>(flood_force_merge_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_force_merge_lat_index_in,grid_params_in)
-              == field<int>(connect_force_merge_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_force_merge_lon_index_in,grid_params_in)
-              == field<int>(connect_force_merge_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lat_index_in,grid_params_in)
-              == field<int>(flood_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lon_index_in,grid_params_in)
-              == field<int>(flood_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lat_index_in,grid_params_in)
-              == field<int>(connect_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lon_index_in,grid_params_in)
-              == field<int>(connect_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(flood_local_redirect_in,grid_params_in)
-              == field<bool>(flood_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(connect_local_redirect_in,grid_params_in)
-              == field<bool>(connect_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<merge_types>(merge_points_in,grid_params_in)
-              == field<merge_types>(merge_points_expected_out,grid_params_in));
+  merges_and_redirects* merges_and_redirects_out =
+    basin_eval.get_basin_merges_and_redirects();
+
+  EXPECT_TRUE(merges_and_redirects_expected_out ==
+              *merges_and_redirects_out);
   delete grid_params_in; delete coarse_grid_params_in;
   delete[] basin_catchment_numbers_in; delete[] coarse_catchment_nums_in;
-  delete[] flood_force_merge_lat_index_in; delete[] flood_force_merge_lon_index_in;
-  delete[] connect_force_merge_lat_index_in; delete[] connect_force_merge_lon_index_in;
-  delete[] flood_redirect_lat_index_in; delete[] flood_redirect_lon_index_in;
-  delete[] connect_redirect_lat_index_in; delete[] connect_redirect_lon_index_in;
-  delete[] flood_local_redirect_in; delete[] connect_local_redirect_in;
-  delete[] merge_points_in; delete[] merge_points_expected_out;
-  delete[] flood_force_merge_lat_index_expected_out;
-  delete[] flood_force_merge_lon_index_expected_out;
-  delete[] connect_force_merge_lat_index_expected_out;
-  delete[] connect_force_merge_lon_index_expected_out;
-  delete[] flood_redirect_lat_index_expected_out;
-  delete[] flood_redirect_lon_index_expected_out;
-  delete[] connect_redirect_lat_index_expected_out;
-  delete[] connect_redirect_lon_index_expected_out;
-  delete[] flood_local_redirect_expected_out;
-  delete[] connect_local_redirect_expected_out;
   delete[] prior_coarse_rdirs_in;
   delete new_center_coords_in; delete center_coords_in; delete previous_filled_cell_coords_in;
   while (! basin_catchment_centers_in.empty()){
@@ -7606,142 +6184,54 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectTwelve) {
   double* prior_coarse_rdirs_in = new double[3*3] {5.0,5.0,5.0,
                                                    5.0,5.0,5.0,
                                                    5.0,5.0,5.0 };
-  int* flood_force_merge_lat_index_in = new int[9*9];
-  std::fill_n(flood_force_merge_lat_index_in,9*9,-1);
-  int* flood_force_merge_lon_index_in = new int[9*9];
-  std::fill_n(flood_force_merge_lon_index_in,9*9,-1);
-  int* connect_force_merge_lat_index_in = new int[9*9];
-  std::fill_n(connect_force_merge_lat_index_in,9*9,-1);
-  int* connect_force_merge_lon_index_in = new int[9*9];
-  std::fill_n(connect_force_merge_lon_index_in,9*9,-1);
-  int* flood_redirect_lat_index_in = new int[9*9];
-  std::fill_n(flood_redirect_lat_index_in,9*9,-1);
-  int* flood_redirect_lon_index_in = new int[9*9];
-  std::fill_n(flood_redirect_lon_index_in,9*9,-1);
-  int* connect_redirect_lat_index_in = new int[9*9];
-  std::fill_n(connect_redirect_lat_index_in,9*9,-1);
-  int* connect_redirect_lon_index_in = new int[9*9];
-  std::fill_n(connect_redirect_lon_index_in,9*9,-1);
   height_types previous_filled_cell_height_type_in = flood_height;
-  bool* flood_local_redirect_in = new bool[9*9];
-  std::fill_n(flood_local_redirect_in,9*9,false);
-  bool* connect_local_redirect_in = new bool[9*9];
-  std::fill_n(connect_local_redirect_in,9*9,false);
-  merge_types* merge_points_in = new merge_types[9*9];
-  std::fill_n(merge_points_in,9*9,no_merge);
-  merge_types* merge_points_expected_out = new merge_types[9*9]{
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    connection_merge_not_set_flood_merge_as_primary,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-//
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-//
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge};
-  int* flood_force_merge_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1,  4,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* flood_force_merge_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1,  8,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_force_merge_lat_index_expected_out = new int[9*9];
-  std::fill_n(connect_force_merge_lat_index_expected_out,9*9,-1);
-  int* connect_force_merge_lon_index_expected_out = new int[9*9];
-  std::fill_n(connect_force_merge_lon_index_expected_out,9*9,-1);
-  int* flood_redirect_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1,  4,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* flood_redirect_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1,  8,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  bool* flood_local_redirect_expected_out = new bool[9*9]
-                                     {false,false,false, false,false,false,  true,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false};
-  bool* connect_local_redirect_expected_out = new bool[9*9]
-                                     {false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false};
+  int flood_index = 0;
+  field<int>* connect_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  field<int>* flood_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  connect_merge_and_redirect_indices_index->set_all(-1);
+  flood_merge_and_redirect_indices_index->set_all(-1);
+  vector<collected_merge_and_redirect_indices*>*
+    connect_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<collected_merge_and_redirect_indices*>*
+    flood_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<merge_and_redirect_indices*>* primary_merges = nullptr;
+  merge_and_redirect_indices* primary_merge;
+  merge_and_redirect_indices* secondary_merge;
+  collected_merge_and_redirect_indices* collected_indices = nullptr;
+  secondary_merge =
+          new latlon_merge_and_redirect_indices(new latlon_coords(1,5),
+                                                new latlon_coords(0,2),
+                                                false);
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(4,8)) = flood_index;
+  flood_index++;
+  primary_merge =
+          new latlon_merge_and_redirect_indices(new latlon_coords(4,8),
+                                                new latlon_coords(4,8),
+                                                true);
+  secondary_merge = nullptr;
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  primary_merges->push_back(primary_merge);
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(0,6)) = flood_index;
+  flood_index++;
+  merges_and_redirects merges_and_redirects_expected_out =
+          merges_and_redirects(connect_merge_and_redirect_indices_index,
+                               flood_merge_and_redirect_indices_index,
+                               connect_merge_and_redirect_indices_vector,
+                               flood_merge_and_redirect_indices_vector,
+                               grid_params_in);
   coords* new_center_coords_in = new latlon_coords(3,8);
   coords* center_coords_in = new latlon_coords(5,6);
   coords* previous_filled_cell_coords_in = new latlon_coords(0,6);
@@ -7760,63 +6250,19 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectTwelve) {
                                                  prior_coarse_rdirs_in,
                                                  basin_catchment_numbers_in,
                                                  coarse_catchment_nums_in,
-                                                 flood_force_merge_lat_index_in,
-                                                 flood_force_merge_lon_index_in,
-                                                 connect_force_merge_lat_index_in,
-                                                 connect_force_merge_lon_index_in,
-                                                 flood_redirect_lat_index_in,
-                                                 flood_redirect_lon_index_in,
-                                                 connect_redirect_lat_index_in,
-                                                 connect_redirect_lon_index_in,
-                                                 flood_local_redirect_in,
-                                                 connect_local_redirect_in,
-                                                 merge_points_in,
                                                  new_center_coords_in,
                                                  center_coords_in,
                                                  previous_filled_cell_coords_in,
                                                  previous_filled_cell_height_type_in,
                                                  grid_params_in,
                                                  coarse_grid_params_in);
-  EXPECT_TRUE(field<int>(flood_force_merge_lat_index_in,grid_params_in)
-              == field<int>(flood_force_merge_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_force_merge_lon_index_in,grid_params_in)
-              == field<int>(flood_force_merge_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_force_merge_lat_index_in,grid_params_in)
-              == field<int>(connect_force_merge_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_force_merge_lon_index_in,grid_params_in)
-              == field<int>(connect_force_merge_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lat_index_in,grid_params_in)
-              == field<int>(flood_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lon_index_in,grid_params_in)
-              == field<int>(flood_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lat_index_in,grid_params_in)
-              == field<int>(connect_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lon_index_in,grid_params_in)
-              == field<int>(connect_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(flood_local_redirect_in,grid_params_in)
-              == field<bool>(flood_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(connect_local_redirect_in,grid_params_in)
-              == field<bool>(connect_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<merge_types>(merge_points_in,grid_params_in)
-              == field<merge_types>(merge_points_expected_out,grid_params_in));
+  merges_and_redirects* merges_and_redirects_out =
+    basin_eval.get_basin_merges_and_redirects();
+
+  EXPECT_TRUE(merges_and_redirects_expected_out ==
+              *merges_and_redirects_out);
   delete grid_params_in; delete coarse_grid_params_in;
   delete[] basin_catchment_numbers_in; delete[] coarse_catchment_nums_in;
-  delete[] flood_force_merge_lat_index_in; delete[] flood_force_merge_lon_index_in;
-  delete[] connect_force_merge_lat_index_in; delete[] connect_force_merge_lon_index_in;
-  delete[] flood_redirect_lat_index_in; delete[] flood_redirect_lon_index_in;
-  delete[] connect_redirect_lat_index_in; delete[] connect_redirect_lon_index_in;
-  delete[] flood_local_redirect_in; delete[] connect_local_redirect_in;
-  delete[] merge_points_in; delete[] merge_points_expected_out;
-  delete[] flood_force_merge_lat_index_expected_out;
-  delete[] flood_force_merge_lon_index_expected_out;
-  delete[] connect_force_merge_lat_index_expected_out;
-  delete[] connect_force_merge_lon_index_expected_out;
-  delete[] flood_redirect_lat_index_expected_out;
-  delete[] flood_redirect_lon_index_expected_out;
-  delete[] connect_redirect_lat_index_expected_out;
-  delete[] connect_redirect_lon_index_expected_out;
-  delete[] flood_local_redirect_expected_out;
-  delete[] connect_local_redirect_expected_out;
   delete[] prior_coarse_rdirs_in;
   delete new_center_coords_in; delete center_coords_in; delete previous_filled_cell_coords_in;
   while (! basin_catchment_centers_in.empty()){
@@ -7846,142 +6292,55 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectThirteen) {
   double* prior_coarse_rdirs_in = new double[3*3] {5.0,5.0,5.0,
                                                    5.0,5.0,5.0,
                                                    5.0,5.0,5.0 };
-  int* flood_force_merge_lat_index_in = new int[9*9];
-  std::fill_n(flood_force_merge_lat_index_in,9*9,-1);
-  int* flood_force_merge_lon_index_in = new int[9*9];
-  std::fill_n(flood_force_merge_lon_index_in,9*9,-1);
-  int* connect_force_merge_lat_index_in = new int[9*9];
-  std::fill_n(connect_force_merge_lat_index_in,9*9,-1);
-  int* connect_force_merge_lon_index_in = new int[9*9];
-  std::fill_n(connect_force_merge_lon_index_in,9*9,-1);
-  int* flood_redirect_lat_index_in = new int[9*9];
-  std::fill_n(flood_redirect_lat_index_in,9*9,-1);
-  int* flood_redirect_lon_index_in = new int[9*9];
-  std::fill_n(flood_redirect_lon_index_in,9*9,-1);
-  int* connect_redirect_lat_index_in = new int[9*9];
-  std::fill_n(connect_redirect_lat_index_in,9*9,-1);
-  int* connect_redirect_lon_index_in = new int[9*9];
-  std::fill_n(connect_redirect_lon_index_in,9*9,-1);
   height_types previous_filled_cell_height_type_in = flood_height;
-  bool* flood_local_redirect_in = new bool[9*9];
-  std::fill_n(flood_local_redirect_in,9*9,false);
-  bool* connect_local_redirect_in = new bool[9*9];
-  std::fill_n(connect_local_redirect_in,9*9,false);
-  merge_types* merge_points_in = new merge_types[9*9];
-  std::fill_n(merge_points_in,9*9,no_merge);
-  merge_types* merge_points_expected_out = new merge_types[9*9]{
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-//
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    connection_merge_not_set_flood_merge_as_primary,no_merge,no_merge,
-//
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge};
-  int* flood_force_merge_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1,  1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* flood_force_merge_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1,  1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* connect_force_merge_lat_index_expected_out = new int[9*9];
-  std::fill_n(connect_force_merge_lat_index_expected_out,9*9,-1);
-  int* connect_force_merge_lon_index_expected_out = new int[9*9];
-  std::fill_n(connect_force_merge_lon_index_expected_out,9*9,-1);
-  int* flood_redirect_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1,  1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* flood_redirect_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1,  0,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  bool* flood_local_redirect_expected_out = new bool[9*9]
-                                     {false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false};
-  bool* connect_local_redirect_expected_out = new bool[9*9]
-                                     {false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false};
+  int flood_index = 0;
+  field<int>* connect_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  field<int>* flood_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  connect_merge_and_redirect_indices_index->set_all(-1);
+  flood_merge_and_redirect_indices_index->set_all(-1);
+  vector<collected_merge_and_redirect_indices*>*
+    connect_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<collected_merge_and_redirect_indices*>*
+    flood_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<merge_and_redirect_indices*>* primary_merges = nullptr;
+  merge_and_redirect_indices* primary_merge;
+  merge_and_redirect_indices* secondary_merge;
+  collected_merge_and_redirect_indices* collected_indices = nullptr;
+  secondary_merge =
+          new latlon_merge_and_redirect_indices(new latlon_coords(1,5),
+                                                new latlon_coords(0,2),
+                                                false);
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(1,1)) = flood_index;
+  flood_index++;
+  primary_merge =
+          new latlon_merge_and_redirect_indices(new latlon_coords(1,1),
+                                                new latlon_coords(1,0),
+                                                false);
+  secondary_merge = nullptr;
+
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  primary_merges->push_back(primary_merge);
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(5,6)) = flood_index;
+  flood_index++;
+  merges_and_redirects merges_and_redirects_expected_out =
+          merges_and_redirects(connect_merge_and_redirect_indices_index,
+                               flood_merge_and_redirect_indices_index,
+                               connect_merge_and_redirect_indices_vector,
+                               flood_merge_and_redirect_indices_vector,
+                               grid_params_in);
   coords* new_center_coords_in = new latlon_coords(2,2);
   coords* center_coords_in = new latlon_coords(0,5);
   coords* previous_filled_cell_coords_in = new latlon_coords(5,6);
@@ -8000,63 +6359,19 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectThirteen) {
                                                  prior_coarse_rdirs_in,
                                                  basin_catchment_numbers_in,
                                                  coarse_catchment_nums_in,
-                                                 flood_force_merge_lat_index_in,
-                                                 flood_force_merge_lon_index_in,
-                                                 connect_force_merge_lat_index_in,
-                                                 connect_force_merge_lon_index_in,
-                                                 flood_redirect_lat_index_in,
-                                                 flood_redirect_lon_index_in,
-                                                 connect_redirect_lat_index_in,
-                                                 connect_redirect_lon_index_in,
-                                                 flood_local_redirect_in,
-                                                 connect_local_redirect_in,
-                                                 merge_points_in,
                                                  new_center_coords_in,
                                                  center_coords_in,
                                                  previous_filled_cell_coords_in,
                                                  previous_filled_cell_height_type_in,
                                                  grid_params_in,
                                                  coarse_grid_params_in);
-  EXPECT_TRUE(field<int>(flood_force_merge_lat_index_in,grid_params_in)
-              == field<int>(flood_force_merge_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_force_merge_lon_index_in,grid_params_in)
-              == field<int>(flood_force_merge_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_force_merge_lat_index_in,grid_params_in)
-              == field<int>(connect_force_merge_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_force_merge_lon_index_in,grid_params_in)
-              == field<int>(connect_force_merge_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lat_index_in,grid_params_in)
-              == field<int>(flood_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lon_index_in,grid_params_in)
-              == field<int>(flood_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lat_index_in,grid_params_in)
-              == field<int>(connect_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lon_index_in,grid_params_in)
-              == field<int>(connect_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(flood_local_redirect_in,grid_params_in)
-              == field<bool>(flood_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(connect_local_redirect_in,grid_params_in)
-              == field<bool>(connect_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<merge_types>(merge_points_in,grid_params_in)
-              == field<merge_types>(merge_points_expected_out,grid_params_in));
+  merges_and_redirects* merges_and_redirects_out =
+    basin_eval.get_basin_merges_and_redirects();
+
+  EXPECT_TRUE(merges_and_redirects_expected_out ==
+              *merges_and_redirects_out);
   delete grid_params_in; delete coarse_grid_params_in;
   delete[] basin_catchment_numbers_in; delete[] coarse_catchment_nums_in;
-  delete[] flood_force_merge_lat_index_in; delete[] flood_force_merge_lon_index_in;
-  delete[] connect_force_merge_lat_index_in; delete[] connect_force_merge_lon_index_in;
-  delete[] flood_redirect_lat_index_in; delete[] flood_redirect_lon_index_in;
-  delete[] connect_redirect_lat_index_in; delete[] connect_redirect_lon_index_in;
-  delete[] flood_local_redirect_in; delete[] connect_local_redirect_in;
-  delete[] merge_points_in; delete[] merge_points_expected_out;
-  delete[] flood_force_merge_lat_index_expected_out;
-  delete[] flood_force_merge_lon_index_expected_out;
-  delete[] connect_force_merge_lat_index_expected_out;
-  delete[] connect_force_merge_lon_index_expected_out;
-  delete[] flood_redirect_lat_index_expected_out;
-  delete[] flood_redirect_lon_index_expected_out;
-  delete[] connect_redirect_lat_index_expected_out;
-  delete[] connect_redirect_lon_index_expected_out;
-  delete[] flood_local_redirect_expected_out;
-  delete[] connect_local_redirect_expected_out;
   delete[] prior_coarse_rdirs_in;
   delete new_center_coords_in; delete center_coords_in; delete previous_filled_cell_coords_in;
   while (! basin_catchment_centers_in.empty()){
@@ -8086,142 +6401,55 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectFourteen) {
   double* prior_coarse_rdirs_in = new double[3*3] {5.0,5.0,5.0,
                                                    5.0,5.0,5.0,
                                                    5.0,5.0,5.0 };
-  int* flood_force_merge_lat_index_in = new int[9*9];
-  std::fill_n(flood_force_merge_lat_index_in,9*9,-1);
-  int* flood_force_merge_lon_index_in = new int[9*9];
-  std::fill_n(flood_force_merge_lon_index_in,9*9,-1);
-  int* connect_force_merge_lat_index_in = new int[9*9];
-  std::fill_n(connect_force_merge_lat_index_in,9*9,-1);
-  int* connect_force_merge_lon_index_in = new int[9*9];
-  std::fill_n(connect_force_merge_lon_index_in,9*9,-1);
-  int* flood_redirect_lat_index_in = new int[9*9];
-  std::fill_n(flood_redirect_lat_index_in,9*9,-1);
-  int* flood_redirect_lon_index_in = new int[9*9];
-  std::fill_n(flood_redirect_lon_index_in,9*9,-1);
-  int* connect_redirect_lat_index_in = new int[9*9];
-  std::fill_n(connect_redirect_lat_index_in,9*9,-1);
-  int* connect_redirect_lon_index_in = new int[9*9];
-  std::fill_n(connect_redirect_lon_index_in,9*9,-1);
   height_types previous_filled_cell_height_type_in = flood_height;
-  bool* flood_local_redirect_in = new bool[9*9];
-  std::fill_n(flood_local_redirect_in,9*9,false);
-  bool* connect_local_redirect_in = new bool[9*9];
-  std::fill_n(connect_local_redirect_in,9*9,false);
-  merge_types* merge_points_in = new merge_types[9*9];
-  std::fill_n(merge_points_in,9*9,no_merge);
-  merge_types* merge_points_expected_out = new merge_types[9*9]{
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-//
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-//
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    connection_merge_not_set_flood_merge_as_primary,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge};
-  int* flood_force_merge_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                                8,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* flood_force_merge_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                                6,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_force_merge_lat_index_expected_out = new int[9*9];
-  std::fill_n(connect_force_merge_lat_index_expected_out,9*9,-1);
-  int* connect_force_merge_lon_index_expected_out = new int[9*9];
-  std::fill_n(connect_force_merge_lon_index_expected_out,9*9,-1);
-  int* flood_redirect_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                                2,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* flood_redirect_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                                1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  bool* flood_local_redirect_expected_out = new bool[9*9]
-                                     {false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false};
-  bool* connect_local_redirect_expected_out = new bool[9*9]
-                                     {false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false};
+  int flood_index = 0;
+  field<int>* connect_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  field<int>* flood_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  connect_merge_and_redirect_indices_index->set_all(-1);
+  flood_merge_and_redirect_indices_index->set_all(-1);
+  vector<collected_merge_and_redirect_indices*>*
+    connect_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<collected_merge_and_redirect_indices*>*
+    flood_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<merge_and_redirect_indices*>* primary_merges = nullptr;
+  merge_and_redirect_indices* primary_merge;
+  merge_and_redirect_indices* secondary_merge;
+  collected_merge_and_redirect_indices* collected_indices = nullptr;
+  secondary_merge =
+          new latlon_merge_and_redirect_indices(new latlon_coords(1,1),
+                                                new latlon_coords(1,0),
+                                                false);
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(8,6)) = flood_index;
+  flood_index++;
+  primary_merge =
+          new latlon_merge_and_redirect_indices(new latlon_coords(8,6),
+                                                new latlon_coords(2,1),
+                                                false);
+  secondary_merge = nullptr;
+
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  primary_merges->push_back(primary_merge);
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(7,0)) = flood_index;
+  flood_index++;
+  merges_and_redirects merges_and_redirects_expected_out =
+          merges_and_redirects(connect_merge_and_redirect_indices_index,
+                               flood_merge_and_redirect_indices_index,
+                               connect_merge_and_redirect_indices_vector,
+                               flood_merge_and_redirect_indices_vector,
+                               grid_params_in);
   coords* new_center_coords_in = new latlon_coords(5,1);
   coords* center_coords_in = new latlon_coords(6,0);
   coords* previous_filled_cell_coords_in = new latlon_coords(7,0);
@@ -8240,63 +6468,19 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectFourteen) {
                                                  prior_coarse_rdirs_in,
                                                  basin_catchment_numbers_in,
                                                  coarse_catchment_nums_in,
-                                                 flood_force_merge_lat_index_in,
-                                                 flood_force_merge_lon_index_in,
-                                                 connect_force_merge_lat_index_in,
-                                                 connect_force_merge_lon_index_in,
-                                                 flood_redirect_lat_index_in,
-                                                 flood_redirect_lon_index_in,
-                                                 connect_redirect_lat_index_in,
-                                                 connect_redirect_lon_index_in,
-                                                 flood_local_redirect_in,
-                                                 connect_local_redirect_in,
-                                                 merge_points_in,
                                                  new_center_coords_in,
                                                  center_coords_in,
                                                  previous_filled_cell_coords_in,
                                                  previous_filled_cell_height_type_in,
                                                  grid_params_in,
                                                  coarse_grid_params_in);
-  EXPECT_TRUE(field<int>(flood_force_merge_lat_index_in,grid_params_in)
-              == field<int>(flood_force_merge_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_force_merge_lon_index_in,grid_params_in)
-              == field<int>(flood_force_merge_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_force_merge_lat_index_in,grid_params_in)
-              == field<int>(connect_force_merge_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_force_merge_lon_index_in,grid_params_in)
-              == field<int>(connect_force_merge_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lat_index_in,grid_params_in)
-              == field<int>(flood_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lon_index_in,grid_params_in)
-              == field<int>(flood_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lat_index_in,grid_params_in)
-              == field<int>(connect_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lon_index_in,grid_params_in)
-              == field<int>(connect_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(flood_local_redirect_in,grid_params_in)
-              == field<bool>(flood_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(connect_local_redirect_in,grid_params_in)
-              == field<bool>(connect_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<merge_types>(merge_points_in,grid_params_in)
-              == field<merge_types>(merge_points_expected_out,grid_params_in));
+  merges_and_redirects* merges_and_redirects_out =
+    basin_eval.get_basin_merges_and_redirects();
+
+  EXPECT_TRUE(merges_and_redirects_expected_out ==
+              *merges_and_redirects_out);
   delete grid_params_in; delete coarse_grid_params_in;
   delete[] basin_catchment_numbers_in; delete[] coarse_catchment_nums_in;
-  delete[] flood_force_merge_lat_index_in; delete[] flood_force_merge_lon_index_in;
-  delete[] connect_force_merge_lat_index_in; delete[] connect_force_merge_lon_index_in;
-  delete[] flood_redirect_lat_index_in; delete[] flood_redirect_lon_index_in;
-  delete[] connect_redirect_lat_index_in; delete[] connect_redirect_lon_index_in;
-  delete[] flood_local_redirect_in; delete[] connect_local_redirect_in;
-  delete[] merge_points_in; delete[] merge_points_expected_out;
-  delete[] flood_force_merge_lat_index_expected_out;
-  delete[] flood_force_merge_lon_index_expected_out;
-  delete[] connect_force_merge_lat_index_expected_out;
-  delete[] connect_force_merge_lon_index_expected_out;
-  delete[] flood_redirect_lat_index_expected_out;
-  delete[] flood_redirect_lon_index_expected_out;
-  delete[] connect_redirect_lat_index_expected_out;
-  delete[] connect_redirect_lon_index_expected_out;
-  delete[] flood_local_redirect_expected_out;
-  delete[] connect_local_redirect_expected_out;
   delete[] prior_coarse_rdirs_in;
   delete new_center_coords_in; delete center_coords_in; delete previous_filled_cell_coords_in;
   while (! basin_catchment_centers_in.empty()){
@@ -8326,142 +6510,55 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectFifteen) {
   double* prior_coarse_rdirs_in = new double[3*3] {5.0,5.0,5.0,
                                                    5.0,5.0,5.0,
                                                    5.0,5.0,5.0 };
-  int* flood_force_merge_lat_index_in = new int[9*9];
-  std::fill_n(flood_force_merge_lat_index_in,9*9,-1);
-  int* flood_force_merge_lon_index_in = new int[9*9];
-  std::fill_n(flood_force_merge_lon_index_in,9*9,-1);
-  int* connect_force_merge_lat_index_in = new int[9*9];
-  std::fill_n(connect_force_merge_lat_index_in,9*9,-1);
-  int* connect_force_merge_lon_index_in = new int[9*9];
-  std::fill_n(connect_force_merge_lon_index_in,9*9,-1);
-  int* flood_redirect_lat_index_in = new int[9*9];
-  std::fill_n(flood_redirect_lat_index_in,9*9,-1);
-  int* flood_redirect_lon_index_in = new int[9*9];
-  std::fill_n(flood_redirect_lon_index_in,9*9,-1);
-  int* connect_redirect_lat_index_in = new int[9*9];
-  std::fill_n(connect_redirect_lat_index_in,9*9,-1);
-  int* connect_redirect_lon_index_in = new int[9*9];
-  std::fill_n(connect_redirect_lon_index_in,9*9,-1);
   height_types previous_filled_cell_height_type_in = flood_height;
-  bool* flood_local_redirect_in = new bool[9*9];
-  std::fill_n(flood_local_redirect_in,9*9,false);
-  bool* connect_local_redirect_in = new bool[9*9];
-  std::fill_n(connect_local_redirect_in,9*9,false);
-  merge_types* merge_points_in = new merge_types[9*9];
-  std::fill_n(merge_points_in,9*9,no_merge);
-  merge_types* merge_points_expected_out = new merge_types[9*9]{
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, connection_merge_not_set_flood_merge_as_primary,no_merge,no_merge,
-    no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-//
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-//
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge};
-  int* flood_force_merge_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  8,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* flood_force_merge_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  6,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_force_merge_lat_index_expected_out = new int[9*9];
-  std::fill_n(connect_force_merge_lat_index_expected_out,9*9,-1);
-  int* connect_force_merge_lon_index_expected_out = new int[9*9];
-  std::fill_n(connect_force_merge_lon_index_expected_out,9*9,-1);
-  int* flood_redirect_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  2,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* flood_redirect_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  2,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  bool* flood_local_redirect_expected_out = new bool[9*9]
-                                     {false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false};
-  bool* connect_local_redirect_expected_out = new bool[9*9]
-                                     {false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false};
+  int flood_index = 0;
+  field<int>* connect_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  field<int>* flood_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  connect_merge_and_redirect_indices_index->set_all(-1);
+  flood_merge_and_redirect_indices_index->set_all(-1);
+  vector<collected_merge_and_redirect_indices*>*
+    connect_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<collected_merge_and_redirect_indices*>*
+    flood_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<merge_and_redirect_indices*>* primary_merges = nullptr;
+  merge_and_redirect_indices* primary_merge;
+  merge_and_redirect_indices* secondary_merge;
+  collected_merge_and_redirect_indices* collected_indices = nullptr;
+  secondary_merge =
+          new latlon_merge_and_redirect_indices(new latlon_coords(1,1),
+                                                new latlon_coords(1,0),
+                                                false);
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(8,6)) = flood_index;
+  flood_index++;
+  primary_merge =
+          new latlon_merge_and_redirect_indices(new latlon_coords(8,6),
+                                                new latlon_coords(2,2),
+                                                false);
+  secondary_merge = nullptr;
+
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  primary_merges->push_back(primary_merge);
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(1,3)) = flood_index;
+  flood_index++;
+  merges_and_redirects merges_and_redirects_expected_out =
+          merges_and_redirects(connect_merge_and_redirect_indices_index,
+                               flood_merge_and_redirect_indices_index,
+                               connect_merge_and_redirect_indices_vector,
+                               flood_merge_and_redirect_indices_vector,
+                               grid_params_in);
   coords* new_center_coords_in = new latlon_coords(5,1);
   coords* center_coords_in = new latlon_coords(0,4);
   coords* previous_filled_cell_coords_in = new latlon_coords(1,3);
@@ -8480,63 +6577,19 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectFifteen) {
                                                  prior_coarse_rdirs_in,
                                                  basin_catchment_numbers_in,
                                                  coarse_catchment_nums_in,
-                                                 flood_force_merge_lat_index_in,
-                                                 flood_force_merge_lon_index_in,
-                                                 connect_force_merge_lat_index_in,
-                                                 connect_force_merge_lon_index_in,
-                                                 flood_redirect_lat_index_in,
-                                                 flood_redirect_lon_index_in,
-                                                 connect_redirect_lat_index_in,
-                                                 connect_redirect_lon_index_in,
-                                                 flood_local_redirect_in,
-                                                 connect_local_redirect_in,
-                                                 merge_points_in,
                                                  new_center_coords_in,
                                                  center_coords_in,
                                                  previous_filled_cell_coords_in,
                                                  previous_filled_cell_height_type_in,
                                                  grid_params_in,
                                                  coarse_grid_params_in);
-  EXPECT_TRUE(field<int>(flood_force_merge_lat_index_in,grid_params_in)
-              == field<int>(flood_force_merge_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_force_merge_lon_index_in,grid_params_in)
-              == field<int>(flood_force_merge_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_force_merge_lat_index_in,grid_params_in)
-              == field<int>(connect_force_merge_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_force_merge_lon_index_in,grid_params_in)
-              == field<int>(connect_force_merge_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lat_index_in,grid_params_in)
-              == field<int>(flood_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lon_index_in,grid_params_in)
-              == field<int>(flood_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lat_index_in,grid_params_in)
-              == field<int>(connect_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lon_index_in,grid_params_in)
-              == field<int>(connect_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(flood_local_redirect_in,grid_params_in)
-              == field<bool>(flood_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(connect_local_redirect_in,grid_params_in)
-              == field<bool>(connect_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<merge_types>(merge_points_in,grid_params_in)
-              == field<merge_types>(merge_points_expected_out,grid_params_in));
+  merges_and_redirects* merges_and_redirects_out =
+    basin_eval.get_basin_merges_and_redirects();
+
+  EXPECT_TRUE(merges_and_redirects_expected_out ==
+              *merges_and_redirects_out);
   delete grid_params_in; delete coarse_grid_params_in;
   delete[] basin_catchment_numbers_in; delete[] coarse_catchment_nums_in;
-  delete[] flood_force_merge_lat_index_in; delete[] flood_force_merge_lon_index_in;
-  delete[] connect_force_merge_lat_index_in; delete[] connect_force_merge_lon_index_in;
-  delete[] flood_redirect_lat_index_in; delete[] flood_redirect_lon_index_in;
-  delete[] connect_redirect_lat_index_in; delete[] connect_redirect_lon_index_in;
-  delete[] flood_local_redirect_in; delete[] connect_local_redirect_in;
-  delete[] merge_points_in; delete[] merge_points_expected_out;
-  delete[] flood_force_merge_lat_index_expected_out;
-  delete[] flood_force_merge_lon_index_expected_out;
-  delete[] connect_force_merge_lat_index_expected_out;
-  delete[] connect_force_merge_lon_index_expected_out;
-  delete[] flood_redirect_lat_index_expected_out;
-  delete[] flood_redirect_lon_index_expected_out;
-  delete[] connect_redirect_lat_index_expected_out;
-  delete[] connect_redirect_lon_index_expected_out;
-  delete[] flood_local_redirect_expected_out;
-  delete[] connect_local_redirect_expected_out;
   delete[] prior_coarse_rdirs_in;
   delete new_center_coords_in; delete center_coords_in; delete previous_filled_cell_coords_in;
   while (! basin_catchment_centers_in.empty()){
@@ -8566,142 +6619,54 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectSixteen) {
   double* prior_coarse_rdirs_in = new double[3*3] {5.0,5.0,5.0,
                                                    5.0,5.0,5.0,
                                                    5.0,5.0,5.0 };
-  int* flood_force_merge_lat_index_in = new int[9*9];
-  std::fill_n(flood_force_merge_lat_index_in,9*9,-1);
-  int* flood_force_merge_lon_index_in = new int[9*9];
-  std::fill_n(flood_force_merge_lon_index_in,9*9,-1);
-  int* connect_force_merge_lat_index_in = new int[9*9];
-  std::fill_n(connect_force_merge_lat_index_in,9*9,-1);
-  int* connect_force_merge_lon_index_in = new int[9*9];
-  std::fill_n(connect_force_merge_lon_index_in,9*9,-1);
-  int* flood_redirect_lat_index_in = new int[9*9];
-  std::fill_n(flood_redirect_lat_index_in,9*9,-1);
-  int* flood_redirect_lon_index_in = new int[9*9];
-  std::fill_n(flood_redirect_lon_index_in,9*9,-1);
-  int* connect_redirect_lat_index_in = new int[9*9];
-  std::fill_n(connect_redirect_lat_index_in,9*9,-1);
-  int* connect_redirect_lon_index_in = new int[9*9];
-  std::fill_n(connect_redirect_lon_index_in,9*9,-1);
   height_types previous_filled_cell_height_type_in = flood_height;
-  bool* flood_local_redirect_in = new bool[9*9];
-  std::fill_n(flood_local_redirect_in,9*9,false);
-  bool* connect_local_redirect_in = new bool[9*9];
-  std::fill_n(connect_local_redirect_in,9*9,false);
-  merge_types* merge_points_in = new merge_types[9*9];
-  std::fill_n(merge_points_in,9*9,no_merge);
-  merge_types* merge_points_expected_out = new merge_types[9*9]{
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-//
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-//
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,connection_merge_not_set_flood_merge_as_primary,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge};
-  int* flood_force_merge_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* flood_force_merge_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,5,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_force_merge_lat_index_expected_out = new int[9*9];
-  std::fill_n(connect_force_merge_lat_index_expected_out,9*9,-1);
-  int* connect_force_merge_lon_index_expected_out = new int[9*9];
-  std::fill_n(connect_force_merge_lon_index_expected_out,9*9,-1);
-  int* flood_redirect_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1, 0,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* flood_redirect_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1, 2,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  bool* flood_local_redirect_expected_out = new bool[9*9]
-                                     {false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false};
-  bool* connect_local_redirect_expected_out = new bool[9*9]
-                                     {false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false};
+  int flood_index = 0;
+  field<int>* connect_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  field<int>* flood_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  connect_merge_and_redirect_indices_index->set_all(-1);
+  flood_merge_and_redirect_indices_index->set_all(-1);
+  vector<collected_merge_and_redirect_indices*>*
+    connect_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<collected_merge_and_redirect_indices*>*
+    flood_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<merge_and_redirect_indices*>* primary_merges = nullptr;
+  merge_and_redirect_indices* primary_merge;
+  merge_and_redirect_indices* secondary_merge;
+  collected_merge_and_redirect_indices* collected_indices = nullptr;
+  secondary_merge =
+          new latlon_merge_and_redirect_indices(new latlon_coords(4,8),
+                                                new latlon_coords(1,2),
+                                                false);
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(1,5)) = flood_index;
+  flood_index++;
+  primary_merge =
+          new latlon_merge_and_redirect_indices(new latlon_coords(1,5),
+                                                new latlon_coords(0,2),
+                                                false);
+  secondary_merge = nullptr;
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  primary_merges->push_back(primary_merge);
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(6,8)) = flood_index;
+  flood_index++;
+  merges_and_redirects merges_and_redirects_expected_out =
+          merges_and_redirects(connect_merge_and_redirect_indices_index,
+                               flood_merge_and_redirect_indices_index,
+                               connect_merge_and_redirect_indices_vector,
+                               flood_merge_and_redirect_indices_vector,
+                               grid_params_in);
   coords* new_center_coords_in = new latlon_coords(0,7);
   coords* center_coords_in = new latlon_coords(8,8);
   coords* previous_filled_cell_coords_in = new latlon_coords(6,8);
@@ -8720,63 +6685,19 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectSixteen) {
                                                  prior_coarse_rdirs_in,
                                                  basin_catchment_numbers_in,
                                                  coarse_catchment_nums_in,
-                                                 flood_force_merge_lat_index_in,
-                                                 flood_force_merge_lon_index_in,
-                                                 connect_force_merge_lat_index_in,
-                                                 connect_force_merge_lon_index_in,
-                                                 flood_redirect_lat_index_in,
-                                                 flood_redirect_lon_index_in,
-                                                 connect_redirect_lat_index_in,
-                                                 connect_redirect_lon_index_in,
-                                                 flood_local_redirect_in,
-                                                 connect_local_redirect_in,
-                                                 merge_points_in,
                                                  new_center_coords_in,
                                                  center_coords_in,
                                                  previous_filled_cell_coords_in,
                                                  previous_filled_cell_height_type_in,
                                                  grid_params_in,
                                                  coarse_grid_params_in);
-  EXPECT_TRUE(field<int>(flood_force_merge_lat_index_in,grid_params_in)
-              == field<int>(flood_force_merge_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_force_merge_lon_index_in,grid_params_in)
-              == field<int>(flood_force_merge_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_force_merge_lat_index_in,grid_params_in)
-              == field<int>(connect_force_merge_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_force_merge_lon_index_in,grid_params_in)
-              == field<int>(connect_force_merge_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lat_index_in,grid_params_in)
-              == field<int>(flood_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lon_index_in,grid_params_in)
-              == field<int>(flood_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lat_index_in,grid_params_in)
-              == field<int>(connect_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lon_index_in,grid_params_in)
-              == field<int>(connect_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(flood_local_redirect_in,grid_params_in)
-              == field<bool>(flood_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(connect_local_redirect_in,grid_params_in)
-              == field<bool>(connect_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<merge_types>(merge_points_in,grid_params_in)
-              == field<merge_types>(merge_points_expected_out,grid_params_in));
+  merges_and_redirects* merges_and_redirects_out =
+    basin_eval.get_basin_merges_and_redirects();
+
+  EXPECT_TRUE(merges_and_redirects_expected_out ==
+              *merges_and_redirects_out);
   delete grid_params_in; delete coarse_grid_params_in;
   delete[] basin_catchment_numbers_in; delete[] coarse_catchment_nums_in;
-  delete[] flood_force_merge_lat_index_in; delete[] flood_force_merge_lon_index_in;
-  delete[] connect_force_merge_lat_index_in; delete[] connect_force_merge_lon_index_in;
-  delete[] flood_redirect_lat_index_in; delete[] flood_redirect_lon_index_in;
-  delete[] connect_redirect_lat_index_in; delete[] connect_redirect_lon_index_in;
-  delete[] flood_local_redirect_in; delete[] connect_local_redirect_in;
-  delete[] merge_points_in; delete[] merge_points_expected_out;
-  delete[] flood_force_merge_lat_index_expected_out;
-  delete[] flood_force_merge_lon_index_expected_out;
-  delete[] connect_force_merge_lat_index_expected_out;
-  delete[] connect_force_merge_lon_index_expected_out;
-  delete[] flood_redirect_lat_index_expected_out;
-  delete[] flood_redirect_lon_index_expected_out;
-  delete[] connect_redirect_lat_index_expected_out;
-  delete[] connect_redirect_lon_index_expected_out;
-  delete[] flood_local_redirect_expected_out;
-  delete[] connect_local_redirect_expected_out;
   delete[] prior_coarse_rdirs_in;
   delete new_center_coords_in; delete center_coords_in; delete previous_filled_cell_coords_in;
   while (! basin_catchment_centers_in.empty()){
@@ -8807,141 +6728,55 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectSeventeen) {
   double* prior_coarse_rdirs_in = new double[3*3] {5.0,5.0,4.0,
                                                    8.0,5.0,8.0,
                                                    5.0,5.0,5.0 };
-  int* flood_force_merge_lat_index_in = new int[9*9];
-  std::fill_n(flood_force_merge_lat_index_in,9*9,-1);
-  int* flood_force_merge_lon_index_in = new int[9*9];
-  std::fill_n(flood_force_merge_lon_index_in,9*9,-1);
-  int* connect_force_merge_lat_index_in = new int[9*9];
-  std::fill_n(connect_force_merge_lat_index_in,9*9,-1);
-  int* connect_force_merge_lon_index_in = new int[9*9];
-  std::fill_n(connect_force_merge_lon_index_in,9*9,-1);
-  int* flood_redirect_lat_index_in = new int[9*9];
-  std::fill_n(flood_redirect_lat_index_in,9*9,-1);
-  int* flood_redirect_lon_index_in = new int[9*9];
-  std::fill_n(flood_redirect_lon_index_in,9*9,-1);
-  int* connect_redirect_lat_index_in = new int[9*9];
-  std::fill_n(connect_redirect_lat_index_in,9*9,-1);
-  int* connect_redirect_lon_index_in = new int[9*9];
-  std::fill_n(connect_redirect_lon_index_in,9*9,-1);
   height_types previous_filled_cell_height_type_in = flood_height;
-  bool* flood_local_redirect_in = new bool[9*9];
-  std::fill_n(flood_local_redirect_in,9*9,false);
-  bool* connect_local_redirect_in = new bool[9*9];
-  std::fill_n(connect_local_redirect_in,9*9,false);
-  merge_types* merge_points_in = new merge_types[9*9];
-  std::fill_n(merge_points_in,9*9,no_merge);
-  merge_types* merge_points_expected_out = new merge_types[9*9]{
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-//
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,connection_merge_not_set_flood_merge_as_primary,no_merge,
-//
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge};
-  int* flood_force_merge_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1, 1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* flood_force_merge_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1, 7,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_force_merge_lat_index_expected_out = new int[9*9];
-  std::fill_n(connect_force_merge_lat_index_expected_out,9*9,-1);
-  int* connect_force_merge_lon_index_expected_out = new int[9*9];
-  std::fill_n(connect_force_merge_lon_index_expected_out,9*9,-1);
-  int* flood_redirect_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1, 1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* flood_redirect_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1, 7,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  bool* flood_local_redirect_expected_out = new bool[9*9]
-                                     {false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false, true,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false};
-  bool* connect_local_redirect_expected_out = new bool[9*9]
-                                     {false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false};
+  int flood_index = 0;
+  field<int>* connect_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  field<int>* flood_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  connect_merge_and_redirect_indices_index->set_all(-1);
+  flood_merge_and_redirect_indices_index->set_all(-1);
+  vector<collected_merge_and_redirect_indices*>*
+    connect_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<collected_merge_and_redirect_indices*>*
+    flood_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<merge_and_redirect_indices*>* primary_merges = nullptr;
+  merge_and_redirect_indices* primary_merge;
+  merge_and_redirect_indices* secondary_merge;
+  collected_merge_and_redirect_indices* collected_indices = nullptr;
+  secondary_merge =
+          new latlon_merge_and_redirect_indices(new latlon_coords(4,4),
+                                                new latlon_coords(2,2),
+                                                false);
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(1,7)) = flood_index;
+  flood_index++;
+  primary_merge =
+          new latlon_merge_and_redirect_indices(new latlon_coords(1,7),
+                                                new latlon_coords(1,7),
+                                                true);
+  secondary_merge = nullptr;
+
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  primary_merges->push_back(primary_merge);
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(5,7)) = flood_index;
+  flood_index++;
+  merges_and_redirects merges_and_redirects_expected_out =
+          merges_and_redirects(connect_merge_and_redirect_indices_index,
+                               flood_merge_and_redirect_indices_index,
+                               connect_merge_and_redirect_indices_vector,
+                               flood_merge_and_redirect_indices_vector,
+                               grid_params_in);
   coords* new_center_coords_in = new latlon_coords(3,7);
   coords* center_coords_in = new latlon_coords(4,7);
   coords* previous_filled_cell_coords_in = new latlon_coords(5,7);
@@ -8954,63 +6789,19 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectSeventeen) {
                                                  prior_coarse_rdirs_in,
                                                  basin_catchment_numbers_in,
                                                  coarse_catchment_nums_in,
-                                                 flood_force_merge_lat_index_in,
-                                                 flood_force_merge_lon_index_in,
-                                                 connect_force_merge_lat_index_in,
-                                                 connect_force_merge_lon_index_in,
-                                                 flood_redirect_lat_index_in,
-                                                 flood_redirect_lon_index_in,
-                                                 connect_redirect_lat_index_in,
-                                                 connect_redirect_lon_index_in,
-                                                 flood_local_redirect_in,
-                                                 connect_local_redirect_in,
-                                                 merge_points_in,
                                                  new_center_coords_in,
                                                  center_coords_in,
                                                  previous_filled_cell_coords_in,
                                                  previous_filled_cell_height_type_in,
                                                  grid_params_in,
                                                  coarse_grid_params_in);
-  EXPECT_TRUE(field<int>(flood_force_merge_lat_index_in,grid_params_in)
-              == field<int>(flood_force_merge_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_force_merge_lon_index_in,grid_params_in)
-              == field<int>(flood_force_merge_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_force_merge_lat_index_in,grid_params_in)
-              == field<int>(connect_force_merge_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_force_merge_lon_index_in,grid_params_in)
-              == field<int>(connect_force_merge_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lat_index_in,grid_params_in)
-              == field<int>(flood_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lon_index_in,grid_params_in)
-              == field<int>(flood_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lat_index_in,grid_params_in)
-              == field<int>(connect_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lon_index_in,grid_params_in)
-              == field<int>(connect_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(flood_local_redirect_in,grid_params_in)
-              == field<bool>(flood_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(connect_local_redirect_in,grid_params_in)
-              == field<bool>(connect_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<merge_types>(merge_points_in,grid_params_in)
-              == field<merge_types>(merge_points_expected_out,grid_params_in));
+  merges_and_redirects* merges_and_redirects_out =
+    basin_eval.get_basin_merges_and_redirects();
+
+  EXPECT_TRUE(merges_and_redirects_expected_out ==
+              *merges_and_redirects_out);
   delete grid_params_in; delete coarse_grid_params_in;
   delete[] basin_catchment_numbers_in; delete[] coarse_catchment_nums_in;
-  delete[] flood_force_merge_lat_index_in; delete[] flood_force_merge_lon_index_in;
-  delete[] connect_force_merge_lat_index_in; delete[] connect_force_merge_lon_index_in;
-  delete[] flood_redirect_lat_index_in; delete[] flood_redirect_lon_index_in;
-  delete[] connect_redirect_lat_index_in; delete[] connect_redirect_lon_index_in;
-  delete[] flood_local_redirect_in; delete[] connect_local_redirect_in;
-  delete[] merge_points_in; delete[] merge_points_expected_out;
-  delete[] flood_force_merge_lat_index_expected_out;
-  delete[] flood_force_merge_lon_index_expected_out;
-  delete[] connect_force_merge_lat_index_expected_out;
-  delete[] connect_force_merge_lon_index_expected_out;
-  delete[] flood_redirect_lat_index_expected_out;
-  delete[] flood_redirect_lon_index_expected_out;
-  delete[] connect_redirect_lat_index_expected_out;
-  delete[] connect_redirect_lon_index_expected_out;
-  delete[] flood_local_redirect_expected_out;
-  delete[] connect_local_redirect_expected_out;
   delete[] prior_coarse_rdirs_in;
   delete new_center_coords_in; delete center_coords_in; delete previous_filled_cell_coords_in;
   while (! basin_catchment_centers_in.empty()){
@@ -9042,141 +6833,55 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectEighteen) {
   double* prior_coarse_rdirs_in = new double[3*3] {5.0,5.0,4.0,
                                                    8.0,5.0,8.0,
                                                    5.0,5.0,5.0 };
-  int* flood_force_merge_lat_index_in = new int[9*9];
-  std::fill_n(flood_force_merge_lat_index_in,9*9,-1);
-  int* flood_force_merge_lon_index_in = new int[9*9];
-  std::fill_n(flood_force_merge_lon_index_in,9*9,-1);
-  int* connect_force_merge_lat_index_in = new int[9*9];
-  std::fill_n(connect_force_merge_lat_index_in,9*9,-1);
-  int* connect_force_merge_lon_index_in = new int[9*9];
-  std::fill_n(connect_force_merge_lon_index_in,9*9,-1);
-  int* flood_redirect_lat_index_in = new int[9*9];
-  std::fill_n(flood_redirect_lat_index_in,9*9,-1);
-  int* flood_redirect_lon_index_in = new int[9*9];
-  std::fill_n(flood_redirect_lon_index_in,9*9,-1);
-  int* connect_redirect_lat_index_in = new int[9*9];
-  std::fill_n(connect_redirect_lat_index_in,9*9,-1);
-  int* connect_redirect_lon_index_in = new int[9*9];
-  std::fill_n(connect_redirect_lon_index_in,9*9,-1);
   height_types previous_filled_cell_height_type_in = flood_height;
-  bool* flood_local_redirect_in = new bool[9*9];
-  std::fill_n(flood_local_redirect_in,9*9,false);
-  bool* connect_local_redirect_in = new bool[9*9];
-  std::fill_n(connect_local_redirect_in,9*9,false);
-  merge_types* merge_points_in = new merge_types[9*9];
-  std::fill_n(merge_points_in,9*9,no_merge);
-  merge_types* merge_points_expected_out = new merge_types[9*9]{
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-//
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,connection_merge_not_set_flood_merge_as_primary,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-//
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge};
-  int* flood_force_merge_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1, 1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* flood_force_merge_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1, 1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_force_merge_lat_index_expected_out = new int[9*9];
-  std::fill_n(connect_force_merge_lat_index_expected_out,9*9,-1);
-  int* connect_force_merge_lon_index_expected_out = new int[9*9];
-  std::fill_n(connect_force_merge_lon_index_expected_out,9*9,-1);
-  int* flood_redirect_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1, 1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* flood_redirect_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1, 0,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  bool* flood_local_redirect_expected_out = new bool[9*9]
-                                     {false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false};
-  bool* connect_local_redirect_expected_out = new bool[9*9]
-                                     {false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false};
+  int flood_index = 0;
+  field<int>* connect_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  field<int>* flood_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  connect_merge_and_redirect_indices_index->set_all(-1);
+  flood_merge_and_redirect_indices_index->set_all(-1);
+  vector<collected_merge_and_redirect_indices*>*
+    connect_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<collected_merge_and_redirect_indices*>*
+    flood_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<merge_and_redirect_indices*>* primary_merges = nullptr;
+  merge_and_redirect_indices* primary_merge;
+  merge_and_redirect_indices* secondary_merge;
+  collected_merge_and_redirect_indices* collected_indices = nullptr;
+  secondary_merge =
+          new latlon_merge_and_redirect_indices(new latlon_coords(4,4),
+                                                new latlon_coords(2,1),
+                                                false);
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(1,1)) = flood_index;
+  flood_index++;
+  primary_merge =
+          new latlon_merge_and_redirect_indices(new latlon_coords(1,1),
+                                                new latlon_coords(1,0),
+                                                false);
+  secondary_merge = nullptr;
+
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  primary_merges->push_back(primary_merge);
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(5,1)) = flood_index;
+  flood_index++;
+  merges_and_redirects merges_and_redirects_expected_out =
+          merges_and_redirects(connect_merge_and_redirect_indices_index,
+                               flood_merge_and_redirect_indices_index,
+                               connect_merge_and_redirect_indices_vector,
+                               flood_merge_and_redirect_indices_vector,
+                               grid_params_in);
   coords* new_center_coords_in = new latlon_coords(3,1);
   coords* center_coords_in = new latlon_coords(4,1);
   coords* previous_filled_cell_coords_in = new latlon_coords(5,1);
@@ -9189,63 +6894,19 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectEighteen) {
                                                  prior_coarse_rdirs_in,
                                                  basin_catchment_numbers_in,
                                                  coarse_catchment_nums_in,
-                                                 flood_force_merge_lat_index_in,
-                                                 flood_force_merge_lon_index_in,
-                                                 connect_force_merge_lat_index_in,
-                                                 connect_force_merge_lon_index_in,
-                                                 flood_redirect_lat_index_in,
-                                                 flood_redirect_lon_index_in,
-                                                 connect_redirect_lat_index_in,
-                                                 connect_redirect_lon_index_in,
-                                                 flood_local_redirect_in,
-                                                 connect_local_redirect_in,
-                                                 merge_points_in,
                                                  new_center_coords_in,
                                                  center_coords_in,
                                                  previous_filled_cell_coords_in,
                                                  previous_filled_cell_height_type_in,
                                                  grid_params_in,
                                                  coarse_grid_params_in);
-  EXPECT_TRUE(field<int>(flood_force_merge_lat_index_in,grid_params_in)
-              == field<int>(flood_force_merge_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_force_merge_lon_index_in,grid_params_in)
-              == field<int>(flood_force_merge_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_force_merge_lat_index_in,grid_params_in)
-              == field<int>(connect_force_merge_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_force_merge_lon_index_in,grid_params_in)
-              == field<int>(connect_force_merge_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lat_index_in,grid_params_in)
-              == field<int>(flood_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lon_index_in,grid_params_in)
-              == field<int>(flood_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lat_index_in,grid_params_in)
-              == field<int>(connect_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lon_index_in,grid_params_in)
-              == field<int>(connect_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(flood_local_redirect_in,grid_params_in)
-              == field<bool>(flood_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(connect_local_redirect_in,grid_params_in)
-              == field<bool>(connect_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<merge_types>(merge_points_in,grid_params_in)
-              == field<merge_types>(merge_points_expected_out,grid_params_in));
+  merges_and_redirects* merges_and_redirects_out =
+    basin_eval.get_basin_merges_and_redirects();
+
+  EXPECT_TRUE(merges_and_redirects_expected_out ==
+              *merges_and_redirects_out);
   delete grid_params_in; delete coarse_grid_params_in;
   delete[] basin_catchment_numbers_in; delete[] coarse_catchment_nums_in;
-  delete[] flood_force_merge_lat_index_in; delete[] flood_force_merge_lon_index_in;
-  delete[] connect_force_merge_lat_index_in; delete[] connect_force_merge_lon_index_in;
-  delete[] flood_redirect_lat_index_in; delete[] flood_redirect_lon_index_in;
-  delete[] connect_redirect_lat_index_in; delete[] connect_redirect_lon_index_in;
-  delete[] flood_local_redirect_in; delete[] connect_local_redirect_in;
-  delete[] merge_points_in; delete[] merge_points_expected_out;
-  delete[] flood_force_merge_lat_index_expected_out;
-  delete[] flood_force_merge_lon_index_expected_out;
-  delete[] connect_force_merge_lat_index_expected_out;
-  delete[] connect_force_merge_lon_index_expected_out;
-  delete[] flood_redirect_lat_index_expected_out;
-  delete[] flood_redirect_lon_index_expected_out;
-  delete[] connect_redirect_lat_index_expected_out;
-  delete[] connect_redirect_lon_index_expected_out;
-  delete[] flood_local_redirect_expected_out;
-  delete[] connect_local_redirect_expected_out;
   delete[] prior_coarse_rdirs_in;
   delete new_center_coords_in; delete center_coords_in; delete previous_filled_cell_coords_in;
   while (! basin_catchment_centers_in.empty()){
@@ -9256,874 +6917,790 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectEighteen) {
 }
 
 TEST_F(BasinEvaluationTest,TestSettingSecondaryRedirect) {
-  auto grid_params_in = new latlon_grid_params(9,9,true);
-  int* flood_next_cell_lat_index_in = new int[9*9];
-  std::fill_n(flood_next_cell_lat_index_in,9*9,-1);
-  int* flood_next_cell_lon_index_in = new int[9*9];
-  std::fill_n(flood_next_cell_lon_index_in,9*9,-1);
-  int* connect_next_cell_lat_index_in = new int[9*9];
-  std::fill_n(connect_next_cell_lat_index_in,9*9,-1);
-  int* connect_next_cell_lon_index_in = new int[9*9];
-  std::fill_n(connect_next_cell_lon_index_in,9*9,-1);
-  int* flood_redirect_lat_index_in = new int[9*9];
-  std::fill_n(flood_redirect_lat_index_in,9*9,-1);
-  int* flood_redirect_lon_index_in = new int[9*9];
-  std::fill_n(flood_redirect_lon_index_in,9*9,-1);
-  int* connect_redirect_lat_index_in = new int[9*9];
-  std::fill_n(connect_redirect_lat_index_in,9*9,-1);
-  int* connect_redirect_lon_index_in = new int[9*9];
-  std::fill_n(connect_redirect_lon_index_in,9*9,-1);
-  bool* requires_flood_redirect_indices_in = new bool[9*9];
-  std::fill_n(requires_flood_redirect_indices_in,9*9,false);
-  bool* requires_connect_redirect_indices_in = new bool[9*9];
-  std::fill_n(requires_connect_redirect_indices_in,9*9,false);
-  double* raw_orography_in = new double[9*9];
-  std::fill_n(raw_orography_in,9*9,10.0);
-  double* corrected_orography_in = new double[9*9];
-  std::fill_n(corrected_orography_in,9*9, 9.0);
-  int* flood_next_cell_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,2,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* flood_next_cell_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1, 7,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_next_cell_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_next_cell_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* flood_redirect_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,2,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* flood_redirect_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,7,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  bool* requires_flood_redirect_indices_expected_out = new bool[9*9]
-                                     {false,false,false, false, true,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false};
-  bool* requires_connect_redirect_indices_expected_out = new bool[9*9]
-                                     {false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false};
-  coords* new_center_coords_in = new latlon_coords(2,7);
-  coords* center_coords_in = new latlon_coords(5,1);
-  coords* previous_filled_cell_coords_in = new latlon_coords(0,4);
-  height_types previous_filled_cell_height_type_in = flood_height;
-  auto basin_eval = latlon_basin_evaluation_algorithm();
-  basin_eval.test_set_secondary_redirect(flood_next_cell_lat_index_in,
-                                         flood_next_cell_lon_index_in,
-                                         connect_next_cell_lat_index_in,
-                                         connect_next_cell_lon_index_in,
-                                         flood_redirect_lat_index_in,
-                                         flood_redirect_lon_index_in,
-                                         connect_redirect_lat_index_in,
-                                         connect_redirect_lon_index_in,
-                                         requires_flood_redirect_indices_in,
-                                         requires_connect_redirect_indices_in,
-                                         raw_orography_in,
-                                         corrected_orography_in,new_center_coords_in,
-                                         center_coords_in,previous_filled_cell_coords_in,
-                                         previous_filled_cell_height_type_in,
-                                         grid_params_in);
-  EXPECT_TRUE(field<int>(flood_next_cell_lat_index_in,grid_params_in)
-              == field<int>(flood_next_cell_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_next_cell_lon_index_in,grid_params_in)
-              == field<int>(flood_next_cell_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_next_cell_lat_index_in,grid_params_in)
-              == field<int>(connect_next_cell_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_next_cell_lon_index_in,grid_params_in)
-              == field<int>(connect_next_cell_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(requires_flood_redirect_indices_in,grid_params_in)
-              == field<bool>(requires_flood_redirect_indices_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(requires_connect_redirect_indices_in,grid_params_in)
-              == field<bool>(requires_connect_redirect_indices_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lat_index_in,grid_params_in)
-              == field<int>(flood_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lon_index_in,grid_params_in)
-              == field<int>(flood_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lat_index_in,grid_params_in)
-              == field<int>(connect_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lon_index_in,grid_params_in)
-              == field<int>(connect_redirect_lon_index_expected_out,grid_params_in));
-  delete grid_params_in;
-  delete[] flood_next_cell_lat_index_in; delete[] flood_next_cell_lon_index_in;
-  delete[] connect_next_cell_lat_index_in; delete[] connect_next_cell_lon_index_in;
-  delete[] flood_redirect_lat_index_in; delete[] flood_redirect_lon_index_in;
-  delete[] connect_redirect_lat_index_in; delete[] connect_redirect_lon_index_in;
-  delete[] requires_flood_redirect_indices_in;
-  delete[] requires_connect_redirect_indices_in;
-  delete[] raw_orography_in; delete[] corrected_orography_in;
-  delete[] flood_next_cell_lat_index_expected_out;
-  delete[] flood_next_cell_lon_index_expected_out;
-  delete[] connect_next_cell_lat_index_expected_out;
-  delete[] connect_next_cell_lon_index_expected_out;
-  delete[] flood_redirect_lat_index_expected_out;
-  delete[] flood_redirect_lon_index_expected_out;
-  delete[] connect_redirect_lat_index_expected_out;
-  delete[] connect_redirect_lon_index_expected_out;
-  delete[] requires_flood_redirect_indices_expected_out;
-  delete[] requires_connect_redirect_indices_expected_out;
-  delete new_center_coords_in; delete center_coords_in;
-  delete previous_filled_cell_coords_in;
+  EXPECT_TRUE(false);
+//   auto grid_params_in = new latlon_grid_params(9,9,true);
+//   auto coarse_grid_params_in = new latlon_grid_params(3,3,true);
+//   int* flood_next_cell_lat_index_in = new int[9*9];
+//   std::fill_n(flood_next_cell_lat_index_in,9*9,-1);
+//   int* flood_next_cell_lon_index_in = new int[9*9];
+//   std::fill_n(flood_next_cell_lon_index_in,9*9,-1);
+//   int* connect_next_cell_lat_index_in = new int[9*9];
+//   std::fill_n(connect_next_cell_lat_index_in,9*9,-1);
+//   int* connect_next_cell_lon_index_in = new int[9*9];
+//   std::fill_n(connect_next_cell_lon_index_in,9*9,-1);
+//   bool* requires_flood_redirect_indices_in = new bool[9*9];
+//   std::fill_n(requires_flood_redirect_indices_in,9*9,false);
+//   bool* requires_connect_redirect_indices_in = new bool[9*9];
+//   std::fill_n(requires_connect_redirect_indices_in,9*9,false);
+//   double* raw_orography_in = new double[9*9];
+//   std::fill_n(raw_orography_in,9*9,10.0);
+//   double* corrected_orography_in = new double[9*9];
+//   std::fill_n(corrected_orography_in,9*9, 9.0);
+//   int* flood_next_cell_lat_index_expected_out = new int[9*9]
+//                                               {-1,-1,-1, -1,2,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
+//   int* flood_next_cell_lon_index_expected_out = new int[9*9]
+//                                               {-1,-1,-1, -1, 7,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
+//   int* connect_next_cell_lat_index_expected_out = new int[9*9]
+//                                               {-1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
+//   int* connect_next_cell_lon_index_expected_out = new int[9*9]
+//                                               {-1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
+//   int* flood_redirect_lat_index_expected_out = new int[9*9]
+//                                               {-1,-1,-1, -1,2,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
+//   int* flood_redirect_lon_index_expected_out = new int[9*9]
+//                                               {-1,-1,-1, -1,7,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
+//   int* connect_redirect_lat_index_expected_out = new int[9*9]
+//                                               {-1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
+//   int* connect_redirect_lon_index_expected_out = new int[9*9]
+//                                               {-1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
+//   bool* requires_flood_redirect_indices_expected_out = new bool[9*9]
+//                                      {false,false,false, false, true,false, false,false,false,
+//                                       false,false,false, false,false,false, false,false,false,
+//                                       false,false,false, false,false,false, false,false,false,
+// //
+//                                       false,false,false, false,false,false, false,false,false,
+//                                       false,false,false, false,false,false, false,false,false,
+//                                       false,false,false, false,false,false, false,false,false,
+// //
+//                                       false,false,false, false,false,false, false,false,false,
+//                                       false,false,false, false,false,false, false,false,false,
+//                                       false,false,false, false,false,false, false,false,false};
+//   bool* requires_connect_redirect_indices_expected_out = new bool[9*9]
+//                                      {false,false,false, false,false,false, false,false,false,
+//                                       false,false,false, false,false,false, false,false,false,
+//                                       false,false,false, false,false,false, false,false,false,
+// //
+//                                       false,false,false, false,false,false, false,false,false,
+//                                       false,false,false, false,false,false, false,false,false,
+//                                       false,false,false, false,false,false, false,false,false,
+// //
+//                                       false,false,false, false,false,false, false,false,false,
+//                                       false,false,false, false,false,false, false,false,false,
+//                                       false,false,false, false,false,false, false,false,false};
+//   coords* new_center_coords_in = new latlon_coords(2,7);
+//   coords* center_coords_in = new latlon_coords(5,1);
+//   coords* previous_filled_cell_coords_in = new latlon_coords(0,4);
+//   coords* target_basin_center_coords = new latlon_coords(2,7);
+//   height_types previous_filled_cell_height_type_in = flood_height;
+//   auto basin_eval = latlon_basin_evaluation_algorithm();
+//   basin_eval.test_set_secondary_redirect(flood_next_cell_lat_index_in,
+//                                          flood_next_cell_lon_index_in,
+//                                          connect_next_cell_lat_index_in,
+//                                          connect_next_cell_lon_index_in,
+//                                          requires_flood_redirect_indices_in,
+//                                          requires_connect_redirect_indices_in,
+//                                          raw_orography_in,
+//                                          corrected_orography_in,new_center_coords_in,
+//                                          center_coords_in,previous_filled_cell_coords_in,
+//                                          target_basin_center_coords,
+//                                          previous_filled_cell_height_type_in,
+//                                          grid_params_in,coarse_grid_params_in);
+//   EXPECT_TRUE(field<int>(flood_next_cell_lat_index_in,grid_params_in)
+//               == field<int>(flood_next_cell_lat_index_expected_out,grid_params_in));
+//   EXPECT_TRUE(field<int>(flood_next_cell_lon_index_in,grid_params_in)
+//               == field<int>(flood_next_cell_lon_index_expected_out,grid_params_in));
+//   EXPECT_TRUE(field<int>(connect_next_cell_lat_index_in,grid_params_in)
+//               == field<int>(connect_next_cell_lat_index_expected_out,grid_params_in));
+//   EXPECT_TRUE(field<int>(connect_next_cell_lon_index_in,grid_params_in)
+//               == field<int>(connect_next_cell_lon_index_expected_out,grid_params_in));
+//   EXPECT_TRUE(field<bool>(requires_flood_redirect_indices_in,grid_params_in)
+//               == field<bool>(requires_flood_redirect_indices_expected_out,grid_params_in));
+//   EXPECT_TRUE(field<bool>(requires_connect_redirect_indices_in,grid_params_in)
+//               == field<bool>(requires_connect_redirect_indices_expected_out,grid_params_in));
+//   EXPECT_TRUE(false);
+//   delete grid_params_in;
+//   delete[] flood_next_cell_lat_index_in; delete[] flood_next_cell_lon_index_in;
+//   delete[] connect_next_cell_lat_index_in; delete[] connect_next_cell_lon_index_in;
+//   delete[] requires_flood_redirect_indices_in;
+//   delete[] requires_connect_redirect_indices_in;
+//   delete[] raw_orography_in; delete[] corrected_orography_in;
+//   delete[] flood_next_cell_lat_index_expected_out;
+//   delete[] flood_next_cell_lon_index_expected_out;
+//   delete[] connect_next_cell_lat_index_expected_out;
+//   delete[] connect_next_cell_lon_index_expected_out;
+//   delete[] flood_redirect_lat_index_expected_out;
+//   delete[] flood_redirect_lon_index_expected_out;
+//   delete[] connect_redirect_lat_index_expected_out;
+//   delete[] connect_redirect_lon_index_expected_out;
+//   delete[] requires_flood_redirect_indices_expected_out;
+//   delete[] requires_connect_redirect_indices_expected_out;
+//   delete new_center_coords_in; delete center_coords_in;
+//   delete previous_filled_cell_coords_in;
 }
 
 TEST_F(BasinEvaluationTest,TestSettingSecondaryRedirectTwo) {
-  auto grid_params_in = new latlon_grid_params(9,9,false);
-  int* flood_next_cell_lat_index_in = new int[9*9];
-  std::fill_n(flood_next_cell_lat_index_in,9*9,-1);
-  int* flood_next_cell_lon_index_in = new int[9*9];
-  std::fill_n(flood_next_cell_lon_index_in,9*9,-1);
-  int* connect_next_cell_lat_index_in = new int[9*9];
-  std::fill_n(connect_next_cell_lat_index_in,9*9,-1);
-  int* connect_next_cell_lon_index_in = new int[9*9];
-  std::fill_n(connect_next_cell_lon_index_in,9*9,-1);
-  int* flood_redirect_lat_index_in = new int[9*9];
-  std::fill_n(flood_redirect_lat_index_in,9*9,-1);
-  int* flood_redirect_lon_index_in = new int[9*9];
-  std::fill_n(flood_redirect_lon_index_in,9*9,-1);
-  int* connect_redirect_lat_index_in = new int[9*9];
-  std::fill_n(connect_redirect_lat_index_in,9*9,-1);
-  int* connect_redirect_lon_index_in = new int[9*9];
-  std::fill_n(connect_redirect_lon_index_in,9*9,-1);
-  bool* requires_flood_redirect_indices_in = new bool[9*9];
-  std::fill_n(requires_flood_redirect_indices_in,9*9,false);
-  bool* requires_connect_redirect_indices_in = new bool[9*9];
-  std::fill_n(requires_connect_redirect_indices_in,9*9,false);
-  double* raw_orography_in = new double[9*9];
-  std::fill_n(raw_orography_in,9*9,10.0);
-  double* corrected_orography_in = new double[9*9];
-  std::fill_n(corrected_orography_in,9*9, 9.0);
-  int* flood_next_cell_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1, 5,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* flood_next_cell_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,8,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_next_cell_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_next_cell_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* flood_redirect_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,5,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* flood_redirect_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,8,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  bool* requires_flood_redirect_indices_expected_out = new bool[9*9]
-                                     {false,false,false, false, true,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false};
-  bool* requires_connect_redirect_indices_expected_out = new bool[9*9]
-                                     {false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false};
-  coords* new_center_coords_in = new latlon_coords(5,8);
-  coords* center_coords_in = new latlon_coords(5,1);
-  coords* previous_filled_cell_coords_in = new latlon_coords(0,4);
-  height_types previous_filled_cell_height_type_in = flood_height;
-  auto basin_eval = latlon_basin_evaluation_algorithm();
-  basin_eval.test_set_secondary_redirect(flood_next_cell_lat_index_in,flood_next_cell_lon_index_in,
-                                         connect_next_cell_lat_index_in,connect_next_cell_lon_index_in,
-                                         flood_redirect_lat_index_in,
-                                         flood_redirect_lon_index_in,
-                                         connect_redirect_lat_index_in,
-                                         connect_redirect_lon_index_in,
-                                         requires_flood_redirect_indices_in,
-                                         requires_connect_redirect_indices_in,
-                                         raw_orography_in,
-                                         corrected_orography_in,new_center_coords_in,
-                                         center_coords_in,previous_filled_cell_coords_in,
-                                         previous_filled_cell_height_type_in,
-                                         grid_params_in);
-  EXPECT_TRUE(field<int>(flood_next_cell_lat_index_in,grid_params_in)
-              == field<int>(flood_next_cell_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_next_cell_lon_index_in,grid_params_in)
-              == field<int>(flood_next_cell_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_next_cell_lat_index_in,grid_params_in)
-              == field<int>(connect_next_cell_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_next_cell_lon_index_in,grid_params_in)
-              == field<int>(connect_next_cell_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(requires_flood_redirect_indices_in,grid_params_in)
-              == field<bool>(requires_flood_redirect_indices_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(requires_connect_redirect_indices_in,grid_params_in)
-              == field<bool>(requires_connect_redirect_indices_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lat_index_in,grid_params_in)
-              == field<int>(flood_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lon_index_in,grid_params_in)
-              == field<int>(flood_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lat_index_in,grid_params_in)
-              == field<int>(connect_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lon_index_in,grid_params_in)
-              == field<int>(connect_redirect_lon_index_expected_out,grid_params_in));
-  delete grid_params_in;
-  delete[] flood_next_cell_lat_index_in; delete[] flood_next_cell_lon_index_in;
-  delete[] connect_next_cell_lat_index_in; delete[] connect_next_cell_lon_index_in;
-  delete[] flood_redirect_lat_index_in; delete[] flood_redirect_lon_index_in;
-  delete[] connect_redirect_lat_index_in; delete[] connect_redirect_lon_index_in;
-  delete[] requires_flood_redirect_indices_in;
-  delete[] requires_connect_redirect_indices_in;
-  delete[] raw_orography_in; delete[] corrected_orography_in;
-  delete[] flood_next_cell_lat_index_expected_out;
-  delete[] flood_next_cell_lon_index_expected_out;
-  delete[] connect_next_cell_lat_index_expected_out;
-  delete[] connect_next_cell_lon_index_expected_out;
-  delete[] flood_redirect_lat_index_expected_out;
-  delete[] flood_redirect_lon_index_expected_out;
-  delete[] connect_redirect_lat_index_expected_out;
-  delete[] connect_redirect_lon_index_expected_out;
-  delete[] requires_flood_redirect_indices_expected_out;
-  delete[] requires_connect_redirect_indices_expected_out;
-  delete new_center_coords_in; delete center_coords_in;
-  delete previous_filled_cell_coords_in;
+  EXPECT_TRUE(false);
+//   auto grid_params_in = new latlon_grid_params(9,9,false);
+//   int* flood_next_cell_lat_index_in = new int[9*9];
+//   std::fill_n(flood_next_cell_lat_index_in,9*9,-1);
+//   int* flood_next_cell_lon_index_in = new int[9*9];
+//   std::fill_n(flood_next_cell_lon_index_in,9*9,-1);
+//   int* connect_next_cell_lat_index_in = new int[9*9];
+//   std::fill_n(connect_next_cell_lat_index_in,9*9,-1);
+//   int* connect_next_cell_lon_index_in = new int[9*9];
+//   std::fill_n(connect_next_cell_lon_index_in,9*9,-1);
+//   bool* requires_flood_redirect_indices_in = new bool[9*9];
+//   std::fill_n(requires_flood_redirect_indices_in,9*9,false);
+//   bool* requires_connect_redirect_indices_in = new bool[9*9];
+//   std::fill_n(requires_connect_redirect_indices_in,9*9,false);
+//   double* raw_orography_in = new double[9*9];
+//   std::fill_n(raw_orography_in,9*9,10.0);
+//   double* corrected_orography_in = new double[9*9];
+//   std::fill_n(corrected_orography_in,9*9, 9.0);
+//   int* flood_next_cell_lat_index_expected_out = new int[9*9]
+//                                               {-1,-1,-1, -1, 5,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
+//   int* flood_next_cell_lon_index_expected_out = new int[9*9]
+//                                               {-1,-1,-1, -1,8,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
+//   int* connect_next_cell_lat_index_expected_out = new int[9*9]
+//                                               {-1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
+//   int* connect_next_cell_lon_index_expected_out = new int[9*9]
+//                                               {-1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
+//   int* flood_redirect_lat_index_expected_out = new int[9*9]
+//                                               {-1,-1,-1, -1,5,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
+//   int* flood_redirect_lon_index_expected_out = new int[9*9]
+//                                               {-1,-1,-1, -1,8,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
+//   int* connect_redirect_lat_index_expected_out = new int[9*9]
+//                                               {-1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
+//   int* connect_redirect_lon_index_expected_out = new int[9*9]
+//                                               {-1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
+//   bool* requires_flood_redirect_indices_expected_out = new bool[9*9]
+//                                      {false,false,false, false, true,false, false,false,false,
+//                                       false,false,false, false,false,false, false,false,false,
+//                                       false,false,false, false,false,false, false,false,false,
+// //
+//                                       false,false,false, false,false,false, false,false,false,
+//                                       false,false,false, false,false,false, false,false,false,
+//                                       false,false,false, false,false,false, false,false,false,
+// //
+//                                       false,false,false, false,false,false, false,false,false,
+//                                       false,false,false, false,false,false, false,false,false,
+//                                       false,false,false, false,false,false, false,false,false};
+//   bool* requires_connect_redirect_indices_expected_out = new bool[9*9]
+//                                      {false,false,false, false,false,false, false,false,false,
+//                                       false,false,false, false,false,false, false,false,false,
+//                                       false,false,false, false,false,false, false,false,false,
+// //
+//                                       false,false,false, false,false,false, false,false,false,
+//                                       false,false,false, false,false,false, false,false,false,
+//                                       false,false,false, false,false,false, false,false,false,
+// //
+//                                       false,false,false, false,false,false, false,false,false,
+//                                       false,false,false, false,false,false, false,false,false,
+//                                       false,false,false, false,false,false, false,false,false};
+//   coords* new_center_coords_in = new latlon_coords(5,8);
+//   coords* center_coords_in = new latlon_coords(5,1);
+//   coords* previous_filled_cell_coords_in = new latlon_coords(0,4);
+//   height_types previous_filled_cell_height_type_in = flood_height;
+//   auto basin_eval = latlon_basin_evaluation_algorithm();
+//   basin_eval.test_set_secondary_redirect(flood_next_cell_lat_index_in,flood_next_cell_lon_index_in,
+//                                          connect_next_cell_lat_index_in,connect_next_cell_lon_index_in,
+//                                          requires_flood_redirect_indices_in,
+//                                          requires_connect_redirect_indices_in,
+//                                          raw_orography_in,
+//                                          corrected_orography_in,new_center_coords_in,
+//                                          center_coords_in,previous_filled_cell_coords_in,
+//                                          previous_filled_cell_height_type_in,
+//                                          grid_params_in);
+//   EXPECT_TRUE(field<int>(flood_next_cell_lat_index_in,grid_params_in)
+//               == field<int>(flood_next_cell_lat_index_expected_out,grid_params_in));
+//   EXPECT_TRUE(field<int>(flood_next_cell_lon_index_in,grid_params_in)
+//               == field<int>(flood_next_cell_lon_index_expected_out,grid_params_in));
+//   EXPECT_TRUE(field<int>(connect_next_cell_lat_index_in,grid_params_in)
+//               == field<int>(connect_next_cell_lat_index_expected_out,grid_params_in));
+//   EXPECT_TRUE(field<int>(connect_next_cell_lon_index_in,grid_params_in)
+//               == field<int>(connect_next_cell_lon_index_expected_out,grid_params_in));
+//   EXPECT_TRUE(field<bool>(requires_flood_redirect_indices_in,grid_params_in)
+//               == field<bool>(requires_flood_redirect_indices_expected_out,grid_params_in));
+//   EXPECT_TRUE(field<bool>(requires_connect_redirect_indices_in,grid_params_in)
+//               == field<bool>(requires_connect_redirect_indices_expected_out,grid_params_in));
+//   delete grid_params_in;
+//   delete[] flood_next_cell_lat_index_in; delete[] flood_next_cell_lon_index_in;
+//   delete[] connect_next_cell_lat_index_in; delete[] connect_next_cell_lon_index_in;
+//   delete[] requires_flood_redirect_indices_in;
+//   delete[] requires_connect_redirect_indices_in;
+//   delete[] raw_orography_in; delete[] corrected_orography_in;
+//   delete[] flood_next_cell_lat_index_expected_out;
+//   delete[] flood_next_cell_lon_index_expected_out;
+//   delete[] connect_next_cell_lat_index_expected_out;
+//   delete[] connect_next_cell_lon_index_expected_out;
+//   delete[] flood_redirect_lat_index_expected_out;
+//   delete[] flood_redirect_lon_index_expected_out;
+//   delete[] connect_redirect_lat_index_expected_out;
+//   delete[] connect_redirect_lon_index_expected_out;
+//   delete[] requires_flood_redirect_indices_expected_out;
+//   delete[] requires_connect_redirect_indices_expected_out;
+//   delete new_center_coords_in; delete center_coords_in;
+//   delete previous_filled_cell_coords_in;
 }
 
 TEST_F(BasinEvaluationTest,TestSettingSecondaryRedirectEqualHeights) {
-  auto grid_params_in = new latlon_grid_params(9,9,true);
-  int* flood_next_cell_lat_index_in = new int[9*9];
-  std::fill_n(flood_next_cell_lat_index_in,9*9,-1);
-  int* flood_next_cell_lon_index_in = new int[9*9];
-  std::fill_n(flood_next_cell_lon_index_in,9*9,-1);
-  int* connect_next_cell_lat_index_in = new int[9*9];
-  std::fill_n(connect_next_cell_lat_index_in,9*9,-1);
-  int* connect_next_cell_lon_index_in = new int[9*9];
-  std::fill_n(connect_next_cell_lon_index_in,9*9,-1);
-  int* flood_redirect_lat_index_in = new int[9*9];
-  std::fill_n(flood_redirect_lat_index_in,9*9,-1);
-  int* flood_redirect_lon_index_in = new int[9*9];
-  std::fill_n(flood_redirect_lon_index_in,9*9,-1);
-  int* connect_redirect_lat_index_in = new int[9*9];
-  std::fill_n(connect_redirect_lat_index_in,9*9,-1);
-  int* connect_redirect_lon_index_in = new int[9*9];
-  std::fill_n(connect_redirect_lon_index_in,9*9,-1);
-  bool* requires_flood_redirect_indices_in = new bool[9*9];
-  std::fill_n(requires_flood_redirect_indices_in,9*9,false);
-  bool* requires_connect_redirect_indices_in = new bool[9*9];
-  std::fill_n(requires_connect_redirect_indices_in,9*9,false);
-  double* raw_orography_in = new double[9*9];
-  std::fill_n(raw_orography_in,9*9,10.0);
-  double* corrected_orography_in = new double[9*9];
-  std::fill_n(corrected_orography_in,9*9,10.0);
-  int* flood_next_cell_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,7,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* flood_next_cell_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,5,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_next_cell_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_next_cell_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* flood_redirect_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,7,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* flood_redirect_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,5,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  bool* requires_flood_redirect_indices_expected_out = new bool[9*9]
-                                     {false,false,false, false, true,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false};
-  bool* requires_connect_redirect_indices_expected_out = new bool[9*9]
-                                     {false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false};
-  coords* new_center_coords_in = new latlon_coords(7,5);
-  coords* center_coords_in = new latlon_coords(5,1);
-  coords* previous_filled_cell_coords_in = new latlon_coords(0,4);
-  height_types previous_filled_cell_height_type_in = flood_height;
-  auto basin_eval = latlon_basin_evaluation_algorithm();
-  basin_eval.test_set_secondary_redirect(flood_next_cell_lat_index_in,flood_next_cell_lon_index_in,
-                                         connect_next_cell_lat_index_in,connect_next_cell_lon_index_in,
-                                         flood_redirect_lat_index_in,
-                                         flood_redirect_lon_index_in,
-                                         connect_redirect_lat_index_in,
-                                         connect_redirect_lon_index_in,
-                                         requires_flood_redirect_indices_in,
-                                         requires_connect_redirect_indices_in,
-                                         raw_orography_in,
-                                         corrected_orography_in,new_center_coords_in,
-                                         center_coords_in,previous_filled_cell_coords_in,
-                                         previous_filled_cell_height_type_in,
-                                         grid_params_in);
-  EXPECT_TRUE(field<int>(flood_next_cell_lat_index_in,grid_params_in)
-              == field<int>(flood_next_cell_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_next_cell_lon_index_in,grid_params_in)
-              == field<int>(flood_next_cell_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_next_cell_lat_index_in,grid_params_in)
-              == field<int>(connect_next_cell_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_next_cell_lon_index_in,grid_params_in)
-              == field<int>(connect_next_cell_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(requires_flood_redirect_indices_in,grid_params_in)
-              == field<bool>(requires_flood_redirect_indices_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(requires_connect_redirect_indices_in,grid_params_in)
-              == field<bool>(requires_connect_redirect_indices_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lat_index_in,grid_params_in)
-              == field<int>(flood_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lon_index_in,grid_params_in)
-              == field<int>(flood_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lat_index_in,grid_params_in)
-              == field<int>(connect_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lon_index_in,grid_params_in)
-              == field<int>(connect_redirect_lon_index_expected_out,grid_params_in));
-  delete grid_params_in;
-  delete[] flood_next_cell_lat_index_in; delete[] flood_next_cell_lon_index_in;
-  delete[] connect_next_cell_lat_index_in; delete[] connect_next_cell_lon_index_in;
-  delete[] flood_redirect_lat_index_in; delete[] flood_redirect_lon_index_in;
-  delete[] connect_redirect_lat_index_in; delete[] connect_redirect_lon_index_in;
-  delete[] requires_flood_redirect_indices_in;
-  delete[] requires_connect_redirect_indices_in;
-  delete[] raw_orography_in; delete[] corrected_orography_in;
-  delete[] flood_next_cell_lat_index_expected_out;
-  delete[] flood_next_cell_lon_index_expected_out;
-  delete[] connect_next_cell_lat_index_expected_out;
-  delete[] connect_next_cell_lon_index_expected_out;
-  delete[] flood_redirect_lat_index_expected_out;
-  delete[] flood_redirect_lon_index_expected_out;
-  delete[] connect_redirect_lat_index_expected_out;
-  delete[] connect_redirect_lon_index_expected_out;
-  delete[] requires_flood_redirect_indices_expected_out;
-  delete[] requires_connect_redirect_indices_expected_out;
-  delete new_center_coords_in; delete center_coords_in;
-  delete previous_filled_cell_coords_in;
+  EXPECT_TRUE(false);
+//   auto grid_params_in = new latlon_grid_params(9,9,true);
+//   int* flood_next_cell_lat_index_in = new int[9*9];
+//   std::fill_n(flood_next_cell_lat_index_in,9*9,-1);
+//   int* flood_next_cell_lon_index_in = new int[9*9];
+//   std::fill_n(flood_next_cell_lon_index_in,9*9,-1);
+//   int* connect_next_cell_lat_index_in = new int[9*9];
+//   std::fill_n(connect_next_cell_lat_index_in,9*9,-1);
+//   int* connect_next_cell_lon_index_in = new int[9*9];
+//   std::fill_n(connect_next_cell_lon_index_in,9*9,-1);
+//   int* flood_redirect_lat_index_in = new int[9*9];
+//   std::fill_n(flood_redirect_lat_index_in,9*9,-1);
+//   int* flood_redirect_lon_index_in = new int[9*9];
+//   std::fill_n(flood_redirect_lon_index_in,9*9,-1);
+//   int* connect_redirect_lat_index_in = new int[9*9];
+//   std::fill_n(connect_redirect_lat_index_in,9*9,-1);
+//   int* connect_redirect_lon_index_in = new int[9*9];
+//   std::fill_n(connect_redirect_lon_index_in,9*9,-1);
+//   bool* requires_flood_redirect_indices_in = new bool[9*9];
+//   std::fill_n(requires_flood_redirect_indices_in,9*9,false);
+//   bool* requires_connect_redirect_indices_in = new bool[9*9];
+//   std::fill_n(requires_connect_redirect_indices_in,9*9,false);
+//   double* raw_orography_in = new double[9*9];
+//   std::fill_n(raw_orography_in,9*9,10.0);
+//   double* corrected_orography_in = new double[9*9];
+//   std::fill_n(corrected_orography_in,9*9,10.0);
+//   int* flood_next_cell_lat_index_expected_out = new int[9*9]
+//                                               {-1,-1,-1, -1,7,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
+//   int* flood_next_cell_lon_index_expected_out = new int[9*9]
+//                                               {-1,-1,-1, -1,5,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
+//   int* connect_next_cell_lat_index_expected_out = new int[9*9]
+//                                               {-1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
+//   int* connect_next_cell_lon_index_expected_out = new int[9*9]
+//                                               {-1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
+//   int* flood_redirect_lat_index_expected_out = new int[9*9]
+//                                               {-1,-1,-1, -1,7,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
+//   int* flood_redirect_lon_index_expected_out = new int[9*9]
+//                                               {-1,-1,-1, -1,5,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
+//   int* connect_redirect_lat_index_expected_out = new int[9*9]
+//                                               {-1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
+//   int* connect_redirect_lon_index_expected_out = new int[9*9]
+//                                               {-1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
+//   bool* requires_flood_redirect_indices_expected_out = new bool[9*9]
+//                                      {false,false,false, false, true,false, false,false,false,
+//                                       false,false,false, false,false,false, false,false,false,
+//                                       false,false,false, false,false,false, false,false,false,
+// //
+//                                       false,false,false, false,false,false, false,false,false,
+//                                       false,false,false, false,false,false, false,false,false,
+//                                       false,false,false, false,false,false, false,false,false,
+// //
+//                                       false,false,false, false,false,false, false,false,false,
+//                                       false,false,false, false,false,false, false,false,false,
+//                                       false,false,false, false,false,false, false,false,false};
+//   bool* requires_connect_redirect_indices_expected_out = new bool[9*9]
+//                                      {false,false,false, false,false,false, false,false,false,
+//                                       false,false,false, false,false,false, false,false,false,
+//                                       false,false,false, false,false,false, false,false,false,
+// //
+//                                       false,false,false, false,false,false, false,false,false,
+//                                       false,false,false, false,false,false, false,false,false,
+//                                       false,false,false, false,false,false, false,false,false,
+// //
+//                                       false,false,false, false,false,false, false,false,false,
+//                                       false,false,false, false,false,false, false,false,false,
+//                                       false,false,false, false,false,false, false,false,false};
+//   coords* new_center_coords_in = new latlon_coords(7,5);
+//   coords* center_coords_in = new latlon_coords(5,1);
+//   coords* previous_filled_cell_coords_in = new latlon_coords(0,4);
+//   height_types previous_filled_cell_height_type_in = flood_height;
+//   auto basin_eval = latlon_basin_evaluation_algorithm();
+//   basin_eval.test_set_secondary_redirect(flood_next_cell_lat_index_in,flood_next_cell_lon_index_in,
+//                                          connect_next_cell_lat_index_in,connect_next_cell_lon_index_in,
+//                                          requires_flood_redirect_indices_in,
+//                                          requires_connect_redirect_indices_in,
+//                                          raw_orography_in,
+//                                          corrected_orography_in,new_center_coords_in,
+//                                          center_coords_in,previous_filled_cell_coords_in,
+//                                          previous_filled_cell_height_type_in,
+//                                          grid_params_in);
+//   EXPECT_TRUE(field<int>(flood_next_cell_lat_index_in,grid_params_in)
+//               == field<int>(flood_next_cell_lat_index_expected_out,grid_params_in));
+//   EXPECT_TRUE(field<int>(flood_next_cell_lon_index_in,grid_params_in)
+//               == field<int>(flood_next_cell_lon_index_expected_out,grid_params_in));
+//   EXPECT_TRUE(field<int>(connect_next_cell_lat_index_in,grid_params_in)
+//               == field<int>(connect_next_cell_lat_index_expected_out,grid_params_in));
+//   EXPECT_TRUE(field<int>(connect_next_cell_lon_index_in,grid_params_in)
+//               == field<int>(connect_next_cell_lon_index_expected_out,grid_params_in));
+//   EXPECT_TRUE(field<bool>(requires_flood_redirect_indices_in,grid_params_in)
+//               == field<bool>(requires_flood_redirect_indices_expected_out,grid_params_in));
+//   EXPECT_TRUE(field<bool>(requires_connect_redirect_indices_in,grid_params_in)
+//               == field<bool>(requires_connect_redirect_indices_expected_out,grid_params_in));
+//   EXPECT_TRUE(field<int>(flood_redirect_lat_index_in,grid_params_in)
+//               == field<int>(flood_redirect_lat_index_expected_out,grid_params_in));
+//   EXPECT_TRUE(field<int>(flood_redirect_lon_index_in,grid_params_in)
+//               == field<int>(flood_redirect_lon_index_expected_out,grid_params_in));
+//   EXPECT_TRUE(field<int>(connect_redirect_lat_index_in,grid_params_in)
+//               == field<int>(connect_redirect_lat_index_expected_out,grid_params_in));
+//   EXPECT_TRUE(field<int>(connect_redirect_lon_index_in,grid_params_in)
+//               == field<int>(connect_redirect_lon_index_expected_out,grid_params_in));
+//   delete grid_params_in;
+//   delete[] flood_next_cell_lat_index_in; delete[] flood_next_cell_lon_index_in;
+//   delete[] connect_next_cell_lat_index_in; delete[] connect_next_cell_lon_index_in;
+//   delete[] flood_redirect_lat_index_in; delete[] flood_redirect_lon_index_in;
+//   delete[] connect_redirect_lat_index_in; delete[] connect_redirect_lon_index_in;
+//   delete[] requires_flood_redirect_indices_in;
+//   delete[] requires_connect_redirect_indices_in;
+//   delete[] raw_orography_in; delete[] corrected_orography_in;
+//   delete[] flood_next_cell_lat_index_expected_out;
+//   delete[] flood_next_cell_lon_index_expected_out;
+//   delete[] connect_next_cell_lat_index_expected_out;
+//   delete[] connect_next_cell_lon_index_expected_out;
+//   delete[] flood_redirect_lat_index_expected_out;
+//   delete[] flood_redirect_lon_index_expected_out;
+//   delete[] connect_redirect_lat_index_expected_out;
+//   delete[] connect_redirect_lon_index_expected_out;
+//   delete[] requires_flood_redirect_indices_expected_out;
+//   delete[] requires_connect_redirect_indices_expected_out;
+//   delete new_center_coords_in; delete center_coords_in;
+//   delete previous_filled_cell_coords_in;
 }
 
 TEST_F(BasinEvaluationTest,TestSettingSecondaryRedirectCorrectedHigher) {
-  auto grid_params_in = new latlon_grid_params(9,9,true);
-  int* flood_next_cell_lat_index_in = new int[9*9];
-  std::fill_n(flood_next_cell_lat_index_in,9*9,-1);
-  int* flood_next_cell_lon_index_in = new int[9*9];
-  std::fill_n(flood_next_cell_lon_index_in,9*9,-1);
-  int* connect_next_cell_lat_index_in = new int[9*9];
-  std::fill_n(connect_next_cell_lat_index_in,9*9,-1);
-  int* connect_next_cell_lon_index_in = new int[9*9];
-  std::fill_n(connect_next_cell_lon_index_in,9*9,-1);
-  int* flood_redirect_lat_index_in = new int[9*9];
-  std::fill_n(flood_redirect_lat_index_in,9*9,-1);
-  int* flood_redirect_lon_index_in = new int[9*9];
-  std::fill_n(flood_redirect_lon_index_in,9*9,-1);
-  int* connect_redirect_lat_index_in = new int[9*9];
-  std::fill_n(connect_redirect_lat_index_in,9*9,-1);
-  int* connect_redirect_lon_index_in = new int[9*9];
-  std::fill_n(connect_redirect_lon_index_in,9*9,-1);
-  bool* requires_flood_redirect_indices_in = new bool[9*9];
-  std::fill_n(requires_flood_redirect_indices_in,9*9,false);
-  bool* requires_connect_redirect_indices_in = new bool[9*9];
-  std::fill_n(requires_connect_redirect_indices_in,9*9,false);
-  double* raw_orography_in = new double[9*9];
-  std::fill_n(raw_orography_in,9*9,10.0);
-  double* corrected_orography_in = new double[9*9];
-  std::fill_n(corrected_orography_in,9*9,11.0);
-  int* flood_next_cell_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1, 3,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* flood_next_cell_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1, 2,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_next_cell_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_next_cell_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* flood_redirect_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,3,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* flood_redirect_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,2,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lat_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lon_index_expected_out = new int[9*9]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1};
-  bool* requires_flood_redirect_indices_expected_out = new bool[9*9]
-                                     {false,false,false, false, true,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false};
-  bool* requires_connect_redirect_indices_expected_out = new bool[9*9]
-                                     {false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false};
-  coords* new_center_coords_in = new latlon_coords(3,2);
-  coords* center_coords_in = new latlon_coords(5,1);
-  coords* previous_filled_cell_coords_in = new latlon_coords(0,4);
-  height_types previous_filled_cell_height_type_in = flood_height;
-  auto basin_eval = latlon_basin_evaluation_algorithm();
-  basin_eval.test_set_secondary_redirect(flood_next_cell_lat_index_in,flood_next_cell_lon_index_in,
-                                         connect_next_cell_lat_index_in,connect_next_cell_lon_index_in,
-                                         flood_redirect_lat_index_in,
-                                         flood_redirect_lon_index_in,
-                                         connect_redirect_lat_index_in,
-                                         connect_redirect_lon_index_in,
-                                         requires_flood_redirect_indices_in,
-                                         requires_connect_redirect_indices_in,
-                                         raw_orography_in,
-                                         corrected_orography_in,new_center_coords_in,
-                                         center_coords_in,previous_filled_cell_coords_in,
-                                         previous_filled_cell_height_type_in,
-                                         grid_params_in);
-  EXPECT_TRUE(field<int>(flood_next_cell_lat_index_in,grid_params_in)
-              == field<int>(flood_next_cell_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_next_cell_lon_index_in,grid_params_in)
-              == field<int>(flood_next_cell_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_next_cell_lat_index_in,grid_params_in)
-              == field<int>(connect_next_cell_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_next_cell_lon_index_in,grid_params_in)
-              == field<int>(connect_next_cell_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(requires_flood_redirect_indices_in,grid_params_in)
-              == field<bool>(requires_flood_redirect_indices_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(requires_connect_redirect_indices_in,grid_params_in)
-              == field<bool>(requires_connect_redirect_indices_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lat_index_in,grid_params_in)
-              == field<int>(flood_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lon_index_in,grid_params_in)
-              == field<int>(flood_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lat_index_in,grid_params_in)
-              == field<int>(connect_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lon_index_in,grid_params_in)
-              == field<int>(connect_redirect_lon_index_expected_out,grid_params_in));
-  delete grid_params_in;
-  delete[] flood_next_cell_lat_index_in; delete[] flood_next_cell_lon_index_in;
-  delete[] connect_next_cell_lat_index_in; delete[] connect_next_cell_lon_index_in;
-  delete[] flood_redirect_lat_index_in; delete[] flood_redirect_lon_index_in;
-  delete[] connect_redirect_lat_index_in; delete[] connect_redirect_lon_index_in;
-  delete[] requires_flood_redirect_indices_in;
-  delete[] requires_connect_redirect_indices_in;
-  delete[] raw_orography_in; delete[] corrected_orography_in;
-  delete[] flood_next_cell_lat_index_expected_out;
-  delete[] flood_next_cell_lon_index_expected_out;
-  delete[] connect_next_cell_lat_index_expected_out;
-  delete[] connect_next_cell_lon_index_expected_out;
-  delete[] flood_redirect_lat_index_expected_out;
-  delete[] flood_redirect_lon_index_expected_out;
-  delete[] connect_redirect_lat_index_expected_out;
-  delete[] connect_redirect_lon_index_expected_out;
-  delete[] requires_flood_redirect_indices_expected_out;
-  delete[] requires_connect_redirect_indices_expected_out;
-  delete new_center_coords_in; delete center_coords_in;
-  delete previous_filled_cell_coords_in;
+  EXPECT_TRUE(false);
+//   auto grid_params_in = new latlon_grid_params(9,9,true);
+//   int* flood_next_cell_lat_index_in = new int[9*9];
+//   std::fill_n(flood_next_cell_lat_index_in,9*9,-1);
+//   int* flood_next_cell_lon_index_in = new int[9*9];
+//   std::fill_n(flood_next_cell_lon_index_in,9*9,-1);
+//   int* connect_next_cell_lat_index_in = new int[9*9];
+//   std::fill_n(connect_next_cell_lat_index_in,9*9,-1);
+//   int* connect_next_cell_lon_index_in = new int[9*9];
+//   std::fill_n(connect_next_cell_lon_index_in,9*9,-1);
+//   int* flood_redirect_lat_index_in = new int[9*9];
+//   std::fill_n(flood_redirect_lat_index_in,9*9,-1);
+//   int* flood_redirect_lon_index_in = new int[9*9];
+//   std::fill_n(flood_redirect_lon_index_in,9*9,-1);
+//   int* connect_redirect_lat_index_in = new int[9*9];
+//   std::fill_n(connect_redirect_lat_index_in,9*9,-1);
+//   int* connect_redirect_lon_index_in = new int[9*9];
+//   std::fill_n(connect_redirect_lon_index_in,9*9,-1);
+//   bool* requires_flood_redirect_indices_in = new bool[9*9];
+//   std::fill_n(requires_flood_redirect_indices_in,9*9,false);
+//   bool* requires_connect_redirect_indices_in = new bool[9*9];
+//   std::fill_n(requires_connect_redirect_indices_in,9*9,false);
+//   double* raw_orography_in = new double[9*9];
+//   std::fill_n(raw_orography_in,9*9,10.0);
+//   double* corrected_orography_in = new double[9*9];
+//   std::fill_n(corrected_orography_in,9*9,11.0);
+//   int* flood_next_cell_lat_index_expected_out = new int[9*9]
+//                                               {-1,-1,-1, -1, 3,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
+//   int* flood_next_cell_lon_index_expected_out = new int[9*9]
+//                                               {-1,-1,-1, -1, 2,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
+//   int* connect_next_cell_lat_index_expected_out = new int[9*9]
+//                                               {-1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
+//   int* connect_next_cell_lon_index_expected_out = new int[9*9]
+//                                               {-1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
+//   int* flood_redirect_lat_index_expected_out = new int[9*9]
+//                                               {-1,-1,-1, -1,3,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
+//   int* flood_redirect_lon_index_expected_out = new int[9*9]
+//                                               {-1,-1,-1, -1,2,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
+//   int* connect_redirect_lat_index_expected_out = new int[9*9]
+//                                               {-1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
+//   int* connect_redirect_lon_index_expected_out = new int[9*9]
+//                                               {-1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+// //
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//                                                -1,-1,-1,  -1,-1,-1, -1,-1,-1};
+//   bool* requires_flood_redirect_indices_expected_out = new bool[9*9]
+//                                      {false,false,false, false, true,false, false,false,false,
+//                                       false,false,false, false,false,false, false,false,false,
+//                                       false,false,false, false,false,false, false,false,false,
+// //
+//                                       false,false,false, false,false,false, false,false,false,
+//                                       false,false,false, false,false,false, false,false,false,
+//                                       false,false,false, false,false,false, false,false,false,
+// //
+//                                       false,false,false, false,false,false, false,false,false,
+//                                       false,false,false, false,false,false, false,false,false,
+//                                       false,false,false, false,false,false, false,false,false};
+//   bool* requires_connect_redirect_indices_expected_out = new bool[9*9]
+//                                      {false,false,false, false,false,false, false,false,false,
+//                                       false,false,false, false,false,false, false,false,false,
+//                                       false,false,false, false,false,false, false,false,false,
+// //
+//                                       false,false,false, false,false,false, false,false,false,
+//                                       false,false,false, false,false,false, false,false,false,
+//                                       false,false,false, false,false,false, false,false,false,
+// //
+//                                       false,false,false, false,false,false, false,false,false,
+//                                       false,false,false, false,false,false, false,false,false,
+//                                       false,false,false, false,false,false, false,false,false};
+//   coords* new_center_coords_in = new latlon_coords(3,2);
+//   coords* center_coords_in = new latlon_coords(5,1);
+//   coords* previous_filled_cell_coords_in = new latlon_coords(0,4);
+//   height_types previous_filled_cell_height_type_in = flood_height;
+//   auto basin_eval = latlon_basin_evaluation_algorithm();
+//   basin_eval.test_set_secondary_redirect(flood_next_cell_lat_index_in,flood_next_cell_lon_index_in,
+//                                          connect_next_cell_lat_index_in,connect_next_cell_lon_index_in,
+//                                          requires_flood_redirect_indices_in,
+//                                          requires_connect_redirect_indices_in,
+//                                          raw_orography_in,
+//                                          corrected_orography_in,new_center_coords_in,
+//                                          center_coords_in,previous_filled_cell_coords_in,
+//                                          previous_filled_cell_height_type_in,
+//                                          grid_params_in);
+//   EXPECT_TRUE(field<int>(flood_next_cell_lat_index_in,grid_params_in)
+//               == field<int>(flood_next_cell_lat_index_expected_out,grid_params_in));
+//   EXPECT_TRUE(field<int>(flood_next_cell_lon_index_in,grid_params_in)
+//               == field<int>(flood_next_cell_lon_index_expected_out,grid_params_in));
+//   EXPECT_TRUE(field<int>(connect_next_cell_lat_index_in,grid_params_in)
+//               == field<int>(connect_next_cell_lat_index_expected_out,grid_params_in));
+//   EXPECT_TRUE(field<int>(connect_next_cell_lon_index_in,grid_params_in)
+//               == field<int>(connect_next_cell_lon_index_expected_out,grid_params_in));
+//   EXPECT_TRUE(field<bool>(requires_flood_redirect_indices_in,grid_params_in)
+//               == field<bool>(requires_flood_redirect_indices_expected_out,grid_params_in));
+//   EXPECT_TRUE(field<bool>(requires_connect_redirect_indices_in,grid_params_in)
+//               == field<bool>(requires_connect_redirect_indices_expected_out,grid_params_in));
+//   EXPECT_TRUE(field<int>(flood_redirect_lat_index_in,grid_params_in)
+//               == field<int>(flood_redirect_lat_index_expected_out,grid_params_in));
+//   EXPECT_TRUE(field<int>(flood_redirect_lon_index_in,grid_params_in)
+//               == field<int>(flood_redirect_lon_index_expected_out,grid_params_in));
+//   EXPECT_TRUE(field<int>(connect_redirect_lat_index_in,grid_params_in)
+//               == field<int>(connect_redirect_lat_index_expected_out,grid_params_in));
+//   EXPECT_TRUE(field<int>(connect_redirect_lon_index_in,grid_params_in)
+//               == field<int>(connect_redirect_lon_index_expected_out,grid_params_in));
+//   delete grid_params_in;
+//   delete[] flood_next_cell_lat_index_in; delete[] flood_next_cell_lon_index_in;
+//   delete[] connect_next_cell_lat_index_in; delete[] connect_next_cell_lon_index_in;
+//   delete[] flood_redirect_lat_index_in; delete[] flood_redirect_lon_index_in;
+//   delete[] connect_redirect_lat_index_in; delete[] connect_redirect_lon_index_in;
+//   delete[] requires_flood_redirect_indices_in;
+//   delete[] requires_connect_redirect_indices_in;
+//   delete[] raw_orography_in; delete[] corrected_orography_in;
+//   delete[] flood_next_cell_lat_index_expected_out;
+//   delete[] flood_next_cell_lon_index_expected_out;
+//   delete[] connect_next_cell_lat_index_expected_out;
+//   delete[] connect_next_cell_lon_index_expected_out;
+//   delete[] flood_redirect_lat_index_expected_out;
+//   delete[] flood_redirect_lon_index_expected_out;
+//   delete[] connect_redirect_lat_index_expected_out;
+//   delete[] connect_redirect_lon_index_expected_out;
+//   delete[] requires_flood_redirect_indices_expected_out;
+//   delete[] requires_connect_redirect_indices_expected_out;
+//   delete new_center_coords_in; delete center_coords_in;
+//   delete previous_filled_cell_coords_in;
 }
 
 TEST_F(BasinEvaluationTest,TestSettingRemainingRedirects) {
   auto grid_params_in = new latlon_grid_params(12,12,false);
   auto coarse_grid_params_in = new latlon_grid_params(4,4,false);
-  int* flood_redirect_lat_index_in = new int[12*12]
-                                     {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1,  2,-1,-1,
-                                     -1,-1,-1, -1, 2,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1, 2,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1,  5,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1, 9,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* flood_redirect_lon_index_in = new int[12*12]
-                                     {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, 11,-1,-1,
-                                     -1,-1,-1, -1, 3,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1, 1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1,  2,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,11,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lat_index_in = new int[12*12];
-  std::fill_n(connect_redirect_lat_index_in,12*12,-1);
-  int* connect_redirect_lon_index_in = new int[12*12];
-  std::fill_n(connect_redirect_lon_index_in,12*12,-1);
-  bool* flood_local_redirect_in = new bool[12*12];
-  std::fill_n(flood_local_redirect_in,12*12,false);
-  bool* connect_local_redirect_in = new bool[12*12];
-  std::fill_n(connect_local_redirect_in,12*12,false);
   int* prior_fine_catchments_in = new int[12*12]
                                     {21,21,21, 21,21,21, 24,24,24, 24,24,24,
                                      21,21,21, 21,21,24, 24,24,24, 24,24,24,
@@ -10159,7 +7736,7 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirects) {
   double*  prior_fine_rdirs_in = new double[12*12]
                                     {-1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0,
                                      -1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0,
-                                     -1.0,-1.0,-1.0,  1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0,-1.0, 2.0,
+                                     -1.0, 0.0,-1.0,  1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0,-1.0, 2.0,
 //
                                      -1.0, 8.0, 2.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0,-1.0, 2.0,
                                       2.0, 4.0, 2.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0,-1.0, 1.0,
@@ -10206,10 +7783,26 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirects) {
                                      false,false,false, false,false,false, false,false,false, false,false,false};
   int* flood_next_cell_lat_index_in = new int[12*12]
                                     {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1,  5,-1,-1,
-                                     -1,-1,-1, -1, 7,-1, -1,-1,-1, -1,-1,-1,
+                                     -1,-1,-1, -1,-1,-1, -1,-1,-1,  2,-1,-1,
+                                     -1,-1,-1, -1, 2,-1, -1,-1,-1, -1,-1,-1,
 //
-                                     -1, 6,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                     -1, 2,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//
+                                     -1,-1,-1, -1,-1,-1,  5,-1,-1, -1,-1,-1,
+                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
+//
+                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1, 9,-1,
+                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
+  int* flood_next_cell_lon_index_in = new int[12*12]
+                                    {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
+                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, 11,-1,-1,
+                                     -1,-1,-1, -1, 3,-1, -1,-1,-1, -1,-1,-1,
+//
+                                     -1, 1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
 //
@@ -10217,23 +7810,7 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirects) {
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
 //
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1, 2,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* flood_next_cell_lon_index_in = new int[12*12]
-                                    {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1,  1,-1,-1,
-                                     -1,-1,-1, -1, 4,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1, 2,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1,  7,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,14,-1,
+                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,11,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
   int* connect_next_cell_lat_index_in = new int[12*12]
@@ -10287,7 +7864,7 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirects) {
   int* flood_redirect_lon_index_expected_out = new int[12*12]
                                     {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1,  3,-1,-1,
-                                     -1,-1,-1, -1, 0,-1, -1,-1,-1, -1,-1,-1,
+-                                    -1,-1,-1, -1, 0,-1, -1,-1,-1, -1,-1,-1,
 //
                                      -1, 1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
@@ -10297,7 +7874,7 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirects) {
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
 //
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1, 3,-1,
+                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1, 3,-1
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
   int* connect_redirect_lat_index_expected_out = new int[12*12]
@@ -10393,37 +7970,17 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirects) {
                                           flood_next_cell_lon_index_in,
                                           connect_next_cell_lat_index_in,
                                           connect_next_cell_lon_index_in,
-                                          flood_redirect_lat_index_in,
-                                          flood_redirect_lon_index_in,
-                                          connect_redirect_lat_index_in,
-                                          connect_redirect_lon_index_in,
-                                          flood_local_redirect_in,
-                                          connect_local_redirect_in,
                                           grid_params_in,
                                           coarse_grid_params_in);
-  EXPECT_TRUE(field<int>(flood_redirect_lat_index_in,grid_params_in)
-              == field<int>(flood_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lon_index_in,grid_params_in)
-              == field<int>(flood_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lat_index_in,grid_params_in)
-              == field<int>(connect_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lon_index_in,grid_params_in)
-              == field<int>(connect_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(flood_local_redirect_in,grid_params_in)
-              == field<bool>(flood_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(connect_local_redirect_in,grid_params_in)
-              == field<bool>(connect_local_redirect_expected_out,grid_params_in));
+  merges_and_redirects* merges_and_redirects_out =
+    basin_eval.get_basin_merges_and_redirects();
+  cout << *merges_and_redirects_out << endl;
+  EXPECT_TRUE(false);
   delete grid_params_in; delete coarse_grid_params_in;
-  delete[] flood_redirect_lat_index_in; delete[] flood_redirect_lat_index_expected_out;
-  delete[] flood_redirect_lon_index_in; delete[] flood_redirect_lon_index_expected_out;
-  delete[] connect_redirect_lat_index_in; delete[] connect_redirect_lat_index_expected_out;
-  delete[] connect_redirect_lon_index_in; delete[] connect_redirect_lon_index_expected_out;
-  delete[] flood_local_redirect_in; delete[] connect_local_redirect_in;
-  delete[] flood_local_redirect_expected_out; delete[] connect_local_redirect_expected_out;
-  delete[] flood_next_cell_lat_index_in; delete[] flood_next_cell_lon_index_in;
-  delete[] connect_next_cell_lat_index_in; delete[] connect_next_cell_lon_index_in;
-  delete[] coarse_catchment_nums_in; delete[] prior_fine_catchments_in;
-  delete[] basin_catchment_numbers_in; delete[] prior_fine_rdirs_in;
+  delete[] flood_next_cell_lon_index_in;
+  delete[] connect_next_cell_lon_index_in;
+  delete[] prior_fine_catchments_in;
+  delete[] prior_fine_rdirs_in;
   delete[] requires_flood_redirect_indices_in; delete[] requires_connect_redirect_indices_in;
   delete[] prior_coarse_rdirs_in;
   while (! basin_catchment_centers_in.empty()){
@@ -10436,7 +7993,7 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirects) {
 TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsTwo) {
   auto grid_params_in = new latlon_grid_params(12,12,false);
   auto coarse_grid_params_in = new latlon_grid_params(4,4,false);
-  int* flood_redirect_lat_index_in = new int[12*12]
+  int* flood_next_cell_lat_index_in = new int[12*12]
                                     {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1,  2,-1,-1,
                                      -1,-1,-1, -1, 4,-1, -1,-1,-1, -1,-1,-1,
@@ -10452,7 +8009,7 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsTwo) {
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1, 8,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* flood_redirect_lon_index_in = new int[12*12]
+  int* flood_next_cell_lon_index_in = new int[12*12]
                                     {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, 11,-1,-1,
                                      -1,-1,-1, -1, 2,-1, -1,-1,-1, -1,-1,-1,
@@ -10468,7 +8025,7 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsTwo) {
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1, 8,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lat_index_in = new int[12*12]
+  int* connect_next_cell_lat_index_in = new int[12*12]
                                     {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1,  2,-1,-1,
                                      -1,-1,-1, -1, 4,-1, -1,-1,-1, -1,-1,-1,
@@ -10484,7 +8041,7 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsTwo) {
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1, 8,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lon_index_in = new int[12*12]
+  int* connect_next_cell_lon_index_in = new int[12*12]
                                     {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, 11,-1,-1,
                                      -1,-1,-1, -1, 2,-1, -1,-1,-1, -1,-1,-1,
@@ -10539,10 +8096,10 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsTwo) {
   double*  prior_fine_rdirs_in = new double[12*12]
                                     {-1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0,
                                      -1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0,
-                                     -1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0,
+                                     -1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0,-1.0, 0.0,
 //
                                      -1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0,
-                                     -1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0,
+                                     -1.0,-1.0, 0.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0,
                                      -1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0,
 //
                                      -1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0, -1.0,-1.0,-1.0,
@@ -10584,70 +8141,6 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsTwo) {
                                      false,false,false, false,false,false, false,false,false, false,false,false,
                                      false,false,false, false,false,false, false,false,false, false,false,false,
                                      false,false,false, false,false,false, false,false,false, false,false,false};
-  int* flood_next_cell_lat_index_in = new int[12*12]
-                                    {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1,  4,-1,-1,
-                                     -1,-1,-1, -1, 8,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1,  2,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1, 3,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* flood_next_cell_lon_index_in = new int[12*12]
-                                    {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, 17,-1,-1,
-                                     -1,-1,-1, -1, 1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1,  7,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,14,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* connect_next_cell_lat_index_in = new int[12*12]
-                                    {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1,  3,-1,-1,
-                                     -1,-1,-1, -1,18,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1,  9,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,12,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* connect_next_cell_lon_index_in = new int[12*12]
-                                    {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, 10,-1,-1,
-                                     -1,-1,-1, -1, 5,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, 12,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,18,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
   int* flood_redirect_lat_index_expected_out = new int[12*12]
                                     {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1,  1,-1,-1,
@@ -10772,33 +8265,13 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsTwo) {
                                           flood_next_cell_lon_index_in,
                                           connect_next_cell_lat_index_in,
                                           connect_next_cell_lon_index_in,
-                                          flood_redirect_lat_index_in,
-                                          flood_redirect_lon_index_in,
-                                          connect_redirect_lat_index_in,
-                                          connect_redirect_lon_index_in,
-                                          flood_local_redirect_in,
-                                          connect_local_redirect_in,
                                           grid_params_in,
                                           coarse_grid_params_in);
-  EXPECT_TRUE(field<int>(flood_redirect_lat_index_in,grid_params_in)
-              == field<int>(flood_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lon_index_in,grid_params_in)
-              == field<int>(flood_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lat_index_in,grid_params_in)
-              == field<int>(connect_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lon_index_in,grid_params_in)
-              == field<int>(connect_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(flood_local_redirect_in,grid_params_in)
-              == field<bool>(flood_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(connect_local_redirect_in,grid_params_in)
-              == field<bool>(connect_local_redirect_expected_out,grid_params_in));
+  merges_and_redirects* merges_and_redirects_out =
+    basin_eval.get_basin_merges_and_redirects();
+  cout << *merges_and_redirects_out << endl;
+  EXPECT_TRUE(false);
   delete grid_params_in; delete coarse_grid_params_in;
-  delete[] flood_redirect_lat_index_in; delete[] flood_redirect_lat_index_expected_out;
-  delete[] flood_redirect_lon_index_in; delete[] flood_redirect_lon_index_expected_out;
-  delete[] connect_redirect_lat_index_in; delete[] connect_redirect_lat_index_expected_out;
-  delete[] connect_redirect_lon_index_in; delete[] connect_redirect_lon_index_expected_out;
-  delete[] flood_local_redirect_in; delete[] connect_local_redirect_in;
-  delete[] flood_local_redirect_expected_out; delete[] connect_local_redirect_expected_out;
   delete[] flood_next_cell_lat_index_in; delete[] flood_next_cell_lon_index_in;
   delete[] connect_next_cell_lat_index_in; delete[] connect_next_cell_lon_index_in;
   delete[] coarse_catchment_nums_in; delete[] prior_fine_catchments_in;
@@ -10816,7 +8289,7 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsThree) {
   //Test defaulting to a local redirect
   auto grid_params_in = new latlon_grid_params(12,12,false);
   auto coarse_grid_params_in = new latlon_grid_params(4,4,false);
-  int* flood_redirect_lat_index_in = new int[12*12]
+  int* flood_next_cell_lat_index_in = new int[12*12]
                                     {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
@@ -10832,7 +8305,7 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsThree) {
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* flood_redirect_lon_index_in = new int[12*12]
+  int* flood_next_cell_lon_index_in = new int[12*12]
                                     {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
@@ -10848,7 +8321,7 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsThree) {
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lat_index_in = new int[12*12]
+  int* connect_next_cell_lat_index_in = new int[12*12]
                                     {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
@@ -10864,7 +8337,7 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsThree) {
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lon_index_in = new int[12*12]
+  int* connect_next_cell_lon_index_in = new int[12*12]
                                     {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
@@ -10964,166 +8437,40 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsThree) {
                                      false,false,false, false,false,false, false,false,false, false,false,false,
                                      false,false,false, false,false,false, false,false,false, false,false,false,
                                      false,false,false, false,false,false, false,false,false, false,false,false};
-  int* flood_next_cell_lat_index_in = new int[12*12]
-                                    {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* flood_next_cell_lon_index_in = new int[12*12]
-                                    {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* connect_next_cell_lat_index_in = new int[12*12]
-                                    {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-11};
-  int* connect_next_cell_lon_index_in = new int[12*12]
-                                    {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* flood_redirect_lat_index_expected_out = new int[12*12]
-                                    {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1, 1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* flood_redirect_lon_index_expected_out = new int[12*12]
-                                    {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1, 4,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lat_index_expected_out = new int[12*12]
-                                    {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lon_index_expected_out = new int[12*12]
-                                    {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  bool* flood_local_redirect_expected_out  = new bool[12*12]
-                                    {false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-//
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-//
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false, true,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-//
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false};
-  bool* connect_local_redirect_expected_out = new bool[12*12]
-                                    {false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-//
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-//
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-//
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false};
+  int flood_index = 0;
+  int connect_index = 0;
+  field<int>* connect_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  field<int>* flood_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  connect_merge_and_redirect_indices_index->set_all(-1);
+  flood_merge_and_redirect_indices_index->set_all(-1);
+  vector<collected_merge_and_redirect_indices*>*
+    connect_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<collected_merge_and_redirect_indices*>*
+    flood_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<merge_and_redirect_indices*>* primary_redirects =
+      new vector<merge_and_redirect_indices*>();
+  merge_and_redirect_indices* secondary_redirect;
+  collected_merge_and_redirect_indices* collected_indices = nullptr;
+
+  secondary_redirect =
+          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
+                                                new latlon_coords(1,4),
+                                                true);
+  collected_indices = new collected_merge_and_redirect_indices(primary_redirects,
+                                                               secondary_redirect,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(7,4)) = flood_index;
+  flood_index++;
+
+  merges_and_redirects merges_and_redirects_expected_out =
+          merges_and_redirects(connect_merge_and_redirect_indices_index,
+                               flood_merge_and_redirect_indices_index,
+                               connect_merge_and_redirect_indices_vector,
+                               flood_merge_and_redirect_indices_vector,
+                               grid_params_in);
   int* coarse_catchment_nums_in = new int[4*4]
                                      {1,2,1,1,
                                       1,2,1,1,
@@ -11150,33 +8497,15 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsThree) {
                                           flood_next_cell_lon_index_in,
                                           connect_next_cell_lat_index_in,
                                           connect_next_cell_lon_index_in,
-                                          flood_redirect_lat_index_in,
-                                          flood_redirect_lon_index_in,
-                                          connect_redirect_lat_index_in,
-                                          connect_redirect_lon_index_in,
-                                          flood_local_redirect_in,
-                                          connect_local_redirect_in,
                                           grid_params_in,
                                           coarse_grid_params_in);
-  EXPECT_TRUE(field<int>(flood_redirect_lat_index_in,grid_params_in)
-              == field<int>(flood_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lon_index_in,grid_params_in)
-              == field<int>(flood_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lat_index_in,grid_params_in)
-              == field<int>(connect_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lon_index_in,grid_params_in)
-              == field<int>(connect_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(flood_local_redirect_in,grid_params_in)
-              == field<bool>(flood_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(connect_local_redirect_in,grid_params_in)
-              == field<bool>(connect_local_redirect_expected_out,grid_params_in));
+  merges_and_redirects* merges_and_redirects_out =
+    basin_eval.get_basin_merges_and_redirects();
+  EXPECT_TRUE(merges_and_redirects_expected_out ==
+              *merges_and_redirects_out);
+  cout << merges_and_redirects_expected_out << endl;
+  cout << *merges_and_redirects_out << endl;
   delete grid_params_in; delete coarse_grid_params_in;
-  delete[] flood_redirect_lat_index_in; delete[] flood_redirect_lat_index_expected_out;
-  delete[] flood_redirect_lon_index_in; delete[] flood_redirect_lon_index_expected_out;
-  delete[] connect_redirect_lat_index_in; delete[] connect_redirect_lat_index_expected_out;
-  delete[] connect_redirect_lon_index_in; delete[] connect_redirect_lon_index_expected_out;
-  delete[] flood_local_redirect_in; delete[] connect_local_redirect_in;
-  delete[] flood_local_redirect_expected_out; delete[] connect_local_redirect_expected_out;
   delete[] flood_next_cell_lat_index_in; delete[] flood_next_cell_lon_index_in;
   delete[] connect_next_cell_lat_index_in; delete[] connect_next_cell_lon_index_in;
   delete[] coarse_catchment_nums_in; delete[] prior_fine_catchments_in;
@@ -11195,7 +8524,7 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsFour) {
   //Test defaulting to a local redirect - control case
   auto grid_params_in = new latlon_grid_params(12,12,false);
   auto coarse_grid_params_in = new latlon_grid_params(4,4,false);
-  int* flood_redirect_lat_index_in = new int[12*12]
+  int* flood_next_cell_lat_index_in = new int[12*12]
                                     {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
@@ -11211,7 +8540,7 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsFour) {
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* flood_redirect_lon_index_in = new int[12*12]
+  int* flood_next_cell_lon_index_in = new int[12*12]
                                     {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
@@ -11227,7 +8556,7 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsFour) {
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lat_index_in = new int[12*12]
+  int* connect_next_cell_lat_index_in = new int[12*12]
                                     {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
@@ -11243,7 +8572,7 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsFour) {
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lon_index_in = new int[12*12]
+  int* connect_next_cell_lon_index_in = new int[12*12]
                                     {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
@@ -11343,166 +8672,40 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsFour) {
                                      false,false,false, false,false,false, false,false,false, false,false,false,
                                      false,false,false, false,false,false, false,false,false, false,false,false,
                                      false,false,false, false,false,false, false,false,false, false,false,false};
-  int* flood_next_cell_lat_index_in = new int[12*12]
-                                    {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* flood_next_cell_lon_index_in = new int[12*12]
-                                    {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* connect_next_cell_lat_index_in = new int[12*12]
-                                    {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-11};
-  int* connect_next_cell_lon_index_in = new int[12*12]
-                                    {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* flood_redirect_lat_index_expected_out = new int[12*12]
-                                    {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1, 1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* flood_redirect_lon_index_expected_out = new int[12*12]
-                                    {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1, 1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lat_index_expected_out = new int[12*12]
-                                    {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lon_index_expected_out = new int[12*12]
-                                    {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  bool* flood_local_redirect_expected_out  = new bool[12*12]
-                                    {false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-//
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-//
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-//
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false};
-  bool* connect_local_redirect_expected_out = new bool[12*12]
-                                    {false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-//
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-//
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-//
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false};
+  int flood_index = 0;
+  int connect_index = 0;
+  field<int>* connect_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  field<int>* flood_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  connect_merge_and_redirect_indices_index->set_all(-1);
+  flood_merge_and_redirect_indices_index->set_all(-1);
+  vector<collected_merge_and_redirect_indices*>*
+    connect_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<collected_merge_and_redirect_indices*>*
+    flood_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<merge_and_redirect_indices*>* primary_redirects =
+      new vector<merge_and_redirect_indices*>();
+  merge_and_redirect_indices* secondary_redirect;
+  collected_merge_and_redirect_indices* collected_indices = nullptr;
+
+  secondary_redirect =
+          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
+                                                new latlon_coords(1,1),
+                                                false);
+  collected_indices = new collected_merge_and_redirect_indices(primary_redirects,
+                                                               secondary_redirect,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(7,4)) = flood_index;
+  flood_index++;
+
+  merges_and_redirects merges_and_redirects_expected_out =
+          merges_and_redirects(connect_merge_and_redirect_indices_index,
+                               flood_merge_and_redirect_indices_index,
+                               connect_merge_and_redirect_indices_vector,
+                               flood_merge_and_redirect_indices_vector,
+                               grid_params_in);
   int* coarse_catchment_nums_in = new int[4*4]
                                      {1,2,1,1,
                                       1,2,1,1,
@@ -11529,33 +8732,13 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsFour) {
                                           flood_next_cell_lon_index_in,
                                           connect_next_cell_lat_index_in,
                                           connect_next_cell_lon_index_in,
-                                          flood_redirect_lat_index_in,
-                                          flood_redirect_lon_index_in,
-                                          connect_redirect_lat_index_in,
-                                          connect_redirect_lon_index_in,
-                                          flood_local_redirect_in,
-                                          connect_local_redirect_in,
                                           grid_params_in,
                                           coarse_grid_params_in);
-  EXPECT_TRUE(field<int>(flood_redirect_lat_index_in,grid_params_in)
-              == field<int>(flood_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lon_index_in,grid_params_in)
-              == field<int>(flood_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lat_index_in,grid_params_in)
-              == field<int>(connect_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lon_index_in,grid_params_in)
-              == field<int>(connect_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(flood_local_redirect_in,grid_params_in)
-              == field<bool>(flood_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(connect_local_redirect_in,grid_params_in)
-              == field<bool>(connect_local_redirect_expected_out,grid_params_in));
+  merges_and_redirects* merges_and_redirects_out =
+    basin_eval.get_basin_merges_and_redirects();
+  EXPECT_TRUE(merges_and_redirects_expected_out ==
+              *merges_and_redirects_out);
   delete grid_params_in; delete coarse_grid_params_in;
-  delete[] flood_redirect_lat_index_in; delete[] flood_redirect_lat_index_expected_out;
-  delete[] flood_redirect_lon_index_in; delete[] flood_redirect_lon_index_expected_out;
-  delete[] connect_redirect_lat_index_in; delete[] connect_redirect_lat_index_expected_out;
-  delete[] connect_redirect_lon_index_in; delete[] connect_redirect_lon_index_expected_out;
-  delete[] flood_local_redirect_in; delete[] connect_local_redirect_in;
-  delete[] flood_local_redirect_expected_out; delete[] connect_local_redirect_expected_out;
   delete[] flood_next_cell_lat_index_in; delete[] flood_next_cell_lon_index_in;
   delete[] connect_next_cell_lat_index_in; delete[] connect_next_cell_lon_index_in;
   delete[] coarse_catchment_nums_in; delete[] prior_fine_catchments_in;
@@ -11573,7 +8756,7 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsFive) {
   //Test defaulting to a local redirect
   auto grid_params_in = new latlon_grid_params(12,12,false);
   auto coarse_grid_params_in = new latlon_grid_params(4,4,false);
-  int* flood_redirect_lat_index_in = new int[12*12]
+  int* flood_next_cell_lat_index_in = new int[12*12]
                                     {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
@@ -11589,7 +8772,7 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsFive) {
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* flood_redirect_lon_index_in = new int[12*12]
+  int* flood_next_cell_lon_index_in = new int[12*12]
                                     {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
@@ -11605,7 +8788,7 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsFive) {
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lat_index_in = new int[12*12]
+  int* connect_next_cell_lat_index_in = new int[12*12]
                                     {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
@@ -11621,7 +8804,7 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsFive) {
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lon_index_in = new int[12*12]
+  int* connect_next_cell_lon_index_in = new int[12*12]
                                     {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
@@ -11721,166 +8904,40 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsFive) {
                                      false,false,false, false,false,false, false,false,false, false,false,false,
                                      false,false,false, false,false,false, false,false,false, false,false,false,
                                      false,false,false, false,false,false, false,false,false, false,false,false};
-  int* flood_next_cell_lat_index_in = new int[12*12]
-                                    {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,1};
-  int* flood_next_cell_lon_index_in = new int[12*12]
-                                    {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,1};
-  int* connect_next_cell_lat_index_in = new int[12*12]
-                                    {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* connect_next_cell_lon_index_in = new int[12*12]
-                                    {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* flood_redirect_lat_index_expected_out = new int[12*12]
-                                    {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1, 1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1 };
-  int* flood_redirect_lon_index_expected_out = new int[12*12]
-                                    {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1, 1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lat_index_expected_out = new int[12*12]
-                                    {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lon_index_expected_out = new int[12*12]
-                                    {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  bool* flood_local_redirect_expected_out  = new bool[12*12]
-                                    {false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-//
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-//
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-//
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false};
-  bool* connect_local_redirect_expected_out = new bool[12*12]
-                                    {false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-//
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-//
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-//
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false};
+  int flood_index = 0;
+  int connect_index = 0;
+  field<int>* connect_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  field<int>* flood_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  connect_merge_and_redirect_indices_index->set_all(-1);
+  flood_merge_and_redirect_indices_index->set_all(-1);
+  vector<collected_merge_and_redirect_indices*>*
+    connect_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<collected_merge_and_redirect_indices*>*
+    flood_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<merge_and_redirect_indices*>* primary_redirects =
+      new vector<merge_and_redirect_indices*>();
+  merge_and_redirect_indices* secondary_redirect;
+  collected_merge_and_redirect_indices* collected_indices = nullptr;
+
+  secondary_redirect =
+          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
+                                                new latlon_coords(1,1),
+                                                false);
+  collected_indices = new collected_merge_and_redirect_indices(primary_redirects,
+                                                               secondary_redirect,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(7,4)) = flood_index;
+  flood_index++;
+
+  merges_and_redirects merges_and_redirects_expected_out =
+          merges_and_redirects(connect_merge_and_redirect_indices_index,
+                               flood_merge_and_redirect_indices_index,
+                               connect_merge_and_redirect_indices_vector,
+                               flood_merge_and_redirect_indices_vector,
+                               grid_params_in);
   int* coarse_catchment_nums_in = new int[4*4]
                                      {1,2,1,1,
                                       1,2,1,1,
@@ -11907,33 +8964,13 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsFive) {
                                           flood_next_cell_lon_index_in,
                                           connect_next_cell_lat_index_in,
                                           connect_next_cell_lon_index_in,
-                                          flood_redirect_lat_index_in,
-                                          flood_redirect_lon_index_in,
-                                          connect_redirect_lat_index_in,
-                                          connect_redirect_lon_index_in,
-                                          flood_local_redirect_in,
-                                          connect_local_redirect_in,
                                           grid_params_in,
                                           coarse_grid_params_in);
-  EXPECT_TRUE(field<int>(flood_redirect_lat_index_in,grid_params_in)
-              == field<int>(flood_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lon_index_in,grid_params_in)
-              == field<int>(flood_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lat_index_in,grid_params_in)
-              == field<int>(connect_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lon_index_in,grid_params_in)
-              == field<int>(connect_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(flood_local_redirect_in,grid_params_in)
-              == field<bool>(flood_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(connect_local_redirect_in,grid_params_in)
-              == field<bool>(connect_local_redirect_expected_out,grid_params_in));
+  merges_and_redirects* merges_and_redirects_out =
+    basin_eval.get_basin_merges_and_redirects();
+  EXPECT_TRUE(merges_and_redirects_expected_out ==
+              *merges_and_redirects_out);
   delete grid_params_in; delete coarse_grid_params_in;
-  delete[] flood_redirect_lat_index_in; delete[] flood_redirect_lat_index_expected_out;
-  delete[] flood_redirect_lon_index_in; delete[] flood_redirect_lon_index_expected_out;
-  delete[] connect_redirect_lat_index_in; delete[] connect_redirect_lat_index_expected_out;
-  delete[] connect_redirect_lon_index_in; delete[] connect_redirect_lon_index_expected_out;
-  delete[] flood_local_redirect_in; delete[] connect_local_redirect_in;
-  delete[] flood_local_redirect_expected_out; delete[] connect_local_redirect_expected_out;
   delete[] flood_next_cell_lat_index_in; delete[] flood_next_cell_lon_index_in;
   delete[] connect_next_cell_lat_index_in; delete[] connect_next_cell_lon_index_in;
   delete[] coarse_catchment_nums_in; delete[] prior_fine_catchments_in;
@@ -11947,12 +8984,11 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsFive) {
   }
 }
 
-
 TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsSix) {
   //Test defaulting to a local redirect - control case
   auto grid_params_in = new latlon_grid_params(12,12,false);
   auto coarse_grid_params_in = new latlon_grid_params(4,4,false);
-  int* flood_redirect_lat_index_in = new int[12*12]
+  int* flood_next_cell_lat_index_in = new int[12*12]
                                     {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
@@ -11968,7 +9004,7 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsSix) {
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* flood_redirect_lon_index_in = new int[12*12]
+  int* flood_next_cell_lon_index_in = new int[12*12]
                                     {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
@@ -11984,7 +9020,7 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsSix) {
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lat_index_in = new int[12*12]
+  int* connect_next_cell_lat_index_in = new int[12*12]
                                     {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
@@ -12000,7 +9036,7 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsSix) {
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lon_index_in = new int[12*12]
+  int* connect_next_cell_lon_index_in = new int[12*12]
                                     {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
@@ -12100,166 +9136,40 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsSix) {
                                      false,false,false, false,false,false, false,false,false, false,false,false,
                                      false,false,false, false,false,false, false,false,false, false,false,false,
                                      false,false,false, false,false,false, false,false,false, false,false,false};
-  int* flood_next_cell_lat_index_in = new int[12*12]
-                                    {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* flood_next_cell_lon_index_in = new int[12*12]
-                                    {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* connect_next_cell_lat_index_in = new int[12*12]
-                                    {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-11};
-  int* connect_next_cell_lon_index_in = new int[12*12]
-                                    {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* flood_redirect_lat_index_expected_out = new int[12*12]
-                                    {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1, 1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* flood_redirect_lon_index_expected_out = new int[12*12]
-                                    {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1, 1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lat_index_expected_out = new int[12*12]
-                                    {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lon_index_expected_out = new int[12*12]
-                                    {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                     -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  bool* flood_local_redirect_expected_out  = new bool[12*12]
-                                    {false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-//
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-//
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-//
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false};
-  bool* connect_local_redirect_expected_out = new bool[12*12]
-                                    {false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-//
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-//
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-//
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false,
-                                     false,false,false, false,false,false, false,false,false, false,false,false};
+  int flood_index = 0;
+  int connect_index = 0;
+  field<int>* connect_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  field<int>* flood_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  connect_merge_and_redirect_indices_index->set_all(-1);
+  flood_merge_and_redirect_indices_index->set_all(-1);
+  vector<collected_merge_and_redirect_indices*>*
+    connect_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<collected_merge_and_redirect_indices*>*
+    flood_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<merge_and_redirect_indices*>* primary_redirects =
+    new vector<merge_and_redirect_indices*>();
+  merge_and_redirect_indices* secondary_redirect;
+  collected_merge_and_redirect_indices* collected_indices = nullptr;
+
+  secondary_redirect =
+          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
+                                                new latlon_coords(1,1),
+                                                false);
+  collected_indices = new collected_merge_and_redirect_indices(primary_redirects,
+                                                               secondary_redirect,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(7,4)) = flood_index;
+  flood_index++;
+
+  merges_and_redirects merges_and_redirects_expected_out =
+          merges_and_redirects(connect_merge_and_redirect_indices_index,
+                               flood_merge_and_redirect_indices_index,
+                               connect_merge_and_redirect_indices_vector,
+                               flood_merge_and_redirect_indices_vector,
+                               grid_params_in);
   int* coarse_catchment_nums_in = new int[4*4]
                                      {1,2,1,1,
                                       1,2,1,1,
@@ -12286,33 +9196,13 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsSix) {
                                           flood_next_cell_lon_index_in,
                                           connect_next_cell_lat_index_in,
                                           connect_next_cell_lon_index_in,
-                                          flood_redirect_lat_index_in,
-                                          flood_redirect_lon_index_in,
-                                          connect_redirect_lat_index_in,
-                                          connect_redirect_lon_index_in,
-                                          flood_local_redirect_in,
-                                          connect_local_redirect_in,
                                           grid_params_in,
                                           coarse_grid_params_in);
-  EXPECT_TRUE(field<int>(flood_redirect_lat_index_in,grid_params_in)
-              == field<int>(flood_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lon_index_in,grid_params_in)
-              == field<int>(flood_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lat_index_in,grid_params_in)
-              == field<int>(connect_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lon_index_in,grid_params_in)
-              == field<int>(connect_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(flood_local_redirect_in,grid_params_in)
-              == field<bool>(flood_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(connect_local_redirect_in,grid_params_in)
-              == field<bool>(connect_local_redirect_expected_out,grid_params_in));
+  merges_and_redirects* merges_and_redirects_out =
+    basin_eval.get_basin_merges_and_redirects();
+  EXPECT_TRUE(merges_and_redirects_expected_out ==
+              *merges_and_redirects_out);
   delete grid_params_in; delete coarse_grid_params_in;
-  delete[] flood_redirect_lat_index_in; delete[] flood_redirect_lat_index_expected_out;
-  delete[] flood_redirect_lon_index_in; delete[] flood_redirect_lon_index_expected_out;
-  delete[] connect_redirect_lat_index_in; delete[] connect_redirect_lat_index_expected_out;
-  delete[] connect_redirect_lon_index_in; delete[] connect_redirect_lon_index_expected_out;
-  delete[] flood_local_redirect_in; delete[] connect_local_redirect_in;
-  delete[] flood_local_redirect_expected_out; delete[] connect_local_redirect_expected_out;
   delete[] flood_next_cell_lat_index_in; delete[] flood_next_cell_lon_index_in;
   delete[] connect_next_cell_lat_index_in; delete[] connect_next_cell_lon_index_in;
   delete[] coarse_catchment_nums_in; delete[] prior_fine_catchments_in;
@@ -12352,178 +9242,55 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectWrap) {
                                                   5.0,5.0,5.0,5.0,
                                                   5.0,5.0,5.0,5.0,
                                                   5.0,5.0,5.0,5.0 };
-  int* flood_force_merge_lat_index_in = new int[12*12];
-  std::fill_n(flood_force_merge_lat_index_in,12*12,-1);
-  int* flood_force_merge_lon_index_in = new int[12*12];
-  std::fill_n(flood_force_merge_lon_index_in,12*12,-1);
-  int* connect_force_merge_lat_index_in = new int[12*12];
-  std::fill_n(connect_force_merge_lat_index_in,12*12,-1);
-  int* connect_force_merge_lon_index_in = new int[12*12];
-  std::fill_n(connect_force_merge_lon_index_in,12*12,-1);
-  int* flood_redirect_lat_index_in = new int[12*12];
-  std::fill_n(flood_redirect_lat_index_in,12*12,-1);
-  int* flood_redirect_lon_index_in = new int[12*12];
-  std::fill_n(flood_redirect_lon_index_in,12*12,-1);
-  int* connect_redirect_lat_index_in = new int[12*12];
-  std::fill_n(connect_redirect_lat_index_in,12*12,-1);
-  int* connect_redirect_lon_index_in = new int[12*12];
-  std::fill_n(connect_redirect_lon_index_in,12*12,-1);
   height_types previous_filled_cell_height_type_in = flood_height;
-  bool* flood_local_redirect_in = new bool[12*12];
-  std::fill_n(flood_local_redirect_in,12*12,false);
-  bool* connect_local_redirect_in = new bool[12*12];
-  std::fill_n(connect_local_redirect_in,12*12,false);
-  merge_types* merge_points_in = new merge_types[12*12];
-  std::fill_n(merge_points_in,12*12,no_merge);
-  merge_types* merge_points_expected_out = new merge_types[12*12]{
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-//
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-//
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,connection_merge_not_set_flood_merge_as_primary, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-//
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge};
-  int* flood_force_merge_lat_index_expected_out = new int[12*12]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,-1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,-1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,-1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1, 6,-1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1,-1,-1,-1,-1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* flood_force_merge_lon_index_expected_out = new int[12*12]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1, 2, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* connect_force_merge_lat_index_expected_out = new int[12*12];
-  std::fill_n(connect_force_merge_lat_index_expected_out,12*12,-1);
-  int* connect_force_merge_lon_index_expected_out = new int[12*12];
-  std::fill_n(connect_force_merge_lon_index_expected_out,12*12,-1);
-  int* flood_redirect_lat_index_expected_out = new int[12*12]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1, 0, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* flood_redirect_lon_index_expected_out = new int[12*12]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1, 0, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lat_index_expected_out = new int[12*12]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lon_index_expected_out = new int[12*12]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  bool* flood_local_redirect_expected_out = new bool[12*12]
-                                     {false,false,false, false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false, false,false,false};
-  bool* connect_local_redirect_expected_out = new bool[12*12]
-                                     {false,false,false, false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false, false,false,false};
+  int flood_index = 0;
+  field<int>* connect_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  field<int>* flood_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  connect_merge_and_redirect_indices_index->set_all(-1);
+  flood_merge_and_redirect_indices_index->set_all(-1);
+  vector<collected_merge_and_redirect_indices*>*
+    connect_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<collected_merge_and_redirect_indices*>*
+    flood_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<merge_and_redirect_indices*>* primary_merges = nullptr;
+  merge_and_redirect_indices* primary_merge;
+  merge_and_redirect_indices* secondary_merge;
+  collected_merge_and_redirect_indices* collected_indices = nullptr;
+  secondary_merge =
+          new latlon_merge_and_redirect_indices(new latlon_coords(4,8),
+                                                new latlon_coords(1,2),
+                                                false);
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(6,2)) = flood_index;
+  flood_index++;
+  primary_merge =
+          new latlon_merge_and_redirect_indices(new latlon_coords(6,2),
+                                                new latlon_coords(0,0),
+                                                false);
+  secondary_merge = nullptr;
+
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  primary_merges->push_back(primary_merge);
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(7,8)) = flood_index;
+  flood_index++;
+  merges_and_redirects merges_and_redirects_expected_out =
+          merges_and_redirects(connect_merge_and_redirect_indices_index,
+                               flood_merge_and_redirect_indices_index,
+                               connect_merge_and_redirect_indices_vector,
+                               flood_merge_and_redirect_indices_vector,
+                               grid_params_in);
   coords* new_center_coords_in = new latlon_coords(0,9);
   coords* center_coords_in = new latlon_coords(1,9);
   coords* previous_filled_cell_coords_in = new latlon_coords(7,8);
@@ -12542,63 +9309,19 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectWrap) {
                                                  prior_coarse_rdirs_in,
                                                  basin_catchment_numbers_in,
                                                  coarse_catchment_nums_in,
-                                                 flood_force_merge_lat_index_in,
-                                                 flood_force_merge_lon_index_in,
-                                                 connect_force_merge_lat_index_in,
-                                                 connect_force_merge_lon_index_in,
-                                                 flood_redirect_lat_index_in,
-                                                 flood_redirect_lon_index_in,
-                                                 connect_redirect_lat_index_in,
-                                                 connect_redirect_lon_index_in,
-                                                 flood_local_redirect_in,
-                                                 connect_local_redirect_in,
-                                                 merge_points_in,
                                                  new_center_coords_in,
                                                  center_coords_in,
                                                  previous_filled_cell_coords_in,
                                                  previous_filled_cell_height_type_in,
                                                  grid_params_in,
                                                  coarse_grid_params_in);
-  EXPECT_TRUE(field<int>(flood_force_merge_lat_index_in,grid_params_in)
-              == field<int>(flood_force_merge_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_force_merge_lon_index_in,grid_params_in)
-              == field<int>(flood_force_merge_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_force_merge_lat_index_in,grid_params_in)
-              == field<int>(connect_force_merge_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_force_merge_lon_index_in,grid_params_in)
-              == field<int>(connect_force_merge_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lat_index_in,grid_params_in)
-              == field<int>(flood_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lon_index_in,grid_params_in)
-              == field<int>(flood_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lat_index_in,grid_params_in)
-              == field<int>(connect_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lon_index_in,grid_params_in)
-              == field<int>(connect_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(flood_local_redirect_in,grid_params_in)
-              == field<bool>(flood_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(connect_local_redirect_in,grid_params_in)
-              == field<bool>(connect_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<merge_types>(merge_points_in,grid_params_in)
-              == field<merge_types>(merge_points_expected_out,grid_params_in));
+  merges_and_redirects* merges_and_redirects_out =
+    basin_eval.get_basin_merges_and_redirects();
+
+  EXPECT_TRUE(merges_and_redirects_expected_out ==
+              *merges_and_redirects_out);
   delete grid_params_in; delete coarse_grid_params_in;
   delete[] basin_catchment_numbers_in; delete[] coarse_catchment_nums_in;
-  delete[] flood_force_merge_lat_index_in; delete[] flood_force_merge_lon_index_in;
-  delete[] connect_force_merge_lat_index_in; delete[] connect_force_merge_lon_index_in;
-  delete[] flood_redirect_lat_index_in; delete[] flood_redirect_lon_index_in;
-  delete[] connect_redirect_lat_index_in; delete[] connect_redirect_lon_index_in;
-  delete[] flood_local_redirect_in; delete[] connect_local_redirect_in;
-  delete[] merge_points_in; delete[] merge_points_expected_out;
-  delete[] flood_force_merge_lat_index_expected_out;
-  delete[] flood_force_merge_lon_index_expected_out;
-  delete[] connect_force_merge_lat_index_expected_out;
-  delete[] connect_force_merge_lon_index_expected_out;
-  delete[] flood_redirect_lat_index_expected_out;
-  delete[] flood_redirect_lon_index_expected_out;
-  delete[] connect_redirect_lat_index_expected_out;
-  delete[] connect_redirect_lon_index_expected_out;
-  delete[] flood_local_redirect_expected_out;
-  delete[] connect_local_redirect_expected_out;
   delete[] prior_coarse_rdirs_in;
   delete new_center_coords_in; delete center_coords_in; delete previous_filled_cell_coords_in;
   while (! basin_catchment_centers_in.empty()){
@@ -12634,179 +9357,54 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectNoWrap) {
                                                   5.0,5.0,5.0,5.0,
                                                   5.0,5.0,5.0,5.0,
                                                   5.0,5.0,5.0,5.0 };
-  int* flood_force_merge_lat_index_in = new int[12*12];
-  std::fill_n(flood_force_merge_lat_index_in,12*12,-1);
-  int* flood_force_merge_lon_index_in = new int[12*12];
-  std::fill_n(flood_force_merge_lon_index_in,12*12,-1);
-  int* connect_force_merge_lat_index_in = new int[12*12];
-  std::fill_n(connect_force_merge_lat_index_in,12*12,-1);
-  int* connect_force_merge_lon_index_in = new int[12*12];
-  std::fill_n(connect_force_merge_lon_index_in,12*12,-1);
-  int* flood_redirect_lat_index_in = new int[12*12];
-  std::fill_n(flood_redirect_lat_index_in,12*12,-1);
-  int* flood_redirect_lon_index_in = new int[12*12];
-  std::fill_n(flood_redirect_lon_index_in,12*12,-1);
-  int* connect_redirect_lat_index_in = new int[12*12];
-  std::fill_n(connect_redirect_lat_index_in,12*12,-1);
-  int* connect_redirect_lon_index_in = new int[12*12];
-  std::fill_n(connect_redirect_lon_index_in,12*12,-1);
   height_types previous_filled_cell_height_type_in = flood_height;
-  bool* flood_local_redirect_in = new bool[12*12];
-  std::fill_n(flood_local_redirect_in,12*12,false);
-  bool* connect_local_redirect_in = new bool[12*12];
-  std::fill_n(connect_local_redirect_in,12*12,false);
-  merge_types* merge_points_in = new merge_types[12*12];
-  std::fill_n(merge_points_in,12*12,no_merge);
-  merge_types* merge_points_expected_out = new merge_types[12*12]{
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-//
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-//
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,connection_merge_not_set_flood_merge_as_primary, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-//
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge, no_merge,no_merge,no_merge
-  };
-  int* flood_force_merge_lat_index_expected_out = new int[12*12]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,-1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,-1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1,-1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1, 6,-1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1,-1,-1,-1,-1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* flood_force_merge_lon_index_expected_out = new int[12*12]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1, 2, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* connect_force_merge_lat_index_expected_out = new int[12*12];
-  std::fill_n(connect_force_merge_lat_index_expected_out,12*12,-1);
-  int* connect_force_merge_lon_index_expected_out = new int[12*12];
-  std::fill_n(connect_force_merge_lon_index_expected_out,12*12,-1);
-  int* flood_redirect_lat_index_expected_out = new int[12*12]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1, 2, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* flood_redirect_lon_index_expected_out = new int[12*12]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1, 2, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lat_index_expected_out = new int[12*12]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1,  -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  int* connect_redirect_lon_index_expected_out = new int[12*12]
-                                              {-1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-//
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
-                                               -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  bool* flood_local_redirect_expected_out = new bool[12*12]
-                                     {false,false,false, false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false, false,false,false};
-  bool* connect_local_redirect_expected_out = new bool[12*12]
-                                     {false,false,false, false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false, false,false,false,
-//
-                                      false,false,false, false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false, false,false,false,
-                                      false,false,false, false,false,false, false,false,false, false,false,false};
+  int flood_index = 0;
+  field<int>* connect_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  field<int>* flood_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  connect_merge_and_redirect_indices_index->set_all(-1);
+  flood_merge_and_redirect_indices_index->set_all(-1);
+  vector<collected_merge_and_redirect_indices*>*
+    connect_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<collected_merge_and_redirect_indices*>*
+    flood_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<merge_and_redirect_indices*>* primary_merges = nullptr;
+  merge_and_redirect_indices* primary_merge;
+  merge_and_redirect_indices* secondary_merge;
+  collected_merge_and_redirect_indices* collected_indices = nullptr;
+  secondary_merge =
+          new latlon_merge_and_redirect_indices(new latlon_coords(4,8),
+                                                new latlon_coords(1,2),
+                                                false);
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(6,2)) = flood_index;
+  flood_index++;
+  primary_merge =
+          new latlon_merge_and_redirect_indices(new latlon_coords(6,2),
+                                                new latlon_coords(2,2),
+                                                false);
+  secondary_merge = nullptr;
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  primary_merges->push_back(primary_merge);
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(7,8)) = flood_index;
+  flood_index++;
+  merges_and_redirects merges_and_redirects_expected_out =
+          merges_and_redirects(connect_merge_and_redirect_indices_index,
+                               flood_merge_and_redirect_indices_index,
+                               connect_merge_and_redirect_indices_vector,
+                               flood_merge_and_redirect_indices_vector,
+                               grid_params_in);
   coords* new_center_coords_in = new latlon_coords(0,9);
   coords* center_coords_in = new latlon_coords(1,9);
   coords* previous_filled_cell_coords_in = new latlon_coords(7,8);
@@ -12825,63 +9423,19 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectNoWrap) {
                                                  prior_coarse_rdirs_in,
                                                  basin_catchment_numbers_in,
                                                  coarse_catchment_nums_in,
-                                                 flood_force_merge_lat_index_in,
-                                                 flood_force_merge_lon_index_in,
-                                                 connect_force_merge_lat_index_in,
-                                                 connect_force_merge_lon_index_in,
-                                                 flood_redirect_lat_index_in,
-                                                 flood_redirect_lon_index_in,
-                                                 connect_redirect_lat_index_in,
-                                                 connect_redirect_lon_index_in,
-                                                 flood_local_redirect_in,
-                                                 connect_local_redirect_in,
-                                                 merge_points_in,
                                                  new_center_coords_in,
                                                  center_coords_in,
                                                  previous_filled_cell_coords_in,
                                                  previous_filled_cell_height_type_in,
                                                  grid_params_in,
                                                  coarse_grid_params_in);
-  EXPECT_TRUE(field<int>(flood_force_merge_lat_index_in,grid_params_in)
-              == field<int>(flood_force_merge_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_force_merge_lon_index_in,grid_params_in)
-              == field<int>(flood_force_merge_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_force_merge_lat_index_in,grid_params_in)
-              == field<int>(connect_force_merge_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_force_merge_lon_index_in,grid_params_in)
-              == field<int>(connect_force_merge_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lat_index_in,grid_params_in)
-              == field<int>(flood_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lon_index_in,grid_params_in)
-              == field<int>(flood_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lat_index_in,grid_params_in)
-              == field<int>(connect_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lon_index_in,grid_params_in)
-              == field<int>(connect_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(flood_local_redirect_in,grid_params_in)
-              == field<bool>(flood_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(connect_local_redirect_in,grid_params_in)
-              == field<bool>(connect_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<merge_types>(merge_points_in,grid_params_in)
-              == field<merge_types>(merge_points_expected_out,grid_params_in));
+  merges_and_redirects* merges_and_redirects_out =
+    basin_eval.get_basin_merges_and_redirects();
+
+  EXPECT_TRUE(merges_and_redirects_expected_out ==
+              *merges_and_redirects_out);
   delete grid_params_in; delete coarse_grid_params_in;
   delete[] basin_catchment_numbers_in; delete[] coarse_catchment_nums_in;
-  delete[] flood_force_merge_lat_index_in; delete[] flood_force_merge_lon_index_in;
-  delete[] connect_force_merge_lat_index_in; delete[] connect_force_merge_lon_index_in;
-  delete[] flood_redirect_lat_index_in; delete[] flood_redirect_lon_index_in;
-  delete[] connect_redirect_lat_index_in; delete[] connect_redirect_lon_index_in;
-  delete[] flood_local_redirect_in; delete[] connect_local_redirect_in;
-  delete[] merge_points_in; delete[] merge_points_expected_out;
-  delete[] flood_force_merge_lat_index_expected_out;
-  delete[] flood_force_merge_lon_index_expected_out;
-  delete[] connect_force_merge_lat_index_expected_out;
-  delete[] connect_force_merge_lon_index_expected_out;
-  delete[] flood_redirect_lat_index_expected_out;
-  delete[] flood_redirect_lon_index_expected_out;
-  delete[] connect_redirect_lat_index_expected_out;
-  delete[] connect_redirect_lon_index_expected_out;
-  delete[] flood_local_redirect_expected_out;
-  delete[] connect_local_redirect_expected_out;
   delete[] prior_coarse_rdirs_in;
   delete new_center_coords_in; delete center_coords_in; delete previous_filled_cell_coords_in;
   while (! basin_catchment_centers_in.empty()){
@@ -13044,40 +9598,6 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsOne) {
   std::fill_n(connect_next_cell_lat_index_in,20*20,-1);
   int* connect_next_cell_lon_index_in = new int[20*20];
   std::fill_n(connect_next_cell_lon_index_in,20*20,-1);
-  int* flood_force_merge_lat_index_in = new int[20*20];
-  std::fill_n(flood_force_merge_lat_index_in,20*20,-1);
-  int* flood_force_merge_lon_index_in = new int[20*20];
-  std::fill_n(flood_force_merge_lon_index_in,20*20,-1);
-  int* connect_force_merge_lat_index_in = new int[20*20];
-  std::fill_n(connect_force_merge_lat_index_in,20*20,-1);
-  int* connect_force_merge_lon_index_in = new int[20*20];
-  std::fill_n(connect_force_merge_lon_index_in,20*20,-1);
-  int* flood_redirect_lat_index_in = new int[20*20];
-  std::fill_n(flood_redirect_lat_index_in,20*20,-1);
-  int* flood_redirect_lon_index_in = new int[20*20];
-  std::fill_n(flood_redirect_lon_index_in,20*20,-1);
-  int* connect_redirect_lat_index_in = new int[20*20];
-  std::fill_n(connect_redirect_lat_index_in,20*20,-1);
-  int* connect_redirect_lon_index_in = new int[20*20];
-  std::fill_n(connect_redirect_lon_index_in,20*20,-1);
-  bool* flood_local_redirect_in = new bool[20*20];
-  std::fill_n(flood_local_redirect_in,20*20,false);
-  bool* connect_local_redirect_in = new bool[20*20];
-  std::fill_n(connect_local_redirect_in,20*20,false);
-  int* additional_flood_redirect_lat_index_in = new int[20*20];
-  std::fill_n(additional_flood_redirect_lat_index_in,20*20,-1);
-  int* additional_flood_redirect_lon_index_in = new int[20*20];
-  std::fill_n(additional_flood_redirect_lon_index_in,20*20,-1);
-  int* additional_connect_redirect_lat_index_in = new int[20*20];
-  std::fill_n(additional_connect_redirect_lat_index_in,20*20,-1);
-  int* additional_connect_redirect_lon_index_in = new int[20*20];
-  std::fill_n(additional_connect_redirect_lon_index_in,20*20,-1);
-  bool* additional_flood_local_redirect_in = new bool[20*20];
-  std::fill_n(additional_flood_local_redirect_in,20*20,false);
-  bool* additional_connect_local_redirect_in = new bool[20*20];
-  std::fill_n(additional_connect_local_redirect_in,20*20,false);
-  merge_types* merge_points_in = new merge_types[20*20];
-  std::fill_n(merge_points_in,20*20,no_merge);
   double* flood_volume_thresholds_expected_out = new double[20*20] {
  -1,  -1,   -1,   -1,   -1, -1,   -1,    -1,  -1,  -1, -1, -1,   -1,   -1,   -1,  -1,   -1,  -1,     -1,   -1,
  -1,  -1,   -1,   -1,   -1, -1,   -1,    -1,  -1,  -1, -1, -1,   -1,   -1,   -1,  -1,   -1,  -1,     -1,   5.0,
@@ -13548,23 +10068,6 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsOne) {
                           flood_next_cell_lon_index_in,
                           connect_next_cell_lat_index_in,
                           connect_next_cell_lon_index_in,
-                          flood_force_merge_lat_index_in,
-                          flood_force_merge_lon_index_in,
-                          connect_force_merge_lat_index_in,
-                          connect_force_merge_lon_index_in,
-                          flood_redirect_lat_index_in,
-                          flood_redirect_lon_index_in,
-                          connect_redirect_lat_index_in,
-                          connect_redirect_lon_index_in,
-                          additional_flood_redirect_lat_index_in,
-                          additional_flood_redirect_lon_index_in,
-                          additional_connect_redirect_lat_index_in,
-                          additional_connect_redirect_lon_index_in,
-                          flood_local_redirect_in,
-                          connect_local_redirect_in,
-                          additional_flood_local_redirect_in,
-                          additional_connect_local_redirect_in,
-                          merge_points_in,
                           grid_params_in,
                           coarse_grid_params_in);
   bool* landsea_in = new bool[20*20] {
@@ -13626,6 +10129,9 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsOne) {
                      catchment_nums_in);
   basin_eval.setup_sink_filling_algorithm(alg4);
   basin_eval.evaluate_basins();
+  merges_and_redirects* merges_and_redirects_out =
+    basin_eval.get_basin_merges_and_redirects();
+  cout << *merges_and_redirects_out << endl;
   EXPECT_TRUE(field<double>(flood_volume_thresholds_in,grid_params_in)
               == field<double>(flood_volume_thresholds_expected_out,grid_params_in));
   EXPECT_TRUE(field<double>(connection_volume_thresholds_in,grid_params_in)
@@ -13638,28 +10144,7 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsOne) {
               == field<int>(connect_next_cell_lat_index_expected_out,grid_params_in));
   EXPECT_TRUE(field<int>(connect_next_cell_lon_index_in,grid_params_in)
               == field<int>(connect_next_cell_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lat_index_in,grid_params_in)
-              == field<int>(flood_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lon_index_in,grid_params_in)
-              == field<int>(flood_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lat_index_in,grid_params_in)
-              == field<int>(connect_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lon_index_in,grid_params_in)
-              == field<int>(connect_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(flood_local_redirect_in,grid_params_in)
-              == field<bool>(flood_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(connect_local_redirect_in,grid_params_in)
-              == field<bool>(connect_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<merge_types>(merge_points_in,grid_params_in)
-              == field<merge_types>(merge_points_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_force_merge_lat_index_in,grid_params_in)
-              == field<int>(flood_force_merge_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_force_merge_lon_index_in,grid_params_in)
-              == field<int>(flood_force_merge_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_force_merge_lat_index_in,grid_params_in)
-              == field<int>(connect_force_merge_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_force_merge_lon_index_in,grid_params_in)
-              == field<int>(connect_force_merge_lon_index_expected_out,grid_params_in));
+  EXPECT_TRUE(false);
   delete grid_params_in; delete coarse_grid_params_in; delete alg4;
   delete[] coarse_catchment_nums_in; delete[] corrected_orography_in;
   delete[] raw_orography_in; delete[] minima_in;
@@ -13667,34 +10152,12 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsOne) {
   delete[] connection_volume_thresholds_in; delete[] flood_volume_thresholds_in;
   delete[] flood_next_cell_lat_index_in; delete[] flood_next_cell_lon_index_in;
   delete[] connect_next_cell_lat_index_in; delete[] connect_next_cell_lon_index_in;
-  delete[] flood_force_merge_lat_index_in; delete[] flood_force_merge_lon_index_in;
-  delete[] connect_force_merge_lat_index_in; delete[] connect_force_merge_lon_index_in;
-  delete[] flood_redirect_lat_index_in; delete[] flood_redirect_lon_index_in;
-  delete[] connect_redirect_lat_index_in; delete[] connect_redirect_lon_index_in;
-  delete[] flood_local_redirect_in; delete[] connect_local_redirect_in;
-  delete[] additional_flood_redirect_lat_index_in;
-  delete[] additional_flood_redirect_lon_index_in;
-  delete[] additional_connect_redirect_lat_index_in;
-  delete[] additional_connect_redirect_lon_index_in;
-  delete[] additional_flood_local_redirect_in;
-  delete[] additional_connect_local_redirect_in;
-  delete[] merge_points_in; delete[] flood_volume_thresholds_expected_out;
+  delete[] flood_volume_thresholds_expected_out;
   delete[] connection_volume_thresholds_expected_out;
   delete[] flood_next_cell_lat_index_expected_out;
   delete[] flood_next_cell_lon_index_expected_out;
   delete[] connect_next_cell_lat_index_expected_out;
   delete[] connect_next_cell_lon_index_expected_out;
-  delete[] flood_redirect_lat_index_expected_out;
-  delete[] flood_redirect_lon_index_expected_out;
-  delete[] connect_redirect_lat_index_expected_out;
-  delete[] connect_redirect_lon_index_expected_out;
-  delete[] flood_local_redirect_expected_out;
-  delete[] connect_local_redirect_expected_out;
-  delete[] merge_points_expected_out;
-  delete[] flood_force_merge_lat_index_expected_out;
-  delete[] flood_force_merge_lon_index_expected_out;
-  delete[] connect_force_merge_lat_index_expected_out;
-  delete[] connect_force_merge_lon_index_expected_out;
   delete[] landsea_in;
   delete[] true_sinks_in;
   delete[] next_cell_lat_index_in;
@@ -14329,23 +10792,6 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsTwo) {
                           flood_next_cell_lon_index_in,
                           connect_next_cell_lat_index_in,
                           connect_next_cell_lon_index_in,
-                          flood_force_merge_lat_index_in,
-                          flood_force_merge_lon_index_in,
-                          connect_force_merge_lat_index_in,
-                          connect_force_merge_lon_index_in,
-                          flood_redirect_lat_index_in,
-                          flood_redirect_lon_index_in,
-                          connect_redirect_lat_index_in,
-                          connect_redirect_lon_index_in,
-                          additional_flood_redirect_lat_index_in,
-                          additional_flood_redirect_lon_index_in,
-                          additional_connect_redirect_lat_index_in,
-                          additional_connect_redirect_lon_index_in,
-                          flood_local_redirect_in,
-                          connect_local_redirect_in,
-                          additional_flood_local_redirect_in,
-                          additional_connect_local_redirect_in,
-                          merge_points_in,
                           grid_params_in,
                           coarse_grid_params_in);
   bool* landsea_in = new bool[20*20] {
@@ -14419,28 +10865,7 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsTwo) {
               == field<int>(connect_next_cell_lat_index_expected_out,grid_params_in));
   EXPECT_TRUE(field<int>(connect_next_cell_lon_index_in,grid_params_in)
               == field<int>(connect_next_cell_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lat_index_in,grid_params_in)
-              == field<int>(flood_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lon_index_in,grid_params_in)
-              == field<int>(flood_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lat_index_in,grid_params_in)
-              == field<int>(connect_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lon_index_in,grid_params_in)
-              == field<int>(connect_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(flood_local_redirect_in,grid_params_in)
-              == field<bool>(flood_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(connect_local_redirect_in,grid_params_in)
-              == field<bool>(connect_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<merge_types>(merge_points_in,grid_params_in)
-              == field<merge_types>(merge_points_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_force_merge_lat_index_in,grid_params_in)
-              == field<int>(flood_force_merge_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_force_merge_lon_index_in,grid_params_in)
-              == field<int>(flood_force_merge_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_force_merge_lat_index_in,grid_params_in)
-              == field<int>(connect_force_merge_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_force_merge_lon_index_in,grid_params_in)
-              == field<int>(connect_force_merge_lon_index_expected_out,grid_params_in));
+  EXPECT_TRUE(false);
   delete grid_params_in; delete coarse_grid_params_in; delete alg4;
   delete[] coarse_catchment_nums_in; delete[] corrected_orography_in;
   delete[] raw_orography_in; delete[] minima_in;
@@ -14465,17 +10890,6 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsTwo) {
   delete[] flood_next_cell_lon_index_expected_out;
   delete[] connect_next_cell_lat_index_expected_out;
   delete[] connect_next_cell_lon_index_expected_out;
-  delete[] flood_redirect_lat_index_expected_out;
-  delete[] flood_redirect_lon_index_expected_out;
-  delete[] connect_redirect_lat_index_expected_out;
-  delete[] connect_redirect_lon_index_expected_out;
-  delete[] flood_local_redirect_expected_out;
-  delete[] connect_local_redirect_expected_out;
-  delete[] merge_points_expected_out;
-  delete[] flood_force_merge_lat_index_expected_out;
-  delete[] flood_force_merge_lon_index_expected_out;
-  delete[] connect_force_merge_lat_index_expected_out;
-  delete[] connect_force_merge_lon_index_expected_out;
   delete[] landsea_in;
   delete[] true_sinks_in;
   delete[] next_cell_lat_index_in;
@@ -14667,40 +11081,6 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsThree) {
   std::fill_n(connect_next_cell_lat_index_in,20*20,-1);
   int* connect_next_cell_lon_index_in = new int[20*20];
   std::fill_n(connect_next_cell_lon_index_in,20*20,-1);
-  int* flood_force_merge_lat_index_in = new int[20*20];
-  std::fill_n(flood_force_merge_lat_index_in,20*20,-1);
-  int* flood_force_merge_lon_index_in = new int[20*20];
-  std::fill_n(flood_force_merge_lon_index_in,20*20,-1);
-  int* connect_force_merge_lat_index_in = new int[20*20];
-  std::fill_n(connect_force_merge_lat_index_in,20*20,-1);
-  int* connect_force_merge_lon_index_in = new int[20*20];
-  std::fill_n(connect_force_merge_lon_index_in,20*20,-1);
-  int* flood_redirect_lat_index_in = new int[20*20];
-  std::fill_n(flood_redirect_lat_index_in,20*20,-1);
-  int* flood_redirect_lon_index_in = new int[20*20];
-  std::fill_n(flood_redirect_lon_index_in,20*20,-1);
-  int* connect_redirect_lat_index_in = new int[20*20];
-  std::fill_n(connect_redirect_lat_index_in,20*20,-1);
-  int* connect_redirect_lon_index_in = new int[20*20];
-  std::fill_n(connect_redirect_lon_index_in,20*20,-1);
-  bool* flood_local_redirect_in = new bool[20*20];
-  std::fill_n(flood_local_redirect_in,20*20,false);
-  bool* connect_local_redirect_in = new bool[20*20];
-  std::fill_n(connect_local_redirect_in,20*20,false);
-  int* additional_flood_redirect_lat_index_in = new int[20*20];
-  std::fill_n(additional_flood_redirect_lat_index_in,20*20,-1);
-  int* additional_flood_redirect_lon_index_in = new int[20*20];
-  std::fill_n(additional_flood_redirect_lon_index_in,20*20,-1);
-  int* additional_connect_redirect_lat_index_in = new int[20*20];
-  std::fill_n(additional_connect_redirect_lat_index_in,20*20,-1);
-  int* additional_connect_redirect_lon_index_in = new int[20*20];
-  std::fill_n(additional_connect_redirect_lon_index_in,20*20,-1);
-  bool* additional_flood_local_redirect_in = new bool[20*20];
-  std::fill_n(additional_flood_local_redirect_in,20*20,false);
-  bool* additional_connect_local_redirect_in = new bool[20*20];
-  std::fill_n(additional_connect_local_redirect_in,20*20,false);
-  merge_types* merge_points_in = new merge_types[20*20];
-  std::fill_n(merge_points_in,20*20,no_merge);
   double* flood_volume_thresholds_expected_out = new double[20*20] {
    -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0,   -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0,
    -1.0, 2.0,229.0,-1.0,363.0, -1.0,-1.0,-1.0, 2.0,1150.0,   -1.0,-1.0, 2.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0,
@@ -15131,23 +11511,6 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsThree) {
                           flood_next_cell_lon_index_in,
                           connect_next_cell_lat_index_in,
                           connect_next_cell_lon_index_in,
-                          flood_force_merge_lat_index_in,
-                          flood_force_merge_lon_index_in,
-                          connect_force_merge_lat_index_in,
-                          connect_force_merge_lon_index_in,
-                          flood_redirect_lat_index_in,
-                          flood_redirect_lon_index_in,
-                          connect_redirect_lat_index_in,
-                          connect_redirect_lon_index_in,
-                          additional_flood_redirect_lat_index_in,
-                          additional_flood_redirect_lon_index_in,
-                          additional_connect_redirect_lat_index_in,
-                          additional_connect_redirect_lon_index_in,
-                          flood_local_redirect_in,
-                          connect_local_redirect_in,
-                          additional_flood_local_redirect_in,
-                          additional_connect_local_redirect_in,
-                          merge_points_in,
                           grid_params_in,
                           coarse_grid_params_in);
   bool* landsea_in = new bool[20*20] {
@@ -15221,28 +11584,7 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsThree) {
               == field<int>(connect_next_cell_lat_index_expected_out,grid_params_in));
   EXPECT_TRUE(field<int>(connect_next_cell_lon_index_in,grid_params_in)
               == field<int>(connect_next_cell_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lat_index_in,grid_params_in)
-              == field<int>(flood_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lon_index_in,grid_params_in)
-              == field<int>(flood_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lat_index_in,grid_params_in)
-              == field<int>(connect_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lon_index_in,grid_params_in)
-              == field<int>(connect_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(flood_local_redirect_in,grid_params_in)
-              == field<bool>(flood_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(connect_local_redirect_in,grid_params_in)
-              == field<bool>(connect_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<merge_types>(merge_points_in,grid_params_in)
-              == field<merge_types>(merge_points_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_force_merge_lat_index_in,grid_params_in)
-              == field<int>(flood_force_merge_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_force_merge_lon_index_in,grid_params_in)
-              == field<int>(flood_force_merge_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_force_merge_lat_index_in,grid_params_in)
-              == field<int>(connect_force_merge_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_force_merge_lon_index_in,grid_params_in)
-              == field<int>(connect_force_merge_lon_index_expected_out,grid_params_in));
+  EXPECT_TRUE(false);
   delete grid_params_in; delete coarse_grid_params_in; delete alg4;
   delete[] coarse_catchment_nums_in; delete[] corrected_orography_in;
   delete[] raw_orography_in; delete[] minima_in;
@@ -15250,34 +11592,12 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsThree) {
   delete[] connection_volume_thresholds_in; delete[] flood_volume_thresholds_in;
   delete[] flood_next_cell_lat_index_in; delete[] flood_next_cell_lon_index_in;
   delete[] connect_next_cell_lat_index_in; delete[] connect_next_cell_lon_index_in;
-  delete[] flood_force_merge_lat_index_in; delete[] flood_force_merge_lon_index_in;
-  delete[] connect_force_merge_lat_index_in; delete[] connect_force_merge_lon_index_in;
-  delete[] flood_redirect_lat_index_in; delete[] flood_redirect_lon_index_in;
-  delete[] connect_redirect_lat_index_in; delete[] connect_redirect_lon_index_in;
-  delete[] flood_local_redirect_in; delete[] connect_local_redirect_in;
-  delete[] additional_flood_redirect_lat_index_in;
-  delete[] additional_flood_redirect_lon_index_in;
-  delete[] additional_connect_redirect_lat_index_in;
-  delete[] additional_connect_redirect_lon_index_in;
-  delete[] additional_flood_local_redirect_in;
-  delete[] additional_connect_local_redirect_in;
-  delete[] merge_points_in; delete[] flood_volume_thresholds_expected_out;
+  delete[] flood_volume_thresholds_expected_out;
   delete[] connection_volume_thresholds_expected_out;
   delete[] flood_next_cell_lat_index_expected_out;
   delete[] flood_next_cell_lon_index_expected_out;
   delete[] connect_next_cell_lat_index_expected_out;
   delete[] connect_next_cell_lon_index_expected_out;
-  delete[] flood_redirect_lat_index_expected_out;
-  delete[] flood_redirect_lon_index_expected_out;
-  delete[] connect_redirect_lat_index_expected_out;
-  delete[] connect_redirect_lon_index_expected_out;
-  delete[] flood_local_redirect_expected_out;
-  delete[] connect_local_redirect_expected_out;
-  delete[] merge_points_expected_out;
-  delete[] flood_force_merge_lat_index_expected_out;
-  delete[] flood_force_merge_lon_index_expected_out;
-  delete[] connect_force_merge_lat_index_expected_out;
-  delete[] connect_force_merge_lon_index_expected_out;
   delete[] landsea_in;
   delete[] true_sinks_in;
   delete[] next_cell_lat_index_in;
@@ -15448,40 +11768,6 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsFour) {
   std::fill_n(connect_next_cell_lat_index_in,20*20,-1);
   int* connect_next_cell_lon_index_in = new int[20*20];
   std::fill_n(connect_next_cell_lon_index_in,20*20,-1);
-  int* flood_force_merge_lat_index_in = new int[20*20];
-  std::fill_n(flood_force_merge_lat_index_in,20*20,-1);
-  int* flood_force_merge_lon_index_in = new int[20*20];
-  std::fill_n(flood_force_merge_lon_index_in,20*20,-1);
-  int* connect_force_merge_lat_index_in = new int[20*20];
-  std::fill_n(connect_force_merge_lat_index_in,20*20,-1);
-  int* connect_force_merge_lon_index_in = new int[20*20];
-  std::fill_n(connect_force_merge_lon_index_in,20*20,-1);
-  int* flood_redirect_lat_index_in = new int[20*20];
-  std::fill_n(flood_redirect_lat_index_in,20*20,-1);
-  int* flood_redirect_lon_index_in = new int[20*20];
-  std::fill_n(flood_redirect_lon_index_in,20*20,-1);
-  int* connect_redirect_lat_index_in = new int[20*20];
-  std::fill_n(connect_redirect_lat_index_in,20*20,-1);
-  int* connect_redirect_lon_index_in = new int[20*20];
-  std::fill_n(connect_redirect_lon_index_in,20*20,-1);
-  bool* flood_local_redirect_in = new bool[20*20];
-  std::fill_n(flood_local_redirect_in,20*20,false);
-  bool* connect_local_redirect_in = new bool[20*20];
-  std::fill_n(connect_local_redirect_in,20*20,false);
-  int* additional_flood_redirect_lat_index_in = new int[20*20];
-  std::fill_n(additional_flood_redirect_lat_index_in,20*20,-1);
-  int* additional_flood_redirect_lon_index_in = new int[20*20];
-  std::fill_n(additional_flood_redirect_lon_index_in,20*20,-1);
-  int* additional_connect_redirect_lat_index_in = new int[20*20];
-  std::fill_n(additional_connect_redirect_lat_index_in,20*20,-1);
-  int* additional_connect_redirect_lon_index_in = new int[20*20];
-  std::fill_n(additional_connect_redirect_lon_index_in,20*20,-1);
-  bool* additional_flood_local_redirect_in = new bool[20*20];
-  std::fill_n(additional_flood_local_redirect_in,20*20,false);
-  bool* additional_connect_local_redirect_in = new bool[20*20];
-  std::fill_n(additional_connect_local_redirect_in,20*20,false);
-  merge_types* merge_points_in = new merge_types[20*20];
-  std::fill_n(merge_points_in,20*20,no_merge);
   double* flood_volume_thresholds_expected_out = new double[20*20] {
    -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0,
    -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0,
@@ -16031,23 +12317,6 @@ false, false, false, false, false, false, false, false, false, false, false, fal
                           flood_next_cell_lon_index_in,
                           connect_next_cell_lat_index_in,
                           connect_next_cell_lon_index_in,
-                          flood_force_merge_lat_index_in,
-                          flood_force_merge_lon_index_in,
-                          connect_force_merge_lat_index_in,
-                          connect_force_merge_lon_index_in,
-                          flood_redirect_lat_index_in,
-                          flood_redirect_lon_index_in,
-                          connect_redirect_lat_index_in,
-                          connect_redirect_lon_index_in,
-                          additional_flood_redirect_lat_index_in,
-                          additional_flood_redirect_lon_index_in,
-                          additional_connect_redirect_lat_index_in,
-                          additional_connect_redirect_lon_index_in,
-                          flood_local_redirect_in,
-                          connect_local_redirect_in,
-                          additional_flood_local_redirect_in,
-                          additional_connect_local_redirect_in,
-                          merge_points_in,
                           grid_params_in,
                           coarse_grid_params_in);
   bool* landsea_in = new bool[20*20] {
@@ -16103,40 +12372,7 @@ false, false, false, false, false, false, false, false, false, false, false, fal
               == field<int>(connect_next_cell_lat_index_expected_out,grid_params_in));
   EXPECT_TRUE(field<int>(connect_next_cell_lon_index_in,grid_params_in)
               == field<int>(connect_next_cell_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lat_index_in,grid_params_in)
-              == field<int>(flood_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lon_index_in,grid_params_in)
-              == field<int>(flood_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lat_index_in,grid_params_in)
-              == field<int>(connect_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lon_index_in,grid_params_in)
-              == field<int>(connect_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(flood_local_redirect_in,grid_params_in)
-              == field<bool>(flood_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(connect_local_redirect_in,grid_params_in)
-              == field<bool>(connect_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(additional_flood_redirect_lat_index_in,grid_params_in)
-              == field<int>(additional_flood_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(additional_flood_redirect_lon_index_in,grid_params_in)
-              == field<int>(additional_flood_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(additional_connect_redirect_lat_index_in,grid_params_in)
-              == field<int>(additional_connect_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(additional_connect_redirect_lon_index_in,grid_params_in)
-              == field<int>(additional_connect_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(additional_flood_local_redirect_in,grid_params_in)
-              == field<bool>(additional_flood_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(additional_connect_local_redirect_in,grid_params_in)
-              == field<bool>(additional_connect_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<merge_types>(merge_points_in,grid_params_in)
-              == field<merge_types>(merge_points_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_force_merge_lat_index_in,grid_params_in)
-              == field<int>(flood_force_merge_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_force_merge_lon_index_in,grid_params_in)
-              == field<int>(flood_force_merge_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_force_merge_lat_index_in,grid_params_in)
-              == field<int>(connect_force_merge_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_force_merge_lon_index_in,grid_params_in)
-              == field<int>(connect_force_merge_lon_index_expected_out,grid_params_in));
+  EXPECT_TRUE(false);
   delete grid_params_in; delete coarse_grid_params_in; delete alg4;
   delete[] coarse_catchment_nums_in; delete[] corrected_orography_in;
   delete[] raw_orography_in; delete[] minima_in;
@@ -16144,34 +12380,12 @@ false, false, false, false, false, false, false, false, false, false, false, fal
   delete[] connection_volume_thresholds_in; delete[] flood_volume_thresholds_in;
   delete[] flood_next_cell_lat_index_in; delete[] flood_next_cell_lon_index_in;
   delete[] connect_next_cell_lat_index_in; delete[] connect_next_cell_lon_index_in;
-  delete[] flood_force_merge_lat_index_in; delete[] flood_force_merge_lon_index_in;
-  delete[] connect_force_merge_lat_index_in; delete[] connect_force_merge_lon_index_in;
-  delete[] flood_redirect_lat_index_in; delete[] flood_redirect_lon_index_in;
-  delete[] connect_redirect_lat_index_in; delete[] connect_redirect_lon_index_in;
-  delete[] flood_local_redirect_in; delete[] connect_local_redirect_in;
-  delete[] additional_flood_redirect_lat_index_in;
-  delete[] additional_flood_redirect_lon_index_in;
-  delete[] additional_connect_redirect_lat_index_in;
-  delete[] additional_connect_redirect_lon_index_in;
-  delete[] additional_flood_local_redirect_in;
-  delete[] additional_connect_local_redirect_in;
-  delete[] merge_points_in; delete[] flood_volume_thresholds_expected_out;
+  delete[] flood_volume_thresholds_expected_out;
   delete[] connection_volume_thresholds_expected_out;
   delete[] flood_next_cell_lat_index_expected_out;
   delete[] flood_next_cell_lon_index_expected_out;
   delete[] connect_next_cell_lat_index_expected_out;
   delete[] connect_next_cell_lon_index_expected_out;
-  delete[] flood_redirect_lat_index_expected_out;
-  delete[] flood_redirect_lon_index_expected_out;
-  delete[] connect_redirect_lat_index_expected_out;
-  delete[] connect_redirect_lon_index_expected_out;
-  delete[] flood_local_redirect_expected_out;
-  delete[] connect_local_redirect_expected_out;
-  delete[] merge_points_expected_out;
-  delete[] flood_force_merge_lat_index_expected_out;
-  delete[] flood_force_merge_lon_index_expected_out;
-  delete[] connect_force_merge_lat_index_expected_out;
-  delete[] connect_force_merge_lon_index_expected_out;
   delete[] landsea_in;
   delete[] true_sinks_in;
   delete[] next_cell_lat_index_in;
@@ -18045,17 +14259,6 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsFive) {
                                     coarse_catchment_nums_in,
                                     flood_next_cell_index_in,
                                     connect_next_cell_index_in,
-                                    flood_force_merge_index_in,
-                                    connect_force_merge_index_in,
-                                    flood_redirect_index_in,
-                                    connect_redirect_index_in,
-                                    additional_flood_redirect_index_in,
-                                    additional_connect_redirect_index_in,
-                                    flood_local_redirect_in,
-                                    connect_local_redirect_in,
-                                    additional_flood_local_redirect_in,
-                                    additional_connect_local_redirect_in,
-                                    merge_points_out_int,
                                     ncells,ncells,
                                     fine_neighboring_cell_indices_in,
                                     coarse_neighboring_cell_indices_in,
@@ -18073,28 +14276,7 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsFive) {
               field<int>(flood_next_cell_index_expected_out,grid_params_in));
   EXPECT_TRUE(field<int>(connect_next_cell_index_in,grid_params_in) ==
               field<int>(connect_next_cell_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_force_merge_index_in,grid_params_in) ==
-              field<int>(flood_force_merge_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_force_merge_index_in,grid_params_in) ==
-              field<int>(connect_force_merge_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_index_in,grid_params_in) ==
-              field<int>(flood_redirect_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_index_in,grid_params_in) ==
-              field<int>(connect_redirect_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(additional_flood_redirect_index_in,grid_params_in) ==
-              field<int>(additional_flood_redirect_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(additional_connect_redirect_index_in,grid_params_in) ==
-              field<int>(additional_connect_redirect_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(flood_local_redirect_in,grid_params_in) ==
-              field<bool>(flood_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(connect_local_redirect_in,grid_params_in) ==
-              field<bool>(connect_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(additional_flood_local_redirect_in,grid_params_in) ==
-              field<bool>(additional_flood_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(additional_connect_local_redirect_in,grid_params_in) ==
-              field<bool>(additional_connect_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(merge_points_out_int,grid_params_in) ==
-              field<int>(merge_points_expected_out,grid_params_in));
+  EXPECT_TRUE(false);
   delete grid_params_in;
 }
 
@@ -19010,23 +15192,6 @@ false, false, false, false, false, false, false, false, false, false, false, fal
                           flood_next_cell_lon_index_in,
                           connect_next_cell_lat_index_in,
                           connect_next_cell_lon_index_in,
-                          flood_force_merge_lat_index_in,
-                          flood_force_merge_lon_index_in,
-                          connect_force_merge_lat_index_in,
-                          connect_force_merge_lon_index_in,
-                          flood_redirect_lat_index_in,
-                          flood_redirect_lon_index_in,
-                          connect_redirect_lat_index_in,
-                          connect_redirect_lon_index_in,
-                          additional_flood_redirect_lat_index_in,
-                          additional_flood_redirect_lon_index_in,
-                          additional_connect_redirect_lat_index_in,
-                          additional_connect_redirect_lon_index_in,
-                          flood_local_redirect_in,
-                          connect_local_redirect_in,
-                          additional_flood_local_redirect_in,
-                          additional_connect_local_redirect_in,
-                          merge_points_in,
                           grid_params_in,
                           coarse_grid_params_in);
   bool* landsea_in = new bool[20*20] {
@@ -19082,40 +15247,7 @@ false, false, false, false, false, false, false, false, false, false, false, fal
               == field<int>(connect_next_cell_lat_index_expected_out,grid_params_in));
   EXPECT_TRUE(field<int>(connect_next_cell_lon_index_in,grid_params_in)
               == field<int>(connect_next_cell_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lat_index_in,grid_params_in)
-              == field<int>(flood_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_redirect_lon_index_in,grid_params_in)
-              == field<int>(flood_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lat_index_in,grid_params_in)
-              == field<int>(connect_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_redirect_lon_index_in,grid_params_in)
-              == field<int>(connect_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(flood_local_redirect_in,grid_params_in)
-              == field<bool>(flood_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(connect_local_redirect_in,grid_params_in)
-              == field<bool>(connect_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(additional_flood_redirect_lat_index_in,grid_params_in)
-              == field<int>(additional_flood_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(additional_flood_redirect_lon_index_in,grid_params_in)
-              == field<int>(additional_flood_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(additional_connect_redirect_lat_index_in,grid_params_in)
-              == field<int>(additional_connect_redirect_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(additional_connect_redirect_lon_index_in,grid_params_in)
-              == field<int>(additional_connect_redirect_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(additional_flood_local_redirect_in,grid_params_in)
-              == field<bool>(additional_flood_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<bool>(additional_connect_local_redirect_in,grid_params_in)
-              == field<bool>(additional_connect_local_redirect_expected_out,grid_params_in));
-  EXPECT_TRUE(field<merge_types>(merge_points_in,grid_params_in)
-              == field<merge_types>(merge_points_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_force_merge_lat_index_in,grid_params_in)
-              == field<int>(flood_force_merge_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(flood_force_merge_lon_index_in,grid_params_in)
-              == field<int>(flood_force_merge_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_force_merge_lat_index_in,grid_params_in)
-              == field<int>(connect_force_merge_lat_index_expected_out,grid_params_in));
-  EXPECT_TRUE(field<int>(connect_force_merge_lon_index_in,grid_params_in)
-              == field<int>(connect_force_merge_lon_index_expected_out,grid_params_in));
+  EXPECT_TRUE(false);
   delete grid_params_in; delete coarse_grid_params_in; delete alg4;
   delete[] coarse_catchment_nums_in; delete[] corrected_orography_in;
   delete[] raw_orography_in; delete[] minima_in;
@@ -19134,23 +15266,12 @@ false, false, false, false, false, false, false, false, false, false, false, fal
   delete[] additional_connect_redirect_lon_index_in;
   delete[] additional_flood_local_redirect_in;
   delete[] additional_connect_local_redirect_in;
-  delete[] merge_points_in; delete[] flood_volume_thresholds_expected_out;
+  delete[] flood_volume_thresholds_expected_out;
   delete[] connection_volume_thresholds_expected_out;
   delete[] flood_next_cell_lat_index_expected_out;
   delete[] flood_next_cell_lon_index_expected_out;
   delete[] connect_next_cell_lat_index_expected_out;
   delete[] connect_next_cell_lon_index_expected_out;
-  delete[] flood_redirect_lat_index_expected_out;
-  delete[] flood_redirect_lon_index_expected_out;
-  delete[] connect_redirect_lat_index_expected_out;
-  delete[] connect_redirect_lon_index_expected_out;
-  delete[] flood_local_redirect_expected_out;
-  delete[] connect_local_redirect_expected_out;
-  delete[] merge_points_expected_out;
-  delete[] flood_force_merge_lat_index_expected_out;
-  delete[] flood_force_merge_lon_index_expected_out;
-  delete[] connect_force_merge_lat_index_expected_out;
-  delete[] connect_force_merge_lon_index_expected_out;
   delete[] landsea_in;
   delete[] true_sinks_in;
   delete[] next_cell_lat_index_in;

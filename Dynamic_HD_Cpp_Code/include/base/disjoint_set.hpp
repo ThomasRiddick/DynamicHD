@@ -11,6 +11,8 @@
 #define INCLUDE_DISJOINT_SET_HPP_
 
 #include <vector>
+#include <iostream>
+#include <functional>
 using namespace std;
 
 class disjoint_set {
@@ -18,9 +20,10 @@ class disjoint_set {
     int label;
     int size;
     disjoint_set* root = nullptr;
-    vector<disjoint_set*>* nodes;
+    vector<disjoint_set*>* nodes = nullptr;
   public:
-    disjoint_set(int label_in) : label(label_in), size(1) { root = this; }
+    disjoint_set(int label_in) : label(label_in), size(1)
+      { root = this; nodes = new vector<disjoint_set*>(); }
     disjoint_set* get_root(){ return root;}
     void set_root(disjoint_set* x){ root = x; }
     void add_node(disjoint_set* x) { nodes->push_back(x); }
@@ -31,14 +34,15 @@ class disjoint_set {
     void increase_size(int size_increment_in) {size = size+size_increment_in;}
     int get_size() { return size;}
     int get_label() { return label;}
+    friend ostream& operator<<(ostream& out, disjoint_set& set_object)
+    { return out << set_object.get_label(); }
 };
 
-class disjoint_sets{
+class disjoint_set_forest{
   protected:
     vector<disjoint_set*> sets;
-    vector<int> set_indices;
   public:
-    disjoint_sets() {}
+    disjoint_set_forest() {}
     disjoint_set* find_root(disjoint_set* x);
     int find_root(int label_in);
     bool link(disjoint_set* x,disjoint_set* y);
@@ -47,6 +51,8 @@ class disjoint_sets{
     disjoint_set* get_set(int label_in);
     void for_elements_in_set(disjoint_set* root,function<void(int)> func);
     void for_elements_in_set(int root_label,function<void(int)> func);
+    bool check_subset_has_elements(int label_of_element,vector<int> element_labels);
+    friend ostream& operator<<(ostream& out, disjoint_set_forest& sets_object);
 };
 
 #endif //INCLUDE_DISJOINT_SET_HPP_

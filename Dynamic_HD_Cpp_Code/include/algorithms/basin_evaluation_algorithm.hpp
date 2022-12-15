@@ -45,6 +45,7 @@ public:
 	queue<cell*> test_add_minima_to_queue(double* raw_orography_in,
                                         double* corrected_orography_in,
                                         bool* minima_in,
+                                        int* prior_fine_catchments_in,
                                         sink_filling_algorithm_4*
                                         sink_filling_alg_in,
                                         grid_params* grid_params_in,
@@ -60,6 +61,8 @@ public:
 	queue<landsea_cell*> test_search_process_neighbors(coords* search_coords_in,
 	                                                   bool* search_completed_cells_in,
 	                              										 grid_params* grid_params_in);
+  merges_and_redirects* get_basin_merges_and_redirects()
+    { return basin_merges_and_redirects; }
 protected:
   ///Virtual setter for flood next cell index of previous cell
 	virtual void set_previous_cells_flood_next_cell_index(coords* coords_in) = 0;
@@ -156,6 +159,7 @@ protected:
 	field<int>* basin_numbers = nullptr;
 	field<int>* coarse_catchment_nums = nullptr;
 	field<int>* prior_fine_catchments = nullptr;
+  field<int>* catchments_from_sink_filling = nullptr;
   basin_cell* minimum = nullptr;
 	basin_cell* center_cell = nullptr;
 	coords* center_coords = nullptr;
@@ -168,19 +172,18 @@ protected:
 	vector<coords*>* neighbors_coords = nullptr;
 	vector<coords*>* search_neighbors_coords = nullptr;
 	vector<coords*> basin_catchment_centers;
-  vector<coords*>* basin_sink_points;
-  vector<vector<pair<coords*,bool>>> basin_connect_and_fill_orders;
-  vector<pair<coords*,bool>> basin_connect_and_fill_order;
-  disjoint_sets basin_connections;
+  vector<coords*> basin_sink_points;
+  vector<vector<pair<coords*,bool>*>*> basin_connect_and_fill_orders;
+  vector<pair<coords*,bool>*>* basin_connect_and_fill_order;
+  disjoint_set_forest basin_connections;
   merges_and_redirects* basin_merges_and_redirects = nullptr;
   height_types new_center_cell_height_type;
   height_types center_cell_height_type;
   height_types previous_filled_cell_height_type;
   sink_filling_algorithm_4* sink_filling_alg;
 	int basin_number;
-  int basin_prior_fine_catchment_num;
+  int  catchments_from_sink_filling_catchment_num;
   bool skipped_previous_center_cell;
-  bool primary_merge_found;
   bool secondary_merge_found;
   double lake_area;
   double new_center_cell_height;
@@ -239,7 +242,6 @@ public:
                                            coords* center_coords_in,
                                            coords* previous_filled_cell_coords_in,
                                            height_types previous_filled_cell_height_type_in,
-                                           int target_basin_number_in,
                                            grid_params* grid_params_in,
                                            grid_params* coarse_grid_params_in);
 	void test_set_secondary_redirect(int* flood_next_cell_lat_index_in,
@@ -253,9 +255,10 @@ public:
                                    coords* new_center_coords_in,
                                    coords* center_coords_in,
                                    coords* previous_filled_cell_coords_in,
-                                   coords* target_basin_center_coords_in,
+                                   coords* target_basin_center_coords,
                                    height_types& previous_filled_cell_height_type_in,
-                                   grid_params* grid_params_in);
+                                   grid_params* grid_params_in,
+                                   grid_params* coarse_grid_params_in);
 	void test_set_remaining_redirects(vector<coords*> basin_catchment_centers_in,
                                     double* prior_fine_rdirs_in,
                                     double* prior_coarse_rdirs_in,

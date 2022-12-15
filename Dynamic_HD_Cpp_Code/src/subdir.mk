@@ -36,6 +36,7 @@ CPP_SRCS += \
 ../src/testing/test_catchment_computation.cpp \
 ../src/testing/test_evaluate_basins.cpp \
 ../src/testing/test_grid.cpp \
+../src/testing/test_disjoint_set.cpp \
 ../src/testing/test_determine_river_directions.cpp \
 ../src/testing/test_orography_creation.cpp \
 ../src/testing/test_bifurcate_rivers_basic.cpp \
@@ -99,6 +100,7 @@ TEST_OBJS += \
 ./src/testing/test_catchment_computation.o \
 ./src/testing/test_evaluate_basins.o \
 ./src/testing/test_grid.o \
+./src/testing/test_disjoint_set.o \
 ./src/testing/test_determine_river_directions.o \
 ./src/testing/test_orography_creation.o \
 ./src/testing/test_bifurcate_rivers_basic.o
@@ -139,6 +141,7 @@ CPP_DEPS += \
 ./src/testing/test_catchment_computation.d \
 ./src/testing/test_evaluate_basins.d \
 ./src/testing/test_grid.d \
+./src/testing/test_disjoint_set.d \
 ./src/testing/test_determine_river_directions.d \
 ./src/testing/test_fill_sinks.d \
 ./src/testing/test_orography_creation.d \
@@ -153,35 +156,35 @@ CPP_DEPS += \
 src/base/%.o: ../src/base/%.cpp
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C++ Compiler'
-	$(GPLUSPLUS) -I"../include" -I"../." -I"../src" $(INCLUDE) -O3 -Wall -c -fmessage-length=0 -std=gnu++11 $(FLAGS) $(STDLIB_OPT) -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -o "$@" "$<"
+	$(GPLUSPLUS) -I"../include" -I"../." -I"../src" $(INCLUDE) -O0 -Wall -c -fmessage-length=0 -std=gnu++11 $(FLAGS) $(STDLIB_OPT) -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 
 src/algorithms/%.o: ../src/algorithms/%.cpp
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C++ Compiler'
-	$(GPLUSPLUS) -I"../include" -I"../." -I"../src" $(INCLUDE) -O3 -Wall -c -fmessage-length=0 -std=gnu++11 $(FLAGS) $(STDLIB_OPT) -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -o "$@" "$<"
+	$(GPLUSPLUS) -I"../include" -I"../." -I"../src" $(INCLUDE) -O0 -Wall -c -fmessage-length=0 -std=gnu++11 $(FLAGS) $(STDLIB_OPT) -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 
 src/drivers/%.o: ../src/drivers/%.cpp
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C++ Compiler'
-	$(GPLUSPLUS) -I"../include" -I"../." -I"../src" $(INCLUDE) -O3 -Wall -c -fmessage-length=0 -std=gnu++11 $(FLAGS) $(STDLIB_OPT) -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -o "$@" "$<"
+	$(GPLUSPLUS) -I"../include" -I"../." -I"../src" $(INCLUDE) -O0 -Wall -c -fmessage-length=0 -std=gnu++11 $(FLAGS) $(STDLIB_OPT) -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 
 src/testing/%.o: ../src/testing/%.cpp
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C++ Compiler'
-	$(GPLUSPLUS) -I"../include" -I"../." -I"../src" $(INCLUDE) -O3 -Wall -c -fmessage-length=0 -std=gnu++11 $(FLAGS) $(STDLIB_OPT) -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -o "$@" "$<"
+	$(GPLUSPLUS) -I"../include" -I"../." -I"../src" $(INCLUDE) -O0 -Wall -c -fmessage-length=0 -std=gnu++11 $(FLAGS) $(STDLIB_OPT) -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 
 src/command_line_drivers/%.o: ../src/command_line_drivers/%.cpp
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C++ Compiler'
-	$(GPLUSPLUS) -I"../include" -I"../." -I"../src" $(INCLUDE) -O3 -Wall -c -fmessage-length=0 -std=gnu++11 $(FLAGS) $(STDLIB_OPT) -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -o "$@" "$<"
+	$(GPLUSPLUS) -I"../include" -I"../." -I"../src" $(INCLUDE) -O0 -Wall -c -fmessage-length=0 -std=gnu++11 $(FLAGS) $(STDLIB_OPT) -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 
