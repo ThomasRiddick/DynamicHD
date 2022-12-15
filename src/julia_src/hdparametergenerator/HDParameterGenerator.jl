@@ -290,8 +290,32 @@ end
 
 function get_next_cell_coords(i::CartesianIndex,input_data::InputData,
                               grid::LatLonGrid)
-  println("NOT WORKING PROPERLY")
-  return i::CartesianIndex
+  river_direction::Int64 =
+    input_data.grid_specific_input_data.river_directions[i]
+  lat_index::Int64 = i[1]
+  lon_index::Int64 = i[2]
+  local lat_index_change::Int64
+  local lon_index_change::Int64
+  if river_direction <= 3
+    lat_index_change = 1
+  elseif river_direction >= 7
+    lat_index_change = -1
+  else
+    lat_index_change = 0
+  end
+  if river_direction == 7 ||
+     river_direction == 4 ||
+     river_direction == 1
+    lon_index_change = -1
+  elseif river_direction == 9 ||
+          river_direction == 6 ||
+          river_direction == 3
+    lon_index_change = 1
+  else
+    lon_index_change = 0
+  end
+  return CartesianIndex(lat_index+lat_index_change,
+                        lon_index+lon_index_change)
 end
 
 function get_next_cell_coords(i::CartesianIndex,input_data::InputData,
