@@ -22,7 +22,7 @@ if platform == "linux" or platform == "linux2":
     extra_compile_args = ['-std=gnu++11',
                           "-isystem" + netcdfcxx + "/include",
                           "-isystem" + netcdfc +"/include"]
-    if socket.getfqdn().endswith("atos.local"):
+    if socket.getfqdn().endswith("lvt.dkrz.de"):
         extra_links_args = ["-shared",
                             "-isystem" + netcdfcxx + "/include",
                             "-isystem" + netcdfc +"/include"]
