@@ -1,11 +1,12 @@
 RM := rm -rf
 ifeq ($(shell uname -s),Darwin)
-GPLUSPLUS := /usr/bin/g++
-STDLIB_OPT := -stdlib=libc++
-FLAGS := -DPROCESSED_CELL_COUNTER -DUSE_NETCDFCPP -DDARWIN
-NETCDFCXX := /Users/thomasriddick/anaconda3/pkgs/netcdf-cxx4-4.3.0-h703b707_9
-INCLUDE := -I"$(NETCDFCXX)/include"
-else ifeq ($(shell hostname -d),atos.local)
+GPLUSPLUS := /usr/local/Cellar/gcc@10/10.4.0/bin/g++-10
+STDLIB_OPT :=
+FLAGS := -DPROCESSED_CELL_COUNTER  -DDARWIN -g  -fsanitize=address
+NETCDFC :=  /usr/local/Cellar/netcdf/4.9.0
+NETCDFCXX :=  /Users/thomasriddick/anaconda3/pkgs/netcdf-cxx4-4.3.0-h703b707_9
+INCLUDE := -isystem"$(NETCDFCXX)/include" -isystem"$(NETCDFC)/include"
+else ifeq ($(shell hostname -d),lvt.dkrz.de)
 STDLIB_OPT :=
 FLAGS :=-pthread -DUSE_NETCDFCPP
 INCLUDE := -isystem"$(NETCDFCXX)/include" -isystem"$(NETCDFC)/include"
