@@ -16,11 +16,6 @@ import HDModule: water_to_lakes,water_from_lakes
 import HierarchicalStateMachineModule: handle_event
 import Base.show, Base.iterate
 
-TYPE FOR MERGE
-SPLIT FUNC
-JOIN FUNC
-FIND ROOT FUNC
-
 abstract type Lake <: State end
 
 struct RunLakes <: Event end
@@ -39,9 +34,12 @@ end
 
 struct AcceptMerge <: Event
   redirect_coords::Coords
+  primary_lake_number::Int64
 end
 
-struct AcceptSplit <: Event end
+struct AcceptSplit <: Event
+  primary_lake_number::Int64
+end
 
 struct DrainExcessWater <: Event end
 
@@ -814,7 +812,6 @@ function handle_event(lake::Lake,release_negative_water::ReleaseNegativeWater)
   return lake
 end
 
-MERGE TREE
 function handle_event(lake::Lake,accept_merge::AcceptMerge)
   lake_parameters::LakeParameters = get_lake_parameters(lake)
   lake_variables::LakeVariables = get_lake_variables(lake)
@@ -832,6 +829,9 @@ function handle_event(lake::Lake,accept_merge::AcceptMerge)
                                              lake_fields.
                                              lake_numbers(accept_merge.
                                                           redirect_coords))
+  make_new_link(lake_fields.set_forest,
+                accept_merge.primary_lake_number
+                lake_variables.lake_number)
   if isa(lake,OverflowingLake)
     subsumed_lake = handle_event(subsumed_lake,StoreWater(lake.
                                                           overflowing_lake_variables.
@@ -840,7 +840,6 @@ function handle_event(lake::Lake,accept_merge::AcceptMerge)
   return subsumed_lake
 end
 
-SPLIT TREE
 function handle_event(lake::SubsumedLake,accept_split::AcceptSplit)
   lake_parameters::LakeParameters = get_lake_parameters(lake)
   lake_variables::LakeVariables = get_lake_variables(lake)
@@ -856,6 +855,9 @@ function handle_event(lake::SubsumedLake,accept_split::AcceptSplit)
                                           lake.lake_fields,
                                           FillingLakeVariables(false,
                                                                false))
+  make_split_set(lake_fields.set_forest,
+                 accept_split.primary_lake_number,
+                 lake_variables.lake_number)
   return filling_lake
 end
 
@@ -1099,7 +1101,8 @@ function perform_primary_merge(lake::FillingLake,merge_indices::MergeAndRedirect
   lake_variables.secondary_number_of_flooded_cells += (other_lake.lake_variables.number_of_flooded_cells +
     other_lake.lake_variables.secondary_number_of_flooded_cells)
   other_lake_number = other_lake.lake_variables.lake_number
-  accept_merge::AcceptMerge = AcceptMerge(lake_variables.center_cell)
+  accept_merge::AcceptMerge = AcceptMerge(lake_variables.center_cell,
+                                          lake_variables.lake_number)
   lake_variables.other_lakes[other_lake_number] =
     handle_event(other_lake,accept_merge)
 end
@@ -1139,7 +1142,8 @@ function perform_secondary_merge(lake::FillingLake,merge_indices::MergeAndRedire
   other_lake_as_filling_lake::FillingLake = change_to_filling_lake(other_lake)
   lake_variables.other_lakes[other_lake_number] = other_lake_as_filling_lake
   accept_merge::AcceptMerge =
-    AcceptMerge(get_lake_variables(other_lake_as_filling_lake).center_cell)
+    AcceptMerge(get_lake_variables(other_lake_as_filling_lake).center_cell,
+                other_lake_number)
   return handle_event(lake,accept_merge)
 end
 
@@ -1159,7 +1163,7 @@ function rollback_primary_merge(lake::FillingLake,merge_indices::MergeAndRedirec
     (other_lake.lake_variables.number_of_flooded_cells +
      other_lake.lake_variables.secondary_number_of_flooded_cells)
   other_lake_number = other_lake.lake_variables.lake_number
-  accept_split::AcceptSplit = AcceptSplit()
+  accept_split::AcceptSplit = AcceptSplit(lake_variables.lake_number)
   lake_variables.other_lakes[other_lake_number] =
     handle_event(other_lake,accept_split)
   other_lake = lake_variables.other_lakes[other_lake_number]

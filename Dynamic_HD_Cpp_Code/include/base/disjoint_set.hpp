@@ -31,7 +31,7 @@ class disjoint_set {
       { nodes->insert(nodes->end(),extra_nodes->begin(),
                       extra_nodes->end());}
     vector<disjoint_set*>* get_nodes() { return nodes; }
-    void increase_size(int size_increment_in) {size = size+size_increment_in;}
+    void increase_size(int size_increment_in) {size += size_increment_in;}
     int get_size() { return size;}
     int get_label() { return label;}
     friend ostream& operator<<(ostream& out, disjoint_set& set_object)

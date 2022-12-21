@@ -70,11 +70,11 @@ TEST_F(DetermineRiverDirectionsTest,DetermineRiverDirectionsTestOne) {
        6,   3,   2,   3,    2,   1,   1,   6,
        3,   2,   1,   6,    0,   4,   4,   1,
        3,   2,   1,   9,    8,   7,   7,   4,
-       3,   2,   1,   6,    9,   9,   8,   7,
+       3,   2,   1,   9,    8,   9,   8,   7,
        6,   3,   3,   3,    3,   9,   8,   7,
        9,   6,   6,   6,    6,   9,   8,   7,
-       6,   9,   9,   9,    9,   8,   7,   6,
-       9,   8,   7,   4,    4,   6,   9,   9
+       7,   9,   9,   9,    9,   8,   7,   8,
+       7,   7,   4,   4,    6,   6,   9,   8
   };
 
   double* rdirs = new double[8*8];
@@ -139,11 +139,11 @@ TEST_F(DetermineRiverDirectionsTest,DetermineRiverDirectionsTestTwo) {
        6,   3,   2,   3,    2,   1,   1,   6,
        3,   2,   1,   6,    5,   4,   4,   1,
        3,   2,   1,   9,    8,   7,   7,   4,
-       3,   2,   1,   6,    9,   9,   8,   7,
+       3,   2,   1,   9,    8,   9,   8,   7,
        6,   3,   3,   3,    3,   9,   8,   7,
        9,   6,   6,   6,    6,   9,   8,   7,
-       6,   9,   9,   9,    9,   8,   7,   6,
-       9,   8,   7,   4,    4,   6,   9,   9
+       7,   9,   9,   9,    9,   8,   7,   8,
+       7,   7,   4,   4,    6,   6,   9,   8
   };
   double* rdirs = new double[8*8];
   bool always_flow_to_sea_in = true;
@@ -204,14 +204,14 @@ TEST_F(DetermineRiverDirectionsTest,DetermineRiverDirectionsTestThree) {
   };
 
   double* expected_rdirs_out = new double[8*8] {
-       2,   1,   1,   6,    6,   3,   2,   3,
+       2,   1,   1,   4,    4,   3,   2,   3,
        0,   4,   4,   1,    3,   2,   1,   6,
        8,   7,   7,   4,    3,   2,   1,   9,
-       4,   9,   8,   7,    3,   2,   1,   7,
+       1,   9,   8,   7,    3,   2,   1,   2,
        3,   9,   8,   7,    6,   3,   3,   3,
        6,   9,   8,   7,    9,   6,   6,   6,
-       9,   8,   7,   1,    3,   9,   9,   9,
-       8,   7,   4,   4,    6,   6,   6,   9
+       9,   8,   7,   6,    9,   9,   9,   9,
+       6,   6,   9,   9,    8,   7,   4,   4
   };
 
   double* rdirs = new double[8*8];
@@ -273,14 +273,14 @@ TEST_F(DetermineRiverDirectionsTest,DetermineRiverDirectionsTestFour) {
   };
 
   double* expected_rdirs_out = new double[8*8] {
-       2,   1,   1,   6,    6,   3,   2,   3,
+       2,   1,   1,   4,    4,   3,   2,   3,
        5,   4,   4,   1,    3,   2,   1,   6,
        8,   7,   7,   4,    3,   2,   1,   9,
-       4,   9,   8,   7,    3,   2,   1,   7,
+       1,   9,   8,   7,    3,   2,   1,   2,
        3,   9,   8,   7,    6,   3,   3,   3,
        6,   9,   8,   7,    9,   6,   6,   6,
-       9,   8,   7,   1,    3,   9,   9,   9,
-       8,   7,   4,   4,    6,   6,   6,   9
+       9,   8,   7,   6,    9,   9,   9,   9,
+       6,   6,   9,   9,    8,   7,   4,   4
   };
 
   double* rdirs = new double[8*8];
@@ -342,14 +342,14 @@ TEST_F(DetermineRiverDirectionsTest,DetermineRiverDirectionsTestFive) {
   };
 
   double* expected_rdirs_out = new double[8*8] {
-       2,   1,   1,   6,    6,   3,   2,   3,
+       2,   1,   1,   4,    4,   3,   2,   3,
        5,   4,   4,   1,    3,   2,   1,   6,
        1,   7,   7,   4,    3,   2,   3,   2,
        4,   9,   8,   7,    3,   2,   6,   5,
        7,   9,   8,   7,    6,   3,   9,   8,
        6,   9,   8,   7,    9,   6,   6,   6,
        3,   2,   1,   2,    1,   1,   9,   9,
-       6,   5,   4,   5,    4,   4,   6,   9
+       6,   5,   4,   5,    4,   4,   4,   4
   };
 
   double* rdirs = new double[8*8];
@@ -929,7 +929,7 @@ TEST_F(DetermineRiverDirectionsTest, DetermineRiverDirectionsICONTestOne) {
     //32
     30,
     //33
-    14,
+    52,
     //34
     55,
     //35
@@ -967,7 +967,7 @@ TEST_F(DetermineRiverDirectionsTest, DetermineRiverDirectionsICONTestOne) {
     //51
     30,
     //52
-    33,
+    70,
     //53
     55,
     //54
@@ -979,11 +979,11 @@ TEST_F(DetermineRiverDirectionsTest, DetermineRiverDirectionsICONTestOne) {
     //57
     55,
     //58
-    60,
+    59,
     //59
-    22,
+    21,
     //60
-    22,
+    21,
     //61
     43,
     //62
@@ -1013,7 +1013,7 @@ TEST_F(DetermineRiverDirectionsTest, DetermineRiverDirectionsICONTestOne) {
     //74
     79,
     //75
-    60,
+    59,
     //76
     79,
     //77
