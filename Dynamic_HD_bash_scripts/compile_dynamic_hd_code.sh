@@ -10,10 +10,13 @@ working_directory=${4}
 prep_paragen_code=${5}
 make_argument=${6:-"compile_only"}
 
+#As make arguments arent setup yet
+make_argument="all"
+
 #Compile C++ and Fortran Code if this is the first timestep
 if $compilation_required ; then
   cd ${source_directory}
-  rm makefile
+  rm -f makefile || true
   ./config/dkrz/levante.gcc-11.2.0
   make -f makefile clean
   make -f makefile ${make_argument}

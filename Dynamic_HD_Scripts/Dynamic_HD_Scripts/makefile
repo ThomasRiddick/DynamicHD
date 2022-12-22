@@ -3,8 +3,8 @@ RM := rm -rf
 
 all :
 	echo "Compiling Cython Modules" 1>&2
-	python3 interface/cpp_interface/setup_fill_sinks.py clean --all
-	python3 interface/cpp_interface/setup_fill_sinks.py build_ext --inplace -f
+	cd interface/cpp_interface; python3 setup_fill_sinks.py clean --all
+	cd interface/cpp_interface; python3 setup_fill_sinks.py build_ext --inplace -f
 clean :
 		-$(RM) ./bin/f2py_setup_wrapper.py
 		-$(RM) ./libs/*.so
