@@ -821,7 +821,7 @@ void basin_evaluation_algorithm::set_remaining_redirects() {
 							if (check_for_sinks_and_set_downstream_coords(current_coords)) {
 								catchment_outlet_coarse_coords =
 									_coarse_grid->convert_fine_coords(current_coords,
-									                           _grid_params);
+									                                  _grid_params);
 								delete downstream_coords;
 								delete current_coords;
 								break;
@@ -836,12 +836,15 @@ void basin_evaluation_algorithm::set_remaining_redirects() {
 			}
 			int coarse_catchment_number =
 				(*coarse_catchment_nums)(catchment_outlet_coarse_coords);
-			if (prior_fine_catchment_num == 0) delete catchment_outlet_coarse_coords;
 			collected_merge_and_redirect_indices*
 				working_collected_merge_and_redirect_indices =
 				basin_merges_and_redirects->get_collected_merge_and_redirect_indices(coords_in,
 		                                                                    		 redirect_height_type,
 		                                                                    		 false);
+			if (! working_collected_merge_and_redirect_indices->
+			    	get_unmatched_secondary_merge())
+				throw runtime_error("Missing unmatched secondary merge when setting remaining redirects");
+			working_collected_merge_and_redirect_indices->set_unmatched_secondary_merge(false);
 			working_collected_merge_and_redirect_indices->set_secondary_merge_target_coords(null_coords);
 			merge_and_redirect_indices*  working_redirect =
 				working_collected_merge_and_redirect_indices->
@@ -1115,13 +1118,23 @@ void latlon_basin_evaluation_algorithm::test_set_remaining_redirects(vector<coor
 		new merges_and_redirects(latlon_merge_and_redirect_indices_factory,grid_params_in);
 	_grid->for_all([&](coords* coords_in){
 	if ((*requires_flood_redirect_indices)(coords_in)){
-			basin_merges_and_redirects->get_collected_merge_and_redirect_indices(coords_in,
-                                             													     flood_height,
-                                             													     true);
+			collected_merge_and_redirect_indices*
+				working_collected_merge_and_redirect_indices =
+					basin_merges_and_redirects->
+						get_collected_merge_and_redirect_indices(coords_in,
+                                             			   flood_height,
+                                             			   true);
+			working_collected_merge_and_redirect_indices->
+				set_unmatched_secondary_merge(coords_in);
 		} else if ((*requires_connect_redirect_indices)(coords_in)){
-			basin_merges_and_redirects->get_collected_merge_and_redirect_indices(coords_in,
-                                             													     connection_height,
-                                             													     true);
+			collected_merge_and_redirect_indices*
+				working_collected_merge_and_redirect_indices =
+					basin_merges_and_redirects->
+						get_collected_merge_and_redirect_indices(coords_in,
+                                             			   connection_height,
+                                             		     true);
+			working_collected_merge_and_redirect_indices->
+				set_unmatched_secondary_merge(coords_in);
 		}
   });
 	set_remaining_redirects();

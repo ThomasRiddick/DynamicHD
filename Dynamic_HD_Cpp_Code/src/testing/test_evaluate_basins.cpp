@@ -5086,7 +5086,7 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectOne) {
 TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectTwo) {
   auto grid_params_in = new latlon_grid_params(9,9,false);
   auto coarse_grid_params_in = new latlon_grid_params(3,3,false);
-  int* basin_catchment_numbers_in = new int[9*9] {3,3,3, 3,3,8, 8,8,9,
+  int* basin_catchment_numbers_in = new int[9*9] {3,3,3, 3,3,8, 8,9,9,
                                                   3,3,3, 3,8,8, 8,9,9,
                                                   3,3,3, 8,8,8, 9,9,9,
 //
@@ -5119,7 +5119,18 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectTwo) {
   merge_and_redirect_indices* primary_merge;
   merge_and_redirect_indices* secondary_merge;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
-
+  secondary_merge =
+          new latlon_merge_and_redirect_indices(new latlon_coords(4,8),
+                                                new latlon_coords(1,2),
+                                                false);
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(1,5)) = flood_index;
+  flood_index++;
   primary_merge =
           new latlon_merge_and_redirect_indices(new latlon_coords(1,5),
                                                 new latlon_coords(1,5),
@@ -5169,7 +5180,6 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectTwo) {
     basin_eval.get_basin_merges_and_redirects();
   EXPECT_TRUE(merges_and_redirects_expected_out ==
               *merges_and_redirects_out);
-  EXPECT_TRUE(false);
   delete grid_params_in; delete coarse_grid_params_in;
   delete[] basin_catchment_numbers_in; delete[] coarse_catchment_nums_in;
   delete[] prior_coarse_rdirs_in;
@@ -8456,8 +8466,8 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsThree) {
 
   secondary_redirect =
           new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
-                                                new latlon_coords(1,4),
-                                                true);
+                                                new latlon_coords(1,1),
+                                                false);
   collected_indices = new collected_merge_and_redirect_indices(primary_redirects,
                                                                secondary_redirect,
                                                                latlon_merge_and_redirect_indices_factory);
@@ -8472,7 +8482,7 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsThree) {
                                flood_merge_and_redirect_indices_vector,
                                grid_params_in);
   int* coarse_catchment_nums_in = new int[4*4]
-                                     {1,2,1,1,
+                                     {2,2,1,1,
                                       1,2,1,1,
                                       1,1,1,1,
                                       1,1,1,1};
@@ -8503,8 +8513,6 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsThree) {
     basin_eval.get_basin_merges_and_redirects();
   EXPECT_TRUE(merges_and_redirects_expected_out ==
               *merges_and_redirects_out);
-  cout << merges_and_redirects_expected_out << endl;
-  cout << *merges_and_redirects_out << endl;
   delete grid_params_in; delete coarse_grid_params_in;
   delete[] flood_next_cell_lat_index_in; delete[] flood_next_cell_lon_index_in;
   delete[] connect_next_cell_lat_index_in; delete[] connect_next_cell_lon_index_in;
@@ -9733,326 +9741,152 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsOne) {
     -1, -1, -1, -1, -1,  -1,      -1,  -1,  -1, -1,   -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
     -1, -1, -1, -1, -1,  -1,      -1,  -1,  -1, -1,   -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
     -1, -1, -1, -1, -1,  -1,      -1,  -1,  -1, -1,   -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1  };
-  int* flood_redirect_lat_index_expected_out = new int[20*20]{
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,   1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,   1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1,  7, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-//
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1,  7, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1,  1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1,  6, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1,  5,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-//
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1,  3, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-//
-    -1, -1, -1,  3, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1 };
-  int* flood_redirect_lon_index_expected_out = new int[20*20]{
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,   0, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,   3, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, 14, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-//
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, 14, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1,  0, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1,  5, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, 13,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-//
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1,  3, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-//
-    -1, -1, -1,  0, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1 };
-  int* connect_redirect_lat_index_expected_out = new int[20*20]{
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-//
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-//
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-//
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1 };
-  int* connect_redirect_lon_index_expected_out = new int[20*20]{
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-//
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-//
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-//
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1 };
-  bool* flood_local_redirect_expected_out = new bool[20*20]{
-   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
-    false,false,false,false,
-   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
-    false,false,false,false,
-   false, false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
-    false,false,false,false,
-   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
-    false,false,false,false,
-   false,false,false,false,false,false,false,true,false,false,false,false,false,false,false,false,
-    false,false,false,false,
-   false,false,false,false,false,false,false,false,false,false,false, true,false,false, false,false,
-    false,false,false,false,
-   false,false,false,false,false,false, false,false,false,false,false,false,false,false,false,false,
-    false,false,false,false,
-   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false, false,
-    true,false,false,false,
-   false,false,false,false,false,false,false,false,false,false,false,false,false,false,true,false,
-    false,false,false,false,
-   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
-    false,false,false,false,
-   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
-    false,false,false,false,
-   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
-    false,false,false,false,
-   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
-    false,false,false,false,
-   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
-    false,false,false,false,
-   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
-    false,false,false,false,
-   false,false,false,false, false,false,false,false,false,false,false,false,false,false,false,false,
-    false,false,false,false,
-   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
-    false,false,false,false,
-   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
-    false,false,false,false,
-   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
-    false,false,false,false,
-   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
-    false,false,false,false};
-  bool* connect_local_redirect_expected_out = new bool[20*20]{
-   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
-    false,false,false,false,
-   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
-    false,false,false,false,
-   false, false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
-    false,false,false,false,
-   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
-    false,false,false,false,
-   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
-    false,false,false,false,
-   false,false,false,false,false,false,false,false,false,false,false,false,false,false, false,false,
-    false,false,false,false,
-   false,false,false,false,false,false, false,false,false,false,false,false,false,false,false,false,
-    false,false,false,false,
-   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false, false,
-    false,false,false,false,
-   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
-    false,false,false,false,
-   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
-    false,false,false,false,
-   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
-    false,false,false,false,
-   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
-    false,false,false,false,
-   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
-    false,false,false,false,
-   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
-    false,false,false,false,
-   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
-    false,false,false,false,
-   false,false,false,false, false,false,false,false,false,false,false,false,false,false,false,false,
-    false,false,false,false,
-   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
-    false,false,false,false,
-   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
-    false,false,false,false,
-   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
-    false,false,false,false,
-   false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,
-    false,false,false,false};
-  merge_types* merge_points_expected_out = new merge_types[20*20]{
-    no_merge,no_merge,no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,no_merge,no_merge,
-      no_merge,no_merge,no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,no_merge,no_merge,
-      no_merge,no_merge,no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,no_merge,no_merge,
-      no_merge,no_merge,no_merge,no_merge,no_merge, connection_merge_not_set_flood_merge_as_primary,no_merge,no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge,no_merge,no_merge, connection_merge_not_set_flood_merge_as_secondary,no_merge,no_merge,no_merge,no_merge,
-      no_merge,no_merge,no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge,no_merge,no_merge, no_merge,no_merge,connection_merge_not_set_flood_merge_as_secondary,no_merge,no_merge,
-      no_merge,no_merge,no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,no_merge,no_merge,
+  int flood_index = 0;
+  int connect_index = 0;
+  field<int>* connect_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  field<int>* flood_merge_and_redirect_indices_index = new field<int>(grid_params_in);
+  connect_merge_and_redirect_indices_index->set_all(-1);
+  flood_merge_and_redirect_indices_index->set_all(-1);
+  vector<collected_merge_and_redirect_indices*>*
+    connect_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<collected_merge_and_redirect_indices*>*
+    flood_merge_and_redirect_indices_vector =
+      new vector<collected_merge_and_redirect_indices*>;
+  vector<merge_and_redirect_indices*>* primary_merges = nullptr;
+  merge_and_redirect_indices* primary_merge;
+  merge_and_redirect_indices* secondary_merge;
+  collected_merge_and_redirect_indices* collected_indices = nullptr;
+  secondary_merge =
+          new latlon_merge_and_redirect_indices(new latlon_coords(-1.0,-1.0),
+                                                new latlon_coords(3,0),
+                                                false);
+  primary_merges = new vector<merge_and_redirect_indices*>;
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(15,3)) = flood_index;
+  flood_index++;
 
-    no_merge,no_merge,no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,no_merge,no_merge,
-      no_merge,connection_merge_not_set_flood_merge_as_secondary,no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,no_merge,no_merge,
-      no_merge,no_merge,no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,no_merge,no_merge,
-    no_merge,connection_merge_not_set_flood_merge_as_secondary,no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,no_merge,no_merge,
-      no_merge,no_merge,no_merge,no_merge,no_merge, no_merge,connection_merge_not_set_flood_merge_as_primary,no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,no_merge,no_merge,
-      no_merge,no_merge,no_merge,no_merge,connection_merge_not_set_flood_merge_as_primary, no_merge,no_merge,no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,no_merge,no_merge,
-      no_merge,no_merge,no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,no_merge,no_merge,
+  secondary_merge =
+          new latlon_merge_and_redirect_indices(new latlon_coords(7,14),
+                                                new latlon_coords(2,3),
+                                                false);
+  primary_merges = new vector<merge_and_redirect_indices*>;
 
-    no_merge,no_merge,no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,no_merge,no_merge,
-      no_merge,no_merge,no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,no_merge,no_merge,
-      no_merge,no_merge,no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,no_merge,no_merge,
-      no_merge,no_merge,no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,no_merge,no_merge,
-      no_merge,no_merge,no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,connection_merge_not_set_flood_merge_as_secondary,no_merge,
-    no_merge,no_merge,no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,no_merge,no_merge,
-      no_merge,no_merge,no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,no_merge,no_merge,
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(7,1)) = flood_index;
+  flood_index++;
 
-    no_merge,no_merge,no_merge,connection_merge_not_set_flood_merge_as_secondary,no_merge, no_merge,no_merge,no_merge,no_merge,no_merge,
-      no_merge,no_merge,no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,no_merge,no_merge,
-      no_merge,no_merge,no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,no_merge,no_merge,
-      no_merge,no_merge,no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,no_merge,no_merge,
-      no_merge,no_merge,no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,no_merge,no_merge,
-    no_merge,no_merge,no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,no_merge,no_merge,
-      no_merge,no_merge,no_merge,no_merge,no_merge, no_merge,no_merge,no_merge,no_merge,no_merge };
+  secondary_merge =
+          new latlon_merge_and_redirect_indices(new latlon_coords(7,14),
+                                                new latlon_coords(7,14),
+                                                true);
+  primary_merges = new vector<merge_and_redirect_indices*>;
 
-  int* flood_force_merge_lat_index_expected_out = new int[20*20] {
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(4,7)) = flood_index;
+  flood_index++;
 
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,   2, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-//
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1,  6, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1,  5,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-//
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-//
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1 };
-  int* flood_force_merge_lon_index_expected_out = new int[20*20] {
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,   0, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-//
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1,  5, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, 13,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-//
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-//
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1 };
-  int* connect_force_merge_lat_index_expected_out = new int[20*20] {
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-//
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-//
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-//
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1 };
-  int* connect_force_merge_lon_index_expected_out = new int[20*20] {
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-//
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-//
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-//
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1,  -1, -1, -1, -1, -1 };
+  secondary_merge =
+          new latlon_merge_and_redirect_indices(new latlon_coords(7,14),
+                                                new latlon_coords(7,14),
+                                                true);
+  primary_merges = new vector<merge_and_redirect_indices*>;
+
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(5,11)) = flood_index;
+  flood_index++;
+
+  primary_merge =
+          new latlon_merge_and_redirect_indices(new latlon_coords(5,13),
+                                                new latlon_coords(5,13),
+                                                true);
+  secondary_merge = nullptr;
+
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  primary_merges->push_back(primary_merge);
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(8,14)) = flood_index;
+  flood_index++;
+   primary_merge =
+          new latlon_merge_and_redirect_indices(new latlon_coords(6,5),
+                                                new latlon_coords(6,5),
+                                                true);
+  secondary_merge = nullptr;
+
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  primary_merges->push_back(primary_merge);
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(7,16)) = flood_index;
+  flood_index++;
+
+  primary_merge =
+          new latlon_merge_and_redirect_indices(new latlon_coords(2,0),
+                                                new latlon_coords(1,0),
+                                                false);
+  secondary_merge = nullptr;
+
+  primary_merges =
+    new vector<merge_and_redirect_indices*>;
+  primary_merges->push_back(primary_merge);
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(2,15)) = flood_index;
+  flood_index++;
+
+  secondary_merge =
+          new latlon_merge_and_redirect_indices(new latlon_coords(-1.0,-1.0),
+                                                new latlon_coords(1,3),
+                                                false);
+  primary_merges = new vector<merge_and_redirect_indices*>;
+
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(3,5)) = flood_index;
+  flood_index++;
+
+  secondary_merge =
+          new latlon_merge_and_redirect_indices(new latlon_coords(-1.0,-1.0),
+                                                new latlon_coords(3,3),
+                                                false);
+  primary_merges = new vector<merge_and_redirect_indices*>;
+
+  collected_indices = new collected_merge_and_redirect_indices(primary_merges,
+                                                               secondary_merge,
+                                                               latlon_merge_and_redirect_indices_factory);
+  flood_merge_and_redirect_indices_vector->push_back(collected_indices);
+  (*flood_merge_and_redirect_indices_index)(new latlon_coords(13,18)) = flood_index;
+  flood_index++;
+
+  merges_and_redirects merges_and_redirects_expected_out =
+          merges_and_redirects(connect_merge_and_redirect_indices_index,
+                               flood_merge_and_redirect_indices_index,
+                               connect_merge_and_redirect_indices_vector,
+                               flood_merge_and_redirect_indices_vector,
+                               grid_params_in);
   auto basin_eval = latlon_basin_evaluation_algorithm();
   basin_eval.setup_fields(minima_in,
                           raw_orography_in,
@@ -10131,7 +9965,6 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsOne) {
   basin_eval.evaluate_basins();
   merges_and_redirects* merges_and_redirects_out =
     basin_eval.get_basin_merges_and_redirects();
-  cout << *merges_and_redirects_out << endl;
   EXPECT_TRUE(field<double>(flood_volume_thresholds_in,grid_params_in)
               == field<double>(flood_volume_thresholds_expected_out,grid_params_in));
   EXPECT_TRUE(field<double>(connection_volume_thresholds_in,grid_params_in)
@@ -10144,7 +9977,8 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsOne) {
               == field<int>(connect_next_cell_lat_index_expected_out,grid_params_in));
   EXPECT_TRUE(field<int>(connect_next_cell_lon_index_in,grid_params_in)
               == field<int>(connect_next_cell_lon_index_expected_out,grid_params_in));
-  EXPECT_TRUE(false);
+  EXPECT_TRUE(merges_and_redirects_expected_out ==
+              *merges_and_redirects_out);
   delete grid_params_in; delete coarse_grid_params_in; delete alg4;
   delete[] coarse_catchment_nums_in; delete[] corrected_orography_in;
   delete[] raw_orography_in; delete[] minima_in;

@@ -210,7 +210,7 @@ collected_merge_and_redirect_indices*
         connect_merge_and_redirect_indices->push_back(new collected_merge_and_redirect_indices
                                                           (merge_and_redirect_indices_factory));
         next_free_connect_index++;
-        return flood_merge_and_redirect_indices->back();
+        return connect_merge_and_redirect_indices->back();
       } else throw runtime_error("Merge not found");
     }
     return (*connect_merge_and_redirect_indices)[merge_and_redirect_indices_index];
@@ -254,12 +254,16 @@ ostream& operator<<(ostream& out, merges_and_redirects& obj){
         obj.get_connect_merge_and_redirect_indices()->begin();
       i != obj.get_connect_merge_and_redirect_indices()->end();++i){
     out << *(*i) << endl;
+    out << endl << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@" << endl << endl;
   }
+  out << "=================================" << endl;
+  out << "=================================" << endl << endl;
   out << "flood merge indices:  " << endl;
   for(vector<collected_merge_and_redirect_indices*>::const_iterator i =
       obj.get_flood_merge_and_redirect_indices()->begin();
       i != obj.get_flood_merge_and_redirect_indices()->end();++i){
     out << *(*i) << endl;
+    out << endl << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@" << endl << endl;
   }
   return out;
 }
