@@ -33,8 +33,9 @@ $(FORTRAN_RELEASE_DIR):
 
 $(CPP_RELEASE_DIR):
 	mkdir $(CPP_RELEASE_DIR)
-	mkdir $(CPP_RELEASE_DIR)/base
-	mkdir $(CPP_RELEASE_DIR)/algorithms
-	mkdir $(CPP_RELEASE_DIR)/drivers
-	mkdir $(CPP_RELEASE_DIR)/testing
-	mkdir $(CPP_RELEASE_DIR)/command_line_drivers
+	mkdir $(CPP_RELEASE_DIR)/src
+	mkdir $(CPP_RELEASE_DIR)/src/base
+	mkdir $(CPP_RELEASE_DIR)/src/algorithms
+	mkdir $(CPP_RELEASE_DIR)/src/drivers
+	mkdir $(CPP_RELEASE_DIR)/src/testing
+	mkdir $(CPP_RELEASE_DIR)/src/command_line_drivers
