@@ -12,8 +12,10 @@ using CoordsModule: Generic1DCoords
 using GridModule: Grid, LatLonGrid, for_all, for_all_fine_cells_in_coarse_cell, for_all_with_line_breaks
 using GridModule: for_section_with_line_breaks,find_coarse_cell_containing_fine_cell
 using FieldModule: Field, set!,elementwise_divide, elementwise_multiple
+using SplittableRootedTree: RootedTreeForest,make_new_link,split_set,add_set,find_root
 import HDModule: water_to_lakes,water_from_lakes
 import HierarchicalStateMachineModule: handle_event
+import FieldModule: add_offset
 import Base.show, Base.iterate
 
 abstract type Lake <: State end
@@ -70,7 +72,7 @@ struct CalculateEffectiveLakeVolumePerCell <: Event
     return new(true,cell_list)
   end
   function CalculateEffectiveLakeVolumePerCell()
-    return new(false,Vector{Coords}[])
+    return new(false,Coords[])
   end
 end
 
@@ -81,7 +83,7 @@ struct CalculateTrueLakeDepths <: Event
     return new(true,cell_list)
   end
   function CalculateTrueLakeDepths()
-    return new(false,Vector{Coords}[])
+    return new(false,Coords[])
   end
 end
 
@@ -103,7 +105,7 @@ struct PrintSelectedLakes <: Event
   lakes_to_print::Array{Int64,1}
 end
 
-abstract struct MergeAndRedirectIndices end
+abstract type MergeAndRedirectIndices end
 
 mutable struct LatLonMergeAndRedirectIndices <: MergeAndRedirectIndices
   is_primary_merge::Bool
@@ -113,6 +115,20 @@ mutable struct LatLonMergeAndRedirectIndices <: MergeAndRedirectIndices
   merge_target_lon_index::Int64
   redirect_lat_index::Int64
   redirect_lon_index::Int64
+  function LatLonMergeAndRedirectIndices(is_primary_merge::Bool,
+                                         local_redirect::Bool,
+                                         merge_target_lat_index::Int64,
+                                         merge_target_lon_index::Int64,
+                                         redirect_lat_index::Int64,
+                                         redirect_lon_index::Int64)
+    return(new(is_primary_merge,
+               false,
+               local_redirect,
+               merge_target_lat_index,
+               merge_target_lon_index,
+               redirect_lat_index,
+               redirect_lon_index))
+  end
 end
 
 mutable struct UnstructuredMergeAndRedirectIndices <: MergeAndRedirectIndices
@@ -123,12 +139,37 @@ mutable struct UnstructuredMergeAndRedirectIndices <: MergeAndRedirectIndices
   redirect_cell_index::Int64
 end
 
+function add_offset(merge_indices::LatLonMergeAndRedirectIndices,
+                    offset::Int64)
+  merge_indices.merge_target_lat_index += offset
+  merge_indices.merge_target_lon_index += offset
+  merge_indices.redirect_lat_index += offset
+  merge_indices.redirect_lon_index += offset
+end
+
+function reset(merge_indices::LatLonMergeAndRedirectIndices)
+  merge_indices.merged = false
+end
+
 struct MergeAndRedirectIndicesCollection
   primary_merge::Bool
   secondary_merge::Bool
   primary_merge_and_redirect_indices::Vector{MergeAndRedirectIndices}
   primary_merge_and_redirect_indices_count::Int64
-  secondary_merge_and_redirect_indices::MergeAndRedirectIndices
+  secondary_merge_and_redirect_indices::Union{MergeAndRedirectIndices,Nothing}
+  function MergeAndRedirectIndicesCollection(primary_merge_and_redirect_indices
+                                             ::Vector{MergeAndRedirectIndices},
+                                             secondary_merge_and_redirect_indices
+                                             ::Union{MergeAndRedirectIndices,Nothing})
+    primary_merge_and_redirect_indices_count::Int64 =
+      length(primary_merge_and_redirect_indices)
+    primary_merge::Bool = (primary_merge_and_redirect_indices_count > 0)
+    secondary_merge::Bool = secondary_merge_and_redirect_indices === nothing
+    return new(primary_merge,secondary_merge,
+               primary_merge_and_redirect_indices,
+               primary_merge_and_redirect_indices_count,
+               secondary_merge_and_redirect_indices)
+  end
 end
 
 function iterate(collection::MergeAndRedirectIndicesCollection,
@@ -136,22 +177,48 @@ function iterate(collection::MergeAndRedirectIndicesCollection,
   if state <= collection.primary_merge_and_redirect_indices_count
     return collection.primary_merge_and_redirect_indices[state], state+1
   elseif state == collection.primary_merge_and_redirect_indices_count + 1
-    return collection.secondary_merge_and_redirect_indices, state+1
+    if collection.secondary_merge_and_redirect_indices !== nothing
+      return collection.secondary_merge_and_redirect_indices, state+1
+    else
+      return nothing
+    end
   else
     return nothing
   end
 end
 
-function iterate(collection::Iterators.Reverse{MergeAndRedirectIndicesCollection},
-                 state=rcollection.iter.primary_merge_and_redirect_indices_count + 1)
+function iterate(rcollection::Iterators.Reverse{MergeAndRedirectIndicesCollection},
+                 state=rcollection.itr.primary_merge_and_redirect_indices_count + 1)
+  if state == rcollection.itr.primary_merge_and_redirect_indices_count + 1
+    if rcollection.itr.secondary_merge_and_redirect_indices !== nothing
+      return rcollection.itr.secondary_merge_and_redirect_indices, state-1
+    else
+      state -= 1
+    end
+  end
   if state < 1
     return nothing
-  elseif state <= rcollection.iter.primary_merge_and_redirect_indices_count
-    return rcollection.iter.primary_merge_and_redirect_indices[state], state-1
-  elseif state == rcollection.iter.primary_merge_and_redirect_indices_count + 1
-    return rcollection.iter.secondary_merge_and_redirect_indices, state-1
+  elseif state <= rcollection.itr.primary_merge_and_redirect_indices_count
+    return rcollection.itr.primary_merge_and_redirect_indices[state], state-1
   else
     throw(UserError())
+  end
+end
+
+function add_offset(collections::Vector{MergeAndRedirectIndicesCollection},
+                    offset::Int64)
+  for collection in collections
+    for merge_indices in collection
+      add_offset(merge_indices,offset)
+    end
+  end
+end
+
+function reset(collections::Vector{MergeAndRedirectIndicesCollection})
+  for collection in collections
+    for merge_indices in collection
+      reset(merge_indices)
+    end
   end
 end
 
@@ -164,9 +231,9 @@ struct LakeParameters
   flood_only::Field{Bool}
   connect_merge_and_redirect_indices_index::Field{Int64}
   flood_merge_and_redirect_indices_index::Field{Int64}
-  connect_merge_and_redirect_indices_collection::
+  connect_merge_and_redirect_indices_collections::
     Vector{MergeAndRedirectIndicesCollection}
-  flood_merge_and_redirect_indices_collection::
+  flood_merge_and_redirect_indices_collections::
     Vector{MergeAndRedirectIndicesCollection}
   cell_areas_on_surface_model_grid::Field{Float64}
   basin_numbers::Field{Int64}
@@ -182,8 +249,12 @@ struct LakeParameters
   function LakeParameters(lake_centers::Field{Bool},
                           connection_volume_thresholds::Field{Float64},
                           flood_volume_thresholds::Field{Float64},
-                          connect_merge_and_redirect_indices_index::Field{Int64}
-                          flood_merge_and_redirect_indices_index::Field{Int64}
+                          connect_merge_and_redirect_indices_index::Field{Int64},
+                          flood_merge_and_redirect_indices_index::Field{Int64},
+                          connect_merge_and_redirect_indices_collections
+                          ::Vector{MergeAndRedirectIndicesCollection},
+                          flood_merge_and_redirect_indices_collections
+                          ::Vector{MergeAndRedirectIndicesCollection},
                           cell_areas_on_surface_model_grid::Field{Float64},
                           grid::Grid,
                           hd_grid::Grid,
@@ -191,7 +262,7 @@ struct LakeParameters
                           grid_specific_lake_parameters::GridSpecificLakeParameters)
     flood_only::Field{Bool} =  Field{Bool}(grid,false)
     number_fine_grid_cells = Field{Int64}(surface_model_grid,0)
-    surface_cell_to_fine_cell_maps::Vector{Vector{Coords}} = Vector{Vector{Coords}}[]
+    surface_cell_to_fine_cell_maps::Vector{Vector{Coords}} = Vector{Coords}[]
     surface_cell_to_fine_cell_map_numbers = Field{Int64}(surface_model_grid,0)
     for_all(grid) do coords::Coords
       if connection_volume_thresholds(coords) == -1.0
@@ -218,11 +289,11 @@ struct LakeParameters
         end
       end
     end
-    basins::Vector{Vector{Coords}} = Vector{Vector{Coords}}[]
+    basins::Vector{Vector{Coords}} = Vector{Coords}[]
     basin_numbers::Field{Int64} = Field{Int64}(hd_grid)
     basin_number::Int64 = 1
     for_all(hd_grid) do coords::Coords
-      basins_in_coarse_cell::Vector{Coords} = Vector{Coords}[]
+      basins_in_coarse_cell::Vector{Coords} = Coords[]
       basins_found::Bool = false
       for_all_fine_cells_in_coarse_cell(grid,hd_grid,coords) do fine_coords::Coords
         if lake_centers(fine_coords)
@@ -240,8 +311,10 @@ struct LakeParameters
                connection_volume_thresholds,
                flood_volume_thresholds,
                flood_only,
-               connect_merge_and_redirect_indices_index::Field{Int64}
-               flood_merge_and_redirect_indices_index::Field{Int64}
+               connect_merge_and_redirect_indices_index,
+               flood_merge_and_redirect_indices_index,
+               connect_merge_and_redirect_indices_collections,
+               flood_merge_and_redirect_indices_collections,
                cell_areas_on_surface_model_grid,
                basin_numbers,
                number_fine_grid_cells,
@@ -283,6 +356,7 @@ struct LakeFields
   cells_with_lakes::Vector{Coords}
   evaporation_from_lakes::Array{Float64,1}
   evaporation_applied::BitArray{1}
+  set_forest::RootedTreeForest
   function LakeFields(lake_parameters::LakeParameters)
     connected_lake_cells = Field{Bool}(lake_parameters.grid,false)
     flooded_lake_cells = Field{Bool}(lake_parameters.grid,false)
@@ -296,7 +370,7 @@ struct LakeFields
     water_to_hd = Field{Float64}(lake_parameters.hd_grid,0.0)
     lake_water_from_ocean = Field{Float64}(lake_parameters.hd_grid,0.0)
     number_lake_cells = Field{Int64}(lake_parameters.surface_model_grid,0)
-    cells_with_lakes::Vector{Coords} = Vector{Coords}[]
+    cells_with_lakes::Vector{Coords} = Coords[]
     for_all(lake_parameters.hd_grid) do coords::Coords
       contains_lake::Bool = false
       for_all_fine_cells_in_coarse_cell(lake_parameters.grid,
@@ -309,10 +383,11 @@ struct LakeFields
     end
     evaporation_from_lakes::Array{Float64,1} = zeros(Float64,count(lake_parameters.lake_centers))
     evaporation_applied = falses(count(lake_parameters.lake_centers))
+    set_forest::RootedTreeForest = RootedTreeForest()
     new(connected_lake_cells,flooded_lake_cells,lake_numbers,buried_lake_numbers,
         effective_volume_per_cell_on_surface_grid,effective_lake_height_on_surface_grid_to_lakes,
         water_to_lakes,water_to_hd,lake_water_from_ocean,number_lake_cells,cells_with_lakes,
-        evaporation_from_lakes,evaporation_applied)
+        evaporation_from_lakes,evaporation_applied,set_forest)
   end
 end
 
@@ -320,7 +395,7 @@ struct LakePrognostics
   lakes::Vector{Lake}
   function LakePrognostics(lake_parameters::LakeParameters,
                            lake_fields::LakeFields)
-    lakes::Vector{Lake} = Vector{Lake}[]
+    lakes::Vector{Lake} = Lake[]
     lake_number::Int64 = 1
     for_all(lake_parameters.grid) do coords::Coords
       if lake_parameters.lake_centers(coords)
@@ -333,6 +408,7 @@ struct LakePrognostics
                                               coarse_coords),
                                 lake_fields))
         set!(lake_fields.lake_numbers,coords,lake_number)
+        add_set(lake_fields.set_forest,lake_number)
         lake_number += 1
         if lake_parameters.flood_only(coords)
           surface_model_coords::Coords =
@@ -365,7 +441,7 @@ mutable struct LakeVariables
                 lake_number::Int64,
                 center_cell_coarse_coords::Coords) =
     new(center_cell,0.0,0.0,0.0,deepcopy(center_cell),deepcopy(center_cell),
-        other_lakes,lake_number,Vector{Coords}[],center_cell_coarse_coords,0,0)
+        other_lakes,lake_number,Coords[],center_cell_coarse_coords,0,0)
 end
 
 get_lake_parameters(obj::T) where {T <: Lake} =
@@ -386,14 +462,6 @@ struct FillingLake <: Lake
   lake_variables::LakeVariables
   lake_fields::LakeFields
 end
-
-FillingLake(lake_parameters::LakeParameters,
-            lake_variables::LakeVariables,
-            lake_fields::LakeFields) =
-  FillingLake(lake_parameters,
-              lake_variables,
-              lake_fields,
-              FillingLakeVariables(false,false))
 
 mutable struct OverflowingLakeVariables
   excess_water::Float64
@@ -633,9 +701,9 @@ function handle_event(lake::FillingLake,add_water::AddWater)
     if filled
       merge_indices_index::Int64,is_flood_merge::Bool =
         get_merge_indices_index(lake)
-      if merge_indices_collection_index != 0:
+      if merge_indices_index != 0
         merge_indices_collection::MergeAndRedirectIndicesCollection =
-          get_merge_indices_collection(lake,merge_indices_collection_index,
+          get_merge_indices_collection(lake,merge_indices_index,
                                        is_flood_merge)
         for merge_indices::MergeAndRedirectIndices in merge_indices_collection
           local merge_possible::Bool
@@ -653,7 +721,7 @@ function handle_event(lake::FillingLake,add_water::AddWater)
             else
               perform_primary_merge(lake,merge_indices)
             end
-          else
+          elseif ! already_merged
             #Note becoming an overflowing lake occur not only when the other basin
             #is not yet full enough but also when the other other basin is overflowing
             #but is filling another basin at the same height (at a tri basin meeting point)
@@ -682,19 +750,20 @@ function handle_event(lake::FillingLake,remove_water::RemoveWater)
       rollback_filling_cell(lake)
       merge_indices_index::Int64,is_flood_merge::Bool =
         get_merge_indices_index(lake)
-      if merge_indices_collection_index != 0:
+      if merge_indices_index != 0
         merge_indices_collection::MergeAndRedirectIndicesCollection =
-          get_merge_indices_collection(lake,merge_indices_collection_index,
+          get_merge_indices_collection(lake,merge_indices_index,
                                        is_flood_merge)
         for merge_indices::MergeAndRedirectIndices in
               Iterators.reverse(merge_indices_collection)
-          merge_type::SimpleMergeType = get_merge_type(merge_indices)
-          if merge_type == primary_merge && merge_indices.merged
+          merge_type::MergeTypes = get_merge_type(merge_indices)
+          if merge_type == primary_merge
             new_outflow::Float64 = outflow/2.0
-            rollback_primary_merge(lake,merge_indices,new_outflow)
-            outflow -= new_outflow
+            if conditionally_rollback_primary_merge(lake,merge_indices,new_outflow)
+              outflow -= new_outflow
+            end
           elseif merge_type == secondary_merge
-            throw(UserError("Merge logic failure"))
+            error("Merge logic failure")
           end
         end
       end
@@ -751,19 +820,20 @@ function handle_event(lake::OverflowingLake,remove_water::RemoveWater)
   end
   lake_as_filling_lake::FillingLake = change_to_filling_lake(lake)
   merge_indices_index::Int64,is_flood_merge::Bool = get_merge_indices_index(lake)
-  if merge_indices_collection_index != 0:
+  if merge_indices_index != 0
     merge_indices_collection::MergeAndRedirectIndicesCollection =
-      get_merge_indices_collection(lake,merge_indices_collection_index,
+      get_merge_indices_collection(lake,merge_indices_index,
                                    is_flood_merge)
     for merge_indices::MergeAndRedirectIndices in merge_indices_collection
-      merge_type::SimpleMergeType = get_merge_type(merge_indices)
-      if merge_type == primary_merge && merge_indices.merged
+      merge_type::MergeTypes = get_merge_type(merge_indices)
+      if merge_type == primary_merge
         new_outflow::Float64 = outflow/2.0
-        rollback_primary_merge(lake,merge_indices,new_outflow)
-        outflow -= new_outflow
+        if conditionally_rollback_primary_merge(lake,merge_indices,new_outflow)
+          outflow -= new_outflow
+        end
       elseif merge_type == secondary_merge
         if merge_indices.merged
-          throw(UserError("Merge logic failure"))
+          error("Merge logic failure")
         end
       end
     end
@@ -830,7 +900,7 @@ function handle_event(lake::Lake,accept_merge::AcceptMerge)
                                              lake_numbers(accept_merge.
                                                           redirect_coords))
   make_new_link(lake_fields.set_forest,
-                accept_merge.primary_lake_number
+                accept_merge.primary_lake_number,
                 lake_variables.lake_number)
   if isa(lake,OverflowingLake)
     subsumed_lake = handle_event(subsumed_lake,StoreWater(lake.
@@ -852,12 +922,10 @@ function handle_event(lake::SubsumedLake,accept_split::AcceptSplit)
   end
   filling_lake::FillingLake = FillingLake(lake_parameters,
                                           lake_variables,
-                                          lake.lake_fields,
-                                          FillingLakeVariables(false,
-                                                               false))
-  make_split_set(lake_fields.set_forest,
-                 accept_split.primary_lake_number,
-                 lake_variables.lake_number)
+                                          lake.lake_fields)
+  split_set(lake_fields.set_forest,
+            accept_split.primary_lake_number,
+            lake_variables.lake_number)
   return filling_lake
 end
 
@@ -1037,6 +1105,7 @@ function get_merge_type(merge_indices::MergeAndRedirectIndices)
     return primary_merge
   else
     return secondary_merge
+  end
 end
 
 function get_merge_indices_index(lake::Lake)
@@ -1046,45 +1115,51 @@ function get_merge_indices_index(lake::Lake)
   current_cell::Coords = lake_variables.current_cell_to_fill
   if lake_fields.connected_lake_cells(current_cell) ||
      lake_parameters.flood_only(current_cell)
-    return flood_merge_and_redirect_indices_index(current_cell),true
+    return lake_parameters.flood_merge_and_redirect_indices_index(current_cell),true
   else
-    return connect_merge_and_redirect_indices_index(current_cell),false
-  end if
+    return lake_parameters.connect_merge_and_redirect_indices_index(current_cell),false
+  end
 end
 
-function get_merge_indices_collection(lake::Lake,merge_indices_collection_index::Int64,
+function get_merge_indices_collection(lake::Lake,merge_indices_index::Int64,
                                       is_flood_merge::Bool)
   lake_parameters::LakeParameters = get_lake_parameters(lake)
   if is_flood_merge
     return lake_parameters.
-           flood_merge_and_redirect_indices_collection[merge_indices_collection_index]
+           flood_merge_and_redirect_indices_collections[merge_indices_index]
   else
     return lake_parameters.
-           connect_merge_and_redirect_indices_collection[merge_indices_collection_index]
+           connect_merge_and_redirect_indices_collections[merge_indices_index]
   end
 end
 
 function check_if_merge_is_possible(lake::Lake,merge_indices::MergeAndRedirectIndices)
   lake_variables::LakeVariables = get_lake_variables(lake)
   lake_fields::LakeFields = get_lake_fields(lake)
-  if ! merge_indices.merged
-    return false,true
+  merge_type::MergeTypes = get_merge_type(merge_indices)
+  if merge_indices.merged
+    return false,true,merge_type
   end
   target_cell::Coords = get_merge_target_coords(merge_indices)
-  other_lake::Lake = lake_variables.other_lakes[lake_fields.lake_numbers(target_cell)]
+  other_lake_number::Int64 = lake_fields.lake_numbers(target_cell)
+  if other_lake_number == 0
+    return false,false,merge_type
+  end
+  other_lake::Lake = lake_variables.other_lakes[other_lake_number]
   other_lake = find_true_primary_lake(other_lake)
   if (get_lake_variables(other_lake)::LakeVariables).lake_number == lake_variables.lake_number
-    return false,true
+    return false,true,merge_type
   elseif isa(other_lake,OverflowingLake)
     other_lake_target_lake_number::Int64 = lake_fields.lake_numbers(other_lake.next_merge_target_coords)
     other_lake_target_lake::Lake = lake_variables.other_lakes[other_lake_target_lake_number]
+    other_lake_target_lake = find_true_primary_lake(other_lake_target_lake)
     if (get_lake_variables(other_lake_target_lake)::LakeVariables).lake_number == lake_variables.lake_number
-      return true,false
+      return true,false,merge_type
     else
-      return false,false
+      return false,false,merge_type
     end
   else
-    return false,false
+    return false,false,merge_type
   end
 end
 
@@ -1147,15 +1222,18 @@ function perform_secondary_merge(lake::FillingLake,merge_indices::MergeAndRedire
   return handle_event(lake,accept_merge)
 end
 
-function rollback_primary_merge(lake::FillingLake,merge_indices::MergeAndRedirectIndices,
-                                other_lake_outflow::Float64)
+function conditionally_rollback_primary_merge(lake::FillingLake,merge_indices::MergeAndRedirectIndices,
+                                              other_lake_outflow::Float64)
   lake_variables::LakeVariables = get_lake_variables(lake)
   lake_fields::LakeFields = get_lake_fields(lake)
   target_cell::Coords = get_merge_target_coords(merge_indices)
-  merge_indices.merged = false
   other_lake_number::Integer = lake_fields.lake_numbers(target_cell)
   other_lake::Lake = lake_variables.other_lakes[other_lake_number]
   other_lake = find_true_rolledback_primary_lake(other_lake)
+  if find_true_primary_lake(other_lake).lake_variables.lake_number != lake_variables.lake_number
+    return false
+  end
+  merge_indices.merged = false
   lake_variables.secondary_lake_volume -=
     (other_lake.lake_variables.lake_volume +
      other_lake.lake_variables.secondary_lake_volume)
@@ -1170,6 +1248,7 @@ function rollback_primary_merge(lake::FillingLake,merge_indices::MergeAndRedirec
   remove_water::RemoveWater = RemoveWater(other_lake_outflow)
   lake_variables.other_lakes[other_lake_number] =
     handle_event(other_lake,remove_water)
+  return true
 end
 
 function change_to_filling_lake(lake::OverflowingLake)
@@ -1184,9 +1263,7 @@ end
 function change_to_filling_lake(lake::SubsumedLake)
   filling_lake::FillingLake = FillingLake(lake.lake_parameters,
                                           lake.lake_variables,
-                                          lake.lake_fields,
-                                          FillingLakeVariables(false,
-                                                               false))
+                                          lake.lake_fields)
 end
 
 function update_filling_cell(lake::FillingLake)
@@ -1267,19 +1344,20 @@ end
 
 function find_true_primary_lake(lake::Lake)
   lake_variables::LakeVariables = get_lake_variables(lake)
+  lake_fields::LakeFields = get_lake_fields(lake)
   if isa(lake,SubsumedLake)
     true_primary_lake_number::Int64 =
-      find_root(lake.lake_variables.merges,lake.lake_variables.primary_lake_number)
+      find_root(lake_fields.set_forest,lake.primary_lake_number)
     return lake_variables.other_lakes[true_primary_lake_number]
   else
     return lake
   end
 end
 
-function find_true_rolledback_primary_lake(lake::Lake)
+function find_true_rolledback_primary_lake(lake::SubsumedLake)
   next_lake::Lake = lake.lake_variables.other_lakes[lake.primary_lake_number]
   if isa(next_lake,SubsumedLake)
-    return find_true_primary_lake(next_lake)
+    return find_true_rolledback_primary_lake(next_lake)
   else
     return lake
   end

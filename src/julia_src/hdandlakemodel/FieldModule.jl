@@ -7,7 +7,6 @@ using GridModule: Grid,LatLonGrid, for_all, wrap_coords, coords_in_grid,for_all_
 using GridModule: UnstructuredGrid
 using InteractiveUtils: subtypes
 using SpecialDirectionCodesModule
-using MergeTypesModule
 import Base.maximum
 import Base.*
 import Base./
@@ -141,27 +140,12 @@ struct LatLonField{T} <: Field{T}
                                           ones(T,grid.nlat,grid.nlon)*value
     return new(data,grid)
   end
-  function LatLonField{MergeTypes}(grid::LatLonGrid,value::MergeTypes)
-    data::Array{MergeTypes,2} =  zeros(MergeTypes,grid.nlat,grid.nlon)
-    fill!(data,value)
-    return new(data,grid)
-  end
   function LatLonField{T}(grid::LatLonGrid,values::AbstractArray{T,2}) where {T}
     if size(values,1) != grid.nlat ||
        size(values,2) != grid.nlon
        error("Values provided don't match selected grid")
     end
     return new(values,grid)
-  end
-  function LatLonField{MergeTypes}(grid::LatLonGrid,
-                                   integer_field::LatLonField{T}) where {T<:Signed}
-    grid = get_grid(integer_field)
-    merge_type_field = LatLonField{MergeTypes}(grid,null_mtype)
-    for_all(grid) do coords::Coords
-      element::MergeTypes = MergeTypes(get(integer_field,coords))
-      set!(merge_type_field,coords,element)
-    end
-    return new(merge_type_field.data,grid)
   end
 end
 
@@ -173,26 +157,11 @@ struct UnstructuredField{T} <: Field{T}
                                           ones(T,grid.ncells)*value
     return new(data,grid)
   end
-  function UnstructuredField{MergeTypes}(grid::UnstructuredGrid,value::MergeTypes)
-    data::Array{MergeTypes,1} =  zeros(MergeTypes,grid.ncells)
-    fill!(data,value)
-    return new(data,grid)
-  end
   function UnstructuredField{T}(grid::UnstructuredGrid,values::AbstractArray{T,1}) where {T}
     if size(values,1) != grid.ncells
        error("Values provided don't match selected grid")
     end
     return new(values,grid)
-  end
-  function UnstructuredField{MergeTypes}(grid::UnstructuredGrid,
-                                   integer_field::UnstructuredField{T}) where {T<:Signed}
-    grid = get_grid(integer_field)
-    merge_type_field = UnstructuredField{MergeTypes}(grid,null_mtype)
-    for_all(grid) do coords::Coords
-      element::MergeTypes = MergeTypes(get(integer_field,coords))
-      set!(merge_type_field,coords,element)
-    end
-    return new(merge_type_field.data,grid)
   end
 end
 
@@ -212,14 +181,6 @@ Field{T}(grid::LatLonGrid,values::AbstractArray{T,2}) where {T} =
 Field{T}(grid::UnstructuredGrid,values::AbstractArray{T,1}) where {T} =
   UnstructuredField{T}(grid::UnstructuredGrid,
                        values::AbstractArray{T,1})
-
-Field{MergeTypes}(grid::LatLonGrid,integer_field::LatLonField{T}) where {T<:Signed} =
-  LatLonField{MergeTypes}(grid::LatLonGrid,integer_field::LatLonField{T})
-Field{MergeTypes}(grid::UnstructuredGrid,integer_field::UnstructuredField{T}) where {T<:Signed} =
-  UnstructuredField{MergeTypes}(grid::UnstructuredGrid,integer_field::UnstructuredField{T})
-
-convert(::Type{Field{MergeTypes}},x::T2) where {T<:Signed,T2<:Field{T}} = Field{MergeTypes}(get_grid(x),x)
-
 
 function (latlon_field::LatLonField{T})(coords::LatLonCoords) where {T}
     return latlon_field.data[coords.lat,coords.lon]::T

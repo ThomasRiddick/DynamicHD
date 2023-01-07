@@ -1,12 +1,12 @@
 module MergeTypesModule
 
-export SimpleMergeTypes
+export MergeTypes
 export no_merge
 export primary_merge
 export secondary_merge
 export null_simple_mtype
 
-@enum SimpleMergeTypes begin
+@enum MergeTypes begin
 no_merge = 0
 primary_merge = 1
 secondary_merge = 2

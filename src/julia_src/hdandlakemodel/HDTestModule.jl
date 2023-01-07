@@ -15,7 +15,8 @@ using LakeModule: LakePrognostics,Lake,FillingLake,OverflowingLake,SubsumedLake
 using LakeModule: get_lake_variables,calculate_diagnostic_lake_volumes_field
 using LakeModule: calculate_lake_fraction_on_surface_grid
 using LakeModule: calculate_effective_lake_height_on_surface_grid
-using MergeTypesModule
+using LakeModule: MergeAndRedirectIndices,MergeAndRedirectIndicesCollection
+using LakeModule: LatLonMergeAndRedirectIndices,add_offset,reset
 
 @testset "HD model tests" begin
   grid = LatLonGrid(4,4,true)
@@ -136,29 +137,6 @@ end
                                                              -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0
                                                              -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0
                                                              -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 ])
-  flood_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,false)
-  connect_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,false)
-  additional_flood_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,false)
-  additional_connect_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,false)
-  merge_points::Field{MergeTypes} = LatLonField{MergeTypes}(lake_grid,
-    MergeTypes[ no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_secondary #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype ])
   cell_areas_on_surface_model_grid::Field{Float64} = LatLonField{Float64}(surface_model_grid,
     Float64[ 2.5 3.0 2.5
              3.0 4.0 3.0
@@ -203,86 +181,6 @@ end
                                                            0 0 0 0 0 0 0 0 0
                                                            0 0 0 0 0 0 0 0 0
                                                            0 0 0 0 0 0 0 0 0 ])
-  flood_force_merge_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-                                                    Int64[ 0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0 ])
-  flood_force_merge_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-                                                    Int64[ 0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0 ])
-  connect_force_merge_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-                                                    Int64[ 0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0 ])
-  connect_force_merge_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-                                                    Int64[ 0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0 ])
-  flood_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-                                                    Int64[ 0 0 0 1 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0 ])
-  flood_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-                                                    Int64[ 0 0 0 3 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0 ])
-  connect_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-                                                    Int64[ 0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0 ])
-  connect_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-                                                    Int64[ 0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0 ])
   corresponding_surface_cell_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
                                                     Int64[ 1 1 1 1 1 1 1 1 1
                                                            1 1 1 1 1 1 1 1 1
@@ -303,37 +201,43 @@ end
                                                            1 1 1 2 2 2 3 3 3
                                                            1 1 1 2 2 2 3 3 3
                                                            1 1 1 2 2 2 3 3 3 ])
-  additional_flood_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
-  additional_flood_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
-  additional_connect_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
-  additional_connect_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  flood_index::Int64 = 1
+  connect_merge_and_redirect_indices_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  flood_merge_and_redirect_indices_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  connect_merge_and_redirect_indices_collections::Vector{MergeAndRedirectIndicesCollection} =
+      MergeAndRedirectIndicesCollection[]
+  flood_merge_and_redirect_indices_collections::Vector{MergeAndRedirectIndicesCollection} =
+      MergeAndRedirectIndicesCollection[]
+  primary_merges::Vector{MergeAndRedirectIndices} = MergeAndRedirectIndices[]
+  local primary_merge::MergeAndRedirectIndices
+  local secondary_merge::MergeAndRedirectIndices
+  local collected_indices::MergeAndRedirectIndicesCollection
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        false,
+                                        1,
+                                        5,
+                                        1,
+                                        3)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(1,4),flood_index)
   grid_specific_lake_parameters::GridSpecificLakeParameters =
     LatLonLakeParameters(flood_next_cell_lat_index,
                          flood_next_cell_lon_index,
                          connect_next_cell_lat_index,
                          connect_next_cell_lon_index,
-                         flood_force_merge_lat_index,
-                         flood_force_merge_lon_index,
-                         connect_force_merge_lat_index,
-                         connect_force_merge_lon_index,
-                         flood_redirect_lat_index,
-                         flood_redirect_lon_index,
-                         connect_redirect_lat_index,
-                         connect_redirect_lon_index,
-                         additional_flood_redirect_lat_index,
-                         additional_flood_redirect_lon_index,
-                         additional_connect_redirect_lat_index,
-                         additional_connect_redirect_lon_index,
                          corresponding_surface_cell_lat_index,
                          corresponding_surface_cell_lon_index)
   lake_parameters = LakeParameters(lake_centers,
                                    connection_volume_thresholds,
                                    flood_volume_threshold,
-                                   flood_local_redirect,
-                                   connect_local_redirect,
-                                   additional_flood_local_redirect,
-                                   additional_connect_local_redirect,
-                                   merge_points,
+                                   connect_merge_and_redirect_indices_index,
+                                   flood_merge_and_redirect_indices_index,
+                                   connect_merge_and_redirect_indices_collections,
+                                   flood_merge_and_redirect_indices_collections,
                                    cell_areas_on_surface_model_grid,
                                    lake_grid,
                                    grid,
@@ -563,171 +467,6 @@ end
               -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1
               -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1
               -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1 ])
-  flood_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,
-    Bool[ false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false  false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false true false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false  true false false  false false #=
-      =#  false false false false
-          false false false false false false  false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false  false #=
-      =#  true false false false
-          false false false false false false false false false false false false false false true false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false  false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false ])
-  connect_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,
-    Bool[ false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false  false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false  false false #=
-      =#  false false false false
-          false false false false false false  false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false  false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false  false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false ])
-  additional_flood_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,false)
-  additional_connect_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,false)
-  merge_points::Field{MergeTypes} = LatLonField{MergeTypes}(lake_grid,
-    MergeTypes[ no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          connection_merge_not_set_flood_merge_as_primary no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype  no_merge_mtype #=
-    =#          no_merge_mtype  no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype connection_merge_not_set_flood_merge_as_primary no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_primary  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype ])
   cell_areas_on_surface_model_grid::Field{Float64} = LatLonField{Float64}(surface_model_grid,
     Float64[ 2.5 3.0 2.5
              3.0 2.0 3.0
@@ -816,174 +555,6 @@ end
            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  flood_force_merge_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  6 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  6 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  7 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  flood_force_merge_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  2 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  8 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 12 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  connect_force_merge_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  connect_force_merge_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  flood_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1  1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1  7 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  7 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1  1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  6 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  5 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  3 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1  3 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  flood_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  0 -1 -1 -1 -1
-           -1 -1 -1 -1 -1  3 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 14 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 14 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1  0 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  5 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 13 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  3 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1  1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  connect_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  connect_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
   corresponding_surface_cell_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
                                                     Int64[ 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
                                                            1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
@@ -1026,49 +597,156 @@ end
                                                            1 1 1 1 1 1 1 2 2 2 2 2 2 3 3 3 3 3 3 3
                                                            1 1 1 1 1 1 1 2 2 2 2 2 2 3 3 3 3 3 3 3
                                                            1 1 1 1 1 1 1 2 2 2 2 2 2 3 3 3 3 3 3 3 ])
+  flood_index::Int64 = 1
+  connect_merge_and_redirect_indices_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  flood_merge_and_redirect_indices_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  connect_merge_and_redirect_indices_collections::Vector{MergeAndRedirectIndicesCollection} =
+      MergeAndRedirectIndicesCollection[]
+  flood_merge_and_redirect_indices_collections::Vector{MergeAndRedirectIndicesCollection} =
+      MergeAndRedirectIndicesCollection[]
+  primary_merges::Vector{MergeAndRedirectIndices} = MergeAndRedirectIndices[]
+  local primary_merge::MergeAndRedirectIndices
+  local secondary_merge::MergeAndRedirectIndices
+  local collected_indices::MergeAndRedirectIndicesCollection
+  primary_merge =
+    LatLonMergeAndRedirectIndices(true,
+                                        false,
+                                        6,
+                                        2,
+                                        1,
+                                        0)
+  primary_merges = MergeAndRedirectIndices[]
+  push!(primary_merges,primary_merge)
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        nothing)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(3,16),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        false,
+                                        8,
+                                        18,
+                                        1,
+                                        3)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(4,6),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        true,
+                                        6,
+                                        10,
+                                        7,
+                                        14)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(5,8),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        true,
+                                        7,
+                                        14,
+                                        7,
+                                        14)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(6,12),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        false,
+                                        6,
+                                        4,
+                                        1,
+                                        0)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(8,2),flood_index)
+  flood_index +=1
+  primary_merge =
+    LatLonMergeAndRedirectIndices(true,
+                                        true,
+                                        6,
+                                        8,
+                                        6,
+                                        5)
+  primary_merges = MergeAndRedirectIndices[]
+  push!(primary_merges,primary_merge)
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        nothing)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(8,17),flood_index)
+  flood_index +=1
+  primary_merge =
+    LatLonMergeAndRedirectIndices(true,
+                                        true,
+                                        7,
+                                        12,
+                                        5,
+                                        13)
+  primary_merges = MergeAndRedirectIndices[]
+  push!(primary_merges,primary_merge)
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        nothing)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(9,15),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        false,
+                                        16,
+                                        15,
+                                        3,
+                                        3)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(14,19),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        false,
+                                        17,
+                                        3,
+                                        3,
+                                        1)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(16,4),flood_index)
   add_offset(flood_next_cell_lat_index,1,Int64[-1])
   add_offset(flood_next_cell_lon_index,1,Int64[-1])
   add_offset(connect_next_cell_lat_index,1,Int64[-1])
   add_offset(connect_next_cell_lon_index,1,Int64[-1])
-  add_offset(flood_force_merge_lat_index,1,Int64[-1])
-  add_offset(flood_force_merge_lon_index,1,Int64[-1])
-  add_offset(connect_force_merge_lat_index,1,Int64[-1])
-  add_offset(connect_force_merge_lon_index,1,Int64[-1])
-  add_offset(flood_redirect_lat_index,1,Int64[-1])
-  add_offset(flood_redirect_lon_index,1,Int64[-1])
-  add_offset(connect_redirect_lat_index,1,Int64[-1])
-  add_offset(connect_redirect_lon_index,1,Int64[-1])
-  additional_flood_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
-  additional_flood_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
-  additional_connect_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
-  additional_connect_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  add_offset(connect_merge_and_redirect_indices_collections,1)
+  add_offset(flood_merge_and_redirect_indices_collections,1)
   grid_specific_lake_parameters::GridSpecificLakeParameters =
     LatLonLakeParameters(flood_next_cell_lat_index,
                          flood_next_cell_lon_index,
                          connect_next_cell_lat_index,
                          connect_next_cell_lon_index,
-                         flood_force_merge_lat_index,
-                         flood_force_merge_lon_index,
-                         connect_force_merge_lat_index,
-                         connect_force_merge_lon_index,
-                         flood_redirect_lat_index,
-                         flood_redirect_lon_index,
-                         connect_redirect_lat_index,
-                         connect_redirect_lon_index,
-                         additional_flood_redirect_lat_index,
-                         additional_flood_redirect_lon_index,
-                         additional_connect_redirect_lat_index,
-                         additional_connect_redirect_lon_index,
                          corresponding_surface_cell_lat_index,
                          corresponding_surface_cell_lon_index)
   lake_parameters = LakeParameters(lake_centers,
                                    connection_volume_thresholds,
                                    flood_volume_threshold,
-                                   flood_local_redirect,
-                                   connect_local_redirect,
-                                   additional_flood_local_redirect,
-                                   additional_connect_local_redirect,
-                                   merge_points,
+                                   connect_merge_and_redirect_indices_index,
+                                   flood_merge_and_redirect_indices_index,
+                                   connect_merge_and_redirect_indices_collections,
+                                   flood_merge_and_redirect_indices_collections,
                                    cell_areas_on_surface_model_grid,
                                    lake_grid,
                                    grid,
@@ -1362,171 +1040,6 @@ end
               -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1
               -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1
               -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1 ])
-  flood_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,
-    Bool[ false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false  false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false true false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false  true false false  false false #=
-      =#  false false false false
-          false false false false false false  false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false  false #=
-      =#  true false false false
-          false false false false false false false false false false false false false false true false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false  false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false ])
-  connect_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,
-    Bool[ false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false  false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false  false false #=
-      =#  false false false false
-          false false false false false false  false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false  false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false  false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false ])
-  additional_flood_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,false)
-  additional_connect_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,false)
-  merge_points::Field{MergeTypes} = LatLonField{MergeTypes}(lake_grid,
-    MergeTypes[ no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          connection_merge_not_set_flood_merge_as_primary no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype  no_merge_mtype #=
-    =#          no_merge_mtype  no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype connection_merge_not_set_flood_merge_as_primary no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_primary  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype ])
   cell_areas_on_surface_model_grid::Field{Float64} = LatLonField{Float64}(surface_model_grid,
     Float64[ 2.5 3.0 2.5
              3.0 4.0 3.0
@@ -1615,174 +1128,137 @@ end
            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  flood_force_merge_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  6 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  6 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  7 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  flood_force_merge_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  2 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  8 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 12 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  connect_force_merge_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  connect_force_merge_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  flood_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1  1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1  7 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  7 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1  1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  6 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  5 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  3 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1  3 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  flood_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  0 -1 -1 -1 -1
-           -1 -1 -1 -1 -1  3 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 14 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 14 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1  0 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  5 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 13 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  3 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1  1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  connect_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  connect_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
+  flood_index::Int64 = 1
+  connect_merge_and_redirect_indices_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  flood_merge_and_redirect_indices_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  connect_merge_and_redirect_indices_collections::Vector{MergeAndRedirectIndicesCollection} =
+      MergeAndRedirectIndicesCollection[]
+  flood_merge_and_redirect_indices_collections::Vector{MergeAndRedirectIndicesCollection} =
+      MergeAndRedirectIndicesCollection[]
+  primary_merges::Vector{MergeAndRedirectIndices} = MergeAndRedirectIndices[]
+  local primary_merge::MergeAndRedirectIndices
+  local secondary_merge::MergeAndRedirectIndices
+  local collected_indices::MergeAndRedirectIndicesCollection
+  primary_merge =
+    LatLonMergeAndRedirectIndices(true,
+                                        false,
+                                        6,
+                                        2,
+                                        1,
+                                        0)
+  primary_merges = MergeAndRedirectIndices[]
+  push!(primary_merges,primary_merge)
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        nothing)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(3,16),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        false,
+                                        8,
+                                        18,
+                                        1,
+                                        3)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(4,6),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        true,
+                                        6,
+                                        10,
+                                        7,
+                                        14)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(5,8),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        true,
+                                        7,
+                                        14,
+                                        7,
+                                        14)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(6,12),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        false,
+                                        6,
+                                        4,
+                                        1,
+                                        0)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(8,2),flood_index)
+  flood_index +=1
+  primary_merge =
+    LatLonMergeAndRedirectIndices(true,
+                                        true,
+                                        6,
+                                        8,
+                                        6,
+                                        5)
+  primary_merges = MergeAndRedirectIndices[]
+  push!(primary_merges,primary_merge)
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        nothing)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(8,17),flood_index)
+  flood_index +=1
+  primary_merge =
+    LatLonMergeAndRedirectIndices(true,
+                                        true,
+                                        7,
+                                        12,
+                                        5,
+                                        13)
+  primary_merges = MergeAndRedirectIndices[]
+  push!(primary_merges,primary_merge)
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        nothing)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(9,15),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        false,
+                                        16,
+                                        15,
+                                        3,
+                                        3)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(14,19),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        false,
+                                        17,
+                                        3,
+                                        3,
+                                        1)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(16,4),flood_index)
+  flood_index +=1
   corresponding_surface_cell_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
                                                     Int64[   1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
                                                              1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
@@ -1830,45 +1306,22 @@ end
   add_offset(flood_next_cell_lon_index,1,Int64[-1])
   add_offset(connect_next_cell_lat_index,1,Int64[-1])
   add_offset(connect_next_cell_lon_index,1,Int64[-1])
-  add_offset(flood_force_merge_lat_index,1,Int64[-1])
-  add_offset(flood_force_merge_lon_index,1,Int64[-1])
-  add_offset(connect_force_merge_lat_index,1,Int64[-1])
-  add_offset(connect_force_merge_lon_index,1,Int64[-1])
-  add_offset(flood_redirect_lat_index,1,Int64[-1])
-  add_offset(flood_redirect_lon_index,1,Int64[-1])
-  add_offset(connect_redirect_lat_index,1,Int64[-1])
-  add_offset(connect_redirect_lon_index,1,Int64[-1])
-  additional_flood_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
-  additional_flood_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
-  additional_connect_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
-  additional_connect_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  add_offset(connect_merge_and_redirect_indices_collections,1)
+  add_offset(flood_merge_and_redirect_indices_collections,1)
   grid_specific_lake_parameters::GridSpecificLakeParameters =
     LatLonLakeParameters(flood_next_cell_lat_index,
                          flood_next_cell_lon_index,
                          connect_next_cell_lat_index,
                          connect_next_cell_lon_index,
-                         flood_force_merge_lat_index,
-                         flood_force_merge_lon_index,
-                         connect_force_merge_lat_index,
-                         connect_force_merge_lon_index,
-                         flood_redirect_lat_index,
-                         flood_redirect_lon_index,
-                         connect_redirect_lat_index,
-                         connect_redirect_lon_index,
-                         additional_flood_redirect_lat_index,
-                         additional_flood_redirect_lon_index,
-                         additional_connect_redirect_lat_index,
-                         additional_connect_redirect_lon_index,
                          corresponding_surface_cell_lat_index,
                          corresponding_surface_cell_lon_index)
   lake_parameters = LakeParameters(lake_centers,
                                    connection_volume_thresholds,
                                    flood_volume_threshold,
-                                   flood_local_redirect,
-                                   connect_local_redirect,
-                                   additional_flood_local_redirect,
-                                   additional_connect_local_redirect,
-                                   merge_points,
+                                   connect_merge_and_redirect_indices_index,
+                                   flood_merge_and_redirect_indices_index,
+                                   connect_merge_and_redirect_indices_collections,
+                                   flood_merge_and_redirect_indices_collections,
                                    cell_areas_on_surface_model_grid,
                                    lake_grid,
                                    grid,
@@ -2152,6 +1605,8 @@ end
   @test isapprox(expected_intermediate_lake_fractions,lake_fractions,rtol=0.0,atol=0.000001)
   @test expected_intermediate_number_lake_cells == lake_fields.number_lake_cells
   @test expected_intermediate_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
   @time river_fields,lake_prognostics,lake_fields =
     drive_hd_and_lake_model(river_parameters,lake_parameters,
                             drainages,runoffs,evaporations,
@@ -2204,1600 +1659,1598 @@ end
   #@time timing2(river_parameters,lake_parameters)
 end
 
-@testset "Lake model tests 4" begin
-  grid = UnstructuredGrid(16)
-  surface_model_grid = UnstructuredGrid(4)
-  flow_directions =  UnstructuredDirectionIndicators(UnstructuredField{Int64}(grid,
-                                                     vec(Int64[-4  1  7  8 #=
-                                                             =# 6 -4 -4 12 #=
-                                                            =# 10 14 16 -4 #=
-                                                            =# -4 -1 16 -1 ])))
-  river_reservoir_nums = UnstructuredField{Int64}(grid,5)
-  overland_reservoir_nums = UnstructuredField{Int64}(grid,1)
-  base_reservoir_nums = UnstructuredField{Int64}(grid,1)
-  river_retention_coefficients = UnstructuredField{Float64}(grid,0.7)
-  overland_retention_coefficients = UnstructuredField{Float64}(grid,0.5)
-  base_retention_coefficients = UnstructuredField{Float64}(grid,0.1)
-  landsea_mask = UnstructuredField{Bool}(grid,fill(false,16))
-  set!(river_reservoir_nums,Generic1DCoords(16),0)
-  set!(overland_reservoir_nums,Generic1DCoords(16),0)
-  set!(base_reservoir_nums,Generic1DCoords(16),0)
-  set!(landsea_mask,Generic1DCoords(16),true)
-  set!(river_reservoir_nums,Generic1DCoords(14),0)
-  set!(overland_reservoir_nums,Generic1DCoords(14),0)
-  set!(base_reservoir_nums,Generic1DCoords(14),0)
-  set!(landsea_mask,Generic1DCoords(14),true)
-  river_parameters = RiverParameters(flow_directions,
-                                     river_reservoir_nums,
-                                     overland_reservoir_nums,
-                                     base_reservoir_nums,
-                                     river_retention_coefficients,
-                                     overland_retention_coefficients,
-                                     base_retention_coefficients,
-                                     landsea_mask,
-                                     grid,1.0,1.0)
-  mapping_to_coarse_grid::Array{Int64,1} =
-    vec(Int64[1 1 1 1 1 2 2 2 2 2 3 3 3 3 3 4 4 4 4 4 #=
-           =# 1 1 1 1 1 2 2 2 2 2 3 3 3 3 3 4 4 4 4 4 #=
-           =# 1 1 1 1 1 2 2 2 2 2 3 3 3 3 3 4 4 4 4 4 #=
-           =# 1 1 1 1 1 2 2 2 2 2 3 3 3 3 3 4 4 4 4 4 #=
-           =# 1 1 1 1 1 2 2 2 2 2 3 3 3 3 3 4 4 4 4 4 #=
-           =# 5 5 5 5 5 6 6 6 6 6 7 7 7 7 7 8 8 8 8 8 #=
-           =# 5 5 5 5 5 6 6 6 6 6 7 7 7 7 7 8 8 8 8 8 #=
-           =# 5 5 5 5 5 6 6 6 6 6 7 7 7 7 7 8 8 8 8 8 #=
-           =# 5 5 5 5 5 6 6 6 6 6 7 7 7 7 7 8 8 8 8 8 #=
-           =# 5 5 5 5 5 6 6 6 6 6 7 7 7 7 7 8 8 8 8 8 #=
-           =# 9 9 9 9 9 10 10 10 10 10 11 11 11 11 11 12 12 12 12 12 #=
-           =# 9 9 9 9 9 10 10 10 10 10 11 11 11 11 11 12 12 12 12 12 #=
-           =# 9 9 9 9 9 10 10 10 10 10 11 11 11 11 11 12 12 12 12 12 #=
-           =# 9 9 9 9 9 10 10 10 10 10 11 11 11 11 11 12 12 12 12 12 #=
-           =# 9 9 9 9 9 10 10 10 10 10 11 11 11 11 11 12 12 12 12 12 #=
-           =# 13 13 13 13 13 14 14 14 14 14 15 15 15 15 15 16 16 16 16 16 #=
-           =# 13 13 13 13 13 14 14 14 14 14 15 15 15 15 15 16 16 16 16 16 #=
-           =# 13 13 13 13 13 14 14 14 14 14 15 15 15 15 15 16 16 16 16 16 #=
-           =# 13 13 13 13 13 14 14 14 14 14 15 15 15 15 15 16 16 16 16 16 #=
-           =# 13 13 13 13 13 14 14 14 14 14 15 15 15 15 15 16 16 16 16 16 ])
-  lake_grid = UnstructuredGrid(400,mapping_to_coarse_grid)
-  lake_centers::Field{Bool} = UnstructuredField{Bool}(lake_grid,
-    vec(Bool[ false false false false false false false false false false false false false false false false #=
-    =# false false false false #=
-    =# false false false false false false false false false false false false false false false false  #=
-    =# false false false false #=
-    =# true  false false false false false false false false false false false false false false false  #=
-    =# false false false false #=
-    =# false false false false false false false false false false false false false false false false #=
-    =# false false false false #=
-    =# false false false false false false false false false false false false false false false false #=
-    =# false false false false #=
-    =# false false false false false false false false false false false false false true  false false #=
-    =# false false false false #=
-    =# false false false false false true  false false false false false false false false false false #=
-    =# false false false false #=
-    =# false false false false false false false false false false false false false false true  false #=
-    =# false false false false #=
-    =# false false false false false false false false false false false false false false false false #=
-    =# false false false false #=
-    =# false false false false false false false false false false false false false false false false #=
-    =# false false false false #=
-    =# false false false false false false false false false false false false false false false false  #=
-    =# false false false false #=
-    =# false false false false false false false false false false false false false false false false #=
-    =# false false false false #=
-    =# false false false false false false false false false false false false false false false false #=
-    =# false false false false #=
-    =# false false false false false false false false false false false false false false false true #=
-    =# false false false false #=
-    =# false false false false false false false false false false false false false false false false #=
-    =# false false false false #=
-    =# false false false true  false false false false false false false false false false false false #=
-    =# false false false false #=
-    =# false false false false false false false false false false false false false false false false #=
-    =# false false false false #=
-    =# false false false false false false false false false false false false false false false false #=
-    =# false false false false #=
-    =# false false false false false false false false false false false false false false false false #=
-    =# false false false false #=
-    =# false false false false false false false false false false false false false false false false #=
-    =# false false false false ]))
-  connection_volume_thresholds::Field{Float64} = UnstructuredField{Float64}(lake_grid,
-    vec(Float64[    -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
-             =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
-             =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
-             =# -1 -1 -1 -1 -1 186.0 23.0  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
-             =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
-             =# -1 -1 -1 -1 -1    -1   -1  -1 -1 56.0 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
-             =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
-             =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
-             =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
-             =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
-             =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
-             =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
-             =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
-             =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
-             =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
-             =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
-             =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
-             =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
-             =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
-             =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ]))
-  flood_volume_threshold::Field{Float64} = UnstructuredField{Float64}(lake_grid,
-    vec(Float64[  -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1 #=
-             =# -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1 5.0 #=
-             =# 0.0 262.0  5.0    -1   -1    -1    -1   -1   -1  -1  -1    -1 111.0 111.0 56.0 111.0   -1    -1   -1 2.0 #=
-              =# -1   5.0  5.0    -1   -1 340.0 262.0   -1   -1  -1  -1 111.0   1.0   1.0 56.0  56.0   -1    -1   -1  -1 #=
-              =# -1   5.0  5.0    -1   -1  10.0  10.0 38.0 10.0  -1  -1    -1   0.0   1.0  1.0  26.0 56.0    -1   -1  -1 #=
-              =# -1   5.0  5.0 186.0  2.0   2.0    -1 10.0 10.0  -1 1.0   6.0   1.0   0.0  1.0  26.0 26.0 111.0   -1  -1 #=
-            =# 16.0  16.0 16.0    -1  2.0   0.0   2.0  2.0 10.0  -1 1.0   0.0   0.0   1.0  1.0   1.0 26.0  56.0   -1  -1 #=
-            =# -1  46.0 16.0    -1   -1   2.0    -1 23.0   -1  -1  -1   1.0   0.0   1.0  1.0   1.0 56.0    -1   -1  -1 #=
-            =# -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1  56.0   1.0   1.0  1.0  26.0 56.0    -1   -1  -1 #=
-            =# -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1  56.0  56.0   -1    -1   -1    -1   -1  -1 #=
-            =# -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1 #=
-            =# -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1 #=
-            =# -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1 #=
-            =# -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1   0.0  3.0   3.0 10.0  -1 #=
-            =# -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1   0.0  3.0   3.0   -1  -1 #=
-            =# -1    -1   -1   1.0   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1 #=
-            =# -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1 #=
-            =# -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1 #=
-            =# -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1 #=
-            =# -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1 ]))
-  flood_local_redirect::Field{Bool} = UnstructuredField{Bool}(lake_grid,
-    vec(Bool[ false false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =#  false false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =#  false  false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =#  false false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =#  false false false false false false false true false false false false false false false false #=
-      =#  false false false false #=
-      =#  false false false false false false false false false false false  true false false  false false #=
-      =#  false false false false #=
-      =#  false false false false false false  false false false false false false false false false false #=
-      =#  false false false false #=
-      =#  false false false false false false false false false false false false false false false  false #=
-      =#  true false false false #=
-      =#  false false false false false false false false false false false false false false true false #=
-      =#  false false false false #=
-      =#  false false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =#  false false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =#  false false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =# false false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =#  false false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =#  false false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =#  false false false false  false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =#  false false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =#  false false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =#  false false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =#  false false false false false false false false false false false false false false false false #=
-      =#  false false false false ]))
-  connect_local_redirect::Field{Bool} = UnstructuredField{Bool}(lake_grid,
-    vec(Bool[ false false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =#  false false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =#  false  false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =# false false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =#  false false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =#  false false false false false false false false false false false false false false  false false #=
-      =#  false false false false #=
-      =#  false false false false false false  false false false false false false false false false false #=
-      =#  false false false false #=
-      =#  false false false false false false false false false false false false false false false  false #=
-      =#  false false false false #=
-      =#  false false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =#  false false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =#  false false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =#  false false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =# false false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =#   false false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =#   false false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =# false false false false  false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =# false false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =#  false false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =#  false false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =# false false false false false false false false false false false false false false false false #=
-      =#  false false false false ]))
-  additional_flood_local_redirect::Field{Bool} = UnstructuredField{Bool}(lake_grid,false)
-  additional_connect_local_redirect::Field{Bool} = UnstructuredField{Bool}(lake_grid,false)
-  merge_points::Field{MergeTypes} = UnstructuredField{MergeTypes}(lake_grid,
-    vec(MergeTypes[ no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          connection_merge_not_set_flood_merge_as_primary no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype  no_merge_mtype #=
-    =#          no_merge_mtype  no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype connection_merge_not_set_flood_merge_as_primary no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_primary  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype ]))
-  cell_areas_on_surface_model_grid::Field{Float64} = UnstructuredField{Float64}(surface_model_grid,
-    vec(Float64[ 2.5 3.0 2.5 4.0 ]))
-  flood_next_cell_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,
-    vec(Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 61 59 65 102 -1 -1 -1 -1 -1 -1 -1 -1 -1 55 52 96 103 -1 -1 -1 39 -1 82 42 -1 -1 178 41 -1 -1 -1 -1 53 115 72 193 54 -1 -1 -1 -1 -1 62 81 -1 -1 128 85 130 66 -1 -1 -1 152 73 93 74 137 -1 -1 -1 -1 122 101 65 127 145 -1 86 88 -1 114 154 130 132 94 175 95 71 -1 -1 142 120 121 -1 104 105 124 107 108 -1 110 111 92 172 133 134 116 117 -1 -1 -1 124 141 -1 -1 126 -1 87 -1 -1 -1 112 131 135 174 153 109 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 176 151 155 173 136 156 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 171 192 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 295 296 278 335 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 276 297 277 -1 -1 -1 -1 -1 343 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ]))
-  connect_next_cell_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,
-    vec(Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 66 147 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 75 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ]))
-  flood_force_merge_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,
-    vec(Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 122 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 128 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 152 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ]))
-  connect_force_merge_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,
-    vec(Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ]))
-  flood_redirect_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,
-    vec(Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 4 -1 -1 -1 -1 -1 -1 -1 -1 -1 7 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 154 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 154 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 4 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 125 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 113 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 15 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 13 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ]))
-  connect_redirect_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,
-    vec(Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ]))
-  corresponding_surface_cell_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,
-    vec(Int64[1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 #=
-           =# 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 #=
-           =# 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 #=
-           =# 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 #=
-           =# 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 #=
-           =# 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 #=
-           =# 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 #=
-           =# 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 #=
-           =# 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 #=
-           =# 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 #=
-           =# 3 3 3 3 3 3 3 3 3 3 4 4 4 4 4 4 4 4 4 4 #=
-           =# 3 3 3 3 3 3 3 3 3 3 4 4 4 4 4 4 4 4 4 4 #=
-           =# 3 3 3 3 3 3 3 3 3 3 4 4 4 4 4 4 4 4 4 4 #=
-           =# 3 3 3 3 3 3 3 3 3 3 4 4 4 4 4 4 4 4 4 4 #=
-           =# 3 3 3 3 3 3 3 3 3 3 4 4 4 4 4 4 4 4 4 4 #=
-           =# 3 3 3 3 3 3 3 3 3 3 4 4 4 4 4 4 4 4 4 4 #=
-           =# 3 3 3 3 3 3 3 3 3 3 4 4 4 4 4 4 4 4 4 4 #=
-           =# 3 3 3 3 3 3 3 3 3 3 4 4 4 4 4 4 4 4 4 4 #=
-           =# 3 3 3 3 3 3 3 3 3 3 4 4 4 4 4 4 4 4 4 4 #=
-           =# 3 3 3 3 3 3 3 3 3 3 4 4 4 4 4 4 4 4 4 4 ]))
-  add_offset(flood_next_cell_index,1,Int64[-1])
-  add_offset(connect_next_cell_index,1,Int64[-1])
-  add_offset(flood_force_merge_index,1,Int64[-1])
-  add_offset(connect_force_merge_index,1,Int64[-1])
-  add_offset(flood_redirect_index,1,Int64[-1])
-  add_offset(connect_redirect_index,1,Int64[-1])
-  additional_flood_redirect_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,0)
-  additional_connect_redirect_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,0)
-  grid_specific_lake_parameters::GridSpecificLakeParameters =
-    UnstructuredLakeParameters(flood_next_cell_index,
-                               connect_next_cell_index,
-                               flood_force_merge_index,
-                               connect_force_merge_index,
-                               flood_redirect_index,
-                               connect_redirect_index,
-                               additional_flood_redirect_index,
-                               additional_connect_redirect_index,
-                               corresponding_surface_cell_index)
-  lake_parameters = LakeParameters(lake_centers,
-                                   connection_volume_thresholds,
-                                   flood_volume_threshold,
-                                   flood_local_redirect,
-                                   connect_local_redirect,
-                                   additional_flood_local_redirect,
-                                   additional_connect_local_redirect,
-                                   merge_points,
-                                   cell_areas_on_surface_model_grid,
-                                   lake_grid,
-                                   grid,
-                                   surface_model_grid,
-                                   grid_specific_lake_parameters)
-  drainage::Field{Float64} = UnstructuredField{Float64}(river_parameters.grid,
-                                                        vec(Float64[ 1.0 1.0 1.0 1.0 #=
-                                                                  =# 1.0 1.0 1.0 1.0 #=
-                                                                  =# 1.0 1.0 1.0 1.0 #=
-                                                                  =# 1.0 0.0 1.0 0.0 ]))
-  drainages::Array{Field{Float64},1} = repeat(drainage,10000)
-  runoffs::Array{Field{Float64},1} = deepcopy(drainages)
-  evaporation::Field{Float64} = UnstructuredField{Float64}(surface_model_grid,0.0)
-  evaporations::Array{Field{Float64},1} = repeat(evaporation,10000)
-  expected_river_inflow::Field{Float64} = UnstructuredField{Float64}(grid,
-                                          vec(Float64[ 0.0 0.0 0.0 0.0 #=
-                                                    =# 0.0 0.0 0.0 2.0 #=
-                                                    =# 0.0 2.0 0.0 0.0 #=
-                                                   =#  0.0 0.0 0.0 0.0 ]))
-  expected_water_to_ocean::Field{Float64} = UnstructuredField{Float64}(grid,
-                                            vec(Float64[ 0.0 0.0 0.0 0.0 #=
-                                                      =# 0.0 0.0 0.0 0.0 #=
-                                                      =# 0.0 0.0 0.0 0.0 #=
-                                                      =# 0.0 6.0 0.0 22.0 ]))
-  expected_water_to_hd::Field{Float64} = UnstructuredField{Float64}(grid,
-                                         vec(Float64[ 0.0 0.0 0.0  0.0 #=
-                                                   =# 0.0 0.0 0.0 12.0 #=
-                                                   =# 0.0 0.0 0.0  0.0 #=
-                                                   =# 0.0 2.0 0.0 18.0 ]))
-  expected_lake_numbers::Field{Int64} = UnstructuredField{Int64}(lake_grid,
-      vec(Int64[ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-              =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 #=
-              =# 1 4 1 0 0 0 0 0 0 0 0 0 4 4 4 4 0 0 0 1 #=
-              =# 0 1 1 0 0 4 4 0 0 0 0 4 4 4 4 4 0 0 0 0 #=
-              =# 0 1 1 0 0 3 3 3 3 0 0 0 2 4 4 4 4 0 0 0 #=
-              =# 0 1 1 4 3 3 0 3 3 4 4 2 4 2 4 4 4 4 0 0 #=
-              =# 1 1 1 0 3 3 3 3 3 0 4 2 2 4 4 4 4 4 0 0 #=
-              =# 0 1 1 0 0 3 0 3 0 0 0 4 2 4 4 4 4 0 0 0 #=
-              =# 0 0 0 0 0 0 0 0 0 0 0 4 4 4 4 4 4 0 0 0 #=
-              =# 0 0 0 0 0 0 0 0 0 0 0 0 4 4 0 0 0 0 0 0 #=
-              =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-              =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-              =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-              =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 5 5 5 5 0 #=
-              =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 5 5 5 0 0 #=
-              =# 0 0 0 6 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-              =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-              =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-              =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-              =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ]))
-  expected_lake_types::Field{Int64} = UnstructuredField{Int64}(lake_grid,
-      vec(Int64[ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-              =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 3 #=
-              =# 3 2 3 0 0 0 0 0 0 0 0 0 2 2 2 2 0 0 0 3 #=
-              =# 0 3 3 0 0 2 2 0 0 0 0 2 2 2 2 2 0 0 0 0 #=
-              =# 0 3 3 0 0 3 3 3 3 0 0 0 3 2 2 2 2 0 0 0 #=
-              =# 0 3 3 2 3 3 0 3 3 2 2 3 2 3 2 2 2 2 0 0 #=
-              =# 3 3 3 0 3 3 3 3 3 0 2 3 3 2 2 2 2 2 0 0 #=
-              =# 0 3 3 0 0 3 0 3 0 0 0 2 3 2 2 2 2 0 0 0 #=
-              =# 0 0 0 0 0 0 0 0 0 0 0 2 2 2 2 2 2 0 0 0 #=
-              =# 0 0 0 0 0 0 0 0 0 0 0 0 2 2 0 0 0 0 0 0 #=
-              =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-              =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-              =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-              =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 2 2 2 2 0 #=
-              =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 2 2 2 0 0 #=
-              =# 0 0 0 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-              =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-              =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-              =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-              =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ]))
-  expected_diagnostic_lake_volumes::Field{Float64} =
-  UnstructuredField{Float64}(lake_grid,
-    vec(Float64[   0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     430.0 #=
-                =# 430.0 430.0 430.0 0     0     0     0     0     0     0     #=
-                =# 0     0     430.0 430.0 430.0 430.0 0     0     0     430.0 #=
-                =# 0     430.0 430.0 0     0     430.0 430.0 0     0     0     #=
-                =# 0     430.0 430.0 430.0 430.0 430.0 0     0     0     0     #=
-                =# 0     430.0 430.0 0     0     430.0 430.0 430.0 430.0 0     #=
-                =# 0     0     430.0 430.0 430.0 430.0 430.0 0     0     0     #=
-                =# 0     430.0 430.0 430.0 430.0 430.0 0     430.0 430.0 430.0 #=
-                =# 430.0 430.0 430.0 430.0 430.0 430.0 430.0 430.0 0     0     #=
-                =# 430.0 430.0 430.0 0     430.0 430.0 430.0 430.0 430.0 0     #=
-                =# 430.0 430.0 430.0 430.0 430.0 430.0 430.0 430.0 0     0     #=
-                =# 0     430.0 430.0 0     0     430.0 0     430.0 0     0     #=
-                =# 0     430.0 430.0 430.0 430.0 430.0 430.0 0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     430.0 430.0 430.0 430.0 430.0 430.0 0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     430.0 430.0 0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     10.0  10.0  10.0  10.0  0     #=
-                =# 0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     10.0  10.0  10.0  0     0     #=
-                =# 0     0     0     1.0   0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0 ]))
-  expected_lake_fractions::Field{Float64} = UnstructuredField{Float64}(surface_model_grid,
-        vec(Float64[ 0.32 0.46 0.01 0.07 ]))
-  expected_number_lake_cells::Field{Int64} = UnstructuredField{Int64}(surface_model_grid,
-        vec(Int64[ 32 46 1 7 ]))
-  expected_number_fine_grid_cells::Field{Int64} = UnstructuredField{Int64}(surface_model_grid,
-        vec(Int64[ 100 100 100 100 ]))
-  expected_lake_volumes::Array{Float64} = Float64[46.0, 6.0, 38.0,  340.0, 10.0, 1.0]
-  @time river_fields::RiverPrognosticFields,lake_prognostics::LakePrognostics,lake_fields::LakeFields =
-    drive_hd_and_lake_model(river_parameters,lake_parameters,
-                            drainages,runoffs,evaporations,
-                            10000,print_timestep_results=false,
-                            write_output=false,return_output=true)
-  lake_types::UnstructuredField{Int64} = UnstructuredField{Int64}(lake_grid,0)
-  for i = 1:400
-      coords::Generic1DCoords = Generic1DCoords(i)
-      lake_number::Int64 = lake_fields.lake_numbers(coords)
-      if lake_number <= 0 continue end
-      lake::Lake = lake_prognostics.lakes[lake_number]
-      if isa(lake,FillingLake)
-        set!(lake_types,coords,1)
-      elseif isa(lake,OverflowingLake)
-        set!(lake_types,coords,2)
-      elseif isa(lake,SubsumedLake)
-        set!(lake_types,coords,3)
-      else
-        set!(lake_types,coords,4)
-      end
-  end
-  lake_volumes::Array{Float64} = Float64[]
-  lake_fractions::Field{Float64} = calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields)
-  for lake::Lake in lake_prognostics.lakes
-    append!(lake_volumes,get_lake_variables(lake).lake_volume)
-  end
-  diagnostic_lake_volumes::Field{Float64} =
-    calculate_diagnostic_lake_volumes_field(lake_parameters,lake_fields,
-                                            lake_prognostics)
-  @test expected_river_inflow == river_fields.river_inflow
-  @test isapprox(expected_water_to_ocean,river_fields.water_to_ocean,rtol=0.0,atol=0.00001)
-  @test expected_water_to_hd    == lake_fields.water_to_hd
-  @test expected_lake_numbers == lake_fields.lake_numbers
-  @test expected_lake_types == lake_types
-  @test isapprox(expected_lake_volumes,lake_volumes,atol=0.00001)
-  @test expected_diagnostic_lake_volumes == diagnostic_lake_volumes
-  @test expected_lake_fractions == lake_fractions
-  @test expected_number_lake_cells == lake_fields.number_lake_cells
-  @test expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
-  # function timing2(river_parameters,lake_parameters)
-  #   for i in 1:50000
-  #     drainagesl = repeat(drainage,20)
-  #     runoffsl = deepcopy(drainages)
-  #     drive_hd_and_lake_model(river_parameters,lake_parameters,
-  #                             drainagesl,runoffsl,20,print_timestep_results=false)
-  #   end
-  # end
-  #@time timing2(river_parameters,lake_parameters)
-end
+# @testset "Lake model tests 4" begin
+#   grid = UnstructuredGrid(16)
+#   surface_model_grid = UnstructuredGrid(4)
+#   flow_directions =  UnstructuredDirectionIndicators(UnstructuredField{Int64}(grid,
+#                                                      vec(Int64[-4  1  7  8 #=
+#                                                              =# 6 -4 -4 12 #=
+#                                                             =# 10 14 16 -4 #=
+#                                                             =# -4 -1 16 -1 ])))
+#   river_reservoir_nums = UnstructuredField{Int64}(grid,5)
+#   overland_reservoir_nums = UnstructuredField{Int64}(grid,1)
+#   base_reservoir_nums = UnstructuredField{Int64}(grid,1)
+#   river_retention_coefficients = UnstructuredField{Float64}(grid,0.7)
+#   overland_retention_coefficients = UnstructuredField{Float64}(grid,0.5)
+#   base_retention_coefficients = UnstructuredField{Float64}(grid,0.1)
+#   landsea_mask = UnstructuredField{Bool}(grid,fill(false,16))
+#   set!(river_reservoir_nums,Generic1DCoords(16),0)
+#   set!(overland_reservoir_nums,Generic1DCoords(16),0)
+#   set!(base_reservoir_nums,Generic1DCoords(16),0)
+#   set!(landsea_mask,Generic1DCoords(16),true)
+#   set!(river_reservoir_nums,Generic1DCoords(14),0)
+#   set!(overland_reservoir_nums,Generic1DCoords(14),0)
+#   set!(base_reservoir_nums,Generic1DCoords(14),0)
+#   set!(landsea_mask,Generic1DCoords(14),true)
+#   river_parameters = RiverParameters(flow_directions,
+#                                      river_reservoir_nums,
+#                                      overland_reservoir_nums,
+#                                      base_reservoir_nums,
+#                                      river_retention_coefficients,
+#                                      overland_retention_coefficients,
+#                                      base_retention_coefficients,
+#                                      landsea_mask,
+#                                      grid,1.0,1.0)
+#   mapping_to_coarse_grid::Array{Int64,1} =
+#     vec(Int64[1 1 1 1 1 2 2 2 2 2 3 3 3 3 3 4 4 4 4 4 #=
+#            =# 1 1 1 1 1 2 2 2 2 2 3 3 3 3 3 4 4 4 4 4 #=
+#            =# 1 1 1 1 1 2 2 2 2 2 3 3 3 3 3 4 4 4 4 4 #=
+#            =# 1 1 1 1 1 2 2 2 2 2 3 3 3 3 3 4 4 4 4 4 #=
+#            =# 1 1 1 1 1 2 2 2 2 2 3 3 3 3 3 4 4 4 4 4 #=
+#            =# 5 5 5 5 5 6 6 6 6 6 7 7 7 7 7 8 8 8 8 8 #=
+#            =# 5 5 5 5 5 6 6 6 6 6 7 7 7 7 7 8 8 8 8 8 #=
+#            =# 5 5 5 5 5 6 6 6 6 6 7 7 7 7 7 8 8 8 8 8 #=
+#            =# 5 5 5 5 5 6 6 6 6 6 7 7 7 7 7 8 8 8 8 8 #=
+#            =# 5 5 5 5 5 6 6 6 6 6 7 7 7 7 7 8 8 8 8 8 #=
+#            =# 9 9 9 9 9 10 10 10 10 10 11 11 11 11 11 12 12 12 12 12 #=
+#            =# 9 9 9 9 9 10 10 10 10 10 11 11 11 11 11 12 12 12 12 12 #=
+#            =# 9 9 9 9 9 10 10 10 10 10 11 11 11 11 11 12 12 12 12 12 #=
+#            =# 9 9 9 9 9 10 10 10 10 10 11 11 11 11 11 12 12 12 12 12 #=
+#            =# 9 9 9 9 9 10 10 10 10 10 11 11 11 11 11 12 12 12 12 12 #=
+#            =# 13 13 13 13 13 14 14 14 14 14 15 15 15 15 15 16 16 16 16 16 #=
+#            =# 13 13 13 13 13 14 14 14 14 14 15 15 15 15 15 16 16 16 16 16 #=
+#            =# 13 13 13 13 13 14 14 14 14 14 15 15 15 15 15 16 16 16 16 16 #=
+#            =# 13 13 13 13 13 14 14 14 14 14 15 15 15 15 15 16 16 16 16 16 #=
+#            =# 13 13 13 13 13 14 14 14 14 14 15 15 15 15 15 16 16 16 16 16 ])
+#   lake_grid = UnstructuredGrid(400,mapping_to_coarse_grid)
+#   lake_centers::Field{Bool} = UnstructuredField{Bool}(lake_grid,
+#     vec(Bool[ false false false false false false false false false false false false false false false false #=
+#     =# false false false false #=
+#     =# false false false false false false false false false false false false false false false false  #=
+#     =# false false false false #=
+#     =# true  false false false false false false false false false false false false false false false  #=
+#     =# false false false false #=
+#     =# false false false false false false false false false false false false false false false false #=
+#     =# false false false false #=
+#     =# false false false false false false false false false false false false false false false false #=
+#     =# false false false false #=
+#     =# false false false false false false false false false false false false false true  false false #=
+#     =# false false false false #=
+#     =# false false false false false true  false false false false false false false false false false #=
+#     =# false false false false #=
+#     =# false false false false false false false false false false false false false false true  false #=
+#     =# false false false false #=
+#     =# false false false false false false false false false false false false false false false false #=
+#     =# false false false false #=
+#     =# false false false false false false false false false false false false false false false false #=
+#     =# false false false false #=
+#     =# false false false false false false false false false false false false false false false false  #=
+#     =# false false false false #=
+#     =# false false false false false false false false false false false false false false false false #=
+#     =# false false false false #=
+#     =# false false false false false false false false false false false false false false false false #=
+#     =# false false false false #=
+#     =# false false false false false false false false false false false false false false false true #=
+#     =# false false false false #=
+#     =# false false false false false false false false false false false false false false false false #=
+#     =# false false false false #=
+#     =# false false false true  false false false false false false false false false false false false #=
+#     =# false false false false #=
+#     =# false false false false false false false false false false false false false false false false #=
+#     =# false false false false #=
+#     =# false false false false false false false false false false false false false false false false #=
+#     =# false false false false #=
+#     =# false false false false false false false false false false false false false false false false #=
+#     =# false false false false #=
+#     =# false false false false false false false false false false false false false false false false #=
+#     =# false false false false ]))
+#   connection_volume_thresholds::Field{Float64} = UnstructuredField{Float64}(lake_grid,
+#     vec(Float64[    -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
+#              =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
+#              =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
+#              =# -1 -1 -1 -1 -1 186.0 23.0  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
+#              =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
+#              =# -1 -1 -1 -1 -1    -1   -1  -1 -1 56.0 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
+#              =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
+#              =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
+#              =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
+#              =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
+#              =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
+#              =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
+#              =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
+#              =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
+#              =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
+#              =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
+#              =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
+#              =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
+#              =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
+#              =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ]))
+#   flood_volume_threshold::Field{Float64} = UnstructuredField{Float64}(lake_grid,
+#     vec(Float64[  -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1 #=
+#              =# -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1 5.0 #=
+#              =# 0.0 262.0  5.0    -1   -1    -1    -1   -1   -1  -1  -1    -1 111.0 111.0 56.0 111.0   -1    -1   -1 2.0 #=
+#               =# -1   5.0  5.0    -1   -1 340.0 262.0   -1   -1  -1  -1 111.0   1.0   1.0 56.0  56.0   -1    -1   -1  -1 #=
+#               =# -1   5.0  5.0    -1   -1  10.0  10.0 38.0 10.0  -1  -1    -1   0.0   1.0  1.0  26.0 56.0    -1   -1  -1 #=
+#               =# -1   5.0  5.0 186.0  2.0   2.0    -1 10.0 10.0  -1 1.0   6.0   1.0   0.0  1.0  26.0 26.0 111.0   -1  -1 #=
+#             =# 16.0  16.0 16.0    -1  2.0   0.0   2.0  2.0 10.0  -1 1.0   0.0   0.0   1.0  1.0   1.0 26.0  56.0   -1  -1 #=
+#             =# -1  46.0 16.0    -1   -1   2.0    -1 23.0   -1  -1  -1   1.0   0.0   1.0  1.0   1.0 56.0    -1   -1  -1 #=
+#             =# -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1  56.0   1.0   1.0  1.0  26.0 56.0    -1   -1  -1 #=
+#             =# -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1  56.0  56.0   -1    -1   -1    -1   -1  -1 #=
+#             =# -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1 #=
+#             =# -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1 #=
+#             =# -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1 #=
+#             =# -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1   0.0  3.0   3.0 10.0  -1 #=
+#             =# -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1   0.0  3.0   3.0   -1  -1 #=
+#             =# -1    -1   -1   1.0   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1 #=
+#             =# -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1 #=
+#             =# -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1 #=
+#             =# -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1 #=
+#             =# -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1 ]))
+#   flood_local_redirect::Field{Bool} = UnstructuredField{Bool}(lake_grid,
+#     vec(Bool[ false false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =#  false false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =#  false  false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =#  false false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =#  false false false false false false false true false false false false false false false false #=
+#       =#  false false false false #=
+#       =#  false false false false false false false false false false false  true false false  false false #=
+#       =#  false false false false #=
+#       =#  false false false false false false  false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =#  false false false false false false false false false false false false false false false  false #=
+#       =#  true false false false #=
+#       =#  false false false false false false false false false false false false false false true false #=
+#       =#  false false false false #=
+#       =#  false false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =#  false false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =#  false false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =# false false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =#  false false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =#  false false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =#  false false false false  false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =#  false false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =#  false false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =#  false false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =#  false false false false false false false false false false false false false false false false #=
+#       =#  false false false false ]))
+#   connect_local_redirect::Field{Bool} = UnstructuredField{Bool}(lake_grid,
+#     vec(Bool[ false false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =#  false false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =#  false  false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =# false false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =#  false false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =#  false false false false false false false false false false false false false false  false false #=
+#       =#  false false false false #=
+#       =#  false false false false false false  false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =#  false false false false false false false false false false false false false false false  false #=
+#       =#  false false false false #=
+#       =#  false false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =#  false false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =#  false false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =#  false false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =# false false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =#   false false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =#   false false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =# false false false false  false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =# false false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =#  false false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =#  false false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =# false false false false false false false false false false false false false false false false #=
+#       =#  false false false false ]))
+#   merge_points::Field{MergeTypes} = UnstructuredField{MergeTypes}(lake_grid,
+#     vec(MergeTypes[ no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          connection_merge_not_set_flood_merge_as_primary no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
+#     =#          connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
+#     =#          no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype  #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
+#     =#          no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype no_merge_mtype  #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
+#     =#          no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype  no_merge_mtype #=
+#     =#          no_merge_mtype  no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
+#     =#          no_merge_mtype connection_merge_not_set_flood_merge_as_primary no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_primary  #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype  #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype ]))
+#   cell_areas_on_surface_model_grid::Field{Float64} = UnstructuredField{Float64}(surface_model_grid,
+#     vec(Float64[ 2.5 3.0 2.5 4.0 ]))
+#   flood_next_cell_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,
+#     vec(Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 61 59 65 102 -1 -1 -1 -1 -1 -1 -1 -1 -1 55 52 96 103 -1 -1 -1 39 -1 82 42 -1 -1 178 41 -1 -1 -1 -1 53 115 72 193 54 -1 -1 -1 -1 -1 62 81 -1 -1 128 85 130 66 -1 -1 -1 152 73 93 74 137 -1 -1 -1 -1 122 101 65 127 145 -1 86 88 -1 114 154 130 132 94 175 95 71 -1 -1 142 120 121 -1 104 105 124 107 108 -1 110 111 92 172 133 134 116 117 -1 -1 -1 124 141 -1 -1 126 -1 87 -1 -1 -1 112 131 135 174 153 109 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 176 151 155 173 136 156 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 171 192 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 295 296 278 335 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 276 297 277 -1 -1 -1 -1 -1 343 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ]))
+#   connect_next_cell_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,
+#     vec(Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 66 147 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 75 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ]))
+#   flood_force_merge_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,
+#     vec(Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 122 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 128 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 152 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ]))
+#   connect_force_merge_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,
+#     vec(Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ]))
+#   flood_redirect_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,
+#     vec(Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 4 -1 -1 -1 -1 -1 -1 -1 -1 -1 7 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 154 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 154 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 4 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 125 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 113 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 15 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 13 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ]))
+#   connect_redirect_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,
+#     vec(Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ]))
+#   corresponding_surface_cell_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,
+#     vec(Int64[1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 #=
+#            =# 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 #=
+#            =# 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 #=
+#            =# 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 #=
+#            =# 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 #=
+#            =# 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 #=
+#            =# 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 #=
+#            =# 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 #=
+#            =# 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 #=
+#            =# 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 #=
+#            =# 3 3 3 3 3 3 3 3 3 3 4 4 4 4 4 4 4 4 4 4 #=
+#            =# 3 3 3 3 3 3 3 3 3 3 4 4 4 4 4 4 4 4 4 4 #=
+#            =# 3 3 3 3 3 3 3 3 3 3 4 4 4 4 4 4 4 4 4 4 #=
+#            =# 3 3 3 3 3 3 3 3 3 3 4 4 4 4 4 4 4 4 4 4 #=
+#            =# 3 3 3 3 3 3 3 3 3 3 4 4 4 4 4 4 4 4 4 4 #=
+#            =# 3 3 3 3 3 3 3 3 3 3 4 4 4 4 4 4 4 4 4 4 #=
+#            =# 3 3 3 3 3 3 3 3 3 3 4 4 4 4 4 4 4 4 4 4 #=
+#            =# 3 3 3 3 3 3 3 3 3 3 4 4 4 4 4 4 4 4 4 4 #=
+#            =# 3 3 3 3 3 3 3 3 3 3 4 4 4 4 4 4 4 4 4 4 #=
+#            =# 3 3 3 3 3 3 3 3 3 3 4 4 4 4 4 4 4 4 4 4 ]))
+#   add_offset(flood_next_cell_index,1,Int64[-1])
+#   add_offset(connect_next_cell_index,1,Int64[-1])
+#   add_offset(flood_force_merge_index,1,Int64[-1])
+#   add_offset(connect_force_merge_index,1,Int64[-1])
+#   add_offset(flood_redirect_index,1,Int64[-1])
+#   add_offset(connect_redirect_index,1,Int64[-1])
+#   additional_flood_redirect_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,0)
+#   additional_connect_redirect_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,0)
+#   grid_specific_lake_parameters::GridSpecificLakeParameters =
+#     UnstructuredLakeParameters(flood_next_cell_index,
+#                                connect_next_cell_index,
+#                                flood_force_merge_index,
+#                                connect_force_merge_index,
+#                                flood_redirect_index,
+#                                connect_redirect_index,
+#                                additional_flood_redirect_index,
+#                                additional_connect_redirect_index,
+#                                corresponding_surface_cell_index)
+#   lake_parameters = LakeParameters(lake_centers,
+#                                    connection_volume_thresholds,
+#                                    flood_volume_threshold,
+#                                    flood_local_redirect,
+#                                    connect_local_redirect,
+#                                    additional_flood_local_redirect,
+#                                    additional_connect_local_redirect,
+#                                    merge_points,
+#                                    cell_areas_on_surface_model_grid,
+#                                    lake_grid,
+#                                    grid,
+#                                    surface_model_grid,
+#                                    grid_specific_lake_parameters)
+#   drainage::Field{Float64} = UnstructuredField{Float64}(river_parameters.grid,
+#                                                         vec(Float64[ 1.0 1.0 1.0 1.0 #=
+#                                                                   =# 1.0 1.0 1.0 1.0 #=
+#                                                                   =# 1.0 1.0 1.0 1.0 #=
+#                                                                   =# 1.0 0.0 1.0 0.0 ]))
+#   drainages::Array{Field{Float64},1} = repeat(drainage,10000)
+#   runoffs::Array{Field{Float64},1} = deepcopy(drainages)
+#   evaporation::Field{Float64} = UnstructuredField{Float64}(surface_model_grid,0.0)
+#   evaporations::Array{Field{Float64},1} = repeat(evaporation,10000)
+#   expected_river_inflow::Field{Float64} = UnstructuredField{Float64}(grid,
+#                                           vec(Float64[ 0.0 0.0 0.0 0.0 #=
+#                                                     =# 0.0 0.0 0.0 2.0 #=
+#                                                     =# 0.0 2.0 0.0 0.0 #=
+#                                                    =#  0.0 0.0 0.0 0.0 ]))
+#   expected_water_to_ocean::Field{Float64} = UnstructuredField{Float64}(grid,
+#                                             vec(Float64[ 0.0 0.0 0.0 0.0 #=
+#                                                       =# 0.0 0.0 0.0 0.0 #=
+#                                                       =# 0.0 0.0 0.0 0.0 #=
+#                                                       =# 0.0 6.0 0.0 22.0 ]))
+#   expected_water_to_hd::Field{Float64} = UnstructuredField{Float64}(grid,
+#                                          vec(Float64[ 0.0 0.0 0.0  0.0 #=
+#                                                    =# 0.0 0.0 0.0 12.0 #=
+#                                                    =# 0.0 0.0 0.0  0.0 #=
+#                                                    =# 0.0 2.0 0.0 18.0 ]))
+#   expected_lake_numbers::Field{Int64} = UnstructuredField{Int64}(lake_grid,
+#       vec(Int64[ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#               =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 #=
+#               =# 1 4 1 0 0 0 0 0 0 0 0 0 4 4 4 4 0 0 0 1 #=
+#               =# 0 1 1 0 0 4 4 0 0 0 0 4 4 4 4 4 0 0 0 0 #=
+#               =# 0 1 1 0 0 3 3 3 3 0 0 0 2 4 4 4 4 0 0 0 #=
+#               =# 0 1 1 4 3 3 0 3 3 4 4 2 4 2 4 4 4 4 0 0 #=
+#               =# 1 1 1 0 3 3 3 3 3 0 4 2 2 4 4 4 4 4 0 0 #=
+#               =# 0 1 1 0 0 3 0 3 0 0 0 4 2 4 4 4 4 0 0 0 #=
+#               =# 0 0 0 0 0 0 0 0 0 0 0 4 4 4 4 4 4 0 0 0 #=
+#               =# 0 0 0 0 0 0 0 0 0 0 0 0 4 4 0 0 0 0 0 0 #=
+#               =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#               =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#               =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#               =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 5 5 5 5 0 #=
+#               =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 5 5 5 0 0 #=
+#               =# 0 0 0 6 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#               =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#               =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#               =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#               =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ]))
+#   expected_lake_types::Field{Int64} = UnstructuredField{Int64}(lake_grid,
+#       vec(Int64[ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#               =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 3 #=
+#               =# 3 2 3 0 0 0 0 0 0 0 0 0 2 2 2 2 0 0 0 3 #=
+#               =# 0 3 3 0 0 2 2 0 0 0 0 2 2 2 2 2 0 0 0 0 #=
+#               =# 0 3 3 0 0 3 3 3 3 0 0 0 3 2 2 2 2 0 0 0 #=
+#               =# 0 3 3 2 3 3 0 3 3 2 2 3 2 3 2 2 2 2 0 0 #=
+#               =# 3 3 3 0 3 3 3 3 3 0 2 3 3 2 2 2 2 2 0 0 #=
+#               =# 0 3 3 0 0 3 0 3 0 0 0 2 3 2 2 2 2 0 0 0 #=
+#               =# 0 0 0 0 0 0 0 0 0 0 0 2 2 2 2 2 2 0 0 0 #=
+#               =# 0 0 0 0 0 0 0 0 0 0 0 0 2 2 0 0 0 0 0 0 #=
+#               =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#               =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#               =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#               =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 2 2 2 2 0 #=
+#               =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 2 2 2 0 0 #=
+#               =# 0 0 0 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#               =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#               =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#               =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#               =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ]))
+#   expected_diagnostic_lake_volumes::Field{Float64} =
+#   UnstructuredField{Float64}(lake_grid,
+#     vec(Float64[   0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     430.0 #=
+#                 =# 430.0 430.0 430.0 0     0     0     0     0     0     0     #=
+#                 =# 0     0     430.0 430.0 430.0 430.0 0     0     0     430.0 #=
+#                 =# 0     430.0 430.0 0     0     430.0 430.0 0     0     0     #=
+#                 =# 0     430.0 430.0 430.0 430.0 430.0 0     0     0     0     #=
+#                 =# 0     430.0 430.0 0     0     430.0 430.0 430.0 430.0 0     #=
+#                 =# 0     0     430.0 430.0 430.0 430.0 430.0 0     0     0     #=
+#                 =# 0     430.0 430.0 430.0 430.0 430.0 0     430.0 430.0 430.0 #=
+#                 =# 430.0 430.0 430.0 430.0 430.0 430.0 430.0 430.0 0     0     #=
+#                 =# 430.0 430.0 430.0 0     430.0 430.0 430.0 430.0 430.0 0     #=
+#                 =# 430.0 430.0 430.0 430.0 430.0 430.0 430.0 430.0 0     0     #=
+#                 =# 0     430.0 430.0 0     0     430.0 0     430.0 0     0     #=
+#                 =# 0     430.0 430.0 430.0 430.0 430.0 430.0 0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     430.0 430.0 430.0 430.0 430.0 430.0 0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     430.0 430.0 0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     10.0  10.0  10.0  10.0  0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     10.0  10.0  10.0  0     0     #=
+#                 =# 0     0     0     1.0   0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0 ]))
+#   expected_lake_fractions::Field{Float64} = UnstructuredField{Float64}(surface_model_grid,
+#         vec(Float64[ 0.32 0.46 0.01 0.07 ]))
+#   expected_number_lake_cells::Field{Int64} = UnstructuredField{Int64}(surface_model_grid,
+#         vec(Int64[ 32 46 1 7 ]))
+#   expected_number_fine_grid_cells::Field{Int64} = UnstructuredField{Int64}(surface_model_grid,
+#         vec(Int64[ 100 100 100 100 ]))
+#   expected_lake_volumes::Array{Float64} = Float64[46.0, 6.0, 38.0,  340.0, 10.0, 1.0]
+#   @time river_fields::RiverPrognosticFields,lake_prognostics::LakePrognostics,lake_fields::LakeFields =
+#     drive_hd_and_lake_model(river_parameters,lake_parameters,
+#                             drainages,runoffs,evaporations,
+#                             10000,print_timestep_results=false,
+#                             write_output=false,return_output=true)
+#   lake_types::UnstructuredField{Int64} = UnstructuredField{Int64}(lake_grid,0)
+#   for i = 1:400
+#       coords::Generic1DCoords = Generic1DCoords(i)
+#       lake_number::Int64 = lake_fields.lake_numbers(coords)
+#       if lake_number <= 0 continue end
+#       lake::Lake = lake_prognostics.lakes[lake_number]
+#       if isa(lake,FillingLake)
+#         set!(lake_types,coords,1)
+#       elseif isa(lake,OverflowingLake)
+#         set!(lake_types,coords,2)
+#       elseif isa(lake,SubsumedLake)
+#         set!(lake_types,coords,3)
+#       else
+#         set!(lake_types,coords,4)
+#       end
+#   end
+#   lake_volumes::Array{Float64} = Float64[]
+#   lake_fractions::Field{Float64} = calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields)
+#   for lake::Lake in lake_prognostics.lakes
+#     append!(lake_volumes,get_lake_variables(lake).lake_volume)
+#   end
+#   diagnostic_lake_volumes::Field{Float64} =
+#     calculate_diagnostic_lake_volumes_field(lake_parameters,lake_fields,
+#                                             lake_prognostics)
+#   @test expected_river_inflow == river_fields.river_inflow
+#   @test isapprox(expected_water_to_ocean,river_fields.water_to_ocean,rtol=0.0,atol=0.00001)
+#   @test expected_water_to_hd    == lake_fields.water_to_hd
+#   @test expected_lake_numbers == lake_fields.lake_numbers
+#   @test expected_lake_types == lake_types
+#   @test isapprox(expected_lake_volumes,lake_volumes,atol=0.00001)
+#   @test expected_diagnostic_lake_volumes == diagnostic_lake_volumes
+#   @test expected_lake_fractions == lake_fractions
+#   @test expected_number_lake_cells == lake_fields.number_lake_cells
+#   @test expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
+#   # function timing2(river_parameters,lake_parameters)
+#   #   for i in 1:50000
+#   #     drainagesl = repeat(drainage,20)
+#   #     runoffsl = deepcopy(drainages)
+#   #     drive_hd_and_lake_model(river_parameters,lake_parameters,
+#   #                             drainagesl,runoffsl,20,print_timestep_results=false)
+#   #   end
+#   # end
+#   #@time timing2(river_parameters,lake_parameters)
+# end
 
-@testset "Lake model tests 5" begin
-  grid = UnstructuredGrid(16)
-  surface_model_grid = UnstructuredGrid(7)
-  flow_directions =  UnstructuredDirectionIndicators(UnstructuredField{Int64}(grid,
-                                                     vec(Int64[-4  1  7  8 #=
-                                                             =# 6 -4 -4 12 #=
-                                                            =# 10 14 16 -4 #=
-                                                            =# -4 -1 16 -1 ])))
-  river_reservoir_nums = UnstructuredField{Int64}(grid,5)
-  overland_reservoir_nums = UnstructuredField{Int64}(grid,1)
-  base_reservoir_nums = UnstructuredField{Int64}(grid,1)
-  river_retention_coefficients = UnstructuredField{Float64}(grid,0.7)
-  overland_retention_coefficients = UnstructuredField{Float64}(grid,0.5)
-  base_retention_coefficients = UnstructuredField{Float64}(grid,0.1)
-  landsea_mask = UnstructuredField{Bool}(grid,fill(false,16))
-  set!(river_reservoir_nums,Generic1DCoords(16),0)
-  set!(overland_reservoir_nums,Generic1DCoords(16),0)
-  set!(base_reservoir_nums,Generic1DCoords(16),0)
-  set!(landsea_mask,Generic1DCoords(16),true)
-  set!(river_reservoir_nums,Generic1DCoords(14),0)
-  set!(overland_reservoir_nums,Generic1DCoords(14),0)
-  set!(base_reservoir_nums,Generic1DCoords(14),0)
-  set!(landsea_mask,Generic1DCoords(14),true)
-  river_parameters = RiverParameters(flow_directions,
-                                     river_reservoir_nums,
-                                     overland_reservoir_nums,
-                                     base_reservoir_nums,
-                                     river_retention_coefficients,
-                                     overland_retention_coefficients,
-                                     base_retention_coefficients,
-                                     landsea_mask,
-                                     grid,1.0,1.0)
-  mapping_to_coarse_grid::Array{Int64,1} =
-    vec(Int64[1 1 1 1 1 2 2 2 2 2 3 3 3 3 3 4 4 4 4 4 #=
-           =# 1 1 1 1 1 2 2 2 2 2 3 3 3 3 3 4 4 4 4 4 #=
-           =# 1 1 1 1 1 2 2 2 2 2 3 3 3 3 3 4 4 4 4 4 #=
-           =# 1 1 1 1 1 2 2 2 2 2 3 3 3 3 3 4 4 4 4 4 #=
-           =# 1 1 1 1 1 2 2 2 2 2 3 3 3 3 3 4 4 4 4 4 #=
-           =# 5 5 5 5 5 6 6 6 6 6 7 7 7 7 7 8 8 8 8 8 #=
-           =# 5 5 5 5 5 6 6 6 6 6 7 7 7 7 7 8 8 8 8 8 #=
-           =# 5 5 5 5 5 6 6 6 6 6 7 7 7 7 7 8 8 8 8 8 #=
-           =# 5 5 5 5 5 6 6 6 6 6 7 7 7 7 7 8 8 8 8 8 #=
-           =# 5 5 5 5 5 6 6 6 6 6 7 7 7 7 7 8 8 8 8 8 #=
-           =# 9 9 9 9 9 10 10 10 10 10 11 11 11 11 11 12 12 12 12 12 #=
-           =# 9 9 9 9 9 10 10 10 10 10 11 11 11 11 11 12 12 12 12 12 #=
-           =# 9 9 9 9 9 10 10 10 10 10 11 11 11 11 11 12 12 12 12 12 #=
-           =# 9 9 9 9 9 10 10 10 10 10 11 11 11 11 11 12 12 12 12 12 #=
-           =# 9 9 9 9 9 10 10 10 10 10 11 11 11 11 11 12 12 12 12 12 #=
-           =# 13 13 13 13 13 14 14 14 14 14 15 15 15 15 15 16 16 16 16 16 #=
-           =# 13 13 13 13 13 14 14 14 14 14 15 15 15 15 15 16 16 16 16 16 #=
-           =# 13 13 13 13 13 14 14 14 14 14 15 15 15 15 15 16 16 16 16 16 #=
-           =# 13 13 13 13 13 14 14 14 14 14 15 15 15 15 15 16 16 16 16 16 #=
-           =# 13 13 13 13 13 14 14 14 14 14 15 15 15 15 15 16 16 16 16 16 ])
-  lake_grid = UnstructuredGrid(400,mapping_to_coarse_grid)
-  lake_centers::Field{Bool} = UnstructuredField{Bool}(lake_grid,
-    vec(Bool[ false false false false false false false false false false false false false false false false #=
-    =# false false false false #=
-    =# false false false false false false false false false false false false false false false false  #=
-    =# false false false false #=
-    =# true  false false false false false false false false false false false false false false false  #=
-    =# false false false false #=
-    =# false false false false false false false false false false false false false false false false #=
-    =# false false false false #=
-    =# false false false false false false false false false false false false false false false false #=
-    =# false false false false #=
-    =# false false false false false false false false false false false false false true  false false #=
-    =# false false false false #=
-    =# false false false false false true  false false false false false false false false false false #=
-    =# false false false false #=
-    =# false false false false false false false false false false false false false false true  false #=
-    =# false false false false #=
-    =# false false false false false false false false false false false false false false false false #=
-    =# false false false false #=
-    =# false false false false false false false false false false false false false false false false #=
-    =# false false false false #=
-    =# false false false false false false false false false false false false false false false false  #=
-    =# false false false false #=
-    =# false false false false false false false false false false false false false false false false #=
-    =# false false false false #=
-    =# false false false false false false false false false false false false false false false false #=
-    =# false false false false #=
-    =# false false false false false false false false false false false false false false false true #=
-    =# false false false false #=
-    =# false false false false false false false false false false false false false false false false #=
-    =# false false false false #=
-    =# false false false true  false false false false false false false false false false false false #=
-    =# false false false false #=
-    =# false false false false false false false false false false false false false false false false #=
-    =# false false false false #=
-    =# false false false false false false false false false false false false false false false false #=
-    =# false false false false #=
-    =# false false false false false false false false false false false false false false false false #=
-    =# false false false false #=
-    =# false false false false false false false false false false false false false false false false #=
-    =# false false false false ]))
-  connection_volume_thresholds::Field{Float64} = UnstructuredField{Float64}(lake_grid,
-    vec(Float64[    -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
-             =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
-             =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
-             =# -1 -1 -1 -1 -1 186.0 23.0  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
-             =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
-             =# -1 -1 -1 -1 -1    -1   -1  -1 -1 56.0 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
-             =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
-             =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
-             =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
-             =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
-             =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
-             =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
-             =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
-             =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
-             =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
-             =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
-             =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
-             =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
-             =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
-             =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ]))
-  flood_volume_threshold::Field{Float64} = UnstructuredField{Float64}(lake_grid,
-    vec(Float64[  -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1 #=
-             =# -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1 5.0 #=
-             =# 0.0 262.0  5.0    -1   -1    -1    -1   -1   -1  -1  -1    -1 111.0 111.0 56.0 111.0   -1    -1   -1 2.0 #=
-              =# -1   5.0  5.0    -1   -1 340.0 262.0   -1   -1  -1  -1 111.0   1.0   1.0 56.0  56.0   -1    -1   -1  -1 #=
-              =# -1   5.0  5.0    -1   -1  10.0  10.0 38.0 10.0  -1  -1    -1   0.0   1.0  1.0  26.0 56.0    -1   -1  -1 #=
-              =# -1   5.0  5.0 186.0  2.0   2.0    -1 10.0 10.0  -1 1.0   6.0   1.0   0.0  1.0  26.0 26.0 111.0   -1  -1 #=
-            =# 16.0  16.0 16.0    -1  2.0   0.0   2.0  2.0 10.0  -1 1.0   0.0   0.0   1.0  1.0   1.0 26.0  56.0   -1  -1 #=
-            =# -1  46.0 16.0    -1   -1   2.0    -1 23.0   -1  -1  -1   1.0   0.0   1.0  1.0   1.0 56.0    -1   -1  -1 #=
-            =# -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1  56.0   1.0   1.0  1.0  26.0 56.0    -1   -1  -1 #=
-            =# -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1  56.0  56.0   -1    -1   -1    -1   -1  -1 #=
-            =# -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1 #=
-            =# -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1 #=
-            =# -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1 #=
-            =# -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1   0.0  3.0   3.0 10.0  -1 #=
-            =# -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1   0.0  3.0   3.0   -1  -1 #=
-            =# -1    -1   -1   1.0   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1 #=
-            =# -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1 #=
-            =# -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1 #=
-            =# -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1 #=
-            =# -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1 ]))
-  flood_local_redirect::Field{Bool} = UnstructuredField{Bool}(lake_grid,
-    vec(Bool[ false false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =#  false false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =#  false  false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =#  false false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =#  false false false false false false false true false false false false false false false false #=
-      =#  false false false false #=
-      =#  false false false false false false false false false false false  true false false  false false #=
-      =#  false false false false #=
-      =#  false false false false false false  false false false false false false false false false false #=
-      =#  false false false false #=
-      =#  false false false false false false false false false false false false false false false  false #=
-      =#  true false false false #=
-      =#  false false false false false false false false false false false false false false true false #=
-      =#  false false false false #=
-      =#  false false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =#  false false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =#  false false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =# false false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =#  false false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =#  false false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =#  false false false false  false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =#  false false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =#  false false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =#  false false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =#  false false false false false false false false false false false false false false false false #=
-      =#  false false false false ]))
-  connect_local_redirect::Field{Bool} = UnstructuredField{Bool}(lake_grid,
-    vec(Bool[ false false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =#  false false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =#  false  false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =# false false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =#  false false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =#  false false false false false false false false false false false false false false  false false #=
-      =#  false false false false #=
-      =#  false false false false false false  false false false false false false false false false false #=
-      =#  false false false false #=
-      =#  false false false false false false false false false false false false false false false  false #=
-      =#  false false false false #=
-      =#  false false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =#  false false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =#  false false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =#  false false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =# false false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =#   false false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =#   false false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =# false false false false  false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =# false false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =#  false false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =#  false false false false false false false false false false false false false false false false #=
-      =#  false false false false #=
-      =# false false false false false false false false false false false false false false false false #=
-      =#  false false false false ]))
-  additional_flood_local_redirect::Field{Bool} = UnstructuredField{Bool}(lake_grid,false)
-  additional_connect_local_redirect::Field{Bool} = UnstructuredField{Bool}(lake_grid,false)
-  merge_points::Field{MergeTypes} = UnstructuredField{MergeTypes}(lake_grid,
-    vec(MergeTypes[ no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          connection_merge_not_set_flood_merge_as_primary no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype  no_merge_mtype #=
-    =#          no_merge_mtype  no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype connection_merge_not_set_flood_merge_as_primary no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_primary  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype ]))
-  cell_areas_on_surface_model_grid::Field{Float64} =
-    UnstructuredField{Float64}(surface_model_grid,
-    vec(Float64[ 2.5 3.0 2.5 4.0 5.0 1.0 3.0]))
-  flood_next_cell_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,
-    vec(Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 61 59 65 102 -1 -1 -1 -1 -1 -1 -1 -1 -1 55 52 96 103 -1 -1 -1 39 -1 82 42 -1 -1 178 41 -1 -1 -1 -1 53 115 72 193 54 -1 -1 -1 -1 -1 62 81 -1 -1 128 85 130 66 -1 -1 -1 152 73 93 74 137 -1 -1 -1 -1 122 101 65 127 145 -1 86 88 -1 114 154 130 132 94 175 95 71 -1 -1 142 120 121 -1 104 105 124 107 108 -1 110 111 92 172 133 134 116 117 -1 -1 -1 124 141 -1 -1 126 -1 87 -1 -1 -1 112 131 135 174 153 109 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 176 151 155 173 136 156 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 171 192 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 295 296 278 335 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 276 297 277 -1 -1 -1 -1 -1 343 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ]))
-  connect_next_cell_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,
-    vec(Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 66 147 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 75 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ]))
-  flood_force_merge_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,
-    vec(Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 122 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 128 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 152 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ]))
-  connect_force_merge_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,
-    vec(Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ]))
-  flood_redirect_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,
-    vec(Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 4 -1 -1 -1 -1 -1 -1 -1 -1 -1 7 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 154 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 154 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 4 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 125 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 113 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 15 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 13 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ]))
-  connect_redirect_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,
-    vec(Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ]))
-  corresponding_surface_cell_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,
-    vec(Int64[   7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 #=
-              =# 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 1 #=
-              =# 1 4 1 7 7 7 7 7 7 7 7 7 4 4 4 4 7 7 7 1 #=
-              =# 7 1 1 7 7 4 4 7 7 7 7 4 4 4 4 4 7 7 7 7 #=
-              =# 7 1 1 7 7 3 3 3 3 7 7 7 2 4 4 4 4 7 7 7 #=
-              =# 7 1 1 4 3 3 7 3 3 4 4 2 4 2 4 4 4 4 7 7 #=
-              =# 1 1 1 7 3 3 3 3 3 7 4 2 2 4 4 4 4 4 7 7 #=
-              =# 7 1 1 7 7 3 7 3 7 7 7 4 2 4 4 4 4 7 7 7 #=
-              =# 7 7 7 7 7 7 7 7 7 7 7 4 4 4 4 4 4 7 7 7 #=
-              =# 7 7 7 7 7 7 7 7 7 7 7 7 4 4 7 7 7 7 7 7 #=
-              =# 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 #=
-              =# 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 #=
-              =# 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 #=
-              =# 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 5 5 5 5 7 #=
-              =# 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 5 5 5 7 7 #=
-              =# 7 7 7 6 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 #=
-              =# 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 #=
-              =# 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 #=
-              =# 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 #=
-              =# 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 ]))
-  add_offset(flood_next_cell_index,1,Int64[-1])
-  add_offset(connect_next_cell_index,1,Int64[-1])
-  add_offset(flood_force_merge_index,1,Int64[-1])
-  add_offset(connect_force_merge_index,1,Int64[-1])
-  add_offset(flood_redirect_index,1,Int64[-1])
-  add_offset(connect_redirect_index,1,Int64[-1])
-  additional_flood_redirect_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,0)
-  additional_connect_redirect_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,0)
-  grid_specific_lake_parameters::GridSpecificLakeParameters =
-    UnstructuredLakeParameters(flood_next_cell_index,
-                               connect_next_cell_index,
-                               flood_force_merge_index,
-                               connect_force_merge_index,
-                               flood_redirect_index,
-                               connect_redirect_index,
-                               additional_flood_redirect_index,
-                               additional_connect_redirect_index,
-                               corresponding_surface_cell_index)
-  lake_parameters = LakeParameters(lake_centers,
-                                   connection_volume_thresholds,
-                                   flood_volume_threshold,
-                                   flood_local_redirect,
-                                   connect_local_redirect,
-                                   additional_flood_local_redirect,
-                                   additional_connect_local_redirect,
-                                   merge_points,
-                                   cell_areas_on_surface_model_grid,
-                                   lake_grid,
-                                   grid,
-                                   surface_model_grid,
-                                   grid_specific_lake_parameters)
-  drainage::Field{Float64} = UnstructuredField{Float64}(river_parameters.grid,
-                                                        vec(Float64[ 1.0 1.0 1.0 1.0 #=
-                                                                  =# 1.0 1.0 1.0 1.0 #=
-                                                                  =# 1.0 1.0 1.0 1.0 #=
-                                                                  =# 1.0 0.0 1.0 0.0 ]))
-  drainages::Array{Field{Float64},1} = repeat(drainage,10000)
-  runoffs::Array{Field{Float64},1} = deepcopy(drainages)
-  evaporation::Field{Float64} = UnstructuredField{Float64}(surface_model_grid,0.0)
-  evaporations::Array{Field{Float64},1} = repeat(evaporation,180)
-  evaporation = UnstructuredField{Float64}(surface_model_grid,100.0)
-  additional_evaporations::Array{Field{Float64},1} = repeat(evaporation,200)
-  append!(evaporations,additional_evaporations)
-  expected_river_inflow::Field{Float64} = UnstructuredField{Float64}(grid,
-                                                            vec(Float64[ 0.0 0.0 0.0 0.0 #=
-                                                                      =# 0.0 0.0 0.0 2.0 #=
-                                                                      =# 0.0 2.0 0.0 0.0 #=
-                                                                      =# 0.0 0.0 0.0 0.0 ]))
-  expected_water_to_ocean::Field{Float64} = UnstructuredField{Float64}(grid,
-                                                              vec(Float64[ -96.0   0.0   0.0   0.0 #=
-                                                                        =#   0.0 -96.0 -196.0  0.0 #=
-                                                                        =#   0.0   0.0   0.0 -94.0 #=
-                                                                        =# -98.0   4.0   0.0   4.0 ]))
-  expected_water_to_hd::Field{Float64} = UnstructuredField{Float64}(grid,
-                                                           vec(Float64[ 0.0 0.0 0.0 0.0 #=
-                                                                    =# 0.0 0.0 0.0 0.0 #=
-                                                                    =# 0.0 0.0 0.0 0.0 #=
-                                                                    =# 0.0 0.0 0.0 0.0 ]))
-  expected_lake_numbers::Field{Int64} = UnstructuredField{Int64}(lake_grid,
-      vec(Int64[ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-          =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-          =# 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-          =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-          =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-          =# 0 0 0 0 0 0 0 0 0 0 0 0 0 2 0 0 0 0 0 0 #=
-          =# 0 0 0 0 0 3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-          =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 4 0 0 0 0 0 #=
-          =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-          =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-          =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-          =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-          =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-          =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 5 0 0 0 0 #=
-          =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-          =# 0 0 0 6 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-          =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-          =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-          =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-          =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ]))
-  expected_lake_types::Field{Int64} = UnstructuredField{Int64}(lake_grid,
-      vec(Int64[ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-          =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-          =# 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-          =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-          =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-          =# 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 #=
-          =# 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-          =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 #=
-          =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-          =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-          =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-          =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-          =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-          =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 #=
-          =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-          =# 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-          =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-          =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-          =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-          =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ]))
-  expected_lake_fractions::Field{Float64} = UnstructuredField{Float64}(surface_model_grid,
-        vec(Float64[ 0.06666666667 0.1666666667 0.06666666667 0.02325581395 0.1428571429 1.0 0.0]))
-  expected_number_lake_cells::Field{Int64} = UnstructuredField{Int64}(surface_model_grid,
-        vec(Int64[ 1 1 1 1 1 1 0]))
-  expected_number_fine_grid_cells::Field{Int64} = UnstructuredField{Int64}(surface_model_grid,
-        vec(Int64[ 15 6 15 43 7 1 313 ]))
-  expected_lake_volumes::Array{Float64} = Float64[0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-  expected_intermediate_river_inflow::Field{Float64} = UnstructuredField{Float64}(grid,
-                                                       vec(Float64[ 0.0 0.0 0.0 0.0 #=
-                                                                 =# 0.0 0.0 0.0 2.0 #=
-                                                                 =# 0.0 2.0 0.0 0.0 #=
-                                                                 =# 0.0 0.0 0.0 0.0 ]))
-  expected_intermediate_water_to_ocean::Field{Float64} = UnstructuredField{Float64}(grid,
-                                                         vec(Float64[ 0.0 0.0 0.0 0.0 #=
-                                                                   =# 0.0 0.0 0.0 0.0 #=
-                                                                   =# 0.0 0.0 0.0 0.0 #=
-                                                                   =# 0.0 6.0 0.0 22.0 ]))
-  expected_intermediate_water_to_hd::Field{Float64} = UnstructuredField{Float64}(grid,
-                                                      vec(Float64[ 0.0 0.0 0.0  0.0 #=
-                                                                =# 0.0 0.0 0.0 12.0 #=
-                                                                =# 0.0 0.0 0.0  0.0 #=
-                                                                =# 0.0 2.0 0.0 18.0 ]))
-  expected_intermediate_lake_numbers::Field{Int64} = UnstructuredField{Int64}(lake_grid,
-      vec(Int64[ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-              =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 #=
-              =# 1 4 1 0 0 0 0 0 0 0 0 0 4 4 4 4 0 0 0 1 #=
-              =# 0 1 1 0 0 4 4 0 0 0 0 4 4 4 4 4 0 0 0 0 #=
-              =# 0 1 1 0 0 3 3 3 3 0 0 0 2 4 4 4 4 0 0 0 #=
-              =# 0 1 1 4 3 3 0 3 3 4 4 2 4 2 4 4 4 4 0 0 #=
-              =# 1 1 1 0 3 3 3 3 3 0 4 2 2 4 4 4 4 4 0 0 #=
-              =# 0 1 1 0 0 3 0 3 0 0 0 4 2 4 4 4 4 0 0 0 #=
-              =# 0 0 0 0 0 0 0 0 0 0 0 4 4 4 4 4 4 0 0 0 #=
-              =# 0 0 0 0 0 0 0 0 0 0 0 0 4 4 0 0 0 0 0 0 #=
-              =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-              =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-              =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-              =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 5 5 5 5 0 #=
-              =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 5 5 5 0 0 #=
-              =# 0 0 0 6 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-              =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-              =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-              =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-              =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ]))
-  expected_intermediate_lake_types::Field{Int64} = UnstructuredField{Int64}(lake_grid,
-      vec(Int64[ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-              =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 3 #=
-              =# 3 2 3 0 0 0 0 0 0 0 0 0 2 2 2 2 0 0 0 3 #=
-              =# 0 3 3 0 0 2 2 0 0 0 0 2 2 2 2 2 0 0 0 0 #=
-              =# 0 3 3 0 0 3 3 3 3 0 0 0 3 2 2 2 2 0 0 0 #=
-              =# 0 3 3 2 3 3 0 3 3 2 2 3 2 3 2 2 2 2 0 0 #=
-              =# 3 3 3 0 3 3 3 3 3 0 2 3 3 2 2 2 2 2 0 0 #=
-              =# 0 3 3 0 0 3 0 3 0 0 0 2 3 2 2 2 2 0 0 0 #=
-              =# 0 0 0 0 0 0 0 0 0 0 0 2 2 2 2 2 2 0 0 0 #=
-              =# 0 0 0 0 0 0 0 0 0 0 0 0 2 2 0 0 0 0 0 0 #=
-              =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-              =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-              =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-              =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 2 2 2 2 0 #=
-              =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 2 2 2 0 0 #=
-              =# 0 0 0 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-              =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-              =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-              =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
-              =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ]))
-  expected_intermediate_diagnostic_lake_volumes::Field{Float64} =
-    UnstructuredField{Float64}(lake_grid,
-    vec(Float64[   0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     430.0 #=
-                =# 430.0 430.0 430.0 0     0     0     0     0     0     0     #=
-                =# 0     0     430.0 430.0 430.0 430.0 0     0     0     430.0 #=
-                =# 0     430.0 430.0 0     0     430.0 430.0 0     0     0     #=
-                =# 0     430.0 430.0 430.0 430.0 430.0 0     0     0     0     #=
-                =# 0     430.0 430.0 0     0     430.0 430.0 430.0 430.0 0     #=
-                =# 0     0     430.0 430.0 430.0 430.0 430.0 0     0     0     #=
-                =# 0     430.0 430.0 430.0 430.0 430.0 0     430.0 430.0 430.0 #=
-                =# 430.0 430.0 430.0 430.0 430.0 430.0 430.0 430.0 0     0     #=
-                =# 430.0 430.0 430.0 0     430.0 430.0 430.0 430.0 430.0 0     #=
-                =# 430.0 430.0 430.0 430.0 430.0 430.0 430.0 430.0 0     0     #=
-                =# 0     430.0 430.0 0     0     430.0 0     430.0 0     0     #=
-                =# 0     430.0 430.0 430.0 430.0 430.0 430.0 0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     430.0 430.0 430.0 430.0 430.0 430.0 0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     430.0 430.0 0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     10.0  10.0  10.0  10.0  0     #=
-                =# 0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     10.0  10.0  10.0  0     0     #=
-                =# 0     0     0     1.0   0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0 ]))
-  expected_diagnostic_lake_volumes::Field{Float64} =
-    UnstructuredField{Float64}(lake_grid,
-    vec(Float64[   0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0
-                   0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0
-                   0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0
-                   0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0
-                   0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0
-                   0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0
-                   0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0
-                   0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0
-                   0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0
-                   0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0
-                   0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0
-                   0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0
-                   0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0
-                   0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0
-                   0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0
-                   0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0
-                   0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0
-                   0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0
-                   0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0
-                   0     0     0     0     0     0     0     0     0     0     #=
-                =# 0     0     0     0     0     0     0     0     0     0 ]))
-  expected_intermediate_lake_fractions::Field{Float64} = UnstructuredField{Float64}(surface_model_grid,
-        vec(Float64[ 1.0 1.0 1.0 0.97674419 1.0 1.0 0.0]))
-  expected_intermediate_number_lake_cells::Field{Int64} = UnstructuredField{Int64}(surface_model_grid,
-        vec(Int64[ 15 6 15 42 7 1 0 ]))
-  expected_intermediate_number_fine_grid_cells::Field{Int64} = UnstructuredField{Int64}(surface_model_grid,
-        vec(Int64[ 15 6 15 43 7 1 313 ]))
-  expected_intermediate_lake_volumes::Array{Float64} = Float64[46.0, 6.0, 38.0,  340.0, 10.0, 1.0]
-  evaporations_copy::Array{Field{Float64},1} = deepcopy(evaporations)
-  @time river_fields::RiverPrognosticFields,lake_prognostics::LakePrognostics,lake_fields::LakeFields =
-    drive_hd_and_lake_model(river_parameters,lake_parameters,
-                            drainages,runoffs,evaporations_copy,
-                            5000,print_timestep_results=false,
-                            write_output=false,return_output=true)
-  lake_types = UnstructuredField{Int64}(lake_grid,0)
-  for i = 1:400
-    coords::Generic1DCoords = Generic1DCoords(i)
-    lake_number::Int64 = lake_fields.lake_numbers(coords)
-    if lake_number <= 0 continue end
-    lake::Lake = lake_prognostics.lakes[lake_number]
-    if isa(lake,FillingLake)
-      set!(lake_types,coords,1)
-    elseif isa(lake,OverflowingLake)
-      set!(lake_types,coords,2)
-    elseif isa(lake,SubsumedLake)
-      set!(lake_types,coords,3)
-    else
-      set!(lake_types,coords,4)
-    end
-  end
-  lake_volumes = Float64[]
-  lake_fractions::Field{Float64} = calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields)
-  for lake::Lake in lake_prognostics.lakes
-    append!(lake_volumes,get_lake_variables(lake).lake_volume)
-  end
-  diagnostic_lake_volumes::Field{Float64} =
-    calculate_diagnostic_lake_volumes_field(lake_parameters,lake_fields,
-                                            lake_prognostics)
-  @test expected_intermediate_river_inflow == river_fields.river_inflow
-  @test isapprox(expected_intermediate_water_to_ocean,
-                 river_fields.water_to_ocean,rtol=0.0,atol=0.00001)
-  @test expected_intermediate_water_to_hd    == lake_fields.water_to_hd
-  @test expected_intermediate_lake_numbers == lake_fields.lake_numbers
-  @test expected_intermediate_lake_types == lake_types
-  @test isapprox(expected_intermediate_lake_volumes,lake_volumes,atol=0.00001)
-  @test expected_intermediate_diagnostic_lake_volumes == diagnostic_lake_volumes
-  @test isapprox(expected_intermediate_lake_fractions,lake_fractions,rtol=0.0,atol=0.00001)
-  @test expected_intermediate_number_lake_cells == lake_fields.number_lake_cells
-  @test expected_intermediate_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
-  @time river_fields,lake_prognostics,lake_fields =
-    drive_hd_and_lake_model(river_parameters,lake_parameters,
-                            drainages,runoffs,evaporations,
-                            10000,print_timestep_results=false,
-                            write_output=false,return_output=true)
-  lake_types::UnstructuredField{Int64} = UnstructuredField{Int64}(lake_grid,0)
-  for i = 1:400
-    coords::Generic1DCoords = Generic1DCoords(i)
-    lake_number::Int64 = lake_fields.lake_numbers(coords)
-    if lake_number <= 0 continue end
-    lake::Lake = lake_prognostics.lakes[lake_number]
-    if isa(lake,FillingLake)
-      set!(lake_types,coords,1)
-    elseif isa(lake,OverflowingLake)
-      set!(lake_types,coords,2)
-    elseif isa(lake,SubsumedLake)
-      set!(lake_types,coords,3)
-    else
-      set!(lake_types,coords,4)
-    end
-  end
-  lake_volumes::Array{Float64} = Float64[]
-  lake_fractions = calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields)
-  for lake::Lake in lake_prognostics.lakes
-    append!(lake_volumes,get_lake_variables(lake).lake_volume)
-  end
-  diagnostic_lake_volumes =
-    calculate_diagnostic_lake_volumes_field(lake_parameters,lake_fields,
-                                            lake_prognostics)
-  @test expected_river_inflow == river_fields.river_inflow
-  @test isapprox(expected_water_to_ocean,river_fields.water_to_ocean,rtol=0.0,atol=0.00001)
-  @test expected_water_to_hd    == lake_fields.water_to_hd
-  @test expected_lake_numbers == lake_fields.lake_numbers
-  @test expected_lake_types == lake_types
-  @test expected_diagnostic_lake_volumes == diagnostic_lake_volumes
-  @test isapprox(expected_lake_volumes,lake_volumes,atol=0.00001)
-  @test isapprox(expected_lake_fractions,lake_fractions,rtol=0.0,atol=0.000001)
-  @test expected_number_lake_cells == lake_fields.number_lake_cells
-  @test expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
-  # function timing2(river_parameters,lake_parameters)
-  #   for i in 1:50000
-  #     drainagesl = repeat(drainage,20)
-  #     runoffsl = deepcopy(drainages)
-  #     drive_hd_and_lake_model(river_parameters,lake_parameters,
-  #                             drainagesl,runoffsl,20,print_timestep_results=false)
-  #   end
-  # end
-  #@time timing2(river_parameters,lake_parameters)
-end
+# @testset "Lake model tests 5" begin
+#   grid = UnstructuredGrid(16)
+#   surface_model_grid = UnstructuredGrid(7)
+#   flow_directions =  UnstructuredDirectionIndicators(UnstructuredField{Int64}(grid,
+#                                                      vec(Int64[-4  1  7  8 #=
+#                                                              =# 6 -4 -4 12 #=
+#                                                             =# 10 14 16 -4 #=
+#                                                             =# -4 -1 16 -1 ])))
+#   river_reservoir_nums = UnstructuredField{Int64}(grid,5)
+#   overland_reservoir_nums = UnstructuredField{Int64}(grid,1)
+#   base_reservoir_nums = UnstructuredField{Int64}(grid,1)
+#   river_retention_coefficients = UnstructuredField{Float64}(grid,0.7)
+#   overland_retention_coefficients = UnstructuredField{Float64}(grid,0.5)
+#   base_retention_coefficients = UnstructuredField{Float64}(grid,0.1)
+#   landsea_mask = UnstructuredField{Bool}(grid,fill(false,16))
+#   set!(river_reservoir_nums,Generic1DCoords(16),0)
+#   set!(overland_reservoir_nums,Generic1DCoords(16),0)
+#   set!(base_reservoir_nums,Generic1DCoords(16),0)
+#   set!(landsea_mask,Generic1DCoords(16),true)
+#   set!(river_reservoir_nums,Generic1DCoords(14),0)
+#   set!(overland_reservoir_nums,Generic1DCoords(14),0)
+#   set!(base_reservoir_nums,Generic1DCoords(14),0)
+#   set!(landsea_mask,Generic1DCoords(14),true)
+#   river_parameters = RiverParameters(flow_directions,
+#                                      river_reservoir_nums,
+#                                      overland_reservoir_nums,
+#                                      base_reservoir_nums,
+#                                      river_retention_coefficients,
+#                                      overland_retention_coefficients,
+#                                      base_retention_coefficients,
+#                                      landsea_mask,
+#                                      grid,1.0,1.0)
+#   mapping_to_coarse_grid::Array{Int64,1} =
+#     vec(Int64[1 1 1 1 1 2 2 2 2 2 3 3 3 3 3 4 4 4 4 4 #=
+#            =# 1 1 1 1 1 2 2 2 2 2 3 3 3 3 3 4 4 4 4 4 #=
+#            =# 1 1 1 1 1 2 2 2 2 2 3 3 3 3 3 4 4 4 4 4 #=
+#            =# 1 1 1 1 1 2 2 2 2 2 3 3 3 3 3 4 4 4 4 4 #=
+#            =# 1 1 1 1 1 2 2 2 2 2 3 3 3 3 3 4 4 4 4 4 #=
+#            =# 5 5 5 5 5 6 6 6 6 6 7 7 7 7 7 8 8 8 8 8 #=
+#            =# 5 5 5 5 5 6 6 6 6 6 7 7 7 7 7 8 8 8 8 8 #=
+#            =# 5 5 5 5 5 6 6 6 6 6 7 7 7 7 7 8 8 8 8 8 #=
+#            =# 5 5 5 5 5 6 6 6 6 6 7 7 7 7 7 8 8 8 8 8 #=
+#            =# 5 5 5 5 5 6 6 6 6 6 7 7 7 7 7 8 8 8 8 8 #=
+#            =# 9 9 9 9 9 10 10 10 10 10 11 11 11 11 11 12 12 12 12 12 #=
+#            =# 9 9 9 9 9 10 10 10 10 10 11 11 11 11 11 12 12 12 12 12 #=
+#            =# 9 9 9 9 9 10 10 10 10 10 11 11 11 11 11 12 12 12 12 12 #=
+#            =# 9 9 9 9 9 10 10 10 10 10 11 11 11 11 11 12 12 12 12 12 #=
+#            =# 9 9 9 9 9 10 10 10 10 10 11 11 11 11 11 12 12 12 12 12 #=
+#            =# 13 13 13 13 13 14 14 14 14 14 15 15 15 15 15 16 16 16 16 16 #=
+#            =# 13 13 13 13 13 14 14 14 14 14 15 15 15 15 15 16 16 16 16 16 #=
+#            =# 13 13 13 13 13 14 14 14 14 14 15 15 15 15 15 16 16 16 16 16 #=
+#            =# 13 13 13 13 13 14 14 14 14 14 15 15 15 15 15 16 16 16 16 16 #=
+#            =# 13 13 13 13 13 14 14 14 14 14 15 15 15 15 15 16 16 16 16 16 ])
+#   lake_grid = UnstructuredGrid(400,mapping_to_coarse_grid)
+#   lake_centers::Field{Bool} = UnstructuredField{Bool}(lake_grid,
+#     vec(Bool[ false false false false false false false false false false false false false false false false #=
+#     =# false false false false #=
+#     =# false false false false false false false false false false false false false false false false  #=
+#     =# false false false false #=
+#     =# true  false false false false false false false false false false false false false false false  #=
+#     =# false false false false #=
+#     =# false false false false false false false false false false false false false false false false #=
+#     =# false false false false #=
+#     =# false false false false false false false false false false false false false false false false #=
+#     =# false false false false #=
+#     =# false false false false false false false false false false false false false true  false false #=
+#     =# false false false false #=
+#     =# false false false false false true  false false false false false false false false false false #=
+#     =# false false false false #=
+#     =# false false false false false false false false false false false false false false true  false #=
+#     =# false false false false #=
+#     =# false false false false false false false false false false false false false false false false #=
+#     =# false false false false #=
+#     =# false false false false false false false false false false false false false false false false #=
+#     =# false false false false #=
+#     =# false false false false false false false false false false false false false false false false  #=
+#     =# false false false false #=
+#     =# false false false false false false false false false false false false false false false false #=
+#     =# false false false false #=
+#     =# false false false false false false false false false false false false false false false false #=
+#     =# false false false false #=
+#     =# false false false false false false false false false false false false false false false true #=
+#     =# false false false false #=
+#     =# false false false false false false false false false false false false false false false false #=
+#     =# false false false false #=
+#     =# false false false true  false false false false false false false false false false false false #=
+#     =# false false false false #=
+#     =# false false false false false false false false false false false false false false false false #=
+#     =# false false false false #=
+#     =# false false false false false false false false false false false false false false false false #=
+#     =# false false false false #=
+#     =# false false false false false false false false false false false false false false false false #=
+#     =# false false false false #=
+#     =# false false false false false false false false false false false false false false false false #=
+#     =# false false false false ]))
+#   connection_volume_thresholds::Field{Float64} = UnstructuredField{Float64}(lake_grid,
+#     vec(Float64[    -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
+#              =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
+#              =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
+#              =# -1 -1 -1 -1 -1 186.0 23.0  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
+#              =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
+#              =# -1 -1 -1 -1 -1    -1   -1  -1 -1 56.0 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
+#              =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
+#              =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
+#              =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
+#              =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
+#              =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
+#              =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
+#              =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
+#              =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
+#              =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
+#              =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
+#              =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
+#              =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
+#              =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 #=
+#              =# -1 -1 -1 -1 -1    -1   -1  -1 -1   -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ]))
+#   flood_volume_threshold::Field{Float64} = UnstructuredField{Float64}(lake_grid,
+#     vec(Float64[  -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1 #=
+#              =# -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1 5.0 #=
+#              =# 0.0 262.0  5.0    -1   -1    -1    -1   -1   -1  -1  -1    -1 111.0 111.0 56.0 111.0   -1    -1   -1 2.0 #=
+#               =# -1   5.0  5.0    -1   -1 340.0 262.0   -1   -1  -1  -1 111.0   1.0   1.0 56.0  56.0   -1    -1   -1  -1 #=
+#               =# -1   5.0  5.0    -1   -1  10.0  10.0 38.0 10.0  -1  -1    -1   0.0   1.0  1.0  26.0 56.0    -1   -1  -1 #=
+#               =# -1   5.0  5.0 186.0  2.0   2.0    -1 10.0 10.0  -1 1.0   6.0   1.0   0.0  1.0  26.0 26.0 111.0   -1  -1 #=
+#             =# 16.0  16.0 16.0    -1  2.0   0.0   2.0  2.0 10.0  -1 1.0   0.0   0.0   1.0  1.0   1.0 26.0  56.0   -1  -1 #=
+#             =# -1  46.0 16.0    -1   -1   2.0    -1 23.0   -1  -1  -1   1.0   0.0   1.0  1.0   1.0 56.0    -1   -1  -1 #=
+#             =# -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1  56.0   1.0   1.0  1.0  26.0 56.0    -1   -1  -1 #=
+#             =# -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1  56.0  56.0   -1    -1   -1    -1   -1  -1 #=
+#             =# -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1 #=
+#             =# -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1 #=
+#             =# -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1 #=
+#             =# -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1   0.0  3.0   3.0 10.0  -1 #=
+#             =# -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1   0.0  3.0   3.0   -1  -1 #=
+#             =# -1    -1   -1   1.0   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1 #=
+#             =# -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1 #=
+#             =# -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1 #=
+#             =# -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1 #=
+#             =# -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1 ]))
+#   flood_local_redirect::Field{Bool} = UnstructuredField{Bool}(lake_grid,
+#     vec(Bool[ false false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =#  false false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =#  false  false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =#  false false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =#  false false false false false false false true false false false false false false false false #=
+#       =#  false false false false #=
+#       =#  false false false false false false false false false false false  true false false  false false #=
+#       =#  false false false false #=
+#       =#  false false false false false false  false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =#  false false false false false false false false false false false false false false false  false #=
+#       =#  true false false false #=
+#       =#  false false false false false false false false false false false false false false true false #=
+#       =#  false false false false #=
+#       =#  false false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =#  false false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =#  false false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =# false false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =#  false false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =#  false false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =#  false false false false  false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =#  false false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =#  false false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =#  false false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =#  false false false false false false false false false false false false false false false false #=
+#       =#  false false false false ]))
+#   connect_local_redirect::Field{Bool} = UnstructuredField{Bool}(lake_grid,
+#     vec(Bool[ false false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =#  false false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =#  false  false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =# false false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =#  false false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =#  false false false false false false false false false false false false false false  false false #=
+#       =#  false false false false #=
+#       =#  false false false false false false  false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =#  false false false false false false false false false false false false false false false  false #=
+#       =#  false false false false #=
+#       =#  false false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =#  false false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =#  false false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =#  false false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =# false false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =#   false false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =#   false false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =# false false false false  false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =# false false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =#  false false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =#  false false false false false false false false false false false false false false false false #=
+#       =#  false false false false #=
+#       =# false false false false false false false false false false false false false false false false #=
+#       =#  false false false false ]))
+#   additional_flood_local_redirect::Field{Bool} = UnstructuredField{Bool}(lake_grid,false)
+#   additional_connect_local_redirect::Field{Bool} = UnstructuredField{Bool}(lake_grid,false)
+#   merge_points::Field{MergeTypes} = UnstructuredField{MergeTypes}(lake_grid,
+#     vec(MergeTypes[ no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          connection_merge_not_set_flood_merge_as_primary no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
+#     =#          connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
+#     =#          no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype  #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
+#     =#          no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype no_merge_mtype  #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
+#     =#          no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype  no_merge_mtype #=
+#     =#          no_merge_mtype  no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
+#     =#          no_merge_mtype connection_merge_not_set_flood_merge_as_primary no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_primary  #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype  #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
+#     =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype ]))
+#   cell_areas_on_surface_model_grid::Field{Float64} =
+#     UnstructuredField{Float64}(surface_model_grid,
+#     vec(Float64[ 2.5 3.0 2.5 4.0 5.0 1.0 3.0]))
+#   flood_next_cell_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,
+#     vec(Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 61 59 65 102 -1 -1 -1 -1 -1 -1 -1 -1 -1 55 52 96 103 -1 -1 -1 39 -1 82 42 -1 -1 178 41 -1 -1 -1 -1 53 115 72 193 54 -1 -1 -1 -1 -1 62 81 -1 -1 128 85 130 66 -1 -1 -1 152 73 93 74 137 -1 -1 -1 -1 122 101 65 127 145 -1 86 88 -1 114 154 130 132 94 175 95 71 -1 -1 142 120 121 -1 104 105 124 107 108 -1 110 111 92 172 133 134 116 117 -1 -1 -1 124 141 -1 -1 126 -1 87 -1 -1 -1 112 131 135 174 153 109 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 176 151 155 173 136 156 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 171 192 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 295 296 278 335 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 276 297 277 -1 -1 -1 -1 -1 343 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ]))
+#   connect_next_cell_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,
+#     vec(Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 66 147 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 75 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ]))
+#   flood_force_merge_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,
+#     vec(Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 122 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 128 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 152 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ]))
+#   connect_force_merge_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,
+#     vec(Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ]))
+#   flood_redirect_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,
+#     vec(Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 4 -1 -1 -1 -1 -1 -1 -1 -1 -1 7 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 154 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 154 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 4 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 125 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 113 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 15 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 13 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ]))
+#   connect_redirect_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,
+#     vec(Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ]))
+#   corresponding_surface_cell_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,
+#     vec(Int64[   7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 #=
+#               =# 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 1 #=
+#               =# 1 4 1 7 7 7 7 7 7 7 7 7 4 4 4 4 7 7 7 1 #=
+#               =# 7 1 1 7 7 4 4 7 7 7 7 4 4 4 4 4 7 7 7 7 #=
+#               =# 7 1 1 7 7 3 3 3 3 7 7 7 2 4 4 4 4 7 7 7 #=
+#               =# 7 1 1 4 3 3 7 3 3 4 4 2 4 2 4 4 4 4 7 7 #=
+#               =# 1 1 1 7 3 3 3 3 3 7 4 2 2 4 4 4 4 4 7 7 #=
+#               =# 7 1 1 7 7 3 7 3 7 7 7 4 2 4 4 4 4 7 7 7 #=
+#               =# 7 7 7 7 7 7 7 7 7 7 7 4 4 4 4 4 4 7 7 7 #=
+#               =# 7 7 7 7 7 7 7 7 7 7 7 7 4 4 7 7 7 7 7 7 #=
+#               =# 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 #=
+#               =# 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 #=
+#               =# 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 #=
+#               =# 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 5 5 5 5 7 #=
+#               =# 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 5 5 5 7 7 #=
+#               =# 7 7 7 6 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 #=
+#               =# 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 #=
+#               =# 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 #=
+#               =# 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 #=
+#               =# 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 ]))
+#   add_offset(flood_next_cell_index,1,Int64[-1])
+#   add_offset(connect_next_cell_index,1,Int64[-1])
+#   add_offset(flood_force_merge_index,1,Int64[-1])
+#   add_offset(connect_force_merge_index,1,Int64[-1])
+#   add_offset(flood_redirect_index,1,Int64[-1])
+#   add_offset(connect_redirect_index,1,Int64[-1])
+#   additional_flood_redirect_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,0)
+#   additional_connect_redirect_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,0)
+#   grid_specific_lake_parameters::GridSpecificLakeParameters =
+#     UnstructuredLakeParameters(flood_next_cell_index,
+#                                connect_next_cell_index,
+#                                flood_force_merge_index,
+#                                connect_force_merge_index,
+#                                flood_redirect_index,
+#                                connect_redirect_index,
+#                                additional_flood_redirect_index,
+#                                additional_connect_redirect_index,
+#                                corresponding_surface_cell_index)
+#   lake_parameters = LakeParameters(lake_centers,
+#                                    connection_volume_thresholds,
+#                                    flood_volume_threshold,
+#                                    flood_local_redirect,
+#                                    connect_local_redirect,
+#                                    additional_flood_local_redirect,
+#                                    additional_connect_local_redirect,
+#                                    merge_points,
+#                                    cell_areas_on_surface_model_grid,
+#                                    lake_grid,
+#                                    grid,
+#                                    surface_model_grid,
+#                                    grid_specific_lake_parameters)
+#   drainage::Field{Float64} = UnstructuredField{Float64}(river_parameters.grid,
+#                                                         vec(Float64[ 1.0 1.0 1.0 1.0 #=
+#                                                                   =# 1.0 1.0 1.0 1.0 #=
+#                                                                   =# 1.0 1.0 1.0 1.0 #=
+#                                                                   =# 1.0 0.0 1.0 0.0 ]))
+#   drainages::Array{Field{Float64},1} = repeat(drainage,10000)
+#   runoffs::Array{Field{Float64},1} = deepcopy(drainages)
+#   evaporation::Field{Float64} = UnstructuredField{Float64}(surface_model_grid,0.0)
+#   evaporations::Array{Field{Float64},1} = repeat(evaporation,180)
+#   evaporation = UnstructuredField{Float64}(surface_model_grid,100.0)
+#   additional_evaporations::Array{Field{Float64},1} = repeat(evaporation,200)
+#   append!(evaporations,additional_evaporations)
+#   expected_river_inflow::Field{Float64} = UnstructuredField{Float64}(grid,
+#                                                             vec(Float64[ 0.0 0.0 0.0 0.0 #=
+#                                                                       =# 0.0 0.0 0.0 2.0 #=
+#                                                                       =# 0.0 2.0 0.0 0.0 #=
+#                                                                       =# 0.0 0.0 0.0 0.0 ]))
+#   expected_water_to_ocean::Field{Float64} = UnstructuredField{Float64}(grid,
+#                                                               vec(Float64[ -96.0   0.0   0.0   0.0 #=
+#                                                                         =#   0.0 -96.0 -196.0  0.0 #=
+#                                                                         =#   0.0   0.0   0.0 -94.0 #=
+#                                                                         =# -98.0   4.0   0.0   4.0 ]))
+#   expected_water_to_hd::Field{Float64} = UnstructuredField{Float64}(grid,
+#                                                            vec(Float64[ 0.0 0.0 0.0 0.0 #=
+#                                                                     =# 0.0 0.0 0.0 0.0 #=
+#                                                                     =# 0.0 0.0 0.0 0.0 #=
+#                                                                     =# 0.0 0.0 0.0 0.0 ]))
+#   expected_lake_numbers::Field{Int64} = UnstructuredField{Int64}(lake_grid,
+#       vec(Int64[ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#           =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#           =# 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#           =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#           =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#           =# 0 0 0 0 0 0 0 0 0 0 0 0 0 2 0 0 0 0 0 0 #=
+#           =# 0 0 0 0 0 3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#           =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 4 0 0 0 0 0 #=
+#           =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#           =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#           =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#           =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#           =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#           =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 5 0 0 0 0 #=
+#           =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#           =# 0 0 0 6 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#           =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#           =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#           =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#           =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ]))
+#   expected_lake_types::Field{Int64} = UnstructuredField{Int64}(lake_grid,
+#       vec(Int64[ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#           =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#           =# 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#           =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#           =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#           =# 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 #=
+#           =# 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#           =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 #=
+#           =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#           =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#           =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#           =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#           =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#           =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 #=
+#           =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#           =# 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#           =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#           =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#           =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#           =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ]))
+#   expected_lake_fractions::Field{Float64} = UnstructuredField{Float64}(surface_model_grid,
+#         vec(Float64[ 0.06666666667 0.1666666667 0.06666666667 0.02325581395 0.1428571429 1.0 0.0]))
+#   expected_number_lake_cells::Field{Int64} = UnstructuredField{Int64}(surface_model_grid,
+#         vec(Int64[ 1 1 1 1 1 1 0]))
+#   expected_number_fine_grid_cells::Field{Int64} = UnstructuredField{Int64}(surface_model_grid,
+#         vec(Int64[ 15 6 15 43 7 1 313 ]))
+#   expected_lake_volumes::Array{Float64} = Float64[0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+#   expected_intermediate_river_inflow::Field{Float64} = UnstructuredField{Float64}(grid,
+#                                                        vec(Float64[ 0.0 0.0 0.0 0.0 #=
+#                                                                  =# 0.0 0.0 0.0 2.0 #=
+#                                                                  =# 0.0 2.0 0.0 0.0 #=
+#                                                                  =# 0.0 0.0 0.0 0.0 ]))
+#   expected_intermediate_water_to_ocean::Field{Float64} = UnstructuredField{Float64}(grid,
+#                                                          vec(Float64[ 0.0 0.0 0.0 0.0 #=
+#                                                                    =# 0.0 0.0 0.0 0.0 #=
+#                                                                    =# 0.0 0.0 0.0 0.0 #=
+#                                                                    =# 0.0 6.0 0.0 22.0 ]))
+#   expected_intermediate_water_to_hd::Field{Float64} = UnstructuredField{Float64}(grid,
+#                                                       vec(Float64[ 0.0 0.0 0.0  0.0 #=
+#                                                                 =# 0.0 0.0 0.0 12.0 #=
+#                                                                 =# 0.0 0.0 0.0  0.0 #=
+#                                                                 =# 0.0 2.0 0.0 18.0 ]))
+#   expected_intermediate_lake_numbers::Field{Int64} = UnstructuredField{Int64}(lake_grid,
+#       vec(Int64[ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#               =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 #=
+#               =# 1 4 1 0 0 0 0 0 0 0 0 0 4 4 4 4 0 0 0 1 #=
+#               =# 0 1 1 0 0 4 4 0 0 0 0 4 4 4 4 4 0 0 0 0 #=
+#               =# 0 1 1 0 0 3 3 3 3 0 0 0 2 4 4 4 4 0 0 0 #=
+#               =# 0 1 1 4 3 3 0 3 3 4 4 2 4 2 4 4 4 4 0 0 #=
+#               =# 1 1 1 0 3 3 3 3 3 0 4 2 2 4 4 4 4 4 0 0 #=
+#               =# 0 1 1 0 0 3 0 3 0 0 0 4 2 4 4 4 4 0 0 0 #=
+#               =# 0 0 0 0 0 0 0 0 0 0 0 4 4 4 4 4 4 0 0 0 #=
+#               =# 0 0 0 0 0 0 0 0 0 0 0 0 4 4 0 0 0 0 0 0 #=
+#               =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#               =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#               =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#               =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 5 5 5 5 0 #=
+#               =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 5 5 5 0 0 #=
+#               =# 0 0 0 6 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#               =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#               =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#               =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#               =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ]))
+#   expected_intermediate_lake_types::Field{Int64} = UnstructuredField{Int64}(lake_grid,
+#       vec(Int64[ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#               =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 3 #=
+#               =# 3 2 3 0 0 0 0 0 0 0 0 0 2 2 2 2 0 0 0 3 #=
+#               =# 0 3 3 0 0 2 2 0 0 0 0 2 2 2 2 2 0 0 0 0 #=
+#               =# 0 3 3 0 0 3 3 3 3 0 0 0 3 2 2 2 2 0 0 0 #=
+#               =# 0 3 3 2 3 3 0 3 3 2 2 3 2 3 2 2 2 2 0 0 #=
+#               =# 3 3 3 0 3 3 3 3 3 0 2 3 3 2 2 2 2 2 0 0 #=
+#               =# 0 3 3 0 0 3 0 3 0 0 0 2 3 2 2 2 2 0 0 0 #=
+#               =# 0 0 0 0 0 0 0 0 0 0 0 2 2 2 2 2 2 0 0 0 #=
+#               =# 0 0 0 0 0 0 0 0 0 0 0 0 2 2 0 0 0 0 0 0 #=
+#               =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#               =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#               =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#               =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 2 2 2 2 0 #=
+#               =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 2 2 2 0 0 #=
+#               =# 0 0 0 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#               =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#               =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#               =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 #=
+#               =# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ]))
+#   expected_intermediate_diagnostic_lake_volumes::Field{Float64} =
+#     UnstructuredField{Float64}(lake_grid,
+#     vec(Float64[   0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     430.0 #=
+#                 =# 430.0 430.0 430.0 0     0     0     0     0     0     0     #=
+#                 =# 0     0     430.0 430.0 430.0 430.0 0     0     0     430.0 #=
+#                 =# 0     430.0 430.0 0     0     430.0 430.0 0     0     0     #=
+#                 =# 0     430.0 430.0 430.0 430.0 430.0 0     0     0     0     #=
+#                 =# 0     430.0 430.0 0     0     430.0 430.0 430.0 430.0 0     #=
+#                 =# 0     0     430.0 430.0 430.0 430.0 430.0 0     0     0     #=
+#                 =# 0     430.0 430.0 430.0 430.0 430.0 0     430.0 430.0 430.0 #=
+#                 =# 430.0 430.0 430.0 430.0 430.0 430.0 430.0 430.0 0     0     #=
+#                 =# 430.0 430.0 430.0 0     430.0 430.0 430.0 430.0 430.0 0     #=
+#                 =# 430.0 430.0 430.0 430.0 430.0 430.0 430.0 430.0 0     0     #=
+#                 =# 0     430.0 430.0 0     0     430.0 0     430.0 0     0     #=
+#                 =# 0     430.0 430.0 430.0 430.0 430.0 430.0 0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     430.0 430.0 430.0 430.0 430.0 430.0 0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     430.0 430.0 0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     10.0  10.0  10.0  10.0  0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     10.0  10.0  10.0  0     0     #=
+#                 =# 0     0     0     1.0   0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0 ]))
+#   expected_diagnostic_lake_volumes::Field{Float64} =
+#     UnstructuredField{Float64}(lake_grid,
+#     vec(Float64[   0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0
+#                    0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0
+#                    0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0
+#                    0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0
+#                    0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0
+#                    0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0
+#                    0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0
+#                    0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0
+#                    0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0
+#                    0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0
+#                    0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0
+#                    0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0
+#                    0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0
+#                    0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0
+#                    0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0
+#                    0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0
+#                    0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0
+#                    0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0
+#                    0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0
+#                    0     0     0     0     0     0     0     0     0     0     #=
+#                 =# 0     0     0     0     0     0     0     0     0     0 ]))
+#   expected_intermediate_lake_fractions::Field{Float64} = UnstructuredField{Float64}(surface_model_grid,
+#         vec(Float64[ 1.0 1.0 1.0 0.97674419 1.0 1.0 0.0]))
+#   expected_intermediate_number_lake_cells::Field{Int64} = UnstructuredField{Int64}(surface_model_grid,
+#         vec(Int64[ 15 6 15 42 7 1 0 ]))
+#   expected_intermediate_number_fine_grid_cells::Field{Int64} = UnstructuredField{Int64}(surface_model_grid,
+#         vec(Int64[ 15 6 15 43 7 1 313 ]))
+#   expected_intermediate_lake_volumes::Array{Float64} = Float64[46.0, 6.0, 38.0,  340.0, 10.0, 1.0]
+#   evaporations_copy::Array{Field{Float64},1} = deepcopy(evaporations)
+#   @time river_fields::RiverPrognosticFields,lake_prognostics::LakePrognostics,lake_fields::LakeFields =
+#     drive_hd_and_lake_model(river_parameters,lake_parameters,
+#                             drainages,runoffs,evaporations_copy,
+#                             5000,print_timestep_results=false,
+#                             write_output=false,return_output=true)
+#   lake_types = UnstructuredField{Int64}(lake_grid,0)
+#   for i = 1:400
+#     coords::Generic1DCoords = Generic1DCoords(i)
+#     lake_number::Int64 = lake_fields.lake_numbers(coords)
+#     if lake_number <= 0 continue end
+#     lake::Lake = lake_prognostics.lakes[lake_number]
+#     if isa(lake,FillingLake)
+#       set!(lake_types,coords,1)
+#     elseif isa(lake,OverflowingLake)
+#       set!(lake_types,coords,2)
+#     elseif isa(lake,SubsumedLake)
+#       set!(lake_types,coords,3)
+#     else
+#       set!(lake_types,coords,4)
+#     end
+#   end
+#   lake_volumes = Float64[]
+#   lake_fractions::Field{Float64} = calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields)
+#   for lake::Lake in lake_prognostics.lakes
+#     append!(lake_volumes,get_lake_variables(lake).lake_volume)
+#   end
+#   diagnostic_lake_volumes::Field{Float64} =
+#     calculate_diagnostic_lake_volumes_field(lake_parameters,lake_fields,
+#                                             lake_prognostics)
+#   @test expected_intermediate_river_inflow == river_fields.river_inflow
+#   @test isapprox(expected_intermediate_water_to_ocean,
+#                  river_fields.water_to_ocean,rtol=0.0,atol=0.00001)
+#   @test expected_intermediate_water_to_hd    == lake_fields.water_to_hd
+#   @test expected_intermediate_lake_numbers == lake_fields.lake_numbers
+#   @test expected_intermediate_lake_types == lake_types
+#   @test isapprox(expected_intermediate_lake_volumes,lake_volumes,atol=0.00001)
+#   @test expected_intermediate_diagnostic_lake_volumes == diagnostic_lake_volumes
+#   @test isapprox(expected_intermediate_lake_fractions,lake_fractions,rtol=0.0,atol=0.00001)
+#   @test expected_intermediate_number_lake_cells == lake_fields.number_lake_cells
+#   @test expected_intermediate_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
+#   @time river_fields,lake_prognostics,lake_fields =
+#     drive_hd_and_lake_model(river_parameters,lake_parameters,
+#                             drainages,runoffs,evaporations,
+#                             10000,print_timestep_results=false,
+#                             write_output=false,return_output=true)
+#   lake_types::UnstructuredField{Int64} = UnstructuredField{Int64}(lake_grid,0)
+#   for i = 1:400
+#     coords::Generic1DCoords = Generic1DCoords(i)
+#     lake_number::Int64 = lake_fields.lake_numbers(coords)
+#     if lake_number <= 0 continue end
+#     lake::Lake = lake_prognostics.lakes[lake_number]
+#     if isa(lake,FillingLake)
+#       set!(lake_types,coords,1)
+#     elseif isa(lake,OverflowingLake)
+#       set!(lake_types,coords,2)
+#     elseif isa(lake,SubsumedLake)
+#       set!(lake_types,coords,3)
+#     else
+#       set!(lake_types,coords,4)
+#     end
+#   end
+#   lake_volumes::Array{Float64} = Float64[]
+#   lake_fractions = calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields)
+#   for lake::Lake in lake_prognostics.lakes
+#     append!(lake_volumes,get_lake_variables(lake).lake_volume)
+#   end
+#   diagnostic_lake_volumes =
+#     calculate_diagnostic_lake_volumes_field(lake_parameters,lake_fields,
+#                                             lake_prognostics)
+#   @test expected_river_inflow == river_fields.river_inflow
+#   @test isapprox(expected_water_to_ocean,river_fields.water_to_ocean,rtol=0.0,atol=0.00001)
+#   @test expected_water_to_hd    == lake_fields.water_to_hd
+#   @test expected_lake_numbers == lake_fields.lake_numbers
+#   @test expected_lake_types == lake_types
+#   @test expected_diagnostic_lake_volumes == diagnostic_lake_volumes
+#   @test isapprox(expected_lake_volumes,lake_volumes,atol=0.00001)
+#   @test isapprox(expected_lake_fractions,lake_fractions,rtol=0.0,atol=0.000001)
+#   @test expected_number_lake_cells == lake_fields.number_lake_cells
+#   @test expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
+#   # function timing2(river_parameters,lake_parameters)
+#   #   for i in 1:50000
+#   #     drainagesl = repeat(drainage,20)
+#   #     runoffsl = deepcopy(drainages)
+#   #     drive_hd_and_lake_model(river_parameters,lake_parameters,
+#   #                             drainagesl,runoffsl,20,print_timestep_results=false)
+#   #   end
+#   # end
+#   #@time timing2(river_parameters,lake_parameters)
+# end
 
-@testset "Lake model tests 6" begin
-  grid = UnstructuredGrid(80)
-  surface_model_grid = UnstructuredGrid(7)
-  flow_directions =  UnstructuredDirectionIndicators(UnstructuredField{Int64}(grid,
-                                                     vec(Int64[ 8,13,13,13,19, #=
-                                                             =# 8,8,24,24,13, 13,13,-4,13,13, #=
-                                                             =# 13,36,36,37,37, 8,24,24,64,45, #=
-                                                             =# 45,45,49,49,13, 13,30,52,55,55, #=
-                                                             =# 55,55,55,37,38, 61,61,64,64,64, #=
-                                                             =# 64,64,64,-4,49, 30,54,55,55,-1, #=
-                                                             =# 55,55,38,38,59, 63,64,64,-4,64, #=
-                                                             =# 38,49,52,55,55, 55,55,56,58,58, #=
-                                                             =# 64,64,68,71,71 ])))
-  river_reservoir_nums = UnstructuredField{Int64}(grid,5)
-  overland_reservoir_nums = UnstructuredField{Int64}(grid,1)
-  base_reservoir_nums = UnstructuredField{Int64}(grid,1)
-  river_retention_coefficients = UnstructuredField{Float64}(grid,0.7)
-  overland_retention_coefficients = UnstructuredField{Float64}(grid,0.5)
-  base_retention_coefficients = UnstructuredField{Float64}(grid,0.1)
-  landsea_mask = UnstructuredField{Bool}(grid,false)
-  set!(river_reservoir_nums,Generic1DCoords(55),0)
-  set!(overland_reservoir_nums,Generic1DCoords(55),0)
-  set!(base_reservoir_nums,Generic1DCoords(55),0)
-  set!(landsea_mask,Generic1DCoords(55),true)
-  river_parameters = RiverParameters(flow_directions,
-                                     river_reservoir_nums,
-                                     overland_reservoir_nums,
-                                     base_reservoir_nums,
-                                     river_retention_coefficients,
-                                     overland_retention_coefficients,
-                                     base_retention_coefficients,
-                                     landsea_mask,
-                                     grid,1.0,1.0)
-  mapping_to_coarse_grid::Array{Int64,1} =
-    vec(Int64[ 1,2,3,4,5, #=
-            =# 6,7,8,9,10,     11,12,13,14,15, #=
-            =# 16,17,18,19,20, 21,22,23,24,25, #=
-            =# 26,27,28,29,30, 31,32,33,34,35, #=
-            =# 36,37,38,39,40, 41,42,43,44,45, #=
-            =# 46,47,48,49,50, 51,52,53,54,55, #=
-            =# 56,57,58,59,60, 61,62,63,64,65, #=
-            =# 66,67,68,69,70, 71,72,73,74,75, #=
-            =# 76,77,78,79,80 ])
-  lake_grid = UnstructuredGrid(80,mapping_to_coarse_grid)
-  lake_centers::Field{Bool} = UnstructuredField{Bool}(lake_grid,
-    vec(Bool[ false,false,false,false,false, #=
-        =# false,false,false,false,false, false,false,true,false,false, #=
-        =# false,false,false,false,false, false,false,false,false,false, #=
-        =# false,false,false,false,false, false,false,false,false,false, #=
-        =# false,false,false,false,false, false,false,false,false,false, #=
-        =# false,false,false,true, false, false,false,false,false,false, #=
-        =# false,false,false,false,false, false,false,false, true,false, #=
-        =# false,false,false,false,false, false,false,false,false,false, #=
-        =# false,false,false,false,false ]))
-  connection_volume_thresholds::Field{Float64} = UnstructuredField{Float64}(lake_grid,-1.0)
-  flood_volume_threshold::Field{Float64} = UnstructuredField{Float64}(lake_grid,
-    vec(Float64[ -1.0,-1.0,-1.0,-1.0,-1.0, #=
-              =# -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,3.0,-1.0,-1.0, #=
-              =# -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0, #=
-              =# -1.0,-1.0,-1.0,-1.0, 4.0, -1.0,-1.0,-1.0,-1.0,-1.0, #=
-              =# -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0, 5.0, #=
-              =# 1.0,22.0,-1.0,1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0, #=
-              =# -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,1.0,1.0,-1.0, #=
-              =# -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0, #=
-              =# 15.0,-1.0,-1.0,-1.0,-1.0 ]))
-  flood_local_redirect::Field{Bool} = UnstructuredField{Bool}(lake_grid,
-    vec(Bool[ true,true,true,true,true, #=
-           =# true,true,true,true,true, true,true,true,true,true, #=
-           =# true,true,true,true,true, true,true,true,true,true, #=
-           =# true,true,true,true,true, true,true,true,true,true, #=
-           =# true,true,true,true,true, true,true,true,true,true, #=
-           =# true,false,true,true,true, true,true,true,true,true, #=
-           =# true,true,true,true,true, true,true,true,true,true, #=
-           =# true,true,true,true,true, true,true,true,true,true, #=
-           =# true,true,true,true,true ]))
-  connect_local_redirect::Field{Bool} = UnstructuredField{Bool}(lake_grid,false)
-  additional_flood_local_redirect::Field{Bool} = UnstructuredField{Bool}(lake_grid,false)
-  additional_connect_local_redirect::Field{Bool} = UnstructuredField{Bool}(lake_grid,false)
-  merge_points::Field{MergeTypes} = UnstructuredField{MergeTypes}(lake_grid,
-    vec(MergeTypes[ no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, #=
-                 =# no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, #=
-                 =# no_merge_mtype,no_merge_mtype,connection_merge_not_set_flood_merge_as_secondary, #=
-                 =# no_merge_mtype,no_merge_mtype, #=
-                 =# no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, #=
-                 =# no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, #=
-                 =# no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, #=
-                 =# connection_merge_not_set_flood_merge_as_primary, #=
-                 =# no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, #=
-                 =# no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, #=
-                 =# no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, #=
-                 =# no_merge_mtype,connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype, #=
-                 =# connection_merge_not_set_flood_merge_as_primary,no_merge_mtype, #=
-                 =# no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, #=
-                 =# no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, #=
-                 =# no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, #=
-                 =# no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, #=
-                 =# no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, #=
-                 =# connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype,no_merge_mtype, #=
-                 =# no_merge_mtype,no_merge_mtype ]))
-  cell_areas_on_surface_model_grid::Field{Float64} = UnstructuredField{Float64}(surface_model_grid,
-    vec(Float64[ 2.5 3.0 2.5 4.0 2.0 1.0 3.0  ]))
-  flood_next_cell_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,
-    vec(Int64[ -1,-1,-1,-1,-1, #=
-            =# -1,-1,-1,-1,-1, -1,-1,49,-1,-1, #=
-            =# -1,-1,-1,-1,-1, -1,-1,-1,-1,-1, #=
-            =# -1,-1,-1,-1,47, -1,-1,-1,-1,-1, #=
-            =# -1,-1,-1,-1,-1, -1,-1,-1,-1,76, #=
-            =# 45,52,-1,30,-1, -1,-1,-1,-1,-1, #=
-            =# -1,-1,-1,-1,-1, -1,-1,46,63,-1, #=
-            =# -1,-1,-1,-1,-1, -1,-1,-1,-1,-1, #=
-            =# 49,-1,-1,-1,-1 ]))
-  connect_next_cell_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,-1)
-  flood_force_merge_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,
-    vec(Int64[ -1,-1,-1,-1,-1, #=
-            =# -1,-1,-1,-1,-1, -1,-1,-1,-1,-1, #=
-            =# -1,-1,-1,-1,-1, -1,-1,-1,-1,-1, #=
-            =# -1,-1,-1,-1,64, -1,-1,-1,-1,-1, #=
-            =# -1,-1,-1,-1,-1, -1,-1,-1,-1,-1, #=
-            =# -1,-1,-1,13,-1, -1,-1,-1,-1,-1, #=
-            =# -1,-1,-1,-1,-1, -1,-1,-1,-1,-1, #=
-            =# -1,-1,-1,-1,-1, -1,-1,-1,-1,-1, #=
-            =# -1,-1,-1,-1,-1 ]))
-  connect_force_merge_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,-1)
-  flood_redirect_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,
-    vec(Int64[ -1,-1,-1,-1,-1, #=
-            =# -1,-1,-1,-1,-1, -1,-1,49,-1,-1, #=
-            =# -1,-1,-1,-1,-1, -1,-1,-1,-1,-1, #=
-            =# -1,-1,-1,-1,64, -1,-1,-1,-1,-1, #=
-            =# -1,-1,-1,-1,-1, -1,-1,-1,-1,-1, #=
-            =# -1,52,-1,13,-1, -1,-1,-1,-1,-1, #=
-            =# -1,-1,-1,-1,-1, -1,-1,-1,-1,-1, #=
-            =# -1,-1,-1,-1,-1, -1,-1,-1,-1,-1, #=
-            =# 49,-1,-1,-1,-1 ]))
-  corresponding_surface_cell_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,
-    vec(Int64[ 4, 4, 4, 4, 4, #=
-            =# 4, 4, 4, 4, 4, 4, 4, 1, 4, 4, 4, 4, 4, 4, 4, #=
-            =# 4, 4, 4, 4, 4, 4, 4, 4, 4, 2, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, #=
-            =# 4, 4, 4, 4, 3, 3, 2, 4, 2, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, #=
-            =# 4, 4, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, #=
-            =# 3, 4, 5, 6, 7 ]))
-  connect_redirect_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,-1)
-  additional_flood_redirect_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,0)
-  additional_connect_redirect_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,0)
-  grid_specific_lake_parameters::GridSpecificLakeParameters =
-    UnstructuredLakeParameters(flood_next_cell_index,
-                               connect_next_cell_index,
-                               flood_force_merge_index,
-                               connect_force_merge_index,
-                               flood_redirect_index,
-                               connect_redirect_index,
-                               additional_flood_redirect_index,
-                               additional_connect_redirect_index,
-                               corresponding_surface_cell_index)
-  lake_parameters = LakeParameters(lake_centers,
-                                   connection_volume_thresholds,
-                                   flood_volume_threshold,
-                                   flood_local_redirect,
-                                   connect_local_redirect,
-                                   additional_flood_local_redirect,
-                                   additional_connect_local_redirect,
-                                   merge_points,
-                                   cell_areas_on_surface_model_grid,
-                                   lake_grid,
-                                   grid,
-                                   surface_model_grid,
-                                   grid_specific_lake_parameters)
-  drainage::Field{Float64} = UnstructuredField{Float64}(river_parameters.grid,1.0)
-  set!(drainage,Generic1DCoords(55),0.0)
-  drainages::Array{Field{Float64},1} = repeat(drainage,10000)
-  runoffs::Array{Field{Float64},1} = deepcopy(drainages)
-  evaporation::Field{Float64} =
-    UnstructuredField{Float64}(surface_model_grid,0.0)
-  evaporations::Array{Field{Float64},1} = repeat(evaporation,180)
-  evaporation = UnstructuredField{Float64}(surface_model_grid,100.0)
-  additional_evaporations::Array{Field{Float64},1} = repeat(evaporation,200)
-  append!(evaporations,additional_evaporations)
-  expected_river_inflow::Field{Float64} = UnstructuredField{Float64}(grid,
-                                                      vec(Float64[ #=
-              =# 0.0, 0.0, 0.0, 0.0, 0.0, #=
-              =# 0.0, 0.0, 8.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.0, 0.0, #=
-              =# 0.0, 0.0, 0.0, 16.0, 0.0, 0.0, 0.0, 0.0, 0.0, 4.0, #=
-              =# 0.0, 0.0, 0.0, 0.0, 0.0, 4.0, 8.0, 14.0, 0.0, 0.0, #=
-              =# 0.0, 0.0, 0.0, 0.0, 6.0, 0.0, 0.0, 0.0, 0.0, 0.0, #=
-              =# 0.0, 6.0, 0.0, 8.0, 0.0, 2.0, 0.0, 4.0, 2.0, 0.0, #=
-              =# 4.0, 0.0, 6.0, 0.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 4.0, 0.0, 0.0, 0.0, 0.0, #=
-              =# 0.0, 0.0, 0.0, 0.0, 0.0  ]))
-  expected_water_to_ocean::Field{Float64} = UnstructuredField{Float64}(grid,
-                                                              vec(Float64[ #=
-              =# 0, 0, 0, 0, 0, #=
-              =# 0, 0, 0, 0, 0, 0, 0,-72.0, 0, 0, 0, 0, 0, 0, 0, #=
-              =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
-              =# 0, 0, 0, 0, 0, 0, 0, 0,-90.0, 0, 0, 0, 0, 0, 66.0, 0, 0, 0, 0, 0, #=
-              =# 0, 0, 0,-46.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
-              =# 0, 0, 0, 0, 0 ]))
-  expected_water_to_hd::Field{Float64} = UnstructuredField{Float64}(grid,
-                                                           vec(Float64[ #=
-              =# 0, 0, 0, 0, 0, #=
-              =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
-              =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
-              =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
-              =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
-              =# 0, 0, 0, 0, 0 ]))
-  expected_lake_numbers::Field{Int64} = UnstructuredField{Int64}(lake_grid,
-      vec(Int64[ 0, 0, 0, 0, 0, #=
-              =# 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, #=
-              =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
-              =# 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
-              =# 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
-              =# 0, 0, 0, 0, 0 ]))
-  expected_lake_types::Field{Int64} = UnstructuredField{Int64}(lake_grid,
-      vec(Int64[ 0, 0, 0, 0, 0, #=
-              =# 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, #=
-              =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
-              =# 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
-              =# 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
-              =# 0, 0, 0, 0, 0 ]))
-  expected_lake_fractions::Field{Float64} = UnstructuredField{Float64}(surface_model_grid,
-        vec(Float64[ 1.0, 0.33333333, 0.2, 0.0, 0.0, 0.0, 0.0 ]))
-  expected_number_lake_cells::Field{Int64} = UnstructuredField{Int64}(surface_model_grid,
-        vec(Int64[ 1, 1, 1, 0, 0, 0, 0 ]))
-  expected_number_fine_grid_cells::Field{Int64} = UnstructuredField{Int64}(surface_model_grid,
-        vec(Int64[ 1, 3, 5, 68, 1, 1, 1 ]))
-  expected_lake_volumes::Array{Float64} = Float64[0.0, 0.0, 0.0]
-  expected_intermediate_river_inflow::Field{Float64} = UnstructuredField{Float64}(grid,
-                                                      vec(Float64[ #=
-              =# 0.0, 0.0, 0.0, 0.0, 0.0, #=
-              =# 0.0, 0.0, 8.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.0, 0.0, #=
-              =# 0.0, 0.0, 0.0,16.0, 0.0, 0.0, 0.0, 0.0, 0.0, 4.0, 0.0, 0.0, 0.0, 0.0,  0.0, #=
-              =# 4.0, 8.0, 14.0,0.0, 0.0,#=
-              =# 0.0, 0.0, 0.0, 0.0, 6.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 6.0, 0.0, 100.0,0.0, #=
-              =# 2.0, 0.0, 4.0, 2.0, 0.0, #=
-              =# 4.0, 0.0, 6.0, 0.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 4.0, 0.0, 0.0, 0.0, 0.0, #=
-              =# 0.0, 0.0, 0.0, 0.0, 0.0 ]))
-  expected_intermediate_water_to_ocean::Field{Float64} = UnstructuredField{Float64}(grid,
-                                                      vec(Float64[ #=
-              =# 0, 0, 0, 0, 0, #=
-              =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
-              =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
-              =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 158, 0, 0, 0, 0, 0, #=
-              =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
-              =# 0, 0, 0, 0, 0 ]))
-  expected_intermediate_water_to_hd::Field{Float64} = UnstructuredField{Float64}(grid,
-                                                      vec(Float64[ #=
-              =# 0, 0, 0, 0, 0, #=
-              =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
-              =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
-              =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 92, 0, 0, 0, 0, 0, 0, 0, 0, #=
-              =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
-              =# 0, 0, 0, 0, 0 ]))
-  expected_intermediate_lake_numbers::Field{Int64} = UnstructuredField{Int64}(lake_grid,
-      vec(Int64[ 0, 0, 0, 0, 0, #=
-              =# 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, #=
-              =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
-              =# 0, 0, 0, 0, 3, 3, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
-              =# 0, 0, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
-              =# 3, 0, 0, 0, 0 ]))
-  expected_intermediate_lake_types::Field{Int64} = UnstructuredField{Int64}(lake_grid,
-      vec(Int64[ 0, 0, 0, 0, 0, #=
-              =# 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, #=
-              =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
-              =# 0, 0, 0, 0, 3, 3, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
-              =# 0, 0, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
-              =# 3, 0, 0, 0, 0 ]))
-  expected_intermediate_diagnostic_lake_volumes::Field{Float64} =
-    UnstructuredField{Float64}(lake_grid,
-    vec(Float64[ 0, 0, 0, 0, 0, #=
-              =# 0, 0, 0, 0, 0, 0, 0, 40.0, 0, 0, 0, 0, 0, 0, 0, #=
-              =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 40.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
-              =# 0, 0, 0, 0, 40.0, 40.0, 40.0, 0, 40.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
-              =# 0, 0, 40.0, 40.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
-              =# 40.0, 0, 0, 0, 0 ]))
-  expected_diagnostic_lake_volumes::Field{Float64} =
-    UnstructuredField{Float64}(lake_grid,
-    vec(Float64[ 0, 0, 0, 0, 0, #=
-              =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
-              =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
-              =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
-              =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
-              =# 0, 0, 0, 0, 0 ]))
-  expected_intermediate_lake_fractions::Field{Float64} = UnstructuredField{Float64}(surface_model_grid,
-        vec(Float64[ 1.0 1.0 1.0 0.0 0.0 0.0 0.0 ]))
-  expected_intermediate_number_lake_cells::Field{Int64} = UnstructuredField{Int64}(surface_model_grid,
-        vec(Int64[ 1 3 5 0 0 0 0  ]))
-  expected_intermediate_number_fine_grid_cells::Field{Int64} = UnstructuredField{Int64}(surface_model_grid,
-        vec(Int64[ 1, 3, 5, 68, 1, 1, 1 ]))
-  expected_intermediate_lake_volumes::Array{Float64} = Float64[3.0, 22.0, 15.0]
-  evaporations_copy::Array{Field{Float64},1} = deepcopy(evaporations)
-  @time river_fields::RiverPrognosticFields,lake_prognostics::LakePrognostics,lake_fields::LakeFields =
-    drive_hd_and_lake_model(river_parameters,lake_parameters,
-                            drainages,runoffs,evaporations_copy,
-                            5000,print_timestep_results=false,
-                            write_output=false,return_output=true)
-  lake_types = UnstructuredField{Int64}(lake_grid,0)
-  for i = 1:80
-    coords::Generic1DCoords = Generic1DCoords(i)
-    lake_number::Int64 = lake_fields.lake_numbers(coords)
-    if lake_number <= 0 continue end
-    lake::Lake = lake_prognostics.lakes[lake_number]
-    if isa(lake,FillingLake)
-      set!(lake_types,coords,1)
-    elseif isa(lake,OverflowingLake)
-      set!(lake_types,coords,2)
-    elseif isa(lake,SubsumedLake)
-      set!(lake_types,coords,3)
-    else
-      set!(lake_types,coords,4)
-    end
-  end
-  lake_volumes = Float64[]
-  lake_fractions::Field{Float64} = calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields)
-  for lake::Lake in lake_prognostics.lakes
-    append!(lake_volumes,get_lake_variables(lake).lake_volume)
-  end
-  diagnostic_lake_volumes::Field{Float64} =
-    calculate_diagnostic_lake_volumes_field(lake_parameters,lake_fields,
-                                            lake_prognostics)
-  @test isapprox(expected_intermediate_river_inflow,river_fields.river_inflow,
-                 rtol=0.0,atol=0.00001)
-  @test isapprox(expected_intermediate_water_to_ocean,
-                 river_fields.water_to_ocean,rtol=0.0,atol=0.00001)
-  @test expected_intermediate_water_to_hd    == lake_fields.water_to_hd
-  @test expected_intermediate_lake_numbers == lake_fields.lake_numbers
-  @test expected_intermediate_lake_types == lake_types
-  @test isapprox(expected_intermediate_lake_volumes,lake_volumes,atol=0.00001)
-  @test expected_intermediate_diagnostic_lake_volumes == diagnostic_lake_volumes
-  @test expected_intermediate_lake_fractions == lake_fractions
-  @test expected_intermediate_number_lake_cells == lake_fields.number_lake_cells
-  @test expected_intermediate_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
-  @time river_fields,lake_prognostics,lake_fields =
-    drive_hd_and_lake_model(river_parameters,lake_parameters,
-                            drainages,runoffs,evaporations,
-                            10000,print_timestep_results=false,
-                            write_output=false,return_output=true)
-  lake_types::UnstructuredField{Int64} = UnstructuredField{Int64}(lake_grid,0)
-  for i = 1:80
-    coords::Generic1DCoords = Generic1DCoords(i)
-    lake_number::Int64 = lake_fields.lake_numbers(coords)
-    if lake_number <= 0 continue end
-    lake::Lake = lake_prognostics.lakes[lake_number]
-    if isa(lake,FillingLake)
-      set!(lake_types,coords,1)
-    elseif isa(lake,OverflowingLake)
-      set!(lake_types,coords,2)
-    elseif isa(lake,SubsumedLake)
-      set!(lake_types,coords,3)
-    else
-      set!(lake_types,coords,4)
-    end
-  end
-  lake_volumes::Array{Float64} = Float64[]
-  lake_fractions = calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields)
-  for lake::Lake in lake_prognostics.lakes
-    append!(lake_volumes,get_lake_variables(lake).lake_volume)
-  end
-  diagnostic_lake_volumes =
-    calculate_diagnostic_lake_volumes_field(lake_parameters,lake_fields,
-                                            lake_prognostics)
-  @test isapprox(expected_river_inflow,river_fields.river_inflow,rtol=0.0,atol=0.00001)
-  @test isapprox(expected_water_to_ocean,river_fields.water_to_ocean,rtol=0.0,atol=0.00001)
-  @test expected_water_to_hd    == lake_fields.water_to_hd
-  @test expected_lake_numbers == lake_fields.lake_numbers
-  @test expected_lake_types == lake_types
-  @test isapprox(expected_lake_volumes,lake_volumes,atol=0.00001)
-  @test expected_diagnostic_lake_volumes == diagnostic_lake_volumes
-  @test isapprox(expected_lake_fractions,lake_fractions,rtol=0.0,atol=0.00001)
-  @test expected_number_lake_cells == lake_fields.number_lake_cells
-  @test expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
-  # function timing2(river_parameters,lake_parameters)
-  #   for i in 1:50000
-  #     drainagesl = repeat(drainage,20)
-  #     runoffsl = deepcopy(drainages)
-  #     drive_hd_and_lake_model(river_parameters,lake_parameters,
-  #                             drainagesl,runoffsl,20,print_timestep_results=false)
-  #   end
-  # end
-  #@time timing2(river_parameters,lake_parameters)
-end
+# @testset "Lake model tests 6" begin
+#   grid = UnstructuredGrid(80)
+#   surface_model_grid = UnstructuredGrid(7)
+#   flow_directions =  UnstructuredDirectionIndicators(UnstructuredField{Int64}(grid,
+#                                                      vec(Int64[ 8,13,13,13,19, #=
+#                                                              =# 8,8,24,24,13, 13,13,-4,13,13, #=
+#                                                              =# 13,36,36,37,37, 8,24,24,64,45, #=
+#                                                              =# 45,45,49,49,13, 13,30,52,55,55, #=
+#                                                              =# 55,55,55,37,38, 61,61,64,64,64, #=
+#                                                              =# 64,64,64,-4,49, 30,54,55,55,-1, #=
+#                                                              =# 55,55,38,38,59, 63,64,64,-4,64, #=
+#                                                              =# 38,49,52,55,55, 55,55,56,58,58, #=
+#                                                              =# 64,64,68,71,71 ])))
+#   river_reservoir_nums = UnstructuredField{Int64}(grid,5)
+#   overland_reservoir_nums = UnstructuredField{Int64}(grid,1)
+#   base_reservoir_nums = UnstructuredField{Int64}(grid,1)
+#   river_retention_coefficients = UnstructuredField{Float64}(grid,0.7)
+#   overland_retention_coefficients = UnstructuredField{Float64}(grid,0.5)
+#   base_retention_coefficients = UnstructuredField{Float64}(grid,0.1)
+#   landsea_mask = UnstructuredField{Bool}(grid,false)
+#   set!(river_reservoir_nums,Generic1DCoords(55),0)
+#   set!(overland_reservoir_nums,Generic1DCoords(55),0)
+#   set!(base_reservoir_nums,Generic1DCoords(55),0)
+#   set!(landsea_mask,Generic1DCoords(55),true)
+#   river_parameters = RiverParameters(flow_directions,
+#                                      river_reservoir_nums,
+#                                      overland_reservoir_nums,
+#                                      base_reservoir_nums,
+#                                      river_retention_coefficients,
+#                                      overland_retention_coefficients,
+#                                      base_retention_coefficients,
+#                                      landsea_mask,
+#                                      grid,1.0,1.0)
+#   mapping_to_coarse_grid::Array{Int64,1} =
+#     vec(Int64[ 1,2,3,4,5, #=
+#             =# 6,7,8,9,10,     11,12,13,14,15, #=
+#             =# 16,17,18,19,20, 21,22,23,24,25, #=
+#             =# 26,27,28,29,30, 31,32,33,34,35, #=
+#             =# 36,37,38,39,40, 41,42,43,44,45, #=
+#             =# 46,47,48,49,50, 51,52,53,54,55, #=
+#             =# 56,57,58,59,60, 61,62,63,64,65, #=
+#             =# 66,67,68,69,70, 71,72,73,74,75, #=
+#             =# 76,77,78,79,80 ])
+#   lake_grid = UnstructuredGrid(80,mapping_to_coarse_grid)
+#   lake_centers::Field{Bool} = UnstructuredField{Bool}(lake_grid,
+#     vec(Bool[ false,false,false,false,false, #=
+#         =# false,false,false,false,false, false,false,true,false,false, #=
+#         =# false,false,false,false,false, false,false,false,false,false, #=
+#         =# false,false,false,false,false, false,false,false,false,false, #=
+#         =# false,false,false,false,false, false,false,false,false,false, #=
+#         =# false,false,false,true, false, false,false,false,false,false, #=
+#         =# false,false,false,false,false, false,false,false, true,false, #=
+#         =# false,false,false,false,false, false,false,false,false,false, #=
+#         =# false,false,false,false,false ]))
+#   connection_volume_thresholds::Field{Float64} = UnstructuredField{Float64}(lake_grid,-1.0)
+#   flood_volume_threshold::Field{Float64} = UnstructuredField{Float64}(lake_grid,
+#     vec(Float64[ -1.0,-1.0,-1.0,-1.0,-1.0, #=
+#               =# -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,3.0,-1.0,-1.0, #=
+#               =# -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0, #=
+#               =# -1.0,-1.0,-1.0,-1.0, 4.0, -1.0,-1.0,-1.0,-1.0,-1.0, #=
+#               =# -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0, 5.0, #=
+#               =# 1.0,22.0,-1.0,1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0, #=
+#               =# -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,1.0,1.0,-1.0, #=
+#               =# -1.0,-1.0,-1.0,-1.0,-1.0, -1.0,-1.0,-1.0,-1.0,-1.0, #=
+#               =# 15.0,-1.0,-1.0,-1.0,-1.0 ]))
+#   flood_local_redirect::Field{Bool} = UnstructuredField{Bool}(lake_grid,
+#     vec(Bool[ true,true,true,true,true, #=
+#            =# true,true,true,true,true, true,true,true,true,true, #=
+#            =# true,true,true,true,true, true,true,true,true,true, #=
+#            =# true,true,true,true,true, true,true,true,true,true, #=
+#            =# true,true,true,true,true, true,true,true,true,true, #=
+#            =# true,false,true,true,true, true,true,true,true,true, #=
+#            =# true,true,true,true,true, true,true,true,true,true, #=
+#            =# true,true,true,true,true, true,true,true,true,true, #=
+#            =# true,true,true,true,true ]))
+#   connect_local_redirect::Field{Bool} = UnstructuredField{Bool}(lake_grid,false)
+#   additional_flood_local_redirect::Field{Bool} = UnstructuredField{Bool}(lake_grid,false)
+#   additional_connect_local_redirect::Field{Bool} = UnstructuredField{Bool}(lake_grid,false)
+#   merge_points::Field{MergeTypes} = UnstructuredField{MergeTypes}(lake_grid,
+#     vec(MergeTypes[ no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, #=
+#                  =# no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, #=
+#                  =# no_merge_mtype,no_merge_mtype,connection_merge_not_set_flood_merge_as_secondary, #=
+#                  =# no_merge_mtype,no_merge_mtype, #=
+#                  =# no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, #=
+#                  =# no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, #=
+#                  =# no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, #=
+#                  =# connection_merge_not_set_flood_merge_as_primary, #=
+#                  =# no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, #=
+#                  =# no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, #=
+#                  =# no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, #=
+#                  =# no_merge_mtype,connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype, #=
+#                  =# connection_merge_not_set_flood_merge_as_primary,no_merge_mtype, #=
+#                  =# no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, #=
+#                  =# no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, #=
+#                  =# no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, #=
+#                  =# no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, #=
+#                  =# no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, #=
+#                  =# connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype,no_merge_mtype, #=
+#                  =# no_merge_mtype,no_merge_mtype ]))
+#   cell_areas_on_surface_model_grid::Field{Float64} = UnstructuredField{Float64}(surface_model_grid,
+#     vec(Float64[ 2.5 3.0 2.5 4.0 2.0 1.0 3.0  ]))
+#   flood_next_cell_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,
+#     vec(Int64[ -1,-1,-1,-1,-1, #=
+#             =# -1,-1,-1,-1,-1, -1,-1,49,-1,-1, #=
+#             =# -1,-1,-1,-1,-1, -1,-1,-1,-1,-1, #=
+#             =# -1,-1,-1,-1,47, -1,-1,-1,-1,-1, #=
+#             =# -1,-1,-1,-1,-1, -1,-1,-1,-1,76, #=
+#             =# 45,52,-1,30,-1, -1,-1,-1,-1,-1, #=
+#             =# -1,-1,-1,-1,-1, -1,-1,46,63,-1, #=
+#             =# -1,-1,-1,-1,-1, -1,-1,-1,-1,-1, #=
+#             =# 49,-1,-1,-1,-1 ]))
+#   connect_next_cell_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,-1)
+#   flood_force_merge_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,
+#     vec(Int64[ -1,-1,-1,-1,-1, #=
+#             =# -1,-1,-1,-1,-1, -1,-1,-1,-1,-1, #=
+#             =# -1,-1,-1,-1,-1, -1,-1,-1,-1,-1, #=
+#             =# -1,-1,-1,-1,64, -1,-1,-1,-1,-1, #=
+#             =# -1,-1,-1,-1,-1, -1,-1,-1,-1,-1, #=
+#             =# -1,-1,-1,13,-1, -1,-1,-1,-1,-1, #=
+#             =# -1,-1,-1,-1,-1, -1,-1,-1,-1,-1, #=
+#             =# -1,-1,-1,-1,-1, -1,-1,-1,-1,-1, #=
+#             =# -1,-1,-1,-1,-1 ]))
+#   connect_force_merge_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,-1)
+#   flood_redirect_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,
+#     vec(Int64[ -1,-1,-1,-1,-1, #=
+#             =# -1,-1,-1,-1,-1, -1,-1,49,-1,-1, #=
+#             =# -1,-1,-1,-1,-1, -1,-1,-1,-1,-1, #=
+#             =# -1,-1,-1,-1,64, -1,-1,-1,-1,-1, #=
+#             =# -1,-1,-1,-1,-1, -1,-1,-1,-1,-1, #=
+#             =# -1,52,-1,13,-1, -1,-1,-1,-1,-1, #=
+#             =# -1,-1,-1,-1,-1, -1,-1,-1,-1,-1, #=
+#             =# -1,-1,-1,-1,-1, -1,-1,-1,-1,-1, #=
+#             =# 49,-1,-1,-1,-1 ]))
+#   corresponding_surface_cell_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,
+#     vec(Int64[ 4, 4, 4, 4, 4, #=
+#             =# 4, 4, 4, 4, 4, 4, 4, 1, 4, 4, 4, 4, 4, 4, 4, #=
+#             =# 4, 4, 4, 4, 4, 4, 4, 4, 4, 2, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, #=
+#             =# 4, 4, 4, 4, 3, 3, 2, 4, 2, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, #=
+#             =# 4, 4, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, #=
+#             =# 3, 4, 5, 6, 7 ]))
+#   connect_redirect_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,-1)
+#   additional_flood_redirect_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,0)
+#   additional_connect_redirect_index::Field{Int64} = UnstructuredField{Int64}(lake_grid,0)
+#   grid_specific_lake_parameters::GridSpecificLakeParameters =
+#     UnstructuredLakeParameters(flood_next_cell_index,
+#                                connect_next_cell_index,
+#                                flood_force_merge_index,
+#                                connect_force_merge_index,
+#                                flood_redirect_index,
+#                                connect_redirect_index,
+#                                additional_flood_redirect_index,
+#                                additional_connect_redirect_index,
+#                                corresponding_surface_cell_index)
+#   lake_parameters = LakeParameters(lake_centers,
+#                                    connection_volume_thresholds,
+#                                    flood_volume_threshold,
+#                                    flood_local_redirect,
+#                                    connect_local_redirect,
+#                                    additional_flood_local_redirect,
+#                                    additional_connect_local_redirect,
+#                                    merge_points,
+#                                    cell_areas_on_surface_model_grid,
+#                                    lake_grid,
+#                                    grid,
+#                                    surface_model_grid,
+#                                    grid_specific_lake_parameters)
+#   drainage::Field{Float64} = UnstructuredField{Float64}(river_parameters.grid,1.0)
+#   set!(drainage,Generic1DCoords(55),0.0)
+#   drainages::Array{Field{Float64},1} = repeat(drainage,10000)
+#   runoffs::Array{Field{Float64},1} = deepcopy(drainages)
+#   evaporation::Field{Float64} =
+#     UnstructuredField{Float64}(surface_model_grid,0.0)
+#   evaporations::Array{Field{Float64},1} = repeat(evaporation,180)
+#   evaporation = UnstructuredField{Float64}(surface_model_grid,100.0)
+#   additional_evaporations::Array{Field{Float64},1} = repeat(evaporation,200)
+#   append!(evaporations,additional_evaporations)
+#   expected_river_inflow::Field{Float64} = UnstructuredField{Float64}(grid,
+#                                                       vec(Float64[ #=
+#               =# 0.0, 0.0, 0.0, 0.0, 0.0, #=
+#               =# 0.0, 0.0, 8.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.0, 0.0, #=
+#               =# 0.0, 0.0, 0.0, 16.0, 0.0, 0.0, 0.0, 0.0, 0.0, 4.0, #=
+#               =# 0.0, 0.0, 0.0, 0.0, 0.0, 4.0, 8.0, 14.0, 0.0, 0.0, #=
+#               =# 0.0, 0.0, 0.0, 0.0, 6.0, 0.0, 0.0, 0.0, 0.0, 0.0, #=
+#               =# 0.0, 6.0, 0.0, 8.0, 0.0, 2.0, 0.0, 4.0, 2.0, 0.0, #=
+#               =# 4.0, 0.0, 6.0, 0.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 4.0, 0.0, 0.0, 0.0, 0.0, #=
+#               =# 0.0, 0.0, 0.0, 0.0, 0.0  ]))
+#   expected_water_to_ocean::Field{Float64} = UnstructuredField{Float64}(grid,
+#                                                               vec(Float64[ #=
+#               =# 0, 0, 0, 0, 0, #=
+#               =# 0, 0, 0, 0, 0, 0, 0,-72.0, 0, 0, 0, 0, 0, 0, 0, #=
+#               =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+#               =# 0, 0, 0, 0, 0, 0, 0, 0,-90.0, 0, 0, 0, 0, 0, 66.0, 0, 0, 0, 0, 0, #=
+#               =# 0, 0, 0,-46.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+#               =# 0, 0, 0, 0, 0 ]))
+#   expected_water_to_hd::Field{Float64} = UnstructuredField{Float64}(grid,
+#                                                            vec(Float64[ #=
+#               =# 0, 0, 0, 0, 0, #=
+#               =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+#               =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+#               =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+#               =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+#               =# 0, 0, 0, 0, 0 ]))
+#   expected_lake_numbers::Field{Int64} = UnstructuredField{Int64}(lake_grid,
+#       vec(Int64[ 0, 0, 0, 0, 0, #=
+#               =# 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, #=
+#               =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+#               =# 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+#               =# 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+#               =# 0, 0, 0, 0, 0 ]))
+#   expected_lake_types::Field{Int64} = UnstructuredField{Int64}(lake_grid,
+#       vec(Int64[ 0, 0, 0, 0, 0, #=
+#               =# 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, #=
+#               =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+#               =# 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+#               =# 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+#               =# 0, 0, 0, 0, 0 ]))
+#   expected_lake_fractions::Field{Float64} = UnstructuredField{Float64}(surface_model_grid,
+#         vec(Float64[ 1.0, 0.33333333, 0.2, 0.0, 0.0, 0.0, 0.0 ]))
+#   expected_number_lake_cells::Field{Int64} = UnstructuredField{Int64}(surface_model_grid,
+#         vec(Int64[ 1, 1, 1, 0, 0, 0, 0 ]))
+#   expected_number_fine_grid_cells::Field{Int64} = UnstructuredField{Int64}(surface_model_grid,
+#         vec(Int64[ 1, 3, 5, 68, 1, 1, 1 ]))
+#   expected_lake_volumes::Array{Float64} = Float64[0.0, 0.0, 0.0]
+#   expected_intermediate_river_inflow::Field{Float64} = UnstructuredField{Float64}(grid,
+#                                                       vec(Float64[ #=
+#               =# 0.0, 0.0, 0.0, 0.0, 0.0, #=
+#               =# 0.0, 0.0, 8.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.0, 0.0, #=
+#               =# 0.0, 0.0, 0.0,16.0, 0.0, 0.0, 0.0, 0.0, 0.0, 4.0, 0.0, 0.0, 0.0, 0.0,  0.0, #=
+#               =# 4.0, 8.0, 14.0,0.0, 0.0,#=
+#               =# 0.0, 0.0, 0.0, 0.0, 6.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 6.0, 0.0, 100.0,0.0, #=
+#               =# 2.0, 0.0, 4.0, 2.0, 0.0, #=
+#               =# 4.0, 0.0, 6.0, 0.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 4.0, 0.0, 0.0, 0.0, 0.0, #=
+#               =# 0.0, 0.0, 0.0, 0.0, 0.0 ]))
+#   expected_intermediate_water_to_ocean::Field{Float64} = UnstructuredField{Float64}(grid,
+#                                                       vec(Float64[ #=
+#               =# 0, 0, 0, 0, 0, #=
+#               =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+#               =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+#               =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 158, 0, 0, 0, 0, 0, #=
+#               =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+#               =# 0, 0, 0, 0, 0 ]))
+#   expected_intermediate_water_to_hd::Field{Float64} = UnstructuredField{Float64}(grid,
+#                                                       vec(Float64[ #=
+#               =# 0, 0, 0, 0, 0, #=
+#               =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+#               =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+#               =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 92, 0, 0, 0, 0, 0, 0, 0, 0, #=
+#               =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+#               =# 0, 0, 0, 0, 0 ]))
+#   expected_intermediate_lake_numbers::Field{Int64} = UnstructuredField{Int64}(lake_grid,
+#       vec(Int64[ 0, 0, 0, 0, 0, #=
+#               =# 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, #=
+#               =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+#               =# 0, 0, 0, 0, 3, 3, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+#               =# 0, 0, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+#               =# 3, 0, 0, 0, 0 ]))
+#   expected_intermediate_lake_types::Field{Int64} = UnstructuredField{Int64}(lake_grid,
+#       vec(Int64[ 0, 0, 0, 0, 0, #=
+#               =# 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, #=
+#               =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+#               =# 0, 0, 0, 0, 3, 3, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+#               =# 0, 0, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+#               =# 3, 0, 0, 0, 0 ]))
+#   expected_intermediate_diagnostic_lake_volumes::Field{Float64} =
+#     UnstructuredField{Float64}(lake_grid,
+#     vec(Float64[ 0, 0, 0, 0, 0, #=
+#               =# 0, 0, 0, 0, 0, 0, 0, 40.0, 0, 0, 0, 0, 0, 0, 0, #=
+#               =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 40.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+#               =# 0, 0, 0, 0, 40.0, 40.0, 40.0, 0, 40.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+#               =# 0, 0, 40.0, 40.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+#               =# 40.0, 0, 0, 0, 0 ]))
+#   expected_diagnostic_lake_volumes::Field{Float64} =
+#     UnstructuredField{Float64}(lake_grid,
+#     vec(Float64[ 0, 0, 0, 0, 0, #=
+#               =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+#               =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+#               =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+#               =# 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #=
+#               =# 0, 0, 0, 0, 0 ]))
+#   expected_intermediate_lake_fractions::Field{Float64} = UnstructuredField{Float64}(surface_model_grid,
+#         vec(Float64[ 1.0 1.0 1.0 0.0 0.0 0.0 0.0 ]))
+#   expected_intermediate_number_lake_cells::Field{Int64} = UnstructuredField{Int64}(surface_model_grid,
+#         vec(Int64[ 1 3 5 0 0 0 0  ]))
+#   expected_intermediate_number_fine_grid_cells::Field{Int64} = UnstructuredField{Int64}(surface_model_grid,
+#         vec(Int64[ 1, 3, 5, 68, 1, 1, 1 ]))
+#   expected_intermediate_lake_volumes::Array{Float64} = Float64[3.0, 22.0, 15.0]
+#   evaporations_copy::Array{Field{Float64},1} = deepcopy(evaporations)
+#   @time river_fields::RiverPrognosticFields,lake_prognostics::LakePrognostics,lake_fields::LakeFields =
+#     drive_hd_and_lake_model(river_parameters,lake_parameters,
+#                             drainages,runoffs,evaporations_copy,
+#                             5000,print_timestep_results=false,
+#                             write_output=false,return_output=true)
+#   lake_types = UnstructuredField{Int64}(lake_grid,0)
+#   for i = 1:80
+#     coords::Generic1DCoords = Generic1DCoords(i)
+#     lake_number::Int64 = lake_fields.lake_numbers(coords)
+#     if lake_number <= 0 continue end
+#     lake::Lake = lake_prognostics.lakes[lake_number]
+#     if isa(lake,FillingLake)
+#       set!(lake_types,coords,1)
+#     elseif isa(lake,OverflowingLake)
+#       set!(lake_types,coords,2)
+#     elseif isa(lake,SubsumedLake)
+#       set!(lake_types,coords,3)
+#     else
+#       set!(lake_types,coords,4)
+#     end
+#   end
+#   lake_volumes = Float64[]
+#   lake_fractions::Field{Float64} = calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields)
+#   for lake::Lake in lake_prognostics.lakes
+#     append!(lake_volumes,get_lake_variables(lake).lake_volume)
+#   end
+#   diagnostic_lake_volumes::Field{Float64} =
+#     calculate_diagnostic_lake_volumes_field(lake_parameters,lake_fields,
+#                                             lake_prognostics)
+#   @test isapprox(expected_intermediate_river_inflow,river_fields.river_inflow,
+#                  rtol=0.0,atol=0.00001)
+#   @test isapprox(expected_intermediate_water_to_ocean,
+#                  river_fields.water_to_ocean,rtol=0.0,atol=0.00001)
+#   @test expected_intermediate_water_to_hd    == lake_fields.water_to_hd
+#   @test expected_intermediate_lake_numbers == lake_fields.lake_numbers
+#   @test expected_intermediate_lake_types == lake_types
+#   @test isapprox(expected_intermediate_lake_volumes,lake_volumes,atol=0.00001)
+#   @test expected_intermediate_diagnostic_lake_volumes == diagnostic_lake_volumes
+#   @test expected_intermediate_lake_fractions == lake_fractions
+#   @test expected_intermediate_number_lake_cells == lake_fields.number_lake_cells
+#   @test expected_intermediate_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
+#   @time river_fields,lake_prognostics,lake_fields =
+#     drive_hd_and_lake_model(river_parameters,lake_parameters,
+#                             drainages,runoffs,evaporations,
+#                             10000,print_timestep_results=false,
+#                             write_output=false,return_output=true)
+#   lake_types::UnstructuredField{Int64} = UnstructuredField{Int64}(lake_grid,0)
+#   for i = 1:80
+#     coords::Generic1DCoords = Generic1DCoords(i)
+#     lake_number::Int64 = lake_fields.lake_numbers(coords)
+#     if lake_number <= 0 continue end
+#     lake::Lake = lake_prognostics.lakes[lake_number]
+#     if isa(lake,FillingLake)
+#       set!(lake_types,coords,1)
+#     elseif isa(lake,OverflowingLake)
+#       set!(lake_types,coords,2)
+#     elseif isa(lake,SubsumedLake)
+#       set!(lake_types,coords,3)
+#     else
+#       set!(lake_types,coords,4)
+#     end
+#   end
+#   lake_volumes::Array{Float64} = Float64[]
+#   lake_fractions = calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields)
+#   for lake::Lake in lake_prognostics.lakes
+#     append!(lake_volumes,get_lake_variables(lake).lake_volume)
+#   end
+#   diagnostic_lake_volumes =
+#     calculate_diagnostic_lake_volumes_field(lake_parameters,lake_fields,
+#                                             lake_prognostics)
+#   @test isapprox(expected_river_inflow,river_fields.river_inflow,rtol=0.0,atol=0.00001)
+#   @test isapprox(expected_water_to_ocean,river_fields.water_to_ocean,rtol=0.0,atol=0.00001)
+#   @test expected_water_to_hd    == lake_fields.water_to_hd
+#   @test expected_lake_numbers == lake_fields.lake_numbers
+#   @test expected_lake_types == lake_types
+#   @test isapprox(expected_lake_volumes,lake_volumes,atol=0.00001)
+#   @test expected_diagnostic_lake_volumes == diagnostic_lake_volumes
+#   @test isapprox(expected_lake_fractions,lake_fractions,rtol=0.0,atol=0.00001)
+#   @test expected_number_lake_cells == lake_fields.number_lake_cells
+#   @test expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
+#   # function timing2(river_parameters,lake_parameters)
+#   #   for i in 1:50000
+#   #     drainagesl = repeat(drainage,20)
+#   #     runoffsl = deepcopy(drainages)
+#   #     drive_hd_and_lake_model(river_parameters,lake_parameters,
+#   #                             drainagesl,runoffsl,20,print_timestep_results=false)
+#   #   end
+#   # end
+#   #@time timing2(river_parameters,lake_parameters)
+# end
 
 @testset "Lake model tests 7" begin
   grid = LatLonGrid(3,3,true)
@@ -3851,29 +3304,6 @@ end
              -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0
              -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0
              -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 ])
-  flood_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,false)
-  connect_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,false)
-  additional_flood_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,false)
-  additional_connect_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,false)
-  merge_points::Field{MergeTypes} = LatLonField{MergeTypes}(lake_grid,
-    MergeTypes[ no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_secondary #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype ])
   cell_areas_on_surface_model_grid::Field{Float64} = LatLonField{Float64}(surface_model_grid,
     Float64[ 2.5 3.0
              3.5 4.0 ])
@@ -3917,86 +3347,6 @@ end
                                                            0 0 0 0 0 0 0 0 0
                                                            0 0 0 0 0 0 0 0 0
                                                            0 0 0 0 0 0 0 0 0 ])
-  flood_force_merge_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-                                                    Int64[ 0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0 ])
-  flood_force_merge_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-                                                    Int64[ 0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0 ])
-  connect_force_merge_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-                                                    Int64[ 0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0 ])
-  connect_force_merge_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-                                                    Int64[ 0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0 ])
-  flood_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-                                                    Int64[ 0 0 0 1 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0 ])
-  flood_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-                                                    Int64[ 0 0 0 3 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0 ])
-  connect_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-                                                    Int64[ 0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0 ])
-  connect_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-                                                    Int64[ 0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0 ])
   corresponding_surface_cell_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
                                                     Int64[ 2 2 2 1 2 2 2 2 2
                                                            2 2 2 1 2 2 2 2 2
@@ -4017,37 +3367,43 @@ end
                                                            2 2 2 2 2 2 2 2 2
                                                            2 2 2 2 2 2 2 2 1
                                                            2 2 2 2 2 2 2 2 2 ])
-  additional_flood_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
-  additional_flood_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
-  additional_connect_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
-  additional_connect_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  flood_index::Int64 = 1
+  connect_merge_and_redirect_indices_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  flood_merge_and_redirect_indices_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  connect_merge_and_redirect_indices_collections::Vector{MergeAndRedirectIndicesCollection} =
+      MergeAndRedirectIndicesCollection[]
+  flood_merge_and_redirect_indices_collections::Vector{MergeAndRedirectIndicesCollection} =
+      MergeAndRedirectIndicesCollection[]
+  primary_merges::Vector{MergeAndRedirectIndices} = MergeAndRedirectIndices[]
+  local primary_merge::MergeAndRedirectIndices
+  local secondary_merge::MergeAndRedirectIndices
+  local collected_indices::MergeAndRedirectIndicesCollection
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        false,
+                                        1,
+                                        5,
+                                        1,
+                                        3)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(1,4),flood_index)
   grid_specific_lake_parameters::GridSpecificLakeParameters =
     LatLonLakeParameters(flood_next_cell_lat_index,
                          flood_next_cell_lon_index,
                          connect_next_cell_lat_index,
                          connect_next_cell_lon_index,
-                         flood_force_merge_lat_index,
-                         flood_force_merge_lon_index,
-                         connect_force_merge_lat_index,
-                         connect_force_merge_lon_index,
-                         flood_redirect_lat_index,
-                         flood_redirect_lon_index,
-                         connect_redirect_lat_index,
-                         connect_redirect_lon_index,
-                         additional_flood_redirect_lat_index,
-                         additional_flood_redirect_lon_index,
-                         additional_connect_redirect_lat_index,
-                         additional_connect_redirect_lon_index,
                          corresponding_surface_cell_lat_index,
                          corresponding_surface_cell_lon_index)
   lake_parameters = LakeParameters(lake_centers,
                                    connection_volume_thresholds,
                                    flood_volume_threshold,
-                                   flood_local_redirect,
-                                   connect_local_redirect,
-                                   additional_flood_local_redirect,
-                                   additional_connect_local_redirect,
-                                   merge_points,
+                                   connect_merge_and_redirect_indices_index,
+                                   flood_merge_and_redirect_indices_index,
+                                   connect_merge_and_redirect_indices_collections,
+                                   flood_merge_and_redirect_indices_collections,
                                    cell_areas_on_surface_model_grid,
                                    lake_grid,
                                    grid,
@@ -4375,7 +3731,8 @@ end
   @test first_intermediate_expected_lake_fractions == lake_fractions
   @test first_intermediate_expected_number_lake_cells == lake_fields.number_lake_cells
   @test first_intermediate_expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
-
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
   @time river_fields,lake_prognostics,lake_fields =
   drive_hd_and_lake_model(river_parameters,lake_parameters,
                           drainages,runoffs,evaporations,
@@ -4418,7 +3775,8 @@ end
   @test isapprox(second_intermediate_expected_lake_fractions,lake_fractions,rtol=0.0,atol=0.000001)
   @test second_intermediate_expected_number_lake_cells == lake_fields.number_lake_cells
   @test second_intermediate_expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
-
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
   @time river_fields,lake_prognostics,lake_fields =
   drive_hd_and_lake_model(river_parameters,lake_parameters,
                           drainages,runoffs,evaporations,
@@ -4462,7 +3820,8 @@ end
   @test third_intermediate_expected_number_lake_cells == lake_fields.number_lake_cells
   @test third_intermediate_expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
 
-
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
   @time river_fields,lake_prognostics,lake_fields =
     drive_hd_and_lake_model(river_parameters,lake_parameters,
                             drainages,runoffs,evaporations,
@@ -4506,7 +3865,8 @@ end
   @test fourth_intermediate_expected_number_lake_cells == lake_fields.number_lake_cells
   @test fourth_intermediate_expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
 
-
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
   @time river_fields,lake_prognostics,lake_fields =
     drive_hd_and_lake_model(river_parameters,lake_parameters,
                             drainages,runoffs,evaporations,
@@ -4549,7 +3909,8 @@ end
   @test fifth_intermediate_expected_lake_fractions == lake_fractions
   @test fifth_intermediate_expected_number_lake_cells == lake_fields.number_lake_cells
   @test fifth_intermediate_expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
-
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
   @time river_fields,lake_prognostics,lake_fields =
     drive_hd_and_lake_model(river_parameters,lake_parameters,
                             drainages,runoffs,evaporations,
@@ -4645,29 +4006,6 @@ end
              -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0
              -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0
              -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 ])
-  flood_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,false)
-  connect_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,false)
-  additional_flood_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,false)
-  additional_connect_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,false)
-  merge_points::Field{MergeTypes} = LatLonField{MergeTypes}(lake_grid,
-    MergeTypes[ no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_secondary #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype ])
   cell_areas_on_surface_model_grid::Field{Float64} = LatLonField{Float64}(surface_model_grid,
     Float64[ 2.5 5.0
              3.0 4.0 ])
@@ -4711,86 +4049,6 @@ end
                                                            0 0 0 0 0 0 0 0 0
                                                            0 0 0 0 0 0 0 0 0
                                                            0 0 0 0 0 0 0 0 0 ])
-  flood_force_merge_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-                                                    Int64[ 0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0 ])
-  flood_force_merge_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-                                                    Int64[ 0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0 ])
-  connect_force_merge_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-                                                    Int64[ 0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0 ])
-  connect_force_merge_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-                                                    Int64[ 0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0 ])
-  flood_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-                                                    Int64[ 0 0 0 1 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0 ])
-  flood_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-                                                    Int64[ 0 0 0 3 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0 ])
-  connect_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-                                                    Int64[ 0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0 ])
-  connect_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-                                                    Int64[ 0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0 ])
   corresponding_surface_cell_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
                                                     Int64[ 2 2 2 1 2 2 2 2 2
                                                            2 2 2 1 2 2 2 2 2
@@ -4811,37 +4069,43 @@ end
                                                            2 2 2 2 2 2 2 2 2
                                                            2 2 2 2 2 2 2 2 1
                                                            2 2 2 2 2 2 2 2 2 ])
-  additional_flood_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
-  additional_flood_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
-  additional_connect_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
-  additional_connect_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  flood_index::Int64 = 1
+  connect_merge_and_redirect_indices_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  flood_merge_and_redirect_indices_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  connect_merge_and_redirect_indices_collections::Vector{MergeAndRedirectIndicesCollection} =
+      MergeAndRedirectIndicesCollection[]
+  flood_merge_and_redirect_indices_collections::Vector{MergeAndRedirectIndicesCollection} =
+      MergeAndRedirectIndicesCollection[]
+  primary_merges::Vector{MergeAndRedirectIndices} = MergeAndRedirectIndices[]
+  local primary_merge::MergeAndRedirectIndices
+  local secondary_merge::MergeAndRedirectIndices
+  local collected_indices::MergeAndRedirectIndicesCollection
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        false,
+                                        1,
+                                        5,
+                                        1,
+                                        3)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(1,4),flood_index)
   grid_specific_lake_parameters::GridSpecificLakeParameters =
     LatLonLakeParameters(flood_next_cell_lat_index,
                          flood_next_cell_lon_index,
                          connect_next_cell_lat_index,
                          connect_next_cell_lon_index,
-                         flood_force_merge_lat_index,
-                         flood_force_merge_lon_index,
-                         connect_force_merge_lat_index,
-                         connect_force_merge_lon_index,
-                         flood_redirect_lat_index,
-                         flood_redirect_lon_index,
-                         connect_redirect_lat_index,
-                         connect_redirect_lon_index,
-                         additional_flood_redirect_lat_index,
-                         additional_flood_redirect_lon_index,
-                         additional_connect_redirect_lat_index,
-                         additional_connect_redirect_lon_index,
                          corresponding_surface_cell_lat_index,
                          corresponding_surface_cell_lon_index)
   lake_parameters = LakeParameters(lake_centers,
                                    connection_volume_thresholds,
                                    flood_volume_threshold,
-                                   flood_local_redirect,
-                                   connect_local_redirect,
-                                   additional_flood_local_redirect,
-                                   additional_connect_local_redirect,
-                                   merge_points,
+                                   connect_merge_and_redirect_indices_index,
+                                   flood_merge_and_redirect_indices_index,
+                                   connect_merge_and_redirect_indices_collections,
+                                   flood_merge_and_redirect_indices_collections,
                                    cell_areas_on_surface_model_grid,
                                    lake_grid,
                                    grid,
@@ -5169,7 +4433,8 @@ end
   @test first_intermediate_expected_lake_fractions == lake_fractions
   @test first_intermediate_expected_number_lake_cells == lake_fields.number_lake_cells
   @test first_intermediate_expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
-
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
   @time river_fields,lake_prognostics,lake_fields =
   drive_hd_and_lake_model(river_parameters,lake_parameters,
                           drainages,runoffs,evaporations,
@@ -5212,7 +4477,8 @@ end
   @test second_intermediate_expected_lake_fractions == lake_fractions
   @test second_intermediate_expected_number_lake_cells == lake_fields.number_lake_cells
   @test second_intermediate_expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
-
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
   @time river_fields,lake_prognostics,lake_fields =
   drive_hd_and_lake_model(river_parameters,lake_parameters,
                           drainages,runoffs,evaporations,
@@ -5255,7 +4521,8 @@ end
   @test third_intermediate_expected_lake_fractions == lake_fractions
   @test third_intermediate_expected_number_lake_cells == lake_fields.number_lake_cells
   @test third_intermediate_expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
-
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
   @time river_fields,lake_prognostics,lake_fields =
     drive_hd_and_lake_model(river_parameters,lake_parameters,
                             drainages,runoffs,evaporations,
@@ -5298,7 +4565,8 @@ end
   @test fourth_intermediate_expected_lake_fractions == lake_fractions
   @test fourth_intermediate_expected_number_lake_cells == lake_fields.number_lake_cells
   @test fourth_intermediate_expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
-
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
   @time river_fields,lake_prognostics,lake_fields =
     drive_hd_and_lake_model(river_parameters,lake_parameters,
                             drainages,runoffs,evaporations,
@@ -5341,7 +4609,8 @@ end
   @test fifth_intermediate_expected_lake_fractions == lake_fractions
   @test fifth_intermediate_expected_number_lake_cells == lake_fields.number_lake_cells
   @test fifth_intermediate_expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
-
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
   @time river_fields,lake_prognostics,lake_fields =
     drive_hd_and_lake_model(river_parameters,lake_parameters,
                             drainages,runoffs,evaporations,
@@ -5437,29 +4706,6 @@ end
              -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0
              -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0
              -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 ])
-  flood_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,false)
-  connect_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,false)
-  additional_flood_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,false)
-  additional_connect_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,false)
-  merge_points::Field{MergeTypes} = LatLonField{MergeTypes}(lake_grid,
-    MergeTypes[ no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_secondary #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype ])
   cell_areas_on_surface_model_grid::Field{Float64} = LatLonField{Float64}(surface_model_grid,
     Float64[ 2.5 3.5
              3.0 4.0 ])
@@ -5503,86 +4749,29 @@ end
                                                            0 0 0 0 0 0 0 0 0
                                                            0 0 0 0 0 0 0 0 0
                                                            0 0 0 0 0 0 0 0 0 ])
-  flood_force_merge_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-                                                    Int64[ 0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0 ])
-  flood_force_merge_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-                                                    Int64[ 0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0 ])
-  connect_force_merge_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-                                                    Int64[ 0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0 ])
-  connect_force_merge_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-                                                    Int64[ 0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0 ])
-  flood_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-                                                    Int64[ 0 0 0 1 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0 ])
-  flood_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-                                                    Int64[ 0 0 0 3 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0 ])
-  connect_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-                                                    Int64[ 0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0 ])
-  connect_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-                                                    Int64[ 0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0 ])
+  flood_index::Int64 = 1
+  connect_merge_and_redirect_indices_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  flood_merge_and_redirect_indices_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  connect_merge_and_redirect_indices_collections::Vector{MergeAndRedirectIndicesCollection} =
+      MergeAndRedirectIndicesCollection[]
+  flood_merge_and_redirect_indices_collections::Vector{MergeAndRedirectIndicesCollection} =
+      MergeAndRedirectIndicesCollection[]
+  primary_merges::Vector{MergeAndRedirectIndices} = MergeAndRedirectIndices[]
+  local primary_merge::MergeAndRedirectIndices
+  local secondary_merge::MergeAndRedirectIndices
+  local collected_indices::MergeAndRedirectIndicesCollection
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        false,
+                                        1,
+                                        5,
+                                        1,
+                                        3)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(1,4),flood_index)
   corresponding_surface_cell_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
                                                     Int64[ 2 2 2 1 2 2 2 2 2
                                                            2 2 2 1 2 2 2 2 2
@@ -5603,37 +4792,20 @@ end
                                                            2 2 2 2 2 2 2 2 2
                                                            2 2 2 2 2 2 2 2 1
                                                            2 2 2 2 2 2 2 2 2 ])
-  additional_flood_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
-  additional_flood_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
-  additional_connect_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
-  additional_connect_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
   grid_specific_lake_parameters::GridSpecificLakeParameters =
     LatLonLakeParameters(flood_next_cell_lat_index,
                          flood_next_cell_lon_index,
                          connect_next_cell_lat_index,
                          connect_next_cell_lon_index,
-                         flood_force_merge_lat_index,
-                         flood_force_merge_lon_index,
-                         connect_force_merge_lat_index,
-                         connect_force_merge_lon_index,
-                         flood_redirect_lat_index,
-                         flood_redirect_lon_index,
-                         connect_redirect_lat_index,
-                         connect_redirect_lon_index,
-                         additional_flood_redirect_lat_index,
-                         additional_flood_redirect_lon_index,
-                         additional_connect_redirect_lat_index,
-                         additional_connect_redirect_lon_index,
                          corresponding_surface_cell_lat_index,
                          corresponding_surface_cell_lon_index)
   lake_parameters = LakeParameters(lake_centers,
                                    connection_volume_thresholds,
                                    flood_volume_threshold,
-                                   flood_local_redirect,
-                                   connect_local_redirect,
-                                   additional_flood_local_redirect,
-                                   additional_connect_local_redirect,
-                                   merge_points,
+                                   connect_merge_and_redirect_indices_index,
+                                   flood_merge_and_redirect_indices_index,
+                                   connect_merge_and_redirect_indices_collections,
+                                   flood_merge_and_redirect_indices_collections,
                                    cell_areas_on_surface_model_grid,
                                    lake_grid,
                                    grid,
@@ -6345,7 +5517,8 @@ end
   @test first_intermediate_expected_lake_fractions == lake_fractions
   @test first_intermediate_expected_number_lake_cells == lake_fields.number_lake_cells
   @test first_intermediate_expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
-
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
   @time river_fields,lake_prognostics,lake_fields =
   drive_hd_and_lake_model(river_parameters,lake_parameters,
                           drainages,runoffs,evaporations,
@@ -6388,7 +5561,8 @@ end
   @test second_intermediate_expected_lake_fractions == lake_fractions
   @test second_intermediate_expected_number_lake_cells == lake_fields.number_lake_cells
   @test second_intermediate_expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
-
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
   @time river_fields,lake_prognostics,lake_fields =
   drive_hd_and_lake_model(river_parameters,lake_parameters,
                           drainages,runoffs,evaporations,
@@ -6431,7 +5605,8 @@ end
   @test third_intermediate_expected_lake_fractions == lake_fractions
   @test third_intermediate_expected_number_lake_cells == lake_fields.number_lake_cells
   @test third_intermediate_expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
-
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
   @time river_fields,lake_prognostics,lake_fields =
     drive_hd_and_lake_model(river_parameters,lake_parameters,
                             drainages,runoffs,evaporations,
@@ -6475,7 +5650,8 @@ end
   @test fourth_intermediate_expected_lake_fractions == lake_fractions
   @test fourth_intermediate_expected_number_lake_cells == lake_fields.number_lake_cells
   @test fourth_intermediate_expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
-
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
   @time river_fields,lake_prognostics,lake_fields =
     drive_hd_and_lake_model(river_parameters,lake_parameters,
                             drainages,runoffs,evaporations,
@@ -6518,7 +5694,8 @@ end
   @test fifth_intermediate_expected_lake_fractions == lake_fractions
   @test fifth_intermediate_expected_number_lake_cells == lake_fields.number_lake_cells
   @test fifth_intermediate_expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
-
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
   @time river_fields,lake_prognostics,lake_fields =
     drive_hd_and_lake_model(river_parameters,lake_parameters,
                             drainages,runoffs,evaporations,
@@ -6562,7 +5739,8 @@ end
   @test sixth_intermediate_expected_lake_fractions == lake_fractions
   @test sixth_intermediate_expected_number_lake_cells == lake_fields.number_lake_cells
   @test sixth_intermediate_expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
-
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
   @time river_fields,lake_prognostics,lake_fields =
     drive_hd_and_lake_model(river_parameters,lake_parameters,
                             drainages,runoffs,evaporations,
@@ -6606,7 +5784,8 @@ end
   @test sixth_intermediate_expected_lake_fractions == lake_fractions
   @test sixth_intermediate_expected_number_lake_cells == lake_fields.number_lake_cells
   @test sixth_intermediate_expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
-
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
   @time river_fields,lake_prognostics,lake_fields =
   drive_hd_and_lake_model(river_parameters,lake_parameters,
                             drainages,runoffs,evaporations,
@@ -6650,7 +5829,8 @@ end
   @test seven_intermediate_expected_lake_fractions == lake_fractions
   @test seven_intermediate_expected_number_lake_cells == lake_fields.number_lake_cells
   @test seven_intermediate_expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
-
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
   @time river_fields,lake_prognostics,lake_fields =
   drive_hd_and_lake_model(river_parameters,lake_parameters,
                           drainages,runoffs,evaporations,
@@ -6694,7 +5874,8 @@ end
   @test eight_intermediate_expected_lake_fractions == lake_fractions
   @test eight_intermediate_expected_number_lake_cells == lake_fields.number_lake_cells
   @test eight_intermediate_expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
-
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
   @time river_fields,lake_prognostics,lake_fields =
   drive_hd_and_lake_model(river_parameters,lake_parameters,
                           drainages,runoffs,evaporations,
@@ -6738,7 +5919,8 @@ end
   @test nine_intermediate_expected_lake_fractions == lake_fractions
   @test nine_intermediate_expected_number_lake_cells == lake_fields.number_lake_cells
   @test nine_intermediate_expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
-
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
   @time river_fields,lake_prognostics,lake_fields =
   drive_hd_and_lake_model(river_parameters,lake_parameters,
                           drainages,runoffs,evaporations,
@@ -6782,7 +5964,8 @@ end
   @test ten_intermediate_expected_lake_fractions == lake_fractions
   @test ten_intermediate_expected_number_lake_cells == lake_fields.number_lake_cells
   @test ten_intermediate_expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
-
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
   @time river_fields,lake_prognostics,lake_fields =
   drive_hd_and_lake_model(river_parameters,lake_parameters,
                           drainages,runoffs,evaporations,
@@ -6826,7 +6009,8 @@ end
   @test eleven_intermediate_expected_lake_fractions == lake_fractions
   @test eleven_intermediate_expected_number_lake_cells == lake_fields.number_lake_cells
   @test eleven_intermediate_expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
-
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
   @time river_fields,lake_prognostics,lake_fields =
   drive_hd_and_lake_model(river_parameters,lake_parameters,
                           drainages,runoffs,evaporations,
@@ -6870,7 +6054,8 @@ end
   @test twelve_intermediate_expected_lake_fractions == lake_fractions
   @test twelve_intermediate_expected_number_lake_cells == lake_fields.number_lake_cells
   @test twelve_intermediate_expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
-
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
   @time river_fields,lake_prognostics,lake_fields =
   drive_hd_and_lake_model(river_parameters,lake_parameters,
                           drainages,runoffs,evaporations,
@@ -6968,29 +6153,6 @@ end
              -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0
              -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0
              -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 ])
-  flood_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,false)
-  connect_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,false)
-  additional_flood_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,false)
-  additional_connect_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,false)
-  merge_points::Field{MergeTypes} = LatLonField{MergeTypes}(lake_grid,
-    MergeTypes[ no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_secondary #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype ])
   cell_areas_on_surface_model_grid::Field{Float64} = LatLonField{Float64}(surface_model_grid,
     Float64[ 2.5 3.0 2.5
              3.0 4.0 3.0
@@ -7035,86 +6197,6 @@ end
                                                            0 0 0 0 0 0 0 0 0
                                                            0 0 0 0 0 0 0 0 0
                                                            0 0 0 0 0 0 0 0 0 ])
-  flood_force_merge_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-                                                    Int64[ 0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0 ])
-  flood_force_merge_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-                                                    Int64[ 0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0 ])
-  connect_force_merge_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-                                                    Int64[ 0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0 ])
-  connect_force_merge_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-                                                    Int64[ 0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0 ])
-  flood_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-                                                    Int64[ 0 0 0 1 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0 ])
-  flood_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-                                                    Int64[ 0 0 0 3 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0 ])
-  connect_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-                                                    Int64[ 0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0 ])
-  connect_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-                                                    Int64[ 0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0
-                                                           0 0 0 0 0 0 0 0 0 ])
   corresponding_surface_cell_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
                                                     Int64[ 1 1 1 1 1 1 1 1 1
                                                            1 1 1 1 1 1 1 1 1
@@ -7135,37 +6217,43 @@ end
                                                            1 1 1 2 2 2 3 3 3
                                                            1 1 1 2 2 2 3 3 3
                                                            1 1 1 2 2 2 3 3 3 ])
-  additional_flood_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
-  additional_flood_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
-  additional_connect_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
-  additional_connect_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  flood_index::Int64 = 1
+  connect_merge_and_redirect_indices_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  flood_merge_and_redirect_indices_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  connect_merge_and_redirect_indices_collections::Vector{MergeAndRedirectIndicesCollection} =
+      MergeAndRedirectIndicesCollection[]
+  flood_merge_and_redirect_indices_collections::Vector{MergeAndRedirectIndicesCollection} =
+      MergeAndRedirectIndicesCollection[]
+  primary_merges::Vector{MergeAndRedirectIndices} = MergeAndRedirectIndices[]
+  local primary_merge::MergeAndRedirectIndices
+  local secondary_merge::MergeAndRedirectIndices
+  local collected_indices::MergeAndRedirectIndicesCollection
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        false,
+                                        1,
+                                        5,
+                                        1,
+                                        3)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(1,4),flood_index)
   grid_specific_lake_parameters::GridSpecificLakeParameters =
     LatLonLakeParameters(flood_next_cell_lat_index,
                          flood_next_cell_lon_index,
                          connect_next_cell_lat_index,
                          connect_next_cell_lon_index,
-                         flood_force_merge_lat_index,
-                         flood_force_merge_lon_index,
-                         connect_force_merge_lat_index,
-                         connect_force_merge_lon_index,
-                         flood_redirect_lat_index,
-                         flood_redirect_lon_index,
-                         connect_redirect_lat_index,
-                         connect_redirect_lon_index,
-                         additional_flood_redirect_lat_index,
-                         additional_flood_redirect_lon_index,
-                         additional_connect_redirect_lat_index,
-                         additional_connect_redirect_lon_index,
                          corresponding_surface_cell_lat_index,
                          corresponding_surface_cell_lon_index)
   lake_parameters = LakeParameters(lake_centers,
                                    connection_volume_thresholds,
                                    flood_volume_threshold,
-                                   flood_local_redirect,
-                                   connect_local_redirect,
-                                   additional_flood_local_redirect,
-                                   additional_connect_local_redirect,
-                                   merge_points,
+                                   connect_merge_and_redirect_indices_index,
+                                   flood_merge_and_redirect_indices_index,
+                                   connect_merge_and_redirect_indices_collections,
+                                   flood_merge_and_redirect_indices_collections,
                                    cell_areas_on_surface_model_grid,
                                    lake_grid,
                                    grid,
@@ -7411,7 +6499,8 @@ end
   @test first_intermediate_expected_lake_fractions == lake_fractions
   @test first_intermediate_expected_number_lake_cells == lake_fields.number_lake_cells
   @test first_intermediate_expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
-
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
   @time river_fields,lake_prognostics,lake_fields =
   drive_hd_and_lake_model(river_parameters,lake_parameters,
                             drainages,runoffs,evaporations,
@@ -7457,7 +6546,8 @@ end
   @test second_intermediate_expected_lake_fractions == lake_fractions
   @test second_intermediate_expected_number_lake_cells == lake_fields.number_lake_cells
   @test second_intermediate_expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
-
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
   @time river_fields,lake_prognostics,lake_fields =
   drive_hd_and_lake_model(river_parameters,lake_parameters,
                             drainages,runoffs,evaporations,
@@ -7619,171 +6709,6 @@ end
               -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1
               -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1
               -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1 ])
-  flood_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,
-    Bool[ false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false  false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false true false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false  true false false  false false #=
-      =#  false false false false
-          false false false false false false  false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false  false #=
-      =#  true false false false
-          false false false false false false false false false false false false false false true false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false  false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false ])
-  connect_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,
-    Bool[ false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false  false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false  false false #=
-      =#  false false false false
-          false false false false false false  false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false  false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false  false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false ])
-  additional_flood_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,false)
-  additional_connect_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,false)
-  merge_points::Field{MergeTypes} = LatLonField{MergeTypes}(lake_grid,
-    MergeTypes[ no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          connection_merge_not_set_flood_merge_as_primary no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype  no_merge_mtype #=
-    =#          no_merge_mtype  no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype connection_merge_not_set_flood_merge_as_primary no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_primary  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype ])
   cell_areas_on_surface_model_grid::Field{Float64} = LatLonField{Float64}(surface_model_grid,
     Float64[ 2.5 3.0 2.5
              3.0 4.0 3.0
@@ -7872,174 +6797,136 @@ end
            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  flood_force_merge_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  6 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  6 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  7 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  flood_force_merge_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  2 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  8 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 12 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  connect_force_merge_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  connect_force_merge_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  flood_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1  1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1  7 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  7 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1  1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  6 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  5 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  3 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1  3 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  flood_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  0 -1 -1 -1 -1
-           -1 -1 -1 -1 -1  3 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 14 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 14 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1  0 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  5 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 13 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  3 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1  1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  connect_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  connect_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
+  flood_index::Int64 = 1
+  connect_merge_and_redirect_indices_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  flood_merge_and_redirect_indices_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  connect_merge_and_redirect_indices_collections::Vector{MergeAndRedirectIndicesCollection} =
+      MergeAndRedirectIndicesCollection[]
+  flood_merge_and_redirect_indices_collections::Vector{MergeAndRedirectIndicesCollection} =
+      MergeAndRedirectIndicesCollection[]
+  primary_merges::Vector{MergeAndRedirectIndices} = MergeAndRedirectIndices[]
+  local primary_merge::MergeAndRedirectIndices
+  local secondary_merge::MergeAndRedirectIndices
+  local collected_indices::MergeAndRedirectIndicesCollection
+  primary_merge =
+    LatLonMergeAndRedirectIndices(true,
+                                        false,
+                                        6,
+                                        2,
+                                        1,
+                                        0)
+  primary_merges = MergeAndRedirectIndices[]
+  push!(primary_merges,primary_merge)
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        nothing)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(3,16),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        false,
+                                        8,
+                                        18,
+                                        1,
+                                        3)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(4,6),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        true,
+                                        6,
+                                        10,
+                                        7,
+                                        14)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(5,8),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        true,
+                                        7,
+                                        14,
+                                        7,
+                                        14)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(6,12),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        false,
+                                        6,
+                                        4,
+                                        1,
+                                        0)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(8,2),flood_index)
+  flood_index +=1
+  primary_merge =
+    LatLonMergeAndRedirectIndices(true,
+                                        true,
+                                        6,
+                                        8,
+                                        6,
+                                        5)
+  primary_merges = MergeAndRedirectIndices[]
+  push!(primary_merges,primary_merge)
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        nothing)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(8,17),flood_index)
+  flood_index +=1
+  primary_merge =
+    LatLonMergeAndRedirectIndices(true,
+                                        true,
+                                        7,
+                                        12,
+                                        5,
+                                        13)
+  primary_merges = MergeAndRedirectIndices[]
+  push!(primary_merges,primary_merge)
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        nothing)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(9,15),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        false,
+                                        16,
+                                        15,
+                                        3,
+                                        3)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(14,19),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        false,
+                                        17,
+                                        3,
+                                        3,
+                                        1)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(16,4),flood_index)
   corresponding_surface_cell_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
                                                     Int64[   1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
                                                              1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
@@ -8086,45 +6973,22 @@ end
   add_offset(flood_next_cell_lon_index,1,Int64[-1])
   add_offset(connect_next_cell_lat_index,1,Int64[-1])
   add_offset(connect_next_cell_lon_index,1,Int64[-1])
-  add_offset(flood_force_merge_lat_index,1,Int64[-1])
-  add_offset(flood_force_merge_lon_index,1,Int64[-1])
-  add_offset(connect_force_merge_lat_index,1,Int64[-1])
-  add_offset(connect_force_merge_lon_index,1,Int64[-1])
-  add_offset(flood_redirect_lat_index,1,Int64[-1])
-  add_offset(flood_redirect_lon_index,1,Int64[-1])
-  add_offset(connect_redirect_lat_index,1,Int64[-1])
-  add_offset(connect_redirect_lon_index,1,Int64[-1])
-  additional_flood_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
-  additional_flood_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
-  additional_connect_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
-  additional_connect_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  add_offset(connect_merge_and_redirect_indices_collections,1)
+  add_offset(flood_merge_and_redirect_indices_collections,1)
   grid_specific_lake_parameters::GridSpecificLakeParameters =
     LatLonLakeParameters(flood_next_cell_lat_index,
                          flood_next_cell_lon_index,
                          connect_next_cell_lat_index,
                          connect_next_cell_lon_index,
-                         flood_force_merge_lat_index,
-                         flood_force_merge_lon_index,
-                         connect_force_merge_lat_index,
-                         connect_force_merge_lon_index,
-                         flood_redirect_lat_index,
-                         flood_redirect_lon_index,
-                         connect_redirect_lat_index,
-                         connect_redirect_lon_index,
-                         additional_flood_redirect_lat_index,
-                         additional_flood_redirect_lon_index,
-                         additional_connect_redirect_lat_index,
-                         additional_connect_redirect_lon_index,
                          corresponding_surface_cell_lat_index,
                          corresponding_surface_cell_lon_index)
   lake_parameters = LakeParameters(lake_centers,
                                    connection_volume_thresholds,
                                    flood_volume_threshold,
-                                   flood_local_redirect,
-                                   connect_local_redirect,
-                                   additional_flood_local_redirect,
-                                   additional_connect_local_redirect,
-                                   merge_points,
+                                   connect_merge_and_redirect_indices_index,
+                                   flood_merge_and_redirect_indices_index,
+                                   connect_merge_and_redirect_indices_collections,
+                                   flood_merge_and_redirect_indices_collections,
                                    cell_areas_on_surface_model_grid,
                                    lake_grid,
                                    grid,
@@ -8644,7 +7508,8 @@ end
                  rtol=0.0,atol=0.00001)
   @test first_intermediate_expected_number_lake_cells == lake_fields.number_lake_cells
   @test first_intermediate_expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
-
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
   @time river_fields,lake_prognostics,lake_fields =
   drive_hd_and_lake_model(river_parameters,lake_parameters,
                           drainages,runoffs,evaporations,
@@ -8691,7 +7556,8 @@ end
                  rtol=0.0,atol=0.00001)
   @test second_intermediate_expected_number_lake_cells == lake_fields.number_lake_cells
   @test second_intermediate_expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
-
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
   @time river_fields,lake_prognostics,lake_fields =
   drive_hd_and_lake_model(river_parameters,lake_parameters,
                           drainages,runoffs,evaporations,
@@ -8737,7 +7603,8 @@ end
   @test isapprox(third_intermediate_expected_lake_fractions,lake_fractions,rtol=0.0,atol=0.000001)
   @test third_intermediate_expected_number_lake_cells == lake_fields.number_lake_cells
   @test third_intermediate_expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
-
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
   @time river_fields,lake_prognostics,lake_fields =
   drive_hd_and_lake_model(river_parameters,lake_parameters,
                           drainages,runoffs,evaporations,
@@ -8899,171 +7766,6 @@ end
               -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1
               -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1
               -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1 ])
-  flood_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,
-    Bool[ false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false  false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false true false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false  true false false  false false #=
-      =#  false false false false
-          false false false false false false  false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false  false #=
-      =#  true false false false
-          false false false false false false false false false false false false false false true false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false  false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false ])
-  connect_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,
-    Bool[ false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false  false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false  false false #=
-      =#  false false false false
-          false false false false false false  false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false  false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false  false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false ])
-  additional_flood_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,false)
-  additional_connect_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,false)
-  merge_points::Field{MergeTypes} = LatLonField{MergeTypes}(lake_grid,
-    MergeTypes[ no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          connection_merge_not_set_flood_merge_as_primary no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype  no_merge_mtype #=
-    =#          no_merge_mtype  no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype connection_merge_not_set_flood_merge_as_primary no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_primary  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype ])
   cell_areas_on_surface_model_grid::Field{Float64} = LatLonField{Float64}(surface_model_grid,
     Float64[ 2.5 3.0 2.5
              3.0 4.0 3.0
@@ -9152,174 +7854,6 @@ end
            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  flood_force_merge_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  6 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  6 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  7 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  flood_force_merge_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  2 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  8 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 12 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  connect_force_merge_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  connect_force_merge_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  flood_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1  1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1  7 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  7 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1  1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  6 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  5 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  3 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1  3 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  flood_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  0 -1 -1 -1 -1
-           -1 -1 -1 -1 -1  3 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 14 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 14 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1  0 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  5 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 13 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  3 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1  1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  connect_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  connect_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
   corresponding_surface_cell_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
                                                     Int64[   1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
                                                              1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
@@ -9362,49 +7896,156 @@ end
                                                              3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
                                                              3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
                                                              3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3  ])
+  flood_index::Int64 = 1
+  connect_merge_and_redirect_indices_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  flood_merge_and_redirect_indices_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  connect_merge_and_redirect_indices_collections::Vector{MergeAndRedirectIndicesCollection} =
+      MergeAndRedirectIndicesCollection[]
+  flood_merge_and_redirect_indices_collections::Vector{MergeAndRedirectIndicesCollection} =
+      MergeAndRedirectIndicesCollection[]
+  primary_merges::Vector{MergeAndRedirectIndices} = MergeAndRedirectIndices[]
+  local primary_merge::MergeAndRedirectIndices
+  local secondary_merge::MergeAndRedirectIndices
+  local collected_indices::MergeAndRedirectIndicesCollection
+  primary_merge =
+    LatLonMergeAndRedirectIndices(true,
+                                        false,
+                                        6,
+                                        2,
+                                        1,
+                                        0)
+  primary_merges = MergeAndRedirectIndices[]
+  push!(primary_merges,primary_merge)
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        nothing)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(3,16),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        false,
+                                        8,
+                                        18,
+                                        1,
+                                        3)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(4,6),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        true,
+                                        6,
+                                        10,
+                                        7,
+                                        14)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(5,8),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        true,
+                                        7,
+                                        14,
+                                        7,
+                                        14)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(6,12),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        false,
+                                        6,
+                                        4,
+                                        1,
+                                        0)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(8,2),flood_index)
+  flood_index +=1
+  primary_merge =
+    LatLonMergeAndRedirectIndices(true,
+                                        true,
+                                        6,
+                                        8,
+                                        6,
+                                        5)
+  primary_merges = MergeAndRedirectIndices[]
+  push!(primary_merges,primary_merge)
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        nothing)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(8,17),flood_index)
+  flood_index +=1
+  primary_merge =
+    LatLonMergeAndRedirectIndices(true,
+                                        true,
+                                        7,
+                                        12,
+                                        5,
+                                        13)
+  primary_merges = MergeAndRedirectIndices[]
+  push!(primary_merges,primary_merge)
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        nothing)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(9,15),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        false,
+                                        16,
+                                        15,
+                                        3,
+                                        3)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(14,19),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        false,
+                                        17,
+                                        3,
+                                        3,
+                                        1)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(16,4),flood_index)
   add_offset(flood_next_cell_lat_index,1,Int64[-1])
   add_offset(flood_next_cell_lon_index,1,Int64[-1])
   add_offset(connect_next_cell_lat_index,1,Int64[-1])
   add_offset(connect_next_cell_lon_index,1,Int64[-1])
-  add_offset(flood_force_merge_lat_index,1,Int64[-1])
-  add_offset(flood_force_merge_lon_index,1,Int64[-1])
-  add_offset(connect_force_merge_lat_index,1,Int64[-1])
-  add_offset(connect_force_merge_lon_index,1,Int64[-1])
-  add_offset(flood_redirect_lat_index,1,Int64[-1])
-  add_offset(flood_redirect_lon_index,1,Int64[-1])
-  add_offset(connect_redirect_lat_index,1,Int64[-1])
-  add_offset(connect_redirect_lon_index,1,Int64[-1])
-  additional_flood_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
-  additional_flood_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
-  additional_connect_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
-  additional_connect_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  add_offset(connect_merge_and_redirect_indices_collections,1)
+  add_offset(flood_merge_and_redirect_indices_collections,1)
   grid_specific_lake_parameters::GridSpecificLakeParameters =
     LatLonLakeParameters(flood_next_cell_lat_index,
                          flood_next_cell_lon_index,
                          connect_next_cell_lat_index,
                          connect_next_cell_lon_index,
-                         flood_force_merge_lat_index,
-                         flood_force_merge_lon_index,
-                         connect_force_merge_lat_index,
-                         connect_force_merge_lon_index,
-                         flood_redirect_lat_index,
-                         flood_redirect_lon_index,
-                         connect_redirect_lat_index,
-                         connect_redirect_lon_index,
-                         additional_flood_redirect_lat_index,
-                         additional_flood_redirect_lon_index,
-                         additional_connect_redirect_lat_index,
-                         additional_connect_redirect_lon_index,
                          corresponding_surface_cell_lat_index,
                          corresponding_surface_cell_lon_index)
   lake_parameters = LakeParameters(lake_centers,
                                    connection_volume_thresholds,
                                    flood_volume_threshold,
-                                   flood_local_redirect,
-                                   connect_local_redirect,
-                                   additional_flood_local_redirect,
-                                   additional_connect_local_redirect,
-                                   merge_points,
+                                   connect_merge_and_redirect_indices_index,
+                                   flood_merge_and_redirect_indices_index,
+                                   connect_merge_and_redirect_indices_collections,
+                                   flood_merge_and_redirect_indices_collections,
                                    cell_areas_on_surface_model_grid,
                                    lake_grid,
                                    grid,
@@ -9714,171 +8355,6 @@ end
               -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1
               -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1
               -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1 ])
-  flood_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,
-    Bool[ false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false  false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false true false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false  true false false  false false #=
-      =#  false false false false
-          false false false false false false  false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false  false #=
-      =#  true false false false
-          false false false false false false false false false false false false false false true false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false  false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false ])
-  connect_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,
-    Bool[ false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false  false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false  false false #=
-      =#  false false false false
-          false false false false false false  false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false  false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false  false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false ])
-  additional_flood_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,false)
-  additional_connect_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,false)
-  merge_points::Field{MergeTypes} = LatLonField{MergeTypes}(lake_grid,
-    MergeTypes[ no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          connection_merge_not_set_flood_merge_as_primary no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype  no_merge_mtype #=
-    =#          no_merge_mtype  no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype connection_merge_not_set_flood_merge_as_primary no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_primary  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype ])
   cell_areas_on_surface_model_grid::Field{Float64} = LatLonField{Float64}(surface_model_grid,
     Float64[ 2.5 3.0 2.5
              3.0 4.0 3.0
@@ -9967,174 +8443,6 @@ end
            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  flood_force_merge_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  6 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  6 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  7 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  flood_force_merge_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  2 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  8 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 12 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  connect_force_merge_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  connect_force_merge_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  flood_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1  1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1  7 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  7 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1  1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  6 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  5 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  3 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1  3 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  flood_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  0 -1 -1 -1 -1
-           -1 -1 -1 -1 -1  3 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 14 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 14 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1  0 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  5 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 13 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  3 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1  1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  connect_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  connect_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
   corresponding_surface_cell_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
                                                     Int64[   1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
                                                              1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
@@ -10177,49 +8485,156 @@ end
                                                              3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
                                                              3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
                                                              3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3  ])
+  flood_index::Int64 = 1
+  connect_merge_and_redirect_indices_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  flood_merge_and_redirect_indices_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  connect_merge_and_redirect_indices_collections::Vector{MergeAndRedirectIndicesCollection} =
+      MergeAndRedirectIndicesCollection[]
+  flood_merge_and_redirect_indices_collections::Vector{MergeAndRedirectIndicesCollection} =
+      MergeAndRedirectIndicesCollection[]
+  primary_merges::Vector{MergeAndRedirectIndices} = MergeAndRedirectIndices[]
+  local primary_merge::MergeAndRedirectIndices
+  local secondary_merge::MergeAndRedirectIndices
+  local collected_indices::MergeAndRedirectIndicesCollection
+  primary_merge =
+    LatLonMergeAndRedirectIndices(true,
+                                        false,
+                                        6,
+                                        2,
+                                        1,
+                                        0)
+  primary_merges = MergeAndRedirectIndices[]
+  push!(primary_merges,primary_merge)
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        nothing)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(3,16),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        false,
+                                        8,
+                                        18,
+                                        1,
+                                        3)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(4,6),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        true,
+                                        6,
+                                        10,
+                                        7,
+                                        14)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(5,8),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        true,
+                                        7,
+                                        14,
+                                        7,
+                                        14)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(6,12),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        false,
+                                        6,
+                                        4,
+                                        1,
+                                        0)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(8,2),flood_index)
+  flood_index +=1
+  primary_merge =
+    LatLonMergeAndRedirectIndices(true,
+                                        true,
+                                        6,
+                                        8,
+                                        6,
+                                        5)
+  primary_merges = MergeAndRedirectIndices[]
+  push!(primary_merges,primary_merge)
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        nothing)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(8,17),flood_index)
+  flood_index +=1
+  primary_merge =
+    LatLonMergeAndRedirectIndices(true,
+                                        true,
+                                        7,
+                                        12,
+                                        5,
+                                        13)
+  primary_merges = MergeAndRedirectIndices[]
+  push!(primary_merges,primary_merge)
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        nothing)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(9,15),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        false,
+                                        16,
+                                        15,
+                                        3,
+                                        3)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(14,19),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        false,
+                                        17,
+                                        3,
+                                        3,
+                                        1)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(16,4),flood_index)
   add_offset(flood_next_cell_lat_index,1,Int64[-1])
   add_offset(flood_next_cell_lon_index,1,Int64[-1])
   add_offset(connect_next_cell_lat_index,1,Int64[-1])
   add_offset(connect_next_cell_lon_index,1,Int64[-1])
-  add_offset(flood_force_merge_lat_index,1,Int64[-1])
-  add_offset(flood_force_merge_lon_index,1,Int64[-1])
-  add_offset(connect_force_merge_lat_index,1,Int64[-1])
-  add_offset(connect_force_merge_lon_index,1,Int64[-1])
-  add_offset(flood_redirect_lat_index,1,Int64[-1])
-  add_offset(flood_redirect_lon_index,1,Int64[-1])
-  add_offset(connect_redirect_lat_index,1,Int64[-1])
-  add_offset(connect_redirect_lon_index,1,Int64[-1])
-  additional_flood_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
-  additional_flood_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
-  additional_connect_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
-  additional_connect_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  add_offset(connect_merge_and_redirect_indices_collections,1)
+  add_offset(flood_merge_and_redirect_indices_collections,1)
   grid_specific_lake_parameters::GridSpecificLakeParameters =
     LatLonLakeParameters(flood_next_cell_lat_index,
                          flood_next_cell_lon_index,
                          connect_next_cell_lat_index,
                          connect_next_cell_lon_index,
-                         flood_force_merge_lat_index,
-                         flood_force_merge_lon_index,
-                         connect_force_merge_lat_index,
-                         connect_force_merge_lon_index,
-                         flood_redirect_lat_index,
-                         flood_redirect_lon_index,
-                         connect_redirect_lat_index,
-                         connect_redirect_lon_index,
-                         additional_flood_redirect_lat_index,
-                         additional_flood_redirect_lon_index,
-                         additional_connect_redirect_lat_index,
-                         additional_connect_redirect_lon_index,
                          corresponding_surface_cell_lat_index,
                          corresponding_surface_cell_lon_index)
   lake_parameters = LakeParameters(lake_centers,
                                    connection_volume_thresholds,
                                    flood_volume_threshold,
-                                   flood_local_redirect,
-                                   connect_local_redirect,
-                                   additional_flood_local_redirect,
-                                   additional_connect_local_redirect,
-                                   merge_points,
+                                   connect_merge_and_redirect_indices_index,
+                                   flood_merge_and_redirect_indices_index,
+                                   connect_merge_and_redirect_indices_collections,
+                                   flood_merge_and_redirect_indices_collections,
                                    cell_areas_on_surface_model_grid,
                                    lake_grid,
                                    grid,
@@ -10509,171 +8924,6 @@ end
               -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1
               -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1
               -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1 ])
-  flood_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,
-    Bool[ false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false  false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false true false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false  true false false  false false #=
-      =#  false false false false
-          false false false false false false  false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false  false #=
-      =#  true false false false
-          false false false false false false false false false false false false false false true false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false  false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false ])
-  connect_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,
-    Bool[ false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false  false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false  false false #=
-      =#  false false false false
-          false false false false false false  false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false  false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false  false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false ])
-  additional_flood_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,false)
-  additional_connect_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,false)
-  merge_points::Field{MergeTypes} = LatLonField{MergeTypes}(lake_grid,
-    MergeTypes[ no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          connection_merge_not_set_flood_merge_as_primary no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype  no_merge_mtype #=
-    =#          no_merge_mtype  no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype connection_merge_not_set_flood_merge_as_primary no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_primary  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype ])
   cell_areas_on_surface_model_grid::Field{Float64} = LatLonField{Float64}(surface_model_grid,
     Float64[ 2.5 3.0 2.5
              3.0 4.0 3.0
@@ -10762,174 +9012,6 @@ end
            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  flood_force_merge_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  6 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  6 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  7 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  flood_force_merge_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  2 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  8 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 12 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  connect_force_merge_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  connect_force_merge_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  flood_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1  1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1  7 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  7 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1  1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  6 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  5 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  3 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1  3 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  flood_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  0 -1 -1 -1 -1
-           -1 -1 -1 -1 -1  3 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 14 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 14 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1  0 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  5 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 13 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  3 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1  1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  connect_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  connect_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
   corresponding_surface_cell_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
                                                     Int64[   1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
                                                              1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
@@ -10973,49 +9055,156 @@ end
                                                              3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
                                                              3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
                                                              3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3  ])
+  flood_index::Int64 = 1
+  connect_merge_and_redirect_indices_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  flood_merge_and_redirect_indices_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  connect_merge_and_redirect_indices_collections::Vector{MergeAndRedirectIndicesCollection} =
+      MergeAndRedirectIndicesCollection[]
+  flood_merge_and_redirect_indices_collections::Vector{MergeAndRedirectIndicesCollection} =
+      MergeAndRedirectIndicesCollection[]
+  primary_merges::Vector{MergeAndRedirectIndices} = MergeAndRedirectIndices[]
+  local primary_merge::MergeAndRedirectIndices
+  local secondary_merge::MergeAndRedirectIndices
+  local collected_indices::MergeAndRedirectIndicesCollection
+  primary_merge =
+    LatLonMergeAndRedirectIndices(true,
+                                        false,
+                                        6,
+                                        2,
+                                        1,
+                                        0)
+  primary_merges = MergeAndRedirectIndices[]
+  push!(primary_merges,primary_merge)
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        nothing)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(3,16),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        false,
+                                        8,
+                                        18,
+                                        1,
+                                        3)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(4,6),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        true,
+                                        6,
+                                        10,
+                                        7,
+                                        14)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(5,8),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        true,
+                                        7,
+                                        14,
+                                        7,
+                                        14)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(6,12),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        false,
+                                        6,
+                                        4,
+                                        1,
+                                        0)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(8,2),flood_index)
+  flood_index +=1
+  primary_merge =
+    LatLonMergeAndRedirectIndices(true,
+                                        true,
+                                        6,
+                                        8,
+                                        6,
+                                        5)
+  primary_merges = MergeAndRedirectIndices[]
+  push!(primary_merges,primary_merge)
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        nothing)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(8,17),flood_index)
+  flood_index +=1
+  primary_merge =
+    LatLonMergeAndRedirectIndices(true,
+                                        true,
+                                        7,
+                                        12,
+                                        5,
+                                        13)
+  primary_merges = MergeAndRedirectIndices[]
+  push!(primary_merges,primary_merge)
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        nothing)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(9,15),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        false,
+                                        16,
+                                        15,
+                                        3,
+                                        3)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(14,19),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        false,
+                                        17,
+                                        3,
+                                        3,
+                                        1)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(16,4),flood_index)
   add_offset(flood_next_cell_lat_index,1,Int64[-1])
   add_offset(flood_next_cell_lon_index,1,Int64[-1])
   add_offset(connect_next_cell_lat_index,1,Int64[-1])
   add_offset(connect_next_cell_lon_index,1,Int64[-1])
-  add_offset(flood_force_merge_lat_index,1,Int64[-1])
-  add_offset(flood_force_merge_lon_index,1,Int64[-1])
-  add_offset(connect_force_merge_lat_index,1,Int64[-1])
-  add_offset(connect_force_merge_lon_index,1,Int64[-1])
-  add_offset(flood_redirect_lat_index,1,Int64[-1])
-  add_offset(flood_redirect_lon_index,1,Int64[-1])
-  add_offset(connect_redirect_lat_index,1,Int64[-1])
-  add_offset(connect_redirect_lon_index,1,Int64[-1])
-  additional_flood_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
-  additional_flood_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
-  additional_connect_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
-  additional_connect_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  add_offset(connect_merge_and_redirect_indices_collections,1)
+  add_offset(flood_merge_and_redirect_indices_collections,1)
   grid_specific_lake_parameters::GridSpecificLakeParameters =
     LatLonLakeParameters(flood_next_cell_lat_index,
                          flood_next_cell_lon_index,
                          connect_next_cell_lat_index,
                          connect_next_cell_lon_index,
-                         flood_force_merge_lat_index,
-                         flood_force_merge_lon_index,
-                         connect_force_merge_lat_index,
-                         connect_force_merge_lon_index,
-                         flood_redirect_lat_index,
-                         flood_redirect_lon_index,
-                         connect_redirect_lat_index,
-                         connect_redirect_lon_index,
-                         additional_flood_redirect_lat_index,
-                         additional_flood_redirect_lon_index,
-                         additional_connect_redirect_lat_index,
-                         additional_connect_redirect_lon_index,
                          corresponding_surface_cell_lat_index,
                          corresponding_surface_cell_lon_index)
   lake_parameters = LakeParameters(lake_centers,
                                    connection_volume_thresholds,
                                    flood_volume_threshold,
-                                   flood_local_redirect,
-                                   connect_local_redirect,
-                                   additional_flood_local_redirect,
-                                   additional_connect_local_redirect,
-                                   merge_points,
+                                   connect_merge_and_redirect_indices_index,
+                                   flood_merge_and_redirect_indices_index,
+                                   connect_merge_and_redirect_indices_collections,
+                                   flood_merge_and_redirect_indices_collections,
                                    cell_areas_on_surface_model_grid,
                                    lake_grid,
                                    grid,
@@ -11439,7 +9628,8 @@ end
   @test isapprox(first_intermediate_expected_lake_fractions,lake_fractions,rtol=0.0,atol=0.000001)
   @test first_intermediate_expected_number_lake_cells == lake_fields.number_lake_cells
   @test first_intermediate_expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
-
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
   @time river_fields,lake_prognostics,lake_fields =
   drive_hd_and_lake_model(river_parameters,lake_parameters,
                           drainages,runoffs,evaporations,
@@ -11485,7 +9675,8 @@ end
   @test isapprox(second_intermediate_expected_lake_fractions,lake_fractions,rtol=0.0,atol=0.000001)
   @test second_intermediate_expected_number_lake_cells == lake_fields.number_lake_cells
   @test second_intermediate_expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
-
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
   @time river_fields,lake_prognostics,lake_fields =
   drive_hd_and_lake_model(river_parameters,lake_parameters,
                           drainages,runoffs,evaporations,
@@ -11647,171 +9838,6 @@ end
               -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1
               -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1
               -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1 ])
-  flood_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,
-    Bool[ false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false  false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false true false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false  true false false  false false #=
-      =#  false false false false
-          false false false false false false  false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false  false #=
-      =#  true false false false
-          false false false false false false false false false false false false false false true false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false  false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false ])
-  connect_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,
-    Bool[ false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false  false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false  false false #=
-      =#  false false false false
-          false false false false false false  false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false  false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false  false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false ])
-  additional_flood_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,false)
-  additional_connect_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,false)
-  merge_points::Field{MergeTypes} = LatLonField{MergeTypes}(lake_grid,
-    MergeTypes[ no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          connection_merge_not_set_flood_merge_as_primary no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype  no_merge_mtype #=
-    =#          no_merge_mtype  no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype connection_merge_not_set_flood_merge_as_primary no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_primary  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype ])
   cell_areas_on_surface_model_grid::Field{Float64} = LatLonField{Float64}(surface_model_grid,
     Float64[ 2.5 3.0 2.5
              3.0 4.0 3.0
@@ -11900,174 +9926,6 @@ end
            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  flood_force_merge_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  6 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  6 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  7 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  flood_force_merge_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  2 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  8 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 12 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  connect_force_merge_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  connect_force_merge_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  flood_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1  1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1  7 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  7 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1  1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  6 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  5 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  3 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1  3 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  flood_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  0 -1 -1 -1 -1
-           -1 -1 -1 -1 -1  3 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 14 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 14 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1  0 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  5 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 13 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  3 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1  1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  connect_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  connect_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
   corresponding_surface_cell_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
                                                     Int64[   1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
                                                              1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
@@ -12111,49 +9969,156 @@ end
                                                              3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
                                                              3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
                                                              3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3  ])
+  flood_index::Int64 = 1
+  connect_merge_and_redirect_indices_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  flood_merge_and_redirect_indices_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  connect_merge_and_redirect_indices_collections::Vector{MergeAndRedirectIndicesCollection} =
+      MergeAndRedirectIndicesCollection[]
+  flood_merge_and_redirect_indices_collections::Vector{MergeAndRedirectIndicesCollection} =
+      MergeAndRedirectIndicesCollection[]
+  primary_merges::Vector{MergeAndRedirectIndices} = MergeAndRedirectIndices[]
+  local primary_merge::MergeAndRedirectIndices
+  local secondary_merge::MergeAndRedirectIndices
+  local collected_indices::MergeAndRedirectIndicesCollection
+  primary_merge =
+    LatLonMergeAndRedirectIndices(true,
+                                        false,
+                                        6,
+                                        2,
+                                        1,
+                                        0)
+  primary_merges = MergeAndRedirectIndices[]
+  push!(primary_merges,primary_merge)
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        nothing)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(3,16),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        false,
+                                        8,
+                                        18,
+                                        1,
+                                        3)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(4,6),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        true,
+                                        6,
+                                        10,
+                                        7,
+                                        14)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(5,8),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        true,
+                                        7,
+                                        14,
+                                        7,
+                                        14)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(6,12),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        false,
+                                        6,
+                                        4,
+                                        1,
+                                        0)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(8,2),flood_index)
+  flood_index +=1
+  primary_merge =
+    LatLonMergeAndRedirectIndices(true,
+                                        true,
+                                        6,
+                                        8,
+                                        6,
+                                        5)
+  primary_merges = MergeAndRedirectIndices[]
+  push!(primary_merges,primary_merge)
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        nothing)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(8,17),flood_index)
+  flood_index +=1
+  primary_merge =
+    LatLonMergeAndRedirectIndices(true,
+                                        true,
+                                        7,
+                                        12,
+                                        5,
+                                        13)
+  primary_merges = MergeAndRedirectIndices[]
+  push!(primary_merges,primary_merge)
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        nothing)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(9,15),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        false,
+                                        16,
+                                        15,
+                                        3,
+                                        3)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(14,19),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        false,
+                                        17,
+                                        3,
+                                        3,
+                                        1)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(16,4),flood_index)
   add_offset(flood_next_cell_lat_index,1,Int64[-1])
   add_offset(flood_next_cell_lon_index,1,Int64[-1])
   add_offset(connect_next_cell_lat_index,1,Int64[-1])
   add_offset(connect_next_cell_lon_index,1,Int64[-1])
-  add_offset(flood_force_merge_lat_index,1,Int64[-1])
-  add_offset(flood_force_merge_lon_index,1,Int64[-1])
-  add_offset(connect_force_merge_lat_index,1,Int64[-1])
-  add_offset(connect_force_merge_lon_index,1,Int64[-1])
-  add_offset(flood_redirect_lat_index,1,Int64[-1])
-  add_offset(flood_redirect_lon_index,1,Int64[-1])
-  add_offset(connect_redirect_lat_index,1,Int64[-1])
-  add_offset(connect_redirect_lon_index,1,Int64[-1])
-  additional_flood_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
-  additional_flood_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
-  additional_connect_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
-  additional_connect_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  add_offset(connect_merge_and_redirect_indices_collections,1)
+  add_offset(flood_merge_and_redirect_indices_collections,1)
   grid_specific_lake_parameters::GridSpecificLakeParameters =
     LatLonLakeParameters(flood_next_cell_lat_index,
                          flood_next_cell_lon_index,
                          connect_next_cell_lat_index,
                          connect_next_cell_lon_index,
-                         flood_force_merge_lat_index,
-                         flood_force_merge_lon_index,
-                         connect_force_merge_lat_index,
-                         connect_force_merge_lon_index,
-                         flood_redirect_lat_index,
-                         flood_redirect_lon_index,
-                         connect_redirect_lat_index,
-                         connect_redirect_lon_index,
-                         additional_flood_redirect_lat_index,
-                         additional_flood_redirect_lon_index,
-                         additional_connect_redirect_lat_index,
-                         additional_connect_redirect_lon_index,
                          corresponding_surface_cell_lat_index,
                          corresponding_surface_cell_lon_index)
   lake_parameters = LakeParameters(lake_centers,
                                    connection_volume_thresholds,
                                    flood_volume_threshold,
-                                   flood_local_redirect,
-                                   connect_local_redirect,
-                                   additional_flood_local_redirect,
-                                   additional_connect_local_redirect,
-                                   merge_points,
+                                   connect_merge_and_redirect_indices_index,
+                                   flood_merge_and_redirect_indices_index,
+                                   connect_merge_and_redirect_indices_collections,
+                                   flood_merge_and_redirect_indices_collections,
                                    cell_areas_on_surface_model_grid,
                                    lake_grid,
                                    grid,
@@ -12463,171 +10428,6 @@ end
               -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1
               -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1
               -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1 ])
-  flood_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,
-    Bool[ false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false  false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false true false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false  true false false  false false #=
-      =#  false false false false
-          false false false false false false  false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false  false #=
-      =#  true false false false
-          false false false false false false false false false false false false false false true false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false  false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false ])
-  connect_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,
-    Bool[ false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false  false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false  false false #=
-      =#  false false false false
-          false false false false false false  false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false  false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false  false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false ])
-  additional_flood_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,false)
-  additional_connect_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,false)
-  merge_points::Field{MergeTypes} = LatLonField{MergeTypes}(lake_grid,
-    MergeTypes[ no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          connection_merge_not_set_flood_merge_as_primary no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype  no_merge_mtype #=
-    =#          no_merge_mtype  no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype connection_merge_not_set_flood_merge_as_primary no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_primary  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype ])
   cell_areas_on_surface_model_grid::Field{Float64} = LatLonField{Float64}(surface_model_grid,
     Float64[ 2.5 3.0 2.5
              3.0 4.0 3.0
@@ -12716,174 +10516,6 @@ end
            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  flood_force_merge_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  6 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  6 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  7 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  flood_force_merge_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  2 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  8 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 12 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  connect_force_merge_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  connect_force_merge_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  flood_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1  1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1  7 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  7 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1  1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  6 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  5 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  3 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1  3 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  flood_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  0 -1 -1 -1 -1
-           -1 -1 -1 -1 -1  3 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 14 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 14 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1  0 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  5 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 13 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  3 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1  1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  connect_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  connect_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
   corresponding_surface_cell_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
                                                     Int64[   1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
                                                              1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
@@ -12927,49 +10559,156 @@ end
                                                              3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
                                                              3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
                                                              3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3  ])
+  flood_index::Int64 = 1
+  connect_merge_and_redirect_indices_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  flood_merge_and_redirect_indices_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  connect_merge_and_redirect_indices_collections::Vector{MergeAndRedirectIndicesCollection} =
+      MergeAndRedirectIndicesCollection[]
+  flood_merge_and_redirect_indices_collections::Vector{MergeAndRedirectIndicesCollection} =
+      MergeAndRedirectIndicesCollection[]
+  primary_merges::Vector{MergeAndRedirectIndices} = MergeAndRedirectIndices[]
+  local primary_merge::MergeAndRedirectIndices
+  local secondary_merge::MergeAndRedirectIndices
+  local collected_indices::MergeAndRedirectIndicesCollection
+  primary_merge =
+    LatLonMergeAndRedirectIndices(true,
+                                        false,
+                                        6,
+                                        2,
+                                        1,
+                                        0)
+  primary_merges = MergeAndRedirectIndices[]
+  push!(primary_merges,primary_merge)
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        nothing)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(3,16),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        false,
+                                        8,
+                                        18,
+                                        1,
+                                        3)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(4,6),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        true,
+                                        6,
+                                        10,
+                                        7,
+                                        14)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(5,8),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        true,
+                                        7,
+                                        14,
+                                        7,
+                                        14)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(6,12),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        false,
+                                        6,
+                                        4,
+                                        1,
+                                        0)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(8,2),flood_index)
+  flood_index +=1
+  primary_merge =
+    LatLonMergeAndRedirectIndices(true,
+                                        true,
+                                        6,
+                                        8,
+                                        6,
+                                        5)
+  primary_merges = MergeAndRedirectIndices[]
+  push!(primary_merges,primary_merge)
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        nothing)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(8,17),flood_index)
+  flood_index +=1
+  primary_merge =
+    LatLonMergeAndRedirectIndices(true,
+                                        true,
+                                        7,
+                                        12,
+                                        5,
+                                        13)
+  primary_merges = MergeAndRedirectIndices[]
+  push!(primary_merges,primary_merge)
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        nothing)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(9,15),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        false,
+                                        16,
+                                        15,
+                                        3,
+                                        3)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(14,19),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        false,
+                                        17,
+                                        3,
+                                        3,
+                                        1)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(16,4),flood_index)
   add_offset(flood_next_cell_lat_index,1,Int64[-1])
   add_offset(flood_next_cell_lon_index,1,Int64[-1])
   add_offset(connect_next_cell_lat_index,1,Int64[-1])
   add_offset(connect_next_cell_lon_index,1,Int64[-1])
-  add_offset(flood_force_merge_lat_index,1,Int64[-1])
-  add_offset(flood_force_merge_lon_index,1,Int64[-1])
-  add_offset(connect_force_merge_lat_index,1,Int64[-1])
-  add_offset(connect_force_merge_lon_index,1,Int64[-1])
-  add_offset(flood_redirect_lat_index,1,Int64[-1])
-  add_offset(flood_redirect_lon_index,1,Int64[-1])
-  add_offset(connect_redirect_lat_index,1,Int64[-1])
-  add_offset(connect_redirect_lon_index,1,Int64[-1])
-  additional_flood_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
-  additional_flood_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
-  additional_connect_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
-  additional_connect_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  add_offset(connect_merge_and_redirect_indices_collections,1)
+  add_offset(flood_merge_and_redirect_indices_collections,1)
   grid_specific_lake_parameters::GridSpecificLakeParameters =
     LatLonLakeParameters(flood_next_cell_lat_index,
                          flood_next_cell_lon_index,
                          connect_next_cell_lat_index,
                          connect_next_cell_lon_index,
-                         flood_force_merge_lat_index,
-                         flood_force_merge_lon_index,
-                         connect_force_merge_lat_index,
-                         connect_force_merge_lon_index,
-                         flood_redirect_lat_index,
-                         flood_redirect_lon_index,
-                         connect_redirect_lat_index,
-                         connect_redirect_lon_index,
-                         additional_flood_redirect_lat_index,
-                         additional_flood_redirect_lon_index,
-                         additional_connect_redirect_lat_index,
-                         additional_connect_redirect_lon_index,
                          corresponding_surface_cell_lat_index,
                          corresponding_surface_cell_lon_index)
   lake_parameters = LakeParameters(lake_centers,
                                    connection_volume_thresholds,
                                    flood_volume_threshold,
-                                   flood_local_redirect,
-                                   connect_local_redirect,
-                                   additional_flood_local_redirect,
-                                   additional_connect_local_redirect,
-                                   merge_points,
+                                   connect_merge_and_redirect_indices_index,
+                                   flood_merge_and_redirect_indices_index,
+                                   connect_merge_and_redirect_indices_collections,
+                                   flood_merge_and_redirect_indices_collections,
                                    cell_areas_on_surface_model_grid,
                                    lake_grid,
                                    grid,
@@ -13259,171 +10998,6 @@ end
               -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1
               -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1
               -1    -1   -1    -1   -1    -1    -1   -1   -1  -1  -1    -1    -1    -1   -1    -1   -1    -1   -1  -1 ])
-  flood_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,
-    Bool[ false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false  false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false true false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false  true false false  false false #=
-      =#  false false false false
-          false false false false false false  false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false  false #=
-      =#  true false false false
-          false false false false false false false false false false false false false false true false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false  false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false ])
-  connect_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,
-    Bool[ false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false  false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false  false false #=
-      =#  false false false false
-          false false false false false false  false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false  false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false  false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false ])
-  additional_flood_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,false)
-  additional_connect_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,false)
-  merge_points::Field{MergeTypes} = LatLonField{MergeTypes}(lake_grid,
-    MergeTypes[ no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          connection_merge_not_set_flood_merge_as_primary no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype  no_merge_mtype #=
-    =#          no_merge_mtype  no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype connection_merge_not_set_flood_merge_as_primary no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_primary  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype  #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype ])
   cell_areas_on_surface_model_grid::Field{Float64} = LatLonField{Float64}(surface_model_grid,
     Float64[ 2.5 3.0 2.5
              3.0 4.0 3.0
@@ -13512,174 +11086,6 @@ end
            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  flood_force_merge_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  6 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  6 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  7 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  flood_force_merge_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  2 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  8 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 12 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  connect_force_merge_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  connect_force_merge_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  flood_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1  1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1  7 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  7 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1  1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  6 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  5 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  3 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1  3 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  flood_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  0 -1 -1 -1 -1
-           -1 -1 -1 -1 -1  3 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 14 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 14 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1  0 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  5 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 13 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  3 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1  1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  connect_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  connect_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
   corresponding_surface_cell_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
                                                     Int64[   1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
                                                              1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
@@ -13722,49 +11128,156 @@ end
                                                              3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
                                                              3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
                                                              3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3  ])
+  flood_index::Int64 = 1
+  connect_merge_and_redirect_indices_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  flood_merge_and_redirect_indices_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  connect_merge_and_redirect_indices_collections::Vector{MergeAndRedirectIndicesCollection} =
+      MergeAndRedirectIndicesCollection[]
+  flood_merge_and_redirect_indices_collections::Vector{MergeAndRedirectIndicesCollection} =
+      MergeAndRedirectIndicesCollection[]
+  primary_merges::Vector{MergeAndRedirectIndices} = MergeAndRedirectIndices[]
+  local primary_merge::MergeAndRedirectIndices
+  local secondary_merge::MergeAndRedirectIndices
+  local collected_indices::MergeAndRedirectIndicesCollection
+  primary_merge =
+    LatLonMergeAndRedirectIndices(true,
+                                        false,
+                                        6,
+                                        2,
+                                        1,
+                                        0)
+  primary_merges = MergeAndRedirectIndices[]
+  push!(primary_merges,primary_merge)
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        nothing)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(3,16),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        false,
+                                        8,
+                                        18,
+                                        1,
+                                        3)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(4,6),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        true,
+                                        6,
+                                        10,
+                                        7,
+                                        14)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(5,8),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        true,
+                                        7,
+                                        14,
+                                        7,
+                                        14)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(6,12),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        false,
+                                        6,
+                                        4,
+                                        1,
+                                        0)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(8,2),flood_index)
+  flood_index +=1
+  primary_merge =
+    LatLonMergeAndRedirectIndices(true,
+                                        true,
+                                        6,
+                                        8,
+                                        6,
+                                        5)
+  primary_merges = MergeAndRedirectIndices[]
+  push!(primary_merges,primary_merge)
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        nothing)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(8,17),flood_index)
+  flood_index +=1
+  primary_merge =
+    LatLonMergeAndRedirectIndices(true,
+                                        true,
+                                        7,
+                                        12,
+                                        5,
+                                        13)
+  primary_merges = MergeAndRedirectIndices[]
+  push!(primary_merges,primary_merge)
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        nothing)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(9,15),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        false,
+                                        16,
+                                        15,
+                                        3,
+                                        3)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(14,19),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        false,
+                                        17,
+                                        3,
+                                        3,
+                                        1)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(16,4),flood_index)
   add_offset(flood_next_cell_lat_index,1,Int64[-1])
   add_offset(flood_next_cell_lon_index,1,Int64[-1])
   add_offset(connect_next_cell_lat_index,1,Int64[-1])
   add_offset(connect_next_cell_lon_index,1,Int64[-1])
-  add_offset(flood_force_merge_lat_index,1,Int64[-1])
-  add_offset(flood_force_merge_lon_index,1,Int64[-1])
-  add_offset(connect_force_merge_lat_index,1,Int64[-1])
-  add_offset(connect_force_merge_lon_index,1,Int64[-1])
-  add_offset(flood_redirect_lat_index,1,Int64[-1])
-  add_offset(flood_redirect_lon_index,1,Int64[-1])
-  add_offset(connect_redirect_lat_index,1,Int64[-1])
-  add_offset(connect_redirect_lon_index,1,Int64[-1])
-  additional_flood_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
-  additional_flood_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
-  additional_connect_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
-  additional_connect_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  add_offset(connect_merge_and_redirect_indices_collections,1)
+  add_offset(flood_merge_and_redirect_indices_collections,1)
   grid_specific_lake_parameters::GridSpecificLakeParameters =
     LatLonLakeParameters(flood_next_cell_lat_index,
                          flood_next_cell_lon_index,
                          connect_next_cell_lat_index,
                          connect_next_cell_lon_index,
-                         flood_force_merge_lat_index,
-                         flood_force_merge_lon_index,
-                         connect_force_merge_lat_index,
-                         connect_force_merge_lon_index,
-                         flood_redirect_lat_index,
-                         flood_redirect_lon_index,
-                         connect_redirect_lat_index,
-                         connect_redirect_lon_index,
-                         additional_flood_redirect_lat_index,
-                         additional_flood_redirect_lon_index,
-                         additional_connect_redirect_lat_index,
-                         additional_connect_redirect_lon_index,
                          corresponding_surface_cell_lat_index,
                          corresponding_surface_cell_lon_index)
   lake_parameters = LakeParameters(lake_centers,
                                    connection_volume_thresholds,
                                    flood_volume_threshold,
-                                   flood_local_redirect,
-                                   connect_local_redirect,
-                                   additional_flood_local_redirect,
-                                   additional_connect_local_redirect,
-                                   merge_points,
+                                   connect_merge_and_redirect_indices_index,
+                                   flood_merge_and_redirect_indices_index,
+                                   connect_merge_and_redirect_indices_collections,
+                                   flood_merge_and_redirect_indices_collections,
                                    cell_areas_on_surface_model_grid,
                                    lake_grid,
                                    grid,
@@ -14168,7 +11681,8 @@ end
   @test isapprox(first_intermediate_expected_lake_fractions,lake_fractions,rtol=0.0,atol=0.00001)
   @test first_intermediate_expected_number_lake_cells == lake_fields.number_lake_cells
   @test first_intermediate_expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
-
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
   @time river_fields,lake_prognostics,lake_fields =
   drive_hd_and_lake_model(river_parameters,lake_parameters,
                           drainages,runoffs,evaporations,
@@ -14214,7 +11728,8 @@ end
   @test isapprox(second_intermediate_expected_lake_fractions,lake_fractions,rtol=0.0,atol=0.00001)
   @test second_intermediate_expected_number_lake_cells == lake_fields.number_lake_cells
   @test second_intermediate_expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
-
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
   @time river_fields,lake_prognostics,lake_fields =
   drive_hd_and_lake_model(river_parameters,lake_parameters,
                           drainages,runoffs,evaporations,
@@ -14355,171 +11870,6 @@ end
              -1.0 574.0 574.0 574.0 574.0 574.0 574.0 574.0 574.0 574.0 574.0 574.0 574.0 574.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0
              -1.0 1459.0 574.0 574.0 574.0 574.0 574.0 574.0 574.0 574.0 574.0 574.0 574.0 574.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0
              -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 ])
-  flood_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,
-    Bool[ false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false  false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false  false false #=
-      =#  false false false false
-          false false false false false false  false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false  false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false  false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false ])
-  connect_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,
-    Bool[ false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false  false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false  false false #=
-      =#  false false false false
-          false false false false false false  false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false  false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false  false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false ])
-  additional_flood_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,false)
-  additional_connect_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,false)
-  merge_points::Field{MergeTypes} = LatLonField{MergeTypes}(lake_grid,
-    MergeTypes[ no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype ])
   cell_areas_on_surface_model_grid::Field{Float64} = LatLonField{Float64}(surface_model_grid,
     Float64[ 2.5 3.0 2.5
              3.0 4.0 3.0
@@ -14608,174 +11958,6 @@ end
            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  flood_force_merge_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  ])
-  flood_force_merge_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  ])
-  connect_force_merge_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  connect_force_merge_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  flood_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 3 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  ])
-  flood_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 3 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1])
-  connect_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  connect_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  ])
   corresponding_surface_cell_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
                                                     Int64[   1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
                                                              1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
@@ -14818,49 +12000,49 @@ end
                                                              1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3
                                                              1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3
                                                              1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3 ])
+  flood_index::Int64 = 1
+  connect_merge_and_redirect_indices_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  flood_merge_and_redirect_indices_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  connect_merge_and_redirect_indices_collections::Vector{MergeAndRedirectIndicesCollection} =
+      MergeAndRedirectIndicesCollection[]
+  flood_merge_and_redirect_indices_collections::Vector{MergeAndRedirectIndicesCollection} =
+      MergeAndRedirectIndicesCollection[]
+  primary_merges::Vector{MergeAndRedirectIndices} = MergeAndRedirectIndices[]
+  local primary_merge::MergeAndRedirectIndices
+  local secondary_merge::MergeAndRedirectIndices
+  local collected_indices::MergeAndRedirectIndicesCollection
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        false,
+                                        15,
+                                        15,
+                                        3,
+                                        3)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(14,18),flood_index)
   add_offset(flood_next_cell_lat_index,1,Int64[-1])
   add_offset(flood_next_cell_lon_index,1,Int64[-1])
   add_offset(connect_next_cell_lat_index,1,Int64[-1])
   add_offset(connect_next_cell_lon_index,1,Int64[-1])
-  add_offset(flood_force_merge_lat_index,1,Int64[-1])
-  add_offset(flood_force_merge_lon_index,1,Int64[-1])
-  add_offset(connect_force_merge_lat_index,1,Int64[-1])
-  add_offset(connect_force_merge_lon_index,1,Int64[-1])
-  add_offset(flood_redirect_lat_index,1,Int64[-1])
-  add_offset(flood_redirect_lon_index,1,Int64[-1])
-  add_offset(connect_redirect_lat_index,1,Int64[-1])
-  add_offset(connect_redirect_lon_index,1,Int64[-1])
-  additional_flood_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
-  additional_flood_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
-  additional_connect_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
-  additional_connect_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  add_offset(connect_merge_and_redirect_indices_collections,1)
+  add_offset(flood_merge_and_redirect_indices_collections,1)
   grid_specific_lake_parameters::GridSpecificLakeParameters =
     LatLonLakeParameters(flood_next_cell_lat_index,
                          flood_next_cell_lon_index,
                          connect_next_cell_lat_index,
                          connect_next_cell_lon_index,
-                         flood_force_merge_lat_index,
-                         flood_force_merge_lon_index,
-                         connect_force_merge_lat_index,
-                         connect_force_merge_lon_index,
-                         flood_redirect_lat_index,
-                         flood_redirect_lon_index,
-                         connect_redirect_lat_index,
-                         connect_redirect_lon_index,
-                         additional_flood_redirect_lat_index,
-                         additional_flood_redirect_lon_index,
-                         additional_connect_redirect_lat_index,
-                         additional_connect_redirect_lon_index,
                          corresponding_surface_cell_lat_index,
                          corresponding_surface_cell_lon_index)
   lake_parameters = LakeParameters(lake_centers,
                                    connection_volume_thresholds,
                                    flood_volume_threshold,
-                                   flood_local_redirect,
-                                   connect_local_redirect,
-                                   additional_flood_local_redirect,
-                                   additional_connect_local_redirect,
-                                   merge_points,
+                                   connect_merge_and_redirect_indices_index,
+                                   flood_merge_and_redirect_indices_index,
+                                   connect_merge_and_redirect_indices_collections,
+                                   flood_merge_and_redirect_indices_collections,
                                    cell_areas_on_surface_model_grid,
                                    lake_grid,
                                    grid,
@@ -15515,7 +12697,8 @@ end
   @test isapprox(first_intermediate_expected_lake_fractions,lake_fractions,rtol=0.0,atol=0.00001)
   @test first_intermediate_expected_number_lake_cells == lake_fields.number_lake_cells
   @test first_intermediate_expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
-
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
   @time river_fields,lake_prognostics,lake_fields =
   drive_hd_and_lake_model(river_parameters,lake_parameters,
                           drainages,runoffs,evaporations,
@@ -15563,7 +12746,8 @@ end
   @test isapprox(second_intermediate_expected_lake_fractions,lake_fractions,rtol=0.0,atol=0.00001)
   @test second_intermediate_expected_number_lake_cells == lake_fields.number_lake_cells
   @test second_intermediate_expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
-
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
   @time river_fields,lake_prognostics,lake_fields =
   drive_hd_and_lake_model(river_parameters,lake_parameters,
                           drainages,runoffs,evaporations,
@@ -15611,7 +12795,8 @@ end
   @test isapprox(third_intermediate_expected_lake_fractions,lake_fractions,rtol=0.0,atol=0.00001)
   @test third_intermediate_expected_number_lake_cells == lake_fields.number_lake_cells
   @test third_intermediate_expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
-
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
   @time river_fields,lake_prognostics,lake_fields =
   drive_hd_and_lake_model(river_parameters,lake_parameters,
                           drainages,runoffs,evaporations,
@@ -15659,7 +12844,8 @@ end
   @test isapprox(fourth_intermediate_expected_lake_fractions,lake_fractions,rtol=0.0,atol=0.00001)
   @test fourth_intermediate_expected_number_lake_cells == lake_fields.number_lake_cells
   @test fourth_intermediate_expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
-
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
   @time river_fields,lake_prognostics,lake_fields =
   drive_hd_and_lake_model(river_parameters,lake_parameters,
                           drainages,runoffs,evaporations,
@@ -15689,7 +12875,8 @@ end
     append!(lake_volumes,get_lake_variables(lake).lake_volume)
   end
   @test isapprox(sixth_intermediate_expected_lake_volumes,lake_volumes,rtol=0.0,atol=0.00001)
-
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
   @time river_fields,lake_prognostics,lake_fields =
   drive_hd_and_lake_model(river_parameters,lake_parameters,
                           drainages,runoffs,evaporations,
@@ -15704,7 +12891,8 @@ end
     append!(lake_volumes,get_lake_variables(lake).lake_volume)
   end
   @test isapprox(seventh_intermediate_expected_lake_volumes,lake_volumes,rtol=0.0,atol=0.00001)
-
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
   @time river_fields,lake_prognostics,lake_fields =
   drive_hd_and_lake_model(river_parameters,lake_parameters,
                           drainages,runoffs,evaporations,
@@ -15719,7 +12907,8 @@ end
     append!(lake_volumes,get_lake_variables(lake).lake_volume)
   end
   @test isapprox(eighth_intermediate_expected_lake_volumes,lake_volumes,rtol=0.0,atol=0.001)
-
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
   @time river_fields,lake_prognostics,lake_fields =
   drive_hd_and_lake_model(river_parameters,lake_parameters,
                           drainages,runoffs,evaporations,
@@ -15734,7 +12923,8 @@ end
     append!(lake_volumes,get_lake_variables(lake).lake_volume)
   end
   @test isapprox(ninth_intermediate_expected_lake_volumes,lake_volumes,rtol=0.0,atol=0.0001)
-
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
   @time river_fields,lake_prognostics,lake_fields =
   drive_hd_and_lake_model(river_parameters,lake_parameters,
                           drainages,runoffs,evaporations,
@@ -15749,7 +12939,8 @@ end
     append!(lake_volumes,get_lake_variables(lake).lake_volume)
   end
   @test isapprox(tenth_intermediate_expected_lake_volumes,lake_volumes,rtol=0.0,atol=0.00001)
-
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
   @time river_fields,lake_prognostics,lake_fields =
   drive_hd_and_lake_model(river_parameters,lake_parameters,
                           drainages,runoffs,evaporations,
@@ -15764,7 +12955,8 @@ end
     append!(lake_volumes,get_lake_variables(lake).lake_volume)
   end
   @test isapprox(eleventh_intermediate_expected_lake_volumes,lake_volumes,rtol=0.0,atol=0.00001)
-
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
   @time river_fields,lake_prognostics,lake_fields =
   drive_hd_and_lake_model(river_parameters,lake_parameters,
                           drainages,runoffs,evaporations,
@@ -15779,7 +12971,8 @@ end
     append!(lake_volumes,get_lake_variables(lake).lake_volume)
   end
   @test isapprox(twelfth_intermediate_expected_lake_volumes,lake_volumes,rtol=0.0,atol=0.00001)
-
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
   @time river_fields,lake_prognostics,lake_fields =
   drive_hd_and_lake_model(river_parameters,lake_parameters,
                           drainages,runoffs,evaporations,
@@ -15794,7 +12987,8 @@ end
     append!(lake_volumes,get_lake_variables(lake).lake_volume)
   end
   @test isapprox(thirteenth_intermediate_expected_lake_volumes,lake_volumes,rtol=0.0,atol=0.00001)
-
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
   @time river_fields,lake_prognostics,lake_fields =
   drive_hd_and_lake_model(river_parameters,lake_parameters,
                           drainages,runoffs,evaporations,
@@ -15936,171 +13130,6 @@ end
              -1.0 574.0 574.0 574.0 574.0 574.0 574.0 574.0 574.0 574.0 574.0 574.0 574.0 574.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0
              -1.0 1459.0 574.0 574.0 574.0 574.0 574.0 574.0 574.0 574.0 574.0 574.0 574.0 574.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0
              -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 ])
-  flood_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,
-    Bool[ false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false  false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false  false false #=
-      =#  false false false false
-          false false false false false false  false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false  false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false  false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false ])
-  connect_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,
-    Bool[ false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false  false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false  false false #=
-      =#  false false false false
-          false false false false false false  false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false  false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false  false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false
-          false false false false false false false false false false false false false false false false #=
-      =#  false false false false ])
-  additional_flood_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,false)
-  additional_connect_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,false)
-  merge_points::Field{MergeTypes} = LatLonField{MergeTypes}(lake_grid,
-    MergeTypes[ no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype #=
-    =#          no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype ])
   cell_areas_on_surface_model_grid::Field{Float64} = LatLonField{Float64}(surface_model_grid,
     Float64[ 2.5 3.0 2.5
              3.0 4.0 3.0
@@ -16189,174 +13218,6 @@ end
            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  flood_force_merge_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  ])
-  flood_force_merge_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  ])
-  connect_force_merge_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  connect_force_merge_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  flood_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 3 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  ])
-  flood_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 3 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1])
-  connect_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  connect_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1  ])
   corresponding_surface_cell_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
                                                     Int64[   1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
                                                              1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
@@ -16399,49 +13260,49 @@ end
                                                              1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3
                                                              1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3
                                                              1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3 ])
+  flood_index::Int64 = 1
+  connect_merge_and_redirect_indices_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  flood_merge_and_redirect_indices_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  connect_merge_and_redirect_indices_collections::Vector{MergeAndRedirectIndicesCollection} =
+      MergeAndRedirectIndicesCollection[]
+  flood_merge_and_redirect_indices_collections::Vector{MergeAndRedirectIndicesCollection} =
+      MergeAndRedirectIndicesCollection[]
+  primary_merges::Vector{MergeAndRedirectIndices} = MergeAndRedirectIndices[]
+  local primary_merge::MergeAndRedirectIndices
+  local secondary_merge::MergeAndRedirectIndices
+  local collected_indices::MergeAndRedirectIndicesCollection
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        false,
+                                        15,
+                                        15,
+                                        3,
+                                        3)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(14,18),flood_index)
   add_offset(flood_next_cell_lat_index,1,Int64[-1])
   add_offset(flood_next_cell_lon_index,1,Int64[-1])
   add_offset(connect_next_cell_lat_index,1,Int64[-1])
   add_offset(connect_next_cell_lon_index,1,Int64[-1])
-  add_offset(flood_force_merge_lat_index,1,Int64[-1])
-  add_offset(flood_force_merge_lon_index,1,Int64[-1])
-  add_offset(connect_force_merge_lat_index,1,Int64[-1])
-  add_offset(connect_force_merge_lon_index,1,Int64[-1])
-  add_offset(flood_redirect_lat_index,1,Int64[-1])
-  add_offset(flood_redirect_lon_index,1,Int64[-1])
-  add_offset(connect_redirect_lat_index,1,Int64[-1])
-  add_offset(connect_redirect_lon_index,1,Int64[-1])
-  additional_flood_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
-  additional_flood_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
-  additional_connect_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
-  additional_connect_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  add_offset(connect_merge_and_redirect_indices_collections,1)
+  add_offset(flood_merge_and_redirect_indices_collections,1)
   grid_specific_lake_parameters::GridSpecificLakeParameters =
     LatLonLakeParameters(flood_next_cell_lat_index,
                          flood_next_cell_lon_index,
                          connect_next_cell_lat_index,
                          connect_next_cell_lon_index,
-                         flood_force_merge_lat_index,
-                         flood_force_merge_lon_index,
-                         connect_force_merge_lat_index,
-                         connect_force_merge_lon_index,
-                         flood_redirect_lat_index,
-                         flood_redirect_lon_index,
-                         connect_redirect_lat_index,
-                         connect_redirect_lon_index,
-                         additional_flood_redirect_lat_index,
-                         additional_flood_redirect_lon_index,
-                         additional_connect_redirect_lat_index,
-                         additional_connect_redirect_lon_index,
                          corresponding_surface_cell_lat_index,
                          corresponding_surface_cell_lon_index)
   lake_parameters = LakeParameters(lake_centers,
                                    connection_volume_thresholds,
                                    flood_volume_threshold,
-                                   flood_local_redirect,
-                                   connect_local_redirect,
-                                   additional_flood_local_redirect,
-                                   additional_connect_local_redirect,
-                                   merge_points,
+                                   connect_merge_and_redirect_indices_index,
+                                   flood_merge_and_redirect_indices_index,
+                                   connect_merge_and_redirect_indices_collections,
+                                   flood_merge_and_redirect_indices_collections,
                                    cell_areas_on_surface_model_grid,
                                    lake_grid,
                                    grid,
@@ -16683,111 +13544,6 @@ end
              -1.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0
              -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0
              -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0])
-  flood_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,
-    Bool[ false false false false false false false false false false false false false false false false false false false false
-          false false false false false true false false false false false false false true false false false false false false
-          false false false false false false false false false false false false false false true false false false false false
-          false false false false false false false false false false false false false false false false false false false false
-          false false false false false false false false false false false false false false false false true false false false
-          false false false false false false false false false false false false false false false false false false false false
-          false false false false false false false false false false false false false false false false false false false false
-          false false false false false false false false false false false false false false false false false false false false
-          false false false false false false false false false false false false false false false false false false false false
-          false false false false false false false false false false false false false false false false false false false false
-          false false false false false false false false false false false false false false false false false false false false
-          false false false false false false false false false false false false false false false false false false false false
-          false true false false false false false false false false false false false false false false true false false false
-          false false false false false false false false false false false false false false false false false false false false
-          false false false false false false false false false false false false false false false false false false false false
-          false false false false false false false false false false false false false false false false false false false false
-          false false false false false false false false false false false false false false false false false false false false
-          false false false false false false false false false false false false false false false false false false false false
-          false false false false false false false false false false false false false false false false false false false false
-          false false false false false false false false false false false false false false false false false false false false])
-  connect_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,
-    Bool[ false false false false false false false false false false false false false false false false false false false false
-          false false false false false false false false false false false false false false false false false false false false
-          false false false false false false false false false false false false false false false false false false false false
-          false false false false false false false false false false false false false false false false false false false false
-          false false false false false false false false false false false false false false false false false false false false
-          false false false false false false false false false false false false false false false false false false false false
-          false false false false false false false false false false false false false false false false false false false false
-          false false false false false false false false false false false false false false false false false false false false
-          false false false false false false false false false false false false false false false false false false false false
-          false false false false false false false false false false false false false false false false false false false false
-          false false false false false false false false false false false false false false false false false false false false
-          false false false false false false false false false false false false false false false false false false false false
-          false false false false false false false false false false false false false false false false false false false false
-          false false false false false false false false false false false false false false false false false false false false
-          false false false false false false false false false false false false false false false false false false false false
-          false false false false false false false false false false false false false false false false false false false false
-          false false false false false false false false false false false false false false false false false false false false
-          false false false false false false false false false false false false false false false false false false false false
-          false false false false false false false false false false false false false false false false false false false false
-          false false false false false false false false false false false false false false false false false false false false ])
-  additional_flood_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,
-  Bool[false false false false false false false false false false false false false false false false false false false false
-       false false false false false false false false false false false false false false false false false false false false
-       false false false false false false false false false false false false false false false false false false false false
-       false false false false false false false false false false false false false false false false false false false false
-       false false false false false false false false false false false false false false false false false false false false
-       false false false false false false false false false false false false false false false false false false false false
-       false false false false false false false false false false false false false false false false false false false false
-       false false false false false false false false false false false false false false false false false false false false
-       false false false false false false false false false false false false false false false false false false false false
-       false false false false false false false false false false false false false false false false false false false false
-       false false false false false false false false false false false false false false false false false false false false
-       false false false false false false false false false false false false false false false false false false false false
-       false false false false false false false false false false false false false false false false false false false false
-       false false false false false false false false false false false false false false false false false false false false
-       false false false false false false false false false false false false false false false false false false false false
-       false false false false false false false false false false false false false false false false false false false false
-       false false false false false false false false false false false false false false false false false false false false
-       false false false false false false false false false false false false false false false false false false false false
-       false false false false false false false false false false false false false false false false false false false false
-       false false false false false false false false false false false false false false false false false false false false ])
-  additional_connect_local_redirect::Field{Bool} = LatLonField{Bool}(lake_grid,
-  Bool[false false false false false false false false false false false false false false false false false false false false
-       false false false false false false false false false false false false false false false false false false false false
-       false false false false false false false false false false false false false false false false false false false false
-       false false false false false false false false false false false false false false false false false false false false
-       false false false false false false false false false false false false false false false false false false false false
-       false false false false false false false false false false false false false false false false false false false false
-       false false false false false false false false false false false false false false false false false false false false
-       false false false false false false false false false false false false false false false false false false false false
-       false false false false false false false false false false false false false false false false false false false false
-       false false false false false false false false false false false false false false false false false false false false
-       false false false false false false false false false false false false false false false false false false false false
-       false false false false false false false false false false false false false false false false false false false false
-       false false false false false false false false false false false false false false false false false false false false
-       false false false false false false false false false false false false false false false false false false false false
-       false false false false false false false false false false false false false false false false false false false false
-       false false false false false false false false false false false false false false false false false false false false
-       false false false false false false false false false false false false false false false false false false false false
-       false false false false false false false false false false false false false false false false false false false false
-       false false false false false false false false false false false false false false false false false false false false
-       false false false false false false false false false false false false false false false false false false false false ])
-  merge_points::Field{MergeTypes} = LatLonField{MergeTypes}(lake_grid,
-    MergeTypes[ no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_primary no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_secondary connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_primary no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_primary no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_primary no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_secondary no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype connection_merge_as_secondary_flood_merge_not_set no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype connection_merge_not_set_flood_merge_as_primary no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype
-                no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype no_merge_mtype ])
   cell_areas_on_surface_model_grid::Field{Float64} = LatLonField{Float64}(surface_model_grid,
     Float64[ 2.5 3.0 2.5
              3.0 4.0 3.0
@@ -16876,174 +13632,6 @@ end
            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1])
-  flood_force_merge_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[-1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 7 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 7 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 2 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  flood_force_merge_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 11 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 16 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 7 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 3 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  connect_force_merge_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[-1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  connect_force_merge_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  flood_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 1 -1 -1 -1 -1 -1 -1 -1 7 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 1 3 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 7 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 0 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 14 -1 -1 -1 -1 -1 -1 -1 -1 -1 0 -1 -1 -1 -1 1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 2 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  flood_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 7 -1 -1 -1 -1 -1 -1 -1 11 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 16 3 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 16 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 1 -1 -1 -1 -1 -1 -1 -1 -1 -1 1 -1 -1 -1 -1 16 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 0 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1])
-  connect_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 3 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  connect_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 3 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
   corresponding_surface_cell_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
                                                     Int64[   1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
                                                              1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
@@ -17086,133 +13674,198 @@ end
                                                              1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3
                                                              1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3
                                                              1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3 ])
-  additional_flood_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[  -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  additional_flood_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[  -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-            -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  additional_connect_redirect_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[-1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-          -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 ])
-  additional_connect_redirect_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
-    Int64[ -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
-           -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1])
+  flood_index::Int64 = 1
+  connect_index::Int64 = 1
+  connect_merge_and_redirect_indices_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  flood_merge_and_redirect_indices_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  connect_merge_and_redirect_indices_collections::Vector{MergeAndRedirectIndicesCollection} =
+      MergeAndRedirectIndicesCollection[]
+  flood_merge_and_redirect_indices_collections::Vector{MergeAndRedirectIndicesCollection} =
+      MergeAndRedirectIndicesCollection[]
+  primary_merges::Vector{MergeAndRedirectIndices} = MergeAndRedirectIndices[]
+  local primary_merge::MergeAndRedirectIndices
+  local secondary_merge::MergeAndRedirectIndices
+  local collected_indices::MergeAndRedirectIndicesCollection
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        true,
+                                        3,
+                                        7,
+                                        1,
+                                        7)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(2,6),flood_index)
+  flood_index +=1
+  primary_merge =
+    LatLonMergeAndRedirectIndices(true,
+                                        true,
+                                        7,
+                                        11,
+                                        7,
+                                        11)
+  primary_merges = MergeAndRedirectIndices[]
+  push!(primary_merges,primary_merge)
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        nothing)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(2,14),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        true,
+                                        3,
+                                        16,
+                                        1,
+                                        16)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(3,15),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        false,
+                                        14,
+                                        19,
+                                        3,
+                                        3)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(3,16),flood_index)
+  flood_index +=1
+  primary_merge =
+    LatLonMergeAndRedirectIndices(true,
+                                        true,
+                                        7,
+                                        16,
+                                        7,
+                                        16)
+  primary_merges = MergeAndRedirectIndices[]
+  push!(primary_merges,primary_merge)
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        nothing)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(5,17),flood_index)
+  flood_index +=1
+  primary_merge =
+    LatLonMergeAndRedirectIndices(true,
+                                        false,
+                                        1,
+                                        7,
+                                        0,
+                                        1)
+  primary_merges = MergeAndRedirectIndices[]
+  push!(primary_merges,primary_merge)
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        nothing)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(6,18),flood_index)
+  flood_index +=1
+  primary_merge =
+    LatLonMergeAndRedirectIndices(true,
+                                        false,
+                                        1,
+                                        3,
+                                        1,
+                                        1)
+  primary_merges = MergeAndRedirectIndices[]
+  push!(primary_merges,primary_merge)
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        nothing)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(7,13),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        true,
+                                        14,
+                                        2,
+                                        14,
+                                        1)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(13,2),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        false,
+                                        5,
+                                        13,
+                                        0,
+                                        1)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(13,12),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        true,
+                                        4,
+                                        18,
+                                        1,
+                                        16)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(13,17),flood_index)
+  flood_index +=1
+  primary_merge =
+    LatLonMergeAndRedirectIndices(true,
+                                        false,
+                                        2,
+                                        1,
+                                        2,
+                                        0)
+  primary_merges = MergeAndRedirectIndices[]
+  push!(primary_merges,primary_merge)
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        nothing)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(16,13),flood_index)
+  flood_index +=1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,
+                                        false,
+                                        18,
+                                        14,
+                                        3,
+                                        3)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(connect_merge_and_redirect_indices_collections,collected_indices)
+  set!(connect_merge_and_redirect_indices_index,LatLonCoords(14,2),connect_index)
   add_offset(flood_next_cell_lat_index,1,Int64[-1])
   add_offset(flood_next_cell_lon_index,1,Int64[-1])
   add_offset(connect_next_cell_lat_index,1,Int64[-1])
   add_offset(connect_next_cell_lon_index,1,Int64[-1])
-  add_offset(flood_force_merge_lat_index,1,Int64[-1])
-  add_offset(flood_force_merge_lon_index,1,Int64[-1])
-  add_offset(connect_force_merge_lat_index,1,Int64[-1])
-  add_offset(connect_force_merge_lon_index,1,Int64[-1])
-  add_offset(flood_redirect_lat_index,1,Int64[-1])
-  add_offset(flood_redirect_lon_index,1,Int64[-1])
-  add_offset(connect_redirect_lat_index,1,Int64[-1])
-  add_offset(connect_redirect_lon_index,1,Int64[-1])
-  add_offset(additional_flood_redirect_lat_index,1,Int64[-1])
-  add_offset(additional_flood_redirect_lon_index,1,Int64[-1])
-  add_offset(additional_connect_redirect_lat_index,1,Int64[-1])
-  add_offset(additional_connect_redirect_lon_index,1,Int64[-1])
+  add_offset(connect_merge_and_redirect_indices_collections,1)
+  add_offset(flood_merge_and_redirect_indices_collections,1)
   grid_specific_lake_parameters::GridSpecificLakeParameters =
     LatLonLakeParameters(flood_next_cell_lat_index,
                          flood_next_cell_lon_index,
                          connect_next_cell_lat_index,
                          connect_next_cell_lon_index,
-                         flood_force_merge_lat_index,
-                         flood_force_merge_lon_index,
-                         connect_force_merge_lat_index,
-                         connect_force_merge_lon_index,
-                         flood_redirect_lat_index,
-                         flood_redirect_lon_index,
-                         connect_redirect_lat_index,
-                         connect_redirect_lon_index,
-                         additional_flood_redirect_lat_index,
-                         additional_flood_redirect_lon_index,
-                         additional_connect_redirect_lat_index,
-                         additional_connect_redirect_lon_index,
                          corresponding_surface_cell_lat_index,
                          corresponding_surface_cell_lon_index)
   lake_parameters = LakeParameters(lake_centers,
                                    connection_volume_thresholds,
                                    flood_volume_threshold,
-                                   flood_local_redirect,
-                                   connect_local_redirect,
-                                   additional_flood_local_redirect,
-                                   additional_connect_local_redirect,
-                                   merge_points,
+                                   connect_merge_and_redirect_indices_index,
+                                   flood_merge_and_redirect_indices_index,
+                                   connect_merge_and_redirect_indices_collections,
+                                   flood_merge_and_redirect_indices_collections,
                                    cell_areas_on_surface_model_grid,
                                    lake_grid,
                                    grid,
@@ -18113,7 +14766,8 @@ end
   @test isapprox(first_intermediate_expected_lake_fractions,lake_fractions,rtol=0.0,atol=0.00001)
   @test first_intermediate_expected_number_lake_cells == lake_fields.number_lake_cells
   @test first_intermediate_expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
-
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
   @time river_fields,lake_prognostics,lake_fields =
   drive_hd_and_lake_model(river_parameters,lake_parameters,
                           drainages,runoffs,evaporations,
@@ -18161,7 +14815,8 @@ end
   @test isapprox(second_intermediate_expected_lake_fractions,lake_fractions,rtol=0.0,atol=0.00001)
   @test second_intermediate_expected_number_lake_cells == lake_fields.number_lake_cells
   @test second_intermediate_expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
-
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
   @time river_fields,lake_prognostics,lake_fields =
   drive_hd_and_lake_model(river_parameters,lake_parameters,
                           drainages,runoffs,evaporations,
@@ -18209,7 +14864,8 @@ end
   @test isapprox(third_intermediate_expected_lake_fractions,lake_fractions,rtol=0.0,atol=0.00001)
   @test third_intermediate_expected_number_lake_cells == lake_fields.number_lake_cells
   @test third_intermediate_expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
-
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
   @time river_fields,lake_prognostics,lake_fields =
   drive_hd_and_lake_model(river_parameters,lake_parameters,
                           drainages,runoffs,evaporations,
@@ -18257,6 +14913,8 @@ end
   @test isapprox(fourth_intermediate_expected_lake_fractions,lake_fractions,rtol=0.0,atol=0.00001)
   @test fourth_intermediate_expected_number_lake_cells == lake_fields.number_lake_cells
   @test fourth_intermediate_expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
   @time river_fields,lake_prognostics,lake_fields =
   drive_hd_and_lake_model(river_parameters,lake_parameters,
                           drainages,runoffs,evaporations,
@@ -18304,7 +14962,8 @@ end
   @test isapprox(fifth_intermediate_expected_lake_fractions,lake_fractions,rtol=0.0,atol=0.00001)
   @test fifth_intermediate_expected_number_lake_cells == lake_fields.number_lake_cells
   @test fifth_intermediate_expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
-
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
   @time river_fields,lake_prognostics,lake_fields =
   drive_hd_and_lake_model(river_parameters,lake_parameters,
                           drainages,runoffs,evaporations,
@@ -18352,7 +15011,8 @@ end
   @test isapprox(sixth_intermediate_expected_lake_fractions,lake_fractions,rtol=0.0,atol=0.00001)
   @test sixth_intermediate_expected_number_lake_cells == lake_fields.number_lake_cells
   @test sixth_intermediate_expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
-
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
   @time river_fields,lake_prognostics,lake_fields =
   drive_hd_and_lake_model(river_parameters,lake_parameters,
                           drainages,runoffs,evaporations,
@@ -18400,7 +15060,8 @@ end
   @test isapprox(seventh_intermediate_expected_lake_fractions,lake_fractions,rtol=0.0,atol=0.00001)
   @test seventh_intermediate_expected_number_lake_cells == lake_fields.number_lake_cells
   @test seventh_intermediate_expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
-
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
   lake_volumes_all_timesteps::Vector{Vector{Float64}} = []
   @time river_fields,lake_prognostics,lake_fields =
   drive_hd_and_lake_model(river_parameters,lake_parameters,

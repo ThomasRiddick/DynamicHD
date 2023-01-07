@@ -291,26 +291,11 @@ function load_lake_parameters(lake_para_filepath::AbstractString,grid::Grid,hd_g
       load_field(file_handle,grid,"connection_volume_thresholds",Float64)
     flood_volume_thresholds::Field{Float64} =
       load_field(file_handle,grid,"flood_volume_thresholds",Float64)
-    flood_local_redirect::Field{Bool} =
-      load_field(file_handle,grid,"flood_local_redirect",Bool)
-    connect_local_redirect::Field{Bool} =
-      load_field(file_handle,grid,"connect_local_redirect",Bool)
-    additional_flood_local_redirect::Field{Bool} =
-      load_field(file_handle,grid,"additional_flood_local_redirect",Bool)
-    additional_connect_local_redirect::Field{Bool} =
-      load_field(file_handle,grid,"additional_connect_local_redirect",Bool)
-    merge_points::Field{MergeTypes} =
-      load_field(file_handle,grid,"merge_points",Int64)
     cell_areas_on_surface_model_grid:Field{Float64} =
       load_field(file_handle,grid,"cell_areas_on_surface_model_grid",Float64)
     return LakeParameters(lake_centers,
                           connection_volume_thresholds,
                           flood_volume_thresholds,
-                          flood_local_redirect,
-                          connect_local_redirect,
-                          additional_flood_local_redirect,
-                          additional_connect_local_redirect,
-                          merge_points,
                           cell_areas_on_surface_model_grid,
                           grid,hd_grid,
                           surface_model_grid,
@@ -336,30 +321,6 @@ function load_grid_specific_lake_parameters(file_handle::NcFile,grid::LatLonGrid
       load_field(file_handle,grid,"connect_next_cell_lat_index",Int64)
   connect_next_cell_lon_index::Field{Int64} =
       load_field(file_handle,grid,"connect_next_cell_lon_index",Int64)
-  flood_force_merge_lat_index::Field{Int64} =
-      load_field(file_handle,grid,"flood_force_merge_lat_index",Int64)
-  flood_force_merge_lon_index::Field{Int64} =
-      load_field(file_handle,grid,"flood_force_merge_lon_index",Int64)
-  connect_force_merge_lat_index::Field{Int64} =
-      load_field(file_handle,grid,"connect_force_merge_lat_index",Int64)
-  connect_force_merge_lon_index::Field{Int64} =
-      load_field(file_handle,grid,"connect_force_merge_lon_index",Int64)
-  flood_redirect_lat_index::Field{Int64} =
-      load_field(file_handle,grid,"flood_redirect_lat_index",Int64)
-  flood_redirect_lon_index::Field{Int64} =
-      load_field(file_handle,grid,"flood_redirect_lon_index",Int64)
-  connect_redirect_lat_index::Field{Int64} =
-      load_field(file_handle,grid,"connect_redirect_lat_index",Int64)
-  connect_redirect_lon_index::Field{Int64} =
-      load_field(file_handle,grid,"connect_redirect_lon_index",Int64)
-  additional_flood_redirect_lat_index::Field{Int64} =
-      load_field(file_handle,grid,"additional_flood_redirect_lat_index",Int64)
-  additional_flood_redirect_lon_index::Field{Int64} =
-      load_field(file_handle,grid,"additional_flood_redirect_lon_index",Int64)
-  additional_connect_redirect_lat_index::Field{Int64} =
-      load_field(file_handle,grid,"additional_connect_redirect_lat_index",Int64)
-  additional_connect_redirect_lon_index::Field{Int64} =
-      load_field(file_handle,grid,"additional_connect_redirect_lon_index",Int64)
   corresponding_surface_cell_lat_index::Field{Int64} =
       load_field(file_handle,surface_model_grid,"corresponding_surface_cell_lat_index",Int64)
   corresponding_surface_cell_lon_index::Field{Int64} =
@@ -368,36 +329,12 @@ function load_grid_specific_lake_parameters(file_handle::NcFile,grid::LatLonGrid
   add_offset(flood_next_cell_lon_index,1,Int64[-1])
   add_offset(connect_next_cell_lat_index,1,Int64[-1])
   add_offset(connect_next_cell_lon_index,1,Int64[-1])
-  add_offset(flood_force_merge_lat_index,1,Int64[-1])
-  add_offset(flood_force_merge_lon_index,1,Int64[-1])
-  add_offset(connect_force_merge_lat_index,1,Int64[-1])
-  add_offset(connect_force_merge_lon_index,1,Int64[-1])
-  add_offset(flood_redirect_lat_index,1,Int64[-1])
-  add_offset(flood_redirect_lon_index,1,Int64[-1])
-  add_offset(connect_redirect_lat_index,1,Int64[-1])
-  add_offset(connect_redirect_lon_index,1,Int64[-1])
-  add_offset(additional_flood_redirect_lat_index,1,Int64[-1])
-  add_offset(additional_flood_redirect_lon_index,1,Int64[-1])
-  add_offset(additional_connect_redirect_lat_index,1,Int64[-1])
-  add_offset(additional_connect_redirect_lon_index,1,Int64[-1])
   add_offset(corresponding_surface_cell_lat_index,1,Int64[-1])
   add_offset(corresponding_surface_cell_lon_index,1,Int64[-1])
   return LatLonLakeParameters(flood_next_cell_lat_index,
                               flood_next_cell_lon_index,
                               connect_next_cell_lat_index,
                               connect_next_cell_lon_index,
-                              flood_force_merge_lat_index,
-                              flood_force_merge_lon_index,
-                              connect_force_merge_lat_index,
-                              connect_force_merge_lon_index,
-                              flood_redirect_lat_index,
-                              flood_redirect_lon_index,
-                              connect_redirect_lat_index,
-                              connect_redirect_lon_index,
-                              additional_flood_redirect_lat_index,
-                              additional_flood_redirect_lon_index,
-                              additional_connect_redirect_lat_index,
-                              additional_connect_redirect_lon_index,
                               corresponding_surface_cell_lat_index,
                               corresponding_surface_cell_lon_index)
 end
@@ -408,28 +345,10 @@ function load_grid_specific_lake_parameters(file_handle::NcFile,grid::Unstructur
       load_field(file_handle,grid,"flood_next_cell_index",Int64)
   connect_next_cell_index::Field{Int64} =
       load_field(file_handle,grid,"connect_next_cell_index",Int64)
-  flood_force_merge_index::Field{Int64} =
-      load_field(file_handle,grid,"flood_force_merge_index",Int64)
-  connect_force_merge_index::Field{Int64} =
-      load_field(file_handle,grid,"connect_force_merge_index",Int64)
-  flood_redirect_index::Field{Int64} =
-      load_field(file_handle,grid,"flood_redirect_index",Int64)
-  connect_redirect_index::Field{Int64} =
-      load_field(file_handle,grid,"connect_redirect_index",Int64)
-  additional_flood_redirect_index::Field{Int64} =
-      load_field(file_handle,grid,"additional_flood_redirect_index",Int64)
-  additional_connect_redirect_index::Field{Int64} =
-      load_field(file_handle,grid,"additional_connect_redirect_index",Int64)
   corresponding_surface_cell_index::Field{Int64} =
       load_field(file_handle,surface_model_grid,"corresponding_surface_cell_index",Int64)
   return UnstructuredLakeParameters(flood_next_cell_index,
                                     connect_next_cell_index,
-                                    flood_force_merge_index,
-                                    connect_force_merge_index,
-                                    flood_redirect_index,
-                                    connect_redirect_index,
-                                    additional_flood_redirect_index,
-                                    additional_connect_redirect_index,
                                     corresponding_surface_cell_index)
 end
 
