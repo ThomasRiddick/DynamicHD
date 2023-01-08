@@ -1485,6 +1485,22 @@ contains
 
     end subroutine latlon_hd_and_lake_model_all_tests
 
+    subroutine latlon_lake_model_tree_all_tests
+    use latlon_lake_model_tree_test_mod
+
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testRootedTrees"
+        call set_unit_name('Test rooted trees')
+        call run_test_case(testRootedTrees,'General tests of rooted trees')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","Rooted Tree Test")
+        else
+            call case_passed_xml("test_something","Rooted Tree Test")
+        end if
+        call teardown
+
+    end subroutine latlon_lake_model_tree_all_tests
+
     subroutine icosohedral_hd_and_lake_model_all_tests
     use icosohedral_hd_and_lake_model_test_mod
 

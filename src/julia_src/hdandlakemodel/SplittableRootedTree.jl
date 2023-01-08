@@ -51,8 +51,7 @@ struct RootedTreeForest
   end
 end
 
-function find_root(target_forest::RootedTreeForest,
-                   target_set::RootedTree)
+function find_root(target_set::RootedTree)
   root::RootedTree = target_set
   while root.root != root
     working_ptr::RootedTree = root.root
@@ -65,13 +64,12 @@ end
 function find_root(target_forest::RootedTreeForest,
                    label_in::Int64)
   x::RootedTree = get_set(target_forest,label_in)
-  root_x::RootedTree = find_root(target_forest,x)
+  root_x::RootedTree = find_root(x)
   return root_x.label::Int64
 end
 
-function link(target_forest::RootedTreeForest,
-              x::RootedTree,y::RootedTree)
-  root_x::RootedTree = find_root(target_forest,x)
+function link(x::RootedTree,y::RootedTree)
+  root_x::RootedTree = find_root(x)
   if y.root != y
     error("rhs set must be tree root when adding link")
   end
@@ -89,16 +87,16 @@ function make_new_link(target_forest::RootedTreeForest,
                        label_y::Int64)
   x::RootedTree = get_set(target_forest,label_x)
   y::RootedTree = get_set(target_forest,label_y)
-  return link(target_forest,x,y)
+  return link(x,y)
 end
 
 function split_set(target_forest::RootedTreeForest,
                    set_label::Int64,
                    subset_to_split_label::Int64)
-  original_root::RootedTree = find_root(target_forest,get_set(target_forest,
-                                                               set_label))
+  original_root::RootedTree = find_root(get_set(target_forest,
+                                                set_label))
   new_subset_root::RootedTree = get_set(target_forest,subset_to_split_label)
-  if find_root(target_forest,new_subset_root) != original_root
+  if find_root(new_subset_root) != original_root
     return false
   end
   set_root(new_subset_root,new_subset_root)
@@ -167,8 +165,7 @@ end
 
 function get_all_node_labels_of_set(target_forest::RootedTreeForest,
                                     label_of_element::Int64)
-  root::RootedTree = find_root(target_forest,
-                                get_set(target_forest,
+  root::RootedTree = find_root(get_set(target_forest,
                                         label_of_element))
   full_node_list::Vector{Int64} = Int64[]
   for_elements_in_set(target_forest,root,

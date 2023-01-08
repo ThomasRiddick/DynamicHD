@@ -13,6 +13,7 @@ call cotat_plus_all_tests
 call loop_breaker_all_tests
 call flow_all_tests
 call latlon_hd_and_lake_model_all_tests
+call latlon_lake_model_tree_all_tests
 call icosohedral_hd_and_lake_model_all_tests
 call map_non_coincident_grids_all_tests
 call accumulate_flow_all_tests

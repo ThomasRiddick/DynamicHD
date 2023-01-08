@@ -7,7 +7,7 @@ using SplittableRootedTree: make_new_link,split_set
 using SplittableRootedTree: get_all_node_labels_of_set
 
 @testset "Root tree tests" begin
-  dsets::RootedTreeForest = RootedTreeForest();
+  dsets::RootedTreeForest = RootedTreeForest()
   add_set(dsets,1)
   add_set(dsets,2)
   add_set(dsets,5)
