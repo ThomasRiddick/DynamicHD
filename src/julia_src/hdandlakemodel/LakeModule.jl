@@ -824,7 +824,8 @@ function handle_event(lake::OverflowingLake,remove_water::RemoveWater)
     merge_indices_collection::MergeAndRedirectIndicesCollection =
       get_merge_indices_collection(lake,merge_indices_index,
                                    is_flood_merge)
-    for merge_indices::MergeAndRedirectIndices in merge_indices_collection
+    for merge_indices::MergeAndRedirectIndices in
+          Iterators.reverse(merge_indices_collection)
       merge_type::MergeTypes = get_merge_type(merge_indices)
       if merge_type == primary_merge
         new_outflow::Float64 = outflow/2.0

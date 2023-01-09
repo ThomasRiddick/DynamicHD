@@ -64,32 +64,17 @@ function read_lake_parameters(instant_throughflow)&
   integer, pointer, dimension(:,:) :: lake_centers_int
   real(dp), pointer, dimension(:,:) :: connection_volume_thresholds
   real(dp), pointer, dimension(:,:) :: flood_volume_thresholds
-  logical, pointer, dimension(:,:) :: flood_local_redirect
-  integer, pointer, dimension(:,:) :: flood_local_redirect_int
-  logical, pointer, dimension(:,:) :: connect_local_redirect
-  integer, pointer, dimension(:,:) :: connect_local_redirect_int
-  logical, pointer, dimension(:,:) :: additional_flood_local_redirect
-  integer, pointer, dimension(:,:) :: additional_flood_local_redirect_int
-  logical, pointer, dimension(:,:) :: additional_connect_local_redirect
-  integer, pointer, dimension(:,:) :: additional_connect_local_redirect_int
-  integer, pointer, dimension(:,:) :: merge_points
   real(dp), pointer, dimension(:,:) :: cell_areas_on_surface_model_grid
   integer, pointer, dimension(:,:) :: flood_next_cell_lat_index
   integer, pointer, dimension(:,:) :: flood_next_cell_lon_index
   integer, pointer, dimension(:,:) :: connect_next_cell_lat_index
   integer, pointer, dimension(:,:) :: connect_next_cell_lon_index
-  integer, pointer, dimension(:,:) :: flood_force_merge_lat_index
-  integer, pointer, dimension(:,:) :: flood_force_merge_lon_index
-  integer, pointer, dimension(:,:) :: connect_force_merge_lat_index
-  integer, pointer, dimension(:,:) :: connect_force_merge_lon_index
-  integer, pointer, dimension(:,:) :: flood_redirect_lat_index
-  integer, pointer, dimension(:,:) :: flood_redirect_lon_index
-  integer, pointer, dimension(:,:) :: connect_redirect_lat_index
-  integer, pointer, dimension(:,:) :: connect_redirect_lon_index
-  integer, pointer, dimension(:,:) :: additional_flood_redirect_lat_index
-  integer, pointer, dimension(:,:) :: additional_flood_redirect_lon_index
-  integer, pointer, dimension(:,:) :: additional_connect_redirect_lat_index
-  integer, pointer, dimension(:,:) :: additional_connect_redirect_lon_index
+  integer, pointer, dimension(:,:) :: connect_merge_and_redirect_indices_index
+  integer, pointer, dimension(:,:) :: flood_merge_and_redirect_indices_index
+  type(mergeandredirectindicescollectionpointer), pointer, dimension(:) :: &
+    connect_merge_and_redirect_indices_collections
+  type(mergeandredirectindicescollectionpointer), pointer, dimension(:) :: &
+    flood_merge_and_redirect_indices_collections
   integer, pointer, dimension(:,:) :: corresponding_surface_cell_lat_index
   integer, pointer, dimension(:,:) :: corresponding_surface_cell_lon_index
   integer, allocatable, dimension(:,:) :: temp_integer_array
@@ -134,26 +119,6 @@ function read_lake_parameters(instant_throughflow)&
     allocate(flood_volume_thresholds(nlat,nlon))
     flood_volume_thresholds = transpose(temp_real_array)
 
-    call check_return_code(nf90_inq_varid(ncid,'flood_local_redirect',varid))
-    call check_return_code(nf90_get_var(ncid, varid,temp_integer_array))
-    allocate(flood_local_redirect_int(nlat,nlon))
-    flood_local_redirect_int = transpose(temp_integer_array)
-
-    call check_return_code(nf90_inq_varid(ncid,'connect_local_redirect',varid))
-    call check_return_code(nf90_get_var(ncid, varid,temp_integer_array))
-    allocate(connect_local_redirect_int(nlat,nlon))
-    connect_local_redirect_int = transpose(temp_integer_array)
-
-    call check_return_code(nf90_inq_varid(ncid,'additional_flood_local_redirect',varid))
-    call check_return_code(nf90_get_var(ncid, varid,temp_integer_array))
-    allocate(additional_flood_local_redirect_int(nlat,nlon))
-    additional_flood_local_redirect_int = transpose(temp_integer_array)
-
-    call check_return_code(nf90_inq_varid(ncid,'additional_connect_local_redirect',varid))
-    call check_return_code(nf90_get_var(ncid, varid,temp_integer_array))
-    allocate(additional_connect_local_redirect_int(nlat,nlon))
-    additional_connect_local_redirect_int = transpose(temp_integer_array)
-
     call check_return_code(nf90_inq_varid(ncid,'flood_next_cell_lat_index',varid))
     call check_return_code(nf90_get_var(ncid, varid,temp_integer_array))
     allocate(flood_next_cell_lat_index(nlat,nlon))
@@ -178,78 +143,6 @@ function read_lake_parameters(instant_throughflow)&
     connect_next_cell_lon_index = transpose(temp_integer_array)
     call add_offset(connect_next_cell_lon_index,1,(/-1/))
 
-    call check_return_code(nf90_inq_varid(ncid,'flood_force_merge_lat_index',varid))
-    call check_return_code(nf90_get_var(ncid, varid,temp_integer_array))
-    allocate(flood_force_merge_lat_index(nlat,nlon))
-    flood_force_merge_lat_index = transpose(temp_integer_array)
-    call add_offset(flood_force_merge_lat_index,1,(/-1/))
-
-    call check_return_code(nf90_inq_varid(ncid,'flood_force_merge_lon_index',varid))
-    call check_return_code(nf90_get_var(ncid, varid,temp_integer_array))
-    allocate(flood_force_merge_lon_index(nlat,nlon))
-    flood_force_merge_lon_index = transpose(temp_integer_array)
-    call add_offset(flood_force_merge_lon_index,1,(/-1/))
-
-    call check_return_code(nf90_inq_varid(ncid,'connect_force_merge_lat_index',varid))
-    call check_return_code(nf90_get_var(ncid, varid,temp_integer_array))
-    allocate(connect_force_merge_lat_index(nlat,nlon))
-    connect_force_merge_lat_index = transpose(temp_integer_array)
-    call add_offset(connect_force_merge_lat_index,1,(/-1/))
-
-    call check_return_code(nf90_inq_varid(ncid,'connect_force_merge_lon_index',varid))
-    call check_return_code(nf90_get_var(ncid, varid,temp_integer_array))
-    allocate(connect_force_merge_lon_index(nlat,nlon))
-    connect_force_merge_lon_index = transpose(temp_integer_array)
-    call add_offset(connect_force_merge_lon_index,1,(/-1/))
-
-    call check_return_code(nf90_inq_varid(ncid,'flood_redirect_lat_index',varid))
-    call check_return_code(nf90_get_var(ncid, varid,temp_integer_array))
-    allocate(flood_redirect_lat_index(nlat,nlon))
-    flood_redirect_lat_index = transpose(temp_integer_array)
-    call add_offset(flood_redirect_lat_index,1,(/-1/))
-
-    call check_return_code(nf90_inq_varid(ncid,'flood_redirect_lon_index',varid))
-    call check_return_code(nf90_get_var(ncid, varid,temp_integer_array))
-    allocate(flood_redirect_lon_index(nlat,nlon))
-    flood_redirect_lon_index = transpose(temp_integer_array)
-    call add_offset(flood_redirect_lon_index,1,(/-1/))
-
-    call check_return_code(nf90_inq_varid(ncid,'connect_redirect_lat_index',varid))
-    call check_return_code(nf90_get_var(ncid, varid,temp_integer_array))
-    allocate(connect_redirect_lat_index(nlat,nlon))
-    connect_redirect_lat_index = transpose(temp_integer_array)
-    call add_offset(connect_redirect_lat_index,1,(/-1/))
-
-    call check_return_code(nf90_inq_varid(ncid,'connect_redirect_lon_index',varid))
-    call check_return_code(nf90_get_var(ncid, varid,temp_integer_array))
-    allocate(connect_redirect_lon_index(nlat,nlon))
-    connect_redirect_lon_index = transpose(temp_integer_array)
-    call add_offset(connect_redirect_lon_index,1,(/-1/))
-
-    call check_return_code(nf90_inq_varid(ncid,'additional_flood_redirect_lat_index',varid))
-    call check_return_code(nf90_get_var(ncid, varid,temp_integer_array))
-    allocate(additional_flood_redirect_lat_index(nlat,nlon))
-    additional_flood_redirect_lat_index = transpose(temp_integer_array)
-    call add_offset(additional_flood_redirect_lat_index,1,(/-1/))
-
-    call check_return_code(nf90_inq_varid(ncid,'additional_flood_redirect_lon_index',varid))
-    call check_return_code(nf90_get_var(ncid, varid,temp_integer_array))
-    allocate(additional_flood_redirect_lon_index(nlat,nlon))
-    additional_flood_redirect_lon_index  = transpose(temp_integer_array)
-    call add_offset(additional_flood_redirect_lon_index,1,(/-1/))
-
-    call check_return_code(nf90_inq_varid(ncid,'additional_connect_redirect_lat_index',varid))
-    call check_return_code(nf90_get_var(ncid, varid,temp_integer_array))
-    allocate(additional_connect_redirect_lat_index(nlat,nlon))
-    additional_connect_redirect_lat_index = transpose(temp_integer_array)
-    call add_offset(additional_connect_redirect_lat_index,1,(/-1/))
-
-    call check_return_code(nf90_inq_varid(ncid,'additional_connect_redirect_lon_index',varid))
-    call check_return_code(nf90_get_var(ncid, varid,temp_integer_array))
-    allocate(additional_connect_redirect_lon_index(nlat,nlon))
-    additional_connect_redirect_lon_index  = transpose(temp_integer_array)
-    call add_offset(additional_connect_redirect_lon_index,1,(/-1/))
-
     call check_return_code(nf90_inq_varid(ncid,'corresponding_surface_cell_lat_index',varid))
     call check_return_code(nf90_get_var(ncid, varid,temp_integer_array))
     allocate(corresponding_surface_cell_lat_index(nlat,nlon))
@@ -259,11 +152,6 @@ function read_lake_parameters(instant_throughflow)&
     call check_return_code(nf90_get_var(ncid, varid,temp_integer_array))
     allocate(corresponding_surface_cell_lon_index(nlat,nlon))
     corresponding_surface_cell_lon_index  = transpose(temp_integer_array)
-
-    call check_return_code(nf90_inq_varid(ncid,'merge_points',varid))
-    call check_return_code(nf90_get_var(ncid, varid,temp_integer_array))
-    allocate(merge_points(nlat,nlon))
-    merge_points  = transpose(temp_integer_array)
 
     call check_return_code(nf90_inq_varid(ncid,'cell_areas_on_surface_model_grid',varid))
     call check_return_code(nf90_get_var(ncid, varid,temp_real_array_surface))
@@ -279,63 +167,19 @@ function read_lake_parameters(instant_throughflow)&
       lake_centers = .true.
     end where
 
-    allocate(flood_local_redirect(nlat,nlon))
-    where (flood_local_redirect_int == 0)
-      flood_local_redirect = .false.
-    elsewhere
-      flood_local_redirect = .true.
-    end where
-
-    allocate(connect_local_redirect(nlat,nlon))
-    where (connect_local_redirect_int == 0)
-      connect_local_redirect = .false.
-    elsewhere
-      connect_local_redirect = .true.
-    end where
-
-    allocate(additional_flood_local_redirect(nlat,nlon))
-    where (additional_flood_local_redirect_int == 0)
-      additional_flood_local_redirect = .false.
-    elsewhere
-      additional_flood_local_redirect = .true.
-    end where
-
-    allocate(additional_connect_local_redirect(nlat,nlon))
-    where (additional_connect_local_redirect_int == 0)
-      additional_connect_local_redirect = .false.
-    elsewhere
-      additional_connect_local_redirect = .true.
-    end where
     deallocate(lake_centers_int)
-    deallocate(flood_local_redirect_int)
-    deallocate(connect_local_redirect_int)
-    deallocate(additional_flood_local_redirect_int)
-    deallocate(additional_connect_local_redirect_int)
     lake_parameters => lakeparameters(lake_centers, &
                                       connection_volume_thresholds, &
                                       flood_volume_thresholds, &
-                                      flood_local_redirect, &
-                                      connect_local_redirect, &
-                                      additional_flood_local_redirect, &
-                                      additional_connect_local_redirect, &
-                                      merge_points, &
                                       cell_areas_on_surface_model_grid, &
                                       flood_next_cell_lat_index, &
                                       flood_next_cell_lon_index, &
                                       connect_next_cell_lat_index, &
                                       connect_next_cell_lon_index, &
-                                      flood_force_merge_lat_index, &
-                                      flood_force_merge_lon_index, &
-                                      connect_force_merge_lat_index, &
-                                      connect_force_merge_lon_index, &
-                                      flood_redirect_lat_index, &
-                                      flood_redirect_lon_index, &
-                                      connect_redirect_lat_index, &
-                                      connect_redirect_lon_index, &
-                                      additional_flood_redirect_lat_index, &
-                                      additional_flood_redirect_lon_index, &
-                                      additional_connect_redirect_lat_index, &
-                                      additional_connect_redirect_lon_index, &
+                                      connect_merge_and_redirect_indices_index, &
+                                      flood_merge_and_redirect_indices_index, &
+                                      connect_merge_and_redirect_indices_collections, &
+                                      flood_merge_and_redirect_indices_collections, &
                                       corresponding_surface_cell_lat_index, &
                                       corresponding_surface_cell_lon_index, &
                                       nlat,nlon, &
