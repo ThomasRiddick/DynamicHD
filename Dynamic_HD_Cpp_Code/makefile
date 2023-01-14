@@ -6,7 +6,7 @@ FLAGS := -DPROCESSED_CELL_COUNTER  -DDARWIN -g  -fsanitize=address
 NETCDFC :=  /usr/local/Cellar/netcdf/4.9.0
 NETCDFCXX :=  /Users/thomasriddick/anaconda3/pkgs/netcdf-cxx4-4.3.0-h703b707_9
 INCLUDE := -isystem"$(NETCDFCXX)/include" -isystem"$(NETCDFC)/include"
-else ifeq ($(shell hostname -d),atos.local)
+else ifeq ($(shell hostname -d),lvt.dkrz.de)
 STDLIB_OPT :=
 FLAGS :=-pthread -DUSE_NETCDFCPP
 INCLUDE := -isystem"$(NETCDFCXX)/include" -isystem"$(NETCDFC)/include"

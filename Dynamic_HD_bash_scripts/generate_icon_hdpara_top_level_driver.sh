@@ -7,7 +7,7 @@ echo "Running Version 1.3 of the ICON HD Parameters Generation Code"
 function load_module
 {
 module_name=$1
-if [[ $(hostname -d) == "atos.local" ]]; then
+if [[ $(hostname -d) == "lvt.dkrz.de" ]]; then
 	module load ${module_name}
 else
 	eval "eval `/usr/bin/tclsh /sw/share/Modules-4.2.1/libexec/modulecmd.tcl bash load ${module_name}`"
@@ -191,6 +191,16 @@ if ! [[ -e $python_config_filepath ]]; then
 fi
 
 shopt -s nocasematch
+no_env_gen=${no_env_gen:-"false"}
+if [[ $no_env_gen == "true" ]] || [[ $no_env_gen == "t" ]]; then
+        no_env_gen=true
+elif [[ $no_env_gen == "false" ]] || [[ $no_env_gen == "f" ]]; then
+        no_env_gen=false
+else
+        echo "Format of no_env_gen flag (${no_env_gen}) is unknown, please use True/False or T/F" 1>&2
+        exit 1
+fi
+
 no_conda=${no_conda:-"false"}
 if [[ ${no_conda} == "true" ]] || [[ $no_conda == "t" ]]; then
 	no_conda=true
@@ -227,7 +237,7 @@ cd ${working_directory}
 #Setup conda environment
 echo "Setting up environment"
 if ! $no_modules ; then
-  if [[ $(hostname -d) == "atos.local" ]]; then
+  if [[ $(hostname -d) == "lvt.dkrz.de" ]]; then
     		source /etc/profile
     		unload_module netcdf_c
       	unload_module imagemagick
@@ -245,26 +255,28 @@ export LD_LIBRARY_PATH="${HOME}/sw-spack/netcdf-cxx4-4.3.1-d54zya/lib":"${HOME}/
 export DYLD_LIBRARY_PATH=$LD_LIBRARY_PATH:$DYLD_LIBRARY_PATH
 
 if ! $no_modules && ! $no_conda ; then
-	if [[ $(hostname -d) == "atos.local" ]]; then
+	if [[ $(hostname -d) == "lvt.dkrz.de" ]]; then
     load_module python3
 	else
 		load_module anaconda3
 	fi
 fi
 
+if ! $no_conda && ! $no_env_gen ; then
+  if $compilation_required && conda info -e | grep -q "dyhdenv3"; then
+    conda env remove --yes --name dyhdenv3
+  fi
+  if ! conda info -e | grep -q "dyhdenv3"; then
+    ${source_directory}/Dynamic_HD_bash_scripts/regenerate_conda_environment.sh $no_modules
+  fi
+fi
 if ! $no_conda ; then
-	if $compilation_required && conda info -e | grep -q "dyhdenv3"; then
-		conda env remove --yes --name dyhdenv3
-	fi
-	if ! conda info -e | grep -q "dyhdenv3"; then
-		${source_directory}/Dynamic_HD_bash_scripts/regenerate_conda_environment.sh $no_modules
-	fi
-	source activate dyhdenv3
+  source activate dyhdenv3
 fi
 
 #Load a new version of gcc that doesn't have the polymorphic variable bug
 if ! $no_modules ; then
-  if [[ $(hostname -d) == "atos.local" ]]; then
+  if [[ $(hostname -d) == "lvt.dkrz.de" ]]; then
     load_module gcc/11.2.0-gcc-11.2.0
 	else
 		load_module gcc/6.3.0

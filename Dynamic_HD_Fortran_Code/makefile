@@ -21,7 +21,7 @@ endif
 ifeq ($(USE_MPI),True)
 FLAGS := -DUSE_MPI -m64
 endif
-else ifeq ($(shell hostname -d),atos.local)
+else ifeq ($(shell hostname -d),lvt.dkrz.de)
 ifeq ($(USE_MPI),True)
 GFORTRAN := $(shell which mpifort)
 else
