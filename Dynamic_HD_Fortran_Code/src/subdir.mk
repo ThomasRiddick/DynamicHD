@@ -143,6 +143,7 @@ LATLON_LAKE_NUMBER_RETRIEVAL_OBJS += \
 ./src/base/check_return_code_netcdf_mod.o \
 ./src/latlon_hd_and_lake_model/latlon_lake_logger_mod.o \
 ./src/latlon_hd_and_lake_model/latlon_lake_model_mod.o \
+./src/latlon_hd_and_lake_model/latlon_lake_model_tree_mod.o \
 ./src/latlon_hd_and_lake_model/latlon_lake_model_interface_mod.o \
 ./src/latlon_hd_and_lake_model/latlon_lake_model_io_mod.o \
 ./src/latlon_hd_and_lake_model/latlon_lake_model_retrieve_lake_numbers.o \
@@ -411,11 +412,11 @@ src/latlon_hd_and_lake_model/latlon_hd_model_driver.o: ../src/latlon_hd_and_lake
 
 src/latlon_hd_and_lake_model/latlon_hd_model_io_mod.o: ../src/latlon_hd_and_lake_model/latlon_hd_model_io_mod.f90 src/latlon_hd_and_lake_model/latlon_hd_model_mod.o
 
-src/latlon_hd_and_lake_model/atlon_lake_logger_mod.o: ../src/latlon_hd_and_lake_model/latlon_lake_logger_mod.f90
-
-src/latlon_hd_and_lake_model/latlon_lake_model_mod.o: ../src/latlon_hd_and_lake_model/latlon_lake_model_mod.f90 src/latlon_hd_and_lake_model/latlon_lake_logger_mod.o
+src/latlon_hd_and_lake_model/latlon_lake_logger_mod.o: ../src/latlon_hd_and_lake_model/latlon_lake_logger_mod.f90
 
 src/latlon_hd_and_lake_model/latlon_lake_model_tree_mod.o: ../src/latlon_hd_and_lake_model/latlon_lake_model_tree_mod.f90
+
+src/latlon_hd_and_lake_model/latlon_lake_model_mod.o: ../src/latlon_hd_and_lake_model/latlon_lake_model_mod.f90 src/latlon_hd_and_lake_model/latlon_lake_logger_mod.o src/latlon_hd_and_lake_model/latlon_lake_model_tree_mod.o
 
 ifeq ($(COMPILE_TRANSPOSED_LAKE_MODEL),True)
 src/latlon_hd_and_lake_model/latlon_lake_model_interface_switched_mod.o: ${TRANSPOSED_SOURCE_CODE_LOC}/latlon_lake_model_interface_switched_mod.f90 src/latlon_hd_and_lake_model/latlon_lake_model_switched_mod.o src/latlon_hd_and_lake_model/latlon_lake_model_io_mod.o src/latlon_hd_and_lake_model/latlon_lake_model_init_switched_mod.o

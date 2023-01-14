@@ -408,6 +408,7 @@ contains
           constructor%first_element => null()
           constructor%last_element => null()
           constructor%iterator_position => null()
+          constructor%length = 0
   end function doubly_linked_list_constructor
 
   function find_root(target_set) result(root)

@@ -37,10 +37,15 @@ type :: mergeandredirectindices
   contains
     procedure :: initialisemergeandredirectindices
     procedure :: add_offset_to_merge_indices
+    procedure :: reset_merge_indices
     procedure :: get_merge_type
     procedure :: get_merge_target_coords
     procedure :: get_outflow_redirect_coords
 end type mergeandredirectindices
+
+interface mergeandredirectindices
+  procedure :: mergeandredirectindicesconstructor
+end interface mergeandredirectindices
 
 type :: mergeandredirectindicespointer
   type(mergeandredirectindices), pointer :: ptr
@@ -55,8 +60,14 @@ type :: mergeandredirectindicescollection
   type(mergeandredirectindices), pointer :: secondary_merge_and_redirect_indices
   contains
     procedure :: initialisemergeandredirectindicescollection
+    procedure :: mergeandredirectindicescollectiondestructor
     procedure :: add_offset_to_collection
+    procedure :: reset_collection
 end type mergeandredirectindicescollection
+
+interface mergeandredirectindicescollection
+  procedure :: mergeandredirectindicescollectionconstructor
+end interface mergeandredirectindicescollection
 
 type :: mergeandredirectindicescollectionpointer
   type(mergeandredirectindicescollection), pointer :: ptr
@@ -275,6 +286,11 @@ subroutine add_offset_to_merge_indices(this,offset)
     this%redirect_lon_index = this%redirect_lon_index + offset
 end subroutine add_offset_to_merge_indices
 
+subroutine reset_merge_indices(this)
+  class(mergeandredirectindices) :: this
+    this%merged = .false.
+end subroutine reset_merge_indices
+
 subroutine add_offset_to_collection(this,offset)
   class(mergeandredirectindicescollection) :: this
   class(mergeandredirectindices), pointer :: working_merge_and_redirect_indices
@@ -292,6 +308,22 @@ subroutine add_offset_to_collection(this,offset)
     end if
 end subroutine add_offset_to_collection
 
+subroutine reset_collection(this)
+  class(mergeandredirectindicescollection) :: this
+  class(mergeandredirectindices), pointer :: working_merge_and_redirect_indices
+  integer :: i
+    if(this%primary_merge) then
+      do i = 1,this%primary_merge_and_redirect_indices_count
+        working_merge_and_redirect_indices => &
+          this%primary_merge_and_redirect_indices(i)%ptr
+        call working_merge_and_redirect_indices%reset_merge_indices()
+      end do
+    end if
+    if(this%secondary_merge) then
+      call this%secondary_merge_and_redirect_indices%reset_merge_indices()
+    end if
+end subroutine reset_collection
+
 subroutine initialisemergeandredirectindicescollection(this, &
                                                        primary_merge_and_redirect_indices_in, &
                                                        secondary_merge_and_redirect_indices_in)
@@ -301,8 +333,13 @@ subroutine initialisemergeandredirectindicescollection(this, &
   type(mergeandredirectindices), pointer :: secondary_merge_and_redirect_indices_in
     this%primary_merge_and_redirect_indices => primary_merge_and_redirect_indices_in
     this%secondary_merge_and_redirect_indices => secondary_merge_and_redirect_indices_in
-    this%primary_merge_and_redirect_indices_count = size(this%primary_merge_and_redirect_indices)
-    this%primary_merge = (this%primary_merge_and_redirect_indices_count > 0)
+    if (associated(this%primary_merge_and_redirect_indices)) then
+      this%primary_merge_and_redirect_indices_count = size(this%primary_merge_and_redirect_indices)
+      this%primary_merge = (this%primary_merge_and_redirect_indices_count > 0)
+    else
+      this%primary_merge_and_redirect_indices_count = 0
+      this%primary_merge = .false.
+    end if
     this%secondary_merge = associated(this%secondary_merge_and_redirect_indices)
 end subroutine initialisemergeandredirectindicescollection
 
@@ -317,6 +354,22 @@ function mergeandredirectindicescollectionconstructor(primary_merge_and_redirect
     call constructor%initialisemergeandredirectindicescollection(primary_merge_and_redirect_indices_in, &
                                                                  secondary_merge_and_redirect_indices_in)
 end function mergeandredirectindicescollectionconstructor
+
+subroutine mergeandredirectindicescollectiondestructor(this)
+  class(mergeandredirectindicescollection) :: this
+  type(mergeandredirectindices), pointer :: working_merge_and_redirect_indices
+  integer :: i
+    if(this%primary_merge) then
+      do i = 1,this%primary_merge_and_redirect_indices_count
+        working_merge_and_redirect_indices => &
+          this%primary_merge_and_redirect_indices(i)%ptr
+        deallocate(working_merge_and_redirect_indices)
+      end do
+    end if
+    if(this%secondary_merge) then
+      deallocate(this%secondary_merge_and_redirect_indices)
+    end if
+end subroutine mergeandredirectindicescollectiondestructor
 
 subroutine initialiselake(this,center_cell_lat_in,center_cell_lon_in, &
                           current_cell_to_fill_lat_in, &
@@ -684,6 +737,7 @@ end function lakeparametersconstructor
 
 subroutine lakeparametersdestructor(this)
   class(lakeparameters),intent(inout) :: this
+  type(mergeandredirectindicescollection), pointer :: collected_indices
   integer :: i
     deallocate(this%flood_only)
     deallocate(this%basin_numbers)
@@ -696,6 +750,18 @@ subroutine lakeparametersdestructor(this)
       deallocate(this%surface_cell_to_fine_cell_maps(i)%lat_coords)
       deallocate(this%surface_cell_to_fine_cell_maps(i)%lon_coords)
     end do
+    if (associated(this%flood_merge_and_redirect_indices_collections)) then
+      do i = 1,size(this%flood_merge_and_redirect_indices_collections)
+          collected_indices => this%flood_merge_and_redirect_indices_collections(i)%ptr
+          call collected_indices%mergeandredirectindicescollectiondestructor()
+      end do
+    end if
+    if (associated(this%connect_merge_and_redirect_indices_collections)) then
+      do i = 1,size(this%connect_merge_and_redirect_indices_collections)
+          collected_indices => this%connect_merge_and_redirect_indices_collections(i)%ptr
+          call collected_indices%mergeandredirectindicescollectiondestructor()
+      end do
+    end if
     deallocate(this%surface_cell_to_fine_cell_maps)
     deallocate(this%lake_centers)
     deallocate(this%connection_volume_thresholds)
@@ -842,8 +908,8 @@ subroutine initialiselakeprognostics(this,lake_parameters_in,lake_fields_in)
             lake_parameters_in%nlon/lake_parameters_in%nlon_coarse
           center_cell_coarse_lat = ceiling(real(i)/real(fine_cells_per_coarse_cell_lat));
           center_cell_coarse_lon = ceiling(real(j)/real(fine_cells_per_coarse_cell_lon));
-          call lake_fields_in%set_forest%add_set(lake_number)
           lake_number = lake_number + 1
+          call lake_fields_in%set_forest%add_set(lake_number)
           lake_temp => lake(lake_parameters_in,lake_fields_in,&
                              i,j,i,j,center_cell_coarse_lat, &
                              center_cell_coarse_lon, &
@@ -1282,8 +1348,12 @@ recursive subroutine add_water(this,inflow)
                 merge_indices => &
                   merge_indices_collection%primary_merge_and_redirect_indices(i)%ptr
               else
-                merge_indices => &
-                  merge_indices_collection%secondary_merge_and_redirect_indices
+                if (merge_indices_collection%secondary_merge) then
+                  merge_indices => &
+                    merge_indices_collection%secondary_merge_and_redirect_indices
+                else
+                  exit
+                end if
               end if
               merge_possible = &
                 this%check_if_merge_is_possible(merge_indices,already_merged,merge_type)
@@ -1360,18 +1430,23 @@ subroutine remove_water(this,outflow)
       do while (outflow_local > 0.0_dp)
         outflow_local = this%drain_current_cell(outflow_local,drained)
         if (drained) then
+        call this%rollback_filling_cell()
           merge_indices_index = this%get_merge_indices_index(is_flood_merge)
           if (merge_indices_index /= 0) then
             merge_indices_collection => &
               this%get_merge_indices_collection(merge_indices_index, &
                                                 is_flood_merge)
-            do i = merge_indices_collection%primary_merge_and_redirect_indices_count,0,-1
-              if (i > 0) then
+            do i = merge_indices_collection%primary_merge_and_redirect_indices_count+1,1,-1
+              if (i <= merge_indices_collection%primary_merge_and_redirect_indices_count) then
                 merge_indices => &
                   merge_indices_collection%primary_merge_and_redirect_indices(i)%ptr
               else
-                merge_indices => &
-                  merge_indices_collection%secondary_merge_and_redirect_indices
+                if(merge_indices_collection%secondary_merge) then
+                  merge_indices => &
+                    merge_indices_collection%secondary_merge_and_redirect_indices
+                else
+                  cycle
+                end if
               end if
               merge_type = merge_indices%get_merge_type()
               if (merge_type == primary_merge_mtype) then
@@ -1417,13 +1492,17 @@ subroutine remove_water(this,outflow)
         merge_indices_collection => &
           this%get_merge_indices_collection(merge_indices_index, &
                                             is_flood_merge)
-        do i = merge_indices_collection%primary_merge_and_redirect_indices_count,0,-1
-          if (i > 0) then
+        do i = merge_indices_collection%primary_merge_and_redirect_indices_count+1,1,-1
+          if (i <= merge_indices_collection%primary_merge_and_redirect_indices_count) then
             merge_indices => &
               merge_indices_collection%primary_merge_and_redirect_indices(i)%ptr
           else
-            merge_indices => &
-              merge_indices_collection%secondary_merge_and_redirect_indices
+            if(merge_indices_collection%secondary_merge) then
+              merge_indices => &
+                merge_indices_collection%secondary_merge_and_redirect_indices
+            else
+              cycle
+            end if
           end if
           merge_type = merge_indices%get_merge_type()
           if (merge_type == primary_merge_mtype) then
@@ -1433,8 +1512,10 @@ subroutine remove_water(this,outflow)
               outflow_local = outflow_local - new_outflow
             end if
           else if (merge_type == secondary_merge_mtype) then
-            write(*,*) "Merge logic failure"
-            stop
+            if(merge_indices%merged) then
+              write(*,*) "Merge logic failure"
+              stop
+            end if
           end if
         end do
       end if

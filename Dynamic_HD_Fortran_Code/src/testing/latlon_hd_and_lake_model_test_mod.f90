@@ -128,28 +128,11 @@ subroutine testLakeModel1
    logical,dimension(:,:), pointer :: lake_centers
    real(dp),dimension(:,:), pointer :: connection_volume_thresholds
    real(dp),dimension(:,:), pointer :: flood_volume_thresholds
-   logical,dimension(:,:), pointer :: flood_local_redirect
-   logical,dimension(:,:), pointer :: connect_local_redirect
-   logical,dimension(:,:), pointer :: additional_flood_local_redirect
-   logical,dimension(:,:), pointer :: additional_connect_local_redirect
-   integer,dimension(:,:), pointer :: merge_points
    real(dp),dimension(:,:),pointer :: cell_areas_on_surface_model_grid
    integer,dimension(:,:), pointer :: flood_next_cell_lat_index
    integer,dimension(:,:), pointer :: flood_next_cell_lon_index
    integer,dimension(:,:), pointer :: connect_next_cell_lat_index
    integer,dimension(:,:), pointer :: connect_next_cell_lon_index
-   integer,dimension(:,:), pointer :: flood_force_merge_lat_index
-   integer,dimension(:,:), pointer :: flood_force_merge_lon_index
-   integer,dimension(:,:), pointer :: connect_force_merge_lat_index
-   integer,dimension(:,:), pointer :: connect_force_merge_lon_index
-   integer,dimension(:,:), pointer :: flood_redirect_lat_index
-   integer,dimension(:,:), pointer :: flood_redirect_lon_index
-   integer,dimension(:,:), pointer :: connect_redirect_lat_index
-   integer,dimension(:,:), pointer :: connect_redirect_lon_index
-   integer,dimension(:,:), pointer :: additional_flood_redirect_lat_index
-   integer,dimension(:,:), pointer :: additional_flood_redirect_lon_index
-   integer,dimension(:,:), pointer :: additional_connect_redirect_lat_index
-   integer,dimension(:,:), pointer :: additional_connect_redirect_lon_index
    integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
    integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
    real(dp),dimension(:,:), pointer :: drainage
@@ -169,10 +152,18 @@ subroutine testLakeModel1
    integer , dimension(:,:), pointer :: expected_number_lake_cells
    integer , dimension(:,:), pointer :: expected_number_fine_grid_cells
    integer,dimension(:,:), pointer :: lake_types
-   integer :: no_merge_mtype,connection_merge_not_set_flood_merge_as_secondary
    real(dp),dimension(:), pointer :: lake_volumes
    real(dp), dimension(:,:), pointer :: diagnostic_lake_volumes
    real(dp), dimension(:,:), allocatable :: lake_fractions
+   integer, pointer, dimension(:,:) :: connect_merge_and_redirect_indices_index
+   integer, pointer, dimension(:,:) :: flood_merge_and_redirect_indices_index
+   type(mergeandredirectindicescollectionpointer), pointer, dimension(:) :: &
+    connect_merge_and_redirect_indices_collections
+   type(mergeandredirectindicescollectionpointer), pointer, dimension(:) :: &
+    flood_merge_and_redirect_indices_collections
+   type(mergeandredirectindicescollection), pointer :: collected_indices
+   type(mergeandredirectindicespointer), dimension(:), pointer :: primary_merges
+   type(mergeandredirectindices), pointer :: secondary_merge
    real(dp) :: step_length
    integer :: nlat,nlon
    integer :: nlat_coarse,nlon_coarse
@@ -183,9 +174,8 @@ subroutine testLakeModel1
    logical :: instant_throughflow_local
    real(dp) :: lake_retention_coefficient_local
    integer :: lake_type
+   integer :: flood_index
       step_length = 86400.0_dp
-      no_merge_mtype = 0
-      connection_merge_not_set_flood_merge_as_secondary = 10
       timesteps = 1000
       nlat = 9
       nlon = 9
@@ -253,35 +243,6 @@ subroutine testLakeModel1
          -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
          -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0 /), &
          (/nlon,nlat/)))
-      allocate(flood_local_redirect(nlat,nlon))
-      flood_local_redirect(:,:) = .False.
-      allocate(connect_local_redirect(nlat,nlon))
-      connect_local_redirect(:,:) = .False.
-      allocate(additional_flood_local_redirect(nlat,nlon))
-      additional_flood_local_redirect(:,:) = .False.
-      allocate(additional_connect_local_redirect(nlat,nlon))
-      additional_connect_local_redirect(:,:) = .False.
-      allocate(merge_points(nlat,nlon))
-      merge_points = transpose(reshape((/ &
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,connection_merge_not_set_flood_merge_as_secondary,&
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, no_merge_mtype, &
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,&
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,&
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,&
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,&
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,&
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,&
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,&
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,&
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,&
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,&
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,&
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,&
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,&
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,&
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,&
-        no_merge_mtype,no_merge_mtype,no_merge_mtype /), &
-         (/nlon,nlat/)))
       allocate(cell_areas_on_surface_model_grid(nlat_surface_model,nlon_surface_model))
       cell_areas_on_surface_model_grid = transpose(reshape((/ &
           2.5,3.0,2.5, &
@@ -336,110 +297,6 @@ subroutine testLakeModel1
          0, 0, 0, 0, 0, 0, 0, 0, 0, &
          0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
          (/nlon,nlat/)))
-      allocate(flood_force_merge_lat_index(nlat,nlon))
-      flood_force_merge_lat_index = transpose(reshape((/ &
-          0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
-         (/nlon,nlat/)))
-      allocate(flood_force_merge_lon_index(nlat,nlon))
-      flood_force_merge_lon_index = transpose(reshape((/ &
-          0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
-         (/nlon,nlat/)))
-      allocate(connect_force_merge_lat_index(nlat,nlon))
-      connect_force_merge_lat_index = transpose(reshape((/ &
-          0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
-         (/nlon,nlat/)))
-      allocate(connect_force_merge_lon_index(nlat,nlon))
-      connect_force_merge_lon_index = transpose(reshape((/ &
-          0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
-         (/nlon,nlat/)))
-      allocate(flood_redirect_lat_index(nlat,nlon))
-      flood_redirect_lat_index = transpose(reshape((/ &
-          0, 0, 0, 1, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
-         (/nlon,nlat/)))
-      allocate(flood_redirect_lon_index(nlat,nlon))
-      flood_redirect_lon_index = transpose(reshape((/ &
-          0, 0, 0, 3, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
-         (/nlon,nlat/)))
-      allocate(connect_redirect_lat_index(nlat,nlon))
-      connect_redirect_lat_index = transpose(reshape((/ &
-          0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
-         (/nlon,nlat/)))
-      allocate(connect_redirect_lon_index(nlat,nlon))
-      connect_redirect_lon_index = transpose(reshape((/ &
-          0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
-         (/nlon,nlat/)))
-      allocate(additional_flood_redirect_lat_index(nlat,nlon))
-      additional_flood_redirect_lat_index(:,:) = 0
-      allocate(additional_flood_redirect_lon_index(nlat,nlon))
-      additional_flood_redirect_lon_index(:,:) = 0
-      allocate(additional_connect_redirect_lat_index(nlat,nlon))
-      additional_connect_redirect_lat_index(:,:) = 0
-      allocate(additional_connect_redirect_lon_index(nlat,nlon))
-      additional_connect_redirect_lon_index(:,:) = 0
       instant_throughflow_local=.True.
       lake_retention_coefficient_local=0.1_dp
       allocate(corresponding_surface_cell_lat_index(nlat,nlon))
@@ -466,31 +323,55 @@ subroutine testLakeModel1
                                                            1,1,1,2,2,2,3,3,3, &
                                                            1,1,1,2,2,2,3,3,3 /), &
          (/nlon,nlat/)))
+      allocate(connect_merge_and_redirect_indices_index(nlat,nlon))
+      connect_merge_and_redirect_indices_index = transpose(reshape((/ &
+                                                            0, 0, 0, 0, 0, 0, 0, 0, 0, &
+                                                           0, 0, 0, 0, 0, 0, 0, 0, 0, &
+                                                           0, 0, 0, 0, 0, 0, 0, 0, 0, &
+                                                           0, 0, 0, 0, 0, 0, 0, 0, 0, &
+                                                           0, 0, 0, 0, 0, 0, 0, 0, 0, &
+                                                           0, 0, 0, 0, 0, 0, 0, 0, 0, &
+                                                           0, 0, 0, 0, 0, 0, 0, 0, 0, &
+                                                           0, 0, 0, 0, 0, 0, 0, 0, 0, &
+                                                           0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
+                                                           (/nlon,nlat/)))
+      allocate(flood_merge_and_redirect_indices_index(nlat,nlon))
+      flood_merge_and_redirect_indices_index = transpose(reshape((/ &
+                                                                0, 0, 0, 0, 0, 0, 0, 0, 0, &
+                                                               0, 0, 0, 0, 0, 0, 0, 0, 0, &
+                                                               0, 0, 0, 0, 0, 0, 0, 0, 0, &
+                                                               0, 0, 0, 0, 0, 0, 0, 0, 0, &
+                                                               0, 0, 0, 0, 0, 0, 0, 0, 0, &
+                                                               0, 0, 0, 0, 0, 0, 0, 0, 0, &
+                                                               0, 0, 0, 0, 0, 0, 0, 0, 0, &
+                                                               0, 0, 0, 0, 0, 0, 0, 0, 0, &
+                                                               0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
+                                                               (/nlon,nlat/)))
+      flood_index = 1
+      secondary_merge => &
+                    mergeandredirectindices(.false., &
+                                            .false., &
+                                            1,5, &
+                                            1,3)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                             secondary_merge)
+      allocate(flood_merge_and_redirect_indices_collections(1))
+      flood_merge_and_redirect_indices_collections(1)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(1,4) = flood_index
+      connect_merge_and_redirect_indices_collections => null()
       lake_parameters => LakeParameters(lake_centers, &
                                         connection_volume_thresholds, &
                                         flood_volume_thresholds, &
-                                        flood_local_redirect, &
-                                        connect_local_redirect, &
-                                        additional_flood_local_redirect, &
-                                        additional_connect_local_redirect, &
-                                        merge_points, &
                                         cell_areas_on_surface_model_grid, &
                                         flood_next_cell_lat_index, &
                                         flood_next_cell_lon_index, &
                                         connect_next_cell_lat_index, &
                                         connect_next_cell_lon_index, &
-                                        flood_force_merge_lat_index, &
-                                        flood_force_merge_lon_index, &
-                                        connect_force_merge_lat_index, &
-                                        connect_force_merge_lon_index, &
-                                        flood_redirect_lat_index, &
-                                        flood_redirect_lon_index, &
-                                        connect_redirect_lat_index, &
-                                        connect_redirect_lon_index, &
-                                        additional_flood_redirect_lat_index, &
-                                        additional_flood_redirect_lon_index, &
-                                        additional_connect_redirect_lat_index, &
-                                        additional_connect_redirect_lon_index, &
+                                        connect_merge_and_redirect_indices_index, &
+                                        flood_merge_and_redirect_indices_index, &
+                                        connect_merge_and_redirect_indices_collections, &
+                                        flood_merge_and_redirect_indices_collections, &
                                         corresponding_surface_cell_lat_index, &
                                         corresponding_surface_cell_lon_index, &
                                         nlat,nlon, &
@@ -689,28 +570,11 @@ subroutine testLakeModel2
   logical,dimension(:,:), pointer :: lake_centers
   real(dp),dimension(:,:), pointer :: connection_volume_thresholds
   real(dp),dimension(:,:), pointer :: flood_volume_thresholds
-  logical,dimension(:,:), pointer :: flood_local_redirect
-  logical,dimension(:,:), pointer :: connect_local_redirect
-  logical,dimension(:,:), pointer :: additional_flood_local_redirect
-  logical,dimension(:,:), pointer :: additional_connect_local_redirect
-  integer,dimension(:,:), pointer :: merge_points
   real(dp),dimension(:,:),pointer :: cell_areas_on_surface_model_grid
   integer,dimension(:,:), pointer :: flood_next_cell_lat_index
   integer,dimension(:,:), pointer :: flood_next_cell_lon_index
   integer,dimension(:,:), pointer :: connect_next_cell_lat_index
   integer,dimension(:,:), pointer :: connect_next_cell_lon_index
-  integer,dimension(:,:), pointer :: flood_force_merge_lat_index
-  integer,dimension(:,:), pointer :: flood_force_merge_lon_index
-  integer,dimension(:,:), pointer :: connect_force_merge_lat_index
-  integer,dimension(:,:), pointer :: connect_force_merge_lon_index
-  integer,dimension(:,:), pointer :: flood_redirect_lat_index
-  integer,dimension(:,:), pointer :: flood_redirect_lon_index
-  integer,dimension(:,:), pointer :: connect_redirect_lat_index
-  integer,dimension(:,:), pointer :: connect_redirect_lon_index
-  integer,dimension(:,:), pointer :: additional_flood_redirect_lat_index
-  integer,dimension(:,:), pointer :: additional_flood_redirect_lon_index
-  integer,dimension(:,:), pointer :: additional_connect_redirect_lat_index
-  integer,dimension(:,:), pointer :: additional_connect_redirect_lon_index
    integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
    integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
   real(dp),dimension(:,:), pointer :: drainage
@@ -730,12 +594,19 @@ subroutine testLakeModel2
   integer , dimension(:,:), pointer :: expected_number_lake_cells
   integer , dimension(:,:), pointer :: expected_number_fine_grid_cells
   integer,dimension(:,:), pointer :: lake_types
-  integer :: no_merge_mtype
-  integer :: connection_merge_not_set_flood_merge_as_primary
-  integer :: connection_merge_not_set_flood_merge_as_secondary
   real(dp),dimension(:), pointer :: lake_volumes
   real(dp), dimension(:,:), pointer :: diagnostic_lake_volumes
   real(dp), dimension(:,:), allocatable :: lake_fractions
+  integer, pointer, dimension(:,:) :: connect_merge_and_redirect_indices_index
+  integer, pointer, dimension(:,:) :: flood_merge_and_redirect_indices_index
+  type(mergeandredirectindicescollectionpointer), pointer, dimension(:) :: &
+   connect_merge_and_redirect_indices_collections
+  type(mergeandredirectindicescollectionpointer), pointer, dimension(:) :: &
+   flood_merge_and_redirect_indices_collections
+  type(mergeandredirectindicescollection), pointer :: collected_indices
+  type(mergeandredirectindices), pointer :: primary_merge
+  type(mergeandredirectindicespointer), dimension(:), pointer :: primary_merges
+  type(mergeandredirectindices), pointer :: secondary_merge
   real(dp) :: step_length
   integer :: nlat,nlon
   integer :: nlat_coarse,nlon_coarse
@@ -746,10 +617,8 @@ subroutine testLakeModel2
   logical :: instant_throughflow_local
   real(dp) :: lake_retention_coefficient_local
   integer :: lake_type
+  integer :: flood_index
     step_length = 86400.0_dp
-    no_merge_mtype = 0
-    connection_merge_not_set_flood_merge_as_primary = 9
-    connection_merge_not_set_flood_merge_as_secondary = 10
     timesteps = 10000
     nlat = 20
     nlon = 20
@@ -926,164 +795,6 @@ subroutine testLakeModel2
        -1.0,    -1.0,   -1.0,    -1.0,   -1.0,    -1.0,    -1.0,   -1.0,   -1.0,  -1.0,  -1.0,    -1.0,    -1.0,    -1.0,   -1.0, &
               -1.0,   -1.0,    -1.0,   -1.0,  -1.0 /), &
        (/nlon,nlat/)))
-    allocate(flood_local_redirect(nlat,nlon))
-    flood_local_redirect = transpose(reshape((/ &
-        .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                 .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False.,  .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                 .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .True., .False., .False., .False., &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-                 .True., .False., .False.,  .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False.,  .False., .False., .False., .False., .False., &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                .False., .False., .False., .False.,  .False.,    .True., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                .False., .False., .False., .True., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False.,  .False., .False., .False., .False., .False., .False., .False., &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False. /), &
-       (/nlon,nlat/)))
-    allocate(connect_local_redirect(nlat,nlon))
-    connect_local_redirect = transpose(reshape((/ &
-        .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                 .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False.,  .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                 .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-                .False., .False., .False.,  .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False.,  .False., .False., .False., .False., .False., &
-                 .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-                .False., .False., .False., .False.,  .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False.,  .False., .False., .False., .False., .False., .False., .False., &
-                 .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False. /), &
-       (/nlon,nlat/)))
-    allocate(additional_flood_local_redirect(nlat,nlon))
-    additional_flood_local_redirect(:,:) = .False.
-    allocate(additional_connect_local_redirect(nlat,nlon))
-    additional_connect_local_redirect(:,:) = .False.
-    allocate(merge_points(nlat,nlon))
-    merge_points = transpose(reshape((/ &
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-          no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-          no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-          no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-          no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-          no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-          no_merge_mtype,connection_merge_not_set_flood_merge_as_primary,no_merge_mtype,no_merge_mtype, &
-          no_merge_mtype,no_merge_mtype, &
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,&
-       connection_merge_not_set_flood_merge_as_secondary, &
-       no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-       no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,&
-        no_merge_mtype,no_merge_mtype, &
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-      no_merge_mtype,connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype,no_merge_mtype,no_merge_mtype,&
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,connection_merge_not_set_flood_merge_as_primary, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        connection_merge_not_set_flood_merge_as_primary,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-          no_merge_mtype,no_merge_mtype, &
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype, &
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype,&
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-       no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-       no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype /), &
-       (/nlon,nlat/)))
     allocate(cell_areas_on_surface_model_grid(nlat_surface_model,nlon_surface_model))
       cell_areas_on_surface_model_grid = transpose(reshape((/ &
           2.5,3.0,2.5, &
@@ -1182,210 +893,10 @@ subroutine testLakeModel2
        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
        (/nlon,nlat/)))
-    allocate(flood_force_merge_lat_index(nlat,nlon))
-    flood_force_merge_lat_index = transpose(reshape((/ &
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  6, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  6, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  7, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-       (/nlon,nlat/)))
-    allocate(flood_force_merge_lon_index(nlat,nlon))
-    flood_force_merge_lon_index = transpose(reshape((/ &
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  2, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  8, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 12, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-       (/nlon,nlat/)))
-    allocate(connect_force_merge_lat_index(nlat,nlon))
-    connect_force_merge_lat_index = transpose(reshape((/ &
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-       (/nlon,nlat/)))
-    allocate(connect_force_merge_lon_index(nlat,nlon))
-    connect_force_merge_lon_index = transpose(reshape((/ &
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-       (/nlon,nlat/)))
-    allocate(flood_redirect_lat_index(nlat,nlon))
-    flood_redirect_lat_index = transpose(reshape((/ &
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1,  1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1,  7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  7, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1,  1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  6, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  5, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  3, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1,  3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-       (/nlon,nlat/)))
-    allocate(flood_redirect_lon_index(nlat,nlon))
-    flood_redirect_lon_index = transpose(reshape((/ &
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  0, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1,  3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, 14, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 14, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1,  0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  5, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 13, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  3, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1,  1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-       (/nlon,nlat/)))
-    allocate(connect_redirect_lat_index(nlat,nlon))
-    connect_redirect_lat_index = transpose(reshape((/ &
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-       (/nlon,nlat/)))
-    allocate(connect_redirect_lon_index(nlat,nlon))
-    connect_redirect_lon_index = transpose(reshape((/ &
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-       (/nlon,nlat/)))
     call add_offset(flood_next_cell_lat_index,1,(/-1/))
     call add_offset(flood_next_cell_lon_index,1,(/-1/))
     call add_offset(connect_next_cell_lat_index,1,(/-1/))
     call add_offset(connect_next_cell_lon_index,1,(/-1/))
-    call add_offset(flood_force_merge_lat_index,1,(/-1/))
-    call add_offset(flood_force_merge_lon_index,1,(/-1/))
-    call add_offset(connect_force_merge_lat_index,1,(/-1/))
-    call add_offset(connect_force_merge_lon_index,1,(/-1/))
-    call add_offset(flood_redirect_lat_index,1,(/-1/))
-    call add_offset(flood_redirect_lon_index,1,(/-1/))
-    call add_offset(connect_redirect_lat_index,1,(/-1/))
-    call add_offset(connect_redirect_lon_index,1,(/-1/))
-    allocate(additional_flood_redirect_lat_index(nlat,nlon))
-    additional_flood_redirect_lat_index(:,:) = 0
-    allocate(additional_flood_redirect_lon_index(nlat,nlon))
-    additional_flood_redirect_lon_index(:,:) = 0
-    allocate(additional_connect_redirect_lat_index(nlat,nlon))
-    additional_connect_redirect_lat_index(:,:) = 0
-    allocate(additional_connect_redirect_lon_index(nlat,nlon))
-    additional_connect_redirect_lon_index(:,:) = 0
     instant_throughflow_local=.True.
     lake_retention_coefficient_local=0.1_dp
     allocate(corresponding_surface_cell_lat_index(nlat,nlon))
@@ -1434,31 +945,148 @@ subroutine testLakeModel2
                                                            1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
                                                            1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3 /), &
          (/nlon,nlat/)))
+    allocate(connect_merge_and_redirect_indices_index(nlat,nlon))
+    connect_merge_and_redirect_indices_index(:,:) =0
+    allocate(flood_merge_and_redirect_indices_index(nlat,nlon))
+    flood_merge_and_redirect_indices_index(:,:) = 0
+    allocate(flood_merge_and_redirect_indices_collections(9))
+    connect_merge_and_redirect_indices_collections=> null()
+    flood_index = 1
+    primary_merge => &
+    mergeandredirectindices(.true.,&
+                            .false., &
+                            6, &
+                            2, &
+                            1, &
+                            0)
+    allocate(primary_merges(1))
+    primary_merges(1)%ptr => primary_merge
+    collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                          null())
+    flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+    flood_merge_and_redirect_indices_index(3,16) = flood_index
+    flood_index = flood_index + 1
+    secondary_merge => &
+            mergeandredirectindices(.false., &
+                                    .false., &
+                                    8, &
+                                    18, &
+                                    1, &
+                                    3)
+    primary_merges => null()
+    collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                          secondary_merge)
+    flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+    flood_merge_and_redirect_indices_index(4,6) = flood_index
+    flood_index = flood_index + 1
+    secondary_merge => &
+            mergeandredirectindices(.false., &
+                                    .true., &
+                                    6, &
+                                    10, &
+                                    7, &
+                                    14)
+    primary_merges => null()
+    collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                          secondary_merge)
+    flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+    flood_merge_and_redirect_indices_index(5,8) = flood_index
+    flood_index = flood_index + 1
+    secondary_merge => &
+            mergeandredirectindices(.false., &
+                                    .true., &
+                                    7, &
+                                    14, &
+                                    7, &
+                                    14)
+    primary_merges => null()
+    collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                          secondary_merge)
+    flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+    flood_merge_and_redirect_indices_index(6,12) = flood_index
+    flood_index = flood_index + 1
+    secondary_merge => &
+            mergeandredirectindices(.false., &
+                                    .false., &
+                                    6, &
+                                    4, &
+                                    1, &
+                                    0)
+    primary_merges => null()
+    collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                          secondary_merge)
+    flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+    flood_merge_and_redirect_indices_index(8,2) = flood_index
+    flood_index = flood_index + 1
+    primary_merge => &
+      mergeandredirectindices(.true., &
+                              .true., &
+                              6, &
+                              8, &
+                              6, &
+                              5)
+    allocate(primary_merges(1))
+    primary_merges(1)%ptr => primary_merge
+    collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                          null())
+    flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+    flood_merge_and_redirect_indices_index(8,17) = flood_index
+    flood_index = flood_index + 1
+    primary_merge => &
+      mergeandredirectindices(.true., &
+                              .true., &
+                              7, &
+                              12, &
+                              5, &
+                              13)
+    allocate(primary_merges(1))
+    primary_merges(1)%ptr => primary_merge
+    collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                          null())
+    flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+    flood_merge_and_redirect_indices_index(9,15) = flood_index
+    flood_index = flood_index + 1
+    secondary_merge => &
+            mergeandredirectindices(.false., &
+                                    .false., &
+                                    16, &
+                                    15, &
+                                    3, &
+                                    3)
+    primary_merges => null()
+    collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                          secondary_merge)
+    flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+    flood_merge_and_redirect_indices_index(14,19) = flood_index
+    flood_index = flood_index + 1
+    secondary_merge => &
+            mergeandredirectindices(.false., &
+                                    .false., &
+                                    17, &
+                                    3, &
+                                    3, &
+                                    1)
+    primary_merges => null()
+    collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                          secondary_merge)
+    flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+    flood_merge_and_redirect_indices_index(16,4) = flood_index
+    do i = 1,size(flood_merge_and_redirect_indices_collections)
+      collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+      call collected_indices%add_offset_to_collection(1)
+    end do
     lake_parameters => LakeParameters(lake_centers, &
                                       connection_volume_thresholds, &
                                       flood_volume_thresholds, &
-                                      flood_local_redirect, &
-                                      connect_local_redirect, &
-                                      additional_flood_local_redirect, &
-                                      additional_connect_local_redirect, &
-                                      merge_points, &
                                       cell_areas_on_surface_model_grid, &
                                       flood_next_cell_lat_index, &
                                       flood_next_cell_lon_index, &
                                       connect_next_cell_lat_index, &
                                       connect_next_cell_lon_index, &
-                                      flood_force_merge_lat_index, &
-                                      flood_force_merge_lon_index, &
-                                      connect_force_merge_lat_index, &
-                                      connect_force_merge_lon_index, &
-                                      flood_redirect_lat_index, &
-                                      flood_redirect_lon_index, &
-                                      connect_redirect_lat_index, &
-                                      connect_redirect_lon_index, &
-                                      additional_flood_redirect_lat_index, &
-                                      additional_flood_redirect_lon_index, &
-                                      additional_connect_redirect_lat_index, &
-                                      additional_connect_redirect_lon_index, &
+                                      connect_merge_and_redirect_indices_index, &
+                                      flood_merge_and_redirect_indices_index, &
+                                      connect_merge_and_redirect_indices_collections, &
+                                      flood_merge_and_redirect_indices_collections, &
                                       corresponding_surface_cell_lat_index, &
                                       corresponding_surface_cell_lon_index, &
                                       nlat,nlon, &
@@ -1720,28 +1348,11 @@ subroutine testLakeModel3
   logical,dimension(:,:), pointer :: lake_centers
   real(dp),dimension(:,:), pointer :: connection_volume_thresholds
   real(dp),dimension(:,:), pointer :: flood_volume_thresholds
-  logical,dimension(:,:), pointer :: flood_local_redirect
-  logical,dimension(:,:), pointer :: connect_local_redirect
-  logical,dimension(:,:), pointer :: additional_flood_local_redirect
-  logical,dimension(:,:), pointer :: additional_connect_local_redirect
-  integer,dimension(:,:), pointer :: merge_points
   real(dp),dimension(:,:),pointer :: cell_areas_on_surface_model_grid
   integer,dimension(:,:), pointer :: flood_next_cell_lat_index
   integer,dimension(:,:), pointer :: flood_next_cell_lon_index
   integer,dimension(:,:), pointer :: connect_next_cell_lat_index
   integer,dimension(:,:), pointer :: connect_next_cell_lon_index
-  integer,dimension(:,:), pointer :: flood_force_merge_lat_index
-  integer,dimension(:,:), pointer :: flood_force_merge_lon_index
-  integer,dimension(:,:), pointer :: connect_force_merge_lat_index
-  integer,dimension(:,:), pointer :: connect_force_merge_lon_index
-  integer,dimension(:,:), pointer :: flood_redirect_lat_index
-  integer,dimension(:,:), pointer :: flood_redirect_lon_index
-  integer,dimension(:,:), pointer :: connect_redirect_lat_index
-  integer,dimension(:,:), pointer :: connect_redirect_lon_index
-  integer,dimension(:,:), pointer :: additional_flood_redirect_lat_index
-  integer,dimension(:,:), pointer :: additional_flood_redirect_lon_index
-  integer,dimension(:,:), pointer :: additional_connect_redirect_lat_index
-  integer,dimension(:,:), pointer :: additional_connect_redirect_lon_index
    integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
    integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
   real(dp),dimension(:,:), pointer :: drainage
@@ -1776,12 +1387,19 @@ subroutine testLakeModel3
   integer , dimension(:,:), pointer :: expected_intermediate_number_lake_cells
   integer , dimension(:,:), pointer :: expected_intermediate_number_fine_grid_cells
   integer,dimension(:,:), pointer :: lake_types
-  integer :: no_merge_mtype
-  integer :: connection_merge_not_set_flood_merge_as_primary
-  integer :: connection_merge_not_set_flood_merge_as_secondary
   real(dp),dimension(:), pointer :: lake_volumes
   real(dp), dimension(:,:), pointer :: diagnostic_lake_volumes
   real(dp), dimension(:,:), allocatable :: lake_fractions
+  integer, pointer, dimension(:,:) :: connect_merge_and_redirect_indices_index
+  integer, pointer, dimension(:,:) :: flood_merge_and_redirect_indices_index
+  type(mergeandredirectindicescollectionpointer), pointer, dimension(:) :: &
+   connect_merge_and_redirect_indices_collections
+  type(mergeandredirectindicescollectionpointer), pointer, dimension(:) :: &
+   flood_merge_and_redirect_indices_collections
+  type(mergeandredirectindicescollection), pointer :: collected_indices
+  type(mergeandredirectindices), pointer :: primary_merge
+  type(mergeandredirectindicespointer), dimension(:), pointer :: primary_merges
+  type(mergeandredirectindices), pointer :: secondary_merge
   real(dp) :: step_length
   integer :: nlat,nlon
   integer :: nlat_coarse,nlon_coarse
@@ -1791,10 +1409,8 @@ subroutine testLakeModel3
   logical :: instant_throughflow_local
   real(dp) :: lake_retention_coefficient_local
   integer :: lake_type
+  integer :: flood_index
       step_length = 86400.0_dp
-      no_merge_mtype = 0
-      connection_merge_not_set_flood_merge_as_primary = 9
-      connection_merge_not_set_flood_merge_as_secondary = 10
       nlat = 20
       nlon = 20
       nlat_coarse = 4
@@ -1970,164 +1586,6 @@ subroutine testLakeModel3
        -1.0,    -1.0,   -1.0,    -1.0,   -1.0,    -1.0,    -1.0,   -1.0,   -1.0,  -1.0,  -1.0,    -1.0,    -1.0,    -1.0,   -1.0, &
               -1.0,   -1.0,    -1.0,   -1.0,  -1.0 /), &
          (/nlon,nlat/)))
-      allocate(flood_local_redirect(nlat,nlon))
-      flood_local_redirect = transpose(reshape((/ &
-          .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                   .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                  .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False.,  .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                   .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                  .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .True., .False., .False., .False., &
-                  .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-                   .True., .False., .False.,  .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False.,  .False., .False., .False., .False., .False., &
-                  .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                  .False., .False., .False., .False.,  .False.,    .True., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                  .False., .False., .False., .True., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                  .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                  .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                  .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                  .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                  .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                  .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False.,  .False., .False., .False., .False., .False., .False., .False., &
-                  .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                  .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                  .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                  .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                  .False., .False., .False., .False., .False.,    .False., .False., .False., .False. /), &
-         (/nlon,nlat/)))
-      allocate(connect_local_redirect(nlat,nlon))
-      connect_local_redirect = transpose(reshape((/ &
-          .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                   .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                  .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False.,  .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                   .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-                  .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-                  .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-                  .False., .False., .False.,  .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False.,  .False., .False., .False., .False., .False., &
-                   .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-                  .False., .False., .False., .False.,  .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-                  .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-                  .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-                  .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-                  .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-                  .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-                  .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-                  .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False.,  .False., .False., .False., .False., .False., .False., .False., &
-                   .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-                  .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-                  .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-                  .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-                  .False., .False., .False., .False., .False.,    .False., .False., .False., .False. /), &
-         (/nlon,nlat/)))
-      allocate(additional_flood_local_redirect(nlat,nlon))
-      additional_flood_local_redirect(:,:) = .False.
-      allocate(additional_connect_local_redirect(nlat,nlon))
-      additional_connect_local_redirect(:,:) = .False.
-      allocate(merge_points(nlat,nlon))
-      merge_points = transpose(reshape((/ &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-            no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-            no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-            no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-            no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-            no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-            no_merge_mtype,connection_merge_not_set_flood_merge_as_primary,no_merge_mtype,no_merge_mtype, &
-            no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,&
-         connection_merge_not_set_flood_merge_as_secondary, &
-         no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-         no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-          connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-          no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,&
-          no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-          no_merge_mtype,no_merge_mtype,no_merge_mtype,connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype, &
-          no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-          no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-          no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype,no_merge_mtype,no_merge_mtype,&
-          no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-          no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,connection_merge_not_set_flood_merge_as_primary, &
-          no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-          no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-          connection_merge_not_set_flood_merge_as_primary,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-            no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-          no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-          no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-          no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-          no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-          no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-          no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-          no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-          no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-          no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-          no_merge_mtype,no_merge_mtype,connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-          no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-          no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype,&
-          no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-          no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-          no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-          no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-          no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-          no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-          no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-          no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-         no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-         no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype /), &
-         (/nlon,nlat/)))
       allocate(cell_areas_on_surface_model_grid(nlat_surface_model,nlon_surface_model))
       cell_areas_on_surface_model_grid = transpose(reshape((/ &
           2.5,3.0,2.5, &
@@ -2226,210 +1684,10 @@ subroutine testLakeModel3
          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
          (/nlon,nlat/)))
-      allocate(flood_force_merge_lat_index(nlat,nlon))
-      flood_force_merge_lat_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  6, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  6, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  7, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(flood_force_merge_lon_index(nlat,nlon))
-      flood_force_merge_lon_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  2, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  8, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 12, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(connect_force_merge_lat_index(nlat,nlon))
-      connect_force_merge_lat_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(connect_force_merge_lon_index(nlat,nlon))
-      connect_force_merge_lon_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(flood_redirect_lat_index(nlat,nlon))
-      flood_redirect_lat_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1,  1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1,  7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  7, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1,  1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  6, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  5, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  3, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1,  3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(flood_redirect_lon_index(nlat,nlon))
-      flood_redirect_lon_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  0, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1,  3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, 14, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 14, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1,  0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  5, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 13, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  3, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1,  1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(connect_redirect_lat_index(nlat,nlon))
-      connect_redirect_lat_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(connect_redirect_lon_index(nlat,nlon))
-      connect_redirect_lon_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
       call add_offset(flood_next_cell_lat_index,1,(/-1/))
       call add_offset(flood_next_cell_lon_index,1,(/-1/))
       call add_offset(connect_next_cell_lat_index,1,(/-1/))
       call add_offset(connect_next_cell_lon_index,1,(/-1/))
-      call add_offset(flood_force_merge_lat_index,1,(/-1/))
-      call add_offset(flood_force_merge_lon_index,1,(/-1/))
-      call add_offset(connect_force_merge_lat_index,1,(/-1/))
-      call add_offset(connect_force_merge_lon_index,1,(/-1/))
-      call add_offset(flood_redirect_lat_index,1,(/-1/))
-      call add_offset(flood_redirect_lon_index,1,(/-1/))
-      call add_offset(connect_redirect_lat_index,1,(/-1/))
-      call add_offset(connect_redirect_lon_index,1,(/-1/))
-      allocate(additional_flood_redirect_lat_index(nlat,nlon))
-      additional_flood_redirect_lat_index(:,:) = 0
-      allocate(additional_flood_redirect_lon_index(nlat,nlon))
-      additional_flood_redirect_lon_index(:,:) = 0
-      allocate(additional_connect_redirect_lat_index(nlat,nlon))
-      additional_connect_redirect_lat_index(:,:) = 0
-      allocate(additional_connect_redirect_lon_index(nlat,nlon))
-      additional_connect_redirect_lon_index(:,:) = 0
       instant_throughflow_local=.True.
       lake_retention_coefficient_local=0.1_dp
       allocate(corresponding_surface_cell_lat_index(nlat,nlon))
@@ -2478,31 +1736,149 @@ subroutine testLakeModel3
                                                              3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
                                                              3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3 /), &
          (/nlon,nlat/)))
+      allocate(connect_merge_and_redirect_indices_index(nlat,nlon))
+      connect_merge_and_redirect_indices_index(:,:) =0
+      allocate(flood_merge_and_redirect_indices_index(nlat,nlon))
+      flood_merge_and_redirect_indices_index(:,:) = 0
+      allocate(flood_merge_and_redirect_indices_collections(9))
+      connect_merge_and_redirect_indices_collections => null()
+      flood_index = 1
+      primary_merge => &
+        mergeandredirectindices(.true.,  &
+                                .false., &
+                                6, &
+                                2, &
+                                1, &
+                                0)
+      allocate(primary_merges(1))
+      primary_merges(1)%ptr => primary_merge
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            null())
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(3,16) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .false., &
+                                      8, &
+                                      18, &
+                                      1, &
+                                      3)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(4,6) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .true., &
+                                      6, &
+                                      10, &
+                                      7, &
+                                      14)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(5,8) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .true., &
+                                      7, &
+                                      14, &
+                                      7, &
+                                      14)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(6,12) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .false., &
+                                      6, &
+                                      4, &
+                                      1, &
+                                      0)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(8,2) = flood_index
+      flood_index = flood_index +1
+      primary_merge => &
+        mergeandredirectindices(.true., &
+                                .true., &
+                                6, &
+                                8, &
+                                6, &
+                                5)
+      allocate(primary_merges(1))
+      primary_merges(1)%ptr => primary_merge
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            null())
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(8,17) = flood_index
+      flood_index = flood_index +1
+      primary_merge => &
+        mergeandredirectindices(.true., &
+                                .true., &
+                                7, &
+                                12, &
+                                5, &
+                                13)
+      allocate(primary_merges(1))
+      primary_merges(1)%ptr => primary_merge
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            null())
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(9,15) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .false., &
+                                      16, &
+                                      15, &
+                                      3, &
+                                      3)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(14,19) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .false., &
+                                      17, &
+                                      3, &
+                                      3, &
+                                      1)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(16,4) = flood_index
+      flood_index = flood_index +1
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%add_offset_to_collection(1)
+      end do
       lake_parameters => LakeParameters(lake_centers, &
                                         connection_volume_thresholds, &
                                         flood_volume_thresholds, &
-                                        flood_local_redirect, &
-                                        connect_local_redirect, &
-                                        additional_flood_local_redirect, &
-                                        additional_connect_local_redirect, &
-                                        merge_points, &
                                         cell_areas_on_surface_model_grid, &
                                         flood_next_cell_lat_index, &
                                         flood_next_cell_lon_index, &
                                         connect_next_cell_lat_index, &
                                         connect_next_cell_lon_index, &
-                                        flood_force_merge_lat_index, &
-                                        flood_force_merge_lon_index, &
-                                        connect_force_merge_lat_index, &
-                                        connect_force_merge_lon_index, &
-                                        flood_redirect_lat_index, &
-                                        flood_redirect_lon_index, &
-                                        connect_redirect_lat_index, &
-                                        connect_redirect_lon_index, &
-                                        additional_flood_redirect_lat_index, &
-                                        additional_flood_redirect_lon_index, &
-                                        additional_connect_redirect_lat_index, &
-                                        additional_connect_redirect_lon_index, &
+                                        connect_merge_and_redirect_indices_index, &
+                                        flood_merge_and_redirect_indices_index, &
+                                        connect_merge_and_redirect_indices_collections, &
+                                        flood_merge_and_redirect_indices_collections, &
                                         corresponding_surface_cell_lat_index, &
                                         corresponding_surface_cell_lon_index, &
                                         nlat,nlon, &
@@ -2951,20 +2327,17 @@ subroutine testLakeModel4
    integer,dimension(:,:), pointer :: flood_next_cell_lon_index
    integer,dimension(:,:), pointer :: connect_next_cell_lat_index
    integer,dimension(:,:), pointer :: connect_next_cell_lon_index
-   integer,dimension(:,:), pointer :: flood_force_merge_lat_index
-   integer,dimension(:,:), pointer :: flood_force_merge_lon_index
-   integer,dimension(:,:), pointer :: connect_force_merge_lat_index
-   integer,dimension(:,:), pointer :: connect_force_merge_lon_index
-   integer,dimension(:,:), pointer :: flood_redirect_lat_index
-   integer,dimension(:,:), pointer :: flood_redirect_lon_index
-   integer,dimension(:,:), pointer :: connect_redirect_lat_index
-   integer,dimension(:,:), pointer :: connect_redirect_lon_index
-   integer,dimension(:,:), pointer :: additional_flood_redirect_lat_index
-   integer,dimension(:,:), pointer :: additional_flood_redirect_lon_index
-   integer,dimension(:,:), pointer :: additional_connect_redirect_lat_index
-   integer,dimension(:,:), pointer :: additional_connect_redirect_lon_index
    integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
    integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
+   integer, pointer, dimension(:,:) :: connect_merge_and_redirect_indices_index
+   integer, pointer, dimension(:,:) :: flood_merge_and_redirect_indices_index
+   type(mergeandredirectindicescollectionpointer), pointer, dimension(:) :: &
+    connect_merge_and_redirect_indices_collections
+   type(mergeandredirectindicescollectionpointer), pointer, dimension(:) :: &
+    flood_merge_and_redirect_indices_collections
+   type(mergeandredirectindicescollection), pointer :: collected_indices
+   type(mergeandredirectindicespointer), dimension(:), pointer :: primary_merges
+   type(mergeandredirectindices), pointer :: secondary_merge
    real(dp),dimension(:,:), pointer :: drainage
    real(dp),dimension(:,:), pointer :: runoff
    real(dp),dimension(:,:,:), pointer :: drainages
@@ -3026,7 +2399,6 @@ subroutine testLakeModel4
    integer , dimension(:,:), pointer :: fifth_intermediate_expected_number_lake_cells
    integer , dimension(:,:), pointer :: fifth_intermediate_expected_number_fine_grid_cells
    integer,dimension(:,:), pointer :: lake_types
-   integer :: no_merge_mtype
    integer :: connection_merge_not_set_flood_merge_as_primary
    integer :: connection_merge_not_set_flood_merge_as_secondary
    real(dp),dimension(:), pointer :: lake_volumes
@@ -3040,7 +2412,7 @@ subroutine testLakeModel4
    logical :: instant_throughflow_local
    real(dp) :: lake_retention_coefficient_local
    integer :: lake_type
-      no_merge_mtype = 0
+   integer :: flood_index
       connection_merge_not_set_flood_merge_as_primary = 9
       connection_merge_not_set_flood_merge_as_secondary = 10
       nlat_coarse = 3
@@ -3194,110 +2566,6 @@ subroutine testLakeModel4
          0, 0, 0, 0, 0, 0, 0, 0, 0, &
          0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
          (/nlon,nlat/)))
-      allocate(flood_force_merge_lat_index(nlat,nlon))
-      flood_force_merge_lat_index = transpose(reshape((/ &
-          0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
-         (/nlon,nlat/)))
-      allocate(flood_force_merge_lon_index(nlat,nlon))
-      flood_force_merge_lon_index = transpose(reshape((/ &
-          0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
-         (/nlon,nlat/)))
-      allocate(connect_force_merge_lat_index(nlat,nlon))
-      connect_force_merge_lat_index = transpose(reshape((/ &
-          0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
-         (/nlon,nlat/)))
-      allocate(connect_force_merge_lon_index(nlat,nlon))
-      connect_force_merge_lon_index = transpose(reshape((/ &
-          0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
-         (/nlon,nlat/)))
-      allocate(flood_redirect_lat_index(nlat,nlon))
-      flood_redirect_lat_index = transpose(reshape((/ &
-          0, 0, 0, 1, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
-         (/nlon,nlat/)))
-      allocate(flood_redirect_lon_index(nlat,nlon))
-      flood_redirect_lon_index = transpose(reshape((/ &
-          0, 0, 0, 3, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
-         (/nlon,nlat/)))
-      allocate(connect_redirect_lat_index(nlat,nlon))
-      connect_redirect_lat_index = transpose(reshape((/ &
-          0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
-         (/nlon,nlat/)))
-      allocate(connect_redirect_lon_index(nlat,nlon))
-      connect_redirect_lon_index = transpose(reshape((/ &
-          0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
-         (/nlon,nlat/)))
-      allocate(additional_flood_redirect_lat_index(nlat,nlon))
-      additional_flood_redirect_lat_index(:,:) = 0
-      allocate(additional_flood_redirect_lon_index(nlat,nlon))
-      additional_flood_redirect_lon_index(:,:) = 0
-      allocate(additional_connect_redirect_lat_index(nlat,nlon))
-      additional_connect_redirect_lat_index(:,:) = 0
-      allocate(additional_connect_redirect_lon_index(nlat,nlon))
-      additional_connect_redirect_lon_index(:,:) = 0
       instant_throughflow_local=.True.
       lake_retention_coefficient_local=0.1_dp
       allocate(corresponding_surface_cell_lat_index(nlat,nlon))
@@ -3324,31 +2592,37 @@ subroutine testLakeModel4
                                                            2,2,2,2,2,2,2,2,1, &
                                                            2,2,2,2,2,2,2,2,2 /), &
          (/nlon,nlat/)))
+      allocate(connect_merge_and_redirect_indices_index(nlat,nlon))
+      connect_merge_and_redirect_indices_index(:,:) =0
+      allocate(flood_merge_and_redirect_indices_index(nlat,nlon))
+      flood_merge_and_redirect_indices_index(:,:) = 0
+      allocate(flood_merge_and_redirect_indices_collections(1))
+      connect_merge_and_redirect_indices_collections => null()
+      flood_index = 1
+        secondary_merge => &
+          mergeandredirectindices(.false., &
+                                  .false., &
+                                  1, &
+                                  5, &
+                                  1, &
+                                  3)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                             secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(1,4) = flood_index
       lake_parameters => LakeParameters(lake_centers, &
                                         connection_volume_thresholds, &
                                         flood_volume_thresholds, &
-                                        flood_local_redirect, &
-                                        connect_local_redirect, &
-                                        additional_flood_local_redirect, &
-                                        additional_connect_local_redirect, &
-                                        merge_points, &
                                         cell_areas_on_surface_model_grid, &
                                         flood_next_cell_lat_index, &
                                         flood_next_cell_lon_index, &
                                         connect_next_cell_lat_index, &
                                         connect_next_cell_lon_index, &
-                                        flood_force_merge_lat_index, &
-                                        flood_force_merge_lon_index, &
-                                        connect_force_merge_lat_index, &
-                                        connect_force_merge_lon_index, &
-                                        flood_redirect_lat_index, &
-                                        flood_redirect_lon_index, &
-                                        connect_redirect_lat_index, &
-                                        connect_redirect_lon_index, &
-                                        additional_flood_redirect_lat_index, &
-                                        additional_flood_redirect_lon_index, &
-                                        additional_connect_redirect_lat_index, &
-                                        additional_connect_redirect_lon_index, &
+                                        connect_merge_and_redirect_indices_index, &
+                                        flood_merge_and_redirect_indices_index, &
+                                        connect_merge_and_redirect_indices_collections, &
+                                        flood_merge_and_redirect_indices_collections, &
                                         corresponding_surface_cell_lat_index, &
                                         corresponding_surface_cell_lon_index, &
                                         nlat,nlon, &
@@ -3797,6 +3071,10 @@ subroutine testLakeModel4
       call assert_equals(first_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,2,2)
       deallocate(diagnostic_lake_volumes)
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
                                      initial_water_to_lake_centers, &
@@ -3847,7 +3125,10 @@ subroutine testLakeModel4
       call assert_equals(second_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,2,2)
       deallocate(diagnostic_lake_volumes)
-
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
                                      initial_water_to_lake_centers, &
@@ -3898,7 +3179,10 @@ subroutine testLakeModel4
       call assert_equals(third_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,2,2)
       deallocate(diagnostic_lake_volumes)
-
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
                                      initial_water_to_lake_centers, &
@@ -3947,7 +3231,10 @@ subroutine testLakeModel4
       call assert_equals(fourth_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,2,2)
       deallocate(diagnostic_lake_volumes)
-
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
                                      initial_water_to_lake_centers, &
@@ -3996,7 +3283,10 @@ subroutine testLakeModel4
       call assert_equals(fifth_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,2,2)
       deallocate(diagnostic_lake_volumes)
-
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
                                      initial_water_to_lake_centers, &
@@ -4135,35 +3425,18 @@ subroutine testLakeModel5
    type(lakeprognostics), pointer :: lake_prognostics_out
    type(lakepointer) :: working_lake_ptr
    real(dp),dimension(:,:), pointer :: flood_volume_thresholds
-   logical,dimension(:,:), pointer :: flood_local_redirect
-   logical,dimension(:,:), pointer :: connect_local_redirect
-   logical,dimension(:,:), pointer :: additional_flood_local_redirect
-   logical,dimension(:,:), pointer :: additional_connect_local_redirect
-   integer,dimension(:,:), pointer :: merge_points
   real(dp),dimension(:,:),pointer :: cell_areas_on_surface_model_grid
    integer,dimension(:,:), pointer :: flood_next_cell_lat_index
    integer,dimension(:,:), pointer :: flood_next_cell_lon_index
    integer,dimension(:,:), pointer :: connect_next_cell_lat_index
    integer,dimension(:,:), pointer :: connect_next_cell_lon_index
-   integer,dimension(:,:), pointer :: flood_force_merge_lat_index
-   integer,dimension(:,:), pointer :: flood_force_merge_lon_index
-   integer,dimension(:,:), pointer :: connect_force_merge_lat_index
-   integer,dimension(:,:), pointer :: connect_force_merge_lon_index
-   integer,dimension(:,:), pointer :: flood_redirect_lat_index
-   integer,dimension(:,:), pointer :: flood_redirect_lon_index
-   integer,dimension(:,:), pointer :: connect_redirect_lat_index
-   integer,dimension(:,:), pointer :: connect_redirect_lon_index
-   integer,dimension(:,:), pointer :: additional_flood_redirect_lat_index
-   integer,dimension(:,:), pointer :: additional_flood_redirect_lon_index
-   integer,dimension(:,:), pointer :: additional_connect_redirect_lat_index
-   integer,dimension(:,:), pointer :: additional_connect_redirect_lon_index
    integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
    integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
-   real(dp),dimension(:,:), pointer :: runoff
    real(dp),dimension(:,:), pointer :: drainage
-   real(dp),dimension(:,:), pointer :: evaporation
-   real(dp),dimension(:,:,:), pointer :: runoffs
+   real(dp),dimension(:,:), pointer :: runoff
    real(dp),dimension(:,:,:), pointer :: drainages
+   real(dp),dimension(:,:,:), pointer :: runoffs
+   real(dp),dimension(:,:), pointer :: evaporation
    real(dp),dimension(:,:,:), pointer :: evaporations
    real(dp), pointer, dimension(:,:) :: initial_spillover_to_rivers
    real(dp), pointer, dimension(:,:) :: initial_water_to_lake_centers
@@ -4220,12 +3493,18 @@ subroutine testLakeModel5
    integer , dimension(:,:), pointer :: fifth_intermediate_expected_number_lake_cells
    integer , dimension(:,:), pointer :: fifth_intermediate_expected_number_fine_grid_cells
    integer,dimension(:,:), pointer :: lake_types
-   integer :: no_merge_mtype
-   integer :: connection_merge_not_set_flood_merge_as_primary
-   integer :: connection_merge_not_set_flood_merge_as_secondary
    real(dp),dimension(:), pointer :: lake_volumes
    real(dp), dimension(:,:), pointer :: diagnostic_lake_volumes
    real(dp), dimension(:,:), allocatable :: lake_fractions
+   integer, pointer, dimension(:,:) :: connect_merge_and_redirect_indices_index
+   integer, pointer, dimension(:,:) :: flood_merge_and_redirect_indices_index
+   type(mergeandredirectindicescollectionpointer), pointer, dimension(:) :: &
+    connect_merge_and_redirect_indices_collections
+   type(mergeandredirectindicescollectionpointer), pointer, dimension(:) :: &
+    flood_merge_and_redirect_indices_collections
+   type(mergeandredirectindicescollection), pointer :: collected_indices
+   type(mergeandredirectindicespointer), dimension(:), pointer :: primary_merges
+   type(mergeandredirectindices), pointer :: secondary_merge
    integer :: nlat_coarse,nlon_coarse
    integer :: nlat_surface_model,nlon_surface_model
    integer :: nlat,nlon
@@ -4234,9 +3513,7 @@ subroutine testLakeModel5
    logical :: instant_throughflow_local
    real(dp) :: lake_retention_coefficient_local
    integer :: lake_type
-      no_merge_mtype = 0
-      connection_merge_not_set_flood_merge_as_primary = 9
-      connection_merge_not_set_flood_merge_as_secondary = 10
+  integer :: flood_index
       nlat_coarse = 3
       nlon_coarse = 3
       nlat_surface_model = 2
@@ -4275,7 +3552,7 @@ subroutine testLakeModel5
                                          overland_retention_coefficients, &
                                          base_retention_coefficients, &
                                          landsea_mask)
-      river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
+      river_fields => riverprognosticfields(3,3,1,1,5)
       nlat = 9
       nlon = 9
       allocate(lake_centers(nlat,nlon))
@@ -4305,35 +3582,6 @@ subroutine testLakeModel5
          -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
          -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
          -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0 /), &
-         (/nlon,nlat/)))
-      allocate(flood_local_redirect(nlat,nlon))
-      flood_local_redirect(:,:) = .False.
-      allocate(connect_local_redirect(nlat,nlon))
-      connect_local_redirect(:,:) = .False.
-      allocate(additional_flood_local_redirect(nlat,nlon))
-      additional_flood_local_redirect(:,:) = .False.
-      allocate(additional_connect_local_redirect(nlat,nlon))
-      additional_connect_local_redirect(:,:) = .False.
-      allocate(merge_points(nlat,nlon))
-      merge_points = transpose(reshape((/ &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, connection_merge_not_set_flood_merge_as_secondary,&
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype /), &
          (/nlon,nlat/)))
       allocate(cell_areas_on_surface_model_grid(nlat_surface_model,nlon_surface_model))
       cell_areas_on_surface_model_grid = transpose(reshape((/ &
@@ -4388,110 +3636,6 @@ subroutine testLakeModel5
          0, 0, 0, 0, 0, 0, 0, 0, 0, &
          0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
          (/nlon,nlat/)))
-      allocate(flood_force_merge_lat_index(nlat,nlon))
-      flood_force_merge_lat_index = transpose(reshape((/ &
-          0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
-         (/nlon,nlat/)))
-      allocate(flood_force_merge_lon_index(nlat,nlon))
-      flood_force_merge_lon_index = transpose(reshape((/ &
-          0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
-         (/nlon,nlat/)))
-      allocate(connect_force_merge_lat_index(nlat,nlon))
-      connect_force_merge_lat_index = transpose(reshape((/ &
-          0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
-         (/nlon,nlat/)))
-      allocate(connect_force_merge_lon_index(nlat,nlon))
-      connect_force_merge_lon_index = transpose(reshape((/ &
-          0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
-         (/nlon,nlat/)))
-      allocate(flood_redirect_lat_index(nlat,nlon))
-      flood_redirect_lat_index = transpose(reshape((/ &
-          0, 0, 0, 1, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
-         (/nlon,nlat/)))
-      allocate(flood_redirect_lon_index(nlat,nlon))
-      flood_redirect_lon_index = transpose(reshape((/ &
-          0, 0, 0, 3, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
-         (/nlon,nlat/)))
-      allocate(connect_redirect_lat_index(nlat,nlon))
-      connect_redirect_lat_index = transpose(reshape((/ &
-          0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
-         (/nlon,nlat/)))
-      allocate(connect_redirect_lon_index(nlat,nlon))
-      connect_redirect_lon_index = transpose(reshape((/ &
-          0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
-         (/nlon,nlat/)))
-      allocate(additional_flood_redirect_lat_index(nlat,nlon))
-      additional_flood_redirect_lat_index(:,:) = 0
-      allocate(additional_flood_redirect_lon_index(nlat,nlon))
-      additional_flood_redirect_lon_index(:,:) = 0
-      allocate(additional_connect_redirect_lat_index(nlat,nlon))
-      additional_connect_redirect_lat_index(:,:) = 0
-      allocate(additional_connect_redirect_lon_index(nlat,nlon))
-      additional_connect_redirect_lon_index(:,:) = 0
       instant_throughflow_local=.True.
       lake_retention_coefficient_local=0.1_dp
       allocate(corresponding_surface_cell_lat_index(nlat,nlon))
@@ -4518,31 +3662,37 @@ subroutine testLakeModel5
                                                            2,2,2,2,2,2,2,2,1, &
                                                            2,2,2,2,2,2,2,2,2 /), &
          (/nlon,nlat/)))
+      allocate(connect_merge_and_redirect_indices_index(nlat,nlon))
+      connect_merge_and_redirect_indices_index(:,:) =0
+      allocate(flood_merge_and_redirect_indices_index(nlat,nlon))
+      flood_merge_and_redirect_indices_index(:,:) = 0
+      allocate(flood_merge_and_redirect_indices_collections(1))
+      connect_merge_and_redirect_indices_collections => null()
+      flood_index = 1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .false., &
+                                      1, &
+                                      5, &
+                                      1, &
+                                      3)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(1,4) = flood_index
       lake_parameters => LakeParameters(lake_centers, &
                                         connection_volume_thresholds, &
                                         flood_volume_thresholds, &
-                                        flood_local_redirect, &
-                                        connect_local_redirect, &
-                                        additional_flood_local_redirect, &
-                                        additional_connect_local_redirect, &
-                                        merge_points, &
                                         cell_areas_on_surface_model_grid, &
                                         flood_next_cell_lat_index, &
                                         flood_next_cell_lon_index, &
                                         connect_next_cell_lat_index, &
                                         connect_next_cell_lon_index, &
-                                        flood_force_merge_lat_index, &
-                                        flood_force_merge_lon_index, &
-                                        connect_force_merge_lat_index, &
-                                        connect_force_merge_lon_index, &
-                                        flood_redirect_lat_index, &
-                                        flood_redirect_lon_index, &
-                                        connect_redirect_lat_index, &
-                                        connect_redirect_lon_index, &
-                                        additional_flood_redirect_lat_index, &
-                                        additional_flood_redirect_lon_index, &
-                                        additional_connect_redirect_lat_index, &
-                                        additional_connect_redirect_lon_index, &
+                                        connect_merge_and_redirect_indices_index, &
+                                        flood_merge_and_redirect_indices_index, &
+                                        connect_merge_and_redirect_indices_collections, &
+                                        flood_merge_and_redirect_indices_collections, &
                                         corresponding_surface_cell_lat_index, &
                                         corresponding_surface_cell_lon_index, &
                                         nlat,nlon, &
@@ -4992,6 +4142,10 @@ subroutine testLakeModel5
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
@@ -5044,6 +4198,10 @@ subroutine testLakeModel5
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
@@ -5097,6 +4255,10 @@ subroutine testLakeModel5
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
@@ -5150,6 +4312,10 @@ subroutine testLakeModel5
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
@@ -5202,6 +4368,10 @@ subroutine testLakeModel5
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
@@ -5341,28 +4511,11 @@ subroutine testLakeModel6
    type(lakeprognostics), pointer :: lake_prognostics_out
    type(lakepointer) :: working_lake_ptr
    real(dp),dimension(:,:), pointer :: flood_volume_thresholds
-   logical,dimension(:,:), pointer :: flood_local_redirect
-   logical,dimension(:,:), pointer :: connect_local_redirect
-   logical,dimension(:,:), pointer :: additional_flood_local_redirect
-   logical,dimension(:,:), pointer :: additional_connect_local_redirect
-   integer,dimension(:,:), pointer :: merge_points
   real(dp),dimension(:,:),pointer :: cell_areas_on_surface_model_grid
    integer,dimension(:,:), pointer :: flood_next_cell_lat_index
    integer,dimension(:,:), pointer :: flood_next_cell_lon_index
    integer,dimension(:,:), pointer :: connect_next_cell_lat_index
    integer,dimension(:,:), pointer :: connect_next_cell_lon_index
-   integer,dimension(:,:), pointer :: flood_force_merge_lat_index
-   integer,dimension(:,:), pointer :: flood_force_merge_lon_index
-   integer,dimension(:,:), pointer :: connect_force_merge_lat_index
-   integer,dimension(:,:), pointer :: connect_force_merge_lon_index
-   integer,dimension(:,:), pointer :: flood_redirect_lat_index
-   integer,dimension(:,:), pointer :: flood_redirect_lon_index
-   integer,dimension(:,:), pointer :: connect_redirect_lat_index
-   integer,dimension(:,:), pointer :: connect_redirect_lon_index
-   integer,dimension(:,:), pointer :: additional_flood_redirect_lat_index
-   integer,dimension(:,:), pointer :: additional_flood_redirect_lon_index
-   integer,dimension(:,:), pointer :: additional_connect_redirect_lat_index
-   integer,dimension(:,:), pointer :: additional_connect_redirect_lon_index
    integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
    integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
    real(dp),dimension(:,:), pointer :: drainage
@@ -5497,12 +4650,18 @@ subroutine testLakeModel6
    integer , dimension(:,:), pointer :: twelve_intermediate_expected_number_fine_grid_cells
    real(dp),dimension(:,:), pointer :: twelve_intermediate_expected_diagnostic_lake_volumes
    integer,dimension(:,:), pointer :: lake_types
-   integer :: no_merge_mtype
-   integer :: connection_merge_not_set_flood_merge_as_primary
-   integer :: connection_merge_not_set_flood_merge_as_secondary
    real(dp),dimension(:), pointer :: lake_volumes
    real(dp), dimension(:,:), pointer :: diagnostic_lake_volumes
    real(dp), dimension(:,:), allocatable :: lake_fractions
+   integer, pointer, dimension(:,:) :: connect_merge_and_redirect_indices_index
+   integer, pointer, dimension(:,:) :: flood_merge_and_redirect_indices_index
+   type(mergeandredirectindicescollectionpointer), pointer, dimension(:) :: &
+    connect_merge_and_redirect_indices_collections
+   type(mergeandredirectindicescollectionpointer), pointer, dimension(:) :: &
+    flood_merge_and_redirect_indices_collections
+   type(mergeandredirectindicescollection), pointer :: collected_indices
+   type(mergeandredirectindicespointer), dimension(:), pointer :: primary_merges
+   type(mergeandredirectindices), pointer :: secondary_merge
    integer :: nlat_coarse,nlon_coarse
    integer :: nlat_surface_model,nlon_surface_model
    integer :: nlat,nlon
@@ -5511,9 +4670,7 @@ subroutine testLakeModel6
    logical :: instant_throughflow_local
    real(dp) :: lake_retention_coefficient_local
    integer :: lake_type
-      no_merge_mtype = 0
-      connection_merge_not_set_flood_merge_as_primary = 9
-      connection_merge_not_set_flood_merge_as_secondary = 10
+  integer :: flood_index
       nlat_coarse = 3
       nlon_coarse = 3
       nlat_surface_model = 2
@@ -5583,35 +4740,6 @@ subroutine testLakeModel6
          -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
          -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0 /), &
          (/nlon,nlat/)))
-      allocate(flood_local_redirect(nlat,nlon))
-      flood_local_redirect(:,:) = .False.
-      allocate(connect_local_redirect(nlat,nlon))
-      connect_local_redirect(:,:) = .False.
-      allocate(additional_flood_local_redirect(nlat,nlon))
-      additional_flood_local_redirect(:,:) = .False.
-      allocate(additional_connect_local_redirect(nlat,nlon))
-      additional_connect_local_redirect(:,:) = .False.
-      allocate(merge_points(nlat,nlon))
-      merge_points = transpose(reshape((/ &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, connection_merge_not_set_flood_merge_as_secondary,&
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype /), &
-         (/nlon,nlat/)))
       allocate(cell_areas_on_surface_model_grid(nlat_surface_model,nlon_surface_model))
       cell_areas_on_surface_model_grid = transpose(reshape((/ &
           2.5,3.5, &
@@ -5665,110 +4793,6 @@ subroutine testLakeModel6
          0, 0, 0, 0, 0, 0, 0, 0, 0, &
          0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
          (/nlon,nlat/)))
-      allocate(flood_force_merge_lat_index(nlat,nlon))
-      flood_force_merge_lat_index = transpose(reshape((/ &
-          0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
-         (/nlon,nlat/)))
-      allocate(flood_force_merge_lon_index(nlat,nlon))
-      flood_force_merge_lon_index = transpose(reshape((/ &
-          0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
-         (/nlon,nlat/)))
-      allocate(connect_force_merge_lat_index(nlat,nlon))
-      connect_force_merge_lat_index = transpose(reshape((/ &
-          0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
-         (/nlon,nlat/)))
-      allocate(connect_force_merge_lon_index(nlat,nlon))
-      connect_force_merge_lon_index = transpose(reshape((/ &
-          0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
-         (/nlon,nlat/)))
-      allocate(flood_redirect_lat_index(nlat,nlon))
-      flood_redirect_lat_index = transpose(reshape((/ &
-          0, 0, 0, 1, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
-         (/nlon,nlat/)))
-      allocate(flood_redirect_lon_index(nlat,nlon))
-      flood_redirect_lon_index = transpose(reshape((/ &
-          0, 0, 0, 3, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
-         (/nlon,nlat/)))
-      allocate(connect_redirect_lat_index(nlat,nlon))
-      connect_redirect_lat_index = transpose(reshape((/ &
-          0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
-         (/nlon,nlat/)))
-      allocate(connect_redirect_lon_index(nlat,nlon))
-      connect_redirect_lon_index = transpose(reshape((/ &
-          0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
-         (/nlon,nlat/)))
-      allocate(additional_flood_redirect_lat_index(nlat,nlon))
-      additional_flood_redirect_lat_index(:,:) = 0
-      allocate(additional_flood_redirect_lon_index(nlat,nlon))
-      additional_flood_redirect_lon_index(:,:) = 0
-      allocate(additional_connect_redirect_lat_index(nlat,nlon))
-      additional_connect_redirect_lat_index(:,:) = 0
-      allocate(additional_connect_redirect_lon_index(nlat,nlon))
-      additional_connect_redirect_lon_index(:,:) = 0
       instant_throughflow_local=.True.
       lake_retention_coefficient_local=0.1_dp
       allocate(corresponding_surface_cell_lat_index(nlat,nlon))
@@ -5796,31 +4820,37 @@ subroutine testLakeModel6
                                                            2,2,2,2,2,2,2,2,2  /), &
 
          (/nlon,nlat/)))
+      allocate(connect_merge_and_redirect_indices_index(nlat,nlon))
+      connect_merge_and_redirect_indices_index(:,:) =0
+      allocate(flood_merge_and_redirect_indices_index(nlat,nlon))
+      flood_merge_and_redirect_indices_index(:,:) = 0
+      allocate(flood_merge_and_redirect_indices_collections(1))
+      connect_merge_and_redirect_indices_collections => null()
+      flood_index = 1
+      secondary_merge => &
+          mergeandredirectindices(.false., &
+                                  .false., &
+                                  1, &
+                                  5, &
+                                  1, &
+                                  3)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(1,4) = flood_index
       lake_parameters => LakeParameters(lake_centers, &
                                         connection_volume_thresholds, &
                                         flood_volume_thresholds, &
-                                        flood_local_redirect, &
-                                        connect_local_redirect, &
-                                        additional_flood_local_redirect, &
-                                        additional_connect_local_redirect, &
-                                        merge_points, &
                                         cell_areas_on_surface_model_grid, &
                                         flood_next_cell_lat_index, &
                                         flood_next_cell_lon_index, &
                                         connect_next_cell_lat_index, &
                                         connect_next_cell_lon_index, &
-                                        flood_force_merge_lat_index, &
-                                        flood_force_merge_lon_index, &
-                                        connect_force_merge_lat_index, &
-                                        connect_force_merge_lon_index, &
-                                        flood_redirect_lat_index, &
-                                        flood_redirect_lon_index, &
-                                        connect_redirect_lat_index, &
-                                        connect_redirect_lon_index, &
-                                        additional_flood_redirect_lat_index, &
-                                        additional_flood_redirect_lon_index, &
-                                        additional_connect_redirect_lat_index, &
-                                        additional_connect_redirect_lon_index, &
+                                        connect_merge_and_redirect_indices_index, &
+                                        flood_merge_and_redirect_indices_index, &
+                                        connect_merge_and_redirect_indices_collections, &
+                                        flood_merge_and_redirect_indices_collections, &
                                         corresponding_surface_cell_lat_index, &
                                         corresponding_surface_cell_lon_index, &
                                         nlat,nlon, &
@@ -6799,6 +5829,10 @@ subroutine testLakeModel6
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
@@ -6852,6 +5886,10 @@ subroutine testLakeModel6
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
@@ -6905,6 +5943,10 @@ subroutine testLakeModel6
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
@@ -6958,6 +6000,10 @@ subroutine testLakeModel6
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
@@ -7012,6 +6058,10 @@ subroutine testLakeModel6
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
                                      initial_water_to_lake_centers, &
@@ -7065,6 +6115,10 @@ subroutine testLakeModel6
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
@@ -7118,6 +6172,10 @@ subroutine testLakeModel6
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
@@ -7171,6 +6229,10 @@ subroutine testLakeModel6
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
@@ -7225,6 +6287,10 @@ subroutine testLakeModel6
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
@@ -7278,6 +6344,10 @@ subroutine testLakeModel6
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
@@ -7332,6 +6402,10 @@ subroutine testLakeModel6
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
@@ -7386,6 +6460,10 @@ subroutine testLakeModel6
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
@@ -7440,6 +6518,10 @@ subroutine testLakeModel6
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
@@ -7652,28 +6734,11 @@ subroutine testLakeModel7
    type(lakeprognostics), pointer :: lake_prognostics_out
    type(lakepointer) :: working_lake_ptr
    real(dp),dimension(:,:), pointer :: flood_volume_thresholds
-   logical,dimension(:,:), pointer :: flood_local_redirect
-   logical,dimension(:,:), pointer :: connect_local_redirect
-   logical,dimension(:,:), pointer :: additional_flood_local_redirect
-   logical,dimension(:,:), pointer :: additional_connect_local_redirect
-   integer,dimension(:,:), pointer :: merge_points
   real(dp),dimension(:,:),pointer :: cell_areas_on_surface_model_grid
    integer,dimension(:,:), pointer :: flood_next_cell_lat_index
    integer,dimension(:,:), pointer :: flood_next_cell_lon_index
    integer,dimension(:,:), pointer :: connect_next_cell_lat_index
    integer,dimension(:,:), pointer :: connect_next_cell_lon_index
-   integer,dimension(:,:), pointer :: flood_force_merge_lat_index
-   integer,dimension(:,:), pointer :: flood_force_merge_lon_index
-   integer,dimension(:,:), pointer :: connect_force_merge_lat_index
-   integer,dimension(:,:), pointer :: connect_force_merge_lon_index
-   integer,dimension(:,:), pointer :: flood_redirect_lat_index
-   integer,dimension(:,:), pointer :: flood_redirect_lon_index
-   integer,dimension(:,:), pointer :: connect_redirect_lat_index
-   integer,dimension(:,:), pointer :: connect_redirect_lon_index
-   integer,dimension(:,:), pointer :: additional_flood_redirect_lat_index
-   integer,dimension(:,:), pointer :: additional_flood_redirect_lon_index
-   integer,dimension(:,:), pointer :: additional_connect_redirect_lat_index
-   integer,dimension(:,:), pointer :: additional_connect_redirect_lon_index
    integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
    integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
    real(dp),dimension(:,:,:), pointer :: drainages
@@ -7712,12 +6777,18 @@ subroutine testLakeModel7
    integer , dimension(:,:), pointer :: second_intermediate_expected_number_fine_grid_cells
    real(dp),dimension(:,:), pointer :: second_intermediate_expected_diagnostic_lake_volumes
    integer,dimension(:,:), pointer :: lake_types
-   integer :: no_merge_mtype
-   integer :: connection_merge_not_set_flood_merge_as_primary
-   integer :: connection_merge_not_set_flood_merge_as_secondary
    real(dp),dimension(:), pointer :: lake_volumes
    real(dp), dimension(:,:), pointer :: diagnostic_lake_volumes
    real(dp), dimension(:,:), allocatable :: lake_fractions
+   integer, pointer, dimension(:,:) :: connect_merge_and_redirect_indices_index
+   integer, pointer, dimension(:,:) :: flood_merge_and_redirect_indices_index
+   type(mergeandredirectindicescollectionpointer), pointer, dimension(:) :: &
+    connect_merge_and_redirect_indices_collections
+   type(mergeandredirectindicescollectionpointer), pointer, dimension(:) :: &
+    flood_merge_and_redirect_indices_collections
+   type(mergeandredirectindicescollection), pointer :: collected_indices
+   type(mergeandredirectindicespointer), dimension(:), pointer :: primary_merges
+   type(mergeandredirectindices), pointer :: secondary_merge
    integer :: nlat_coarse,nlon_coarse
    integer :: nlat_surface_model,nlon_surface_model
    integer :: nlat,nlon
@@ -7726,9 +6797,7 @@ subroutine testLakeModel7
    logical :: instant_throughflow_local
    real(dp) :: lake_retention_coefficient_local
    integer :: lake_type
-      no_merge_mtype = 0
-      connection_merge_not_set_flood_merge_as_primary = 9
-      connection_merge_not_set_flood_merge_as_secondary = 10
+   integer :: flood_index
       nlat_coarse = 3
       nlon_coarse = 3
       nlat_surface_model = 3
@@ -7798,35 +6867,6 @@ subroutine testLakeModel7
          -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
          -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0 /), &
          (/nlon,nlat/)))
-      allocate(flood_local_redirect(nlat,nlon))
-      flood_local_redirect(:,:) = .False.
-      allocate(connect_local_redirect(nlat,nlon))
-      connect_local_redirect(:,:) = .False.
-      allocate(additional_flood_local_redirect(nlat,nlon))
-      additional_flood_local_redirect(:,:) = .False.
-      allocate(additional_connect_local_redirect(nlat,nlon))
-      additional_connect_local_redirect(:,:) = .False.
-      allocate(merge_points(nlat,nlon))
-      merge_points = transpose(reshape((/ &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, connection_merge_not_set_flood_merge_as_secondary,&
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype /), &
-         (/nlon,nlat/)))
       allocate(cell_areas_on_surface_model_grid(nlat_surface_model,nlon_surface_model))
       cell_areas_on_surface_model_grid = transpose(reshape((/ &
           2.5,3.0,2.5, &
@@ -7881,110 +6921,6 @@ subroutine testLakeModel7
          0, 0, 0, 0, 0, 0, 0, 0, 0, &
          0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
          (/nlon,nlat/)))
-      allocate(flood_force_merge_lat_index(nlat,nlon))
-      flood_force_merge_lat_index = transpose(reshape((/ &
-          0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
-         (/nlon,nlat/)))
-      allocate(flood_force_merge_lon_index(nlat,nlon))
-      flood_force_merge_lon_index = transpose(reshape((/ &
-          0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
-         (/nlon,nlat/)))
-      allocate(connect_force_merge_lat_index(nlat,nlon))
-      connect_force_merge_lat_index = transpose(reshape((/ &
-          0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
-         (/nlon,nlat/)))
-      allocate(connect_force_merge_lon_index(nlat,nlon))
-      connect_force_merge_lon_index = transpose(reshape((/ &
-          0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
-         (/nlon,nlat/)))
-      allocate(flood_redirect_lat_index(nlat,nlon))
-      flood_redirect_lat_index = transpose(reshape((/ &
-          0, 0, 0, 1, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
-         (/nlon,nlat/)))
-      allocate(flood_redirect_lon_index(nlat,nlon))
-      flood_redirect_lon_index = transpose(reshape((/ &
-          0, 0, 0, 3, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
-         (/nlon,nlat/)))
-      allocate(connect_redirect_lat_index(nlat,nlon))
-      connect_redirect_lat_index = transpose(reshape((/ &
-          0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
-         (/nlon,nlat/)))
-      allocate(connect_redirect_lon_index(nlat,nlon))
-      connect_redirect_lon_index = transpose(reshape((/ &
-          0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0, &
-         0, 0, 0, 0, 0, 0, 0, 0, 0 /), &
-         (/nlon,nlat/)))
-      allocate(additional_flood_redirect_lat_index(nlat,nlon))
-      additional_flood_redirect_lat_index(:,:) = 0
-      allocate(additional_flood_redirect_lon_index(nlat,nlon))
-      additional_flood_redirect_lon_index(:,:) = 0
-      allocate(additional_connect_redirect_lat_index(nlat,nlon))
-      additional_connect_redirect_lat_index(:,:) = 0
-      allocate(additional_connect_redirect_lon_index(nlat,nlon))
-      additional_connect_redirect_lon_index(:,:) = 0
       instant_throughflow_local=.True.
       lake_retention_coefficient_local=0.1_dp
       allocate(corresponding_surface_cell_lat_index(nlat,nlon))
@@ -8011,31 +6947,37 @@ subroutine testLakeModel7
                                                            1,1,1,2,2,2,3,3,3, &
                                                            1,1,1,2,2,2,3,3,3 /), &
          (/nlon,nlat/)))
+      allocate(connect_merge_and_redirect_indices_index(nlat,nlon))
+      connect_merge_and_redirect_indices_index(:,:) =0
+      allocate(flood_merge_and_redirect_indices_index(nlat,nlon))
+      flood_merge_and_redirect_indices_index(:,:) = 0
+      allocate(flood_merge_and_redirect_indices_collections(1))
+      connect_merge_and_redirect_indices_collections => null()
+      flood_index = 1
+        secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .false., &
+                                      1, &
+                                      5, &
+                                      1, &
+                                      3)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(1,4) = flood_index
       lake_parameters => LakeParameters(lake_centers, &
                                         connection_volume_thresholds, &
                                         flood_volume_thresholds, &
-                                        flood_local_redirect, &
-                                        connect_local_redirect, &
-                                        additional_flood_local_redirect, &
-                                        additional_connect_local_redirect, &
-                                        merge_points, &
                                         cell_areas_on_surface_model_grid, &
                                         flood_next_cell_lat_index, &
                                         flood_next_cell_lon_index, &
                                         connect_next_cell_lat_index, &
                                         connect_next_cell_lon_index, &
-                                        flood_force_merge_lat_index, &
-                                        flood_force_merge_lon_index, &
-                                        connect_force_merge_lat_index, &
-                                        connect_force_merge_lon_index, &
-                                        flood_redirect_lat_index, &
-                                        flood_redirect_lon_index, &
-                                        connect_redirect_lat_index, &
-                                        connect_redirect_lon_index, &
-                                        additional_flood_redirect_lat_index, &
-                                        additional_flood_redirect_lon_index, &
-                                        additional_connect_redirect_lat_index, &
-                                        additional_connect_redirect_lon_index, &
+                                        connect_merge_and_redirect_indices_index, &
+                                        flood_merge_and_redirect_indices_index, &
+                                        connect_merge_and_redirect_indices_collections, &
+                                        flood_merge_and_redirect_indices_collections, &
                                         corresponding_surface_cell_lat_index, &
                                         corresponding_surface_cell_lon_index, &
                                         nlat,nlon, &
@@ -8353,6 +7295,10 @@ subroutine testLakeModel7
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
@@ -8409,6 +7355,10 @@ subroutine testLakeModel7
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
@@ -8522,26 +7472,10 @@ subroutine testLakeModel8
    logical,dimension(:,:), pointer :: lake_centers
    real(dp),dimension(:,:), pointer :: connection_volume_thresholds
    real(dp),dimension(:,:), pointer :: flood_volume_thresholds
-   logical,dimension(:,:), pointer :: flood_local_redirect
-   logical,dimension(:,:), pointer :: connect_local_redirect
-   logical,dimension(:,:), pointer :: additional_flood_local_redirect
-   logical,dimension(:,:), pointer :: additional_connect_local_redirect
    integer,dimension(:,:), pointer :: flood_next_cell_lat_index
    integer,dimension(:,:), pointer :: flood_next_cell_lon_index
    integer,dimension(:,:), pointer :: connect_next_cell_lat_index
    integer,dimension(:,:), pointer :: connect_next_cell_lon_index
-   integer,dimension(:,:), pointer :: flood_force_merge_lat_index
-   integer,dimension(:,:), pointer :: flood_force_merge_lon_index
-   integer,dimension(:,:), pointer :: connect_force_merge_lat_index
-   integer,dimension(:,:), pointer :: connect_force_merge_lon_index
-   integer,dimension(:,:), pointer :: flood_redirect_lat_index
-   integer,dimension(:,:), pointer :: flood_redirect_lon_index
-   integer,dimension(:,:), pointer :: connect_redirect_lat_index
-   integer,dimension(:,:), pointer :: connect_redirect_lon_index
-   integer,dimension(:,:), pointer :: additional_flood_redirect_lat_index
-   integer,dimension(:,:), pointer :: additional_flood_redirect_lon_index
-   integer,dimension(:,:), pointer :: additional_connect_redirect_lat_index
-   integer,dimension(:,:), pointer :: additional_connect_redirect_lon_index
    integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
    integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
    real(dp),dimension(:,:), pointer :: drainage
@@ -8593,13 +7527,19 @@ subroutine testLakeModel8
    integer , dimension(:,:), pointer :: third_intermediate_expected_number_fine_grid_cells
    real(dp),dimension(:,:), pointer :: third_intermediate_expected_diagnostic_lake_volumes
    integer,dimension(:,:), pointer :: lake_types
-   integer :: no_merge_mtype
-   integer :: connection_merge_not_set_flood_merge_as_primary
-   integer :: connection_merge_not_set_flood_merge_as_secondary
    real(dp),dimension(:), pointer :: lake_volumes
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
    real(dp), dimension(:,:), allocatable :: lake_fractions
-   integer,dimension(:,:), pointer :: merge_points
+   integer, pointer, dimension(:,:) :: connect_merge_and_redirect_indices_index
+   integer, pointer, dimension(:,:) :: flood_merge_and_redirect_indices_index
+   type(mergeandredirectindicescollectionpointer), pointer, dimension(:) :: &
+    connect_merge_and_redirect_indices_collections
+   type(mergeandredirectindicescollectionpointer), pointer, dimension(:) :: &
+    flood_merge_and_redirect_indices_collections
+   type(mergeandredirectindicescollection), pointer :: collected_indices
+   type(mergeandredirectindices), pointer :: primary_merge
+   type(mergeandredirectindicespointer), dimension(:), pointer :: primary_merges
+   type(mergeandredirectindices), pointer :: secondary_merge
    real(dp),dimension(:,:),pointer :: cell_areas_on_surface_model_grid
    integer :: nlat_coarse, nlon_coarse
    integer :: nlat_surface_model,nlon_surface_model
@@ -8609,10 +7549,8 @@ subroutine testLakeModel8
    logical :: instant_throughflow_local
    real(dp) :: lake_retention_coefficient_local
    integer :: lake_type
+   integer :: flood_index
       seconds_per_day = 86400.0_dp
-      no_merge_mtype = 0
-      connection_merge_not_set_flood_merge_as_primary = 9
-      connection_merge_not_set_flood_merge_as_secondary = 10
       nlat_coarse = 4
       nlon_coarse = 4
       nlat_surface_model = 3
@@ -8786,189 +7724,6 @@ subroutine testLakeModel8
          -1.0,    -1.0,   -1.0,    -1.0,   -1.0,    -1.0,    -1.0,   -1.0,   -1.0,  -1.0,  -1.0,    -1.0,&
              -1.0,    -1.0,   -1.0,    -1.0,   -1.0,    -1.0,   -1.0,  -1.0 /), &
          (/nlon,nlat/)))
-      allocate(flood_local_redirect(20,20))
-      flood_local_redirect = transpose(reshape((/ &
-          .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,.False.,&
-          .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False.,  .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,.False.,&
-         .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .True., .False., .False., .False.,  .False.,&
-         .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .True., &
-         .False., .False.,  .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False.,  .False., .False., .False., .False., .False.,.False.,&
-         .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False.,  .False.,    .True., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .True., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False.,  .False., .False., .False., .False., .False., .False., .False.,.False.,&
-         .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False.,    .False., .False., .False., .False. /), &
-         (/nlon,nlat/)))
-      allocate(connect_local_redirect(20,20))
-      connect_local_redirect = transpose(reshape((/ &
-          .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,.False.,&
-          .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False.,  .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,.False.,&
-         .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False.,  .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False.,  .False., .False., .False., .False., .False.,.False.,&
-         .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False.,  .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False.,  .False., .False., .False., .False., .False., .False., .False.,.False.,&
-         .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False.,    .False., .False., .False., .False. /), &
-         (/nlon,nlat/)))
-      allocate(additional_flood_local_redirect(20,20))
-      additional_flood_local_redirect(:,:) = .False.
-      allocate(additional_connect_local_redirect(20,20))
-      additional_connect_local_redirect(:,:) = .False.
-      allocate(merge_points(nlat,nlon))
-      merge_points = transpose(reshape((/ &
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-          no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-          no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-          no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-          no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-          no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-          connection_merge_not_set_flood_merge_as_primary,no_merge_mtype, &
-          no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,connection_merge_not_set_flood_merge_as_secondary, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype, &
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype, &
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-      no_merge_mtype,connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype, &
-      no_merge_mtype, &
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,connection_merge_not_set_flood_merge_as_primary, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        connection_merge_not_set_flood_merge_as_primary,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype, no_merge_mtype,no_merge_mtype, &
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-        connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype, &
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-        connection_merge_not_set_flood_merge_as_secondary,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-        no_merge_mtype, no_merge_mtype,  no_merge_mtype, no_merge_mtype, &
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype /), &
-         (/nlon,nlat/)))
       allocate(cell_areas_on_surface_model_grid(nlat_surface_model,nlon_surface_model))
       cell_areas_on_surface_model_grid = transpose(reshape((/ &
           2.5,3.0,2.5, &
@@ -9067,210 +7822,10 @@ subroutine testLakeModel8
          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
          (/nlon,nlat/)))
-      allocate(flood_force_merge_lat_index(20,20))
-      flood_force_merge_lat_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  6, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  6, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  7, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(flood_force_merge_lon_index(20,20))
-      flood_force_merge_lon_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  2, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  8, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 12, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(connect_force_merge_lat_index(20,20))
-      connect_force_merge_lat_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(connect_force_merge_lon_index(20,20))
-      connect_force_merge_lon_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(flood_redirect_lat_index(20,20))
-      flood_redirect_lat_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1,  1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1,  7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  7, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1,  1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  6, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  5, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  3, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1,  3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(flood_redirect_lon_index(20,20))
-      flood_redirect_lon_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  0, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1,  3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, 14, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 14, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1,  0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  5, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 13, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  3, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1,  1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(connect_redirect_lat_index(20,20))
-      connect_redirect_lat_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(connect_redirect_lon_index(20,20))
-      connect_redirect_lon_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
       call add_offset(flood_next_cell_lat_index,1,(/-1/))
       call add_offset(flood_next_cell_lon_index,1,(/-1/))
       call add_offset(connect_next_cell_lat_index,1,(/-1/))
       call add_offset(connect_next_cell_lon_index,1,(/-1/))
-      call add_offset(flood_force_merge_lat_index,1,(/-1/))
-      call add_offset(flood_force_merge_lon_index,1,(/-1/))
-      call add_offset(connect_force_merge_lat_index,1,(/-1/))
-      call add_offset(connect_force_merge_lon_index,1,(/-1/))
-      call add_offset(flood_redirect_lat_index,1,(/-1/))
-      call add_offset(flood_redirect_lon_index,1,(/-1/))
-      call add_offset(connect_redirect_lat_index,1,(/-1/))
-      call add_offset(connect_redirect_lon_index,1,(/-1/))
-      allocate(additional_flood_redirect_lat_index(20,20))
-      additional_flood_redirect_lat_index(:,:) = 0
-      allocate(additional_flood_redirect_lon_index(20,20))
-      additional_flood_redirect_lon_index(:,:) = 0
-      allocate(additional_connect_redirect_lat_index(20,20))
-      additional_connect_redirect_lat_index(:,:) = 0
-      allocate(additional_connect_redirect_lon_index(20,20))
-      additional_connect_redirect_lon_index(:,:) = 0
       instant_throughflow_local=.True.
       lake_retention_coefficient_local=0.1_dp
       allocate(corresponding_surface_cell_lat_index(nlat,nlon))
@@ -9319,31 +7874,148 @@ subroutine testLakeModel8
                                                              3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
                                                              3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3 /), &
          (/nlon,nlat/)))
+      allocate(connect_merge_and_redirect_indices_index(nlat,nlon))
+      connect_merge_and_redirect_indices_index(:,:) =0
+      allocate(flood_merge_and_redirect_indices_index(nlat,nlon))
+      flood_merge_and_redirect_indices_index(:,:) = 0
+      allocate(flood_merge_and_redirect_indices_collections(9))
+      connect_merge_and_redirect_indices_collections => null()
+      flood_index = 1
+      primary_merge => &
+        mergeandredirectindices(.true., &
+                                .false., &
+                                6, &
+                                2, &
+                                1, &
+                                0)
+      allocate(primary_merges(1))
+      primary_merges(1)%ptr => primary_merge
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            null())
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(3,16) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .false., &
+                                      8, &
+                                      18, &
+                                      1, &
+                                      3)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(4,6) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .true., &
+                                      6, &
+                                      10, &
+                                      7, &
+                                      14)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(5,8) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .true., &
+                                      7, &
+                                      14, &
+                                      7, &
+                                      14)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(6,12) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .false., &
+                                      6, &
+                                      4, &
+                                      1, &
+                                      0)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(8,2) = flood_index
+      flood_index = flood_index +1
+      primary_merge => &
+        mergeandredirectindices(.true., &
+                                .true., &
+                                6, &
+                                8, &
+                                6, &
+                                5)
+      allocate(primary_merges(1))
+      primary_merges(1)%ptr => primary_merge
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            null())
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(8,17) = flood_index
+      flood_index = flood_index +1
+      primary_merge => &
+        mergeandredirectindices(.true., &
+                                .true., &
+                                7, &
+                                12, &
+                                5, &
+                                13)
+      allocate(primary_merges(1))
+      primary_merges(1)%ptr => primary_merge
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            null())
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(9,15) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .false., &
+                                      16, &
+                                      15, &
+                                      3, &
+                                      3)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(14,19) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .false., &
+                                      17, &
+                                      3, &
+                                      3, &
+                                      1)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(16,4) = flood_index
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%add_offset_to_collection(1)
+      end do
       lake_parameters => LakeParameters(lake_centers, &
                                         connection_volume_thresholds, &
                                         flood_volume_thresholds, &
-                                        flood_local_redirect, &
-                                        connect_local_redirect, &
-                                        additional_flood_local_redirect, &
-                                        additional_connect_local_redirect, &
-                                        merge_points, &
                                         cell_areas_on_surface_model_grid, &
                                         flood_next_cell_lat_index, &
                                         flood_next_cell_lon_index, &
                                         connect_next_cell_lat_index, &
                                         connect_next_cell_lon_index, &
-                                        flood_force_merge_lat_index, &
-                                        flood_force_merge_lon_index, &
-                                        connect_force_merge_lat_index, &
-                                        connect_force_merge_lon_index, &
-                                        flood_redirect_lat_index, &
-                                        flood_redirect_lon_index, &
-                                        connect_redirect_lat_index, &
-                                        connect_redirect_lon_index, &
-                                        additional_flood_redirect_lat_index, &
-                                        additional_flood_redirect_lon_index, &
-                                        additional_connect_redirect_lat_index, &
-                                        additional_connect_redirect_lon_index, &
+                                        connect_merge_and_redirect_indices_index, &
+                                        flood_merge_and_redirect_indices_index, &
+                                        connect_merge_and_redirect_indices_collections, &
+                                        flood_merge_and_redirect_indices_collections, &
                                         corresponding_surface_cell_lat_index, &
                                         corresponding_surface_cell_lon_index, &
                                         nlat,nlon, &
@@ -9964,6 +8636,10 @@ subroutine testLakeModel8
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
                                      initial_water_to_lake_centers, &
@@ -10019,6 +8695,10 @@ subroutine testLakeModel8
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
@@ -10075,6 +8755,10 @@ subroutine testLakeModel8
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
@@ -10192,7 +8876,6 @@ subroutine testLakeModel9
    type(lakeprognostics), pointer :: lake_prognostics_out
    type(lakepointer) :: working_lake_ptr
    real(dp),dimension(:,:), pointer :: flow_directions
-   integer,dimension(:,:), pointer :: merge_points
    real(dp),dimension(:,:),pointer :: cell_areas_on_surface_model_grid
    type(riverprognosticfields), pointer :: river_fields
    integer,dimension(:,:), pointer :: river_reservoir_nums
@@ -10205,26 +8888,10 @@ subroutine testLakeModel9
    logical,dimension(:,:), pointer :: lake_centers
    real(dp),dimension(:,:), pointer :: connection_volume_thresholds
    real(dp),dimension(:,:), pointer :: flood_volume_thresholds
-   logical,dimension(:,:), pointer :: flood_local_redirect
-   logical,dimension(:,:), pointer :: connect_local_redirect
-   logical,dimension(:,:), pointer :: additional_flood_local_redirect
-   logical,dimension(:,:), pointer :: additional_connect_local_redirect
    integer,dimension(:,:), pointer :: flood_next_cell_lat_index
    integer,dimension(:,:), pointer :: flood_next_cell_lon_index
    integer,dimension(:,:), pointer :: connect_next_cell_lat_index
    integer,dimension(:,:), pointer :: connect_next_cell_lon_index
-   integer,dimension(:,:), pointer :: flood_force_merge_lat_index
-   integer,dimension(:,:), pointer :: flood_force_merge_lon_index
-   integer,dimension(:,:), pointer :: connect_force_merge_lat_index
-   integer,dimension(:,:), pointer :: connect_force_merge_lon_index
-   integer,dimension(:,:), pointer :: flood_redirect_lat_index
-   integer,dimension(:,:), pointer :: flood_redirect_lon_index
-   integer,dimension(:,:), pointer :: connect_redirect_lat_index
-   integer,dimension(:,:), pointer :: connect_redirect_lon_index
-   integer,dimension(:,:), pointer :: additional_flood_redirect_lat_index
-   integer,dimension(:,:), pointer :: additional_flood_redirect_lon_index
-   integer,dimension(:,:), pointer :: additional_connect_redirect_lat_index
-   integer,dimension(:,:), pointer :: additional_connect_redirect_lon_index
    integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
    integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
    real(dp),dimension(:,:), pointer :: drainage
@@ -10247,12 +8914,19 @@ subroutine testLakeModel9
    real(dp),dimension(:,:), pointer :: expected_diagnostic_lake_volumes
    integer,dimension(:,:), pointer :: lake_types
    real(dp) :: seconds_per_day
-   integer :: no_merge_mtype
-   integer :: connection_merge_not_set_flood_merge_as_primary
-   integer :: connection_merge_not_set_flood_merge_as_secondary
    real(dp),dimension(:), pointer :: lake_volumes
    real(dp), dimension(:,:), pointer :: diagnostic_lake_volumes
    real(dp), dimension(:,:), allocatable :: lake_fractions
+   integer, pointer, dimension(:,:) :: connect_merge_and_redirect_indices_index
+   integer, pointer, dimension(:,:) :: flood_merge_and_redirect_indices_index
+   type(mergeandredirectindicescollectionpointer), pointer, dimension(:) :: &
+    connect_merge_and_redirect_indices_collections
+   type(mergeandredirectindicescollectionpointer), pointer, dimension(:) :: &
+    flood_merge_and_redirect_indices_collections
+   type(mergeandredirectindicescollection), pointer :: collected_indices
+   type(mergeandredirectindices), pointer :: primary_merge
+   type(mergeandredirectindicespointer), dimension(:), pointer :: primary_merges
+   type(mergeandredirectindices), pointer :: secondary_merge
    integer :: nlat_coarse, nlon_coarse
    integer :: nlat_surface_model,nlon_surface_model
    integer :: nlat,nlon
@@ -10261,10 +8935,8 @@ subroutine testLakeModel9
    logical :: instant_throughflow_local
    real(dp) :: lake_retention_coefficient_local
    integer :: lake_type
+   integer :: flood_index
       seconds_per_day = 86400.0_dp
-      no_merge_mtype = 0
-      connection_merge_not_set_flood_merge_as_primary = 9
-      connection_merge_not_set_flood_merge_as_secondary = 10
       nlat_coarse = 4
       nlon_coarse = 4
       nlat_surface_model = 3
@@ -10439,179 +9111,6 @@ subroutine testLakeModel9
          -1.0,    -1.0,   -1.0,    -1.0,   -1.0,    -1.0,    -1.0,   -1.0,   -1.0,  -1.0,&
           -1.0,    -1.0,    -1.0,    -1.0,   -1.0,    -1.0,   -1.0,    -1.0,   -1.0,  -1.0 /), &
          (/nlon,nlat/)))
-      allocate(flood_local_redirect(nlat,nlon))
-      flood_local_redirect = transpose(reshape((/ &
-          .False., .False., .False., .False., .False.,.False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False.,  .False., .False., .False., .False.,.False., .False., .False.,&
-         .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .True., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False.,  .True., .False., .False.,  .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False., .False., .False., .False.,  .False.,    .True., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False., .False., .False., .True., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False.,  .False., .False.,.False., .False.,&
-         .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False. /), &
-         (/nlon,nlat/)))
-      allocate(connect_local_redirect(nlat,nlon))
-      connect_local_redirect = transpose(reshape((/ &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False.,  .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False.,  .False.,.False.,&
-          .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False.,  .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False.,  .False., .False., .False.,.False.,&
-          .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False. /), &
-         (/nlon,nlat/)))
-      allocate(additional_flood_local_redirect(nlat,nlon))
-      additional_flood_local_redirect(:,:) = .False.
-      allocate(additional_connect_local_redirect(nlat,nlon))
-      additional_connect_local_redirect(:,:) = .False.
-      allocate(merge_points(nlat,nlon))
-      merge_points = transpose(reshape((/ &
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        connection_merge_not_set_flood_merge_as_primary,no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype, no_merge_mtype,  no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, connection_merge_not_set_flood_merge_as_primary,no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, connection_merge_not_set_flood_merge_as_primary,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype /), &
-         (/nlon,nlat/)))
       allocate(cell_areas_on_surface_model_grid(nlat_surface_model,nlon_surface_model))
       cell_areas_on_surface_model_grid = transpose(reshape((/ &
           2.5,3.0,2.5, &
@@ -10710,210 +9209,10 @@ subroutine testLakeModel9
          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
          (/nlon,nlat/)))
-      allocate(flood_force_merge_lat_index(nlat,nlon))
-      flood_force_merge_lat_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  6, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  6, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  7, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(flood_force_merge_lon_index(nlat,nlon))
-      flood_force_merge_lon_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  2, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  8, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 12, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(connect_force_merge_lat_index(nlat,nlon))
-      connect_force_merge_lat_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(connect_force_merge_lon_index(nlat,nlon))
-      connect_force_merge_lon_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(flood_redirect_lat_index(nlat,nlon))
-      flood_redirect_lat_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1,  1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1,  7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  7, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1,  1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  6, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  5, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  3, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1,  3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(flood_redirect_lon_index(nlat,nlon))
-      flood_redirect_lon_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  0, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1,  3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, 14, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 14, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1,  0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  5, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 13, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  3, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1,  1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(connect_redirect_lat_index(nlat,nlon))
-      connect_redirect_lat_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(connect_redirect_lon_index(nlat,nlon))
-      connect_redirect_lon_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
       call add_offset(flood_next_cell_lat_index,1,(/-1/))
       call add_offset(flood_next_cell_lon_index,1,(/-1/))
       call add_offset(connect_next_cell_lat_index,1,(/-1/))
       call add_offset(connect_next_cell_lon_index,1,(/-1/))
-      call add_offset(flood_force_merge_lat_index,1,(/-1/))
-      call add_offset(flood_force_merge_lon_index,1,(/-1/))
-      call add_offset(connect_force_merge_lat_index,1,(/-1/))
-      call add_offset(connect_force_merge_lon_index,1,(/-1/))
-      call add_offset(flood_redirect_lat_index,1,(/-1/))
-      call add_offset(flood_redirect_lon_index,1,(/-1/))
-      call add_offset(connect_redirect_lat_index,1,(/-1/))
-      call add_offset(connect_redirect_lon_index,1,(/-1/))
-      allocate(additional_flood_redirect_lat_index(nlat,nlon))
-      additional_flood_redirect_lat_index(:,:) = 0
-      allocate(additional_flood_redirect_lon_index(nlat,nlon))
-      additional_flood_redirect_lon_index(:,:) = 0
-      allocate(additional_connect_redirect_lat_index(nlat,nlon))
-      additional_connect_redirect_lat_index(:,:) = 0
-      allocate(additional_connect_redirect_lon_index(nlat,nlon))
-      additional_connect_redirect_lon_index(:,:) = 0
       instant_throughflow_local=.True.
       lake_retention_coefficient_local=0.1_dp
       allocate(corresponding_surface_cell_lat_index(nlat,nlon))
@@ -10962,31 +9261,148 @@ subroutine testLakeModel9
                                                              3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
                                                              3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3 /), &
          (/nlon,nlat/)))
+      allocate(connect_merge_and_redirect_indices_index(nlat,nlon))
+      connect_merge_and_redirect_indices_index(:,:) =0
+      allocate(flood_merge_and_redirect_indices_index(nlat,nlon))
+      flood_merge_and_redirect_indices_index(:,:) = 0
+      allocate(flood_merge_and_redirect_indices_collections(9))
+      connect_merge_and_redirect_indices_collections => null()
+      flood_index = 1
+      primary_merge => &
+        mergeandredirectindices(.true., &
+                                .false., &
+                                6, &
+                                2, &
+                                1, &
+                                0)
+      allocate(primary_merges(1))
+      primary_merges(1)%ptr => primary_merge
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            null())
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(3,16) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .false., &
+                                      8, &
+                                      18, &
+                                      1, &
+                                      3)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(4,6) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .true., &
+                                      6, &
+                                      10, &
+                                      7, &
+                                      14)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(5,8) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .true., &
+                                      7, &
+                                      14, &
+                                      7, &
+                                      14)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(6,12) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .false., &
+                                      6, &
+                                      4, &
+                                      1, &
+                                      0)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(8,2) = flood_index
+      flood_index = flood_index +1
+      primary_merge => &
+        mergeandredirectindices(.true., &
+                                .true., &
+                                6, &
+                                8, &
+                                6, &
+                                5)
+      allocate(primary_merges(1))
+      primary_merges(1)%ptr => primary_merge
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            null())
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(8,17) = flood_index
+      flood_index = flood_index +1
+      primary_merge => &
+        mergeandredirectindices(.true., &
+                                .true., &
+                                7, &
+                                12, &
+                                5, &
+                                13)
+      allocate(primary_merges(1))
+      primary_merges(1)%ptr => primary_merge
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            null())
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(9,15) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .false., &
+                                      16, &
+                                      15, &
+                                      3, &
+                                      3)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(14,19) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .false., &
+                                      17, &
+                                      3, &
+                                      3, &
+                                      1)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(16,4) = flood_index
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%add_offset_to_collection(1)
+      end do
       lake_parameters => LakeParameters(lake_centers, &
                                         connection_volume_thresholds, &
                                         flood_volume_thresholds, &
-                                        flood_local_redirect, &
-                                        connect_local_redirect, &
-                                        additional_flood_local_redirect, &
-                                        additional_connect_local_redirect, &
-                                        merge_points, &
                                         cell_areas_on_surface_model_grid, &
                                         flood_next_cell_lat_index, &
                                         flood_next_cell_lon_index, &
                                         connect_next_cell_lat_index, &
                                         connect_next_cell_lon_index, &
-                                        flood_force_merge_lat_index, &
-                                        flood_force_merge_lon_index, &
-                                        connect_force_merge_lat_index, &
-                                        connect_force_merge_lon_index, &
-                                        flood_redirect_lat_index, &
-                                        flood_redirect_lon_index, &
-                                        connect_redirect_lat_index, &
-                                        connect_redirect_lon_index, &
-                                        additional_flood_redirect_lat_index, &
-                                        additional_flood_redirect_lon_index, &
-                                        additional_connect_redirect_lat_index, &
-                                        additional_connect_redirect_lon_index, &
+                                        connect_merge_and_redirect_indices_index, &
+                                        flood_merge_and_redirect_indices_index, &
+                                        connect_merge_and_redirect_indices_collections, &
+                                        flood_merge_and_redirect_indices_collections, &
                                         corresponding_surface_cell_lat_index, &
                                         corresponding_surface_cell_lon_index, &
                                         nlat,nlon, &
@@ -11260,7 +9676,6 @@ subroutine testLakeModel10
    type(lakeprognostics), pointer :: lake_prognostics_out
    type(lakepointer) :: working_lake_ptr
    real(dp),dimension(:,:), pointer :: flow_directions
-   integer,dimension(:,:), pointer :: merge_points
    real(dp),dimension(:,:),pointer :: cell_areas_on_surface_model_grid
    integer,dimension(:,:), pointer :: river_reservoir_nums
    integer,dimension(:,:), pointer ::  overland_reservoir_nums
@@ -11272,26 +9687,10 @@ subroutine testLakeModel10
    logical,dimension(:,:), pointer :: lake_centers
    real(dp),dimension(:,:), pointer :: connection_volume_thresholds
    real(dp),dimension(:,:), pointer :: flood_volume_thresholds
-   logical,dimension(:,:), pointer :: flood_local_redirect
-   logical,dimension(:,:), pointer :: connect_local_redirect
-   logical,dimension(:,:), pointer :: additional_flood_local_redirect
-   logical,dimension(:,:), pointer :: additional_connect_local_redirect
    integer,dimension(:,:), pointer :: flood_next_cell_lat_index
    integer,dimension(:,:), pointer :: flood_next_cell_lon_index
    integer,dimension(:,:), pointer :: connect_next_cell_lat_index
    integer,dimension(:,:), pointer :: connect_next_cell_lon_index
-   integer,dimension(:,:), pointer :: flood_force_merge_lat_index
-   integer,dimension(:,:), pointer :: flood_force_merge_lon_index
-   integer,dimension(:,:), pointer :: connect_force_merge_lat_index
-   integer,dimension(:,:), pointer :: connect_force_merge_lon_index
-   integer,dimension(:,:), pointer :: flood_redirect_lat_index
-   integer,dimension(:,:), pointer :: flood_redirect_lon_index
-   integer,dimension(:,:), pointer :: connect_redirect_lat_index
-   integer,dimension(:,:), pointer :: connect_redirect_lon_index
-   integer,dimension(:,:), pointer :: additional_flood_redirect_lat_index
-   integer,dimension(:,:), pointer :: additional_flood_redirect_lon_index
-   integer,dimension(:,:), pointer :: additional_connect_redirect_lat_index
-   integer,dimension(:,:), pointer :: additional_connect_redirect_lon_index
    integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
    integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
    real(dp),dimension(:,:), pointer :: drainage
@@ -11314,11 +9713,18 @@ subroutine testLakeModel10
    real(dp),dimension(:,:), pointer :: expected_diagnostic_lake_volumes
    integer,dimension(:,:), pointer :: lake_types
    real(dp),dimension(:), pointer :: lake_volumes
-   integer :: no_merge_mtype
-   integer :: connection_merge_not_set_flood_merge_as_primary
-   integer :: connection_merge_not_set_flood_merge_as_secondary
    real(dp), dimension(:,:), pointer :: diagnostic_lake_volumes
    real(dp), dimension(:,:), allocatable :: lake_fractions
+   integer, pointer, dimension(:,:) :: connect_merge_and_redirect_indices_index
+   integer, pointer, dimension(:,:) :: flood_merge_and_redirect_indices_index
+   type(mergeandredirectindicescollectionpointer), pointer, dimension(:) :: &
+    connect_merge_and_redirect_indices_collections
+   type(mergeandredirectindicescollectionpointer), pointer, dimension(:) :: &
+    flood_merge_and_redirect_indices_collections
+   type(mergeandredirectindicescollection), pointer :: collected_indices
+   type(mergeandredirectindices), pointer :: primary_merge
+   type(mergeandredirectindicespointer), dimension(:), pointer :: primary_merges
+   type(mergeandredirectindices), pointer :: secondary_merge
    integer :: nlat_coarse, nlon_coarse
    integer :: nlat_surface_model,nlon_surface_model
    integer :: nlat,nlon
@@ -11328,10 +9734,8 @@ subroutine testLakeModel10
    real(dp) :: lake_retention_coefficient_local
    integer :: lake_type
    real(dp) :: seconds_per_day
+   integer :: flood_index
       seconds_per_day = 86400.0_dp
-      no_merge_mtype = 0
-      connection_merge_not_set_flood_merge_as_primary = 9
-      connection_merge_not_set_flood_merge_as_secondary = 10
       nlat_coarse = 4
       nlon_coarse = 4
       nlat_surface_model = 3
@@ -11507,179 +9911,6 @@ subroutine testLakeModel10
          -1.0,    -1.0,   -1.0,    -1.0,   -1.0,    -1.0,    -1.0,   -1.0,   -1.0, &
           -1.0,  -1.0,    -1.0,    -1.0,    -1.0,   -1.0,    -1.0,   -1.0,    -1.0,   -1.0,  -1.0 /), &
          (/nlon,nlat/)))
-      allocate(flood_local_redirect(nlat,nlon))
-      flood_local_redirect = transpose(reshape((/ &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .True., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False.,  .True., .False., .False.,  .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False., .False., .False., .False.,  .False.,    .True., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False., .False., .False., .True., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-         .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False. /), &
-         (/nlon,nlat/)))
-      allocate(connect_local_redirect(nlat,nlon))
-      connect_local_redirect = transpose(reshape((/ &
-          .False., .False., .False., .False., .False., .False., .False.,.False.,&
-           .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False.,  .False., .False., .False., .False., .False., .False.,.False.,&
-          .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False.,  .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False.,  .False.,.False.,&
-          .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False.,  .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False.,  .False., .False., .False.,.False.,&
-          .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False. /), &
-         (/nlon,nlat/)))
-      allocate(additional_flood_local_redirect(nlat,nlon))
-      additional_flood_local_redirect(:,:) = .False.
-      allocate(additional_connect_local_redirect(nlat,nlon))
-      additional_connect_local_redirect(:,:) = .False.
-      allocate(merge_points(nlat,nlon))
-      merge_points = transpose(reshape((/ &
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       connection_merge_not_set_flood_merge_as_primary,no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype, no_merge_mtype,  no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, connection_merge_not_set_flood_merge_as_primary,no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, connection_merge_not_set_flood_merge_as_primary,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-       no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype /), &
-         (/nlon,nlat/)))
       allocate(cell_areas_on_surface_model_grid(nlat_surface_model,nlon_surface_model))
       cell_areas_on_surface_model_grid = transpose(reshape((/ &
           2.5,3.0,2.5, &
@@ -11778,210 +10009,10 @@ subroutine testLakeModel10
          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
          (/nlon,nlat/)))
-      allocate(flood_force_merge_lat_index(nlat,nlon))
-      flood_force_merge_lat_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  6, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  6, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  7, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(flood_force_merge_lon_index(nlat,nlon))
-      flood_force_merge_lon_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  2, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  8, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 12, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(connect_force_merge_lat_index(nlat,nlon))
-      connect_force_merge_lat_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(connect_force_merge_lon_index(nlat,nlon))
-      connect_force_merge_lon_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(flood_redirect_lat_index(nlat,nlon))
-      flood_redirect_lat_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1,  1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1,  7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  7, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1,  1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  6, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  5, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  3, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1,  3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(flood_redirect_lon_index(nlat,nlon))
-      flood_redirect_lon_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  0, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1,  3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, 14, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 14, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1,  0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  5, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 13, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  3, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1,  1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(connect_redirect_lat_index(nlat,nlon))
-      connect_redirect_lat_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(connect_redirect_lon_index(nlat,nlon))
-      connect_redirect_lon_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
       call add_offset(flood_next_cell_lat_index,1,(/-1/))
       call add_offset(flood_next_cell_lon_index,1,(/-1/))
       call add_offset(connect_next_cell_lat_index,1,(/-1/))
       call add_offset(connect_next_cell_lon_index,1,(/-1/))
-      call add_offset(flood_force_merge_lat_index,1,(/-1/))
-      call add_offset(flood_force_merge_lon_index,1,(/-1/))
-      call add_offset(connect_force_merge_lat_index,1,(/-1/))
-      call add_offset(connect_force_merge_lon_index,1,(/-1/))
-      call add_offset(flood_redirect_lat_index,1,(/-1/))
-      call add_offset(flood_redirect_lon_index,1,(/-1/))
-      call add_offset(connect_redirect_lat_index,1,(/-1/))
-      call add_offset(connect_redirect_lon_index,1,(/-1/))
-      allocate(additional_flood_redirect_lat_index(nlat,nlon))
-      additional_flood_redirect_lat_index(:,:) = 0
-      allocate(additional_flood_redirect_lon_index(nlat,nlon))
-      additional_flood_redirect_lon_index(:,:) = 0
-      allocate(additional_connect_redirect_lat_index(nlat,nlon))
-      additional_connect_redirect_lat_index(:,:) = 0
-      allocate(additional_connect_redirect_lon_index(nlat,nlon))
-      additional_connect_redirect_lon_index(:,:) = 0
       instant_throughflow_local=.True.
       lake_retention_coefficient_local=0.1_dp
       allocate(corresponding_surface_cell_lat_index(nlat,nlon))
@@ -12030,31 +10061,148 @@ subroutine testLakeModel10
                                                              3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
                                                              3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3 /), &
          (/nlon,nlat/)))
+      allocate(connect_merge_and_redirect_indices_index(nlat,nlon))
+      connect_merge_and_redirect_indices_index(:,:) =0
+      allocate(flood_merge_and_redirect_indices_index(nlat,nlon))
+      flood_merge_and_redirect_indices_index(:,:) = 0
+      allocate(flood_merge_and_redirect_indices_collections(9))
+      connect_merge_and_redirect_indices_collections => null()
+      flood_index = 1
+      primary_merge => &
+        mergeandredirectindices(.true., &
+                                .false., &
+                                6, &
+                                2, &
+                                1, &
+                                0)
+      allocate(primary_merges(1))
+      primary_merges(1)%ptr => primary_merge
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            null())
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(3,16) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .false., &
+                                      8, &
+                                      18, &
+                                      1, &
+                                      3)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(4,6) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .true., &
+                                      6, &
+                                      10, &
+                                      7, &
+                                      14)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(5,8) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .true., &
+                                      7, &
+                                      14, &
+                                      7, &
+                                      14)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(6,12) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .false., &
+                                      6, &
+                                      4, &
+                                      1, &
+                                      0)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(8,2) = flood_index
+      flood_index = flood_index +1
+      primary_merge => &
+        mergeandredirectindices(.true., &
+                                .true., &
+                                6, &
+                                8, &
+                                6, &
+                                5)
+      allocate(primary_merges(1))
+      primary_merges(1)%ptr => primary_merge
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            null())
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(8,17) = flood_index
+      flood_index = flood_index +1
+      primary_merge => &
+        mergeandredirectindices(.true., &
+                                .true., &
+                                7, &
+                                12, &
+                                5, &
+                                13)
+      allocate(primary_merges(1))
+      primary_merges(1)%ptr => primary_merge
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            null())
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(9,15) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .false., &
+                                      16, &
+                                      15, &
+                                      3, &
+                                      3)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(14,19) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .false., &
+                                      17, &
+                                      3, &
+                                      3, &
+                                      1)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(16,4) = flood_index
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%add_offset_to_collection(1)
+      end do
       lake_parameters => LakeParameters(lake_centers, &
                                         connection_volume_thresholds, &
                                         flood_volume_thresholds, &
-                                        flood_local_redirect, &
-                                        connect_local_redirect, &
-                                        additional_flood_local_redirect, &
-                                        additional_connect_local_redirect, &
-                                        merge_points, &
                                         cell_areas_on_surface_model_grid, &
                                         flood_next_cell_lat_index, &
                                         flood_next_cell_lon_index, &
                                         connect_next_cell_lat_index, &
                                         connect_next_cell_lon_index, &
-                                        flood_force_merge_lat_index, &
-                                        flood_force_merge_lon_index, &
-                                        connect_force_merge_lat_index, &
-                                        connect_force_merge_lon_index, &
-                                        flood_redirect_lat_index, &
-                                        flood_redirect_lon_index, &
-                                        connect_redirect_lat_index, &
-                                        connect_redirect_lon_index, &
-                                        additional_flood_redirect_lat_index, &
-                                        additional_flood_redirect_lon_index, &
-                                        additional_connect_redirect_lat_index, &
-                                        additional_connect_redirect_lon_index, &
+                                        connect_merge_and_redirect_indices_index, &
+                                        flood_merge_and_redirect_indices_index, &
+                                        connect_merge_and_redirect_indices_collections, &
+                                        flood_merge_and_redirect_indices_collections, &
                                         corresponding_surface_cell_lat_index, &
                                         corresponding_surface_cell_lon_index, &
                                         nlat,nlon, &
@@ -12308,7 +10456,6 @@ subroutine testLakeModel11
    type(lakeprognostics), pointer :: lake_prognostics_out
    type(lakepointer) :: working_lake_ptr
    real(dp),dimension(:,:), pointer :: flow_directions
-   integer,dimension(:,:), pointer :: merge_points
    real(dp),dimension(:,:),pointer :: cell_areas_on_surface_model_grid
    integer,dimension(:,:), pointer :: river_reservoir_nums
    integer,dimension(:,:), pointer ::  overland_reservoir_nums
@@ -12320,26 +10467,10 @@ subroutine testLakeModel11
    logical,dimension(:,:), pointer :: lake_centers
    real(dp),dimension(:,:), pointer :: connection_volume_thresholds
    real(dp),dimension(:,:), pointer :: flood_volume_thresholds
-   logical,dimension(:,:), pointer :: flood_local_redirect
-   logical,dimension(:,:), pointer :: connect_local_redirect
-   logical,dimension(:,:), pointer :: additional_flood_local_redirect
-   logical,dimension(:,:), pointer :: additional_connect_local_redirect
    integer,dimension(:,:), pointer :: flood_next_cell_lat_index
    integer,dimension(:,:), pointer :: flood_next_cell_lon_index
    integer,dimension(:,:), pointer :: connect_next_cell_lat_index
    integer,dimension(:,:), pointer :: connect_next_cell_lon_index
-   integer,dimension(:,:), pointer :: flood_force_merge_lat_index
-   integer,dimension(:,:), pointer :: flood_force_merge_lon_index
-   integer,dimension(:,:), pointer :: connect_force_merge_lat_index
-   integer,dimension(:,:), pointer :: connect_force_merge_lon_index
-   integer,dimension(:,:), pointer :: flood_redirect_lat_index
-   integer,dimension(:,:), pointer :: flood_redirect_lon_index
-   integer,dimension(:,:), pointer :: connect_redirect_lat_index
-   integer,dimension(:,:), pointer :: connect_redirect_lon_index
-   integer,dimension(:,:), pointer :: additional_flood_redirect_lat_index
-   integer,dimension(:,:), pointer :: additional_flood_redirect_lon_index
-   integer,dimension(:,:), pointer :: additional_connect_redirect_lat_index
-   integer,dimension(:,:), pointer :: additional_connect_redirect_lon_index
    integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
    integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
    real(dp),dimension(:,:), pointer :: drainage
@@ -12382,11 +10513,18 @@ subroutine testLakeModel11
    real(dp),dimension(:,:), pointer :: second_intermediate_expected_diagnostic_lake_volumes
    integer,dimension(:,:), pointer :: lake_types
    real(dp),dimension(:), pointer :: lake_volumes
-   integer :: no_merge_mtype
-   integer :: connection_merge_not_set_flood_merge_as_primary
-   integer :: connection_merge_not_set_flood_merge_as_secondary
    real(dp), dimension(:,:), pointer :: diagnostic_lake_volumes
    real(dp), dimension(:,:), allocatable :: lake_fractions
+   integer, pointer, dimension(:,:) :: connect_merge_and_redirect_indices_index
+   integer, pointer, dimension(:,:) :: flood_merge_and_redirect_indices_index
+   type(mergeandredirectindicescollectionpointer), pointer, dimension(:) :: &
+    connect_merge_and_redirect_indices_collections
+   type(mergeandredirectindicescollectionpointer), pointer, dimension(:) :: &
+    flood_merge_and_redirect_indices_collections
+   type(mergeandredirectindicescollection), pointer :: collected_indices
+   type(mergeandredirectindices), pointer :: primary_merge
+   type(mergeandredirectindicespointer), dimension(:), pointer :: primary_merges
+   type(mergeandredirectindices), pointer :: secondary_merge
    integer :: nlat_coarse, nlon_coarse
    integer :: nlat_surface_model,nlon_surface_model
    integer :: nlat,nlon
@@ -12396,10 +10534,8 @@ subroutine testLakeModel11
    real(dp) :: lake_retention_coefficient_local
    integer :: lake_type
    real(dp) :: seconds_per_day
+   integer :: flood_index
       seconds_per_day = 86400.0_dp
-      no_merge_mtype = 0
-      connection_merge_not_set_flood_merge_as_primary = 9
-      connection_merge_not_set_flood_merge_as_secondary = 10
       nlat_coarse = 4
       nlon_coarse = 4
       nlat_surface_model = 3
@@ -12574,179 +10710,6 @@ subroutine testLakeModel11
          -1.0,    -1.0,   -1.0,    -1.0,   -1.0,    -1.0,    -1.0,   -1.0,   -1.0,  -1.0,  -1.0,    -1.0,&
              -1.0,    -1.0,   -1.0,    -1.0,   -1.0,    -1.0,   -1.0,  -1.0 /), &
          (/nlon,nlat/)))
-      allocate(flood_local_redirect(nlat,nlon))
-      flood_local_redirect = transpose(reshape((/ &
-          .False., .False., .False., .False., .False., .False., .False.,.False., .False., .False., .False.,&
-           .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False.,  .False., .False., .False., .False., .False., .False.,.False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .True.,  .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-           .True., .False., .False.,  .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False.,  .False.,    .True., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .True., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False. /), &
-         (/nlon,nlat/)))
-      allocate(connect_local_redirect(nlat,nlon))
-      connect_local_redirect = transpose(reshape((/ &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False.,  .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False.,  .False., .False., .False., .False.,.False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False.,  .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False.,  .False., .False., .False., .False., .False., .False.,.False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False. /), &
-         (/nlon,nlat/)))
-      allocate(additional_flood_local_redirect(nlat,nlon))
-      additional_flood_local_redirect(:,:) = .False.
-      allocate(additional_connect_local_redirect(nlat,nlon))
-      additional_connect_local_redirect(:,:) = .False.
-      allocate(merge_points(nlat,nlon))
-      merge_points = transpose(reshape((/ &
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        connection_merge_not_set_flood_merge_as_primary,no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, connection_merge_not_set_flood_merge_as_primary,no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, connection_merge_not_set_flood_merge_as_primary,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype,   no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype /), &
-         (/nlon,nlat/)))
       allocate(cell_areas_on_surface_model_grid(nlat_surface_model,nlon_surface_model))
       cell_areas_on_surface_model_grid = transpose(reshape((/ &
           2.5,3.0,2.5, &
@@ -12845,210 +10808,10 @@ subroutine testLakeModel11
          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
          (/nlon,nlat/)))
-      allocate(flood_force_merge_lat_index(nlat,nlon))
-      flood_force_merge_lat_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  6, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  6, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  7, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(flood_force_merge_lon_index(nlat,nlon))
-      flood_force_merge_lon_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  2, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  8, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 12, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(connect_force_merge_lat_index(nlat,nlon))
-      connect_force_merge_lat_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(connect_force_merge_lon_index(nlat,nlon))
-      connect_force_merge_lon_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(flood_redirect_lat_index(nlat,nlon))
-      flood_redirect_lat_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1,  1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1,  7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  7, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1,  1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  6, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  5, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  3, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1,  3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(flood_redirect_lon_index(nlat,nlon))
-      flood_redirect_lon_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  0, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1,  3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, 14, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 14, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1,  0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  5, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 13, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  3, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1,  1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(connect_redirect_lat_index(nlat,nlon))
-      connect_redirect_lat_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(connect_redirect_lon_index(nlat,nlon))
-      connect_redirect_lon_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
       call add_offset(flood_next_cell_lat_index,1,(/-1/))
       call add_offset(flood_next_cell_lon_index,1,(/-1/))
       call add_offset(connect_next_cell_lat_index,1,(/-1/))
       call add_offset(connect_next_cell_lon_index,1,(/-1/))
-      call add_offset(flood_force_merge_lat_index,1,(/-1/))
-      call add_offset(flood_force_merge_lon_index,1,(/-1/))
-      call add_offset(connect_force_merge_lat_index,1,(/-1/))
-      call add_offset(connect_force_merge_lon_index,1,(/-1/))
-      call add_offset(flood_redirect_lat_index,1,(/-1/))
-      call add_offset(flood_redirect_lon_index,1,(/-1/))
-      call add_offset(connect_redirect_lat_index,1,(/-1/))
-      call add_offset(connect_redirect_lon_index,1,(/-1/))
-      allocate(additional_flood_redirect_lat_index(nlat,nlon))
-      additional_flood_redirect_lat_index(:,:) = 0
-      allocate(additional_flood_redirect_lon_index(nlat,nlon))
-      additional_flood_redirect_lon_index(:,:) = 0
-      allocate(additional_connect_redirect_lat_index(nlat,nlon))
-      additional_connect_redirect_lat_index(:,:) = 0
-      allocate(additional_connect_redirect_lon_index(nlat,nlon))
-      additional_connect_redirect_lon_index(:,:) = 0
       instant_throughflow_local=.True.
       lake_retention_coefficient_local=0.1_dp
       allocate(corresponding_surface_cell_lat_index(nlat,nlon))
@@ -13097,31 +10860,148 @@ subroutine testLakeModel11
                                                              3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
                                                              3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3 /), &
          (/nlon,nlat/)))
+      allocate(connect_merge_and_redirect_indices_index(nlat,nlon))
+      connect_merge_and_redirect_indices_index(:,:) =0
+      allocate(flood_merge_and_redirect_indices_index(nlat,nlon))
+      flood_merge_and_redirect_indices_index(:,:) = 0
+      allocate(flood_merge_and_redirect_indices_collections(9))
+      connect_merge_and_redirect_indices_collections => null()
+      flood_index = 1
+      primary_merge => &
+        mergeandredirectindices(.true., &
+                                .false., &
+                                6, &
+                                2, &
+                                1, &
+                                0)
+      allocate(primary_merges(1))
+      primary_merges(1)%ptr => primary_merge
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            null())
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(3,16) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .false., &
+                                      8, &
+                                      18, &
+                                      1, &
+                                      3)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(4,6) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .true., &
+                                      6, &
+                                      10, &
+                                      7, &
+                                      14)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(5,8) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .true., &
+                                      7, &
+                                      14, &
+                                      7, &
+                                      14)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(6,12) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .false., &
+                                      6, &
+                                      4, &
+                                      1, &
+                                      0)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(8,2) = flood_index
+      flood_index = flood_index +1
+      primary_merge => &
+        mergeandredirectindices(.true., &
+                                .true., &
+                                6, &
+                                8, &
+                                6, &
+                                5)
+      allocate(primary_merges(1))
+      primary_merges(1)%ptr => primary_merge
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            null())
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(8,17) = flood_index
+      flood_index = flood_index +1
+      primary_merge => &
+        mergeandredirectindices(.true., &
+                                .true., &
+                                7, &
+                                12, &
+                                5, &
+                                13)
+      allocate(primary_merges(1))
+      primary_merges(1)%ptr => primary_merge
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            null())
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(9,15) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .false., &
+                                      16, &
+                                      15, &
+                                      3, &
+                                      3)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(14,19) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .false., &
+                                      17, &
+                                      3, &
+                                      3, &
+                                      1)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(16,4) = flood_index
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%add_offset_to_collection(1)
+      end do
       lake_parameters => LakeParameters(lake_centers, &
                                         connection_volume_thresholds, &
                                         flood_volume_thresholds, &
-                                        flood_local_redirect, &
-                                        connect_local_redirect, &
-                                        additional_flood_local_redirect, &
-                                        additional_connect_local_redirect, &
-                                        merge_points, &
                                         cell_areas_on_surface_model_grid, &
                                         flood_next_cell_lat_index, &
                                         flood_next_cell_lon_index, &
                                         connect_next_cell_lat_index, &
                                         connect_next_cell_lon_index, &
-                                        flood_force_merge_lat_index, &
-                                        flood_force_merge_lon_index, &
-                                        connect_force_merge_lat_index, &
-                                        connect_force_merge_lon_index, &
-                                        flood_redirect_lat_index, &
-                                        flood_redirect_lon_index, &
-                                        connect_redirect_lat_index, &
-                                        connect_redirect_lon_index, &
-                                        additional_flood_redirect_lat_index, &
-                                        additional_flood_redirect_lon_index, &
-                                        additional_connect_redirect_lat_index, &
-                                        additional_connect_redirect_lon_index, &
+                                        connect_merge_and_redirect_indices_index, &
+                                        flood_merge_and_redirect_indices_index, &
+                                        connect_merge_and_redirect_indices_collections, &
+                                        flood_merge_and_redirect_indices_collections, &
                                         corresponding_surface_cell_lat_index, &
                                         corresponding_surface_cell_lon_index, &
                                         nlat,nlon, &
@@ -13631,6 +11511,10 @@ subroutine testLakeModel11
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
                                      initial_water_to_lake_centers, &
@@ -13686,6 +11570,10 @@ subroutine testLakeModel11
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
@@ -13794,7 +11682,6 @@ subroutine testLakeModel12
    type(lakeprognostics), pointer :: lake_prognostics_out
    type(lakepointer) :: working_lake_ptr
    real(dp),dimension(:,:), pointer :: flow_directions
-   integer,dimension(:,:), pointer :: merge_points
    real(dp),dimension(:,:),pointer :: cell_areas_on_surface_model_grid
    integer,dimension(:,:), pointer :: river_reservoir_nums
    integer,dimension(:,:), pointer ::  overland_reservoir_nums
@@ -13806,26 +11693,10 @@ subroutine testLakeModel12
    logical,dimension(:,:), pointer :: lake_centers
    real(dp),dimension(:,:), pointer :: connection_volume_thresholds
    real(dp),dimension(:,:), pointer :: flood_volume_thresholds
-   logical,dimension(:,:), pointer :: flood_local_redirect
-   logical,dimension(:,:), pointer :: connect_local_redirect
-   logical,dimension(:,:), pointer :: additional_flood_local_redirect
-   logical,dimension(:,:), pointer :: additional_connect_local_redirect
    integer,dimension(:,:), pointer :: flood_next_cell_lat_index
    integer,dimension(:,:), pointer :: flood_next_cell_lon_index
    integer,dimension(:,:), pointer :: connect_next_cell_lat_index
    integer,dimension(:,:), pointer :: connect_next_cell_lon_index
-   integer,dimension(:,:), pointer :: flood_force_merge_lat_index
-   integer,dimension(:,:), pointer :: flood_force_merge_lon_index
-   integer,dimension(:,:), pointer :: connect_force_merge_lat_index
-   integer,dimension(:,:), pointer :: connect_force_merge_lon_index
-   integer,dimension(:,:), pointer :: flood_redirect_lat_index
-   integer,dimension(:,:), pointer :: flood_redirect_lon_index
-   integer,dimension(:,:), pointer :: connect_redirect_lat_index
-   integer,dimension(:,:), pointer :: connect_redirect_lon_index
-   integer,dimension(:,:), pointer :: additional_flood_redirect_lat_index
-   integer,dimension(:,:), pointer :: additional_flood_redirect_lon_index
-   integer,dimension(:,:), pointer :: additional_connect_redirect_lat_index
-   integer,dimension(:,:), pointer :: additional_connect_redirect_lon_index
    integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
    integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
    real(dp),dimension(:,:), pointer :: drainage
@@ -13848,11 +11719,18 @@ subroutine testLakeModel12
    real(dp),dimension(:,:), pointer :: expected_diagnostic_lake_volumes
    integer,dimension(:,:), pointer :: lake_types
    real(dp),dimension(:), pointer :: lake_volumes
-   integer :: no_merge_mtype
-   integer :: connection_merge_not_set_flood_merge_as_primary
-   integer :: connection_merge_not_set_flood_merge_as_secondary
    real(dp), dimension(:,:), pointer :: diagnostic_lake_volumes
    real(dp), dimension(:,:), allocatable :: lake_fractions
+   integer, pointer, dimension(:,:) :: connect_merge_and_redirect_indices_index
+   integer, pointer, dimension(:,:) :: flood_merge_and_redirect_indices_index
+   type(mergeandredirectindicescollectionpointer), pointer, dimension(:) :: &
+    connect_merge_and_redirect_indices_collections
+   type(mergeandredirectindicescollectionpointer), pointer, dimension(:) :: &
+    flood_merge_and_redirect_indices_collections
+   type(mergeandredirectindicescollection), pointer :: collected_indices
+   type(mergeandredirectindicespointer), dimension(:), pointer :: primary_merges
+   type(mergeandredirectindices), pointer :: secondary_merge
+   type(mergeandredirectindices), pointer :: primary_merge
    integer :: nlat_coarse, nlon_coarse
    integer :: nlat_surface_model,nlon_surface_model
    integer :: nlat,nlon
@@ -13862,10 +11740,8 @@ subroutine testLakeModel12
    real(dp) :: lake_retention_coefficient_local
    integer :: lake_type
    real(dp) :: seconds_per_day
+   integer :: flood_index
       seconds_per_day = 86400.0_dp
-      no_merge_mtype = 0
-      connection_merge_not_set_flood_merge_as_primary = 9
-      connection_merge_not_set_flood_merge_as_secondary = 10
       nlat_coarse = 4
       nlon_coarse = 4
       nlat_surface_model = 3
@@ -14041,179 +11917,6 @@ subroutine testLakeModel12
          -1.0,    -1.0,   -1.0,    -1.0,   -1.0,    -1.0,    -1.0,   -1.0,   -1.0,  -1.0,  -1.0,    -1.0,&
              -1.0,    -1.0,   -1.0,    -1.0,   -1.0,    -1.0,   -1.0,  -1.0 /), &
          (/nlon,nlat/)))
-      allocate(flood_local_redirect(nlat,nlon))
-      flood_local_redirect = transpose(reshape((/ &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False.,  .False., .False., .False., .False., .False., .False., .False., .False., .False.,.False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .True., .False., .False.,  .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-           .True., .False., .False.,  .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False.,  .False., .False., .False., .False.,.False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False.,  .False.,    .True., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .True., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False.,  .False., .False., .False., .False., .False., .False.,.False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False. /), &
-         (/nlon,nlat/)))
-      allocate(connect_local_redirect(nlat,nlon))
-      connect_local_redirect = transpose(reshape((/ &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False.,  .False., .False., .False., .False., .False., .False.,.False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False.,  .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False.,  .False., .False., .False.,.False.,&
-          .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,  .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False.,  .False., .False., .False., .False., .False.,.False.,&
-          .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False. /), &
-         (/nlon,nlat/)))
-      allocate(additional_flood_local_redirect(nlat,nlon))
-      additional_flood_local_redirect(:,:) = .False.
-      allocate(additional_connect_local_redirect(nlat,nlon))
-      additional_connect_local_redirect(:,:) = .False.
-      allocate(merge_points(nlat,nlon))
-      merge_points = transpose(reshape((/ &
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        connection_merge_not_set_flood_merge_as_primary,no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, connection_merge_not_set_flood_merge_as_primary,no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, connection_merge_not_set_flood_merge_as_primary,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype,   no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype /), &
-         (/nlon,nlat/)))
       allocate(cell_areas_on_surface_model_grid(nlat_surface_model,nlon_surface_model))
       cell_areas_on_surface_model_grid = transpose(reshape((/ &
           2.5,3.0,2.5, &
@@ -14312,210 +12015,10 @@ subroutine testLakeModel12
          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
          (/nlon,nlat/)))
-      allocate(flood_force_merge_lat_index(nlat,nlon))
-      flood_force_merge_lat_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  6, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  6, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  7, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(flood_force_merge_lon_index(nlat,nlon))
-      flood_force_merge_lon_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  2, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  8, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 12, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(connect_force_merge_lat_index(nlat,nlon))
-      connect_force_merge_lat_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(connect_force_merge_lon_index(nlat,nlon))
-      connect_force_merge_lon_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(flood_redirect_lat_index(nlat,nlon))
-      flood_redirect_lat_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1,  1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1,  7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  7, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1,  1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  6, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  5, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  3, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1,  3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(flood_redirect_lon_index(nlat,nlon))
-      flood_redirect_lon_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  0, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1,  3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, 14, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 14, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1,  0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  5, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 13, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  3, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1,  1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(connect_redirect_lat_index(nlat,nlon))
-      connect_redirect_lat_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(connect_redirect_lon_index(nlat,nlon))
-      connect_redirect_lon_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
       call add_offset(flood_next_cell_lat_index,1,(/-1/))
       call add_offset(flood_next_cell_lon_index,1,(/-1/))
       call add_offset(connect_next_cell_lat_index,1,(/-1/))
       call add_offset(connect_next_cell_lon_index,1,(/-1/))
-      call add_offset(flood_force_merge_lat_index,1,(/-1/))
-      call add_offset(flood_force_merge_lon_index,1,(/-1/))
-      call add_offset(connect_force_merge_lat_index,1,(/-1/))
-      call add_offset(connect_force_merge_lon_index,1,(/-1/))
-      call add_offset(flood_redirect_lat_index,1,(/-1/))
-      call add_offset(flood_redirect_lon_index,1,(/-1/))
-      call add_offset(connect_redirect_lat_index,1,(/-1/))
-      call add_offset(connect_redirect_lon_index,1,(/-1/))
-      allocate(additional_flood_redirect_lat_index(nlat,nlon))
-      additional_flood_redirect_lat_index(:,:) = 0
-      allocate(additional_flood_redirect_lon_index(nlat,nlon))
-      additional_flood_redirect_lon_index(:,:) = 0
-      allocate(additional_connect_redirect_lat_index(nlat,nlon))
-      additional_connect_redirect_lat_index(:,:) = 0
-      allocate(additional_connect_redirect_lon_index(nlat,nlon))
-      additional_connect_redirect_lon_index(:,:) = 0
       instant_throughflow_local=.True.
       lake_retention_coefficient_local=0.1_dp
       allocate(corresponding_surface_cell_lat_index(nlat,nlon))
@@ -14564,31 +12067,148 @@ subroutine testLakeModel12
                                                              3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
                                                              3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3 /), &
          (/nlon,nlat/)))
+      allocate(connect_merge_and_redirect_indices_index(nlat,nlon))
+      connect_merge_and_redirect_indices_index(:,:) =0
+      allocate(flood_merge_and_redirect_indices_index(nlat,nlon))
+      flood_merge_and_redirect_indices_index(:,:) = 0
+      allocate(flood_merge_and_redirect_indices_collections(9))
+      connect_merge_and_redirect_indices_collections => null()
+      flood_index = 1
+      primary_merge => &
+        mergeandredirectindices(.true., &
+                                .false., &
+                                6, &
+                                2, &
+                                1, &
+                                0)
+      allocate(primary_merges(1))
+      primary_merges(1)%ptr => primary_merge
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            null())
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(3,16) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .false., &
+                                      8, &
+                                      18, &
+                                      1, &
+                                      3)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(4,6) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .true., &
+                                      6, &
+                                      10, &
+                                      7, &
+                                      14)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(5,8) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .true., &
+                                      7, &
+                                      14, &
+                                      7, &
+                                      14)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(6,12) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .false., &
+                                      6, &
+                                      4, &
+                                      1, &
+                                      0)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(8,2) = flood_index
+      flood_index = flood_index +1
+      primary_merge => &
+        mergeandredirectindices(.true., &
+                                .true., &
+                                6, &
+                                8, &
+                                6, &
+                                5)
+      allocate(primary_merges(1))
+      primary_merges(1)%ptr => primary_merge
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            null())
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(8,17) = flood_index
+      flood_index = flood_index +1
+      primary_merge => &
+        mergeandredirectindices(.true., &
+                                .true., &
+                                7, &
+                                12, &
+                                5, &
+                                13)
+      allocate(primary_merges(1))
+      primary_merges(1)%ptr => primary_merge
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            null())
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(9,15) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .false., &
+                                      16, &
+                                      15, &
+                                      3, &
+                                      3)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(14,19) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .false., &
+                                      17, &
+                                      3, &
+                                      3, &
+                                      1)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(16,4) = flood_index
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%add_offset_to_collection(1)
+      end do
       lake_parameters => LakeParameters(lake_centers, &
                                         connection_volume_thresholds, &
                                         flood_volume_thresholds, &
-                                        flood_local_redirect, &
-                                        connect_local_redirect, &
-                                        additional_flood_local_redirect, &
-                                        additional_connect_local_redirect, &
-                                        merge_points, &
                                         cell_areas_on_surface_model_grid, &
                                         flood_next_cell_lat_index, &
                                         flood_next_cell_lon_index, &
                                         connect_next_cell_lat_index, &
                                         connect_next_cell_lon_index, &
-                                        flood_force_merge_lat_index, &
-                                        flood_force_merge_lon_index, &
-                                        connect_force_merge_lat_index, &
-                                        connect_force_merge_lon_index, &
-                                        flood_redirect_lat_index, &
-                                        flood_redirect_lon_index, &
-                                        connect_redirect_lat_index, &
-                                        connect_redirect_lon_index, &
-                                        additional_flood_redirect_lat_index, &
-                                        additional_flood_redirect_lon_index, &
-                                        additional_connect_redirect_lat_index, &
-                                        additional_connect_redirect_lon_index, &
+                                        connect_merge_and_redirect_indices_index, &
+                                        flood_merge_and_redirect_indices_index, &
+                                        connect_merge_and_redirect_indices_collections, &
+                                        flood_merge_and_redirect_indices_collections, &
                                         corresponding_surface_cell_lat_index, &
                                         corresponding_surface_cell_lon_index, &
                                         nlat,nlon, &
@@ -14862,7 +12482,6 @@ subroutine testLakeModel13
    type(lakeprognostics), pointer :: lake_prognostics_out
    type(lakepointer) :: working_lake_ptr
    real(dp),dimension(:,:), pointer :: flow_directions
-   integer,dimension(:,:), pointer :: merge_points
    real(dp),dimension(:,:),pointer :: cell_areas_on_surface_model_grid
    integer,dimension(:,:), pointer :: river_reservoir_nums
    integer,dimension(:,:), pointer ::  overland_reservoir_nums
@@ -14874,26 +12493,10 @@ subroutine testLakeModel13
    logical,dimension(:,:), pointer :: lake_centers
    real(dp),dimension(:,:), pointer :: connection_volume_thresholds
    real(dp),dimension(:,:), pointer :: flood_volume_thresholds
-   logical,dimension(:,:), pointer :: flood_local_redirect
-   logical,dimension(:,:), pointer :: connect_local_redirect
-   logical,dimension(:,:), pointer :: additional_flood_local_redirect
-   logical,dimension(:,:), pointer :: additional_connect_local_redirect
    integer,dimension(:,:), pointer :: flood_next_cell_lat_index
    integer,dimension(:,:), pointer :: flood_next_cell_lon_index
    integer,dimension(:,:), pointer :: connect_next_cell_lat_index
    integer,dimension(:,:), pointer :: connect_next_cell_lon_index
-   integer,dimension(:,:), pointer :: flood_force_merge_lat_index
-   integer,dimension(:,:), pointer :: flood_force_merge_lon_index
-   integer,dimension(:,:), pointer :: connect_force_merge_lat_index
-   integer,dimension(:,:), pointer :: connect_force_merge_lon_index
-   integer,dimension(:,:), pointer :: flood_redirect_lat_index
-   integer,dimension(:,:), pointer :: flood_redirect_lon_index
-   integer,dimension(:,:), pointer :: connect_redirect_lat_index
-   integer,dimension(:,:), pointer :: connect_redirect_lon_index
-   integer,dimension(:,:), pointer :: additional_flood_redirect_lat_index
-   integer,dimension(:,:), pointer :: additional_flood_redirect_lon_index
-   integer,dimension(:,:), pointer :: additional_connect_redirect_lat_index
-   integer,dimension(:,:), pointer :: additional_connect_redirect_lon_index
    integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
    integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
    real(dp),dimension(:,:), pointer :: drainage
@@ -14916,11 +12519,18 @@ subroutine testLakeModel13
    real(dp),dimension(:,:), pointer :: expected_diagnostic_lake_volumes
    integer,dimension(:,:), pointer :: lake_types
    real(dp),dimension(:), pointer :: lake_volumes
-   integer :: no_merge_mtype
-   integer :: connection_merge_not_set_flood_merge_as_primary
-   integer :: connection_merge_not_set_flood_merge_as_secondary
    real(dp), dimension(:,:), pointer :: diagnostic_lake_volumes
    real(dp), dimension(:,:), allocatable :: lake_fractions
+   integer, pointer, dimension(:,:) :: connect_merge_and_redirect_indices_index
+   integer, pointer, dimension(:,:) :: flood_merge_and_redirect_indices_index
+   type(mergeandredirectindicescollectionpointer), pointer, dimension(:) :: &
+    connect_merge_and_redirect_indices_collections
+   type(mergeandredirectindicescollectionpointer), pointer, dimension(:) :: &
+    flood_merge_and_redirect_indices_collections
+   type(mergeandredirectindicescollection), pointer :: collected_indices
+   type(mergeandredirectindices), pointer :: primary_merge
+   type(mergeandredirectindicespointer), dimension(:), pointer :: primary_merges
+   type(mergeandredirectindices), pointer :: secondary_merge
    integer :: nlat_coarse, nlon_coarse
    integer :: nlat_surface_model,nlon_surface_model
    integer :: nlat,nlon
@@ -14930,10 +12540,8 @@ subroutine testLakeModel13
    real(dp) :: lake_retention_coefficient_local
    integer :: lake_type
    real(dp) :: seconds_per_day
+   integer :: flood_index
       seconds_per_day = 86400.0_dp
-      no_merge_mtype = 0
-      connection_merge_not_set_flood_merge_as_primary = 9
-      connection_merge_not_set_flood_merge_as_secondary = 10
       nlat_coarse = 4
       nlon_coarse = 4
       nlat_surface_model = 3
@@ -15109,179 +12717,6 @@ subroutine testLakeModel13
          -1.0,    -1.0,   -1.0,    -1.0,   -1.0,    -1.0,    -1.0,   -1.0,   -1.0,  -1.0,  -1.0,&
              -1.0,    -1.0,    -1.0,   -1.0,    -1.0,   -1.0,    -1.0,   -1.0,  -1.0 /), &
          (/nlon,nlat/)))
-      allocate(flood_local_redirect(nlat,nlon))
-      flood_local_redirect = transpose(reshape((/ &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .True., .False., &
-          .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False.,  .True., .False., .False.,  .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False.,  .False.,    .True., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .True., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False.,  .False., .False., .False., .False.,.False.,&
-          .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False. /), &
-         (/nlon,nlat/)))
-      allocate(connect_local_redirect(nlat,nlon))
-      connect_local_redirect = transpose(reshape((/ &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,  .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False.,  .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False. /), &
-         (/nlon,nlat/)))
-      allocate(additional_flood_local_redirect(nlat,nlon))
-      additional_flood_local_redirect(:,:) = .False.
-      allocate(additional_connect_local_redirect(nlat,nlon))
-      additional_connect_local_redirect(:,:) = .False.
-      allocate(merge_points(nlat,nlon))
-      merge_points = transpose(reshape((/ &
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        connection_merge_not_set_flood_merge_as_primary,no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, connection_merge_not_set_flood_merge_as_primary,no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, connection_merge_not_set_flood_merge_as_primary,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype,   no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype /), &
-         (/nlon,nlat/)))
       allocate(cell_areas_on_surface_model_grid(nlat_surface_model,nlon_surface_model))
       cell_areas_on_surface_model_grid = transpose(reshape((/ &
           2.5,3.0,2.5, &
@@ -15380,210 +12815,10 @@ subroutine testLakeModel13
          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
          (/nlon,nlat/)))
-      allocate(flood_force_merge_lat_index(nlat,nlon))
-      flood_force_merge_lat_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  6, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  6, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  7, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(flood_force_merge_lon_index(nlat,nlon))
-      flood_force_merge_lon_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  2, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  8, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 12, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(connect_force_merge_lat_index(nlat,nlon))
-      connect_force_merge_lat_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(connect_force_merge_lon_index(nlat,nlon))
-      connect_force_merge_lon_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(flood_redirect_lat_index(nlat,nlon))
-      flood_redirect_lat_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1,  1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1,  7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  7, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1,  1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  6, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  5, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  3, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1,  3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(flood_redirect_lon_index(nlat,nlon))
-      flood_redirect_lon_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  0, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1,  3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, 14, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 14, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1,  0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  5, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 13, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  3, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1,  1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(connect_redirect_lat_index(nlat,nlon))
-      connect_redirect_lat_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(connect_redirect_lon_index(nlat,nlon))
-      connect_redirect_lon_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
       call add_offset(flood_next_cell_lat_index,1,(/-1/))
       call add_offset(flood_next_cell_lon_index,1,(/-1/))
       call add_offset(connect_next_cell_lat_index,1,(/-1/))
       call add_offset(connect_next_cell_lon_index,1,(/-1/))
-      call add_offset(flood_force_merge_lat_index,1,(/-1/))
-      call add_offset(flood_force_merge_lon_index,1,(/-1/))
-      call add_offset(connect_force_merge_lat_index,1,(/-1/))
-      call add_offset(connect_force_merge_lon_index,1,(/-1/))
-      call add_offset(flood_redirect_lat_index,1,(/-1/))
-      call add_offset(flood_redirect_lon_index,1,(/-1/))
-      call add_offset(connect_redirect_lat_index,1,(/-1/))
-      call add_offset(connect_redirect_lon_index,1,(/-1/))
-      allocate(additional_flood_redirect_lat_index(nlat,nlon))
-      additional_flood_redirect_lat_index(:,:) = 0
-      allocate(additional_flood_redirect_lon_index(nlat,nlon))
-      additional_flood_redirect_lon_index(:,:) = 0
-      allocate(additional_connect_redirect_lat_index(nlat,nlon))
-      additional_connect_redirect_lat_index(:,:) = 0
-      allocate(additional_connect_redirect_lon_index(nlat,nlon))
-      additional_connect_redirect_lon_index(:,:) = 0
       instant_throughflow_local=.True.
       lake_retention_coefficient_local=0.1_dp
       allocate(corresponding_surface_cell_lat_index(nlat,nlon))
@@ -15632,31 +12867,148 @@ subroutine testLakeModel13
                                                              3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
                                                              3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3  /), &
          (/nlon,nlat/)))
+      allocate(connect_merge_and_redirect_indices_index(nlat,nlon))
+      connect_merge_and_redirect_indices_index(:,:) =0
+      allocate(flood_merge_and_redirect_indices_index(nlat,nlon))
+      flood_merge_and_redirect_indices_index(:,:) = 0
+      allocate(flood_merge_and_redirect_indices_collections(9))
+      connect_merge_and_redirect_indices_collections => null()
+      flood_index = 1
+      primary_merge => &
+        mergeandredirectindices(.true., &
+                                .false., &
+                                6, &
+                                2, &
+                                1, &
+                                0)
+      allocate(primary_merges(1))
+      primary_merges(1)%ptr => primary_merge
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            null())
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(3,16) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .false., &
+                                      8, &
+                                      18, &
+                                      1, &
+                                      3)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(4,6) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .true., &
+                                      6, &
+                                      10, &
+                                      7, &
+                                      14)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(5,8) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .true., &
+                                      7, &
+                                      14, &
+                                      7, &
+                                      14)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(6,12) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .false., &
+                                      6, &
+                                      4, &
+                                      1, &
+                                      0)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(8,2) = flood_index
+      flood_index = flood_index +1
+      primary_merge => &
+        mergeandredirectindices(.true., &
+                                .true., &
+                                6, &
+                                8, &
+                                6, &
+                                5)
+      allocate(primary_merges(1))
+      primary_merges(1)%ptr => primary_merge
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            null())
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(8,17) = flood_index
+      flood_index = flood_index +1
+      primary_merge => &
+        mergeandredirectindices(.true., &
+                                .true., &
+                                7, &
+                                12, &
+                                5, &
+                                13)
+      allocate(primary_merges(1))
+      primary_merges(1)%ptr => primary_merge
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            null())
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(9,15) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .false., &
+                                      16, &
+                                      15, &
+                                      3, &
+                                      3)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(14,19) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .false., &
+                                      17, &
+                                      3, &
+                                      3, &
+                                      1)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(16,4) = flood_index
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%add_offset_to_collection(1)
+      end do
       lake_parameters => LakeParameters(lake_centers, &
                                         connection_volume_thresholds, &
                                         flood_volume_thresholds, &
-                                        flood_local_redirect, &
-                                        connect_local_redirect, &
-                                        additional_flood_local_redirect, &
-                                        additional_connect_local_redirect, &
-                                        merge_points, &
                                         cell_areas_on_surface_model_grid, &
                                         flood_next_cell_lat_index, &
                                         flood_next_cell_lon_index, &
                                         connect_next_cell_lat_index, &
                                         connect_next_cell_lon_index, &
-                                        flood_force_merge_lat_index, &
-                                        flood_force_merge_lon_index, &
-                                        connect_force_merge_lat_index, &
-                                        connect_force_merge_lon_index, &
-                                        flood_redirect_lat_index, &
-                                        flood_redirect_lon_index, &
-                                        connect_redirect_lat_index, &
-                                        connect_redirect_lon_index, &
-                                        additional_flood_redirect_lat_index, &
-                                        additional_flood_redirect_lon_index, &
-                                        additional_connect_redirect_lat_index, &
-                                        additional_connect_redirect_lon_index, &
+                                        connect_merge_and_redirect_indices_index, &
+                                        flood_merge_and_redirect_indices_index, &
+                                        connect_merge_and_redirect_indices_collections, &
+                                        flood_merge_and_redirect_indices_collections, &
                                         corresponding_surface_cell_lat_index, &
                                         corresponding_surface_cell_lon_index, &
                                         nlat,nlon, &
@@ -15911,7 +13263,6 @@ subroutine testLakeModel14
    type(lakeprognostics), pointer :: lake_prognostics_out
    type(lakepointer) :: working_lake_ptr
    real(dp),dimension(:,:), pointer :: flow_directions
-   integer,dimension(:,:), pointer :: merge_points
    real(dp),dimension(:,:),pointer :: cell_areas_on_surface_model_grid
    integer,dimension(:,:), pointer :: river_reservoir_nums
    integer,dimension(:,:), pointer ::  overland_reservoir_nums
@@ -15923,26 +13274,10 @@ subroutine testLakeModel14
    logical,dimension(:,:), pointer :: lake_centers
    real(dp),dimension(:,:), pointer :: connection_volume_thresholds
    real(dp),dimension(:,:), pointer :: flood_volume_thresholds
-   logical,dimension(:,:), pointer :: flood_local_redirect
-   logical,dimension(:,:), pointer :: connect_local_redirect
-   logical,dimension(:,:), pointer :: additional_flood_local_redirect
-   logical,dimension(:,:), pointer :: additional_connect_local_redirect
    integer,dimension(:,:), pointer :: flood_next_cell_lat_index
    integer,dimension(:,:), pointer :: flood_next_cell_lon_index
    integer,dimension(:,:), pointer :: connect_next_cell_lat_index
    integer,dimension(:,:), pointer :: connect_next_cell_lon_index
-   integer,dimension(:,:), pointer :: flood_force_merge_lat_index
-   integer,dimension(:,:), pointer :: flood_force_merge_lon_index
-   integer,dimension(:,:), pointer :: connect_force_merge_lat_index
-   integer,dimension(:,:), pointer :: connect_force_merge_lon_index
-   integer,dimension(:,:), pointer :: flood_redirect_lat_index
-   integer,dimension(:,:), pointer :: flood_redirect_lon_index
-   integer,dimension(:,:), pointer :: connect_redirect_lat_index
-   integer,dimension(:,:), pointer :: connect_redirect_lon_index
-   integer,dimension(:,:), pointer :: additional_flood_redirect_lat_index
-   integer,dimension(:,:), pointer :: additional_flood_redirect_lon_index
-   integer,dimension(:,:), pointer :: additional_connect_redirect_lat_index
-   integer,dimension(:,:), pointer :: additional_connect_redirect_lon_index
    integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
    integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
    real(dp),dimension(:,:), pointer :: drainage
@@ -15984,12 +13319,19 @@ subroutine testLakeModel14
    integer , dimension(:,:), pointer :: second_intermediate_expected_number_fine_grid_cells
    real(dp),dimension(:,:), pointer :: second_intermediate_expected_diagnostic_lake_volumes
    integer,dimension(:,:), pointer :: lake_types
-   integer :: no_merge_mtype
-   integer :: connection_merge_not_set_flood_merge_as_primary
-   integer :: connection_merge_not_set_flood_merge_as_secondary
    real(dp),dimension(:), pointer :: lake_volumes
    real(dp), dimension(:,:), pointer :: diagnostic_lake_volumes
    real(dp), dimension(:,:), allocatable :: lake_fractions
+   integer, pointer, dimension(:,:) :: connect_merge_and_redirect_indices_index
+   integer, pointer, dimension(:,:) :: flood_merge_and_redirect_indices_index
+   type(mergeandredirectindicescollectionpointer), pointer, dimension(:) :: &
+    connect_merge_and_redirect_indices_collections
+   type(mergeandredirectindicescollectionpointer), pointer, dimension(:) :: &
+    flood_merge_and_redirect_indices_collections
+   type(mergeandredirectindicescollection), pointer :: collected_indices
+   type(mergeandredirectindices), pointer :: primary_merge
+   type(mergeandredirectindicespointer), dimension(:), pointer :: primary_merges
+   type(mergeandredirectindices), pointer :: secondary_merge
    integer :: nlat_coarse, nlon_coarse
    integer :: nlat_surface_model,nlon_surface_model
    integer :: nlat,nlon
@@ -15999,10 +13341,8 @@ subroutine testLakeModel14
    real(dp) :: lake_retention_coefficient_local
    integer :: lake_type
    real(dp) :: seconds_per_day
+   integer :: flood_index
       seconds_per_day = 86400.0_dp
-      no_merge_mtype = 0
-      connection_merge_not_set_flood_merge_as_primary = 9
-      connection_merge_not_set_flood_merge_as_secondary = 10
       nlat_coarse = 4
       nlon_coarse = 4
       nlat_surface_model = 3
@@ -16177,179 +13517,6 @@ subroutine testLakeModel14
          -1.0,    -1.0,   -1.0,    -1.0,   -1.0,    -1.0,    -1.0,   -1.0,   -1.0,  -1.0,  -1.0,    -1.0,    -1.0,&
              -1.0,   -1.0,    -1.0,   -1.0,    -1.0,   -1.0,  -1.0 /), &
          (/nlon,nlat/)))
-      allocate(flood_local_redirect(nlat,nlon))
-      flood_local_redirect = transpose(reshape((/ &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .True., .False., .False.,  .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-           .True., .False., .False.,  .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False.,  .False.,    .True., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .True., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False.,  .False., .False., .False., .False., .False., .False.,.False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False. /), &
-         (/nlon,nlat/)))
-      allocate(connect_local_redirect(nlat,nlon))
-      connect_local_redirect = transpose(reshape((/ &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False.,  .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False.,  .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False.,    .False., .False., .False., .False. /), &
-         (/nlon,nlat/)))
-      allocate(additional_flood_local_redirect(nlat,nlon))
-      additional_flood_local_redirect(:,:) = .False.
-      allocate(additional_connect_local_redirect(nlat,nlon))
-      additional_connect_local_redirect(:,:) = .False.
-      allocate(merge_points(nlat,nlon))
-      merge_points = transpose(reshape((/ &
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        connection_merge_not_set_flood_merge_as_primary,no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, connection_merge_not_set_flood_merge_as_primary,no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, connection_merge_not_set_flood_merge_as_primary,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype,   no_merge_mtype, no_merge_mtype,&
-      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-        no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype /), &
-         (/nlon,nlat/)))
       allocate(cell_areas_on_surface_model_grid(nlat_surface_model,nlon_surface_model))
       cell_areas_on_surface_model_grid = transpose(reshape((/ &
           2.5,3.0,2.5, &
@@ -16448,210 +13615,10 @@ subroutine testLakeModel14
          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
          (/nlon,nlat/)))
-      allocate(flood_force_merge_lat_index(nlat,nlon))
-      flood_force_merge_lat_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  6, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  6, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  7, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(flood_force_merge_lon_index(nlat,nlon))
-      flood_force_merge_lon_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  2, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  8, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 12, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(connect_force_merge_lat_index(nlat,nlon))
-      connect_force_merge_lat_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(connect_force_merge_lon_index(nlat,nlon))
-      connect_force_merge_lon_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(flood_redirect_lat_index(nlat,nlon))
-      flood_redirect_lat_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1,  1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1,  7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  7, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1,  1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  6, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  5, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  3, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1,  3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(flood_redirect_lon_index(nlat,nlon))
-      flood_redirect_lon_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  0, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1,  3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, 14, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 14, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1,  0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  5, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 13, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  3, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1,  1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(connect_redirect_lat_index(nlat,nlon))
-      connect_redirect_lat_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(connect_redirect_lon_index(nlat,nlon))
-      connect_redirect_lon_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
       call add_offset(flood_next_cell_lat_index,1,(/-1/))
       call add_offset(flood_next_cell_lon_index,1,(/-1/))
       call add_offset(connect_next_cell_lat_index,1,(/-1/))
       call add_offset(connect_next_cell_lon_index,1,(/-1/))
-      call add_offset(flood_force_merge_lat_index,1,(/-1/))
-      call add_offset(flood_force_merge_lon_index,1,(/-1/))
-      call add_offset(connect_force_merge_lat_index,1,(/-1/))
-      call add_offset(connect_force_merge_lon_index,1,(/-1/))
-      call add_offset(flood_redirect_lat_index,1,(/-1/))
-      call add_offset(flood_redirect_lon_index,1,(/-1/))
-      call add_offset(connect_redirect_lat_index,1,(/-1/))
-      call add_offset(connect_redirect_lon_index,1,(/-1/))
-      allocate(additional_flood_redirect_lat_index(nlat,nlon))
-      additional_flood_redirect_lat_index(:,:) = 0
-      allocate(additional_flood_redirect_lon_index(nlat,nlon))
-      additional_flood_redirect_lon_index(:,:) = 0
-      allocate(additional_connect_redirect_lat_index(nlat,nlon))
-      additional_connect_redirect_lat_index(:,:) = 0
-      allocate(additional_connect_redirect_lon_index(nlat,nlon))
-      additional_connect_redirect_lon_index(:,:) = 0
       instant_throughflow_local=.True.
       lake_retention_coefficient_local=0.1_dp
       allocate(corresponding_surface_cell_lat_index(nlat,nlon))
@@ -16700,31 +13667,148 @@ subroutine testLakeModel14
                                                              3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, &
                                                              3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3 /), &
          (/nlon,nlat/)))
+      allocate(connect_merge_and_redirect_indices_index(nlat,nlon))
+      connect_merge_and_redirect_indices_index(:,:) =0
+      allocate(flood_merge_and_redirect_indices_index(nlat,nlon))
+      flood_merge_and_redirect_indices_index(:,:) = 0
+      allocate(flood_merge_and_redirect_indices_collections(9))
+      connect_merge_and_redirect_indices_collections => null()
+      flood_index = 1
+      primary_merge => &
+        mergeandredirectindices(.true., &
+                                .false., &
+                                6, &
+                                2, &
+                                1, &
+                                0)
+      allocate(primary_merges(1))
+      primary_merges(1)%ptr => primary_merge
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            null())
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(3,16) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .false., &
+                                      8, &
+                                      18, &
+                                      1, &
+                                      3)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(4,6) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .true., &
+                                      6, &
+                                      10, &
+                                      7, &
+                                      14)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(5,8) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .true., &
+                                      7, &
+                                      14, &
+                                      7, &
+                                      14)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(6,12) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .false., &
+                                      6, &
+                                      4, &
+                                      1, &
+                                      0)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(8,2) = flood_index
+      flood_index = flood_index +1
+      primary_merge => &
+        mergeandredirectindices(.true., &
+                                .true., &
+                                6, &
+                                8, &
+                                6, &
+                                5)
+      allocate(primary_merges(1))
+      primary_merges(1)%ptr => primary_merge
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            null())
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(8,17) = flood_index
+      flood_index = flood_index +1
+      primary_merge => &
+        mergeandredirectindices(.true., &
+                                .true., &
+                                7, &
+                                12, &
+                                5, &
+                                13)
+      allocate(primary_merges(1))
+      primary_merges(1)%ptr => primary_merge
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            null())
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(9,15) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .false., &
+                                      16, &
+                                      15, &
+                                      3, &
+                                      3)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(14,19) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .false., &
+                                      17, &
+                                      3, &
+                                      3, &
+                                      1)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(16,4) = flood_index
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%add_offset_to_collection(1)
+      end do
       lake_parameters => LakeParameters(lake_centers, &
                                         connection_volume_thresholds, &
                                         flood_volume_thresholds, &
-                                        flood_local_redirect, &
-                                        connect_local_redirect, &
-                                        additional_flood_local_redirect, &
-                                        additional_connect_local_redirect, &
-                                        merge_points, &
                                         cell_areas_on_surface_model_grid, &
                                         flood_next_cell_lat_index, &
                                         flood_next_cell_lon_index, &
                                         connect_next_cell_lat_index, &
                                         connect_next_cell_lon_index, &
-                                        flood_force_merge_lat_index, &
-                                        flood_force_merge_lon_index, &
-                                        connect_force_merge_lat_index, &
-                                        connect_force_merge_lon_index, &
-                                        flood_redirect_lat_index, &
-                                        flood_redirect_lon_index, &
-                                        connect_redirect_lat_index, &
-                                        connect_redirect_lon_index, &
-                                        additional_flood_redirect_lat_index, &
-                                        additional_flood_redirect_lon_index, &
-                                        additional_connect_redirect_lat_index, &
-                                        additional_connect_redirect_lon_index, &
+                                        connect_merge_and_redirect_indices_index, &
+                                        flood_merge_and_redirect_indices_index, &
+                                        connect_merge_and_redirect_indices_collections, &
+                                        flood_merge_and_redirect_indices_collections, &
                                         corresponding_surface_cell_lat_index, &
                                         corresponding_surface_cell_lon_index, &
                                         nlat,nlon, &
@@ -17230,6 +14314,10 @@ subroutine testLakeModel14
       call assert_equals(first_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
       call assert_equals(first_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,3,3)
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -17286,6 +14374,10 @@ subroutine testLakeModel14
       call assert_equals(second_intermediate_expected_number_lake_cells,lake_fields_out%number_lake_cells,3,3)
       call assert_equals(second_intermediate_expected_number_fine_grid_cells, &
                          lake_parameters%number_fine_grid_cells,3,3)
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
@@ -17407,30 +14499,13 @@ subroutine testLakeModel15
    logical,dimension(:,:), pointer :: lake_centers
    real(dp),dimension(:,:), pointer :: connection_volume_thresholds
    real(dp),dimension(:,:), pointer :: flood_volume_thresholds
-   logical,dimension(:,:), pointer :: flood_local_redirect
-   logical,dimension(:,:), pointer :: connect_local_redirect
-   logical,dimension(:,:), pointer :: additional_flood_local_redirect
-   logical,dimension(:,:), pointer :: additional_connect_local_redirect
-   integer,dimension(:,:), pointer :: merge_points
    real(dp),dimension(:,:), pointer :: cell_areas_on_surface_model_grid
    integer,dimension(:,:), pointer :: flood_next_cell_lat_index
    integer,dimension(:,:), pointer :: flood_next_cell_lon_index
    integer,dimension(:,:), pointer :: connect_next_cell_lat_index
    integer,dimension(:,:), pointer :: connect_next_cell_lon_index
-   integer,dimension(:,:), pointer :: flood_force_merge_lat_index
-   integer,dimension(:,:), pointer :: flood_force_merge_lon_index
-   integer,dimension(:,:), pointer :: connect_force_merge_lat_index
-   integer,dimension(:,:), pointer :: connect_force_merge_lon_index
-   integer,dimension(:,:), pointer :: flood_redirect_lat_index
-   integer,dimension(:,:), pointer :: flood_redirect_lon_index
-   integer,dimension(:,:), pointer :: connect_redirect_lat_index
-   integer,dimension(:,:), pointer :: connect_redirect_lon_index
    integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
    integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
-   integer,dimension(:,:), pointer :: additional_flood_redirect_lat_index
-   integer,dimension(:,:), pointer :: additional_flood_redirect_lon_index
-   integer,dimension(:,:), pointer :: additional_connect_redirect_lat_index
-   integer,dimension(:,:), pointer :: additional_connect_redirect_lon_index
    real(dp),dimension(:,:), pointer :: drainage
    real(dp),dimension(:,:,:), pointer :: drainages
    real(dp),dimension(:,:), pointer :: runoff
@@ -17442,6 +14517,15 @@ subroutine testLakeModel15
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
    real(dp),dimension(:), pointer :: lake_volumes
    real(dp),dimension(:,:), allocatable :: lake_fractions
+   integer, pointer, dimension(:,:) :: connect_merge_and_redirect_indices_index
+   integer, pointer, dimension(:,:) :: flood_merge_and_redirect_indices_index
+   type(mergeandredirectindicescollectionpointer), pointer, dimension(:) :: &
+    connect_merge_and_redirect_indices_collections
+   type(mergeandredirectindicescollectionpointer), pointer, dimension(:) :: &
+    flood_merge_and_redirect_indices_collections
+   type(mergeandredirectindicescollection), pointer :: collected_indices
+   type(mergeandredirectindicespointer), dimension(:), pointer :: primary_merges
+   type(mergeandredirectindices), pointer :: secondary_merge
    real(dp),dimension(:,:), pointer :: expected_river_inflow
    real(dp),dimension(:,:), pointer :: expected_water_to_ocean
    real(dp),dimension(:,:), pointer :: expected_water_to_hd
@@ -17509,13 +14593,8 @@ subroutine testLakeModel15
    integer :: nlat,nlon
    integer :: nlat_coarse,nlon_coarse
    integer :: nlat_surface_model,nlon_surface_model
-   integer :: no_merge_mtype
-   integer :: connection_merge_not_set_flood_merge_as_primary
-   integer :: connection_merge_not_set_flood_merge_as_secondary
    integer :: lake_number,lake_type
-      no_merge_mtype = 0
-      connection_merge_not_set_flood_merge_as_primary = 9
-      connection_merge_not_set_flood_merge_as_secondary = 10
+   integer :: flood_index
       nlat_coarse = 4
       nlon_coarse = 4
       nlat_surface_model = 3
@@ -17667,220 +14746,6 @@ subroutine testLakeModel15
          -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
          -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0 /), &
          (/nlon,nlat/)))
-      allocate(flood_local_redirect(nlat,nlon))
-      flood_local_redirect = transpose(reshape((/ &
-          .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-           .False., .False., .False., .False., .False., .False., &
-             .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False.,  &
-           .False., .False., .False., .False., &
-         .False.,  .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-          .False., .False., .False., .False., .False., .False., &
-            .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False.,  &
-           .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False.,  &
-           .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False.,  .False., .False., &
-            .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False.,  .False., .False., .False., .False., &
-          .False., .False., .False., .False., .False., .False., &
-            .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False.,  .False., &
-            .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False.,  &
-           .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False.,  &
-           .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False.,  &
-           .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False.,  &
-           .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False.,  &
-           .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False.,  &
-           .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False.,  &
-           .False., .False., .False., .False., &
-         .False., .False., .False., .False.,  .False., .False., .False., .False., .False., .False., &
-          .False., .False., .False., .False., .False., .False., &
-            .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False.,  &
-           .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False.,  &
-           .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False.,  &
-           .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False.,  &
-           .False., .False., .False., .False. /), &
-         (/nlon,nlat/)))
-      allocate(connect_local_redirect(nlat,nlon))
-      connect_local_redirect = transpose(reshape((/ &
-          .False., .False., .False., .False., .False., .False., .False., .False.,&
-           .False., .False., .False., .False., .False., .False., .False., .False.,&
-              .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., &
-            .False., .False., .False., .False., &
-         .False.,  .False., .False., .False., .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False., .False.,&
-             .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., &
-            .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., &
-            .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False.,  .False., .False.,&
-             .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False.,  .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False., .False.,&
-             .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False.,  .False.,&
-             .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., &
-            .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., &
-            .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., &
-            .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., &
-            .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., &
-            .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., &
-            .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., &
-            .False., .False., .False., .False., &
-         .False., .False., .False., .False.,  .False., .False., .False., .False.,&
-          .False., .False., .False., .False., .False., .False., .False., .False.,&
-             .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., &
-            .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., &
-            .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., &
-            .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., &
-            .False., .False., .False., .False. /), &
-         (/nlon,nlat/)))
-      allocate(additional_flood_local_redirect(nlat,nlon))
-      additional_flood_local_redirect(:,:) = .false.
-      allocate(additional_connect_local_redirect(nlat,nlon))
-      additional_connect_local_redirect(:,:) = .false.
-      allocate(merge_points(nlat,nlon))
-      merge_points = transpose(reshape((/ &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
-                   no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,     &
-                          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,    &
-                                  no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
-                   no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,     &
-                          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,    &
-                                  no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
-                   no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,     &
-                          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,    &
-                                  no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
-                   no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,     &
-                          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,    &
-                                  no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
-                   no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,     &
-                          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,    &
-                                  no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
-                   no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,     &
-                          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,    &
-                                  no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
-                   no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,     &
-                          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,    &
-                                  no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
-                   no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,     &
-                          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,    &
-                                  no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
-                   no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,     &
-                          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,    &
-                                  no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
-                   no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,     &
-                          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,    &
-                                  no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
-                   no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,     &
-                          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,    &
-                                  no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
-                   no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,     &
-                          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,    &
-                                  no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
-                   no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,     &
-                          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,    &
-                                  no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
-                   no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,     &
-                          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,    &
-                                  no_merge_mtype, no_merge_mtype, connection_merge_not_set_flood_merge_as_secondary, &
-                                  no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
-                   no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,     &
-                          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,    &
-                                  no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
-                   no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,     &
-                          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,    &
-                                  no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
-                   no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,     &
-                          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,    &
-                                  no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
-                   no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,     &
-                          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,    &
-                                  no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
-                   no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,     &
-                          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,    &
-                                  no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
-                   no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,     &
-                          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,    &
-                                  no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype /), &
-         (/nlon,nlat/)))
       allocate(cell_areas_on_surface_model_grid(3,3))
       cell_areas_on_surface_model_grid = transpose(reshape((/ &
           2.5, 3.0, 2.5, &
@@ -17979,190 +14844,6 @@ subroutine testLakeModel15
          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
          (/nlon,nlat/)))
-      allocate(flood_force_merge_lat_index(nlat,nlon))
-      flood_force_merge_lat_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1  /), &
-         (/nlon,nlat/)))
-      allocate(flood_force_merge_lon_index(nlat,nlon))
-      flood_force_merge_lon_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1  /), &
-         (/nlon,nlat/)))
-      allocate(connect_force_merge_lat_index(nlat,nlon))
-      connect_force_merge_lat_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(connect_force_merge_lon_index(nlat,nlon))
-      connect_force_merge_lon_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(flood_redirect_lat_index(nlat,nlon))
-      flood_redirect_lat_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 3, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1  /), &
-         (/nlon,nlat/)))
-      allocate(flood_redirect_lon_index(nlat,nlon))
-      flood_redirect_lon_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 3, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(connect_redirect_lat_index(nlat,nlon))
-      connect_redirect_lat_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(connect_redirect_lon_index(nlat,nlon))
-      connect_redirect_lon_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1  /), &
-         (/nlon,nlat/)))
       allocate(corresponding_surface_cell_lat_index(nlat,nlon))
       corresponding_surface_cell_lat_index = transpose(reshape((/ &
             1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, &
@@ -18213,49 +14894,43 @@ subroutine testLakeModel15
       call add_offset(flood_next_cell_lon_index,1,(/-1/))
       call add_offset(connect_next_cell_lat_index,1,(/-1/))
       call add_offset(connect_next_cell_lon_index,1,(/-1/))
-      call add_offset(flood_force_merge_lat_index,1,(/-1/))
-      call add_offset(flood_force_merge_lon_index,1,(/-1/))
-      call add_offset(connect_force_merge_lat_index,1,(/-1/))
-      call add_offset(connect_force_merge_lon_index,1,(/-1/))
-      call add_offset(flood_redirect_lat_index,1,(/-1/))
-      call add_offset(flood_redirect_lon_index,1,(/-1/))
-      call add_offset(connect_redirect_lat_index,1,(/-1/))
-      call add_offset(connect_redirect_lon_index,1,(/-1/))
-      allocate(additional_flood_redirect_lat_index(nlat,nlon))
-      additional_flood_redirect_lat_index(:,:) = 0
-      allocate(additional_flood_redirect_lon_index(nlat,nlon))
-      additional_flood_redirect_lon_index(:,:) = 0
-      allocate(additional_connect_redirect_lat_index(nlat,nlon))
-      additional_connect_redirect_lat_index(:,:) = 0
-      allocate(additional_connect_redirect_lon_index(nlat,nlon))
-      additional_connect_redirect_lon_index(:,:) = 0
       instant_throughflow_local=.True.
       lake_retention_coefficient_local=0.1_dp
+      allocate(connect_merge_and_redirect_indices_index(nlat,nlon))
+      connect_merge_and_redirect_indices_index(:,:) =0
+      allocate(flood_merge_and_redirect_indices_index(nlat,nlon))
+      flood_merge_and_redirect_indices_index(:,:) = 0
+      allocate(flood_merge_and_redirect_indices_collections(1))
+      connect_merge_and_redirect_indices_collections => null()
+      flood_index = 1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .false., &
+                                      15, &
+                                      15, &
+                                      3, &
+                                      3)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(14,18) = flood_index
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%add_offset_to_collection(1)
+      end do
       lake_parameters => LakeParameters(lake_centers, &
                                         connection_volume_thresholds, &
                                         flood_volume_thresholds, &
-                                        flood_local_redirect, &
-                                        connect_local_redirect, &
-                                        additional_flood_local_redirect, &
-                                        additional_connect_local_redirect, &
-                                        merge_points, &
                                         cell_areas_on_surface_model_grid, &
                                         flood_next_cell_lat_index, &
                                         flood_next_cell_lon_index, &
                                         connect_next_cell_lat_index, &
                                         connect_next_cell_lon_index, &
-                                        flood_force_merge_lat_index, &
-                                        flood_force_merge_lon_index, &
-                                        connect_force_merge_lat_index, &
-                                        connect_force_merge_lon_index, &
-                                        flood_redirect_lat_index, &
-                                        flood_redirect_lon_index, &
-                                        connect_redirect_lat_index, &
-                                        connect_redirect_lon_index, &
-                                        additional_flood_redirect_lat_index, &
-                                        additional_flood_redirect_lon_index, &
-                                        additional_connect_redirect_lat_index, &
-                                        additional_connect_redirect_lon_index, &
+                                        connect_merge_and_redirect_indices_index, &
+                                        flood_merge_and_redirect_indices_index, &
+                                        connect_merge_and_redirect_indices_collections, &
+                                        flood_merge_and_redirect_indices_collections, &
                                         corresponding_surface_cell_lat_index, &
                                         corresponding_surface_cell_lon_index, &
                                         nlat,nlon, &
@@ -19093,6 +15768,10 @@ subroutine testLakeModel15
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
@@ -19148,6 +15827,10 @@ subroutine testLakeModel15
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
@@ -19203,6 +15886,10 @@ subroutine testLakeModel15
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
@@ -19258,6 +15945,10 @@ subroutine testLakeModel15
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
@@ -19273,6 +15964,10 @@ subroutine testLakeModel15
       call assert_equals(fifth_intermediate_expected_lake_volumes,lake_volumes,1,0.0001_dp)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
@@ -19288,6 +15983,10 @@ subroutine testLakeModel15
       call assert_equals(sixth_intermediate_expected_lake_volumes,lake_volumes,1,0.0001_dp)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
@@ -19303,6 +16002,10 @@ subroutine testLakeModel15
       call assert_equals(seventh_intermediate_expected_lake_volumes,lake_volumes,1,0.0001_dp)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
@@ -19318,6 +16021,10 @@ subroutine testLakeModel15
       call assert_equals(eighth_intermediate_expected_lake_volumes,lake_volumes,1,0.001_dp)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
@@ -19333,6 +16040,10 @@ subroutine testLakeModel15
       call assert_equals(ninth_intermediate_expected_lake_volumes,lake_volumes,1,0.0001_dp)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
@@ -19348,6 +16059,10 @@ subroutine testLakeModel15
       call assert_equals(tenth_intermediate_expected_lake_volumes,lake_volumes,1,0.0001_dp)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
@@ -19363,6 +16078,10 @@ subroutine testLakeModel15
       call assert_equals(eleventh_intermediate_expected_lake_volumes,lake_volumes,1,0.0001_dp)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
@@ -19378,6 +16097,10 @@ subroutine testLakeModel15
       call assert_equals(twelfth_intermediate_expected_lake_volumes,lake_volumes,1,0.0001_dp)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
@@ -19393,6 +16116,10 @@ subroutine testLakeModel15
       call assert_equals(thirteenth_intermediate_expected_lake_volumes,lake_volumes,1,0.001_dp)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
@@ -19539,30 +16266,22 @@ subroutine testLakeModel16
    logical,dimension(:,:), pointer :: lake_centers
    real(dp),dimension(:,:), pointer :: connection_volume_thresholds
    real(dp),dimension(:,:), pointer :: flood_volume_thresholds
-   logical,dimension(:,:), pointer :: flood_local_redirect
-   logical,dimension(:,:), pointer :: connect_local_redirect
-   logical,dimension(:,:), pointer :: additional_flood_local_redirect
-   logical,dimension(:,:), pointer :: additional_connect_local_redirect
-   integer,dimension(:,:), pointer :: merge_points
    real(dp),dimension(:,:), pointer :: cell_areas_on_surface_model_grid
    integer,dimension(:,:), pointer :: flood_next_cell_lat_index
    integer,dimension(:,:), pointer :: flood_next_cell_lon_index
    integer,dimension(:,:), pointer :: connect_next_cell_lat_index
    integer,dimension(:,:), pointer :: connect_next_cell_lon_index
-   integer,dimension(:,:), pointer :: flood_force_merge_lat_index
-   integer,dimension(:,:), pointer :: flood_force_merge_lon_index
-   integer,dimension(:,:), pointer :: connect_force_merge_lat_index
-   integer,dimension(:,:), pointer :: connect_force_merge_lon_index
-   integer,dimension(:,:), pointer :: flood_redirect_lat_index
-   integer,dimension(:,:), pointer :: flood_redirect_lon_index
-   integer,dimension(:,:), pointer :: connect_redirect_lat_index
-   integer,dimension(:,:), pointer :: connect_redirect_lon_index
+   integer, pointer, dimension(:,:) :: connect_merge_and_redirect_indices_index
+   integer, pointer, dimension(:,:) :: flood_merge_and_redirect_indices_index
+   type(mergeandredirectindicescollectionpointer), pointer, dimension(:) :: &
+    connect_merge_and_redirect_indices_collections
+   type(mergeandredirectindicescollectionpointer), pointer, dimension(:) :: &
+    flood_merge_and_redirect_indices_collections
+   type(mergeandredirectindicescollection), pointer :: collected_indices
+   type(mergeandredirectindicespointer), dimension(:), pointer :: primary_merges
+   type(mergeandredirectindices), pointer :: secondary_merge
    integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
    integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
-   integer,dimension(:,:), pointer :: additional_flood_redirect_lat_index
-   integer,dimension(:,:), pointer :: additional_flood_redirect_lon_index
-   integer,dimension(:,:), pointer :: additional_connect_redirect_lat_index
-   integer,dimension(:,:), pointer :: additional_connect_redirect_lon_index
    real(dp),dimension(:,:), pointer :: drainage
    real(dp),dimension(:,:), pointer :: runoff
    real(dp),dimension(:,:), pointer :: evaporation
@@ -19580,13 +16299,8 @@ subroutine testLakeModel16
    integer :: nlat,nlon
    integer :: nlat_coarse,nlon_coarse
    integer :: nlat_surface_model,nlon_surface_model
-   integer :: no_merge_mtype
-   integer :: connection_merge_not_set_flood_merge_as_primary
-   integer :: connection_merge_not_set_flood_merge_as_secondary
+   integer :: flood_index
       use_realistic_surface_coupling_in = .true.
-      no_merge_mtype = 0
-      connection_merge_not_set_flood_merge_as_primary = 9
-      connection_merge_not_set_flood_merge_as_secondary = 10
       nlat_coarse = 4
       nlon_coarse = 4
       nlat_surface_model = 3
@@ -19736,180 +16450,6 @@ subroutine testLakeModel16
          -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0,&
           -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0 /), &
          (/nlon,nlat/)))
-      allocate(flood_local_redirect(nlat,nlon))
-      flood_local_redirect = transpose(reshape((/ &
-          .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-         .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False.,  .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-          .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-         .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-         .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-         .False., .False., .False.,  .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False.,  .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-         .False., .False., .False., .False.,  .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-         .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-         .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-         .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-         .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-         .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-         .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-         .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False.,  .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-         .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-         .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-         .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-         .False., .False., .False., .False., .False.,    .False., .False., .False., .False. /), &
-         (/nlon,nlat/)))
-      allocate(connect_local_redirect(nlat,nlon))
-      connect_local_redirect = transpose(reshape((/ &
-          .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-          .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-         .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False.,  .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-         .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-         .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-         .False., .False., .False., .False.,  .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False.,  .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-         .False., .False., .False., .False., .False.,  .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-         .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-         .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-         .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-         .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-         .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-         .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-         .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False.,  .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-         .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-         .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-         .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-         .False., .False., .False., .False., .False., .False.,    .False., .False., .False., .False. /), &
-         (/nlon,nlat/)))
-      allocate(additional_flood_local_redirect(nlat,nlon))
-      additional_flood_local_redirect(:,:) = .False.
-      allocate(additional_connect_local_redirect(nlat,nlon))
-      additional_connect_local_redirect(:,:) = .False.
-      allocate(merge_points(nlat,nlon))
-      merge_points = transpose(reshape((/ &
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            no_merge_mtype, &
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,           &
-                      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            no_merge_mtype, &
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,           &
-                      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            &
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            no_merge_mtype, &
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,           &
-                      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            &
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            no_merge_mtype, &
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,           &
-                      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            &
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            no_merge_mtype, &
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,           &
-                      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            &
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            no_merge_mtype, &
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,           &
-                      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            &
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            no_merge_mtype, &
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,           &
-                      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            &
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            no_merge_mtype, &
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,           &
-                      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            &
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            no_merge_mtype, &
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,           &
-                      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            &
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            no_merge_mtype, &
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,           &
-                      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            &
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            no_merge_mtype, &
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,           &
-                      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            &
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            no_merge_mtype, &
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,           &
-                      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            &
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            no_merge_mtype, &
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,           &
-                      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            &
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            no_merge_mtype, &
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,           &
-                      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            &
-                     no_merge_mtype, no_merge_mtype, connection_merge_not_set_flood_merge_as_secondary, no_merge_mtype, &
-                     no_merge_mtype, &
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            no_merge_mtype,&
-                      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,           &
-                      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            &
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            no_merge_mtype,&
-                      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,           &
-                      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            &
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            no_merge_mtype,&
-                      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,           &
-                      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            &
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            no_merge_mtype,&
-                      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,           &
-                      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            &
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            no_merge_mtype,&
-                      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,           &
-                      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            &
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            no_merge_mtype,&
-                      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,           &
-                      no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,            &
-                     no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype /), &
-                     (/nlon,nlat/)))
       allocate(cell_areas_on_surface_model_grid(3,3))
       cell_areas_on_surface_model_grid = transpose(reshape((/ &
           2.5, 3.0, 2.5, &
@@ -20008,190 +16548,6 @@ subroutine testLakeModel16
          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
          (/nlon,nlat/)))
-      allocate(flood_force_merge_lat_index(nlat,nlon))
-      flood_force_merge_lat_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1  /), &
-         (/nlon,nlat/)))
-      allocate(flood_force_merge_lon_index(nlat,nlon))
-      flood_force_merge_lon_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1  /), &
-         (/nlon,nlat/)))
-      allocate(connect_force_merge_lat_index(nlat,nlon))
-      connect_force_merge_lat_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(connect_force_merge_lon_index(nlat,nlon))
-      connect_force_merge_lon_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(flood_redirect_lat_index(nlat,nlon))
-      flood_redirect_lat_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 3, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1  /), &
-         (/nlon,nlat/)))
-      allocate(flood_redirect_lon_index(nlat,nlon))
-      flood_redirect_lon_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 3, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1/), &
-         (/nlon,nlat/)))
-      allocate(connect_redirect_lat_index(nlat,nlon))
-      connect_redirect_lat_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(connect_redirect_lon_index(nlat,nlon))
-      connect_redirect_lon_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1  /), &
-         (/nlon,nlat/)))
       allocate(corresponding_surface_cell_lat_index(nlat,nlon))
       corresponding_surface_cell_lat_index = transpose(reshape((/ &
             1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, &
@@ -20242,47 +16598,41 @@ subroutine testLakeModel16
       call add_offset(flood_next_cell_lon_index,1,(/-1/))
       call add_offset(connect_next_cell_lat_index,1,(/-1/))
       call add_offset(connect_next_cell_lon_index,1,(/-1/))
-      call add_offset(flood_force_merge_lat_index,1,(/-1/))
-      call add_offset(flood_force_merge_lon_index,1,(/-1/))
-      call add_offset(connect_force_merge_lat_index,1,(/-1/))
-      call add_offset(connect_force_merge_lon_index,1,(/-1/))
-      call add_offset(flood_redirect_lat_index,1,(/-1/))
-      call add_offset(flood_redirect_lon_index,1,(/-1/))
-      call add_offset(connect_redirect_lat_index,1,(/-1/))
-      call add_offset(connect_redirect_lon_index,1,(/-1/))
-      allocate(additional_flood_redirect_lat_index(nlat,nlon))
-      additional_flood_redirect_lat_index(:,:) = 0
-      allocate(additional_flood_redirect_lon_index(nlat,nlon))
-      additional_flood_redirect_lon_index(:,:) = 0
-      allocate(additional_connect_redirect_lat_index(nlat,nlon))
-      additional_connect_redirect_lat_index(:,:) = 0
-      allocate(additional_connect_redirect_lon_index(nlat,nlon))
-      additional_connect_redirect_lon_index(:,:) = 0
+      allocate(connect_merge_and_redirect_indices_index(nlat,nlon))
+      connect_merge_and_redirect_indices_index(:,:) =0
+      allocate(flood_merge_and_redirect_indices_index(nlat,nlon))
+      flood_merge_and_redirect_indices_index(:,:) = 0
+      allocate(flood_merge_and_redirect_indices_collections(1))
+      connect_merge_and_redirect_indices_collections => null()
+      flood_index = 1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .false., &
+                                      15, &
+                                      15, &
+                                      3, &
+                                      3)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(14,18) = flood_index
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%add_offset_to_collection(1)
+      end do
       lake_parameters => LakeParameters(lake_centers, &
                                         connection_volume_thresholds, &
                                         flood_volume_thresholds, &
-                                        flood_local_redirect, &
-                                        connect_local_redirect, &
-                                        additional_flood_local_redirect, &
-                                        additional_connect_local_redirect, &
-                                        merge_points, &
                                         cell_areas_on_surface_model_grid, &
                                         flood_next_cell_lat_index, &
                                         flood_next_cell_lon_index, &
                                         connect_next_cell_lat_index, &
                                         connect_next_cell_lon_index, &
-                                        flood_force_merge_lat_index, &
-                                        flood_force_merge_lon_index, &
-                                        connect_force_merge_lat_index, &
-                                        connect_force_merge_lon_index, &
-                                        flood_redirect_lat_index, &
-                                        flood_redirect_lon_index, &
-                                        connect_redirect_lat_index, &
-                                        connect_redirect_lon_index, &
-                                        additional_flood_redirect_lat_index, &
-                                        additional_flood_redirect_lon_index, &
-                                        additional_connect_redirect_lat_index, &
-                                        additional_connect_redirect_lon_index, &
+                                        connect_merge_and_redirect_indices_index, &
+                                        flood_merge_and_redirect_indices_index, &
+                                        connect_merge_and_redirect_indices_collections, &
+                                        flood_merge_and_redirect_indices_collections, &
                                         corresponding_surface_cell_lat_index, &
                                         corresponding_surface_cell_lon_index, &
                                         nlat,nlon, &
@@ -20413,6 +16763,10 @@ subroutine testLakeModel16
         571.5, 573.25, 575.0, 571.042, 572.792, 574.542, 570.583, 572.333, 574.083, 570.125 /), &
          (/1,500/))
       allocate(lake_volumes_all_timesteps(1,500))
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
                                      initial_water_to_lake_centers, &
@@ -20457,30 +16811,13 @@ subroutine testLakeModel17
    logical,dimension(:,:), pointer :: lake_centers
    real(dp),dimension(:,:), pointer :: connection_volume_thresholds
    real(dp),dimension(:,:), pointer :: flood_volume_thresholds
-   logical,dimension(:,:), pointer :: flood_local_redirect
-   logical,dimension(:,:), pointer :: connect_local_redirect
-   logical,dimension(:,:), pointer :: additional_flood_local_redirect
-   logical,dimension(:,:), pointer :: additional_connect_local_redirect
-   integer,dimension(:,:), pointer :: merge_points
    real(dp),dimension(:,:), pointer :: cell_areas_on_surface_model_grid
    integer,dimension(:,:), pointer :: flood_next_cell_lat_index
    integer,dimension(:,:), pointer :: flood_next_cell_lon_index
    integer,dimension(:,:), pointer :: connect_next_cell_lat_index
    integer,dimension(:,:), pointer :: connect_next_cell_lon_index
-   integer,dimension(:,:), pointer :: flood_force_merge_lat_index
-   integer,dimension(:,:), pointer :: flood_force_merge_lon_index
-   integer,dimension(:,:), pointer :: connect_force_merge_lat_index
-   integer,dimension(:,:), pointer :: connect_force_merge_lon_index
-   integer,dimension(:,:), pointer :: flood_redirect_lat_index
-   integer,dimension(:,:), pointer :: flood_redirect_lon_index
-   integer,dimension(:,:), pointer :: connect_redirect_lat_index
-   integer,dimension(:,:), pointer :: connect_redirect_lon_index
    integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
    integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
-   integer,dimension(:,:), pointer :: additional_flood_redirect_lat_index
-   integer,dimension(:,:), pointer :: additional_flood_redirect_lon_index
-   integer,dimension(:,:), pointer :: additional_connect_redirect_lat_index
-   integer,dimension(:,:), pointer :: additional_connect_redirect_lon_index
    real(dp),dimension(:,:), pointer :: drainage
    real(dp),dimension(:,:), pointer :: runoff
    real(dp),dimension(:,:), pointer :: evaporation
@@ -20574,10 +16911,6 @@ subroutine testLakeModel17
    integer :: nlat,nlon
    integer :: nlat_coarse,nlon_coarse
    integer :: nlat_surface_model,nlon_surface_model
-   integer :: no_merge_mtype
-   integer :: connection_merge_not_set_flood_merge_as_primary
-   integer :: connection_merge_not_set_flood_merge_as_secondary
-   integer :: connection_merge_as_secondary_flood_merge_not_set
    integer :: lake_number,lake_type
    real(dp),dimension(:,:,:), pointer :: drainages
    real(dp),dimension(:,:,:), pointer :: runoffs
@@ -20585,18 +16918,26 @@ subroutine testLakeModel17
    real(dp),dimension(:,:), pointer :: diagnostic_lake_volumes
    real(dp),dimension(:), pointer :: lake_volumes
    real(dp),dimension(:,:), allocatable :: lake_fractions
+   integer, pointer, dimension(:,:) :: connect_merge_and_redirect_indices_index
+   integer, pointer, dimension(:,:) :: flood_merge_and_redirect_indices_index
+   type(mergeandredirectindicescollectionpointer), pointer, dimension(:) :: &
+    connect_merge_and_redirect_indices_collections
+   type(mergeandredirectindicescollectionpointer), pointer, dimension(:) :: &
+    flood_merge_and_redirect_indices_collections
+   type(mergeandredirectindicescollection), pointer :: collected_indices
+   type(mergeandredirectindices), pointer :: primary_merge
+   type(mergeandredirectindicespointer), dimension(:), pointer :: primary_merges
+   type(mergeandredirectindices), pointer :: secondary_merge
    real(dp),dimension(:,:), pointer :: lake_volumes_all_timesteps
    real(dp),dimension(:,:), pointer :: expected_lake_volumes_all_timesteps
+   integer :: connect_index
+   integer :: flood_index
       use_realistic_surface_coupling_in = .true.
       nlat_coarse = 4
       nlon_coarse = 4
       nlat_surface_model = 3
       nlon_surface_model = 3
       allocate(lake_fractions(nlat_surface_model,nlon_surface_model))
-      no_merge_mtype = 0
-      connection_merge_as_secondary_flood_merge_not_set = 7
-      connection_merge_not_set_flood_merge_as_primary = 9
-      connection_merge_not_set_flood_merge_as_secondary = 10
       allocate(flow_directions(4,4))
       flow_directions = transpose(reshape((/5,5,5,5,&
                                             2,2,5,5,&
@@ -20782,289 +17123,6 @@ subroutine testLakeModel17
          -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0,   &
           -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0/), &
          (/nlon,nlat/)))
-      allocate(flood_local_redirect(nlat,nlon))
-      flood_local_redirect = transpose(reshape((/ &
-          .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-           .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .True., .False., .False., .False.,  &
-         .False., .False., .False., .False., .True., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .True., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .True., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .True., .False., .False., .False., .False., .False., .False., .False.,  &
-         .False., .False., .False., .False., .False., .False., .False., .True., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False./), &
-         (/nlon,nlat/)))
-      allocate(connect_local_redirect(nlat,nlon))
-      connect_local_redirect = transpose(reshape((/ &
-          .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,&
-           .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False. /), &
-         (/nlon,nlat/)))
-      allocate(additional_flood_local_redirect(nlat,nlon))
-      additional_flood_local_redirect = transpose(reshape((/ &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False. /), &
-         (/nlon,nlat/)))
-      allocate(additional_connect_local_redirect(nlat,nlon))
-      additional_connect_local_redirect = transpose(reshape((/ &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-          .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-          .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-          .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-          .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-          .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-          .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-          .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-          .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-          .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-          .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-          .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-          .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-          .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-          .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-          .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-          .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-          .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-          .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-          .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-         .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-          .False., .False., .False., .False., .False., .False., .False., .False., .False. /), &
-         (/nlon,nlat/)))
-      allocate(merge_points(nlat,nlon))
-      merge_points = transpose(reshape((/ &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,       &
-          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-          no_merge_mtype, no_merge_mtype, &
-          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         connection_merge_not_set_flood_merge_as_secondary,&
-          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-           no_merge_mtype, no_merge_mtype, connection_merge_not_set_flood_merge_as_primary, &
-          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-           no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,    &
-          no_merge_mtype, no_merge_mtype, no_merge_mtype,   &
-          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,   &
-           no_merge_mtype, connection_merge_not_set_flood_merge_as_secondary, &
-          connection_merge_not_set_flood_merge_as_secondary, no_merge_mtype, no_merge_mtype,&
-           no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,    &
-          no_merge_mtype, no_merge_mtype, no_merge_mtype,   &
-          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,   &
-           no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
-          no_merge_mtype, no_merge_mtype, no_merge_mtype,   &
-          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-           no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-          connection_merge_not_set_flood_merge_as_primary, no_merge_mtype, no_merge_mtype,&
-           no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
-          no_merge_mtype, no_merge_mtype, no_merge_mtype,   &
-          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-           no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-          no_merge_mtype, connection_merge_not_set_flood_merge_as_primary, no_merge_mtype,&
-           no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype,   &
-          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-          connection_merge_not_set_flood_merge_as_primary, no_merge_mtype, &
-          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-           no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-          no_merge_mtype, no_merge_mtype, no_merge_mtype,   &
-          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-           no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-          no_merge_mtype, no_merge_mtype, no_merge_mtype,   &
-          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-           no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-          no_merge_mtype, no_merge_mtype, no_merge_mtype,   &
-          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-           no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-          no_merge_mtype, no_merge_mtype, no_merge_mtype,   &
-          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-           no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-          no_merge_mtype, no_merge_mtype, no_merge_mtype,   &
-          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-           no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, connection_merge_not_set_flood_merge_as_secondary, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,   &
-          no_merge_mtype, connection_merge_not_set_flood_merge_as_secondary, &
-          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,   &
-          connection_merge_not_set_flood_merge_as_secondary, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, connection_merge_as_secondary_flood_merge_not_set, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,   &
-          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,   &
-          no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,   &
-          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,   &
-          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-          connection_merge_not_set_flood_merge_as_primary, no_merge_mtype, &
-          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-          no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,   &
-          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-          no_merge_mtype, no_merge_mtype, &
-          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-          no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,  &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,   &
-          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,   &
-          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-           no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,   &
-          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-           no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-          no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype /), &
-         (/nlon,nlat/)))
       allocate(cell_areas_on_surface_model_grid(3,3))
       cell_areas_on_surface_model_grid = transpose(reshape((/ &
           2.5, 3.0, 2.5, &
@@ -21163,190 +17221,6 @@ subroutine testLakeModel17
          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1/), &
          (/nlon,nlat/)))
-      allocate(flood_force_merge_lat_index(nlat,nlon))
-      flood_force_merge_lat_index = transpose(reshape((/ &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 7, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 7, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 2, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(flood_force_merge_lon_index(nlat,nlon))
-      flood_force_merge_lon_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 11, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 16, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 7, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 3, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(connect_force_merge_lat_index(nlat,nlon))
-      connect_force_merge_lat_index = transpose(reshape((/ &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(connect_force_merge_lon_index(nlat,nlon))
-      connect_force_merge_lon_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(flood_redirect_lat_index(nlat,nlon))
-      flood_redirect_lat_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, 1, -1, -1, -1, -1, -1, -1, -1, 7, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 3, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 7, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, 14, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, -1, -1, -1, -1, 1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 2, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(flood_redirect_lon_index(nlat,nlon))
-      flood_redirect_lon_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, 7, -1, -1, -1, -1, -1, -1, -1, 11, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 16, 3, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 16, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, -1, -1, -1, -1, 16, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1/), &
-         (/nlon,nlat/)))
-      allocate(connect_redirect_lat_index(nlat,nlon))
-      connect_redirect_lat_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(connect_redirect_lon_index(nlat,nlon))
-      connect_redirect_lon_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
       allocate(corresponding_surface_cell_lat_index(nlat,nlon))
       corresponding_surface_cell_lat_index = transpose(reshape((/ &
             1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, &
@@ -21393,141 +17267,200 @@ subroutine testLakeModel17
          1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, &
          1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3 /), &
          (/nlon,nlat/)))
-      allocate(additional_flood_redirect_lat_index(nlat,nlon))
-      additional_flood_redirect_lat_index = transpose(reshape((/ &
-           -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(additional_flood_redirect_lon_index(nlat,nlon))
-      additional_flood_redirect_lon_index = transpose(reshape((/ &
-           -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(additional_connect_redirect_lat_index(nlat,nlon))
-      additional_connect_redirect_lat_index = transpose(reshape((/ &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-         (/nlon,nlat/)))
-      allocate(additional_connect_redirect_lon_index(nlat,nlon))
-      additional_connect_redirect_lon_index = transpose(reshape((/ &
-          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1/), &
-         (/nlon,nlat/)))
       lake_retention_coefficient_local=0.1_dp
       instant_throughflow_local=.True.
       call add_offset(flood_next_cell_lat_index,1,(/-1/))
       call add_offset(flood_next_cell_lon_index,1,(/-1/))
       call add_offset(connect_next_cell_lat_index,1,(/-1/))
       call add_offset(connect_next_cell_lon_index,1,(/-1/))
-      call add_offset(flood_force_merge_lat_index,1,(/-1/))
-      call add_offset(flood_force_merge_lon_index,1,(/-1/))
-      call add_offset(connect_force_merge_lat_index,1,(/-1/))
-      call add_offset(connect_force_merge_lon_index,1,(/-1/))
-      call add_offset(flood_redirect_lat_index,1,(/-1/))
-      call add_offset(flood_redirect_lon_index,1,(/-1/))
-      call add_offset(connect_redirect_lat_index,1,(/-1/))
-      call add_offset(connect_redirect_lon_index,1,(/-1/))
-      call add_offset(additional_flood_redirect_lat_index,1,(/-1/))
-      call add_offset(additional_flood_redirect_lon_index,1,(/-1/))
-      call add_offset(additional_connect_redirect_lat_index,1,(/-1/))
-      call add_offset(additional_connect_redirect_lon_index,1,(/-1/))
+      allocate(connect_merge_and_redirect_indices_index(nlat,nlon))
+      connect_merge_and_redirect_indices_index(:,:) =0
+      allocate(flood_merge_and_redirect_indices_index(nlat,nlon))
+      flood_merge_and_redirect_indices_index(:,:) = 0
+      allocate(flood_merge_and_redirect_indices_collections(11))
+      allocate(connect_merge_and_redirect_indices_collections(1))
+      flood_index = 1
+      connect_index = 1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .true., &
+                                      3, &
+                                      7, &
+                                      1, &
+                                      7)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(2,6) = flood_index
+      flood_index = flood_index +1
+      primary_merge => &
+        mergeandredirectindices(.true., &
+                                .true., &
+                                7, &
+                                11, &
+                                7, &
+                                11)
+      allocate(primary_merges(1))
+      primary_merges(1)%ptr => primary_merge
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            null())
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(2,14) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .true., &
+                                      3, &
+                                      16, &
+                                      1, &
+                                      16)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(3,15) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .false., &
+                                      14, &
+                                      19, &
+                                      3, &
+                                      3)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(3,16) = flood_index
+      flood_index = flood_index +1
+      primary_merge => &
+        mergeandredirectindices(.true., &
+                                .true., &
+                                7, &
+                                16, &
+                                7, &
+                                16)
+      allocate(primary_merges(1))
+      primary_merges(1)%ptr => primary_merge
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            null())
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(5,17) = flood_index
+      flood_index = flood_index +1
+      primary_merge => &
+        mergeandredirectindices(.true., &
+                                .false., &
+                                1, &
+                                7, &
+                                0, &
+                                1)
+      allocate(primary_merges(1))
+      primary_merges(1)%ptr => primary_merge
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            null())
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(6,18) = flood_index
+      flood_index = flood_index +1
+      primary_merge => &
+        mergeandredirectindices(.true., &
+                                .false., &
+                                1, &
+                                3, &
+                                1, &
+                                1)
+      allocate(primary_merges(1))
+      primary_merges(1)%ptr => primary_merge
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            null())
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(7,13) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .true., &
+                                      14, &
+                                      2, &
+                                      14, &
+                                      1)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(13,2) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .false., &
+                                      5, &
+                                      13, &
+                                      0, &
+                                      1)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(13,12) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .true., &
+                                      4, &
+                                      18, &
+                                      1, &
+                                      16)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(13,17) = flood_index
+      flood_index = flood_index +1
+      primary_merge => &
+        mergeandredirectindices(.true., &
+                                .false., &
+                                2, &
+                                1, &
+                                2, &
+                                0)
+      allocate(primary_merges(1))
+      primary_merges(1)%ptr => primary_merge
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            null())
+      flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+      flood_merge_and_redirect_indices_index(16,13) = flood_index
+      flood_index = flood_index +1
+      secondary_merge => &
+              mergeandredirectindices(.false., &
+                                      .false., &
+                                      18, &
+                                      14, &
+                                      3, &
+                                      3)
+      primary_merges => null()
+      collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                            secondary_merge)
+      connect_merge_and_redirect_indices_collections(connect_index)%ptr => collected_indices
+      connect_merge_and_redirect_indices_index(14,2) = connect_index
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%add_offset_to_collection(1)
+      end do
+      do i = 1,size(connect_merge_and_redirect_indices_collections)
+        collected_indices => connect_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%add_offset_to_collection(1)
+      end do
       lake_parameters => LakeParameters(lake_centers, &
                                         connection_volume_thresholds, &
                                         flood_volume_thresholds, &
-                                        flood_local_redirect, &
-                                        connect_local_redirect, &
-                                        additional_flood_local_redirect, &
-                                        additional_connect_local_redirect, &
-                                        merge_points, &
                                         cell_areas_on_surface_model_grid, &
                                         flood_next_cell_lat_index, &
                                         flood_next_cell_lon_index, &
                                         connect_next_cell_lat_index, &
                                         connect_next_cell_lon_index, &
-                                        flood_force_merge_lat_index, &
-                                        flood_force_merge_lon_index, &
-                                        connect_force_merge_lat_index, &
-                                        connect_force_merge_lon_index, &
-                                        flood_redirect_lat_index, &
-                                        flood_redirect_lon_index, &
-                                        connect_redirect_lat_index, &
-                                        connect_redirect_lon_index, &
-                                        additional_flood_redirect_lat_index, &
-                                        additional_flood_redirect_lon_index, &
-                                        additional_connect_redirect_lat_index, &
-                                        additional_connect_redirect_lon_index, &
+                                        connect_merge_and_redirect_indices_index, &
+                                        flood_merge_and_redirect_indices_index, &
+                                        connect_merge_and_redirect_indices_collections, &
+                                        flood_merge_and_redirect_indices_collections, &
                                         corresponding_surface_cell_lat_index, &
                                         corresponding_surface_cell_lon_index, &
                                         nlat,nlon, &
@@ -22830,6 +18763,12 @@ subroutine testLakeModel17
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
+      collected_indices => connect_merge_and_redirect_indices_collections(1)%ptr
+      call collected_indices%reset_collection()
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
@@ -22889,6 +18828,12 @@ subroutine testLakeModel17
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
+      collected_indices => connect_merge_and_redirect_indices_collections(1)%ptr
+      call collected_indices%reset_collection()
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
@@ -22948,6 +18893,12 @@ subroutine testLakeModel17
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
+      collected_indices => connect_merge_and_redirect_indices_collections(1)%ptr
+      call collected_indices%reset_collection()
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
@@ -23007,6 +18958,12 @@ subroutine testLakeModel17
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
+      collected_indices => connect_merge_and_redirect_indices_collections(1)%ptr
+      call collected_indices%reset_collection()
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
@@ -23066,6 +19023,12 @@ subroutine testLakeModel17
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
+      collected_indices => connect_merge_and_redirect_indices_collections(1)%ptr
+      call collected_indices%reset_collection()
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
@@ -23125,6 +19088,12 @@ subroutine testLakeModel17
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
+      collected_indices => connect_merge_and_redirect_indices_collections(1)%ptr
+      call collected_indices%reset_collection()
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
                                      lake_parameters, &
@@ -23184,6 +19153,12 @@ subroutine testLakeModel17
       deallocate(diagnostic_lake_volumes)
       call river_fields%riverprognosticfieldsdestructor()
       deallocate(river_fields)
+      do i = 1,size(flood_merge_and_redirect_indices_collections)
+        collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+        call collected_indices%reset_collection()
+      end do
+      collected_indices => connect_merge_and_redirect_indices_collections(1)%ptr
+      call collected_indices%reset_collection()
       river_fields => riverprognosticfields(nlat_coarse,nlon_coarse,1,1,5)
       allocate(lake_volumes_all_timesteps(7,115))
       call init_hd_model_for_testing(river_parameters,river_fields,.True., &
@@ -23342,7 +19317,6 @@ subroutine testLakeModel17
       call clean_hd_model()
 end subroutine testLakeModel17
 
-
 subroutine testLakeNumberRetrieval
   use latlon_lake_model_mod
   use latlon_lake_model_io_mod, only: add_offset
@@ -23350,45 +19324,34 @@ subroutine testLakeNumberRetrieval
   type(lakeparameters),  pointer :: lake_parameters
   type(lakeprognostics), pointer :: lake_prognostics
   type(lakefields),      pointer :: lake_fields
-  integer,dimension(:,:), pointer :: merge_points
   real(dp),dimension(:,:),pointer :: cell_areas_on_surface_model_grid
   logical,dimension(:,:), pointer :: lake_centers
   real(dp),dimension(:,:), pointer :: connection_volume_thresholds
   real(dp),dimension(:,:), pointer :: flood_volume_thresholds
-  logical,dimension(:,:), pointer :: flood_local_redirect
-  logical,dimension(:,:), pointer :: connect_local_redirect
-  logical,dimension(:,:), pointer :: additional_flood_local_redirect
-  logical,dimension(:,:), pointer :: additional_connect_local_redirect
   integer,dimension(:,:), pointer :: flood_next_cell_lat_index
   integer,dimension(:,:), pointer :: flood_next_cell_lon_index
   integer,dimension(:,:), pointer :: connect_next_cell_lat_index
   integer,dimension(:,:), pointer :: connect_next_cell_lon_index
-  integer,dimension(:,:), pointer :: flood_force_merge_lat_index
-  integer,dimension(:,:), pointer :: flood_force_merge_lon_index
-  integer,dimension(:,:), pointer :: connect_force_merge_lat_index
-  integer,dimension(:,:), pointer :: connect_force_merge_lon_index
-  integer,dimension(:,:), pointer :: flood_redirect_lat_index
-  integer,dimension(:,:), pointer :: flood_redirect_lon_index
-  integer,dimension(:,:), pointer :: connect_redirect_lat_index
-  integer,dimension(:,:), pointer :: connect_redirect_lon_index
-  integer,dimension(:,:), pointer :: additional_flood_redirect_lat_index
-  integer,dimension(:,:), pointer :: additional_flood_redirect_lon_index
-  integer,dimension(:,:), pointer :: additional_connect_redirect_lat_index
-  integer,dimension(:,:), pointer :: additional_connect_redirect_lon_index
+  integer, pointer, dimension(:,:) :: connect_merge_and_redirect_indices_index
+  integer, pointer, dimension(:,:) :: flood_merge_and_redirect_indices_index
+  type(mergeandredirectindicescollectionpointer), pointer, dimension(:) :: &
+    connect_merge_and_redirect_indices_collections
+  type(mergeandredirectindicescollectionpointer), pointer, dimension(:) :: &
+    flood_merge_and_redirect_indices_collections
+  type(mergeandredirectindicescollection), pointer :: collected_indices
+  type(mergeandredirectindicespointer), dimension(:), pointer :: primary_merges
+  type(mergeandredirectindices), pointer :: secondary_merge
+  type(mergeandredirectindices), pointer :: primary_merge
   integer,dimension(:,:), pointer :: corresponding_surface_cell_lat_index
   integer,dimension(:,:), pointer :: corresponding_surface_cell_lon_index
   integer,dimension(:,:), pointer :: expected_lake_numbers
   integer :: nlat,nlon
   integer :: nlat_coarse,nlon_coarse
   integer :: nlat_surface_model,nlon_surface_model
-  integer :: no_merge_mtype
-  integer :: connection_merge_not_set_flood_merge_as_primary
-  integer :: connection_merge_not_set_flood_merge_as_secondary
   logical :: instant_throughflow_local
   real(dp) :: lake_retention_coefficient_local
-    no_merge_mtype = 0
-    connection_merge_not_set_flood_merge_as_primary = 9
-    connection_merge_not_set_flood_merge_as_secondary = 10
+  integer :: flood_index
+  integer :: i
     nlat = 20
     nlon = 20
     nlat_coarse = 4
@@ -23525,164 +19488,6 @@ subroutine testLakeNumberRetrieval
        -1.0,    -1.0,   -1.0,    -1.0,   -1.0,    -1.0,    -1.0,   -1.0,   -1.0,  -1.0,  -1.0,    -1.0,    -1.0,    -1.0,   -1.0, &
               -1.0,   -1.0,    -1.0,   -1.0,  -1.0 /), &
        (/nlon,nlat/)))
-    allocate(flood_local_redirect(nlat,nlon))
-    flood_local_redirect = transpose(reshape((/ &
-        .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                 .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False.,  .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                 .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .True., .False., .False., .False., &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-                 .True., .False., .False.,  .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False.,  .False., .False., .False., .False., .False., &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                .False., .False., .False., .False.,  .False.,    .True., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                .False., .False., .False., .True., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False.,  .False., .False., .False., .False., .False., .False., .False., &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False. /), &
-       (/nlon,nlat/)))
-    allocate(connect_local_redirect(nlat,nlon))
-    connect_local_redirect = transpose(reshape((/ &
-        .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                 .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False.,  .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., &
-                 .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-                .False., .False., .False.,  .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False.,  .False., .False., .False., .False., .False., &
-                 .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-                .False., .False., .False., .False.,  .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False.,  .False., .False., .False., .False., .False., .False., .False., &
-                 .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False., &
-       .False., .False., .False., .False., .False., .False., .False., .False., .False., .False., .False.,  &
-                .False., .False., .False., .False., .False.,    .False., .False., .False., .False. /), &
-       (/nlon,nlat/)))
-    allocate(additional_flood_local_redirect(nlat,nlon))
-    additional_flood_local_redirect(:,:) = .False.
-    allocate(additional_connect_local_redirect(nlat,nlon))
-    additional_connect_local_redirect(:,:) = .False.
-    allocate(merge_points(nlat,nlon))
-    merge_points = transpose(reshape((/ &
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-          no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-          no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-          no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-          no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-          no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-          no_merge_mtype,connection_merge_not_set_flood_merge_as_primary,no_merge_mtype,no_merge_mtype, &
-          no_merge_mtype,no_merge_mtype, &
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,&
-       connection_merge_not_set_flood_merge_as_secondary, &
-       no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-       no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,&
-        no_merge_mtype,no_merge_mtype, &
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-      no_merge_mtype,connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype,no_merge_mtype,no_merge_mtype,&
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,connection_merge_not_set_flood_merge_as_primary, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        connection_merge_not_set_flood_merge_as_primary,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-          no_merge_mtype,no_merge_mtype, &
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype, &
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,connection_merge_not_set_flood_merge_as_secondary,no_merge_mtype,&
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-        no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-      no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-       no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype, &
-       no_merge_mtype,no_merge_mtype,no_merge_mtype,no_merge_mtype /), &
-       (/nlon,nlat/)))
     allocate(cell_areas_on_surface_model_grid(nlat_surface_model,nlon_surface_model))
     cell_areas_on_surface_model_grid = transpose(reshape((/ &
           2.5,3.0,2.5, &
@@ -23781,210 +19586,10 @@ subroutine testLakeNumberRetrieval
        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
        (/nlon,nlat/)))
-    allocate(flood_force_merge_lat_index(nlat,nlon))
-    flood_force_merge_lat_index = transpose(reshape((/ &
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  6, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  6, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  7, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-       (/nlon,nlat/)))
-    allocate(flood_force_merge_lon_index(nlat,nlon))
-    flood_force_merge_lon_index = transpose(reshape((/ &
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  2, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  8, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 12, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-       (/nlon,nlat/)))
-    allocate(connect_force_merge_lat_index(nlat,nlon))
-    connect_force_merge_lat_index = transpose(reshape((/ &
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-       (/nlon,nlat/)))
-    allocate(connect_force_merge_lon_index(nlat,nlon))
-    connect_force_merge_lon_index = transpose(reshape((/ &
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-       (/nlon,nlat/)))
-    allocate(flood_redirect_lat_index(nlat,nlon))
-    flood_redirect_lat_index = transpose(reshape((/ &
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1,  1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1,  7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  7, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1,  1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  6, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  5, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  3, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1,  3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-       (/nlon,nlat/)))
-    allocate(flood_redirect_lon_index(nlat,nlon))
-    flood_redirect_lon_index = transpose(reshape((/ &
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  0, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1,  3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, 14, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 14, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1,  0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  5, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 13, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  3, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1,  1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-       (/nlon,nlat/)))
-    allocate(connect_redirect_lat_index(nlat,nlon))
-    connect_redirect_lat_index = transpose(reshape((/ &
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-       (/nlon,nlat/)))
-    allocate(connect_redirect_lon_index(nlat,nlon))
-    connect_redirect_lon_index = transpose(reshape((/ &
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, &
-       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 /), &
-       (/nlon,nlat/)))
     call add_offset(flood_next_cell_lat_index,1,(/-1/))
     call add_offset(flood_next_cell_lon_index,1,(/-1/))
     call add_offset(connect_next_cell_lat_index,1,(/-1/))
     call add_offset(connect_next_cell_lon_index,1,(/-1/))
-    call add_offset(flood_force_merge_lat_index,1,(/-1/))
-    call add_offset(flood_force_merge_lon_index,1,(/-1/))
-    call add_offset(connect_force_merge_lat_index,1,(/-1/))
-    call add_offset(connect_force_merge_lon_index,1,(/-1/))
-    call add_offset(flood_redirect_lat_index,1,(/-1/))
-    call add_offset(flood_redirect_lon_index,1,(/-1/))
-    call add_offset(connect_redirect_lat_index,1,(/-1/))
-    call add_offset(connect_redirect_lon_index,1,(/-1/))
-    allocate(additional_flood_redirect_lat_index(nlat,nlon))
-    additional_flood_redirect_lat_index(:,:) = 0
-    allocate(additional_flood_redirect_lon_index(nlat,nlon))
-    additional_flood_redirect_lon_index(:,:) = 0
-    allocate(additional_connect_redirect_lat_index(nlat,nlon))
-    additional_connect_redirect_lat_index(:,:) = 0
-    allocate(additional_connect_redirect_lon_index(nlat,nlon))
-    additional_connect_redirect_lon_index(:,:) = 0
     instant_throughflow_local=.True.
     lake_retention_coefficient_local=0.1_dp
       allocate(corresponding_surface_cell_lat_index(nlat,nlon))
@@ -24033,31 +19638,149 @@ subroutine testLakeNumberRetrieval
                                                            1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3, &
                                                            1,1,1,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3 /), &
          (/nlon,nlat/)))
+
+    allocate(connect_merge_and_redirect_indices_index(nlat,nlon))
+    connect_merge_and_redirect_indices_index(:,:) =0
+    allocate(flood_merge_and_redirect_indices_index(nlat,nlon))
+    flood_merge_and_redirect_indices_index(:,:) = 0
+allocate(flood_merge_and_redirect_indices_collections(9))
+    connect_merge_and_redirect_indices_collections=> null()
+    flood_index = 1
+    primary_merge => &
+    mergeandredirectindices(.true.,&
+                            .false., &
+                            6, &
+                            2, &
+                            1, &
+                            0)
+    allocate(primary_merges(1))
+    primary_merges(1)%ptr => primary_merge
+    collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                          null())
+    flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+    flood_merge_and_redirect_indices_index(3,16) = flood_index
+    flood_index = flood_index + 1
+    secondary_merge => &
+            mergeandredirectindices(.false., &
+                                    .false., &
+                                    8, &
+                                    18, &
+                                    1, &
+                                    3)
+    primary_merges => null()
+    collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                          secondary_merge)
+    flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+    flood_merge_and_redirect_indices_index(4,6) = flood_index
+    flood_index = flood_index + 1
+    secondary_merge => &
+            mergeandredirectindices(.false., &
+                                    .true., &
+                                    6, &
+                                    10, &
+                                    7, &
+                                    14)
+    primary_merges => null()
+    collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                          secondary_merge)
+    flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+    flood_merge_and_redirect_indices_index(5,8) = flood_index
+    flood_index = flood_index + 1
+    secondary_merge => &
+            mergeandredirectindices(.false., &
+                                    .true., &
+                                    7, &
+                                    14, &
+                                    7, &
+                                    14)
+    primary_merges => null()
+    collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                          secondary_merge)
+    flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+    flood_merge_and_redirect_indices_index(6,12) = flood_index
+    flood_index = flood_index + 1
+    secondary_merge => &
+            mergeandredirectindices(.false., &
+                                    .false., &
+                                    6, &
+                                    4, &
+                                    1, &
+                                    0)
+    primary_merges => null()
+    collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                          secondary_merge)
+    flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+    flood_merge_and_redirect_indices_index(8,2) = flood_index
+    flood_index = flood_index + 1
+    primary_merge => &
+      mergeandredirectindices(.true., &
+                              .true., &
+                              6, &
+                              8, &
+                              6, &
+                              5)
+    allocate(primary_merges(1))
+    primary_merges(1)%ptr => primary_merge
+    collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                          null())
+    flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+    flood_merge_and_redirect_indices_index(8,17) = flood_index
+    flood_index = flood_index + 1
+    primary_merge => &
+      mergeandredirectindices(.true., &
+                              .true., &
+                              7, &
+                              12, &
+                              5, &
+                              13)
+    allocate(primary_merges(1))
+    primary_merges(1)%ptr => primary_merge
+    collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                          null())
+    flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+    flood_merge_and_redirect_indices_index(9,15) = flood_index
+    flood_index = flood_index + 1
+    secondary_merge => &
+            mergeandredirectindices(.false., &
+                                    .false., &
+                                    16, &
+                                    15, &
+                                    3, &
+                                    3)
+    primary_merges => null()
+    collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                          secondary_merge)
+    flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+    flood_merge_and_redirect_indices_index(14,19) = flood_index
+    flood_index = flood_index + 1
+    secondary_merge => &
+            mergeandredirectindices(.false., &
+                                    .false., &
+                                    17, &
+                                    3, &
+                                    3, &
+                                    1)
+    primary_merges => null()
+    collected_indices => mergeandredirectindicescollection(primary_merges, &
+                                                          secondary_merge)
+    flood_merge_and_redirect_indices_collections(flood_index)%ptr => collected_indices
+    flood_merge_and_redirect_indices_index(16,4) = flood_index
+    do i = 1,size(flood_merge_and_redirect_indices_collections)
+      collected_indices => flood_merge_and_redirect_indices_collections(i)%ptr
+      call collected_indices%add_offset_to_collection(1)
+    end do
     lake_parameters => LakeParameters(lake_centers, &
                                       connection_volume_thresholds, &
                                       flood_volume_thresholds, &
-                                      flood_local_redirect, &
-                                      connect_local_redirect, &
-                                      additional_flood_local_redirect, &
-                                      additional_connect_local_redirect, &
-                                      merge_points, &
                                       cell_areas_on_surface_model_grid, &
                                       flood_next_cell_lat_index, &
                                       flood_next_cell_lon_index, &
                                       connect_next_cell_lat_index, &
                                       connect_next_cell_lon_index, &
-                                      flood_force_merge_lat_index, &
-                                      flood_force_merge_lon_index, &
-                                      connect_force_merge_lat_index, &
-                                      connect_force_merge_lon_index, &
-                                      flood_redirect_lat_index, &
-                                      flood_redirect_lon_index, &
-                                      connect_redirect_lat_index, &
-                                      connect_redirect_lon_index, &
-                                      additional_flood_redirect_lat_index, &
-                                      additional_flood_redirect_lon_index, &
-                                      additional_connect_redirect_lat_index, &
-                                      additional_connect_redirect_lon_index, &
+                                      connect_merge_and_redirect_indices_index, &
+                                      flood_merge_and_redirect_indices_index, &
+                                      connect_merge_and_redirect_indices_collections, &
+                                      flood_merge_and_redirect_indices_collections, &
                                       corresponding_surface_cell_lat_index, &
                                       corresponding_surface_cell_lon_index, &
                                       nlat,nlon, &
