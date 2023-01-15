@@ -7984,7 +7984,7 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirects) {
                                           coarse_grid_params_in);
   merges_and_redirects* merges_and_redirects_out =
     basin_eval.get_basin_merges_and_redirects();
-  cout << *merges_and_redirects_out << endl;
+  // cout << *merges_and_redirects_out << endl;
   EXPECT_TRUE(false);
   delete grid_params_in; delete coarse_grid_params_in;
   delete[] flood_next_cell_lon_index_in;
@@ -8279,7 +8279,7 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsTwo) {
                                           coarse_grid_params_in);
   merges_and_redirects* merges_and_redirects_out =
     basin_eval.get_basin_merges_and_redirects();
-  cout << *merges_and_redirects_out << endl;
+  // cout << *merges_and_redirects_out << endl;
   EXPECT_TRUE(false);
   delete grid_params_in; delete coarse_grid_params_in;
   delete[] flood_next_cell_lat_index_in; delete[] flood_next_cell_lon_index_in;
@@ -12623,9 +12623,9 @@ false, false, false, false, false, false, false, false, false, false, false, fal
               == field<int>(connect_next_cell_lon_index_expected_out,grid_params_in));
   merges_and_redirects* merges_and_redirects_out =
     basin_eval.get_basin_merges_and_redirects();
-  cout << merges_and_redirects_expected_out << endl;
-  cout << "***************" << endl;
-  cout << *merges_and_redirects_out << endl;
+  // cout << merges_and_redirects_expected_out << endl;
+  // cout << "***************" << endl;
+  // cout << *merges_and_redirects_out << endl;
   EXPECT_TRUE(merges_and_redirects_expected_out ==
               *merges_and_redirects_out);
   delete grid_params_in; delete coarse_grid_params_in; delete alg4;

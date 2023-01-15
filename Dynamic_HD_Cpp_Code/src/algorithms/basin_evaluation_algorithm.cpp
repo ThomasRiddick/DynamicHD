@@ -21,16 +21,16 @@
 using namespace std;
 
 basin_evaluation_algorithm::~basin_evaluation_algorithm() {
-	// delete minima; delete raw_orography; delete corrected_orography;
-	// delete connection_volume_thresholds; delete flood_volume_thresholds;
-	// delete basin_numbers; delete _grid; delete _coarse_grid;
-	// delete prior_fine_catchments; delete coarse_catchment_nums;
-	// delete level_completed_cells; delete requires_flood_redirect_indices;
-	// delete requires_connect_redirect_indices; delete flooded_cells;
-	// delete connected_cells; delete completed_cells;
-	// delete search_completed_cells;
-	// delete basin_flooded_cells; delete basin_connected_cells;
-  // delete null_coords; delete cell_areas;
+	delete minima; delete raw_orography; delete corrected_orography;
+	delete connection_volume_thresholds; delete flood_volume_thresholds;
+	delete basin_numbers; delete _grid; delete _coarse_grid;
+	delete prior_fine_catchments; delete coarse_catchment_nums;
+	delete level_completed_cells; delete requires_flood_redirect_indices;
+	delete requires_connect_redirect_indices; delete flooded_cells;
+	delete connected_cells; delete completed_cells;
+	delete search_completed_cells;
+	delete basin_flooded_cells; delete basin_connected_cells;
+  delete null_coords; delete cell_areas;
 }
 
 latlon_basin_evaluation_algorithm::~latlon_basin_evaluation_algorithm(){

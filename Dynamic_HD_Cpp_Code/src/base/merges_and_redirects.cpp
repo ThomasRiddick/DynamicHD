@@ -1,4 +1,7 @@
 #include "base/merges_and_redirects.hpp"
+#include <algorithm>
+
+using namespace std;
 
 latlon_merge_and_redirect_indices::
   latlon_merge_and_redirect_indices(coords* target_coords){
@@ -76,6 +79,26 @@ bool icon_single_index_merge_and_redirect_indices::
           local_redirect == icon_single_index_rhs->get_local_redirect());
 }
 
+pair<int,int*>* latlon_merge_and_redirect_indices::get_indices_as_array(){
+  //First number is to indicate this array is filled when positioned
+  //within a larger array (where some spaces are unfilled)
+  return new pair<int,int*>(6,new int[6] { 1,
+                                           int(local_redirect),
+                                           merge_target_lat_index,
+                                           merge_target_lon_index,
+                                           redirect_lat_index,
+                                           redirect_lon_index });
+}
+
+pair<int,int*>* icon_single_index_merge_and_redirect_indices::get_indices_as_array(){
+  //First number is to indicate this array is filled when positioned
+  //within a larger array (where some spaces are unfilled)
+  return new pair<int,int*>(4, new int[4] { 1,
+                                            int(local_redirect),
+                                            merge_target_cell_index,
+                                            redirect_cell_index });
+}
+
 ostream& latlon_merge_and_redirect_indices::print(ostream& out) {
   return out << "merge_target: " << get_merge_target_lat_index() << ","  <<
                                     get_merge_target_lon_index() << endl <<
@@ -105,6 +128,29 @@ bool operator==(vector<merge_and_redirect_indices*>& lhs,
   return (equal(lhs.begin(),lhs.end(),rhs.begin(),
                 compare_object_pointers<merge_and_redirect_indices>) &&
           lhs.size() == rhs.size());
+}
+
+pair<pair<int,int>*,int*>* collected_merge_and_redirect_indices::get_collection_as_array(){
+  pair<int,int*>* secondary_merge_dimension_and_array =
+    secondary_merge_and_redirect_indices->get_indices_as_array();
+  int merge_and_redirect_indices_size = secondary_merge_dimension_and_array->first;
+  int* array = new int[merge_and_redirect_indices_size*
+                       (1+primary_merge_and_redirect_indices->size())];
+  for (int i = 0; i<merge_and_redirect_indices_size;i++){
+    array[i] = secondary_merge_dimension_and_array->second[i];
+  }
+  for(int i = 0; i < primary_merge_and_redirect_indices->size(); i++){
+    int* primary_merge_array =
+      (*primary_merge_and_redirect_indices)[i]->get_indices_as_array()->second;
+    for (int j = 0; j<merge_and_redirect_indices_size;j++){
+        array[((i+1)*merge_and_redirect_indices_size)+j] =
+          primary_merge_array[j];
+    }
+  }
+  return new pair<pair<int,int>*,int*>
+    (new pair<int,int>(1+primary_merge_and_redirect_indices->size(),
+                       merge_and_redirect_indices_size),
+                       array);
 }
 
 inline bool operator== (const collected_merge_and_redirect_indices& lhs,
@@ -232,6 +278,24 @@ void merges_and_redirects::set_unmatched_connect_merge(coords* merge_coords){
                                              true);
   working_collected_merge_and_redirect_indices->set_unmatched_secondary_merge(true);
 }
+
+// pair<tuple<int,int,int>,int*>*
+// merges_and_redirects::get_merges_and_redirects_as_array( flood or connect version){
+//   vector<pair<pair<int,int>*,int*>*> array_slices;
+//     get all slices
+//   int max_primary_merges_at_single_point = 0;
+//   search for highest number
+//   int* array = new int[array_slices.size(),
+//                        max_primary_merges_at_single_point*
+//                        ]
+//   fill_n(array,,0)
+//   for(vector<pair<pair<int,int>*,int*>*>::const_iterator i = array_slices->begin();
+//       i != array_slices->end();++i){
+//     copy each slices size into place according to its length
+//   }
+//   return new pair<tuple<int,int,int>,int*>(new tuple<int,int,int>(),
+//                                            array);
+// }
 
 bool merges_and_redirects::operator==(const merges_and_redirects& rhs){
   return (*connect_merge_and_redirect_indices_index ==

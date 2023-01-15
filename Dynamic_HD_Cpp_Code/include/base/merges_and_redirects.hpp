@@ -26,6 +26,7 @@ public:
     return lhs.equals(rhs);
   };
   virtual void set_redirect_indices(coords* redirect_coords) = 0;
+  virtual pair<int,int*>* get_indices_as_array() = 0;
   virtual ostream& print(ostream& out) = 0;
 protected:
   virtual bool equals(const merge_and_redirect_indices& rhs) const = 0;
@@ -45,6 +46,7 @@ public:
   const int get_merge_target_lon_index() const { return merge_target_lon_index; }
   const int get_redirect_lat_index() const { return redirect_lat_index; }
   const int get_redirect_lon_index() const { return redirect_lon_index; }
+  pair<int,int*>* get_indices_as_array();
   ostream& print(ostream& out);
 protected:
   bool equals (const merge_and_redirect_indices& rhs) const;
@@ -65,6 +67,7 @@ public:
   void set_redirect_indices(coords* redirect_coords);
   const int get_merge_target_cell_index() const { return merge_target_cell_index; }
   const int get_redirect_cell_index() const { return redirect_cell_index; }
+  pair<int,int*>* get_indices_as_array();
   ostream& print(ostream& out);
 protected:
   bool equals(const merge_and_redirect_indices& rhs) const;
@@ -122,7 +125,10 @@ public:
   vector<merge_and_redirect_indices*>* get_primary_merge_and_redirect_indices() const {
     return primary_merge_and_redirect_indices;
   }
-  //Not equality does not check the merge and redirect factories are equal
+
+  pair<pair<int,int>*,int*>* get_collection_as_array();
+
+  //Note equality does not check the merge and redirect factories are equal
   friend bool operator== (const collected_merge_and_redirect_indices& lhs,
                           const collected_merge_and_redirect_indices& rhs);
 
@@ -157,6 +163,8 @@ public:
   vector<collected_merge_and_redirect_indices*>*
     get_flood_merge_and_redirect_indices() const
     { return flood_merge_and_redirect_indices; }
+  // pair<tuple<int,int,int>,int*>* get_flood_merges_and_redirects_as_array();
+  // pair<tuple<int,int,int>,int*>* get_connect_merges_and_redirects_as_array();
   bool operator==(const merges_and_redirects& rhs);
   friend ostream& operator<<(ostream& out, merges_and_redirects& obj);
 protected:
