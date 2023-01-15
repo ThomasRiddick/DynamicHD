@@ -101,6 +101,8 @@ subroutine testRootedTrees
     elements = (/ 18, 31 /)
     call assert_true(dsets%check_set_has_elements(18,elements))
     deallocate(elements)
+    call dsets%rooted_tree_forest_destructor()
+    deallocate(dsets)
 end subroutine testRootedTrees
 
 end module latlon_lake_model_tree_test_mod

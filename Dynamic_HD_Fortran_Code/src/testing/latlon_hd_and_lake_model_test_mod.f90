@@ -2317,12 +2317,7 @@ subroutine testLakeModel4
    type(lakeprognostics), pointer :: lake_prognostics_out
    type(lakepointer) :: working_lake_ptr
    real(dp),dimension(:,:), pointer :: flood_volume_thresholds
-   logical,dimension(:,:), pointer :: flood_local_redirect
-   logical,dimension(:,:), pointer :: connect_local_redirect
-   logical,dimension(:,:), pointer :: additional_flood_local_redirect
-   logical,dimension(:,:), pointer :: additional_connect_local_redirect
-   integer,dimension(:,:), pointer :: merge_points
-  real(dp),dimension(:,:),pointer :: cell_areas_on_surface_model_grid
+   real(dp),dimension(:,:),pointer :: cell_areas_on_surface_model_grid
    integer,dimension(:,:), pointer :: flood_next_cell_lat_index
    integer,dimension(:,:), pointer :: flood_next_cell_lon_index
    integer,dimension(:,:), pointer :: connect_next_cell_lat_index
@@ -2483,35 +2478,6 @@ subroutine testLakeModel4
          -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
          -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, &
          -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0 /), &
-         (/nlon,nlat/)))
-      allocate(flood_local_redirect(nlat,nlon))
-      flood_local_redirect(:,:) = .False.
-      allocate(connect_local_redirect(nlat,nlon))
-      connect_local_redirect(:,:) = .False.
-      allocate(additional_flood_local_redirect(nlat,nlon))
-      additional_flood_local_redirect(:,:) = .False.
-      allocate(additional_connect_local_redirect(nlat,nlon))
-      additional_connect_local_redirect(:,:) = .False.
-      allocate(merge_points(nlat,nlon))
-      merge_points = transpose(reshape((/ &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, connection_merge_not_set_flood_merge_as_secondary,&
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, &
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype,&
-         no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype, no_merge_mtype /), &
          (/nlon,nlat/)))
       allocate(cell_areas_on_surface_model_grid(nlat_surface_model,nlon_surface_model))
         cell_areas_on_surface_model_grid = transpose(reshape((/ &

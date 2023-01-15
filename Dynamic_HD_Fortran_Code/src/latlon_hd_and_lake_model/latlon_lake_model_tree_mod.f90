@@ -10,6 +10,7 @@ type, public :: rooted_tree
   type(rooted_tree), pointer :: root => null()
   type(rooted_tree), pointer :: superior => null()
   contains
+    procedure :: rooted_tree_destructor
     procedure :: set_root
     procedure :: set_superior
     procedure :: set_root_for_all_nodes
@@ -99,6 +100,7 @@ type, public :: rooted_tree_forest
   private
   type(doubly_linked_list), pointer :: sets => null()
   contains
+    procedure :: rooted_tree_forest_destructor
     procedure :: find_root_from_label
     procedure :: make_new_link_from_labels
     procedure :: split_set
@@ -114,6 +116,12 @@ interface rooted_tree_forest
 end interface rooted_tree_forest
 
 contains
+
+  subroutine rooted_tree_destructor(this)
+    class(rooted_tree) :: this
+      call this%direct_nodes%doubly_linked_list_destructor()
+      deallocate(this%direct_nodes)
+  end subroutine rooted_tree_destructor
 
   subroutine set_root(this,new_root)
     class(rooted_tree) :: this
@@ -549,6 +557,7 @@ contains
       else
         elements_match_set = .False.
       end if
+      deallocate(node_labels)
   end function check_set_has_elements
 
   function get_all_node_labels_of_set(this,label_of_element) result(label_list)
@@ -579,6 +588,21 @@ contains
         end if
       end do
   end function get_all_node_labels_of_set
+
+  subroutine rooted_tree_forest_destructor(this)
+    class(rooted_tree_forest) :: this
+    type(rooted_tree), pointer :: i
+        call this%sets%reset_iterator()
+        do while (.not. this%sets%iterate_forward())
+          i => this%sets%get_value_at_iterator_position()
+          if (associated(i)) then
+            call i%rooted_tree_destructor()
+            deallocate(i)
+          end if
+        end do
+        call this%sets%doubly_linked_list_destructor()
+        deallocate(this%sets)
+  end subroutine rooted_tree_forest_destructor
 
   function rooted_tree_forest_constructor() &
     result(constructor)

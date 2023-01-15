@@ -365,6 +365,7 @@ subroutine mergeandredirectindicescollectiondestructor(this)
           this%primary_merge_and_redirect_indices(i)%ptr
         deallocate(working_merge_and_redirect_indices)
       end do
+      deallocate(this%primary_merge_and_redirect_indices)
     end if
     if(this%secondary_merge) then
       deallocate(this%secondary_merge_and_redirect_indices)
@@ -754,13 +755,17 @@ subroutine lakeparametersdestructor(this)
       do i = 1,size(this%flood_merge_and_redirect_indices_collections)
           collected_indices => this%flood_merge_and_redirect_indices_collections(i)%ptr
           call collected_indices%mergeandredirectindicescollectiondestructor()
+          deallocate(collected_indices)
       end do
+      deallocate(this%flood_merge_and_redirect_indices_collections)
     end if
     if (associated(this%connect_merge_and_redirect_indices_collections)) then
       do i = 1,size(this%connect_merge_and_redirect_indices_collections)
           collected_indices => this%connect_merge_and_redirect_indices_collections(i)%ptr
           call collected_indices%mergeandredirectindicescollectiondestructor()
+          deallocate(collected_indices)
       end do
+      deallocate(this%connect_merge_and_redirect_indices_collections)
     end if
     deallocate(this%surface_cell_to_fine_cell_maps)
     deallocate(this%lake_centers)
@@ -883,6 +888,8 @@ subroutine lakefieldsdestructor(this)
     deallocate(this%effective_volume_per_cell_on_surface_grid)
     deallocate(this%evaporation_applied)
     deallocate(this%evaporation_from_lakes)
+    call this%set_forest%rooted_tree_forest_destructor()
+    deallocate(this%set_forest)
 end subroutine lakefieldsdestructor
 
 subroutine initialiselakeprognostics(this,lake_parameters_in,lake_fields_in)

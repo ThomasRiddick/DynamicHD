@@ -31,7 +31,7 @@ endif
 endif
 NAGFORTRAN :=  $(shell which nagfor)
 INTELFORTRAN := $(shell which ifort)
-#EXT_SOURCE :=$(shell echo ${HOME} )/HDancillarydata_11Sept2019/code/
+EXT_SOURCE :=$(shell echo ${HOME} )/palmod_ancillary_data/HDancillarydata_11Sept2019/code/
 ifneq ($(USE_SETTINGS_FROM_CONFIGURE),True)
 GFORTRAN_NETCDF_F :=/sw/spack-levante/netcdf-fortran-4.5.3-l2ulgp
 NETCDF_F_LIB :=libnetcdff.so
