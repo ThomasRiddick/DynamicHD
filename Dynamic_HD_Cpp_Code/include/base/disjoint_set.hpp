@@ -24,6 +24,7 @@ class disjoint_set {
   public:
     disjoint_set(int label_in) : label(label_in), size(1)
       { root = this; nodes = new vector<disjoint_set*>(); }
+    ~disjoint_set() { delete nodes; }
     disjoint_set* get_root(){ return root;}
     void set_root(disjoint_set* x){ root = x; }
     void add_node(disjoint_set* x) { nodes->push_back(x); }
@@ -43,6 +44,7 @@ class disjoint_set_forest{
     vector<disjoint_set*> sets;
   public:
     disjoint_set_forest() {}
+    ~disjoint_set_forest();
     disjoint_set* find_root(disjoint_set* x);
     int find_root(int label_in);
     bool link(disjoint_set* x,disjoint_set* y);

@@ -86,6 +86,13 @@ bool disjoint_set_forest::check_subset_has_elements(int label_of_element,
   return check_passed;
 }
 
+disjoint_set_forest::~disjoint_set_forest(){
+  for (vector<disjoint_set*>::iterator i = sets.begin();
+       i != sets.end(); ++i){
+       delete (*i);
+  }
+}
+
 ostream& operator<<(ostream& out, disjoint_set_forest& sets_object){
   for (vector<disjoint_set*>::iterator i = sets_object.sets.begin();
        i != sets_object.sets.end(); ++i){

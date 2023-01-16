@@ -110,6 +110,10 @@ TEST_F(OrographyCreationTest, OrographyCreationTestSmallGrid){
   EXPECT_TRUE(field<double>(expected_orography_out,grid_params_in)
               == field<double>(orography_out,grid_params_in));
   delete grid_params_in;
+  delete[] expected_orography_out;
+  delete[] orography_out;
+  delete[] inclines_in;
+  delete[] landsea_in;
 }
 
 }

@@ -18,6 +18,7 @@ public:
   merge_and_redirect_indices() {}
   merge_and_redirect_indices(bool is_local_redirect) :
     local_redirect(is_local_redirect) {}
+  virtual ~merge_and_redirect_indices() {}
   const bool get_local_redirect() const { return local_redirect; }
   void set_local_redirect() { local_redirect = true; }
   void set_non_local_redirect() { local_redirect = false; }
@@ -41,6 +42,7 @@ public:
   latlon_merge_and_redirect_indices(coords* merge_target_coords,
                                     coords* redirect_coords,
                                     bool is_local_redirect);
+  virtual ~latlon_merge_and_redirect_indices() {}
   void set_redirect_indices(coords* redirect_coords);
   const int get_merge_target_lat_index() const { return merge_target_lat_index; }
   const int get_merge_target_lon_index() const { return merge_target_lon_index; }
@@ -64,6 +66,7 @@ public:
   icon_single_index_merge_and_redirect_indices(coords* merge_target_coords,
                                                coords* redirect_coords,
                                                bool is_local_redirect);
+  virtual ~icon_single_index_merge_and_redirect_indices() {}
   void set_redirect_indices(coords* redirect_coords);
   const int get_merge_target_cell_index() const { return merge_target_cell_index; }
   const int get_redirect_cell_index() const { return redirect_cell_index; }
@@ -103,6 +106,7 @@ public:
     primary_merge_and_redirect_indices(primary_merge_and_redirect_indices_in),
     secondary_merge_and_redirect_indices(secondary_merge_and_redirect_indices_in),
     merge_and_redirect_indices_factory(merge_and_redirect_indices_factory_in) {}
+  ~collected_merge_and_redirect_indices();
   void set_unmatched_secondary_merge(bool unmatched_secondary_merge_in)
     { unmatched_secondary_merge = unmatched_secondary_merge_in; }
   const bool get_unmatched_secondary_merge() const { return unmatched_secondary_merge; }
@@ -147,6 +151,7 @@ public:
                        vector<collected_merge_and_redirect_indices*>*
                           flood_merge_and_redirect_indices_in,
                        grid_params* grid_params_in);
+  ~merges_and_redirects();
   collected_merge_and_redirect_indices*
     get_collected_merge_and_redirect_indices(coords* merge_coords,
                                              height_types merge_height_type,
@@ -174,7 +179,7 @@ protected:
   field<int>* flood_merge_and_redirect_indices_index = nullptr;
   vector<collected_merge_and_redirect_indices*>* connect_merge_and_redirect_indices;
   vector<collected_merge_and_redirect_indices*>* flood_merge_and_redirect_indices;
-  function<merge_and_redirect_indices*(coords*)> merge_and_redirect_indices_factory = nullptr;
+  function<merge_and_redirect_indices*(coords*)> merge_and_redirect_indices_factory;
 };
 
 bool operator==(vector<collected_merge_and_redirect_indices*>& lhs,

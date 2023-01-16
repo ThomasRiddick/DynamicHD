@@ -2055,12 +2055,14 @@ TEST_F(BifurcateRiversBasicTest, BifurcateRiversBasicTestFive) {
                   expected_bifurcations_next_cell_index_other_slices[i]);
     }
   }
+  delete[] cell_neighbors;
   delete[] landsea_mask_in;
   delete[] original_next_cell_index_in;
   delete[] bifurcations_next_cell_index_in;
   delete[] expected_bifurcations_next_cell_index_slice_one;
   delete[] expected_bifurcations_next_cell_index_slice_two;
   delete[] expected_bifurcations_next_cell_index_other_slices;
+  delete[]  secondary_neighboring_cell_indices_in;
   delete grid_params_in;
 }
 

@@ -8,7 +8,7 @@ NETCDFCXX :=  /Users/thomasriddick/anaconda3/pkgs/netcdf-cxx4-4.3.0-h703b707_9
 INCLUDE := -isystem"$(NETCDFCXX)/include" -isystem"$(NETCDFC)/include"
 else ifeq ($(shell hostname -d),lvt.dkrz.de)
 STDLIB_OPT :=
-FLAGS :=-pthread -DUSE_NETCDFCPP
+FLAGS :=-pthread -DUSE_NETCDFCPP -g
 INCLUDE := -isystem"$(NETCDFCXX)/include" -isystem"$(NETCDFC)/include"
 ifneq ($(USE_SETTINGS_FROM_CONFIGURE),True)
 GPLUSPLUS :=  /sw/spack-levante/gcc-11.2.0-7jcqrc/bin/g++

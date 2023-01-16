@@ -153,6 +153,16 @@ pair<pair<int,int>*,int*>* collected_merge_and_redirect_indices::get_collection_
                        array);
 }
 
+collected_merge_and_redirect_indices::~collected_merge_and_redirect_indices(){
+  for(vector<merge_and_redirect_indices*>::const_iterator i =
+      primary_merge_and_redirect_indices->begin();
+      i != primary_merge_and_redirect_indices->end();++i){
+      delete (*i);
+  }
+  delete primary_merge_and_redirect_indices;
+  delete secondary_merge_and_redirect_indices;
+}
+
 inline bool operator== (const collected_merge_and_redirect_indices& lhs,
                         const collected_merge_and_redirect_indices& rhs){
   bool is_equal = (lhs.get_unmatched_secondary_merge() ==
@@ -227,6 +237,23 @@ merges_and_redirects::
     connect_merge_and_redirect_indices(connect_merge_and_redirect_indices_in),
     flood_merge_and_redirect_indices(flood_merge_and_redirect_indices_in)
 {}
+
+merges_and_redirects::~merges_and_redirects(){
+   delete connect_merge_and_redirect_indices_index;
+   delete flood_merge_and_redirect_indices_index; 
+   for(vector<collected_merge_and_redirect_indices*>::const_iterator i =
+     connect_merge_and_redirect_indices->begin();
+     i != connect_merge_and_redirect_indices->end();++i){
+     delete (*i);
+   }
+   for(vector<collected_merge_and_redirect_indices*>::const_iterator i =
+       flood_merge_and_redirect_indices->begin();
+       i != flood_merge_and_redirect_indices->end();++i){
+     delete (*i);
+   }
+   delete connect_merge_and_redirect_indices;
+   delete flood_merge_and_redirect_indices;
+}
 
 collected_merge_and_redirect_indices*
   merges_and_redirects::
