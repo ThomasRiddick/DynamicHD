@@ -130,14 +130,26 @@ bool operator==(vector<merge_and_redirect_indices*>& lhs,
           lhs.size() == rhs.size());
 }
 
-pair<pair<int,int>*,int*>* collected_merge_and_redirect_indices::get_collection_as_array(){
-  pair<int,int*>* secondary_merge_dimension_and_array =
-    secondary_merge_and_redirect_indices->get_indices_as_array();
-  int merge_and_redirect_indices_size = secondary_merge_dimension_and_array->first;
+pair<tuple<int,int,int>*,int*>*
+collected_merge_and_redirect_indices::get_collection_as_array(){
+  int merge_and_redirect_indices_size = 0;
+  pair<int,int*>* secondary_merge_dimension_and_array = nullptr;
+  if (secondary_merge_and_redirect_indices) {
+    secondary_merge_dimension_and_array =
+      secondary_merge_and_redirect_indices->get_indices_as_array();
+    merge_and_redirect_indices_size = secondary_merge_dimension_and_array->first;
+  } else {
+    merge_and_redirect_indices_size =
+      (*primary_merge_and_redirect_indices)[0]->get_indices_as_array()->first;
+  }
   int* array = new int[merge_and_redirect_indices_size*
                        (1+primary_merge_and_redirect_indices->size())];
   for (int i = 0; i<merge_and_redirect_indices_size;i++){
-    array[i] = secondary_merge_dimension_and_array->second[i];
+    if (secondary_merge_and_redirect_indices) {
+      array[i] = secondary_merge_dimension_and_array->second[i];
+    } else {
+      array[i] = -1;
+    }
   }
   for(int i = 0; i < primary_merge_and_redirect_indices->size(); i++){
     int* primary_merge_array =
@@ -147,10 +159,11 @@ pair<pair<int,int>*,int*>* collected_merge_and_redirect_indices::get_collection_
           primary_merge_array[j];
     }
   }
-  return new pair<pair<int,int>*,int*>
-    (new pair<int,int>(1+primary_merge_and_redirect_indices->size(),
-                       merge_and_redirect_indices_size),
-                       array);
+  return new pair<tuple<int,int,int>*,int*>
+    (new tuple<int,int,int>(1+primary_merge_and_redirect_indices->size(),
+                            merge_and_redirect_indices_size,
+                            int(bool(secondary_merge_and_redirect_indices))),
+                            array);
 }
 
 collected_merge_and_redirect_indices::~collected_merge_and_redirect_indices(){
@@ -306,23 +319,42 @@ void merges_and_redirects::set_unmatched_connect_merge(coords* merge_coords){
   working_collected_merge_and_redirect_indices->set_unmatched_secondary_merge(true);
 }
 
-// pair<tuple<int,int,int>,int*>*
-// merges_and_redirects::get_merges_and_redirects_as_array( flood or connect version){
-//   vector<pair<pair<int,int>*,int*>*> array_slices;
-//     get all slices
-//   int max_primary_merges_at_single_point = 0;
-//   search for highest number
-//   int* array = new int[array_slices.size(),
-//                        max_primary_merges_at_single_point*
-//                        ]
-//   fill_n(array,,0)
-//   for(vector<pair<pair<int,int>*,int*>*>::const_iterator i = array_slices->begin();
-//       i != array_slices->end();++i){
-//     copy each slices size into place according to its length
-//   }
-//   return new pair<tuple<int,int,int>,int*>(new tuple<int,int,int>(),
-//                                            array);
-// }
+pair<tuple<int,int,int>*,int*>*
+merges_and_redirects::get_merges_and_redirects_as_array(){
+  int max_primary_merges_at_single_point = 0;
+  vector<pair<tuple<int,int,int>*,int*>*> array_slices;
+  pair<tuple<int,int,int>*,int*>* collection = nullptr;
+  for (vector<collected_merge_and_redirect_indices*>::const_iterator i =
+       flood_merge_and_redirect_indices->begin();
+       i != flood_merge_and_redirect_indices->end();++i){
+    collection = (*i)->get_collection_as_array();
+    if ( get<1>(*collection->first) > max_primary_merges_at_single_point){
+      max_primary_merges_at_single_point = get<1>(*collection->first);
+    }
+    array_slices.push_back(collection);
+  }
+  int* array = new int[array_slices.size()*
+                       max_primary_merges_at_single_point*
+                       get<1>(*array_slices[0]->first)];
+  fill_n(array,array_slices.size()*
+               max_primary_merges_at_single_point*
+               get<1>(*array_slices[0]->first),0);
+  //Would be better to iterate using [] for vector
+  int j = 0;
+  for(vector<pair<tuple<int,int,int>*,int*>*>::const_iterator i = array_slices.begin();
+      i != array_slices.end();++i){
+    for (int k =0; k < get<0>(*(*i)->first); k++){
+      array[j*max_primary_merges_at_single_point*get<1>(*(*i)->first)+
+            get<0>(*(*i)->first)*get<1>(*(*i)->first)+k] =
+            ((*i)->second)[get<0>(*(*i)->first)*get<1>(*(*i)->first)+k];
+    }
+    j++;
+  }
+  return new pair<tuple<int,int,int>*,int*>(new tuple<int,int,int>(array_slices.size(),
+                                                                  max_primary_merges_at_single_point,
+                                                                  get<1>(*array_slices[0]->first)),
+                                                                  array);
+}
 
 bool merges_and_redirects::operator==(const merges_and_redirects& rhs){
   return (*connect_merge_and_redirect_indices_index ==

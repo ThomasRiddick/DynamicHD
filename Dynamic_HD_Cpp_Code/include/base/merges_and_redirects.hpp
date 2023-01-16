@@ -130,7 +130,7 @@ public:
     return primary_merge_and_redirect_indices;
   }
 
-  pair<pair<int,int>*,int*>* get_collection_as_array();
+  pair<tuple<int,int,int>*,int*>* get_collection_as_array();
 
   //Note equality does not check the merge and redirect factories are equal
   friend bool operator== (const collected_merge_and_redirect_indices& lhs,
@@ -168,8 +168,7 @@ public:
   vector<collected_merge_and_redirect_indices*>*
     get_flood_merge_and_redirect_indices() const
     { return flood_merge_and_redirect_indices; }
-  // pair<tuple<int,int,int>,int*>* get_flood_merges_and_redirects_as_array();
-  // pair<tuple<int,int,int>,int*>* get_connect_merges_and_redirects_as_array();
+  pair<tuple<int,int,int>*,int*>* get_merges_and_redirects_as_array();
   bool operator==(const merges_and_redirects& rhs);
   friend ostream& operator<<(ostream& out, merges_and_redirects& obj);
 protected:
