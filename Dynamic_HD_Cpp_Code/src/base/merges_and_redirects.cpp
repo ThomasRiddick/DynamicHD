@@ -320,13 +320,18 @@ void merges_and_redirects::set_unmatched_connect_merge(coords* merge_coords){
 }
 
 pair<tuple<int,int,int>*,int*>*
-merges_and_redirects::get_merges_and_redirects_as_array(){
+merges_and_redirects::
+    get_merges_and_redirects_as_array(bool get_flood_merges_and_redirects){
   int max_primary_merges_at_single_point = 0;
   vector<pair<tuple<int,int,int>*,int*>*> array_slices;
   pair<tuple<int,int,int>*,int*>* collection = nullptr;
+  vector<collected_merge_and_redirect_indices*>*
+    working_merge_and_redirect_indices = get_flood_merges_and_redirects ?
+      flood_merge_and_redirect_indices :
+      connect_merge_and_redirect_indices;
   for (vector<collected_merge_and_redirect_indices*>::const_iterator i =
-       flood_merge_and_redirect_indices->begin();
-       i != flood_merge_and_redirect_indices->end();++i){
+      working_merge_and_redirect_indices->begin();
+       i != working_merge_and_redirect_indices->end();++i){
     collection = (*i)->get_collection_as_array();
     if ( get<1>(*collection->first) > max_primary_merges_at_single_point){
       max_primary_merges_at_single_point = get<1>(*collection->first);

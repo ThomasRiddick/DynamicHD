@@ -244,10 +244,12 @@ public:
                                            height_types previous_filled_cell_height_type_in,
                                            grid_params* grid_params_in,
                                            grid_params* coarse_grid_params_in);
-	void test_set_secondary_redirect(int* flood_next_cell_lat_index_in,
+	void test_set_secondary_redirect(double* prior_coarse_rdirs_in,
+                                   int* flood_next_cell_lat_index_in,
                                    int* flood_next_cell_lon_index_in,
                                    int* connect_next_cell_lat_index_in,
                                    int* connect_next_cell_lon_index_in,
+                                   int* coarse_catchment_nums_in,
                                    bool* requires_flood_redirect_indices_in,
                                    bool* requires_connect_redirect_indices_in,
                                    double* raw_orography_in,

@@ -168,7 +168,8 @@ public:
   vector<collected_merge_and_redirect_indices*>*
     get_flood_merge_and_redirect_indices() const
     { return flood_merge_and_redirect_indices; }
-  pair<tuple<int,int,int>*,int*>* get_merges_and_redirects_as_array();
+  pair<tuple<int,int,int>*,int*>*
+    get_merges_and_redirects_as_array(bool get_flood_merges_and_redirects);
   bool operator==(const merges_and_redirects& rhs);
   friend ostream& operator<<(ostream& out, merges_and_redirects& obj);
 protected:
