@@ -1328,6 +1328,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCell) {
   delete[] connected_cells_expected_out;
   delete[] cell_areas_in;
   delete center_cell_in;
+  delete previous_filled_cell_coords_in;
 }
 
 TEST_F(BasinEvaluationTest, TestProcessingCenterCellTwo) {
@@ -1957,6 +1958,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellFour) {
   delete[] connected_cells_expected_out;
   delete[] cell_areas_in;
   delete center_cell_in;
+  delete previous_filled_cell_coords_in;
 }
 
 TEST_F(BasinEvaluationTest, TestProcessingCenterCellFive) {
@@ -2587,6 +2589,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellSeven) {
   delete[] connected_cells_expected_out;
   delete[] cell_areas_in;
   delete center_cell_in;
+  delete previous_filled_cell_coords_in;
 }
 
 TEST_F(BasinEvaluationTest, TestProcessingCenterCellEight) {
@@ -3217,6 +3220,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellTen) {
   delete[] connected_cells_expected_out;
   delete[] cell_areas_in;
   delete center_cell_in;
+  delete previous_filled_cell_coords_in;
 }
 
 TEST_F(BasinEvaluationTest, TestProcessingCenterCellEleven) {
@@ -3442,6 +3446,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellEleven) {
   delete[] connected_cells_expected_out;
   delete[] cell_areas_in;
   delete center_cell_in;
+  delete previous_filled_cell_coords_in;
 }
 
 TEST_F(BasinEvaluationTest, TestProcessingCenterCellTwelve) {
@@ -3885,6 +3890,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellThirteen) {
   delete[] connected_cells_expected_out;
   delete[] cell_areas_in;
   delete center_cell_in;
+  delete previous_filled_cell_coords_in;
 }
 
 TEST_F(BasinEvaluationTest, TestProcessingCenterCellFourteen) {
@@ -4328,6 +4334,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellFifteen) {
   delete[] connected_cells_expected_out;
   delete[] cell_areas_in;
   delete center_cell_in;
+  delete previous_filled_cell_coords_in;
 }
 
 TEST_F(BasinEvaluationTest, TestProcessingCenterCellSixteen) {
@@ -4979,6 +4986,7 @@ TEST_F(BasinEvaluationTest, TestProcessingCenterCellEighteen) {
   delete[] connected_cells_expected_out;
   delete[] cell_areas_in;
   delete center_cell_in;
+  delete previous_filled_cell_coords_in;
 }
 
 TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectOne) {
@@ -5017,8 +5025,9 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectOne) {
   merge_and_redirect_indices* primary_merge;
   merge_and_redirect_indices* secondary_merge;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(8,4),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(8,4),
                                                 new latlon_coords(8,4),
                                                 true);
   primary_merges =
@@ -5027,10 +5036,12 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectOne) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(8,6)) = flood_index;
+  working_coords = new latlon_coords(8,6);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(8,6),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(8,6),
                                                 new latlon_coords(2,1),
                                                 false);
   secondary_merge = nullptr;
@@ -5041,8 +5052,10 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectOne) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(8,3)) = flood_index;
+  working_coords = new latlon_coords(8,3);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
                                flood_merge_and_redirect_indices_index,
@@ -5125,8 +5138,9 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectTwo) {
   merge_and_redirect_indices* primary_merge;
   merge_and_redirect_indices* secondary_merge;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(4,8),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(4,8),
                                                 new latlon_coords(1,2),
                                                 false);
   primary_merges =
@@ -5135,10 +5149,12 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectTwo) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(1,5)) = flood_index;
+  working_coords = new latlon_coords(1,5);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,5),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,5),
                                                 new latlon_coords(1,5),
                                                 true);
   secondary_merge = nullptr;
@@ -5150,8 +5166,10 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectTwo) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(0,7)) = flood_index;
+  working_coords = new latlon_coords(0,7);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
                                flood_merge_and_redirect_indices_index,
@@ -5234,8 +5252,9 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectThree) {
   merge_and_redirect_indices* primary_merge;
   merge_and_redirect_indices* secondary_merge;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,5),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,5),
                                                 new latlon_coords(0,1),
                                                 false);
   primary_merges =
@@ -5244,10 +5263,12 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectThree) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(4,8)) = flood_index;
+  working_coords = new latlon_coords(4,8);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(4,8),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(4,8),
                                                 new latlon_coords(4,8),
                                                 true);
   secondary_merge = nullptr;
@@ -5259,8 +5280,10 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectThree) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(4,1)) = flood_index;
+  working_coords = new latlon_coords(4,1);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
@@ -5344,8 +5367,9 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectFour) {
   merge_and_redirect_indices* primary_merge;
   merge_and_redirect_indices* secondary_merge;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,5),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,5),
                                                 new latlon_coords(0,2),
                                                 false);
   primary_merges =
@@ -5354,10 +5378,12 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectFour) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(4,8)) = flood_index;
+  working_coords = new latlon_coords(4,8);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(4,8),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(4,8),
                                                 new latlon_coords(4,8),
                                                 true);
   secondary_merge = nullptr;
@@ -5369,8 +5395,10 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectFour) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(0,6)) = flood_index;
+  working_coords = new latlon_coords(0,6);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
                                flood_merge_and_redirect_indices_index,
@@ -5453,8 +5481,9 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectFive) {
   merge_and_redirect_indices* primary_merge;
   merge_and_redirect_indices* secondary_merge;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,5),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,5),
                                                 new latlon_coords(0,1),
                                                 false);
   primary_merges =
@@ -5463,10 +5492,12 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectFive) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(1,1)) = flood_index;
+  working_coords = new latlon_coords(1,1);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,1),
                                                 new latlon_coords(1,1),
                                                 true);
   secondary_merge = nullptr;
@@ -5478,8 +5509,10 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectFive) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(3,1)) = flood_index;
+  working_coords = new latlon_coords(3,1);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
                                flood_merge_and_redirect_indices_index,
@@ -5562,8 +5595,9 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectSix) {
   merge_and_redirect_indices* primary_merge;
   merge_and_redirect_indices* secondary_merge;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,1),
                                                 new latlon_coords(1,0),
                                                 false);
   primary_merges =
@@ -5572,10 +5606,12 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectSix) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(8,6)) = flood_index;
+  working_coords = new latlon_coords(8,6);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(8,6),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(8,6),
                                                 new latlon_coords(2,1),
                                                 false);
   secondary_merge = nullptr;
@@ -5587,8 +5623,10 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectSix) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(8,1)) = flood_index;
+  working_coords = new latlon_coords(8,1);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
                                flood_merge_and_redirect_indices_index,
@@ -5671,8 +5709,9 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectSeven) {
   merge_and_redirect_indices* primary_merge;
   merge_and_redirect_indices* secondary_merge;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,1),
                                                 new latlon_coords(1,0),
                                                 false);
   primary_merges =
@@ -5681,10 +5720,12 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectSeven) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(8,6)) = flood_index;
+  working_coords = new latlon_coords(8,6);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(8,6),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(8,6),
                                                 new latlon_coords(2,2),
                                                 false);
   secondary_merge = nullptr;
@@ -5696,8 +5737,10 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectSeven) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(0,3)) = flood_index;
+  working_coords = new latlon_coords(0,3);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
                                flood_merge_and_redirect_indices_index,
@@ -5780,8 +5823,9 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectEight) {
   merge_and_redirect_indices* primary_merge;
   merge_and_redirect_indices* secondary_merge;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(4,8),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(4,8),
                                                 new latlon_coords(1,2),
                                                 false);
   primary_merges =
@@ -5790,10 +5834,12 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectEight) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(1,5)) = flood_index;
+  working_coords = new latlon_coords(1,5);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,5),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,5),
                                                 new latlon_coords(0,1),
                                                 false);
   secondary_merge = nullptr;
@@ -5805,8 +5851,10 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectEight) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(6,7)) = flood_index;
+  working_coords = new latlon_coords(6,7);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
                                flood_merge_and_redirect_indices_index,
@@ -5889,8 +5937,9 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectNine) {
   merge_and_redirect_indices* primary_merge;
   merge_and_redirect_indices* secondary_merge;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(8,4),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(8,4),
                                                 new latlon_coords(2,1),
                                                 false);
   primary_merges =
@@ -5899,10 +5948,12 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectNine) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(8,6)) = flood_index;
+  working_coords = new latlon_coords(8,6);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(8,6),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(8,6),
                                                 new latlon_coords(2,1),
                                                 false);
   secondary_merge = nullptr;
@@ -5914,8 +5965,10 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectNine) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(8,2)) = flood_index;
+  working_coords = new latlon_coords(8,2);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
                                flood_merge_and_redirect_indices_index,
@@ -5998,8 +6051,9 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectTen) {
   merge_and_redirect_indices* primary_merge;
   merge_and_redirect_indices* secondary_merge;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,1),
                                                 new latlon_coords(1,1),
                                                 true);
   primary_merges =
@@ -6008,10 +6062,12 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectTen) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(1,5)) = flood_index;
+  working_coords = new latlon_coords(1,5);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,5),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,5),
                                                 new latlon_coords(1,5),
                                                 true);
   secondary_merge = nullptr;
@@ -6023,8 +6079,10 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectTen) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(0,0)) = flood_index;
+  working_coords = new latlon_coords(0,0);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
                                flood_merge_and_redirect_indices_index,
@@ -6107,8 +6165,9 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectEleven) {
   merge_and_redirect_indices* primary_merge;
   merge_and_redirect_indices* secondary_merge;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,5),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,5),
                                                 new latlon_coords(0,2),
                                                 false);
   primary_merges =
@@ -6117,10 +6176,12 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectEleven) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(4,8)) = flood_index;
+  working_coords = new latlon_coords(4,8);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(4,8),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(4,8),
                                                 new latlon_coords(4,8),
                                                 true);
   secondary_merge = nullptr;
@@ -6132,8 +6193,10 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectEleven) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(4,4)) = flood_index;
+  working_coords = new latlon_coords(4,4);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
                                flood_merge_and_redirect_indices_index,
@@ -6216,8 +6279,9 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectTwelve) {
   merge_and_redirect_indices* primary_merge;
   merge_and_redirect_indices* secondary_merge;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,5),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,5),
                                                 new latlon_coords(0,2),
                                                 false);
   primary_merges =
@@ -6226,10 +6290,12 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectTwelve) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(4,8)) = flood_index;
+  working_coords = new latlon_coords(4,8);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(4,8),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(4,8),
                                                 new latlon_coords(4,8),
                                                 true);
   secondary_merge = nullptr;
@@ -6240,8 +6306,10 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectTwelve) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(0,6)) = flood_index;
+  working_coords = new latlon_coords(0,6);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
                                flood_merge_and_redirect_indices_index,
@@ -6324,8 +6392,9 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectThirteen) {
   merge_and_redirect_indices* primary_merge;
   merge_and_redirect_indices* secondary_merge;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,5),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,5),
                                                 new latlon_coords(0,2),
                                                 false);
   primary_merges =
@@ -6334,10 +6403,12 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectThirteen) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(1,1)) = flood_index;
+  working_coords = new latlon_coords(1,1);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,1),
                                                 new latlon_coords(1,0),
                                                 false);
   secondary_merge = nullptr;
@@ -6349,8 +6420,10 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectThirteen) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(5,6)) = flood_index;
+  working_coords = new latlon_coords(5,6);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
                                flood_merge_and_redirect_indices_index,
@@ -6433,8 +6506,9 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectFourteen) {
   merge_and_redirect_indices* primary_merge;
   merge_and_redirect_indices* secondary_merge;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,1),
                                                 new latlon_coords(1,0),
                                                 false);
   primary_merges =
@@ -6443,10 +6517,12 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectFourteen) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(8,6)) = flood_index;
+  working_coords = new latlon_coords(8,6);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(8,6),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(8,6),
                                                 new latlon_coords(2,1),
                                                 false);
   secondary_merge = nullptr;
@@ -6458,8 +6534,10 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectFourteen) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(7,0)) = flood_index;
+  working_coords = new latlon_coords(7,0);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
                                flood_merge_and_redirect_indices_index,
@@ -6542,8 +6620,9 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectFifteen) {
   merge_and_redirect_indices* primary_merge;
   merge_and_redirect_indices* secondary_merge;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,1),
                                                 new latlon_coords(1,0),
                                                 false);
   primary_merges =
@@ -6552,10 +6631,12 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectFifteen) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(8,6)) = flood_index;
+  working_coords = new latlon_coords(8,6);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(8,6),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(8,6),
                                                 new latlon_coords(2,2),
                                                 false);
   secondary_merge = nullptr;
@@ -6567,8 +6648,10 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectFifteen) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(1,3)) = flood_index;
+  working_coords = new latlon_coords(1,3);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
                                flood_merge_and_redirect_indices_index,
@@ -6651,8 +6734,9 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectSixteen) {
   merge_and_redirect_indices* primary_merge;
   merge_and_redirect_indices* secondary_merge;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(4,8),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(4,8),
                                                 new latlon_coords(1,2),
                                                 false);
   primary_merges =
@@ -6661,10 +6745,12 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectSixteen) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(1,5)) = flood_index;
+  working_coords = new latlon_coords(1,5);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,5),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,5),
                                                 new latlon_coords(0,2),
                                                 false);
   secondary_merge = nullptr;
@@ -6675,8 +6761,10 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectSixteen) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(6,8)) = flood_index;
+  working_coords = new latlon_coords(6,8);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
                                flood_merge_and_redirect_indices_index,
@@ -6760,8 +6848,9 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectSeventeen) {
   merge_and_redirect_indices* primary_merge;
   merge_and_redirect_indices* secondary_merge;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(4,4),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(4,4),
                                                 new latlon_coords(2,2),
                                                 false);
   primary_merges =
@@ -6770,10 +6859,12 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectSeventeen) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(1,7)) = flood_index;
+  working_coords = new latlon_coords(1,7);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,7),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,7),
                                                 new latlon_coords(1,7),
                                                 true);
   secondary_merge = nullptr;
@@ -6785,8 +6876,10 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectSeventeen) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(5,7)) = flood_index;
+  working_coords = new latlon_coords(5,7);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
                                flood_merge_and_redirect_indices_index,
@@ -6865,8 +6958,9 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectEighteen) {
   merge_and_redirect_indices* primary_merge;
   merge_and_redirect_indices* secondary_merge;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(4,4),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(4,4),
                                                 new latlon_coords(2,1),
                                                 false);
   primary_merges =
@@ -6875,10 +6969,12 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectEighteen) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(1,1)) = flood_index;
+  working_coords = new latlon_coords(1,1);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,1),
                                                 new latlon_coords(1,0),
                                                 false);
   secondary_merge = nullptr;
@@ -6890,8 +6986,10 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectEighteen) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(5,1)) = flood_index;
+  working_coords = new latlon_coords(5,1);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
                                flood_merge_and_redirect_indices_index,
@@ -7945,14 +8043,15 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirects) {
   EXPECT_TRUE(merges_and_redirects_expected_out ==
               *merges_and_redirects_out);
   delete grid_params_in; delete coarse_grid_params_in;
+  delete[] coarse_catchment_nums_in;
   delete[] flood_next_cell_lat_index_in;
   delete[] connect_next_cell_lat_index_in;
   delete[] flood_next_cell_lon_index_in;
   delete[] connect_next_cell_lon_index_in;
   delete[] prior_fine_catchments_in;
+  delete[] prior_coarse_rdirs_in;
   delete[] prior_fine_rdirs_in;
   delete[] requires_flood_redirect_indices_in; delete[] requires_connect_redirect_indices_in;
-  delete[] prior_coarse_rdirs_in;
   delete[] basin_catchment_numbers_in;
   while (! basin_catchment_centers_in.empty()){
     coords* center_coords = basin_catchment_centers_in.back();
@@ -8028,10 +8127,6 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsTwo) {
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1, 8,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  bool* flood_local_redirect_in = new bool[12*12];
-  std::fill_n(flood_local_redirect_in,12*12,false);
-  bool* connect_local_redirect_in = new bool[12*12];
-  std::fill_n(connect_local_redirect_in,12*12,false);
   int* prior_fine_catchments_in = new int[12*12]
                                     {21,21,21, 21,21,21, 24,24,24, 24,24,24,
                                      21,21,21, 21,21,24, 24,24,24, 24,24,24,
@@ -8448,10 +8543,6 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsThree) {
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  bool* flood_local_redirect_in = new bool[12*12];
-  std::fill_n(flood_local_redirect_in,12*12,false);
-  bool* connect_local_redirect_in = new bool[12*12];
-  std::fill_n(connect_local_redirect_in,12*12,false);
   int* prior_fine_catchments_in = new int[12*12]
                                     {1,1,1, 1,1,1, 1,1,1, 1,1,1,
                                      1,1,1, 2,2,1, 1,1,1, 1,1,1,
@@ -8547,17 +8638,20 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsThree) {
       new vector<merge_and_redirect_indices*>();
   merge_and_redirect_indices* secondary_redirect;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
 
   secondary_redirect =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(-1,-1),
                                                 new latlon_coords(1,1),
                                                 false);
   collected_indices = new collected_merge_and_redirect_indices(primary_redirects,
                                                                secondary_redirect,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(7,4)) = flood_index;
+  working_coords = new latlon_coords(7,4);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
@@ -8680,10 +8774,6 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsFour) {
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  bool* flood_local_redirect_in = new bool[12*12];
-  std::fill_n(flood_local_redirect_in,12*12,false);
-  bool* connect_local_redirect_in = new bool[12*12];
-  std::fill_n(connect_local_redirect_in,12*12,false);
   int* prior_fine_catchments_in = new int[12*12]
                                     {1,1,1, 1,1,1, 1,1,1, 1,1,1,
                                      1,1,1, 2,2,1, 1,1,1, 1,1,1,
@@ -8779,17 +8869,20 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsFour) {
       new vector<merge_and_redirect_indices*>();
   merge_and_redirect_indices* secondary_redirect;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
 
   secondary_redirect =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(-1,-1),
                                                 new latlon_coords(1,1),
                                                 false);
   collected_indices = new collected_merge_and_redirect_indices(primary_redirects,
                                                                secondary_redirect,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(7,4)) = flood_index;
+  working_coords = new latlon_coords(7,4);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
@@ -8911,10 +9004,6 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsFive) {
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  bool* flood_local_redirect_in = new bool[12*12];
-  std::fill_n(flood_local_redirect_in,12*12,false);
-  bool* connect_local_redirect_in = new bool[12*12];
-  std::fill_n(connect_local_redirect_in,12*12,false);
   int* prior_fine_catchments_in = new int[12*12]
                                     {1,1,1, 1,1,1, 1,1,1, 1,1,1,
                                      1,1,1, 2,2,1, 1,1,1, 1,1,1,
@@ -9010,17 +9099,20 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsFive) {
       new vector<merge_and_redirect_indices*>();
   merge_and_redirect_indices* secondary_redirect;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
 
   secondary_redirect =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(-1,-1),
                                                 new latlon_coords(1,1),
                                                 false);
   collected_indices = new collected_merge_and_redirect_indices(primary_redirects,
                                                                secondary_redirect,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(7,4)) = flood_index;
+  working_coords = new latlon_coords(7,4);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
@@ -9142,10 +9234,6 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsSix) {
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1,
                                      -1,-1,-1, -1,-1,-1, -1,-1,-1, -1,-1,-1};
-  bool* flood_local_redirect_in = new bool[12*12];
-  std::fill_n(flood_local_redirect_in,12*12,false);
-  bool* connect_local_redirect_in = new bool[12*12];
-  std::fill_n(connect_local_redirect_in,12*12,false);
   int* prior_fine_catchments_in = new int[12*12]
                                     {1,1,1, 1,1,1, 1,1,1, 1,1,1,
                                      1,1,1, 2,2,1, 1,1,1, 1,1,1,
@@ -9241,17 +9329,20 @@ TEST_F(BasinEvaluationTest,TestSettingRemainingRedirectsSix) {
     new vector<merge_and_redirect_indices*>();
   merge_and_redirect_indices* secondary_redirect;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
 
   secondary_redirect =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(-1,-1),
                                                 new latlon_coords(1,1),
                                                 false);
   collected_indices = new collected_merge_and_redirect_indices(primary_redirects,
                                                                secondary_redirect,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(7,4)) = flood_index;
+  working_coords = new latlon_coords(7,4);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
@@ -9347,8 +9438,9 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectWrap) {
   merge_and_redirect_indices* primary_merge;
   merge_and_redirect_indices* secondary_merge;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(4,8),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(4,8),
                                                 new latlon_coords(1,2),
                                                 false);
   primary_merges =
@@ -9357,10 +9449,12 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectWrap) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(6,2)) = flood_index;
+  working_coords = new latlon_coords(6,2);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(6,2),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(6,2),
                                                 new latlon_coords(0,0),
                                                 false);
   secondary_merge = nullptr;
@@ -9372,8 +9466,10 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectWrap) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(7,8)) = flood_index;
+  working_coords = new latlon_coords(7,8);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
                                flood_merge_and_redirect_indices_index,
@@ -9462,8 +9558,9 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectNoWrap) {
   merge_and_redirect_indices* primary_merge;
   merge_and_redirect_indices* secondary_merge;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(4,8),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(4,8),
                                                 new latlon_coords(1,2),
                                                 false);
   primary_merges =
@@ -9472,10 +9569,12 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectNoWrap) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(6,2)) = flood_index;
+  working_coords = new latlon_coords(6,2);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(6,2),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(6,2),
                                                 new latlon_coords(2,2),
                                                 false);
   secondary_merge = nullptr;
@@ -9486,8 +9585,10 @@ TEST_F(BasinEvaluationTest, TestProcessingSetPrimaryMergeAndRedirectNoWrap) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(7,8)) = flood_index;
+  working_coords = new latlon_coords(7,8);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
                                flood_merge_and_redirect_indices_index,
@@ -9837,8 +9938,9 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsOne) {
   merge_and_redirect_indices* primary_merge;
   merge_and_redirect_indices* secondary_merge;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1.0,-1.0),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(-1.0,-1.0),
                                                 new latlon_coords(3,0),
                                                 false);
   primary_merges = new vector<merge_and_redirect_indices*>;
@@ -9846,11 +9948,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsOne) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(15,3)) = flood_index;
+  working_coords = new latlon_coords(15,3);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(7,14),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(7,14),
                                                 new latlon_coords(2,3),
                                                 false);
   primary_merges = new vector<merge_and_redirect_indices*>;
@@ -9859,11 +9963,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsOne) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(7,1)) = flood_index;
+  working_coords = new latlon_coords(7,1);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(7,14),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(7,14),
                                                 new latlon_coords(7,14),
                                                 true);
   primary_merges = new vector<merge_and_redirect_indices*>;
@@ -9872,11 +9978,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsOne) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(4,7)) = flood_index;
+  working_coords = new latlon_coords(4,7);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(7,14),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(7,14),
                                                 new latlon_coords(7,14),
                                                 true);
   primary_merges = new vector<merge_and_redirect_indices*>;
@@ -9885,11 +9993,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsOne) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(5,11)) = flood_index;
+  working_coords = new latlon_coords(5,11);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(5,13),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(5,13),
                                                 new latlon_coords(5,13),
                                                 true);
   secondary_merge = nullptr;
@@ -9901,10 +10011,12 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsOne) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(8,14)) = flood_index;
+  working_coords = new latlon_coords(8,14);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
    primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(6,5),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(6,5),
                                                 new latlon_coords(6,5),
                                                 true);
   secondary_merge = nullptr;
@@ -9916,11 +10028,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsOne) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(7,16)) = flood_index;
+  working_coords = new latlon_coords(7,16);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(2,0),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(2,0),
                                                 new latlon_coords(1,0),
                                                 false);
   secondary_merge = nullptr;
@@ -9932,11 +10046,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsOne) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(2,15)) = flood_index;
+  working_coords = new latlon_coords(2,15);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1.0,-1.0),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(-1.0,-1.0),
                                                 new latlon_coords(1,3),
                                                 false);
   primary_merges = new vector<merge_and_redirect_indices*>;
@@ -9945,11 +10061,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsOne) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(3,5)) = flood_index;
+  working_coords = new latlon_coords(3,5);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1.0,-1.0),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(-1.0,-1.0),
                                                 new latlon_coords(3,3),
                                                 false);
   primary_merges = new vector<merge_and_redirect_indices*>;
@@ -9958,7 +10076,9 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsOne) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(13,18)) = flood_index;
+  working_coords = new latlon_coords(13,18);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
+  delete working_coords;
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
                                flood_merge_and_redirect_indices_index,
@@ -10060,6 +10180,7 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsOne) {
   delete grid_params_in; delete coarse_grid_params_in; delete alg4;
   delete[] coarse_catchment_nums_in; delete[] corrected_orography_in;
   delete[] raw_orography_in; delete[] minima_in;
+  delete[] prior_coarse_rdirs_in;
   delete[] prior_fine_rdirs_in; delete[] prior_fine_catchments_in;
   delete[] connection_volume_thresholds_in; delete[] flood_volume_thresholds_in;
   delete[] flood_next_cell_lat_index_in; delete[] flood_next_cell_lon_index_in;
@@ -10398,9 +10519,10 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsTwo) {
   merge_and_redirect_indices* primary_merge;
   merge_and_redirect_indices* secondary_merge;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(-1,-1),
                                                 new latlon_coords(2,3),
                                                 false);
   primary_merges =
@@ -10409,11 +10531,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsTwo) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(11,14)) = flood_index;
+  working_coords = new latlon_coords(11,14);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,12),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,12),
                                                 new latlon_coords(1,12),
                                                 true);
   primary_merges =
@@ -10422,11 +10546,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsTwo) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(6,9)) = flood_index;
+  working_coords = new latlon_coords(6,9);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,8),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,8),
                                                 new latlon_coords(1,1),
                                                 false);
   secondary_merge = nullptr;
@@ -10438,11 +10564,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsTwo) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(8,12)) = flood_index;
+  working_coords = new latlon_coords(8,12);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(-1,-1),
                                                 new latlon_coords(0,2),
                                                 false);
   primary_merges =
@@ -10451,11 +10579,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsTwo) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(1,9)) = flood_index;
+  working_coords = new latlon_coords(1,9);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(11,4),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(11,4),
                                                 new latlon_coords(11,4),
                                                 true);
   primary_merges =
@@ -10464,11 +10594,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsTwo) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(16,2)) = flood_index;
+  working_coords = new latlon_coords(16,2);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(11,1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(11,1),
                                                 new latlon_coords(3,0),
                                                 false);
   secondary_merge = nullptr;
@@ -10480,11 +10612,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsTwo) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(18,4)) = flood_index;
+  working_coords = new latlon_coords(18,4);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(-1,-1),
                                                 new latlon_coords(3,1),
                                                 false);
   primary_merges =
@@ -10493,11 +10627,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsTwo) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(11,2)) = flood_index;
+  working_coords = new latlon_coords(11,2);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(13,7),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(13,7),
                                                 new latlon_coords(13,7),
                                                 true);
   primary_merges =
@@ -10506,11 +10642,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsTwo) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(14,9)) = flood_index;
+  working_coords = new latlon_coords(14,9);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(16,9),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(16,9),
                                                 new latlon_coords(2,1),
                                                 false);
   secondary_merge = nullptr;
@@ -10522,11 +10660,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsTwo) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(15,7)) = flood_index;
+  working_coords = new latlon_coords(15,7);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(-1,-1),
                                                 new latlon_coords(3,1),
                                                 false);
   primary_merges =
@@ -10535,11 +10675,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsTwo) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(13,9)) = flood_index;
+  working_coords = new latlon_coords(13,9);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,1),
                                                 new latlon_coords(1,1),
                                                 true);
   primary_merges =
@@ -10548,11 +10690,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsTwo) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(1,4)) = flood_index;
+  working_coords = new latlon_coords(1,4);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(8,4),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(8,4),
                                                 new latlon_coords(0,0),
                                                 false);
   secondary_merge = nullptr;
@@ -10564,11 +10708,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsTwo) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(2,2)) = flood_index;
+  working_coords = new latlon_coords(2,2);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(-1,-1),
                                                 new latlon_coords(1,0),
                                                 false);
   primary_merges =
@@ -10577,8 +10723,10 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsTwo) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(8,2)) = flood_index;
+  working_coords = new latlon_coords(8,2);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
@@ -10681,6 +10829,7 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsTwo) {
   delete grid_params_in; delete coarse_grid_params_in; delete alg4;
   delete[] coarse_catchment_nums_in; delete[] corrected_orography_in;
   delete[] raw_orography_in; delete[] minima_in;
+  delete[] prior_coarse_rdirs_in;
   delete[] prior_fine_rdirs_in; delete[] prior_fine_catchments_in;
   delete[] connection_volume_thresholds_in; delete[] flood_volume_thresholds_in;
   delete[] flood_next_cell_lat_index_in; delete[] flood_next_cell_lon_index_in;
@@ -11042,9 +11191,10 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsThree) {
   merge_and_redirect_indices* primary_merge;
   merge_and_redirect_indices* secondary_merge;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(-1,-1),
                                                 new latlon_coords(2,3),
                                                 false);
   primary_merges =
@@ -11053,11 +11203,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsThree) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(11,14)) = flood_index;
+  working_coords = new latlon_coords(11,14);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,12),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,12),
                                                 new latlon_coords(1,12),
                                                 true);
   primary_merges =
@@ -11066,11 +11218,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsThree) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(6,9)) = flood_index;
+  working_coords = new latlon_coords(6,9);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,8),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,8),
                                                 new latlon_coords(1,1),
                                                 false);
   secondary_merge = nullptr;
@@ -11082,11 +11236,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsThree) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(8,12)) = flood_index;
+  working_coords = new latlon_coords(8,12);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(-1,-1),
                                                 new latlon_coords(0,2),
                                                 false);
   primary_merges =
@@ -11095,11 +11251,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsThree) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(1,9)) = flood_index;
+  working_coords = new latlon_coords(1,9);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(11,4),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(11,4),
                                                 new latlon_coords(11,4),
                                                 true);
   primary_merges =
@@ -11108,11 +11266,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsThree) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(16,2)) = flood_index;
+  working_coords = new latlon_coords(16,2);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(11,1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(11,1),
                                                 new latlon_coords(3,0),
                                                 false);
   secondary_merge = nullptr;
@@ -11124,11 +11284,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsThree) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(18,4)) = flood_index;
+  working_coords = new latlon_coords(18,4);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(-1,-1),
                                                 new latlon_coords(3,1),
                                                 false);
   primary_merges =
@@ -11137,11 +11299,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsThree) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(11,2)) = flood_index;
+  working_coords = new latlon_coords(11,2);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(13,7),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(13,7),
                                                 new latlon_coords(13,7),
                                                 true);
   primary_merges =
@@ -11150,11 +11314,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsThree) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(14,9)) = flood_index;
+  working_coords = new latlon_coords(14,9);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(16,9),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(16,9),
                                                 new latlon_coords(2,1),
                                                 false);
   secondary_merge = nullptr;
@@ -11166,11 +11332,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsThree) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(15,7)) = flood_index;
+  working_coords = new latlon_coords(15,7);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(-1,-1),
                                                 new latlon_coords(3,1),
                                                 false);
   primary_merges =
@@ -11179,11 +11347,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsThree) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(13,9)) = flood_index;
+  working_coords = new latlon_coords(13,9);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,1),
                                                 new latlon_coords(1,1),
                                                 true);
   primary_merges =
@@ -11192,11 +11362,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsThree) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(1,4)) = flood_index;
+  working_coords = new latlon_coords(1,4);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(8,4),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(8,4),
                                                 new latlon_coords(0,0),
                                                 false);
   secondary_merge = nullptr;
@@ -11208,11 +11380,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsThree) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(2,2)) = flood_index;
+  working_coords = new latlon_coords(2,2);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(-1,-1),
                                                 new latlon_coords(1,0),
                                                 false);
   primary_merges =
@@ -11221,8 +11395,10 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsThree) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(8,2)) = flood_index;
+  working_coords = new latlon_coords(8,2);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
@@ -11325,6 +11501,7 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsThree) {
   delete grid_params_in; delete coarse_grid_params_in; delete alg4;
   delete[] coarse_catchment_nums_in; delete[] corrected_orography_in;
   delete[] raw_orography_in; delete[] minima_in;
+  delete[] prior_coarse_rdirs_in;
   delete[] prior_fine_rdirs_in; delete[] prior_fine_catchments_in;
   delete[] connection_volume_thresholds_in; delete[] flood_volume_thresholds_in;
   delete[] flood_next_cell_lat_index_in; delete[] flood_next_cell_lon_index_in;
@@ -11668,10 +11845,11 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsFour) {
   merge_and_redirect_indices* primary_merge;
   merge_and_redirect_indices* secondary_merge;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
 
   //0
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(-1,-1),
                                                 new latlon_coords(3,0),
                                                 false);
   primary_merges =
@@ -11680,12 +11858,14 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsFour) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(15,2)) = flood_index;
+  working_coords = new latlon_coords(15,2);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //1
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(-1,-1),
                                                 new latlon_coords(2,0),
                                                 false);
   primary_merges =
@@ -11694,12 +11874,14 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsFour) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(10,2)) = flood_index;
+  working_coords = new latlon_coords(10,2);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //2
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(-1,-1),
                                                 new latlon_coords(3,2),
                                                 false);
   primary_merges =
@@ -11708,12 +11890,14 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsFour) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(17,13)) = flood_index;
+  working_coords = new latlon_coords(17,13);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //3
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(-1,-1),
                                                 new latlon_coords(0,3),
                                                 false);
   primary_merges =
@@ -11722,12 +11906,14 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsFour) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(3,15)) = flood_index;
+  working_coords = new latlon_coords(3,15);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //4
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(-1,-1),
                                                 new latlon_coords(0,2),
                                                 false);
   primary_merges =
@@ -11736,12 +11922,14 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsFour) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(3,12)) = flood_index;
+  working_coords = new latlon_coords(3,12);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //5
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(-1,-1),
                                                 new latlon_coords(1,0),
                                                 false);
   primary_merges =
@@ -11750,8 +11938,10 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsFour) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(6,3)) = flood_index;
+  working_coords = new latlon_coords(6,3);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //6
   secondary_merge =
@@ -11764,12 +11954,14 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsFour) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(11,14)) = flood_index;
+  working_coords = new latlon_coords(11,14);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //7
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(-1,-1),
                                                 new latlon_coords(1,3),
                                                 false);
   primary_merges =
@@ -11778,8 +11970,10 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsFour) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(12,16)) = flood_index;
+  working_coords = new latlon_coords(12,16);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //8
 
@@ -11793,14 +11987,16 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsFour) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(6,5)) = flood_index;
+  working_coords = new latlon_coords(6,5);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
 
 
   //9
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(2,5),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(2,5),
                                                 new latlon_coords(2,5),
                                                 true);
   primary_merges =
@@ -11809,12 +12005,14 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsFour) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(4,6)) = flood_index;
+  working_coords = new latlon_coords(4,6);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //10
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(4,6),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(4,6),
                                                 new latlon_coords(4,6),
                                                 true);
   secondary_merge = nullptr;
@@ -11826,12 +12024,14 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsFour) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(2,6)) = flood_index;
+  working_coords = new latlon_coords(2,6);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //11
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(-1,-1),
                                                 new latlon_coords(0,1),
                                                 false);
   primary_merges =
@@ -11840,8 +12040,10 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsFour) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(4,5)) = flood_index;
+  working_coords = new latlon_coords(4,5);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //12
   secondary_merge =
@@ -11854,8 +12056,10 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsFour) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(8,15)) = flood_index;
+  working_coords = new latlon_coords(8,15);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //13
   secondary_merge =
@@ -11868,8 +12072,10 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsFour) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(5,8)) = flood_index;
+  working_coords = new latlon_coords(5,8);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //14
   secondary_merge =
@@ -11882,12 +12088,14 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsFour) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(6,15)) = flood_index;
+  working_coords = new latlon_coords(6,15);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //15
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(5,11),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(5,11),
                                                 new latlon_coords(5,11),
                                                 true);
   primary_merges =
@@ -11896,12 +12104,14 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsFour) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(7,10)) = flood_index;
+  working_coords = new latlon_coords(7,10);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //16
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(7,10),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(7,10),
                                                 new latlon_coords(7,10),
                                                 true);
   secondary_merge = nullptr;
@@ -11913,12 +12123,14 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsFour) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(5,11)) = flood_index;
+  working_coords = new latlon_coords(5,11);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //17
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(3,9),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(3,9),
                                                 new latlon_coords(3,9),
                                                 true);
   primary_merges =
@@ -11927,12 +12139,14 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsFour) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(6,10)) = flood_index;
+  working_coords = new latlon_coords(6,10);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //18
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(5,11),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(5,11),
                                                 new latlon_coords(1,2),
                                                 false);
   secondary_merge = nullptr;
@@ -11944,8 +12158,10 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsFour) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(3,9)) = flood_index;
+  working_coords = new latlon_coords(3,9);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //19
   secondary_merge =
@@ -11958,8 +12174,10 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsFour) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(4,10)) = flood_index;
+  working_coords = new latlon_coords(4,10);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //20
   secondary_merge =
@@ -11972,12 +12190,14 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsFour) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(15,16)) = flood_index;
+  working_coords = new latlon_coords(15,16);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //21
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(10,9),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(10,9),
                                                 new latlon_coords(10,9),
                                                 true);
   primary_merges =
@@ -11986,12 +12206,14 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsFour) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(9,11)) = flood_index;
+  working_coords = new latlon_coords(9,11);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //22
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(8,12),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(8,12),
                                                 new latlon_coords(8,12),
                                                 true);
   secondary_merge = nullptr;
@@ -12003,8 +12225,10 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsFour) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(10,9)) = flood_index;
+  working_coords = new latlon_coords(10,9);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //23
   secondary_merge =
@@ -12017,12 +12241,14 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsFour) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(9,10)) = flood_index;
+  working_coords = new latlon_coords(9,10);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //24
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(11,7),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(11,7),
                                                 new latlon_coords(11,7),
                                                 true);
   primary_merges =
@@ -12031,8 +12257,10 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsFour) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(9,7)) = flood_index;
+  working_coords = new latlon_coords(9,7);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //25
   secondary_merge =
@@ -12050,8 +12278,10 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsFour) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(11,7)) = flood_index;
+  working_coords = new latlon_coords(11,7);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //26
   secondary_merge =
@@ -12064,8 +12294,10 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsFour) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(12,9)) = flood_index;
+  working_coords = new latlon_coords(12,9);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //27
   secondary_merge =
@@ -12078,8 +12310,10 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsFour) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(11,5)) = flood_index;
+  working_coords = new latlon_coords(11,5);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //28
   secondary_merge =
@@ -12097,12 +12331,14 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsFour) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(13,6)) = flood_index;
+  working_coords = new latlon_coords(13,6);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //29
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(13,7),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(13,7),
                                                 new latlon_coords(13,7),
                                                 true);
   secondary_merge = nullptr;
@@ -12114,12 +12350,14 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsFour) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(13,4)) = flood_index;
+  working_coords = new latlon_coords(13,4);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //30
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(13,11),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(13,11),
                                                 new latlon_coords(2,2),
                                                 false);
   secondary_merge = nullptr;
@@ -12131,12 +12369,14 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsFour) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(12,5)) = flood_index;
+  working_coords = new latlon_coords(12,5);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //31
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(11,7),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(11,7),
                                                 new latlon_coords(11,7),
                                                 true);
   secondary_merge = nullptr;
@@ -12148,8 +12388,10 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsFour) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(13,8)) = flood_index;
+  working_coords = new latlon_coords(13,8);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //32
   secondary_merge =
@@ -12162,8 +12404,10 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsFour) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(10,6)) = flood_index;
+  working_coords = new latlon_coords(10,6);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //33
   secondary_merge =
@@ -12176,12 +12420,14 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsFour) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(17,10)) = flood_index;
+  working_coords = new latlon_coords(17,10);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //34
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(16,7),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(16,7),
                                                 new latlon_coords(16,7),
                                                 true);
   primary_merges =
@@ -12190,12 +12436,14 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsFour) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(16,5)) = flood_index;
+  working_coords = new latlon_coords(16,5);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //35
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(17,10),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(17,10),
                                                 new latlon_coords(3,1),
                                                 false);
   secondary_merge = nullptr;
@@ -12207,12 +12455,14 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsFour) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(15,7)) = flood_index;
+  working_coords = new latlon_coords(15,7);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //36
     primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(15,5),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(15,5),
                                                 new latlon_coords(15,5),
                                                 true);
   secondary_merge = nullptr;
@@ -12224,8 +12474,10 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsFour) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(16,9)) = flood_index;
+  working_coords = new latlon_coords(16,9);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   //37
   secondary_merge =
@@ -12238,8 +12490,10 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsFour) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(16,6)) = flood_index;
+  working_coords = new latlon_coords(16,6);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
@@ -12324,6 +12578,7 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsFour) {
   delete grid_params_in; delete coarse_grid_params_in; delete alg4;
   delete[] coarse_catchment_nums_in; delete[] corrected_orography_in;
   delete[] raw_orography_in; delete[] minima_in;
+  delete[] prior_coarse_rdirs_in;
   delete[] prior_fine_rdirs_in; delete[] prior_fine_catchments_in;
   delete[] connection_volume_thresholds_in; delete[] flood_volume_thresholds_in;
   delete[] flood_next_cell_lat_index_in; delete[] flood_next_cell_lon_index_in;
@@ -14617,9 +14872,10 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsSix) {
   merge_and_redirect_indices* primary_merge;
   merge_and_redirect_indices* secondary_merge;
   collected_merge_and_redirect_indices* collected_indices = nullptr;
+  coords* working_coords = nullptr;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(14,1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(14,1),
                                                 new latlon_coords(14,1),
                                                 true);
   primary_merges =
@@ -14628,11 +14884,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsSix) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(12,1)) = flood_index;
+  working_coords = new latlon_coords(12,1);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(2,1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(2,1),
                                                 new latlon_coords(2,0),
                                                 false);
   secondary_merge = nullptr;
@@ -14644,11 +14902,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsSix) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(15,12)) = flood_index;
+  working_coords = new latlon_coords(15,12);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,7),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,7),
                                                 new latlon_coords(1,7),
                                                 true);
 
@@ -14658,11 +14918,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsSix) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(1,5)) = flood_index;
+  working_coords = new latlon_coords(1,5);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,7),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,7),
                                                 new latlon_coords(0,1),
                                                 false);
 
@@ -14672,11 +14934,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsSix) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(12,11)) = flood_index;
+  working_coords = new latlon_coords(12,11);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(7,11),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(7,11),
                                                 new latlon_coords(7,11),
                                                 true);
   secondary_merge = nullptr;
@@ -14688,11 +14952,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsSix) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(1,13)) = flood_index;
+  working_coords = new latlon_coords(1,13);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,3),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,3),
                                                 new latlon_coords(1,1),
                                                 false);
   secondary_merge = nullptr;
@@ -14704,11 +14970,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsSix) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(6,12)) = flood_index;
+  working_coords = new latlon_coords(6,12);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(7,16),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(7,16),
                                                 new latlon_coords(1,3),
                                                 false);
 
@@ -14718,11 +14986,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsSix) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(2,14)) = flood_index;
+  working_coords = new latlon_coords(2,14);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(7,16),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(7,16),
                                                 new latlon_coords(7,16),
                                                 true);
 
@@ -14732,11 +15002,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsSix) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(4,16)) = flood_index;
+  working_coords = new latlon_coords(4,16);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,16),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,16),
                                                 new latlon_coords(0,3),
                                                 false);
   secondary_merge = nullptr;
@@ -14748,11 +15020,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsSix) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(12,16)) = flood_index;
+  working_coords = new latlon_coords(12,16);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   primary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(1,7),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(1,7),
                                                 new latlon_coords(0,1),
                                                 false);
   secondary_merge = nullptr;
@@ -14764,11 +15038,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsSix) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(5,17)) = flood_index;
+  working_coords = new latlon_coords(5,17);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(-1,-1),
                                                 new latlon_coords(3,3),
                                                 false);
 
@@ -14778,11 +15054,13 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsSix) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   flood_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*flood_merge_and_redirect_indices_index)(new latlon_coords(2,15)) = flood_index;
+  working_coords = new latlon_coords(2,15);
+  (*flood_merge_and_redirect_indices_index)(working_coords) = flood_index;
   flood_index++;
+  delete working_coords;
 
   secondary_merge =
-          new latlon_merge_and_redirect_indices(new latlon_coords(-1,-1),
+          create_latlon_merge_and_redirect_indices_for_testing(new latlon_coords(-1,-1),
                                                 new latlon_coords(3,3),
                                                 false);
 
@@ -14792,8 +15070,10 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsSix) {
                                                                secondary_merge,
                                                                latlon_merge_and_redirect_indices_factory);
   connect_merge_and_redirect_indices_vector->push_back(collected_indices);
-  (*connect_merge_and_redirect_indices_index)(new latlon_coords(13,1)) = connect_index;
+  working_coords = new latlon_coords(13,1);
+  (*connect_merge_and_redirect_indices_index)(working_coords) = connect_index;
   connect_index++;
+  delete working_coords;
 
   merges_and_redirects merges_and_redirects_expected_out =
           merges_and_redirects(connect_merge_and_redirect_indices_index,
@@ -14878,6 +15158,7 @@ TEST_F(BasinEvaluationTest, TestEvaluateBasinsSix) {
   delete grid_params_in; delete coarse_grid_params_in; delete alg4;
   delete[] coarse_catchment_nums_in; delete[] corrected_orography_in;
   delete[] raw_orography_in; delete[] minima_in;
+  delete[] prior_coarse_rdirs_in;
   delete[] prior_fine_rdirs_in; delete[] prior_fine_catchments_in;
   delete[] connection_volume_thresholds_in; delete[] flood_volume_thresholds_in;
   delete[] flood_next_cell_lat_index_in; delete[] flood_next_cell_lon_index_in;

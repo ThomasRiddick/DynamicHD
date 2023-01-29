@@ -720,6 +720,7 @@ void basin_evaluation_algorithm::set_secondary_redirect(merge_and_redirect_indic
 		                                        			 first_cell_beyond_rim_coords,
  		                                                     target_basin_center_coords);
 	}
+	delete first_cell_beyond_rim_coords;
 }
 
 void basin_evaluation_algorithm::
@@ -859,6 +860,7 @@ void basin_evaluation_algorithm::set_remaining_redirects() {
 					                                        						 				first_cell_beyond_rim_coords,
                                                      							 		coarse_catchment_number);
 		delete first_cell_beyond_rim_coords;
+		if (prior_fine_catchment_num == 0) delete catchment_outlet_coarse_coords;
 		}
 		delete coords_in;
 	});
@@ -974,6 +976,7 @@ priority_cell_queue latlon_basin_evaluation_algorithm::test_process_center_cell(
 	basin_connected_cells = new field<bool>(grid_params_in);
 	basin_connected_cells->set_all(false);
 	basin_connect_and_fill_order = new vector<pair<coords*,bool>*>();
+	basin_connect_and_fill_orders.push_back(basin_connect_and_fill_order);
 	center_cell_volume_threshold = center_cell_volume_threshold_in;
 	lake_area = lake_area_in;
 	basin_number = basin_number_in;

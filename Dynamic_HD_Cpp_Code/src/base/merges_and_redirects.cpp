@@ -123,6 +123,17 @@ merge_and_redirect_indices* icon_single_index_merge_and_redirect_indices_factory
   return new icon_single_index_merge_and_redirect_indices(target_coords);
 }
 
+merge_and_redirect_indices* create_latlon_merge_and_redirect_indices_for_testing(coords* merge_target_coords,
+                                    					         coords* redirect_coords,
+                                    				                 bool is_local_redirect){
+  merge_and_redirect_indices* working_indices = new latlon_merge_and_redirect_indices(merge_target_coords,
+                                                                                      redirect_coords,
+                                                                                      is_local_redirect);
+  delete merge_target_coords;
+  delete redirect_coords;
+  return working_indices;
+}
+
 bool operator==(vector<merge_and_redirect_indices*>& lhs,
                 vector<merge_and_redirect_indices*>& rhs){
   return (equal(lhs.begin(),lhs.end(),rhs.begin(),
