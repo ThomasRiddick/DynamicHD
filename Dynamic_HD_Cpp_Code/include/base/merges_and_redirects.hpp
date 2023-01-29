@@ -60,6 +60,10 @@ protected:
 
 merge_and_redirect_indices* latlon_merge_and_redirect_indices_factory(coords* target_coords);
 
+merge_and_redirect_indices* create_latlon_merge_and_redirect_indices_for_testing(coords* merge_target_coords,
+                                    					         coords* redirect_coords,
+                                    				                 bool is_local_redirect);
+
 class icon_single_index_merge_and_redirect_indices : public merge_and_redirect_indices {
 public:
   icon_single_index_merge_and_redirect_indices(coords* target_coords);

@@ -45,6 +45,7 @@ end type mergeandredirectindices
 
 interface mergeandredirectindices
   procedure :: mergeandredirectindicesconstructor
+  procedure :: mergeandredirectindicesconstructorfromarray
 end interface mergeandredirectindices
 
 type :: mergeandredirectindicespointer
@@ -277,6 +278,19 @@ function mergeandredirectindicesconstructor(is_primary_merge_in, &
                                                        redirect_lon_index_in)
 end function mergeandredirectindicesconstructor
 
+function mergeandredirectindicesconstructorfromarray(array_in) &
+    result(constructor)
+  type(mergeandredirectindices), pointer :: constructor
+  integer, dimension(:), pointer :: array_in
+    allocate(constructor)
+    call constructor%initialisemergeandredirectindices((array_in(1)==0), &
+                                                       (array_in(2)==0), &
+                                                       array_in(3), &
+                                                       array_in(4), &
+                                                       array_in(5), &
+                                                       array_in(6))
+end function mergeandredirectindicesconstructorfromarray
+
 subroutine add_offset_to_merge_indices(this,offset)
   class(mergeandredirectindices) :: this
   integer, intent(in) :: offset
@@ -371,6 +385,25 @@ subroutine mergeandredirectindicescollectiondestructor(this)
       deallocate(this%secondary_merge_and_redirect_indices)
     end if
 end subroutine mergeandredirectindicescollectiondestructor
+
+function createmergeindicescollectionsfromarray(array_in) &
+    result(merge_and_redirect_indices_collections)
+  integer, dimension(:,:,:), pointer :: array_in
+  type(mergeandredirectindicescollectionpointer), pointer, dimension(:) :: &
+      merge_and_redirect_indices_collections
+  type(mergeandredirectindices), pointer :: working_merge_and_redirect_indices
+  integer, dimension(:), pointer :: array_slice
+  integer :: i,j
+    do i = 1,size(array_in,1)
+      do j = 1,size(array_in,2)
+        if (array_in(i,j,1) /= 0) then
+          array_slice => array_in(i,j,1:size(array_in,3))
+          working_merge_and_redirect_indices => &
+            mergeandredirectindices(array_slice)
+        end if
+      end do
+    end do
+end function createmergeindicescollectionsfromarray
 
 subroutine initialiselake(this,center_cell_lat_in,center_cell_lon_in, &
                           current_cell_to_fill_lat_in, &
