@@ -392,6 +392,7 @@ inline void basin_evaluation_algorithm::
 	        										level_cell_height_type == connection_height);
 		if (! already_in_basin ){
 			if ((*basin_numbers)(level_coords)  != 0 ) {
+				delete new_center_coords;
 				new_center_coords = level_coords->clone();
 				new_center_cell_height = level_cell_height;
 				new_center_cell_height_type = level_cell_height_type;
@@ -411,6 +412,7 @@ inline void basin_evaluation_algorithm::
 	}
 	if (secondary_merge_found){
 	//Reset values for secondary merge
+		delete new_center_coords;
 		new_center_coords = secondary_merge_new_center_coords;
 		new_center_cell_height =
 			secondary_merge_new_center_cell_height;
