@@ -222,9 +222,9 @@ void latlon_evaluate_basins(bool* minima_in,
   NcDim third_index =
     merges_and_redirects_file.addDim("third_index",get<2>(*array_and_dimensions->first));
   vector<NcDim> dims;
-  vector.push_back(first_index);
-  vector.push_back(second_index);
-  vector.push_back(third_index);
+  dims.push_back(first_index);
+  dims.push_back(second_index);
+  dims.push_back(third_index);
   NcVar flood_merges_and_redirects_out_var =
     merges_and_redirects_file.addVar("flood_merges_and_redirects",ncInt,dims);
   flood_merges_and_redirects_out_var.putVar(array_and_dimensions->second);
