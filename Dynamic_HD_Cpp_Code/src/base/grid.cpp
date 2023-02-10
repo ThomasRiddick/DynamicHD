@@ -750,7 +750,7 @@ void icon_single_index_grid_params::icon_single_index_grid_read_params_file(){
 void icon_single_index_grid_params::icon_single_index_grid_calculate_secondary_neighbors(){
 	//Within this function work with c array indices rather than native icon indices so apply offset to
 	//indices read from arrays
-	secondary_neighboring_cell_indices = new int[9*ncells];
+	secondary_neighboring_cell_indices = new int[9l*(long)ncells];
 	calculated_secondary_neighboring_cell_indices = true;
 	for(int index_over_grid=0;index_over_grid<ncells;index_over_grid++){
 		//Six secondary neighbors are neighbors of primary neighbors
@@ -765,8 +765,8 @@ void icon_single_index_grid_params::icon_single_index_grid_calculate_secondary_n
 					neighboring_cell_indices[3*primary_neighbor_index+index_over_secondary_nbrs] - array_offset;
 				if (secondary_neighbor_index != index_over_grid) {
 					//Note this leaves gaps for the remaining three secondary neighbors
-					secondary_neighboring_cell_indices[9*index_over_grid+3*index_over_primary_nbrs+
-					                                   valid_secondary_nbr_count] =
+					secondary_neighboring_cell_indices[9l*long(index_over_grid)+3l*(long)index_over_primary_nbrs+
+					                                   (long)valid_secondary_nbr_count] =
 																							secondary_neighbor_index + array_offset;
 					valid_secondary_nbr_count++;
 				}
@@ -780,15 +780,16 @@ void icon_single_index_grid_params::icon_single_index_grid_calculate_secondary_n
 		//skip as yet unfilled entries in the secondary neighbors array
 		if ((index_over_secondary_nbrs+1)%3 == 0) index_over_secondary_nbrs++;
 		int first_secondary_neighbor_index =
-			secondary_neighboring_cell_indices[9*index_over_grid+
-		                                     index_over_secondary_nbrs] - array_offset;
+			secondary_neighboring_cell_indices[9l*long(index_over_grid)+
+		                                     long(index_over_secondary_nbrs)] - array_offset;
 	  //Last secondary neighbor is as yet unfilled so loop only up to an index of 7
 		for(int second_index_over_secondary_nbrs=index_over_secondary_nbrs+2;
 		    second_index_over_secondary_nbrs < 8;
 	    second_index_over_secondary_nbrs++){
 			if ((second_index_over_secondary_nbrs+1)%3 == 0) second_index_over_secondary_nbrs++;
 			int second_secondary_neighbor_index =
-				secondary_neighboring_cell_indices[9*index_over_grid + second_index_over_secondary_nbrs]
+				secondary_neighboring_cell_indices[9l*(long)index_over_grid +
+				                                   (long)second_index_over_secondary_nbrs]
 					- array_offset;
 
 				//Some tertiary neighbors are also secondary neighbors
@@ -798,8 +799,8 @@ void icon_single_index_grid_params::icon_single_index_grid_calculate_secondary_n
 					                           index_over_tertiary_nbrs] - array_offset;
 					//Test to see if this one of the twelve 5-point vertices in the grid
 					if(second_secondary_neighbor_index == tertiary_neighbor_index) {
-						secondary_neighboring_cell_indices[9*index_over_grid+
-		                                         gap_index] = no_neighbor;
+						secondary_neighboring_cell_indices[9l*(long)index_over_grid+
+		                                           (long)gap_index] = no_neighbor;
 						gap_index += 3;
 						continue;
 					}
@@ -809,8 +810,8 @@ void icon_single_index_grid_params::icon_single_index_grid_calculate_secondary_n
 							neighboring_cell_indices[second_secondary_neighbor_index*3 +
 					                             second_index_over_tertiary_nbrs] - array_offset;
 						if(second_tertiary_neighbor_index == tertiary_neighbor_index){
-							secondary_neighboring_cell_indices[9*index_over_grid+
-		                                             gap_index] = tertiary_neighbor_index + array_offset;
+							secondary_neighboring_cell_indices[9l*(long)index_over_grid+
+		                                             (long)gap_index] = tertiary_neighbor_index + array_offset;
 							gap_index += 3;
 						}
 					}

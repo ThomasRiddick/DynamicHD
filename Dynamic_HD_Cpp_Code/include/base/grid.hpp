@@ -357,7 +357,8 @@ public:
 		{ return neighboring_cell_indices[icon_single_index_get_index(cell_coords)*3 + neighbor_num]; }
 	//Get the cell indices of the center cells nine secondary neighbors
 	int get_cell_secondary_neighbors_index(generic_1d_coords* cell_coords,int neighbor_num)
-		{ return secondary_neighboring_cell_indices[icon_single_index_get_index(cell_coords)*9 + neighbor_num]; }
+		{ return secondary_neighboring_cell_indices[(long)icon_single_index_get_index(cell_coords)*9l +
+		                                            (long)neighbor_num]; }
 	coords* convert_fine_coords(coords* fine_coords,grid_params* fine_grid_params);
 	//Not implemeted for icon grid; return a runtime error
 	coords* calculate_downstream_coords_from_dir_based_rdir(coords* initial_coords,double rdir);
