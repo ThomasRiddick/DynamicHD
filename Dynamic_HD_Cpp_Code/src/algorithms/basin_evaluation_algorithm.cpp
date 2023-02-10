@@ -854,14 +854,14 @@ void basin_evaluation_algorithm::set_remaining_redirects() {
 			    	get_unmatched_secondary_merge())
 				throw runtime_error("Missing unmatched secondary merge when setting remaining redirects");
 			working_collected_merge_and_redirect_indices->set_unmatched_secondary_merge(false);
-			working_collected_merge_and_redirect_indices->set_secondary_merge_target_coords(null_coords);
+			working_collected_merge_and_redirect_indices->
+				set_secondary_merge_target_coords(first_cell_beyond_rim_coords);
 			merge_and_redirect_indices*  working_redirect =
 				working_collected_merge_and_redirect_indices->
 	        get_secondary_merge_and_redirect_indices();
 			find_and_set_non_local_redirect_index_from_coarse_catchment_num(working_redirect,
-					                                        						 				first_cell_beyond_rim_coords,
-                                                     							 		coarse_catchment_number);
-		delete first_cell_beyond_rim_coords;
+					                                        				first_cell_beyond_rim_coords,
+                                                     						coarse_catchment_number);
 		if (prior_fine_catchment_num == 0) delete catchment_outlet_coarse_coords;
 		}
 		delete coords_in;

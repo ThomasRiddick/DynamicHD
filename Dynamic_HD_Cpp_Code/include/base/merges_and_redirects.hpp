@@ -134,7 +134,7 @@ public:
     return primary_merge_and_redirect_indices;
   }
 
-  pair<tuple<int,int,int>*,int*>* get_collection_as_array();
+  pair<pair<int,int>*,int*>* get_collection_as_array();
 
   //Note equality does not check the merge and redirect factories are equal
   friend bool operator== (const collected_merge_and_redirect_indices& lhs,

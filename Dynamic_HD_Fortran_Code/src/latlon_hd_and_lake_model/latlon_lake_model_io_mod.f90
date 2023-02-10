@@ -78,6 +78,7 @@ function read_lake_parameters(instant_throughflow)&
   integer, pointer, dimension(:,:) :: corresponding_surface_cell_lat_index
   integer, pointer, dimension(:,:) :: corresponding_surface_cell_lon_index
   integer, allocatable, dimension(:,:) :: temp_integer_array
+  integer, pointer, dimension(:,:,:) :: temp_integer_array_merges
   real(dp),    allocatable, dimension(:,:) :: temp_real_array
   real(dp),    allocatable, dimension(:,:) :: temp_real_array_surface
   integer :: nlat,nlon
@@ -85,6 +86,7 @@ function read_lake_parameters(instant_throughflow)&
   integer :: nlat_surface_model,nlon_surface_model
   integer :: ncid
   integer :: varid,dimid
+  integer :: first_index,second_index,third_index
 
     write(*,*) "Loading lake parameters from file: " // trim(lake_params_filename)
     nlat_coarse = 360
@@ -100,9 +102,19 @@ function read_lake_parameters(instant_throughflow)&
     call check_return_code(nf90_inq_dimid(ncid,'lon',dimid))
     call check_return_code(nf90_inquire_dimension(ncid,dimid,len=nlon))
 
+    call check_return_code(nf90_inq_dimid(ncid,'first_index',dimid))
+    call check_return_code(nf90_inquire_dimension(ncid,dimid,len=first_index))
+
+    call check_return_code(nf90_inq_dimid(ncid,'second_index',dimid))
+    call check_return_code(nf90_inquire_dimension(ncid,dimid,len=second_index))
+
+    call check_return_code(nf90_inq_dimid(ncid,'third_index',dimid))
+    call check_return_code(nf90_inquire_dimension(ncid,dimid,len=third_index))
+
     allocate(temp_real_array(nlon,nlat))
     allocate(temp_real_array_surface(nlon_surface_model,nlat_surface_model))
     allocate(temp_integer_array(nlon,nlat))
+    allocate(temp_integer_array_merges(first_index,second_index,third_index))
 
     call check_return_code(nf90_inq_varid(ncid,'lake_centers',varid))
     call check_return_code(nf90_get_var(ncid, varid,temp_integer_array))
@@ -153,10 +165,32 @@ function read_lake_parameters(instant_throughflow)&
     allocate(corresponding_surface_cell_lon_index(nlat,nlon))
     corresponding_surface_cell_lon_index  = transpose(temp_integer_array)
 
+    call check_return_code(nf90_inq_varid(ncid,'flood_merge_and_redirect_indices_index',varid))
+    call check_return_code(nf90_get_var(ncid, varid,temp_integer_array))
+    allocate(flood_merge_and_redirect_indices_index(nlat,nlon))
+    flood_merge_and_redirect_indices_index = transpose(flood_merge_and_redirect_indices_index)
+    call add_offset(flood_merge_and_redirect_indices_index,1,(/-1/))
+
+    call check_return_code(nf90_inq_varid(ncid,'connect_merge_and_redirect_indices_index',varid))
+    call check_return_code(nf90_get_var(ncid, varid,temp_integer_array))
+    allocate(connect_merge_and_redirect_indices_index(nlat,nlon))
+    connect_merge_and_redirect_indices_index = transpose(connect_merge_and_redirect_indices_index)
+    call add_offset(connect_merge_and_redirect_indices_index,1,(/-1/))
+
     call check_return_code(nf90_inq_varid(ncid,'cell_areas_on_surface_model_grid',varid))
     call check_return_code(nf90_get_var(ncid, varid,temp_real_array_surface))
     allocate(cell_areas_on_surface_model_grid(nlat_surface_model,nlon_surface_model))
     cell_areas_on_surface_model_grid  = transpose(temp_real_array_surface)
+
+    call check_return_code(nf90_inq_varid(ncid,'flood_merges_and_redirects',varid))
+    call check_return_code(nf90_get_var(ncid, varid,temp_integer_array_merges))
+    flood_merge_and_redirect_indices_collections => &
+      createmergeindicescollectionsfromarray(temp_integer_array_merges)
+
+    call check_return_code(nf90_inq_varid(ncid,'connect_merges_and_redirects',varid))
+    call check_return_code(nf90_get_var(ncid, varid,temp_integer_array_merges))
+    connect_merge_and_redirect_indices_collections => &
+      createmergeindicescollectionsfromarray(temp_integer_array_merges)
 
     call check_return_code(nf90_close(ncid))
 
@@ -166,6 +200,8 @@ function read_lake_parameters(instant_throughflow)&
     elsewhere
       lake_centers = .true.
     end where
+
+
 
     deallocate(lake_centers_int)
     lake_parameters => lakeparameters(lake_centers, &
@@ -188,6 +224,7 @@ function read_lake_parameters(instant_throughflow)&
                                       instant_throughflow, &
                                       lake_retention_coefficient)
     deallocate(temp_integer_array)
+    deallocate(temp_integer_array_merges)
     deallocate(temp_real_array)
     deallocate(temp_real_array_surface)
 end function read_lake_parameters

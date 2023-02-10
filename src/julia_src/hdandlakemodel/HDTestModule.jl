@@ -80,7 +80,7 @@ using LakeModule: LatLonMergeAndRedirectIndices,add_offset,reset
   #   end
   # end
   # @time timing(river_parameters)
-  # r = Profile.retrieve();
+  # r = Profile.retrieve()
   # f = open("/Users/thomasriddick/Downloads/profile.bin", "w")
   # Serialization.serialize(f, r)
   # close(f)
@@ -15114,6 +15114,797 @@ end
   @test isapprox(expected_lake_fractions,lake_fractions,rtol=0.0,atol=0.01)
   @test expected_number_lake_cells == lake_fields.number_lake_cells
   @test expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
+end
+
+@testset "Lake model tests 21" begin
+  grid = LatLonGrid(4,4,true)
+  surface_model_grid = LatLonGrid(3,3,true)
+  flow_directions =  LatLonDirectionIndicators(LatLonField{Int64}(grid,
+                                                Int64[ 0  0  0 0
+                                                       0 -2 -2 0
+                                                       0 -2 -2 0
+                                                       0  0  0 0 ]))
+  river_reservoir_nums = LatLonField{Int64}(grid,
+                                            Int64[ 0 0 0 0
+                                                   0 5 5 0
+                                                   0 5 5 0
+                                                   0 0 0 0 ])
+  overland_reservoir_nums = LatLonField{Int64}(grid,
+                                               Int64[ 0 0 0 0
+                                                      0 1 1 0
+                                                      0 1 1 0
+                                                      0 0 0 0 ])
+  base_reservoir_nums = LatLonField{Int64}(grid,
+                                           Int64[ 0 0 0 0
+                                                  0 1 1 0
+                                                  0 1 1 0
+                                                  0 0 0 0 ])
+  river_retention_coefficients = LatLonField{Float64}(grid,0.0)
+  overland_retention_coefficients = LatLonField{Float64}(grid,0.0)
+  base_retention_coefficients = LatLonField{Float64}(grid,0.0)
+  landsea_mask = LatLonField{Bool}(grid,
+                                   Bool[ true true  true  true
+                                         true false false true
+                                         true false false true
+                                         true true  true  true ])
+  river_parameters = RiverParameters(flow_directions,
+                                     river_reservoir_nums,
+                                     overland_reservoir_nums,
+                                     base_reservoir_nums,
+                                     river_retention_coefficients,
+                                     overland_retention_coefficients,
+                                     base_retention_coefficients,
+                                     landsea_mask,
+                                     grid,86400.0,86400.0)
+  lake_grid = LatLonGrid(20,20,true)
+  lake_centers::Field{Bool} = LatLonField{Bool}(lake_grid,
+    Bool[ false false false false false false false false false false false false false false false false false false false false
+          false false false false false false false false false false false false false false false false false false false false
+          false false false false false true  false false false false false false false false false false false false false false
+          false false false false false false false false false true  false false true false false true false false false false
+          false false false false false false true  false false false false false false false false false false false false false
+          false false false true  false false false false true  false false true false false false false false false false false
+          false false false false false true  false false false false false false false false true false false false false false
+          false false false false false false false false false false true false false false false false false false false false
+          false false false false false false false false false false false false true false false true false false false false
+          false false false false false false false true  false false false false false false false false false false false false
+          false false false false false false false false false true  false false false false false false false false false false
+          false false true  false false true  false true  false false false false false false true false false true false false
+          false false false false false false false false false false false false false false false false false false false false
+          false false false false true  false false true  false false false true false false false false false false false false
+          false false false false false false false false false false false false false false false false false false false false
+          false false true  false false true  false false false false false false false false false false false true false false
+          false false false false false false false true  false false false false false false false false false false false false
+          false false false false false false false false false false true false false true false false false false false false
+          false false false false false false false false false false false false false false false false false false false false
+          false false false false false false false false false false false false false false false false false false false false ])
+  connection_volume_thresholds::Field{Float64} = LatLonField{Float64}(lake_grid,
+    Float64[ -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0
+             -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0
+             -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0
+             -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0
+             -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0
+             -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0
+             -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0
+             -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0
+             -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0
+             -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0
+             -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0
+             -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0
+             -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0
+             -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0
+             -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0
+             -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0
+             -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0
+             -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0
+             -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0
+             -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0 ])
+  flood_volume_threshold::Field{Float64} = LatLonField{Float64}(lake_grid,
+    Float64[  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0
+              -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0
+              -1.0 -1.0 -1.0 -1.0 -1.0  190.45 343.33 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0
+              -1.0 -1.0 -1.0 -1.0 -1.0  563.89 -1.0 -1.0 -1.0 152.22  -1.0 -1.0 218.21 -1.0 -1.0  90.5 -1.0 -1.0 -1.0 -1.0
+              -1.0 -1.0 -1.0 -1.0 -1.0  636.69 320.83 -1.0 -1.0 -1.0  273.57 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0
+              -1.0 -1.0 -1.0 115.45 -1.0  -1.0 -1.0 -1.0 83.99 -1.0  -1.0 123.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0
+              -1.0 -1.0 -1.0 300.17 -1.0  233.3 -1.0 -1.0 -1.0 -1.0  246.12 -1.0 -1.0 518.49 44.31  872.55 -1.0 -1.0 -1.0 -1.0
+              -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  129.15 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0
+              -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 31.79 -1.0 -1.0  160.58 -1.0 -1.0 -1.0 -1.0
+              -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 127.5 -1.0 -1.0  86.86 32.05 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0
+              -1.0 -1.0 535.18 -1.0 -1.0  -1.0 719.16 -1.0 -1.0 66.26  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0
+              -1.0 -1.0 388.8 -1.0 -1.0  12.25 -1.0 141.39 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 12.2  -1.0 -1.0 1.14 -1.0 -1.0
+              -1.0 -1.0 -1.0 -1.0 -1.0  522.65 -1.0 -1.0 -1.0 444.17  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 83.82 -1.0 -1.0 -1.0
+              -1.0 -1.0 -1.0 -1.0 486.6  -1.0 752.2 209.88 542.75 -1.0  101.19 73.35 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0
+              -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 247.77 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0
+              -1.0 -1.0 111.23 -1.0 -1.0  130.67 -1.0 408.88 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 577.22 41.13 -1.0 -1.0
+              -1.0 -1.0 -1.0 -1.0 -1.0  500.49 539.88 209.53 402.91 527.08  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 241.49 -1.0 -1.0
+              -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  46.02 -1.0 -1.0 5.56 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0
+              -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0
+              -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0  -1.0 -1.0 -1.0 -1.0 -1.0 ])
+  cell_areas_on_surface_model_grid::Field{Float64} = LatLonField{Float64}(surface_model_grid,
+    Float64[ 2.5 3.0 2.5
+             3.0 4.0 3.0
+             2.5 3.0 2.5 ])
+  flood_next_cell_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
+    Int64[  -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1
+            -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1
+            -1   -1   -1   -1   -1    2    3   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1
+            -1   -1   -1   -1   -1    4   -1   -1   -1    4   -1   -1    1   -1   -1    1   -1   -1   -1   -1
+            -1   -1   -1   -1   -1    0    2   -1   -1   -1    1   -1   -1   -1   -1   -1   -1   -1   -1   -1
+            -1   -1   -1    6   -1   -1   -1   -1    6   -1   -1    6   -1   -1   -1   -1   -1   -1   -1   -1
+            -1   -1   -1    5   -1    4   -1   -1   -1   -1    3   -1   -1    6    6    5   -1   -1   -1   -1
+            -1   -1   -1   -1   -1   -1   -1   -1   -1   -1    5   -1   -1   -1   -1   -1   -1   -1   -1   -1
+            -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1    9   -1   -1    6   -1   -1   -1   -1
+            -1   -1   -1   -1   -1   -1   -1   11   -1   -1   11   10   -1   -1   -1   -1   -1   -1   -1   -1
+            -1   -1   12   -1   -1   -1   15   -1   -1    9   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1
+            -1   -1   10   -1   -1   13   -1   11   -1   -1   -1   -1   -1   -1   12   -1   -1   12   -1   -1
+            -1   -1   -1   -1   -1   13   -1   -1   -1   13   -1   -1   -1   -1   -1   -1    9   -1   -1   -1
+            -1   -1   -1   -1   12   -1   13   13   10   -1   14   13   -1   -1   -1   -1   -1   -1   -1   -1
+            -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   12   -1   -1   -1   -1   -1   -1   -1   -1
+            -1   -1   17   -1   -1   16   -1   16   -1   -1   -1   -1   -1   -1   -1   -1   17   16   -1   -1
+            -1   -1   -1   -1   -1   16   18   16   15   16   -1   -1   -1   -1   -1   -1   -1   15   -1   -1
+            -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   16   -1   -1   19   -1   -1   -1   -1   -1   -1
+            -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1
+            -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1  ])
+  flood_next_cell_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
+    Int64[  -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1
+            -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1
+            -1   -1   -1   -1   -1    6    5   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1
+            -1   -1   -1   -1   -1    5   -1   -1   -1   10   -1   -1   11   -1   -1   16   -1   -1   -1   -1
+            -1   -1   -1   -1   -1    6    5   -1   -1   -1    8   -1   -1   -1   -1   -1   -1   -1   -1   -1
+            -1   -1   -1    3   -1   -1   -1   -1   10   -1   -1   10   -1   -1   -1   -1   -1   -1   -1   -1
+            -1   -1   -1    1   -1    5   -1   -1   -1   -1    9   -1   -1   15   13   11   -1   -1   -1   -1
+            -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   11   -1   -1   -1   -1   -1   -1   -1   -1   -1
+            -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   11   -1   -1   14   -1   -1   -1   -1
+            -1   -1   -1   -1   -1   -1   -1    7   -1   -1    7    9   -1   -1   -1   -1   -1   -1   -1   -1
+            -1   -1    0   -1   -1   -1    5   -1   -1   10   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1
+            -1   -1    2   -1   -1    4   -1    5   -1   -1   -1   -1   -1   -1   16   -1   -1   16   -1   -1
+            -1   -1   -1   -1   -1    8   -1   -1   -1    7   -1   -1   -1   -1   -1   -1   17   -1   -1   -1
+            -1   -1   -1   -1    5   -1    4    6    6   -1   11   10   -1   -1   -1   -1   -1   -1   -1   -1
+            -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1    9   -1   -1   -1   -1   -1   -1   -1   -1
+            -1   -1    0   -1   -1    5   -1    9   -1   -1   -1   -1   -1   -1   -1   -1   19   17   -1   -1
+            -1   -1   -1   -1   -1    7    6    8    7    6   -1   -1   -1   -1   -1   -1   -1   16   -1   -1
+            -1   -1   -1   -1   -1   -1   -1   -1   -1   -1    8   -1   -1   14   -1   -1   -1   -1   -1   -1
+            -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1
+            -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1   -1 ])
+  connect_next_cell_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
+    Int64[  -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1
+            -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1
+            -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1
+            -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1
+            -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1
+            -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1
+            -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1
+            -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1
+            -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1
+            -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1
+            -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1
+            -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1
+            -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1
+            -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1
+            -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1
+            -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1
+            -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1
+            -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1
+            -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1
+            -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1 ])
+  connect_next_cell_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
+    Int64[ -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1
+           -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1
+           -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1
+           -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1
+           -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1
+           -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1
+           -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1
+           -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1
+           -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1
+           -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1
+           -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1
+           -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1
+           -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1
+           -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1
+           -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1
+           -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1
+           -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1
+           -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1
+           -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1
+           -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1   -1  -1  -1  -1  -1 ])
+  corresponding_surface_cell_lat_index::Field{Int64} = LatLonField{Int64}(lake_grid,
+                                                    Int64[ 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+                                                           1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+                                                           1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+                                                           1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+                                                           1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+                                                           1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+                                                           2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+                                                           2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+                                                           2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+                                                           2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+                                                           2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+                                                           2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+                                                           2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+                                                           2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+                                                           3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
+                                                           3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
+                                                           3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
+                                                           3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
+                                                           3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
+                                                           3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 ])
+  corresponding_surface_cell_lon_index::Field{Int64} = LatLonField{Int64}(lake_grid,
+                                                    Int64[ 1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3
+                                                           1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3
+                                                           1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3
+                                                           1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3
+                                                           1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3
+                                                           1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3
+                                                           1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3
+                                                           1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3
+                                                           1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3
+                                                           1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3
+                                                           1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3
+                                                           1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3
+                                                           1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3
+                                                           1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3
+                                                           1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3
+                                                           1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3
+                                                           1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3
+                                                           1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3
+                                                           1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3
+                                                           1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3 ])
+  flood_index::Int64 = 1
+  connect_index::Int64 = 1
+  connect_merge_and_redirect_indices_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  flood_merge_and_redirect_indices_index::Field{Int64} = LatLonField{Int64}(lake_grid,0)
+  connect_merge_and_redirect_indices_collections::Vector{MergeAndRedirectIndicesCollection} =
+      MergeAndRedirectIndicesCollection[]
+  flood_merge_and_redirect_indices_collections::Vector{MergeAndRedirectIndicesCollection} =
+      MergeAndRedirectIndicesCollection[]
+  primary_merges::Vector{MergeAndRedirectIndices} = MergeAndRedirectIndices[]
+  local primary_merge::MergeAndRedirectIndices
+  local secondary_merge::MergeAndRedirectIndices
+  local collected_indices::MergeAndRedirectIndicesCollection
+  #0
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,false,
+                                        17,0,
+                                        3, 0)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(16,3),flood_index)
+  flood_index += 1
+
+  #1
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,false,
+                                        12,0,
+                                         2, 0)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(11,3),flood_index)
+  flood_index += 1
+
+  #2
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,false,
+                                        12,0,
+                                         3, 2)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(18,14),flood_index)
+  flood_index += 1
+
+  #3
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,false,
+                                        3,2,
+                                         0, 3)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(4,16),flood_index)
+  flood_index += 1
+
+  #4
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,false,
+                                        1,11,
+                                         0, 2)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(4,13),flood_index)
+  flood_index += 1
+
+  #5
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,false,
+                                        5,1,
+                                         1, 0)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(7,4),flood_index)
+  flood_index += 1
+
+  #6
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,false,
+                                        12,16,
+                                         2, 3)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(12,15),flood_index)
+  flood_index += 1
+
+  #7
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,false,
+                                        9,17,
+                                         1, 3)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(13,17),flood_index)
+  flood_index += 1
+
+  #8
+
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,false,
+                                        4,5,
+                                         0, 1)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(7,6),flood_index)
+  flood_index += 1
+
+  #9
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,true,
+                                        2,5,
+                                        2,5)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(5,7),flood_index)
+  flood_index += 1
+
+  #10
+  primary_merge =
+    LatLonMergeAndRedirectIndices(true,true,
+                                  4,6,
+                                  4,6)
+  primary_merges = MergeAndRedirectIndices[]
+  push!(primary_merges,primary_merge)
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        nothing)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(3,7),flood_index)
+  flood_index += 1
+
+  #11
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,false,
+                                        0,6,
+                                         0, 1)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(5,6),flood_index)
+  flood_index += 1
+
+  #12
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,false,
+                                        6,14,
+                                         1, 2)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(9,16),flood_index)
+  flood_index += 1
+
+  #13
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,false,
+                                        6,10,
+                                         1, 2)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(6,9),flood_index)
+  flood_index += 1
+
+  #14
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,false,
+                                        5,11,
+                                         1, 2)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(7,16),flood_index)
+  flood_index += 1
+
+  #15
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,true,
+                                        5,11,
+                                        5,11)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(8,11),flood_index)
+  flood_index += 1
+
+  #16
+  primary_merge =
+    LatLonMergeAndRedirectIndices(true,true,
+                                  7,10,
+                                  7,10)
+  primary_merges = MergeAndRedirectIndices[]
+  push!(primary_merges,primary_merge)
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        nothing)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(6,12),flood_index)
+  flood_index += 1
+
+  #17
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,true,
+                                        3,9,
+                                        3,9)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(7,11),flood_index)
+  flood_index += 1
+
+  #18
+  primary_merge =
+          LatLonMergeAndRedirectIndices(true,false,
+                                        5,11,
+                                        1, 2)
+  primary_merges = MergeAndRedirectIndices[]
+  push!(primary_merges,primary_merge)
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        nothing)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(4,10),flood_index)
+  flood_index += 1
+
+  #19
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,false,
+                                        1,8,
+                                         0, 1)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(5,11),flood_index)
+  flood_index += 1
+
+  #20
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,false,
+                                        17,19,
+                                         3, 3)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(16,17),flood_index)
+  flood_index += 1
+
+  #21
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,true,
+                                        10,9,
+                                        10,9)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(10,12),flood_index)
+  flood_index += 1
+
+  #22
+  primary_merge =
+          LatLonMergeAndRedirectIndices(true,true,
+                                        8,12,
+                                        8,12)
+  primary_merges = MergeAndRedirectIndices[]
+  push!(primary_merges,primary_merge)
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        nothing)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(11,10),flood_index)
+  flood_index += 1
+
+  #23
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,false,
+                                        2,1,
+                                         2, 1)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(10,11),flood_index)
+  flood_index += 1
+
+  #24
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,true,
+                                        11,7,
+                                        11,7)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(10,8),flood_index)
+  flood_index += 1
+
+  #25
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,false,
+                                        13,4,
+                                         3,2)
+  primary_merge =
+          LatLonMergeAndRedirectIndices(true,false,
+                                        9,7,
+                                        1,1)
+  primary_merges = MergeAndRedirectIndices[]
+  push!(primary_merges,primary_merge)
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(12,8),flood_index)
+  flood_index += 1
+
+  #26
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,false,
+                                        13,4,
+                                         3,2)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(13,10),flood_index)
+  flood_index += 1
+
+  #27
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,false,
+                                        13,7,
+                                        2,1)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(12,6),flood_index)
+  flood_index += 1
+
+  #28
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,true,
+                                        13,4,
+                                        13,4)
+  primary_merge =
+          LatLonMergeAndRedirectIndices(true,true,
+                                        11,5,
+                                        11,5)
+  primary_merges = MergeAndRedirectIndices[]
+  push!(primary_merges,primary_merge)
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(14,7),flood_index)
+  flood_index += 1
+
+  #29
+  primary_merge =
+          LatLonMergeAndRedirectIndices(true,true,
+                                        13,7,
+                                        13,7)
+  primary_merges = MergeAndRedirectIndices[]
+  push!(primary_merges,primary_merge)
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        nothing)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(14,5),flood_index)
+  flood_index += 1
+
+  #30
+  primary_merge =
+          LatLonMergeAndRedirectIndices(true,false,
+                                        13,11,
+                                         2, 2)
+  primary_merges = MergeAndRedirectIndices[]
+  push!(primary_merges,primary_merge)
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        nothing)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(13,6),flood_index)
+  flood_index += 1
+
+  #31
+  primary_merge =
+          LatLonMergeAndRedirectIndices(true,true,
+                                        11,7,
+                                        11,7)
+  primary_merges = MergeAndRedirectIndices[]
+  push!(primary_merges,primary_merge)
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        nothing)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(14,9),flood_index)
+  flood_index += 1
+
+  #32
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,false,
+                                        3,1,
+                                         3, 1)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(11,7),flood_index)
+  flood_index += 1
+
+  #33
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,true,
+                                        16,7,
+                                        16,7)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(18,11),flood_index)
+  flood_index += 1
+
+  #34
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,true,
+                                        16,7,
+                                        16,7)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(17,6),flood_index)
+  flood_index += 1
+
+  #35
+  primary_merge =
+          LatLonMergeAndRedirectIndices(true,false,
+                                        17,10,
+                                         3, 1)
+  primary_merges = MergeAndRedirectIndices[]
+  push!(primary_merges,primary_merge)
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        nothing)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(16,8),flood_index)
+  flood_index += 1
+
+  #36
+  primary_merge =
+          LatLonMergeAndRedirectIndices(true,true,
+                                        15,5,
+                                        15,5)
+  primary_merges = MergeAndRedirectIndices[]
+  push!(primary_merges,primary_merge)
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        nothing)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(17,10),flood_index)
+  flood_index += 1
+
+  #37
+  secondary_merge =
+          LatLonMergeAndRedirectIndices(false,false,
+                                        18,6,
+                                         3, 1)
+  primary_merges = MergeAndRedirectIndices[]
+  collected_indices = MergeAndRedirectIndicesCollection(primary_merges,
+                                                        secondary_merge)
+  push!(flood_merge_and_redirect_indices_collections,collected_indices)
+  set!(flood_merge_and_redirect_indices_index,LatLonCoords(17,7),flood_index)
+  flood_index += 1
+
+  add_offset(flood_next_cell_lat_index,1,Int64[-1])
+  add_offset(flood_next_cell_lon_index,1,Int64[-1])
+  add_offset(connect_next_cell_lat_index,1,Int64[-1])
+  add_offset(connect_next_cell_lon_index,1,Int64[-1])
+  add_offset(connect_merge_and_redirect_indices_collections,1)
+  add_offset(flood_merge_and_redirect_indices_collections,1)
+  grid_specific_lake_parameters::GridSpecificLakeParameters =
+    LatLonLakeParameters(flood_next_cell_lat_index,
+                         flood_next_cell_lon_index,
+                         connect_next_cell_lat_index,
+                         connect_next_cell_lon_index,
+                         corresponding_surface_cell_lat_index,
+                         corresponding_surface_cell_lon_index)
+  lake_parameters = LakeParameters(lake_centers,
+                                   connection_volume_thresholds,
+                                   flood_volume_threshold,
+                                   connect_merge_and_redirect_indices_index,
+                                   flood_merge_and_redirect_indices_index,
+                                   connect_merge_and_redirect_indices_collections,
+                                   flood_merge_and_redirect_indices_collections,
+                                   cell_areas_on_surface_model_grid,
+                                   lake_grid,
+                                   grid,
+                                   surface_model_grid,
+                                   grid_specific_lake_parameters)
+  drainage::Field{Float64} = LatLonField{Float64}(river_parameters.grid,100.0)
+  drainages::Array{Field{Float64},1} = repeat(drainage,10000)
+  runoffs::Array{Field{Float64},1} = deepcopy(drainages)
+  evaporation::Field{Float64} = LatLonField{Float64}(surface_model_grid,0.0)
+  evaporations::Array{Field{Float64},1} = repeat(evaporation,200)
+  evaporation = LatLonField{Float64}(surface_model_grid,1000.0*86400.0)
+  additional_evaporations::Array{Field{Float64},1} = repeat(evaporation,400)
+  append!(evaporations,additional_evaporations)
+  initial_water_to_lake_centers = LatLonField{Float64}(lake_grid,
+    Float64[ 0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
+             0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
+             0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
+             0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
+             0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
+             0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
+             0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
+             0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
+             0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
+             0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
+             0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
+             0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
+             0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
+             0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
+             0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
+             0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
+             0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
+             0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
+             0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
+             0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0 ])
+  initial_spillover_to_rivers = LatLonField{Float64}(grid,
+                                                     Float64[ 0.0 0.0 0.0 0.0
+                                                              0.0 0.0 0.0 0.0
+                                                              0.0 0.0 0.0 0.0
+                                                              0.0 0.0 0.0 0.0 ])
+  drive_hd_and_lake_model(river_parameters,lake_parameters,
+                          drainages,runoffs,evaporations,
+                          10000,true,
+                          initial_water_to_lake_centers,
+                          initial_spillover_to_rivers,
+                          print_timestep_results=true,
+                          write_output=false,return_output=true,
+                          use_realistic_surface_coupling=false)
 end
 
 end

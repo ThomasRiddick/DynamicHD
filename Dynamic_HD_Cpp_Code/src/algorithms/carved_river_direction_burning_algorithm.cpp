@@ -85,7 +85,7 @@ void carved_river_direction_burning_algorithm::reprocess_path(){
 		delete working_cell_coords;
 		return;
 	}
-	double minimum_height_change_threshold = reprocessing_q.size() > short_path_threshold ? regular_minimum_height_change_threshold : short_minimum_height_change_threshold;
+	double minimum_height_change_threshold = (int)reprocessing_q.size() > short_path_threshold ? regular_minimum_height_change_threshold : short_minimum_height_change_threshold;
 	double exit_height = (*orography)(working_cell_coords);
 	double change_in_height = minima_height - exit_height;
 	if (change_in_height <= 0) {
