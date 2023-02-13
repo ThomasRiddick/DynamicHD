@@ -41,6 +41,7 @@ type :: mergeandredirectindices
     procedure :: get_merge_type
     procedure :: get_merge_target_coords
     procedure :: get_outflow_redirect_coords
+    procedure :: is_equal_to
 end type mergeandredirectindices
 
 interface mergeandredirectindices
@@ -278,13 +279,14 @@ function mergeandredirectindicesconstructor(is_primary_merge_in, &
                                                        redirect_lon_index_in)
 end function mergeandredirectindicesconstructor
 
-function mergeandredirectindicesconstructorfromarray(array_in) &
+function mergeandredirectindicesconstructorfromarray(is_primary_merge,array_in) &
     result(constructor)
   type(mergeandredirectindices), pointer :: constructor
   integer, dimension(:), pointer :: array_in
+  logical :: is_primary_merge
     allocate(constructor)
-    call constructor%initialisemergeandredirectindices((array_in(1)==0), &
-                                                       (array_in(2)==0), &
+    call constructor%initialisemergeandredirectindices(is_primary_merge, &
+                                                       (array_in(2)==1), &
                                                        array_in(3), &
                                                        array_in(4), &
                                                        array_in(5), &
@@ -304,6 +306,19 @@ subroutine reset_merge_indices(this)
   class(mergeandredirectindices) :: this
     this%merged = .false.
 end subroutine reset_merge_indices
+
+function is_equal_to(this,rhs) result(equals)
+  class(mergeandredirectindices) :: this
+  type(mergeandredirectindices), pointer :: rhs
+  logical :: equals
+    equals = (this%is_primary_merge .eqv. rhs%is_primary_merge)
+    equals = equals .and. (this%local_redirect .eqv. rhs%local_redirect)
+    equals = equals .and. (this%merge_target_lat_index == rhs%merge_target_lat_index)
+    equals = equals .and. (this%merge_target_lon_index == rhs%merge_target_lon_index)
+    equals = equals .and. (this%redirect_lat_index == rhs%redirect_lat_index)
+    equals = equals .and. (this%redirect_lon_index == rhs%redirect_lon_index)
+end function is_equal_to
+
 
 subroutine add_offset_to_collection(this,offset)
   class(mergeandredirectindicescollection) :: this
@@ -401,12 +416,16 @@ function createmergeindicescollectionsfromarray(array_in) &
   integer :: i,j
     allocate(merge_and_redirect_indices_collections(size(array_in,1)))
     do i = 1,size(array_in,1)
-      allocate(primary_merge_and_redirect_indices(size(array_in,2)-1))
+      if (size(array_in,2)-1 > 0) then
+        allocate(primary_merge_and_redirect_indices(size(array_in,2)-1))
+      else
+        primary_merge_and_redirect_indices => null()
+      end if
       do j = 1,size(array_in,2)
         if (array_in(i,j,1) /= 0) then
           array_slice => array_in(i,j,1:size(array_in,3))
           working_merge_and_redirect_indices => &
-            mergeandredirectindices(array_slice)
+            mergeandredirectindices((j /= 1),array_slice)
           if (j == 1) then
             secondary_merge_and_redirect_indices => working_merge_and_redirect_indices
           else

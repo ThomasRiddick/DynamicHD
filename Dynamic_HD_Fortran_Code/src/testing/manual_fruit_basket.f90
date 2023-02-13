@@ -1473,6 +1473,17 @@ contains
         call teardown
 
         call setup
+        if (verbose) write (*,('(/A)')) "..running test: testLakeModel18"
+        call set_unit_name('Lake model')
+        call run_test_case(testLakeModel18,'Lake model')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","Lake Model test 18")
+        else
+            call case_passed_xml("test_something","Lake Model test 18")
+        end if
+        call teardown
+
+        call setup
         if (verbose) write (*,('(/A)')) "..running test: testLakeNumberRetrieval"
         call set_unit_name('Retreive lake numbers')
         call run_test_case(testLakeNumberRetrieval,'Retrieve lake numbers from lake parameters')
@@ -1480,6 +1491,18 @@ contains
             call case_failed_xml("test_something","Lake Number Retrieval Test")
         else
             call case_passed_xml("test_something","Lake Number Retrieval Test")
+        end if
+        call teardown
+
+
+        call setup
+        if (verbose) write (*,('(/A)')) "..running test: testReadMergesFromArray"
+        call set_unit_name('Test reading merges from the array')
+        call run_test_case(testReadMergesFromArray,'Test reading merges from the array')
+        if (.not. is_case_passed()) then
+            call case_failed_xml("test_something","Merge Reading Test")
+        else
+            call case_passed_xml("test_something","Merge Reading Testt")
         end if
         call teardown
 
