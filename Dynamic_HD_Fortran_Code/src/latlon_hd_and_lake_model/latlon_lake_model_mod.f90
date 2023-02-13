@@ -2087,21 +2087,30 @@ subroutine perform_secondary_merge(this,merge_indices)
                            other_lake%lake_number)
 end subroutine perform_secondary_merge
 
-function conditionally_rollback_primary_merge(this,merge_indices,&
-                                                other_lake_outflow) &
+recursive function conditionally_rollback_primary_merge(this,merge_indices,&
+                                                        other_lake_outflow) &
     result(rollback_performed)
   class(lake), intent(inout) :: this
   type(mergeandredirectindices), pointer, intent(inout) :: merge_indices
+  type(mergeandredirectindicescollection), pointer :: merge_indices_collection
   logical :: rollback_performed
   class(lake), pointer :: other_lake
   class(lake), pointer :: other_lake_true_primary_lake
   integer :: other_lake_number
   real(dp) :: other_lake_outflow
   integer :: target_cell_lat, target_cell_lon
+  logical :: is_flood_merge, dummy
+  integer :: i
+  integer :: merge_type
+  integer :: merge_indices_index
     call merge_indices%get_merge_target_coords(target_cell_lat,target_cell_lon)
     other_lake_number = this%lake_fields%lake_numbers(target_cell_lat, &
                                                       target_cell_lon)
     other_lake => this%lake_fields%other_lakes(other_lake_number)%lake_pointer
+    if (other_lake%lake_type /= subsumed_lake_type) then
+      rollback_performed = .false.
+      return
+    end if
     other_lake => find_true_rolledback_primary_lake(other_lake)
     other_lake_true_primary_lake => find_true_primary_lake(other_lake)
     if (other_lake_true_primary_lake%lake_number /= this%lake_number) then
@@ -2116,6 +2125,34 @@ function conditionally_rollback_primary_merge(this,merge_indices,&
       (other_lake%number_of_flooded_cells + &
        other_lake%secondary_number_of_flooded_cells)
     call other_lake%accept_split(this%lake_number)
+    merge_indices_index = this%get_merge_indices_index(is_flood_merge)
+    if (merge_indices_index /= 0) then
+      merge_indices_collection => &
+            this%get_merge_indices_collection(merge_indices_index, &
+                                              is_flood_merge)
+      do i = merge_indices_collection%primary_merge_and_redirect_indices_count+1,1,-1
+        if (i <= merge_indices_collection%primary_merge_and_redirect_indices_count) then
+          merge_indices => &
+            merge_indices_collection%primary_merge_and_redirect_indices(i)%ptr
+        else
+          if(merge_indices_collection%secondary_merge) then
+            merge_indices => &
+              merge_indices_collection%secondary_merge_and_redirect_indices
+          else
+            cycle
+          end if
+        end if
+        merge_type = merge_indices%get_merge_type()
+        if (merge_type == primary_merge_mtype) then
+          dummy = conditionally_rollback_primary_merge(other_lake,merge_indices,0.0_dp)
+        else if(merge_type == secondary_merge_mtype) then
+          if (merge_indices%merged) then
+              write(*,*) "Merge logic failure"
+              stop
+          end if
+        end if
+      end do
+    end if
     call other_lake%remove_water(other_lake_outflow)
     rollback_performed = .true.
 end function conditionally_rollback_primary_merge
