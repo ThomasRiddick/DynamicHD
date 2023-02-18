@@ -31,6 +31,7 @@ CPP_SRCS += \
 ../src/drivers/follow_streams.cpp \
 ../src/drivers/create_orography.cpp \
 ../src/drivers/bifurcate_rivers_basic.cpp \
+../src/drivers/create_merge_structure_test_data.cpp \
 ../src/testing/test_fill_inks.cpp  \
 ../src/testing/test_lake_operators.cpp \
 ../src/testing/test_catchment_computation.cpp \
@@ -77,7 +78,8 @@ USER_OBJS += \
 ./src/drivers/filter_out_shallow_lakes.o \
 ./src/drivers/follow_streams.o \
 ./src/drivers/create_orography.o \
-./src/drivers/bifurcate_rivers_basic.o
+./src/drivers/bifurcate_rivers_basic.o \
+./src/drivers/create_merge_structure_test_data.o
 
 FS_ICON_SI_OBJS += \
 ./src/command_line_drivers/sink_filling_icon_simple_interface.o
@@ -137,6 +139,7 @@ CPP_DEPS += \
 ./src/drivers/filter_out_shallow_lakes.d \
 ./src/drivers/create_orography.d \
 ./src/drivers/bifurcate_rivers_basic.d \
+./src/drivers/create_merge_structure_test_data.d \
 ./src/testing/test_lake_operators.d \
 ./src/testing/test_catchment_computation.d \
 ./src/testing/test_evaluate_basins.d \

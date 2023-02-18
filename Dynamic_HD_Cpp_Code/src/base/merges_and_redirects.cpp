@@ -79,6 +79,13 @@ bool icon_single_index_merge_and_redirect_indices::
           local_redirect == icon_single_index_rhs->get_local_redirect());
 }
 
+void latlon_merge_and_redirect_indices::add_offsets_to_lat_indices(int offset_non_local,
+                                                                   int offset_local){
+  merge_target_lat_index = max(merge_target_lat_index - offset_local,-1);
+  redirect_lat_index = max(redirect_lat_index -
+                           (local_redirect ? offset_local : offset_non_local),-1);
+}
+
 pair<int,int*>* latlon_merge_and_redirect_indices::get_indices_as_array(){
   //First number is to indicate this array is filled when positioned
   //within a larger array (where some spaces are unfilled)
@@ -140,6 +147,22 @@ bool operator==(vector<merge_and_redirect_indices*>& lhs,
                 compare_object_pointers<merge_and_redirect_indices>) &&
           lhs.size() == rhs.size());
 }
+
+void collected_merge_and_redirect_indices::add_offsets_to_lat_indices(int offset_non_local,
+                                                                      int offset_local) {
+  if (secondary_merge_and_redirect_indices) {
+    secondary_merge_and_redirect_indices->add_offsets_to_lat_indices(offset_non_local,
+                                                                     offset_local);
+  }
+  if (primary_merge_and_redirect_indices->size() > 0 ){
+    for(vector<merge_and_redirect_indices*>::const_iterator i =
+          primary_merge_and_redirect_indices->begin();
+          i != primary_merge_and_redirect_indices->end();++i){
+      (*i)->add_offsets_to_lat_indices(offset_non_local,offset_local);
+    }
+  }
+}
+
 
 pair<pair<int,int>*,int*>*
 collected_merge_and_redirect_indices::get_collection_as_array(){
@@ -329,27 +352,50 @@ void merges_and_redirects::set_unmatched_connect_merge(coords* merge_coords){
   working_collected_merge_and_redirect_indices->set_unmatched_secondary_merge(true);
 }
 
+void merges_and_redirects::add_offsets_to_lat_indices(int offset_non_local,
+                                                      int offset_local){
+  if (connect_merge_and_redirect_indices->size() > 0){
+    for (vector<collected_merge_and_redirect_indices*>::const_iterator i =
+        connect_merge_and_redirect_indices->begin();
+         i != connect_merge_and_redirect_indices->end();++i){
+      (*i)->add_offsets_to_lat_indices(offset_non_local,
+                                       offset_local);
+    }
+  }
+  if (flood_merge_and_redirect_indices->size() > 0){
+    for (vector<collected_merge_and_redirect_indices*>::const_iterator i =
+         flood_merge_and_redirect_indices->begin();
+         i != flood_merge_and_redirect_indices->end();++i){
+      (*i)->add_offsets_to_lat_indices(offset_non_local,
+                                       offset_local);
+    }
+  }
+}
+
 pair<tuple<int,int,int>*,int*>*
 merges_and_redirects::
     get_merges_and_redirects_as_array(bool get_flood_merges_and_redirects){
-  int max_primary_merges_at_single_point_plus_one = 0;
+  int max_primary_merges_at_single_point_plus_one = 1;
   vector<pair<pair<int,int>*,int*>*> array_slices;
   pair<pair<int,int>*,int*>* collection = nullptr;
   vector<collected_merge_and_redirect_indices*>*
     working_merge_and_redirect_indices = get_flood_merges_and_redirects ?
       flood_merge_and_redirect_indices :
       connect_merge_and_redirect_indices;
-  for (vector<collected_merge_and_redirect_indices*>::const_iterator i =
-      working_merge_and_redirect_indices->begin();
-       i != working_merge_and_redirect_indices->end();++i){
-    collection = (*i)->get_collection_as_array();
-    if ( collection->first->first >
-        max_primary_merges_at_single_point_plus_one){
-      max_primary_merges_at_single_point_plus_one = collection->first->first;
+  if (working_merge_and_redirect_indices->size() > 0){
+    for (vector<collected_merge_and_redirect_indices*>::const_iterator i =
+        working_merge_and_redirect_indices->begin();
+         i != working_merge_and_redirect_indices->end();++i){
+      collection = (*i)->get_collection_as_array();
+      if ( collection->first->first >
+          max_primary_merges_at_single_point_plus_one){
+        max_primary_merges_at_single_point_plus_one = collection->first->first;
+      }
+      array_slices.push_back(collection);
     }
-    array_slices.push_back(collection);
   }
-  int merge_and_redirect_indices_size = array_slices[0]->first->second;
+  int merge_and_redirect_indices_size = array_slices.size() > 0
+                                        ? array_slices[0]->first->second : 1;
   int array_size = array_slices.size()*
                    max_primary_merges_at_single_point_plus_one*
                    merge_and_redirect_indices_size;

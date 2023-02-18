@@ -207,8 +207,8 @@ def advanced_basin_evaluation_driver(input_minima_file,
                                             connect_next_cell_lat_index.get_data(),
                                             connect_next_cell_lon_index_in=
                                             connect_next_cell_lon_index.get_data(),
-                                            connect_merge_and_redirect_indices_index_in=,
-                                            connect_merge_and_redirect_indices_index.get_data()
+                                            connect_merge_and_redirect_indices_index_in=
+                                            connect_merge_and_redirect_indices_index.get_data(),
                                             flood_merge_and_redirect_indices_index_in=
                                             flood_merge_and_redirect_indices_index.get_data(),
                                             merges_filepath=merges_filename,

@@ -2125,7 +2125,7 @@ recursive function conditionally_rollback_primary_merge(this,merge_indices,&
       (other_lake%number_of_flooded_cells + &
        other_lake%secondary_number_of_flooded_cells)
     call other_lake%accept_split(this%lake_number)
-    merge_indices_index = this%get_merge_indices_index(is_flood_merge)
+    merge_indices_index = other_lake%get_merge_indices_index(is_flood_merge)
     if (merge_indices_index /= 0) then
       merge_indices_collection => &
             this%get_merge_indices_collection(merge_indices_index, &

@@ -4,6 +4,7 @@ from Cython.Shadow import bint
 cimport numpy as np
 import numpy as np
 from libcpp cimport bool
+from libcpp.string cimport string
 
 cdef extern from 'drivers/evaluate_basins.cpp':
     void latlon_evaluate_basins_cython_wrapper(int* minima_in_int,
@@ -88,7 +89,7 @@ def evaluate_basins(np.ndarray[int,ndim=2,mode='c'] minima_in_int,
                                       &flood_merge_and_redirect_indices_index_in[0,0],
                                       nlat_fine, nlon_fine,
                                       nlat_coarse, nlon_coarse,
-                                      string merges_filepath_c)
+                                      merges_filepath_c)
     else:
       latlon_evaluate_basins_cython_wrapper(&minima_in_int[0,0],
                                             &raw_orography_in[0,0],
@@ -104,7 +105,9 @@ def evaluate_basins(np.ndarray[int,ndim=2,mode='c'] minima_in_int,
                                             &flood_next_cell_lon_index_in[0,0],
                                             &connect_next_cell_lat_index_in[0,0],
                                             &connect_next_cell_lon_index_in[0,0],
+                                            &connect_merge_and_redirect_indices_index_in[0,0],
+                                            &flood_merge_and_redirect_indices_index_in[0,0],
                                             nlat_fine, nlon_fine,
                                             nlat_coarse, nlon_coarse,
-                                            string merges_filepath_c,
+                                            merges_filepath_c,
                                             &basin_catchment_numbers_in[0,0])

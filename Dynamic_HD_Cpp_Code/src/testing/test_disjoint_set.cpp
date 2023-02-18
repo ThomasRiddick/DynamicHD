@@ -44,10 +44,10 @@ TEST_F(DisjointSetTest,TestDisjointSets){
   dsets.make_new_link(20,18);
   EXPECT_TRUE(dsets.check_subset_has_elements(10,vector<int>{2, 5, 9, 10}));
   EXPECT_TRUE(dsets.check_subset_has_elements(6,vector<int>{6}));
-  EXPECT_TRUE(dsets.check_subset_has_elements(13,vector<int>{13,1, 14, 17, 18, 19, 20}));
+  EXPECT_TRUE(dsets.check_subset_has_elements(18,vector<int>{20, 13, 1, 14, 17, 18, 19}));
   EXPECT_TRUE(dsets.make_new_link(2,18));
   EXPECT_TRUE(dsets.check_subset_has_elements(6,vector<int>{6}));
-  EXPECT_TRUE(dsets.check_subset_has_elements(5,vector<int>{13,1, 14, 17, 18, 19, 20, 2, 5, 9, 10}));
+  EXPECT_TRUE(dsets.check_subset_has_elements(2,vector<int>{2, 5, 9, 10, 20, 13, 1, 14, 17, 18, 19}));
   EXPECT_FALSE(dsets.make_new_link(17,10));
 }
 

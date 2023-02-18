@@ -207,6 +207,7 @@ void latlon_evaluate_basins(bool* minima_in,
   alg.evaluate_basins();
   merges_and_redirects* merges_and_redirects_out =
     alg.get_basin_merges_and_redirects();
+  merges_and_redirects_out->add_offsets_to_lat_indices(1,scale_factor);
   int* flood_merge_and_redirect_indices_index_in_ext =
     merges_and_redirects_out->get_flood_merge_and_redirect_indices_index()->get_array();
   int* connect_merge_and_redirect_indices_index_in_ext =
@@ -215,23 +216,33 @@ void latlon_evaluate_basins(bool* minima_in,
   pair<tuple<int,int,int>*,int*>* array_and_dimensions =
     merges_and_redirects_out->get_merges_and_redirects_as_array(true);
   NcFile merges_and_redirects_file(merges_filepath.c_str(), NcFile::newFile);
-  NcDim first_index =
-    merges_and_redirects_file.addDim("first_index",get<0>(*array_and_dimensions->first));
-  NcDim second_index =
-    merges_and_redirects_file.addDim("second_index",get<1>(*array_and_dimensions->first));
-  NcDim third_index =
-    merges_and_redirects_file.addDim("third_index",get<2>(*array_and_dimensions->first));
-  vector<NcDim> dims;
-  dims.push_back(first_index);
-  dims.push_back(second_index);
-  dims.push_back(third_index);
+  NcDim flood_first_index =
+    merges_and_redirects_file.addDim("flood_first_index",get<0>(*array_and_dimensions->first));
+  NcDim flood_second_index =
+    merges_and_redirects_file.addDim("flood_second_index",get<1>(*array_and_dimensions->first));
+  NcDim flood_third_index =
+    merges_and_redirects_file.addDim("flood_third_index",get<2>(*array_and_dimensions->first));
+  vector<NcDim> flood_dims;
+  flood_dims.push_back(flood_first_index);
+  flood_dims.push_back(flood_second_index);
+  flood_dims.push_back(flood_third_index);
   NcVar flood_merges_and_redirects_out_var =
-    merges_and_redirects_file.addVar("flood_merges_and_redirects",ncInt,dims);
+    merges_and_redirects_file.addVar("flood_merges_and_redirects",ncInt,flood_dims);
   flood_merges_and_redirects_out_var.putVar(array_and_dimensions->second);
   array_and_dimensions =
     merges_and_redirects_out->get_merges_and_redirects_as_array(false);
+  NcDim connect_first_index =
+    merges_and_redirects_file.addDim("connect_first_index",get<0>(*array_and_dimensions->first));
+  NcDim connect_second_index =
+    merges_and_redirects_file.addDim("connect_second_index",get<1>(*array_and_dimensions->first));
+  NcDim connect_third_index =
+    merges_and_redirects_file.addDim("connect_third_index",get<2>(*array_and_dimensions->first));
+  vector<NcDim> connect_dims;
+  connect_dims.push_back(connect_first_index);
+  connect_dims.push_back(connect_second_index);
+  connect_dims.push_back(connect_third_index);
   NcVar connect_merges_and_redirects_out_var =
-  merges_and_redirects_file.addVar("connect_merges_and_redirects",ncInt,dims);
+    merges_and_redirects_file.addVar("connect_merges_and_redirects",ncInt,connect_dims);
   connect_merges_and_redirects_out_var.putVar(array_and_dimensions->second);
   #endif
   if(basin_catchment_numbers_in){

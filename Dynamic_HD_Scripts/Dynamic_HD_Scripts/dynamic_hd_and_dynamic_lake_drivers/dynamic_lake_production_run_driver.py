@@ -127,6 +127,8 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                     path.join(dest,"30min_flowtorivermouths_connected.nc"))
 
     def clean_work_dir(self):
+        os.remove(path.join(self.working_directory_path,"merges_and_redirects_temp.nc"))
+        os.remove(path.join(self.working_directory_path,"fields_temp.nc"))
         os.remove(path.join(self.working_directory_path,"30minute_river_dirs_temp.nc"))
         os.remove(path.join(self.working_directory_path,"30minute_filled_orog_temp.nc"))
         os.remove(path.join(self.working_directory_path,"30minute_river_dirs_temp.dat"))
@@ -842,24 +844,13 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         flood_next_cell_lon_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
         connect_next_cell_lat_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
         connect_next_cell_lon_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
-        flood_force_merge_lat_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
-        flood_force_merge_lon_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
-        connect_force_merge_lat_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
-        connect_force_merge_lon_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
-        flood_redirect_lat_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
-        flood_redirect_lon_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
-        connect_redirect_lat_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
-        connect_redirect_lon_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
-        additional_flood_redirect_lat_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
-        additional_flood_redirect_lon_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
-        additional_connect_redirect_lat_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
-        additional_connect_redirect_lon_index = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
-        flood_local_redirect = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
-        connect_local_redirect = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
-        additional_flood_local_redirect = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
-        additional_connect_local_redirect = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
-        merge_points = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
+        connect_merge_and_redirect_indices_index = \
+            field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
+        flood_merge_and_redirect_indices_index = \
+            field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
         basin_catchment_numbers = field.Field(np.zeros(fine_shape,dtype=np.int32,order='C'),fine_grid)
+        merges_filename =  path.join(self.working_directory_path,"merges_and_redirects_temp.nc")
+        fields_filename =  path.join(self.working_directory_path,"fields_temp.nc")
         evaluate_basins_wrapper.evaluate_basins(minima_in_int=
                                                 np.ascontiguousarray(minima.get_data(),dtype=np.int32),
                                                 raw_orography_in=
@@ -895,40 +886,11 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                                                 connect_next_cell_lat_index.get_data(),
                                                 connect_next_cell_lon_index_in=
                                                 connect_next_cell_lon_index.get_data(),
-                                                flood_force_merge_lat_index_in=
-                                                flood_force_merge_lat_index.get_data(),
-                                                flood_force_merge_lon_index_in=
-                                                flood_force_merge_lon_index.get_data(),
-                                                connect_force_merge_lat_index_in=
-                                                connect_force_merge_lat_index.get_data(),
-                                                connect_force_merge_lon_index_in=
-                                                connect_force_merge_lon_index.get_data(),
-                                                flood_redirect_lat_index_in=
-                                                flood_redirect_lat_index.get_data(),
-                                                flood_redirect_lon_index_in=
-                                                flood_redirect_lon_index.get_data(),
-                                                connect_redirect_lat_index_in=
-                                                connect_redirect_lat_index.get_data(),
-                                                connect_redirect_lon_index_in=
-                                                connect_redirect_lon_index.get_data(),
-                                                additional_flood_redirect_lat_index_in=
-                                                additional_flood_redirect_lat_index.get_data(),
-                                                additional_flood_redirect_lon_index_in=
-                                                additional_flood_redirect_lon_index.get_data(),
-                                                additional_connect_redirect_lat_index_in=
-                                                additional_connect_redirect_lat_index.get_data(),
-                                                additional_connect_redirect_lon_index_in=
-                                                additional_connect_redirect_lon_index.get_data(),
-                                                flood_local_redirect_out_int=
-                                                flood_local_redirect.get_data(),
-                                                connect_local_redirect_out_int=
-                                                connect_local_redirect.get_data(),
-                                                additional_flood_local_redirect_out_int=
-                                                additional_flood_local_redirect.get_data(),
-                                                additional_connect_local_redirect_out_int=
-                                                additional_connect_local_redirect.get_data(),
-                                                merge_points_out_int=
-                                                merge_points.get_data(),
+                                                connect_merge_and_redirect_indices_index_in=
+                                                connect_merge_and_redirect_indices_index.get_data(),
+                                                flood_merge_and_redirect_indices_index_in=
+                                                flood_merge_and_redirect_indices_index.get_data(),
+                                                merges_filepath=merges_filename,
                                                 basin_catchment_numbers_in=
                                                 basin_catchment_numbers.get_data())
         fields_to_write = [connection_volume_thresholds,
@@ -937,63 +899,40 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
                            flood_next_cell_lon_index,
                            connect_next_cell_lat_index,
                            connect_next_cell_lon_index,
-                           flood_force_merge_lat_index,
-                           flood_force_merge_lon_index,
-                           connect_force_merge_lat_index,
-                           connect_force_merge_lon_index,
-                           flood_redirect_lat_index,
-                           flood_redirect_lon_index,
-                           connect_redirect_lat_index,
-                           connect_redirect_lon_index,
-                           additional_flood_redirect_lat_index,
-                           additional_flood_redirect_lon_index,
-                           additional_connect_redirect_lat_index,
-                           additional_connect_redirect_lon_index,
                            corresponding_surface_cell_lat_index,
                            corresponding_surface_cell_lon_index,
-                           flood_local_redirect,
-                           connect_local_redirect,
-                           additional_flood_local_redirect,
-                           additional_connect_local_redirect,
-                           merge_points,minima]
+                           connect_merge_and_redirect_indices_index,
+                           flood_merge_and_redirect_indices_index,
+                           minima]
         fieldnames_for_fields_to_write = ['connection_volume_thresholds',
                                           'flood_volume_thresholds',
                                           'flood_next_cell_lat_index',
                                           'flood_next_cell_lon_index',
                                           'connect_next_cell_lat_index',
                                           'connect_next_cell_lon_index',
-                                          'flood_force_merge_lat_index',
-                                          'flood_force_merge_lon_index',
-                                          'connect_force_merge_lat_index',
-                                          'connect_force_merge_lon_index',
-                                          'flood_redirect_lat_index',
-                                          'flood_redirect_lon_index',
-                                          'connect_redirect_lat_index',
-                                          'connect_redirect_lon_index',
-                                          'additional_flood_redirect_lat_index',
-                                          'additional_flood_redirect_lon_index',
-                                          'additional_connect_redirect_lat_index',
-                                          'additional_connect_redirect_lon_index',
                                           'corresponding_surface_cell_lat_index',
                                           'corresponding_surface_cell_lon_index',
-                                          'flood_local_redirect',
-                                          'connect_local_redirect',
-                                          'additional_flood_local_redirect',
-                                          'additional_connect_local_redirect',
-                                          'merge_points','lake_centers']
-        iodriver.advanced_field_writer(self.output_lakeparas_filepath,
+                                          'connect_merge_and_redirect_indices_index',
+                                          'flood_merge_and_redirect_indices_index',
+                                          'lake_centers']
+        iodriver.advanced_field_writer(fields_filename,
                                        fields_to_write,
                                        fieldname=fieldnames_for_fields_to_write)
+        cdo_inst = cdo.Cdo()
+        cdo_inst.merge(input=" ".join([merges_filename,fields_filename]),
+                      output=self.output_lakeparas_filepath)
+        for file_to_remove in [merges_filename,fields_filename]:
+            os.remove(file_to_remove)
         #Write out basins maps
         iodriver.advanced_field_writer(temp_basin_catchment_numbers_filename,
                                        basin_catchment_numbers,
                                        fieldname="basin_catchment_numbers")
         #Run a couple of extra diagnostic -- needs further work to integrate
-        extract_lake_volumes.\
-            lake_volume_extraction_driver(self.output_lakeparas_filepath,
-                                          temp_basin_catchment_numbers_filename,
-                                          path.join(self.working_directory_path,
-                                                    "10min_lake_volumes.nc"))
+        # extract_lake_volumes.\
+        #     lake_volume_extraction_driver(self.output_lakeparas_filepath,
+        #                                   temp_basin_catchment_numbers_filename,
+        #                                   path.join(self.working_directory_path,
+        #                                             "10min_lake_volumes.nc"))
         river_directions_filepath = path.join(self.working_directory_path,"30min_rdirs.nc")
         coarse_catchments_filepath = path.join(self.working_directory_path,"30min_catchments.nc")
         coarse_catchments_fieldname = "catchments"
@@ -1010,32 +949,32 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         cumulative_river_mouth_flow_out_filename=path.join(self.working_directory_path,
                                                            "30min_flowtorivermouths_connected.nc")
         cumulative_river_mouth_flow_out_fieldname="cumulative_flow_to_ocean"
-        cclc.connect_coarse_lake_catchments_driver(coarse_catchments_filepath,
-                                                   self.output_lakeparas_filepath,
-                                                   temp_basin_catchment_numbers_filename,
-                                                   river_directions_filepath,
-                                                   connected_coarse_catchments_out_filename,
-                                                   coarse_catchments_fieldname,
-                                                   connected_coarse_catchments_out_fieldname,
-                                                   "basin_catchment_numbers",
-                                                   river_directions_fieldname,
-                                                   cumulative_flow_filename,
-                                                   cumulative_flow_out_filename,
-                                                   cumulative_flow_fieldname,
-                                                   cumulative_flow_out_fieldname)
-        river_mouth_marking_driver.\
-        advanced_flow_to_rivermouth_calculation_driver(input_river_directions_filename=
-                                                       river_directions_filepath,
-                                                       input_flow_to_cell_filename=
-                                                       cumulative_flow_out_filename,
-                                                       output_flow_to_river_mouths_filename=
-                                                       cumulative_river_mouth_flow_out_filename,
-                                                       input_river_directions_fieldname=
-                                                       river_directions_fieldname,
-                                                       input_flow_to_cell_fieldname=
-                                                       cumulative_flow_out_fieldname,
-                                                       output_flow_to_river_mouths_fieldname=
-                                                       cumulative_river_mouth_flow_out_fieldname)
+        # cclc.connect_coarse_lake_catchments_driver(coarse_catchments_filepath,
+        #                                            self.output_lakeparas_filepath,
+        #                                            temp_basin_catchment_numbers_filename,
+        #                                            river_directions_filepath,
+        #                                            connected_coarse_catchments_out_filename,
+        #                                            coarse_catchments_fieldname,
+        #                                            connected_coarse_catchments_out_fieldname,
+        #                                            "basin_catchment_numbers",
+        #                                            river_directions_fieldname,
+        #                                            cumulative_flow_filename,
+        #                                            cumulative_flow_out_filename,
+        #                                            cumulative_flow_fieldname,
+        #                                            cumulative_flow_out_fieldname)
+        # river_mouth_marking_driver.\
+        # advanced_flow_to_rivermouth_calculation_driver(input_river_directions_filename=
+        #                                                river_directions_filepath,
+        #                                                input_flow_to_cell_filename=
+        #                                                cumulative_flow_out_filename,
+        #                                                output_flow_to_river_mouths_filename=
+        #                                                cumulative_river_mouth_flow_out_filename,
+        #                                                input_river_directions_fieldname=
+        #                                                river_directions_fieldname,
+        #                                                input_flow_to_cell_fieldname=
+        #                                                cumulative_flow_out_fieldname,
+        #                                                output_flow_to_river_mouths_fieldname=
+        #                                                cumulative_river_mouth_flow_out_fieldname)
         #Redistribute water
         if print_timing_info:
             time_before_water_redistribution = timer()

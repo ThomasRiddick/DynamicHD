@@ -982,11 +982,11 @@ priority_cell_queue latlon_basin_evaluation_algorithm::test_process_center_cell(
 	center_cell_volume_threshold = center_cell_volume_threshold_in;
 	lake_area = lake_area_in;
 	basin_number = basin_number_in;
-  center_cell_height = center_cell_height_in;
-  previous_filled_cell_height = previous_filled_cell_height_in;
+  	center_cell_height = center_cell_height_in;
+  	previous_filled_cell_height = previous_filled_cell_height_in;
 	center_cell_height_type = center_cell->get_height_type();
 	previous_filled_cell_height_type = previous_filled_cell_height_type_in;
-  process_center_cell();
+  	process_center_cell();
 	center_cell_volume_threshold_in = center_cell_volume_threshold;
 	lake_area_in = lake_area;
 	previous_filled_cell_height_in = previous_filled_cell_height;

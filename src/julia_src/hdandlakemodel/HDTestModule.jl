@@ -15143,10 +15143,10 @@ end
   overland_retention_coefficients = LatLonField{Float64}(grid,0.0)
   base_retention_coefficients = LatLonField{Float64}(grid,0.0)
   landsea_mask = LatLonField{Bool}(grid,
-                                   Bool[ true true  true  true
+                                   Bool[ true true true  true
                                          true false false true
                                          true false false true
-                                         true true  true  true ])
+                                         true true true  true ])
   river_parameters = RiverParameters(flow_directions,
                                      river_reservoir_nums,
                                      overland_reservoir_nums,
@@ -15897,14 +15897,299 @@ end
                                                               0.0 0.0 0.0 0.0
                                                               0.0 0.0 0.0 0.0
                                                               0.0 0.0 0.0 0.0 ])
-  drive_hd_and_lake_model(river_parameters,lake_parameters,
-                          drainages,runoffs,evaporations,
-                          10000,true,
-                          initial_water_to_lake_centers,
-                          initial_spillover_to_rivers,
-                          print_timestep_results=true,
-                          write_output=false,return_output=true,
-                          use_realistic_surface_coupling=false)
+  expected_river_inflow::Field{Float64} = LatLonField{Float64}(grid,
+                                                               Float64[ 0.0 0.0 0.0 0.0
+                                                                        0.0 0.0 0.0 0.0
+                                                                        0.0 0.0 0.0 0.0
+                                                                        0.0 0.0 0.0 0.0 ])
+  expected_water_to_ocean::Field{Float64} = LatLonField{Float64}(grid,
+                                                                 Float64[ 200.0  200.0   200.0  200.0
+                                                                          200.0 -392.86 -535.71 200.0
+                                                                          200.0 -478.57 -192.86 200.0
+                                                                          200.0  200.0   200.0  200.0 ])
+  expected_water_to_hd::Field{Float64} = LatLonField{Float64}(grid,
+                                                              Float64[ 0.0 0.0 0.0 0.0
+                                                                       0.0 0.0 0.0 0.0
+                                                                       0.0 0.0 0.0 0.0
+                                                                       0.0 0.0 0.0 0.0 ])
+  expected_lake_numbers::Field{Int64} = LatLonField{Int64}(lake_grid,
+       Int64[  0 0 0 0 0  0 0 0 0 0   0 0 0  0 0   0  0 0 0 0
+               0 0 0 0 0  0 0 0 0 0   0 0 0  0 0   0  0 0 0 0
+               0 0 0 0 0  5 0 0 0 0   0 0 0  0 0   0  0 0 0 0
+               0 0 0 0 0  0 0 0 0 15  0 0 21 0 0   26 0 0 0 0
+               0 0 0 0 0  0 9 0  0  0  0  0  0  0 0   0  0 0 0 0
+               0 0 0 3 0  0 0 0  14 0  0  19 0  0 0   0  0 0 0 0
+               0 0 0 0 0  6 0 0  0  0  0  0  0  0 24  0  0 0 0 0
+               0 0 0 0 0  0 0 0  0  0  17 0  0  0 0   0  0 0 0 0
+               0 0 0 0 0  0 0 0  0  0  0  0 22  0 0   27 0 0 0 0
+               0 0 0 0 0  0 0 10 0  0  0  0  0  0 0   0  0 0 0 0
+               0 0 0 0 0  0 0  0 0 16  0  0  0  0 0   0  0 0 0 0
+               0 0 1 0 0  7 0 11 0  0  0  0  0  0 25  0  0 28 0 0
+               0 0 0 0 0  0 0  0 0  0  0  0  0  0 0   0  0 0  0 0
+               0 0 0 0 4  0 0 12 0  0  0 20  0  0 0   0  0 0  0 0
+               0 0 0 0 0  0 0  0 0  0  0  0  0  0 0   0  0 0  0 0
+               0 0 2 0 0  8 0  0 0  0  0  0  0  0 0   0  0 29 0 0
+               0 0 0 0 0  0 0 13 0  0  0  0  0  0 0   0  0 0  0 0
+               0 0 0 0 0  0 0  0 0  0 18  0  0 23 0   0  0 0  0 0
+               0 0 0 0 0  0 0  0 0  0  0  0  0  0 0   0  0 0  0 0
+               0 0 0 0 0  0 0  0 0  0  0  0  0  0 0   0  0 0  0 0 ])
+  expected_lake_types::Field{Int64} = LatLonField{Int64}(lake_grid,
+      Int64[ 0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
+             0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
+             0 0 0 0 0  1 0 0 0 0  0 0 0 0 0  0 0 0 0 0
+             0 0 0 0 0  0 0 0 0 1  0 0 1 0 0  1 0 0 0 0
+             0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 0 0
+             0 0 0 1 0  0 0 0 1 0  0 1 0 0 0  0 0 0 0 0
+             0 0 0 0 0  1 0 0 0 0  0 0 0 0 1  0 0 0 0 0
+             0 0 0 0 0  0 0 0 0 0  1 0 0 0 0  0 0 0 0 0
+             0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  1 0 0 0 0
+             0 0 0 0 0  0 0 1 0 0  0 0 0 0 0  0 0 0 0 0
+             0 0 0 0 0  0 0 0 0 1  0 0 0 0 0  0 0 0 0 0
+             0 0 1 0 0  1 0 1 0 0  0 0 0 0 1  0 0 1 0 0
+             0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
+             0 0 0 0 1  0 0 1 0 0  0 1 0 0 0  0 0 0 0 0
+             0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
+             0 0 1 0 0  1 0 0 0 0  0 0 0 0 0  0 0 1 0 0
+             0 0 0 0 0  0 0 1 0 0  0 0 0 0 0  0 0 0 0 0
+             0 0 0 0 0  0 0 0 0 0  1 0 0 1 0  0 0 0 0 0
+             0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
+             0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  ])
+  expected_diagnostic_lake_volumes::Field{Float64} = LatLonField{Float64}(lake_grid,
+        Float64[ 0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
+                 0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
+                 0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
+                 0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
+                 0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
+                 0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
+                 0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
+                 0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
+                 0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
+                 0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
+                 0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
+                 0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
+                 0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
+                 0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
+                 0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
+                 0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
+                 0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
+                 0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
+                 0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
+                 0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  ])
+  expected_lake_fractions::Field{Float64} = LatLonField{Float64}(surface_model_grid,
+        Float64[ 0.06   0.10   0.03
+                 0.08   0.11   0.08
+                 0.06   0.06   0.03 ])
+  expected_number_lake_cells::Field{Int64} = LatLonField{Int64}(surface_model_grid,
+        Int64[   2    5    1
+                 4    7    4
+                 2    3    1 ])
+  expected_number_fine_grid_cells::Field{Int64} = LatLonField{Int64}(surface_model_grid,
+        Int64[ 36 48 36
+               48 64 48
+               36 48 36  ])
+  expected_lake_volumes::Array{Float64} = Float64[0.0, 0.0, 0.0, 0.0, 0.0, #=
+                                                =#0.0, 0.0, 0.0, 0.0, 0.0, #=
+                                                =#0.0, 0.0, 0.0, 0.0, 0.0, #=
+                                                =#0.0, 0.0, 0.0, 0.0, 0.0, #=
+                                                =#0.0, 0.0, 0.0, 0.0, 0.0, #=
+                                                =#0.0, 0.0, 0.0, 0.0]
+  intermediate_expected_river_inflow::Field{Float64} =
+    LatLonField{Float64}(grid,
+                         Float64[ 0.0 0.0 0.0 0.0
+                                  0.0 0.0 0.0 0.0
+                                  0.0 0.0 0.0 0.0
+                                  0.0 0.0 0.0 0.0 ])
+  intermediate_expected_water_to_ocean::Field{Float64} =
+    LatLonField{Float64}(grid,
+                         Float64[ 200.0 444.44 200.0 200.0
+                                  200.0   0.0    0.0 200.0
+                                  200.0   0.0    0.0 300.0
+                                  200.0 655.56 200.0 200.0 ])
+  intermediate_expected_water_to_hd::Field{Float64} =
+    LatLonField{Float64}(grid,
+                         Float64[ 0.0 21120000.0        0.0 0.0
+                                  0.0        0.0 13440000.0 0.0
+                                  0.0 16000000.0        0.0 8640000.0
+                                  0.0 39360000.0        0.0 0.0  ])
+  intermediate_expected_lake_numbers::Field{Int64} = LatLonField{Int64}(lake_grid,
+       Int64[ 0 0 0 0 0  0 0 0 0  0   0 0  0 0 0   0 0 0 0 0
+              0 0 0 0 0  0 0 0 0  0   0 0  0 0 0   0 0 0 0 0
+              0 0 0 0 0  5 0 0 0  0   0 0  0 0 0   0 0 0 0 0
+              0 0 0 0 0  0 0 0 0  15  0 0 21 0 0  26 0 0 0 0
+              0 0 0 0 0  0 9 0 0  0  15 0  0 0 0   0 0 0 0 0
+
+              0 0 0 3 0  0 0 0 14 0   0  19  0  0  0    0 0 0 0 0
+              0 0 0 0 0  6 0 0  0 0   19  0  0 24 24   24 0 0 0 0
+              0 0 0 0 0  0 0 0  0 0   17  0  0  0  0    0 0 0 0 0
+              0 0 0 0 0  0 0 0  0 0    0  0  22 0  0   27 0 0 0 0
+              0 0 0 0 0  0 0 10 0 0   16 22  0  0  0    0 0 0 0 0
+
+              0 0 0 0 0  0 4  0 0 16   0  0  0  0  0    0 0 0  0 0
+              0 0 1 0 0  7 0 11 0  0   0  0  0  0 25    0 0 28 0 0
+              0 0 0 0 0  4 0  0 0 20   0  0  0  0  0    0 0 0  0 0
+              0 0 0 0 4  0 12 12 4 0  20 20  0  0  0    0 0 0  0 0
+              0 0 0 0 0  0 0  0  0 0   0 20  0  0  0    0 0 0  0 0
+
+              0 0 2 0 0  8 0 0 0  0    0  0  0  0  0    0 0 29 0 0
+              0 0 0 0 0  0 0 13 0 0    0  0  0  0  0    0 0  0 0 0
+              0 0 0 0 0  0 0 0  0 0   18  0  0 23  0    0 0  0 0 0
+              0 0 0 0 0  0 0 0  0 0    0  0  0  0  0    0 0  0 0 0
+              0 0 0 0 0  0 0 0  0 0    0  0  0  0  0    0 0  0 0 0 ])
+  intermediate_expected_lake_types::Field{Int64} = LatLonField{Int64}(lake_grid,
+      Int64[ 0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
+             0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
+             0 0 0 0 0  1 0 0 0 0  0 0 0 0 0  0 0 0 0 0
+             0 0 0 0 0  0 0 0 0 2  0 0 1 0 0  1 0 0 0 0
+             0 0 0 0 0  0 1 0 0 0  2 0 0 0 0  0 0 0 0 0
+             0 0 0 1 0  0 0 0 2 0  0 3 0 0 0  0 0 0 0 0
+             0 0 0 0 0  2 0 0 0 0  3 0 0 2 2  2 0 0 0 0
+             0 0 0 0 0  0 0 0 0 0  3 0 0 0 0  0 0 0 0 0
+             0 0 0 0 0  0 0 0 0 0  0 0 3 0 0  1 0 0 0 0
+             0 0 0 0 0  0 0 3 0 0  2 3 0 0 0  0 0 0 0 0
+             0 0 0 0 0  0 2 0 0 2  0 0 0 0 0  0 0 0 0 0
+             0 0 1 0 0  3 0 3 0 0  0 0 0 0 2  0 0 1 0 0
+             0 0 0 0 0  2 0 0 0 3  0 0 0 0 0  0 0 0 0 0
+             0 0 0 0 2  0 3 3 2 0  3 3 0 0 0  0 0 0 0 0
+             0 0 0 0 0  0 0 0 0 0  0 3 0 0 0  0 0 0 0 0
+             0 0 1 0 0  1 0 0 0 0  0 0 0 0 0  0 0 1 0 0
+             0 0 0 0 0  0 0 1 0 0  0 0 0 0 0  0 0 0 0 0
+             0 0 0 0 0  0 0 0 0 0  1 0 0 1 0  0 0 0 0 0
+             0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0
+             0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0 ])
+  intermediate_expected_diagnostic_lake_volumes::Field{Float64} = LatLonField{Float64}(lake_grid,
+      Float64[   0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+                 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+                 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+                 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 648.84 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+                 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 648.84 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+                 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 83.99 0.0 0.0 648.84 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+                 0.0 0.0 0.0 0.0 0.0 233.30 0.0 0.0 0.0 0.0 648.84 0.0 0.0 872.55 872.55 872.55 0.0 0.0 0.0 0.0
+                 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 648.84 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+                 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 118.91 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+                 0.0 0.0 0.0 0.0 0.0 0.0 0.0 2196.67 0.0 0.0 118.91 118.91 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+                 0.0 0.0 0.0 0.0 0.0 0.0 2196.67 0.0 0.0 118.91 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+                 0.0 0.0 0.0 0.0 0.0 2196.67 0.0 2196.67 0.0 0.0 0.0 0.0 0.0 0.0 12.20 0.0 0.0 0.0 0.0 0.0
+                 0.0 0.0 0.0 0.0 0.0 2196.67 0.0 0.0 0.0 2196.67 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+                 0.0 0.0 0.0 0.0 2196.67 0.0 2196.67 2196.67 2196.67 0.0 2196.67 2196.67 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+                 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 2196.67 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+                 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+                 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+                 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+                 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0
+                 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 ])
+  intermediate_expected_lake_fractions::Field{Float64} = LatLonField{Float64}(surface_model_grid,
+        Float64[ 0.06 0.13 0.03
+                 0.10 0.25 0.10
+                 0.06 0.08 0.03])
+  intermediate_expected_number_lake_cells::Field{Int64} = LatLonField{Int64}(surface_model_grid,
+        Int64[ 2 6  1
+               5 16 5
+               2 4  1])
+  intermediate_expected_number_fine_grid_cells::Field{Int64} = LatLonField{Int64}(surface_model_grid,
+        Int64[ 36 48 36
+               48 64 48
+               36 48 36  ])
+  intermediate_expected_lake_volumes::Array{Float64} = Float64[0.0, 0.0, 0.0, 719.16, 0.0, #=
+                                                          =# 233.3, 12.25, 0.0, 0.0, 127.5, #=
+                                                          =# 141.39, 752.2, 0.0, 83.99, 273.57, #=
+                                                          =# 86.86, 129.15, 0.0, 246.12, 444.17, #=
+                                                          =# 0.0, 32.05, 0.0, 872.55, 12.2, #=
+                                                          =# 0.0, 0.0, 0.0, 0.0]
+  @time river_fields,lake_prognostics,lake_fields =
+    drive_hd_and_lake_model(river_parameters,lake_parameters,
+                            drainages,runoffs,evaporations,
+                            6000,true,
+                            initial_water_to_lake_centers,
+                            initial_spillover_to_rivers,
+                            print_timestep_results=false,
+                            write_output=false,return_output=true,
+                            use_realistic_surface_coupling=false)
+  lake_types::LatLonField{Int64} = LatLonField{Int64}(lake_grid,0)
+  for i = 1:20
+    for j = 1:20
+      coords::LatLonCoords = LatLonCoords(i,j)
+      lake_number::Int64 = lake_fields.lake_numbers(coords)
+      if lake_number <= 0 continue end
+      lake::Lake = lake_prognostics.lakes[lake_number]
+      if isa(lake,FillingLake)
+        set!(lake_types,coords,1)
+      elseif isa(lake,OverflowingLake)
+        set!(lake_types,coords,2)
+      elseif isa(lake,SubsumedLake)
+        set!(lake_types,coords,3)
+      else
+        set!(lake_types,coords,4)
+      end
+    end
+  end
+  lake_volumes::Array{Float64} = Float64[]
+  lake_fractions::Field{Float64} = calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields)
+  for lake::Lake in lake_prognostics.lakes
+    append!(lake_volumes,get_lake_variables(lake).lake_volume)
+  end
+  diagnostic_lake_volumes::Field{Float64} =
+    calculate_diagnostic_lake_volumes_field(lake_parameters,lake_fields,
+                                            lake_prognostics)
+  @test intermediate_expected_river_inflow == river_fields.river_inflow
+  @test isapprox(intermediate_expected_water_to_ocean,
+                 river_fields.water_to_ocean,rtol=0.0,atol=0.01)
+  @test isapprox(intermediate_expected_water_to_hd,lake_fields.water_to_hd,
+                 rtol=0.0,atol=0.00001)
+  @test intermediate_expected_lake_numbers == lake_fields.lake_numbers
+  @test intermediate_expected_lake_types == lake_types
+  @test intermediate_expected_lake_volumes == lake_volumes
+  @test isapprox(diagnostic_lake_volumes,intermediate_expected_diagnostic_lake_volumes,rtol=0.0,atol=0.01)
+  @test isapprox(intermediate_expected_lake_fractions,lake_fractions,rtol=0.0,atol=0.02)
+  @test intermediate_expected_number_lake_cells == lake_fields.number_lake_cells
+  @test intermediate_expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
+  reset(connect_merge_and_redirect_indices_collections)
+  reset(flood_merge_and_redirect_indices_collections)
+  @time river_fields,lake_prognostics,lake_fields =
+    drive_hd_and_lake_model(river_parameters,lake_parameters,
+                            drainages,runoffs,evaporations,
+                            10000,true,
+                            initial_water_to_lake_centers,
+                            initial_spillover_to_rivers,
+                            print_timestep_results=false,
+                            write_output=false,return_output=true,
+                            use_realistic_surface_coupling=false)
+  lake_types = LatLonField{Int64}(lake_grid,0)
+  for i = 1:20
+    for j = 1:20
+      coords::LatLonCoords = LatLonCoords(i,j)
+      lake_number::Int64 = lake_fields.lake_numbers(coords)
+      if lake_number <= 0 continue end
+      lake::Lake = lake_prognostics.lakes[lake_number]
+      if isa(lake,FillingLake)
+        set!(lake_types,coords,1)
+      elseif isa(lake,OverflowingLake)
+        set!(lake_types,coords,2)
+      elseif isa(lake,SubsumedLake)
+        set!(lake_types,coords,3)
+      else
+        set!(lake_types,coords,4)
+      end
+    end
+  end
+  lake_volumes = Float64[]
+  lake_fractions = calculate_lake_fraction_on_surface_grid(lake_parameters,lake_fields)
+  for lake::Lake in lake_prognostics.lakes
+    append!(lake_volumes,get_lake_variables(lake).lake_volume)
+  end
+  diagnostic_lake_volumes =
+    calculate_diagnostic_lake_volumes_field(lake_parameters,lake_fields,
+                                            lake_prognostics)
+  @test expected_river_inflow == river_fields.river_inflow
+  @test isapprox(expected_water_to_ocean,
+                 river_fields.water_to_ocean,rtol=0.0,atol=0.01)
+  @test expected_water_to_hd    == lake_fields.water_to_hd
+  @test expected_lake_numbers == lake_fields.lake_numbers
+  @test expected_lake_types == lake_types
+  @test isapprox(expected_lake_volumes,lake_volumes,rtol=0.0,atol=0.00001)
+  @test isapprox(diagnostic_lake_volumes,expected_diagnostic_lake_volumes,rtol=0.0,atol=0.00001)
+  @test isapprox(expected_lake_fractions,lake_fractions,rtol=0.0,atol=0.01)
+  @test expected_number_lake_cells == lake_fields.number_lake_cells
+  @test expected_number_fine_grid_cells == lake_parameters.number_fine_grid_cells
 end
 
 end
