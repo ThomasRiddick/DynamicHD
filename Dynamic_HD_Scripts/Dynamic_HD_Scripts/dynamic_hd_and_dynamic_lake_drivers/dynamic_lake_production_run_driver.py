@@ -975,6 +975,20 @@ class Dynamic_Lake_Production_Run_Drivers(dyn_hd_dr.Dynamic_HD_Drivers):
         #                                                cumulative_flow_out_fieldname,
         #                                                output_flow_to_river_mouths_fieldname=
         #                                                cumulative_river_mouth_flow_out_fieldname)
+        #Temporary Replacement for river mouth marking code
+        river_mouth_marking_driver.\
+        advanced_flow_to_rivermouth_calculation_driver(input_river_directions_filename=
+                                                       river_directions_filepath,
+                                                       input_flow_to_cell_filename=
+                                                       cumulative_flow_filename,
+                                                       output_flow_to_river_mouths_filename=
+                                                       cumulative_river_mouth_flow_out_filename,
+                                                       input_river_directions_fieldname=
+                                                       river_directions_fieldname,
+                                                       input_flow_to_cell_fieldname=
+                                                       cumulative_flow_fieldname,
+                                                       output_flow_to_river_mouths_fieldname=
+                                                       cumulative_river_mouth_flow_out_fieldname)
         #Redistribute water
         if print_timing_info:
             time_before_water_redistribution = timer()
